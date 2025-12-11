@@ -23,6 +23,7 @@ interface PlayerState {
     childCost: number;
     salary: number;
     passiveIncome: number;
+    token?: string;
 }
 
 export default function GameBoard({ roomId, initialState }: BoardProps) {
@@ -74,21 +75,6 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const isMyTurn = currentPlayer.id === socket.id;
     const me = state.players.find((p: any) => p.id === socket.id) || {};
 
-    // Board Configuration
-    // Rat Race: 24 Squares (Inner Loop)
-    const RAT_RACE_LAYOUT = [
-        // Bottom Row (Right to Left)
-        { x: 5, y: 5 }, { x: 4, y: 5 }, { x: 3, y: 5 }, { x: 2, y: 5 }, { x: 1, y: 5 }, { x: 0, y: 5 },
-        // Left Column (Bottom to Top)
-        { x: 0, y: 4 }, { x: 0, y: 3 }, { x: 0, y: 2 }, { x: 0, y: 1 }, { x: 0, y: 0 },
-        // Top Row (Left to Right)
-        { x: 1, y: 0 }, { x: 2, y: 0 }, { x: 3, y: 0 }, { x: 4, y: 0 }, { x: 5, y: 0 }, { x: 6, y: 0 },
-        // Right Column (Top to Bottom)
-        { x: 6, y: 1 }, { x: 6, y: 2 }, { x: 6, y: 3 }, { x: 6, y: 4 }, { x: 6, y: 5 }
-    ];
-    // This is just a rough shape, need to map exactly to 24 indices for logic. 
-    // Actually, let's use a function to generate coords on a relative 100x100 grid or similar.
-
     // Animation State
     const [animatingPos, setAnimatingPos] = useState<Record<string, number>>({});
 
@@ -97,7 +83,6 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
         // Sync animatingPos with real pos if not animating
         const newPosMap: Record<string, number> = {};
         state.players.forEach((p: any) => {
-            // If we don't have a record, set it. If we do, keep it (animation hook handles updates)
             if (animatingPos[p.id] === undefined) {
                 newPosMap[p.id] = p.position;
             } else {
@@ -109,19 +94,15 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
     // Handle Dice Roll Animation
     useEffect(() => {
-        // This effect will trigger whenever state.players changes.
-        // We need to compare the current player's position in `state` with their `animatingPos`.
         state.players.forEach((p: PlayerState) => {
             const currentDisplayPos = animatingPos[p.id] ?? p.position;
             if (currentDisplayPos !== p.position) {
-                // Animate
                 let nextPos = currentDisplayPos;
                 const interval = setInterval(() => {
                     if (nextPos === p.position) {
                         clearInterval(interval);
                         return;
                     }
-                    // Handle Wrap (24 squares for Rat Race)
                     const max = p.isFastTrack ? 48 : 24;
                     nextPos = (nextPos + 1) % max;
 
@@ -129,189 +110,206 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         ...prev,
                         [p.id]: nextPos
                     }));
-                }, 300); // Speed of movement
-                return () => clearInterval(interval); // Cleanup on unmount or re-render
+                }, 300);
+                return () => clearInterval(interval);
             }
         });
-    }, [state.players, animatingPos]); // Depend on animatingPos to re-evaluate if animation is needed
+    }, [state.players, animatingPos]);
 
-    const getBoardCoordinates = (index: number, isFastTrack: boolean) => {
-        // Custom coordinates to match the image style (Square loops)
-        if (!isFastTrack) {
-            // Inner Loop (24 squares)
-            // Let's define a 7x7 grid logic (indices 0..23)
-            // 0..6 (Bottom), 7..11 (Left), 12..17 (Top), 18..23 (Right)
-            const width = 600;
-            const height = 600;
-            const padding = 100;
-            const innerSize = 400; // 400x400 box
-
-            // Simple Box Path
-            // 0-6: Bottom Edge (Right to Left)
-            if (index <= 6) return { x: 500 - (index * 66), y: 500 };
-            // 7-11: Left Edge (Bottom to Top)
-            if (index <= 12) return { x: 100, y: 500 - ((index - 6) * 66) };
-            // ... This is tedious. Let's use CSS grid or pre-calc.
-        }
-        return { x: 0, y: 0 };
-    }
-
-    // New 3-Column Render Logic
     return (
-        <div className="h-screen bg-[#0B0E14] flex text-white overflow-hidden font-sans selection:bg-blue-500/30">
-            {/* LEFT COLUMN: Bank & Economy */}
-            <div className="w-[350px] flex flex-col border-r border-slate-800 bg-slate-900/50 backdrop-blur-md z-20">
-                <div className="p-6 border-b border-slate-800">
-                    <h2 className="text-xl font-black bg-gradient-to-r from-emerald-400 to-green-500 bg-clip-text text-transparent flex items-center gap-2">
-                        <span className="text-2xl">🏦</span> БАНК
-                    </h2>
-                    <div className="mt-6 space-y-4">
-                        <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/50">
-                            <div className="text-xs text-slate-400 uppercase tracking-widest mb-1">Ваш Баланс</div>
-                            <div className="text-3xl font-mono text-emerald-400 font-bold">${me.cash?.toLocaleString()}</div>
-                        </div>
-                        <div className="bg-slate-800/80 p-4 rounded-2xl border border-slate-700/50">
-                            <div className="text-xs text-slate-400 uppercase tracking-widest mb-1 flex justify-between">
-                                <span>Кредит (10%)</span>
-                                <span className="text-red-400 font-bold">-${Math.ceil((me.loanDebt || 0) * 0.1).toLocaleString()}/мес</span>
-                            </div>
-                            <div className="text-2xl font-mono text-red-400 font-bold mb-4">${me.loanDebt?.toLocaleString() || 0}</div>
+        <div className="h-screen bg-[#0f172a] text-white overflow-hidden font-sans grid grid-cols-[340px_1fr_300px]">
+            {/* LEFT SIDEBAR: Stats & Bank */}
+            <div className="flex flex-col gap-4 p-4 border-r border-slate-800 bg-[#0B0E14] overflow-y-auto custom-scrollbar">
 
-                            <div className="grid grid-cols-2 gap-2">
-                                <button onClick={() => handleLoan(1000)} className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 py-2 rounded-lg text-xs font-bold transition-all">Взять $1k</button>
-                                <button onClick={() => handleLoan(10000)} className="bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 py-2 rounded-lg text-xs font-bold transition-all">Взять $10k</button>
-                                <button onClick={() => handleRepay(1000)} className="col-span-2 bg-slate-700 hover:bg-slate-600 text-slate-300 border border-slate-600 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50" disabled={!me.loanDebt}>Погасить $1k</button>
-                            </div>
+                {/* Bank Card */}
+                <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 shadow-lg">
+                    <div className="flex justify-between items-center mb-4">
+                        <div className="flex items-center gap-2">
+                            <span className="text-2xl">🏦</span>
+                            <span className="font-bold text-slate-200">Банк</span>
+                        </div>
+                        <span className="text-[10px] bg-green-500/10 text-green-400 px-2 py-1 rounded border border-green-500/20">Активен</span>
+                    </div>
+                    <div className="text-center mb-6">
+                        <div className="text-4xl font-bold text-green-400 mb-1 tracking-tight">${me.cash?.toLocaleString()}</div>
+                        <div className="text-xs text-slate-500 uppercase tracking-wider">Доступно</div>
+                    </div>
+
+                    <div className="space-y-3 text-sm">
+                        <div className="flex justify-between items-center p-2 bg-slate-900/50 rounded-lg">
+                            <span className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-green-500 rounded-full"></div> Доход:</span>
+                            <span className="font-mono font-bold text-slate-200">${me.income?.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center p-2 bg-slate-900/50 rounded-lg">
+                            <span className="text-slate-400 flex items-center gap-2"><div className="w-1.5 h-1.5 bg-red-500 rounded-full"></div> Расходы:</span>
+                            <span className="font-mono font-bold text-slate-200">${me.expenses?.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-center pt-3 border-t border-slate-700/50 mt-2">
+                            <span className="text-slate-200 flex items-center gap-2"><span className="text-blue-400 text-lg">💎</span> Чистый доход:</span>
+                            <span className="font-mono font-bold text-green-400 text-lg">+${me.cashflow?.toLocaleString()}</span>
                         </div>
                     </div>
                 </div>
 
-                {/* Active Card / Market Actions (Left Side) */}
-                <div className="flex-1 p-6 overflow-y-auto custom-scrollbar">
-                    {state.currentCard && isMyTurn ? (
-                        <div className="bg-slate-800 rounded-2xl p-5 border border-yellow-500/30 shadow-[0_0_30px_rgba(234,179,8,0.1)]">
-                            <div className="text-4xl mb-4">{state.currentCard.type === 'MARKET' ? '🏠' : '📜'}</div>
-                            <h3 className="text-lg font-bold text-yellow-50 mb-2">{state.currentCard.title}</h3>
-                            <p className="text-sm text-slate-300 mb-6 leading-relaxed">{state.currentCard.description}</p>
-
-                            {state.currentCard.cost > 0 && (
-                                <div className="bg-slate-900/50 p-3 rounded-xl mb-4 text-center">
-                                    <div className="text-[10px] uppercase text-slate-500">Стоимость</div>
-                                    <div className="text-xl font-mono font-bold text-white">${state.currentCard.cost.toLocaleString()}</div>
-                                </div>
-                            )}
-
-                            <div className="flex flex-col gap-2">
-                                {(state.currentCard.type === 'MARKET' || state.currentCard.type === 'DEAL') ? (
-                                    <>
-                                        <button onClick={() => socket.emit('buy_asset', { roomId })} className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg transition-transform active:scale-95">Купить</button>
-                                        <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-bold py-3 rounded-xl">Пропустить</button>
-                                    </>
-                                ) : (
-                                    <button onClick={handleEndTurn} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl">OK</button>
-                                )}
-                            </div>
+                {/* Credit Card */}
+                <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 shadow-lg">
+                    <div className="space-y-3 text-sm">
+                        <div className="flex justify-between items-center">
+                            <span className="text-slate-400">💳 Кредит:</span>
+                            <span className="font-mono font-bold text-red-400 text-lg">${me.loanDebt?.toLocaleString()}</span>
                         </div>
-                    ) : (
-                        <div className="h-full flex flex-col items-center justify-center text-slate-600 opacity-50 border-2 border-dashed border-slate-800 rounded-2xl">
-                            <span className="text-4xl mb-2">🃏</span>
-                            <span className="text-sm font-medium">Нет активных карт</span>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* CENTER COLUMN: Board */}
-            <div className="flex-1 relative flex items-center justify-center bg-[#05070a]">
-                {/* Background Decor */}
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,_var(--tw-gradient-stops))] from-blue-900/10 via-[#05070a] to-[#05070a]"></div>
-
-                <div className="relative z-10 scale-95 transform transition-transform duration-700">
-                    <BoardVisualizer
-                        board={state.board}
-                        players={state.players}
-                        animatingPos={animatingPos}
-                        currentPlayerId={currentPlayer.id}
-                    />
-
-                    {/* Central Dice/Status (Floating in middle of board loop) */}
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                        <div className="w-64 h-64 bg-slate-900/90 backdrop-blur-xl rounded-full border border-slate-700/50 flex flex-col items-center justify-center shadow-2xl pointer-events-auto">
-
-                            {/* Phase Indicator */}
-                            <div className="text-center mb-4">
-                                <div className="text-xs uppercase tracking-[0.2em] text-slate-500 font-bold mb-1">ХОД ИГРОКА</div>
-                                <div className="text-xl font-black text-white">{currentPlayer.name}</div>
-                            </div>
-
-                            {isMyTurn && state.phase === 'ROLL' ? (
-                                <button
-                                    onClick={handleRoll}
-                                    className="w-24 h-24 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 hover:from-indigo-400 hover:to-purple-500 flex items-center justify-center shadow-[0_0_40px_rgba(124,58,237,0.4)] transition-all transform hover:scale-110 active:scale-95 group"
-                                >
-                                    <span className="text-4xl group-hover:rotate-12 transition-transform">🎲</span>
-                                </button>
-                            ) : (
-                                <div className="w-20 h-20 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">
-                                    <span className="text-3xl animate-pulse text-slate-600">{state.lastRoll || '?'}</span>
-                                </div>
-                            )}
-
-                            <div className="mt-4 text-[10px] text-slate-500 font-mono">
-                                {state.phase} PHASE
-                            </div>
+                        <div className="flex justify-between items-center text-xs">
+                            <span className="text-slate-500">Макс. кредит:</span>
+                            <span className="font-mono text-slate-400">$38 000</span>
                         </div>
                     </div>
                 </div>
-            </div>
 
-            {/* RIGHT COLUMN: Players & Status */}
-            <div className="w-[350px] bg-slate-900/80 backdrop-blur-md border-l border-slate-800 flex flex-col z-20">
-                <div className="p-6 border-b border-slate-800 flex justify-between items-center">
-                    <h2 className="text-xs font-bold text-slate-400 uppercase tracking-widest">Игроки ({state.players.length})</h2>
-                    <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${socket.connected ? 'bg-green-500' : 'bg-red-500'}`}></div>
-                        <span className="text-xs text-slate-500">{socket.connected ? 'ONLINE' : 'OFFLINE'}</span>
-                    </div>
-                </div>
-
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar">
-                    {state.players.map((p: any) => (
-                        <div key={p.id} className={`relative p-4 rounded-2xl border transition-all ${p.id === currentPlayer.id ? 'bg-indigo-900/20 border-indigo-500/50 shadow-[0_0_20px_rgba(99,102,241,0.1)]' : 'bg-slate-800/40 border-slate-800 hover:bg-slate-800'}`}>
-                            <div className="flex items-center gap-3 mb-3">
-                                <div className="text-2xl w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center border border-slate-700">{p.token}</div>
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex justify-between items-center">
-                                        <div className="font-bold text-sm text-slate-200 truncate">{p.name}</div>
-                                        {p.isFastTrack && <span className="text-[10px] bg-yellow-500/20 text-yellow-400 px-1.5 py-0.5 rounded border border-yellow-500/30">FAST TRACK</span>}
-                                    </div>
-                                    <div className="text-xs text-slate-500 truncate">{p.dream}</div>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-2 text-xs">
-                                <div className="bg-black/20 rounded p-2">
-                                    <div className="text-slate-500 mb-0.5">Кэш</div>
-                                    <div className="font-mono text-emerald-400 font-bold">${p.cash.toLocaleString()}</div>
-                                </div>
-                                <div className="bg-black/20 rounded p-2">
-                                    <div className="text-slate-500 mb-0.5">Поток</div>
-                                    <div className="font-mono text-blue-400 font-bold">+${p.cashflow.toLocaleString()}</div>
-                                </div>
-                            </div>
-
-                            {p.id === currentPlayer.id && (
-                                <div className="absolute -left-[1px] top-4 bottom-4 w-1 bg-indigo-500 rounded-r"></div>
-                            )}
+                {/* Deal Counters */}
+                <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 space-y-3 shadow-lg flex-1">
+                    <h3 className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-2">Статистика</h3>
+                    {[
+                        { label: 'Малая сделка', count: '0/0' },
+                        { label: 'Большие сделки', count: '0/0' },
+                        { label: 'Расходы', count: '0/0' },
+                        { label: 'Рынок', count: '0/0' }
+                    ].map((item, i) => (
+                        <div key={i} className="flex justify-between items-center bg-slate-900/50 p-3 rounded-xl border border-slate-800/50 hover:border-slate-700/50 transition-colors">
+                            <span className="text-slate-300 font-medium text-sm">{item.label}</span>
+                            <span className="font-mono font-bold text-slate-500">{item.count}</span>
                         </div>
                     ))}
                 </div>
+            </div>
 
-                <div className="p-4 border-t border-slate-800 bg-black/20">
-                    <div className="text-center text-xs text-slate-600 font-mono">
-                        Room ID: {roomId}
+            {/* CENTER: Board */}
+            <div className="relative bg-[#0f172a] flex items-center justify-center p-4">
+                <BoardVisualizer
+                    board={state.board}
+                    players={state.players}
+                    animatingPos={animatingPos}
+                    currentPlayerId={currentPlayer.id}
+                />
+
+                {/* Center Action Button (if not blocked by card) */}
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    {!state.currentCard && isMyTurn && state.phase === 'ROLL' && (
+                        <button
+                            onClick={handleRoll}
+                            className="pointer-events-auto bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-full text-xl shadow-[0_0_50px_rgba(22,163,74,0.4)] transform transition hover:scale-105 active:scale-95"
+                        >
+                            Бросить 🎲
+                        </button>
+                    )}
+                </div>
+
+                {state.currentCard && (
+                    <div className="absolute inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200">
+                        <div className="bg-[#1e293b] p-8 rounded-3xl border border-slate-700 shadow-2xl max-w-md w-full text-center relative overflow-hidden">
+                            <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+
+                            <div className="text-6xl mb-6 bg-slate-800/50 w-24 h-24 mx-auto rounded-full flex items-center justify-center border border-slate-700">
+                                {state.currentCard.type === 'MARKET' ? '🏠' : '💸'}
+                            </div>
+                            <h2 className="text-2xl font-bold text-white mb-3">{state.currentCard.title}</h2>
+                            <p className="text-slate-400 mb-8 text-sm leading-relaxed">{state.currentCard.description}</p>
+
+                            {state.currentCard.cost && (
+                                <div className="bg-slate-900/50 p-4 rounded-2xl mb-8 border border-slate-800">
+                                    <div className="text-xs text-slate-500 uppercase tracking-widest mb-1">Стоимость</div>
+                                    <div className="text-3xl font-mono font-bold text-white mb-1">
+                                        ${(state.currentCard.downPayment ?? state.currentCard.cost).toLocaleString()}
+                                    </div>
+                                    {state.currentCard.cashflow && (
+                                        <div className="text-green-400 text-sm font-bold flex items-center justify-center gap-1">
+                                            <span className="text-xs bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">
+                                                +${state.currentCard.cashflow}/мес
+                                            </span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="flex gap-3">
+                                {isMyTurn ? (
+                                    state.currentCard.type === 'MARKET' ? (
+                                        <>
+                                            <button onClick={() => socket.emit('buy_asset', { roomId })} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3.5 rounded-xl text-sm transition-all shadow-lg shadow-green-900/20 hover:shadow-green-500/20">Купить</button>
+                                            <button onClick={handleEndTurn} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3.5 rounded-xl text-sm transition-all border border-slate-600">Отказаться</button>
+                                        </>
+                                    ) : (
+                                        <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3.5 rounded-xl text-sm transition-all border border-slate-600">OK</button>
+                                    )
+                                ) : <div className="w-full text-slate-500 py-3 bg-slate-900/50 rounded-xl text-sm animate-pulse">Ожидание хода игрока...</div>}
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* RIGHT SIDEBAR: Actions & Players */}
+            <div className="flex flex-col gap-4 p-4 border-l border-slate-800 bg-[#0B0E14] overflow-y-auto custom-scrollbar">
+
+                {/* Actions Panel */}
+                <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 shadow-lg">
+                    <h3 className="text-slate-400 text-xs uppercase tracking-widest font-bold mb-4 flex items-center gap-2">
+                        <span className="text-yellow-500">⚡</span> Действия
+                    </h3>
+
+                    <div className="grid grid-cols-3 gap-2 mb-4">
+                        <button onClick={() => setShowBank(!showBank)} className="bg-slate-800 p-2 rounded-xl border border-slate-700 hover:bg-slate-700 flex flex-col items-center gap-1 group transition-all hover:border-slate-600">
+                            <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">🏦</span>
+                            <span className="text-[10px] text-slate-400 font-bold">Банк</span>
+                        </button>
+                        <button
+                            onClick={handleRoll}
+                            disabled={!isMyTurn || state.phase !== 'ROLL'}
+                            className={`bg-slate-800 p-2 rounded-xl border border-slate-700 hover:bg-slate-700 flex flex-col items-center gap-1 group transition-all ${isMyTurn && state.phase === 'ROLL' ? 'ring-1 ring-green-500 bg-green-500/10' : 'opacity-50 cursor-not-allowed'}`}
+                        >
+                            <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">🎲</span>
+                            <span className="text-[10px] text-slate-400 font-bold">Бросок</span>
+                        </button>
+                        <button
+                            onClick={handleEndTurn}
+                            disabled={!isMyTurn || state.phase === 'ROLL'}
+                            className={`bg-slate-800 p-2 rounded-xl border border-slate-700 hover:bg-slate-700 flex flex-col items-center gap-1 group transition-all ${isMyTurn && state.phase !== 'ROLL' ? 'ring-1 ring-blue-500 bg-blue-500/10' : 'opacity-50 cursor-not-allowed'}`}
+                        >
+                            <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">➡</span>
+                            <span className="text-[10px] text-slate-400 font-bold">Далее</span>
+                        </button>
+                    </div>
+
+                    <div className="bg-slate-900 p-3 rounded-xl border border-slate-800 flex justify-between items-center group cursor-pointer hover:border-slate-700 transition-colors">
+                        <div className="flex items-center gap-3">
+                            <span className="text-xl group-hover:scale-110 transition-transform">💼</span>
+                            <span className="text-sm text-slate-300 font-bold">Активы</span>
+                        </div>
+                        <span className="bg-green-600 text-white text-xs font-bold px-2.5 py-1 rounded-full shadow-lg shadow-green-900/50">$0</span>
                     </div>
                 </div>
+
+                {/* Players List */}
+                <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 flex-1 flex flex-col shadow-lg">
+                    <div className="flex justify-between items-center mb-4 pb-4 border-b border-slate-800">
+                        <h3 className="text-slate-400 text-xs uppercase tracking-widest font-bold flex items-center gap-2">👥 Игроки</h3>
+                        <span className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400 border border-slate-700">{state.players.length}/8</span>
+                    </div>
+
+                    <div className="space-y-3 overflow-y-auto pr-1 flex-1 custom-scrollbar">
+                        {state.players.map((p: any) => (
+                            <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${p.id === currentPlayer.id ? 'bg-slate-800 border-blue-500/50 shadow-lg shadow-blue-500/10 relative overflow-hidden' : 'bg-slate-900/30 border-slate-800/50 opacity-60'}`}>
+                                {p.id === currentPlayer.id && <div className="absolute left-0 top-0 bottom-0 w-1 bg-blue-500"></div>}
+                                <div className="text-2xl bg-slate-900 w-10 h-10 flex items-center justify-center rounded-lg border border-slate-800">{p.token}</div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-bold text-slate-200 truncate">{p.name}</div>
+                                    <div className="text-xs text-slate-500 font-mono">${p.cash.toLocaleString()}</div>
+                                </div>
+                                {p.id === currentPlayer.id && <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse shadow-[0_0_10px_#22c55e]"></div>}
+                            </div>
+                        ))}
+                    </div>
+                </div>
+
             </div>
 
             {/* Winner Overlay */}
