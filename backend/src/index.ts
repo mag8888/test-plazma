@@ -101,6 +101,10 @@ io.on('connection', (socket) => {
 
 
 
-httpServer.listen(PORT, () => {
+const server = httpServer.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
+
+// Increase Keep-Alive Timeout for Load Balancers (Railway/AWS/Nginx)
+server.keepAliveTimeout = 65000; // 65 seconds
+server.headersTimeout = 66000; // 66 seconds
