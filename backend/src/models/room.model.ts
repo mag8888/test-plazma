@@ -20,6 +20,7 @@ export interface IRoom extends Document {
     players: IPlayer[];
     createdAt: Date;
     updatedAt: Date;
+    gameState?: any;
 }
 
 const RoomSchema: Schema = new Schema({
@@ -29,6 +30,7 @@ const RoomSchema: Schema = new Schema({
     timer: { type: Number, default: 60 },
     password: { type: String },
     status: { type: String, enum: ['waiting', 'playing', 'finished'], default: 'waiting' },
+    gameState: { type: Schema.Types.Mixed },
     players: [{
         id: String,
         name: String,

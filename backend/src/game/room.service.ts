@@ -160,6 +160,10 @@ export class RoomService {
         await room.save();
     }
 
+    async saveGameState(roomId: string, state: any): Promise<void> {
+        await RoomModel.findByIdAndUpdate(roomId, { gameState: state });
+    }
+
     // Helper to format room for frontend (convert _id to id)
     private sanitizeRoom(room: any): any {
         const obj = room.toObject ? room.toObject() : room;
