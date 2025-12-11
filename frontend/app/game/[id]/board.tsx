@@ -8,15 +8,28 @@ interface BoardProps {
     initialState: any;
 }
 
+interface PlayerState {
+    id: string;
+    name: string;
+    cash: number;
+    cashflow: number;
+    income: number;
+    expenses: number;
+    loanDebt: number;
+    position: number;
+    isFastTrack: boolean;
+    childrenCount: number;
+    childCost: number;
+    salary: number;
+    passiveIncome: number;
+}
+
 export default function GameBoard({ roomId, initialState }: BoardProps) {
     const [state, setState] = useState(initialState);
-    const [lastRoll, setLastRoll] = useState<number | null>(null);
-
     const [showBank, setShowBank] = useState(false);
 
     useEffect(() => {
         socket.on('dice_rolled', (data) => {
-            setLastRoll(data.roll);
             setState(data.state);
         });
 
@@ -28,31 +41,24 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             setState(data.state);
         });
 
+        socket.on('game_started', (data) => {
+            setState(data.state);
+        });
+
         return () => {
             socket.off('dice_rolled');
             socket.off('turn_ended');
             socket.off('state_updated');
+            socket.off('game_started');
         };
     }, []);
 
-    interface PlayerState {
-        id: string;
-        name: string;
-        cash: number;
-        cashflow: number;
-        income: number;
-        expenses: number;
-        loanDebt: number;
-        position: number;
-        isFastTrack: boolean;
-        childrenCount: number;
-        childCost: number;
-        salary: number;
-        passiveIncome: number;
-    }
-
     const handleLoan = (amount: number) => {
         socket.emit('take_loan', { roomId, amount });
+    }
+
+    const handleRepay = (amount: number) => {
+        socket.emit('repay_loan', { roomId, amount });
     }
 
     const handleRoll = () => {
@@ -65,167 +71,199 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
     const currentPlayer = state.players[state.currentPlayerIndex];
     const isMyTurn = currentPlayer.id === socket.id;
+    const me = state.players.find((p: any) => p.id === socket.id) || {};
 
     return (
-        <div className="flex h-screen bg-slate-900 text-white overflow-hidden">
-            {/* Left: Board Area */}
-            <div className="flex-1 relative bg-slate-800 m-2 rounded-xl flex items-center justify-center border border-slate-700">
-                <div className="absolute top-4 left-4 text-slate-400">
-                    Room: {roomId} | Turn: {currentPlayer.name}
-                </div>
-
-                {/* Visual Board Mockup */}
-                <div className="w-[600px] h-[600px] border-4 border-slate-600 rounded-full relative">
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-slate-900 rounded-full border border-slate-700 flex items-center justify-center">
-                        <span className="text-2xl font-bold text-yellow-500">Fast Track</span>
-                    </div>
-
-                    {/* Render Players */}
-                    {state.players.map((p: any, i: number) => {
-                        // Math for circular position
-                        const angle = (p.position / 24) * 360;
-                        const radius = 250; // Half of 500 (inner ring)
-                        const rad = (angle - 90) * (Math.PI / 180);
-                        const x = Math.cos(rad) * radius + 300 - 16;
-                        const y = Math.sin(rad) * radius + 300 - 16;
-
-                        return (
-                            <div
-                                key={p.id}
-                                className="absolute w-8 h-8 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-xs font-bold"
-                                style={{
-                                    left: x,
-                                    top: y,
-                                    backgroundColor: ['red', 'blue', 'green', 'purple'][i % 4]
-        <div className={`h-screen flex flex-col ${currentPlayer.isFastTrack ? 'bg-indigo-900' : 'bg-slate-900'} text-white`}>
+        <div className={`h-screen flex flex-col ${me.isFastTrack ? 'bg-indigo-900' : 'bg-slate-900'} text-white`}>
             {/* Header */}
-            <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-opacity-50 bg-black">
+            <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-black/40 backdrop-blur-sm">
                 <h1 className="text-xl font-bold flex items-center gap-2">
-                    Moneo Game <span className="text-xs px-2 py-1 rounded bg-slate-700">{roomId}</span>
-                    {currentPlayer.isFastTrack && <span className="text-yellow-400 font-extrabold animate-pulse">🚀 FAST TRACK</span>}
+                    MONEO <span className="text-xs px-2 py-1 rounded bg-slate-700 text-slate-300">{roomId}</span>
+                    {me.isFastTrack && <span className="text-yellow-400 font-extrabold animate-pulse ml-2 text-sm border border-yellow-500 px-2 py-0.5 rounded-full">🚀 FAST TRACK</span>}
                 </h1>
-                <div className="text-sm">
-                    {state.phase === 'ROLL' && <span className="text-green-400 font-bold animate-bounce">Ваш ход! Бросайте кубик 🎲</span>}
-                    {state.phase === 'ACTION' && <span className="text-blue-400">Действуйте...</span>}
-                    {state.phase === 'END' && <span className="text-slate-400">Ожидание других...</span>}
+                <div className="text-sm font-medium">
+                    {state.phase === 'ROLL' && isMyTurn && <span className="text-green-400 animate-pulse">🎲 Ваш ход!</span>}
+                    {state.phase === 'ROLL' && !isMyTurn && <span className="text-slate-400">Ход: {currentPlayer.name}</span>}
+                    {state.phase === 'ACTION' && <span className="text-blue-400">Действие...</span>}
+                    {state.phase === 'END' && <span className="text-slate-400">Завершение хода</span>}
                 </div>
-                <div className={`w-8 h-8 rounded-full bg-green-500`} title="Online" />
+                <div className={`w-3 h-3 rounded-full ${socket.connected ? 'bg-green-500' : 'bg-red-500'}`} title={socket.connected ? "Online" : "Offline"} />
             </div>
 
             <div className="flex-1 flex overflow-hidden">
                 {/* Board Area */}
-                <div className="flex-1 p-8 relative flex items-center justify-center">
-                   {/* Simplified Board Visualization */}
-                   <div className={`w-96 h-96 border-4 rounded-full flex items-center justify-center relative ${currentPlayer.isFastTrack ? 'border-yellow-500 shadow-[0_0_50px_rgba(234,179,8,0.5)]' : 'border-slate-600'}`}>
-                        {/* Player Marker */}
-                        <div className="absolute top-0 -mt-4 bg-blue-500 px-3 py-1 rounded-full text-xs font-bold shadow-lg transform -translate-y-full">
-                           Вы (Pos: {currentPlayer.position})
-                        </div>
-                        <div className="text-center">
-                            <h2 className="text-2xl font-bold mb-4">{state.board[currentPlayer.position]?.name || 'Square'}</h2>
-                            {state.phase === 'ROLL' && (
-                                <button 
-                                    onClick={rollDice}
-                                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg transform transition active:scale-95"
-                                >
-                                    Бросить кубик 🎲
-                                </button>
-                            )}
-                        </div>
-                   </div>
-                </div>
+                <div className="flex-1 p-8 relative flex items-center justify-center bg-[url('/file.svg')] bg-opacity-5 bg-center bg-no-repeat">
 
-                {/* Sidebar (HUD) */}
-                <div className="w-80 bg-slate-800 border-l border-slate-700 flex flex-col p-4 shadow-xl">
-                    <h3 className="font-bold mb-4 text-lg border-b border-slate-700 pb-2">Финансы</h3>
-                    
-                    <div className="space-y-4 mb-6">
-                        <div className="bg-slate-700/50 p-3 rounded-lg">
-                            <div className="flex justify-between text-sm mb-1">
-                                <span className="text-slate-400">Наличные</span>
-                                <span className="text-green-400 font-mono text-lg">${currentPlayer.cash.toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                                <span className="text-slate-400">Денежный поток</span>
-                                <span className="text-blue-400 font-mono text-lg">+${currentPlayer.cashflow.toLocaleString()}</span>
-                            </div>
-                        </div>
+                    {/* Central Board Circle */}
+                    <div className={`relative w-[500px] h-[500px] rounded-full border-8 flex items-center justify-center transition-all duration-1000 ${me.isFastTrack ? 'border-yellow-500 shadow-[0_0_100px_rgba(234,179,8,0.3)]' : 'border-slate-700 shadow-2xl'}`}>
 
-                        <div className="space-y-2 text-sm">
-                             <div className="flex justify-between border-b border-slate-700 pb-1">
-                                 <span>Доходы (ЗП + Пассив):</span>
-                                 <span className="text-green-300">${currentPlayer.income.toLocaleString()} (${currentPlayer.passiveIncome})</span>
-                             </div>
-                             <div className="flex justify-between border-b border-slate-700 pb-1">
-                                 <span>Расходы:</span>
-                                 <span className="text-red-300">-${currentPlayer.expenses.toLocaleString()}</span>
-                             </div>
-                             <div className="flex justify-between pt-1">
-                                 <span>Кредиты (Долг):</span>
-                                 <span className="text-red-400">-${currentPlayer.loanDebt.toLocaleString()}</span>
-                             </div>
-                        </div>
+                        {/* Center Hub */}
+                        <div className="text-center z-10 p-8 bg-slate-900/90 rounded-3xl backdrop-blur border border-slate-700 shadow-xl max-w-xs">
+                            <h2 className="text-3xl font-bold mb-2 text-slate-200">{state.board[currentPlayer.position]?.name || 'Start'}</h2>
+                            <p className="text-slate-500 text-sm mb-6 uppercase tracking-wider font-bold">{state.board[currentPlayer.position]?.type}</p>
 
-                         <div className="flex justify-between mt-2 text-xs text-slate-400 bg-slate-900/50 p-2 rounded">
-                             <span className="flex items-center gap-1">👶 Дети: {currentPlayer.childrenCount}/3</span>
-                             <span>(-${currentPlayer.childrenCount * currentPlayer.childCost}/mo)</span>
-                         </div>
-                     </div>
-                 </div>
-
-                <div className="flex-1 overflow-y-auto">
-                    <h3 className="font-bold mb-2">Лог игры</h3>
-                    <ul className="text-sm space-y-1 text-slate-400">
-                        {state.log.slice().reverse().map((msg: string, i: number) => (
-                            <li key={i}>{msg}</li>
-                        ))}
-                    </ul>
-                </div>
-
-                <div className="mt-6 border-t border-slate-700 pt-6">
-                    <button
-                        onClick={() => setShowBank(!showBank)}
-                        className="w-full mb-3 bg-blue-900/50 border border-blue-500 hover:bg-blue-900 py-2 rounded-lg"
-                    >
-                        🏦 Банк / Кредит
-                    </button>
-
-                    {showBank && (
-                        <div className="bg-slate-800 p-4 rounded-lg mb-4 border border-slate-600">
-                            <div className="flex gap-2">
-                                <button onClick={() => handleLoan(1000)} className="flex-1 bg-green-700 py-2 rounded text-sm hover:bg-green-600">Взять $1k</button>
-                                <button onClick={() => handleLoan(10000)} className="flex-1 bg-green-800 py-2 rounded text-sm hover:bg-green-700">Взять $10k</button>
-                            </div>
-                            <p className="text-xs text-slate-400 mt-2 text-center">Ставка: 10% в месяц</p>
-                        </div>
-                    )}
-
-                    {isMyTurn ? (
-                        <div className="space-y-3">
-                            {state.phase === 'ROLL' && (
+                            {isMyTurn && state.phase === 'ROLL' && (
                                 <button
                                     onClick={handleRoll}
-                                    className="w-full bg-yellow-500 hover:bg-yellow-600 text-black font-bold py-4 rounded-xl text-xl transition-all"
+                                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-4 px-10 rounded-full text-xl shadow-lg transform transition active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    🎲 Бросить кубик
+                                    Бросить 🎲
                                 </button>
                             )}
-                            {state.phase === 'ACTION' && (
+                            {isMyTurn && state.phase === 'ACTION' && !state.currentCard && (
                                 <button
                                     onClick={handleEndTurn}
-                                    className="w-full bg-slate-700 hover:bg-slate-600 font-bold py-4 rounded-xl text-xl"
+                                    className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-8 rounded-full shadow-lg"
                                 >
                                     Завершить ход
                                 </button>
                             )}
                         </div>
-                    ) : (
-                        <div className="text-center text-slate-500 py-4">
-                            Ожидание хода {currentPlayer.name}...
+
+                        {/* Players on Board (Simplified Rendering) */}
+                        {state.players.map((p: PlayerState, i: number) => {
+                            // Calculate position on circle
+                            const totalSquares = p.isFastTrack ? 48 : 24;
+                            const angle = (p.position / totalSquares) * 360 - 90; // Start at top
+                            const radius = 250 + (i * 5); // Slight offset to prevent overlap
+                            const rad = angle * (Math.PI / 180);
+                            const x = Math.cos(rad) * 250; // Just on border
+                            const y = Math.sin(rad) * 250;
+
+                            return (
+                                <div
+                                    key={p.id}
+                                    className={`absolute w-10 h-10 rounded-full border-2 border-white shadow-lg flex items-center justify-center text-xs font-bold transition-all duration-500 z-20 tooltip`}
+                                    style={{
+                                        transform: `translate(${x}px, ${y}px)`,
+                                        backgroundColor: ['#EF4444', '#3B82F6', '#10B981', '#8B5CF6'][i % 4]
+                                    }}
+                                    title={`${p.name} (Pos: ${p.position})`}
+                                >
+                                    {p.name.charAt(0)}
+                                </div>
+                            );
+                        })}
+                    </div>
+
+                    {/* Card Popup Overlay */}
+                    {state.currentCard && (
+                        <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50 backdrop-blur-sm p-4">
+                            <div className="bg-slate-800 p-8 rounded-2xl border-2 border-yellow-500 max-w-lg w-full text-center shadow-[0_0_50px_rgba(0,0,0,0.5)] transform scale-100 transition-all">
+                                <div className="text-5xl mb-4">{
+                                    state.currentCard.type === 'MARKET' ? '📈' :
+                                        state.currentCard.type === 'EXPENSE' ? '💸' : '📄'
+                                }</div>
+                                <h3 className="text-3xl font-bold text-yellow-400 mb-4">{state.currentCard.title}</h3>
+                                <p className="text-slate-300 text-lg mb-8 leading-relaxed">{state.currentCard.description}</p>
+
+                                {state.currentCard.cost && (
+                                    <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-8">
+                                        <div className="text-sm text-red-300 uppercase tracking-widest mb-1">Сумма к оплате</div>
+                                        <div className="text-4xl text-red-500 font-mono font-bold">-${state.currentCard.cost.toLocaleString()}</div>
+                                    </div>
+                                )}
+
+                                {isMyTurn ? (
+                                    <button
+                                        onClick={handleEndTurn}
+                                        className="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-4 px-8 rounded-xl text-xl shadow-lg transition-transform active:scale-95"
+                                    >
+                                        OK, ПОНЯТНО
+                                    </button>
+                                ) : (
+                                    <div className="text-slate-500 animate-pulse">Ожидание решения игрока...</div>
+                                )}
+                            </div>
                         </div>
                     )}
                 </div>
+
+                {/* Sidebar (HUD) */}
+                <div className="w-96 bg-slate-800 border-l border-slate-700 flex flex-col shadow-2xl z-20">
+                    <div className="p-6 border-b border-slate-700">
+                        <h3 className="font-bold mb-4 text-lg flex justify-between items-center text-slate-200">
+                            Финансы
+                            <span className="text-xs bg-slate-700 px-2 py-1 rounded text-slate-400">{me.name}</span>
+                        </h3>
+
+                        <div className="space-y-4">
+                            <div className="bg-slate-700/30 p-4 rounded-xl border border-slate-600/50">
+                                <div className="flex justify-between items-end mb-2">
+                                    <span className="text-slate-400 text-sm">Наличные</span>
+                                    <span className="text-green-400 font-mono text-2xl font-bold tracking-tight">${me.cash?.toLocaleString() || 0}</span>
+                                </div>
+                                <div className="h-px bg-slate-600 mb-2"></div>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-slate-400 text-xs uppercase">Денежный поток</span>
+                                    <span className="text-blue-400 font-mono text-lg font-bold">+${me.cashflow?.toLocaleString() || 0}</span>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2 text-sm bg-slate-900/20 p-4 rounded-xl">
+                                <div className="flex justify-between">
+                                    <span className="text-slate-500">Доходы</span>
+                                    <span className="text-green-300 font-medium">${me.income?.toLocaleString()}</span>
+                                </div>
+                                <div className="pl-4 text-xs text-slate-600 flex justify-between">
+                                    <span>Зарплата</span>
+                                    <span>{me.salary}</span>
+                                </div>
+                                <div className="pl-4 text-xs text-slate-600 flex justify-between">
+                                    <span>Пассивный</span>
+                                    <span>{me.passiveIncome}</span>
+                                </div>
+
+                                <div className="flex justify-between pt-2 border-t border-slate-700/50 mt-2">
+                                    <span className="text-slate-500">Расходы</span>
+                                    <span className="text-red-300 font-medium">-${me.expenses?.toLocaleString()}</span>
+                                </div>
+                                <div className="pl-4 text-xs text-slate-600 flex justify-between">
+                                    <span>Дети ({me.childrenCount}/3)</span>
+                                    <span>-{me.childrenCount * me.childCost}</span>
+                                </div>
+                                <div className="pl-4 text-xs text-slate-600 flex justify-between">
+                                    <span>Кредиты</span>
+                                    <span>-{Number(me.loanDebt) * 0.1}</span> {/* Approx Interest */}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div className="px-6 py-4 border-b border-slate-700 bg-slate-800/50">
+                        <button
+                            onClick={() => setShowBank(!showBank)}
+                            className="w-full bg-slate-700 hover:bg-slate-600 border border-slate-600 text-slate-200 py-3 rounded-xl transition-colors flex items-center justify-center gap-2 font-medium"
+                        >
+                            🏦 Банк / Кредит
+                        </button>
+
+                        {showBank && (
+                            <div className="mt-3 bg-slate-900 p-4 rounded-xl border border-slate-700 animate-in fade-in slide-in-from-top-2">
+                                <div className="text-xs text-center text-slate-500 mb-3">
+                                    Долг: <span className="text-red-400 font-mono">${me.loanDebt?.toLocaleString()}</span> | Ставка 10%
+                                </div>
+                                <div className="grid grid-cols-2 gap-2">
+                                    <button onClick={() => handleLoan(1000)} className="bg-emerald-800 hover:bg-emerald-700 text-emerald-100 py-2 rounded-lg text-xs font-bold transition-colors">Взять $1k</button>
+                                    <button onClick={() => handleLoan(10000)} className="bg-emerald-900 hover:bg-emerald-800 text-emerald-100 py-2 rounded-lg text-xs font-bold transition-colors">Взять $10k</button>
+                                    <button onClick={() => handleRepay(1000)} className="bg-red-900/50 hover:bg-red-900 text-red-200 py-2 rounded-lg text-xs font-bold transition-colors col-span-2 border border-red-900">Погасить $1k</button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-700">
+                        <h3 className="font-bold mb-3 text-xs uppercase tracking-widest text-slate-500">Лог событий</h3>
+                        <ul className="text-xs space-y-2 text-slate-400 font-mono">
+                            {state.log.slice().reverse().map((msg: string, i: number) => (
+                                <li key={i} className="border-l-2 border-slate-700 pl-2 py-0.5">
+                                    {msg}
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
             </div>
         </div>
-                );
+    );
 }
