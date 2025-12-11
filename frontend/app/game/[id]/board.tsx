@@ -35,6 +35,22 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
         };
     }, []);
 
+    interface PlayerState {
+        id: string;
+        name: string;
+        cash: number;
+        cashflow: number;
+        income: number;
+        expenses: number;
+        loanDebt: number;
+        position: number;
+        isFastTrack: boolean;
+        childrenCount: number;
+        childCost: number;
+        salary: number;
+        passiveIncome: number;
+    }
+
     const handleLoan = (amount: number) => {
         socket.emit('take_loan', { roomId, amount });
     }
@@ -81,59 +97,81 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                     left: x,
                                     top: y,
                                     backgroundColor: ['red', 'blue', 'green', 'purple'][i % 4]
-                                }}
-                            >
-                                {p.name[0]}
-                            </div>
-                        );
-                    })}
+        <div className={`h-screen flex flex-col ${currentPlayer.isFastTrack ? 'bg-indigo-900' : 'bg-slate-900'} text-white`}>
+            {/* Header */}
+            <div className="p-4 border-b border-slate-700 flex justify-between items-center bg-opacity-50 bg-black">
+                <h1 className="text-xl font-bold flex items-center gap-2">
+                    Moneo Game <span className="text-xs px-2 py-1 rounded bg-slate-700">{roomId}</span>
+                    {currentPlayer.isFastTrack && <span className="text-yellow-400 font-extrabold animate-pulse">🚀 FAST TRACK</span>}
+                </h1>
+                <div className="text-sm">
+                    {state.phase === 'ROLL' && <span className="text-green-400 font-bold animate-bounce">Ваш ход! Бросайте кубик 🎲</span>}
+                    {state.phase === 'ACTION' && <span className="text-blue-400">Действуйте...</span>}
+                    {state.phase === 'END' && <span className="text-slate-400">Ожидание других...</span>}
                 </div>
-
-                {lastRoll && (
-                    <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 mt-32 bg-black/50 px-4 py-2 rounded text-xl animate-bounce">
-                        🎲 {lastRoll}
-                    </div>
-                )}
-
-                {/* Card Popup */}
-                {state.currentCard && (
-                    <div className="absolute inset-0 bg-black/80 flex items-center justify-center z-50">
-                        <div className="bg-slate-800 p-8 rounded-2xl border-2 border-yellow-500 max-w-md text-center shadow-2xl">
-                            <h3 className="text-2xl font-bold text-yellow-400 mb-2">{state.currentCard.title}</h3>
-                            <div className="text-slate-300 mb-6">{state.currentCard.description}</div>
-                            {state.currentCard.cost && (
-                                <div className="text-3xl text-red-500 font-mono mb-6">-${state.currentCard.cost}</div>
-                            )}
-                            <button
-                                onClick={handleEndTurn} // Simplified: End turn accepts the card result
-                                className="bg-green-600 hover:bg-green-700 px-8 py-3 rounded-xl font-bold text-lg"
-                            >
-                                OK
-                            </button>
-                        </div>
-                    </div>
-                )}
+                <div className={`w-8 h-8 rounded-full bg-green-500`} title="Online" />
             </div>
 
-            {/* Right: HUD */}
-            <div className="w-96 bg-slate-900 border-l border-slate-700 p-6 flex flex-col">
-                <div className="mb-6">
-                    <h2 className="text-2xl font-bold mb-2">Статус</h2>
-                    <div className="bg-slate-800 p-4 rounded-lg">
-                        <div className="flex justify-between mb-2">
-                            <span>Наличные:</span>
-                            <span className="text-green-400 font-mono">${currentPlayer.cash}</span>
+            <div className="flex-1 flex overflow-hidden">
+                {/* Board Area */}
+                <div className="flex-1 p-8 relative flex items-center justify-center">
+                   {/* Simplified Board Visualization */}
+                   <div className={`w-96 h-96 border-4 rounded-full flex items-center justify-center relative ${currentPlayer.isFastTrack ? 'border-yellow-500 shadow-[0_0_50px_rgba(234,179,8,0.5)]' : 'border-slate-600'}`}>
+                        {/* Player Marker */}
+                        <div className="absolute top-0 -mt-4 bg-blue-500 px-3 py-1 rounded-full text-xs font-bold shadow-lg transform -translate-y-full">
+                           Вы (Pos: {currentPlayer.position})
                         </div>
-                        <div className="flex justify-between">
-                            <span>Денежный поток:</span>
-                            <span className="text-blue-400 font-mono">+${currentPlayer.cashflow}</span>
+                        <div className="text-center">
+                            <h2 className="text-2xl font-bold mb-4">{state.board[currentPlayer.position]?.name || 'Square'}</h2>
+                            {state.phase === 'ROLL' && (
+                                <button 
+                                    onClick={rollDice}
+                                    className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white font-bold py-4 px-8 rounded-full text-xl shadow-lg transform transition active:scale-95"
+                                >
+                                    Бросить кубик 🎲
+                                </button>
+                            )}
                         </div>
-                        <div className="flex justify-between mt-2 text-xs text-slate-400">
-                            <span>Дети: {currentPlayer.childrenCount}/3</span>
-                            <span>(Расход: -${currentPlayer.childrenCount * currentPlayer.childCost})</span>
-                        </div>
-                    </div>
+                   </div>
                 </div>
+
+                {/* Sidebar (HUD) */}
+                <div className="w-80 bg-slate-800 border-l border-slate-700 flex flex-col p-4 shadow-xl">
+                    <h3 className="font-bold mb-4 text-lg border-b border-slate-700 pb-2">Финансы</h3>
+                    
+                    <div className="space-y-4 mb-6">
+                        <div className="bg-slate-700/50 p-3 rounded-lg">
+                            <div className="flex justify-between text-sm mb-1">
+                                <span className="text-slate-400">Наличные</span>
+                                <span className="text-green-400 font-mono text-lg">${currentPlayer.cash.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-slate-400">Денежный поток</span>
+                                <span className="text-blue-400 font-mono text-lg">+${currentPlayer.cashflow.toLocaleString()}</span>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2 text-sm">
+                             <div className="flex justify-between border-b border-slate-700 pb-1">
+                                 <span>Доходы (ЗП + Пассив):</span>
+                                 <span className="text-green-300">${currentPlayer.income.toLocaleString()} (${currentPlayer.passiveIncome})</span>
+                             </div>
+                             <div className="flex justify-between border-b border-slate-700 pb-1">
+                                 <span>Расходы:</span>
+                                 <span className="text-red-300">-${currentPlayer.expenses.toLocaleString()}</span>
+                             </div>
+                             <div className="flex justify-between pt-1">
+                                 <span>Кредиты (Долг):</span>
+                                 <span className="text-red-400">-${currentPlayer.loanDebt.toLocaleString()}</span>
+                             </div>
+                        </div>
+
+                         <div className="flex justify-between mt-2 text-xs text-slate-400 bg-slate-900/50 p-2 rounded">
+                             <span className="flex items-center gap-1">👶 Дети: {currentPlayer.childrenCount}/3</span>
+                             <span>(-${currentPlayer.childrenCount * currentPlayer.childCost}/mo)</span>
+                         </div>
+                     </div>
+                 </div>
 
                 <div className="flex-1 overflow-y-auto">
                     <h3 className="font-bold mb-2">Лог игры</h3>
@@ -189,5 +227,5 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 </div>
             </div>
         </div>
-    );
+                );
 }
