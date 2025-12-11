@@ -21,10 +21,11 @@ export const connectDatabase = async () => {
     try {
         const mongoUrl = process.env.MONGO_URL;
         if (!mongoUrl) {
-            console.warn('MONGO_URL not found in environment variables. Database not connected.');
+            console.error('FATAL: MONGO_URL not found in environment variables. Database connections will fail.');
             return;
         }
 
+        mongoose.set('strictQuery', false);
         await mongoose.connect(mongoUrl);
         console.log('Successfully connected to MongoDB');
 

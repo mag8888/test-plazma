@@ -11,14 +11,21 @@ export default function Home() {
 
   const handleAuth = async (type: 'login' | 'register') => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/${type}`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      console.log('Attempting auth to:', apiUrl);
+
+      const res = await fetch(`${apiUrl}/api/auth/${type}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username, password })
       });
+
       const data = await res.json();
 
-      if (!res.ok) throw new Error(data.error || 'Auth failed');
+      if (!res.ok) {
+        console.error('Auth server error:', data);
+        throw new Error(data.error || `Auth failed: ${res.status}`);
+      }
 
       // Save to localStorage (simple persist)
       localStorage.setItem('token', data.token);
@@ -26,23 +33,21 @@ export default function Home() {
 
       router.push('/lobby');
     } catch (err: any) {
-      setError(err.message);
+      console.error('Auth execution error:', err);
+      setError(err.message + (err.message.includes('fetch') ? ' (Check API Connection)' : ''));
     }
   };
 
   const loginAs = (u: string) => {
     setUsername(u);
-    setPassword('123'); // Default password for test users
-    // Small timeout to allow state update then submit
-    setTimeout(() => {
-      // We can't easily rely on state update here in strict mode, so just call directly
-      authDirect(u, '123');
-    }, 100);
+    setPassword('123'); // Default password
+    setTimeout(() => authDirect(u, '123'), 100);
   };
 
   const authDirect = async (u: string, p: string) => {
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001'}/api/auth/login`, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const res = await fetch(`${apiUrl}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: u, password: p })
@@ -62,8 +67,8 @@ export default function Home() {
       <div className="max-w-md w-full space-y-8 bg-slate-800 p-8 rounded-2xl shadow-2xl border border-slate-700">
 
         <div className="text-center">
-          <h1 className="text-4xl font-extrabold bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 bg-clip-text text-transparent drop-shadow-md mb-2">
-            ENERGY OF MONEY
+          <h1 className="text-6xl font-black bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent drop-shadow-2xl mb-4 tracking-tighter">
+            MONEO
           </h1>
           <p className="text-slate-400">Вход в систему</p>
         </div>
