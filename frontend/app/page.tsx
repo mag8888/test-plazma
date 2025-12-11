@@ -9,9 +9,23 @@ export default function Home() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
+  const getApiUrl = () => {
+    let url = (process.env.NEXT_PUBLIC_API_URL || '').trim();
+    // Remove surrounding quotes if present
+    url = url.replace(/^["']|["']$/g, '');
+
+    // If empty after cleaning, use default
+    if (!url) return 'http://localhost:3001';
+
+    if (!url.startsWith('http')) {
+      url = `https://${url}`;
+    }
+    return url.replace(/\/$/, ''); // Remove trailing slash
+  };
+
   const handleAuth = async (type: 'login' | 'register') => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = getApiUrl();
       console.log('Attempting auth to:', apiUrl);
 
       const res = await fetch(`${apiUrl}/api/auth/${type}`, {
@@ -46,7 +60,7 @@ export default function Home() {
 
   const authDirect = async (u: string, p: string) => {
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+      const apiUrl = getApiUrl();
       const res = await fetch(`${apiUrl}/api/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
