@@ -8,13 +8,13 @@ export class RoomService {
     async createRoom(creatorId: string, userId: string, playerName: string, name: string, maxPlayers: number = 6, timer: number = 120, password?: string): Promise<any> {
         const room = await RoomModel.create({
             name,
-            creatorId, // This is the socket ID of the creator initially
+            creatorId: userId, // Use Persistent User ID as Creator
             maxPlayers,
             timer,
             password,
             players: [{
                 id: creatorId,
-                userId: userId, // Persistent ID
+                userId: userId,
                 name: playerName,
                 isReady: false
             }],
@@ -41,16 +41,9 @@ export class RoomService {
         const existingPlayerIndex = room.players.findIndex(p => p.userId === userId);
 
         if (existingPlayerIndex !== -1) {
-            const oldSocketId = room.players[existingPlayerIndex].id;
-
             // Player exists, update socket ID and name
-            room.players[existingPlayerIndex].id = playerId; // Update socket ID
+            room.players[existingPlayerIndex].id = playerId;
             room.players[existingPlayerIndex].name = playerName;
-
-            // Fix Host permissions: If this player was the host (creatorId matched old socket ID), update creatorId
-            if (room.creatorId === oldSocketId) {
-                room.creatorId = playerId;
-            }
         } else {
             room.players.push({
                 id: playerId,
@@ -70,29 +63,29 @@ export class RoomService {
             $pull: { players: { id: playerId } }
         });
 
-        // Check if room is empty, if so, maybe delete? 
-        // For now let's keep it simple. If we want to auto-delete empty rooms:
+        // Check if room is empty
         const room = await RoomModel.findById(roomId);
         if (room) {
             if (room.players.length === 0) {
                 await RoomModel.findByIdAndDelete(roomId);
-            } else if (room.creatorId === playerId) {
-                // If creator leaves, promote next player
-                room.creatorId = room.players[0].id;
-                await room.save();
             }
+            // NOTE: We don't automatically migrate host on simple leave anymore because 
+            // userId is persistent. Host can rejoin. 
+            // If we want to support "Host left forever", we need explicit handover or timeout.
         }
     }
 
-    async kickPlayer(roomId: string, requesterId: string, playerIdToKick: string): Promise<void> {
+    async kickPlayer(roomId: string, requesterUserId: string, playerIdToKick: string): Promise<void> {
         const room = await RoomModel.findById(roomId);
         if (!room) throw new Error("Room not found");
 
-        if (room.creatorId !== requesterId) {
+        if (room.creatorId !== requesterUserId) {
             throw new Error("Only the host can kick players");
         }
 
-        if (requesterId === playerIdToKick) {
+        // Check if hitting self (by socket ID)
+        const player = room.players.find(p => p.id === playerIdToKick);
+        if (player && player.userId === requesterUserId) {
             throw new Error("Host cannot kick themselves");
         }
 
@@ -121,14 +114,6 @@ export class RoomService {
             if (player) {
                 // Update the stale socket ID to the new one
                 player.id = playerId;
-
-                // Also Check and fix host if needed (though unlikely to be needed here if joinRoom handles it, but safety first)
-                if (room.creatorId && room.players[0].userId === userId) {
-                    // This heuristic (first player) is one way, or we could check if we need to ... 
-                    // Actually, rely on joinRoom for host fix. Here just fix the player reference.
-                    // But wait, if creatorId is stale, we might want to update it if we are sure?
-                    // Let's keep it simple.
-                }
             }
         }
 
@@ -163,8 +148,16 @@ export class RoomService {
         return room.players.every(p => p.isReady);
     }
 
-    async startGame(roomId: string): Promise<void> {
-        await RoomModel.findByIdAndUpdate(roomId, { status: 'playing' });
+    async startGame(roomId: string, requesterUserId: string): Promise<void> {
+        const room = await RoomModel.findById(roomId);
+        if (!room) throw new Error("Room not found");
+
+        if (room.creatorId !== requesterUserId) {
+            throw new Error("Only the host can start the game");
+        }
+
+        room.status = 'playing';
+        await room.save();
     }
 
     // Helper to format room for frontend (convert _id to id)

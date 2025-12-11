@@ -83,17 +83,11 @@ export class GameGateway {
             // Kick Player
             socket.on('kick_player', async (data, callback) => {
                 try {
-                    const { roomId, playerId } = data;
-                    await this.roomService.kickPlayer(roomId, socket.id, playerId);
+                    const { roomId, playerId, userId } = data; // Expect userId
+                    await this.roomService.kickPlayer(roomId, userId, playerId);
 
                     // Notify the kicked player
-                    // We need to find the socket of the kicked player if possible, or just emit to room and let client handle it?
-                    // Broadcasting 'kicked' to room with playerId is easier, client checks if it's them.
                     this.io.to(roomId).emit('player_kicked', { playerId });
-
-                    // Make the specific socket leave the room if we can find it, 
-                    // but we don't have direct mapping here easily without iterating.
-                    // The client-side 'player_kicked' handler should disconnect/redirect.
 
                     const room = await this.roomService.getRoom(roomId);
                     if (room) {
@@ -129,23 +123,22 @@ export class GameGateway {
 
             // Start Game
             socket.on('start_game', async (data) => {
-                const { roomId } = data;
-                // Verify is creator
-                const room = await this.roomService.getRoom(roomId);
-                if (room && room.players[0].id === socket.id) {
-                    const allReady = await this.roomService.checkAllReady(roomId);
-                    if (allReady) {
-                        await this.roomService.startGame(roomId);
+                const { roomId, userId } = data;
+                try {
+                    // Service now handles auth via userId
+                    await this.roomService.startGame(roomId, userId);
 
-                        // Init Engine
-                        const engine = new GameEngine(roomId, room.players);
-                        this.games.set(roomId, engine);
+                    // Init Engine (need fresh room data)
+                    const room = await this.roomService.getRoom(roomId);
+                    const engine = new GameEngine(roomId, room.players);
+                    this.games.set(roomId, engine);
 
-                        this.io.to(roomId).emit('game_started', { roomId, state: engine.getState() });
+                    this.io.to(roomId).emit('game_started', { roomId, state: engine.getState() });
 
-                        const rooms = await this.roomService.getRooms();
-                        this.io.emit('rooms_updated', rooms);
-                    }
+                    const rooms = await this.roomService.getRooms();
+                    this.io.emit('rooms_updated', rooms);
+                } catch (e) {
+                    console.error("Start game failed:", e);
                 }
             });
 

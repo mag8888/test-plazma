@@ -6,7 +6,8 @@ import { socket } from '../../socket';
 import GameBoard from './board';
 
 interface Player {
-    id: string;
+    id: string; // Socket ID
+    userId?: string; // Persistent ID
     name: string;
     isReady: boolean;
     dream?: string;
@@ -23,7 +24,7 @@ interface Room {
 }
 
 export default function GameRoom() {
-    const params = useParams(); // params can be Promise in newer Next.js, but using hook directly usually works or await
+    const params = useParams();
     const roomId = params.id as string;
     const router = useRouter();
 
@@ -31,98 +32,129 @@ export default function GameRoom() {
     const [isReady, setIsReady] = useState(false);
     const [error, setError] = useState('');
     const [dream, setDream] = useState('Остров');
-    const [token, setToken] = useState<string>('🦊'); // Default
+    const [token, setToken] = useState<string>('🦊');
+    const [myUserId, setMyUserId] = useState<string | null>(null);
 
+    const [isKickModalOpen, setIsKickModalOpen] = useState(false);
     const [playerToKick, setPlayerToKick] = useState<string | null>(null);
 
+    // Initial Join & Socket Setup
     useEffect(() => {
         if (!roomId) return;
 
+        // Initialize User Identity
+        const userStr = localStorage.getItem('user');
+        const user = userStr ? JSON.parse(userStr) : {};
+        const playerName = user.firstName || user.username || 'Guest';
+        const userId = user._id || user.id || 'guest-' + Math.random();
+        setMyUserId(userId);
+
         const joinGame = () => {
-            const userStr = localStorage.getItem('user');
-            const user = userStr ? JSON.parse(userStr) : {};
-            const playerName = user.firstName || user.username || 'Guest';
-            const userId = user._id || user.id || 'guest-' + Math.random();
-
             console.log("Joining room...", { roomId, playerName, userId });
-
             socket.emit('join_room', { roomId, playerName, userId }, (response: any) => {
-                if (response.success) {
-                    setRoom(response.room);
-                } else {
-                    console.error("Error joining room:", response.error);
-                    // Don't redirect immediately on reconnect error, might be transient
-                    if (socket.connected) {
-                        alert("Error joining room: " + response.error);
-                        router.push('/lobby');
-                    }
+                if (!response.success && socket.connected) {
+                    console.error("Join failed:", response.error);
+                    // Optional: alert(response.error);
                 }
             });
         };
 
         joinGame();
 
-        // Auto-rejoin on reconnection
-        socket.on('connect', () => {
-            console.log("Socket reconnected, re-joining room...");
+        const handleConnect = () => {
+            console.log("Reconnected. Re-joining...");
             joinGame();
-        });
+        };
+
+        socket.on('connect', handleConnect);
 
         socket.on('room_state_updated', (updatedRoom: Room) => {
-            console.log('Room updated:', updatedRoom);
+            console.log("Room updated:", updatedRoom);
             setRoom(updatedRoom);
-            const me = updatedRoom.players.find((p: any) => p.id === socket.id);
-            if (me) setIsReady(me.isReady);
+            // Sync internal state with server state if needed
+            const me = updatedRoom.players.find(p => p.userId === userId);
+            if (me) {
+                setIsReady(me.isReady);
+                if (me.dream) setDream(me.dream);
+                if (me.token) setToken(me.token);
+            }
         });
 
-        socket.on('game_started', (data) => {
+        socket.on('game_started', () => {
             setRoom(prev => prev ? { ...prev, status: 'playing' } : null);
         });
 
-        socket.on('player_kicked', (data) => {
+        socket.on('player_kicked', (data: { playerId: string }) => {
+            // Check if WE are the one kicked.
+            // data.playerId is likely the socket ID or userId we kicked?
+            // Backend sends { playerId } where playerId is the victim's identifier. The kick logic uses userId now?
+            // Wait, backend kick passes userId (the persistent ID) to kickPlayer, but notifications?
+            // Gateway: io.to(roomId).emit('player_kicked', { playerId }); 
+            // The playerId being emitted is the one PASSED to kick_player. 
+            // In frontend confirmKick, we send: `playerId: playerToKick` (which is socket ID from UI map).
+            // So we are kicking by Socket ID still in the UI selection? 
+            // No, the UI map uses `player.id` which is socket ID. 
+            // BUT RoomService logic: kickPlayer(..., requesterUserId, playerIdToKick). 
+            // It expects `playerIdToKick` to be the stored `id` (socket ID) in the players array.
+            // SO: The Kick Flow is: 
+            // 1. Host clicks kick on User A (socketID_A).
+            // 2. Client emits 'kick_player' { roomId, playerId: socketID_A, userId: myUserId }.
+            // 3. Backend calls service.kickPlayer(..., myUserId, socketID_A).
+            // 4. Gateway emits 'player_kicked' { playerId: socketID_A }.
+            // 5. Client listens. If socket.id === socketID_A, then leave. 
+            // Correct.
             if (data.playerId === socket.id) {
-                alert("Вы были исключены из комнаты создателем.");
+                alert("Вы были исключены из комнаты организатором.");
                 router.push('/lobby');
             }
         });
 
+        socket.on('error', (err: any) => {
+            setError(err.message || 'Error');
+        });
+
         return () => {
-            socket.emit('leave_room', { roomId });
-            socket.off('connect');
+            socket.off('connect', handleConnect);
             socket.off('room_state_updated');
             socket.off('game_started');
             socket.off('player_kicked');
+            socket.off('error');
+            socket.emit('leave_room', { roomId });
         };
-    }, [roomId]);
+    }, [roomId, router]);
 
     const toggleReady = () => {
-        const userStr = localStorage.getItem('user');
-        const user = userStr ? JSON.parse(userStr) : {};
-        const userId = user._id || user.id || 'guest-' + Math.random();
-
-        socket.emit('player_ready', { roomId, isReady: !isReady, dream, token, userId }, (res: any) => {
+        if (!myUserId) return;
+        socket.emit('player_ready', { roomId, isReady: !isReady, dream, token, userId: myUserId }, (res: any) => {
             if (!res.success) alert(res.error);
         });
     };
 
     const startGame = () => {
-        socket.emit('start_game', { roomId });
+        if (!room || !myUserId) return;
+        if (room.creatorId !== myUserId) return;
+        socket.emit('start_game', { roomId, userId: myUserId });
     };
 
     const initiateKick = (playerId: string) => {
         setPlayerToKick(playerId);
+        setIsKickModalOpen(true);
     };
 
     const confirmKick = () => {
-        if (playerToKick) {
-            socket.emit('kick_player', { roomId, playerId: playerToKick }, (res: any) => {
+        if (playerToKick && room && myUserId) {
+            socket.emit('kick_player', { roomId, playerId: playerToKick, userId: myUserId }, (res: any) => {
                 if (!res.success) alert(res.error);
-                setPlayerToKick(null);
             });
+            setIsKickModalOpen(false);
+            setPlayerToKick(null);
         }
     };
 
-    if (!room) return <div className="p-8 text-white">Loading room...</div>;
+    // Derived state
+    const isHost = room && myUserId && room.creatorId === myUserId;
+
+    if (!room) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Загрузка комнаты... {error && <span className="text-red-500 ml-2">{error}</span>}</div>;
 
     if (room.status === 'playing') {
         return <GameBoard roomId={roomId} initialState={{
@@ -171,7 +203,7 @@ export default function GameRoom() {
                                 {room.players.map(player => (
                                     <div
                                         key={player.id}
-                                        className={`group flex items-center gap-4 p-4 rounded-2xl transition-all border relative ${player.id === socket.id
+                                        className={`group flex items-center gap-4 p-4 rounded-2xl transition-all border relative ${player.id === myUserId
                                             ? 'bg-blue-600/10 border-blue-500/30 shadow-[0_0_20px_rgba(37,99,235,0.1)]'
                                             : 'bg-white/5 border-white/5 hover:bg-white/10'
                                             }`}
@@ -189,7 +221,7 @@ export default function GameRoom() {
                                         <div className="flex-1 min-w-0">
                                             <div className="font-bold flex items-center justify-between text-slate-200">
                                                 {player.name}
-                                                {player.id === socket.id && <span className="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded ml-2">ВЫ</span>}
+                                                {player.id === myUserId && <span className="text-[10px] bg-blue-500/20 text-blue-300 px-2 py-0.5 rounded ml-2">ВЫ</span>}
                                             </div>
                                             <div className="text-xs text-slate-500 font-medium truncate">
                                                 Мечта: {player.dream || '...'}
@@ -197,7 +229,7 @@ export default function GameRoom() {
                                         </div>
 
                                         {/* Kick Button (Host Only) */}
-                                        {room.creatorId === socket.id && player.id !== socket.id && (
+                                        {isHost && player.id !== myUserId && (
                                             <button
                                                 onClick={() => initiateKick(player.id)}
                                                 className="opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white p-2 rounded-lg absolute right-2 top-2"
@@ -217,7 +249,7 @@ export default function GameRoom() {
                         </div>
 
                         {/* Start Game Button for Host */}
-                        {room.creatorId === socket.id && (
+                        {isHost && (
                             <button
                                 onClick={startGame}
                                 disabled={room.players.length < 2 || !room.players.every(p => p.isReady)}
