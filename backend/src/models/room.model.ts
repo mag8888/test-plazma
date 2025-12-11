@@ -35,7 +35,8 @@ const RoomSchema: Schema = new Schema({
         dream: String,
         token: String,
         userId: String
-    }]
+    }],
+    createdAt: { type: Date, expires: '6h', default: Date.now }
 }, { timestamps: true });
 
 // Virtual to populate ID properly if needed, but _id is standard
