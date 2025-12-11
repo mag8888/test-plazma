@@ -47,7 +47,7 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId 
     const isFastTrackSquare = (index: number) => index >= 24;
 
     return (
-        <div className="w-full h-full grid grid-cols-13 grid-rows-13 gap-1 p-2">
+        <div className="w-full h-full grid grid-cols-13 grid-rows-13 gap-1 p-2 relative">
             {/* Draw Path Squares */}
             {board.map((sq: any) => {
                 const isFT = isFastTrackSquare(sq.index);
