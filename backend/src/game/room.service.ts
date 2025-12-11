@@ -56,17 +56,30 @@ export class RoomService {
         // Check if room is empty, if so, maybe delete? 
         // For now let's keep it simple. If we want to auto-delete empty rooms:
         const room = await RoomModel.findById(roomId);
-        if (room && room.players.length === 0) {
-            await RoomModel.findByIdAndDelete(roomId);
-        } else if (room && room.creatorId === playerId) {
-            // If creator leaves, promote next player
-            if (room.players.length > 0) {
+        if (room) {
+            if (room.players.length === 0) {
+                await RoomModel.findByIdAndDelete(roomId);
+            } else if (room.creatorId === playerId) {
+                // If creator leaves, promote next player
                 room.creatorId = room.players[0].id;
                 await room.save();
-            } else {
-                // If no players left, room will be deleted by the previous check
             }
         }
+    }
+
+    async kickPlayer(roomId: string, requesterId: string, playerIdToKick: string): Promise<void> {
+        const room = await RoomModel.findById(roomId);
+        if (!room) throw new Error("Room not found");
+
+        if (room.creatorId !== requesterId) {
+            throw new Error("Only the host can kick players");
+        }
+
+        if (requesterId === playerIdToKick) {
+            throw new Error("Host cannot kick themselves");
+        }
+
+        await this.leaveRoom(roomId, playerIdToKick);
     }
 
     async getRooms(): Promise<any[]> {

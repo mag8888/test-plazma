@@ -73,6 +73,34 @@ export class GameGateway {
                 this.io.emit('rooms_updated', rooms);
             });
 
+            // Kick Player
+            socket.on('kick_player', async (data, callback) => {
+                try {
+                    const { roomId, playerId } = data;
+                    await this.roomService.kickPlayer(roomId, socket.id, playerId);
+
+                    // Notify the kicked player
+                    // We need to find the socket of the kicked player if possible, or just emit to room and let client handle it?
+                    // Broadcasting 'kicked' to room with playerId is easier, client checks if it's them.
+                    this.io.to(roomId).emit('player_kicked', { playerId });
+
+                    // Make the specific socket leave the room if we can find it, 
+                    // but we don't have direct mapping here easily without iterating.
+                    // The client-side 'player_kicked' handler should disconnect/redirect.
+
+                    const room = await this.roomService.getRoom(roomId);
+                    if (room) {
+                        this.io.to(roomId).emit('room_state_updated', room);
+                    }
+                    const rooms = await this.roomService.getRooms();
+                    this.io.emit('rooms_updated', rooms);
+
+                    callback({ success: true });
+                } catch (e: any) {
+                    callback({ success: false, error: e.message });
+                }
+            });
+
             // Player Ready
             socket.on('player_ready', async (data, callback) => {
                 try {

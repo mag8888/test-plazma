@@ -32,6 +32,8 @@ export default function GameRoom() {
     const [dream, setDream] = useState('Остров');
     const [token, setToken] = useState<string>('🦊'); // Default
 
+    const [playerToKick, setPlayerToKick] = useState<string | null>(null);
+
     useEffect(() => {
         if (!roomId) return;
 
@@ -51,7 +53,6 @@ export default function GameRoom() {
         socket.on('room_state_updated', (updatedRoom: Room) => {
             console.log('Room updated:', updatedRoom);
             setRoom(updatedRoom);
-            // Check if self is ready
             const me = updatedRoom.players.find((p: any) => p.id === socket.id);
             if (me) setIsReady(me.isReady);
         });
@@ -60,10 +61,18 @@ export default function GameRoom() {
             setRoom(prev => prev ? { ...prev, status: 'playing' } : null);
         });
 
+        socket.on('player_kicked', (data) => {
+            if (data.playerId === socket.id) {
+                alert("Вы были исключены из комнаты создателем.");
+                router.push('/lobby');
+            }
+        });
+
         return () => {
             socket.emit('leave_room', { roomId });
             socket.off('room_state_updated');
             socket.off('game_started');
+            socket.off('player_kicked');
         };
     }, [roomId]);
 
@@ -77,12 +86,25 @@ export default function GameRoom() {
         socket.emit('start_game', { roomId });
     };
 
+    const initiateKick = (playerId: string) => {
+        setPlayerToKick(playerId);
+    };
+
+    const confirmKick = () => {
+        if (playerToKick) {
+            socket.emit('kick_player', { roomId, playerId: playerToKick }, (res: any) => {
+                if (!res.success) alert(res.error);
+                setPlayerToKick(null);
+            });
+        }
+    };
+
     if (!room) return <div className="p-8 text-white">Loading room...</div>;
 
     if (room.status === 'playing') {
         return <GameBoard roomId={roomId} initialState={{
             roomId,
-            players: room.players, // Initial mock, real state comes from socket event
+            players: room.players,
             currentPlayerIndex: 0,
             currentTurnTime: 120,
             phase: 'ROLL',
@@ -126,7 +148,7 @@ export default function GameRoom() {
                                 {room.players.map(player => (
                                     <div
                                         key={player.id}
-                                        className={`group flex items-center gap-4 p-4 rounded-2xl transition-all border ${player.id === socket.id
+                                        className={`group flex items-center gap-4 p-4 rounded-2xl transition-all border relative ${player.id === socket.id
                                             ? 'bg-blue-600/10 border-blue-500/30 shadow-[0_0_20px_rgba(37,99,235,0.1)]'
                                             : 'bg-white/5 border-white/5 hover:bg-white/10'
                                             }`}
@@ -150,6 +172,17 @@ export default function GameRoom() {
                                                 Мечта: {player.dream || '...'}
                                             </div>
                                         </div>
+
+                                        {/* Kick Button (Host Only) */}
+                                        {room.creatorId === socket.id && player.id !== socket.id && (
+                                            <button
+                                                onClick={() => initiateKick(player.id)}
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity bg-red-500/20 hover:bg-red-500 text-red-400 hover:text-white p-2 rounded-lg absolute right-2 top-2"
+                                                title="Удалить из комнаты"
+                                            >
+                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                                 {Array.from({ length: Math.max(0, 4 - room.players.length) }).map((_, i) => (
@@ -274,6 +307,30 @@ export default function GameRoom() {
                         </div>
                     </div>
                 </div>
+
+                {/* Confirm Kick Modal */}
+                {playerToKick && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
+                        <div className="bg-slate-800 p-8 rounded-2xl max-w-sm w-full border border-slate-700 shadow-2xl animate-in zoom-in-95 duration-200">
+                            <h3 className="text-xl font-bold mb-4 text-white">Удалить игрока?</h3>
+                            <p className="text-slate-400 mb-6">Вы уверены, что хотите исключить этого игрока из комнаты?</p>
+                            <div className="flex gap-4">
+                                <button
+                                    onClick={() => setPlayerToKick(null)}
+                                    className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg font-medium transition-colors"
+                                >
+                                    Отмена
+                                </button>
+                                <button
+                                    onClick={confirmKick}
+                                    className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-medium shadow-lg shadow-red-500/20 transition-colors"
+                                >
+                                    Удалить
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );
