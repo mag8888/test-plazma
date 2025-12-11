@@ -14,13 +14,17 @@ export default function Home() {
     // Remove surrounding quotes if present
     url = url.replace(/^["']|["']$/g, '');
 
-    // If empty after cleaning, use default
-    if (!url) return 'http://localhost:3001';
-
-    if (!url.startsWith('http')) {
-      url = `https://${url}`;
+    // If in browser, fallback to relative path (empty string implies relative for fetch)
+    // OR return window.location.origin
+    if (typeof window !== 'undefined') {
+      const origin = window.location.origin;
+      if (!process.env.NEXT_PUBLIC_API_URL && origin && !origin.includes('localhost')) {
+        return origin;
+      }
     }
-    return url.replace(/\/$/, ''); // Remove trailing slash
+
+    // Default to localhost for local dev if no env var
+    return 'http://localhost:3001';
   };
 
   const handleAuth = async (type: 'login' | 'register') => {
