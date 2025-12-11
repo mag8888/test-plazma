@@ -40,8 +40,9 @@ export default function GameRoom() {
         const userStr = localStorage.getItem('user');
         const user = userStr ? JSON.parse(userStr) : {};
         const playerName = user.firstName || user.username || 'Guest';
+        const userId = user._id || user.id || 'guest-' + Math.random(); // Ensure userId is sent
 
-        socket.emit('join_room', { roomId, playerName }, (response: any) => {
+        socket.emit('join_room', { roomId, playerName, userId }, (response: any) => {
             if (response.success) {
                 setRoom(response.room);
             } else {

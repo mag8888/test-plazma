@@ -26,9 +26,10 @@ export class GameGateway {
             // Create Room
             socket.on('create_room', async (data, callback) => {
                 try {
-                    const { name, maxPlayers, timer, password, playerName } = data;
+                    const { name, maxPlayers, timer, password, playerName, userId } = data; // Expect userId
                     const room = await this.roomService.createRoom(
                         socket.id,
+                        userId || 'guest_' + socket.id, // Fallback
                         playerName || 'Player',
                         name,
                         maxPlayers,
@@ -47,8 +48,14 @@ export class GameGateway {
             // Join Room
             socket.on('join_room', async (data, callback) => {
                 try {
-                    const { roomId, password, playerName } = data;
-                    const room = await this.roomService.joinRoom(roomId, socket.id, playerName || 'Player', password);
+                    const { roomId, password, playerName, userId } = data; // Expect userId
+                    const room = await this.roomService.joinRoom(
+                        roomId,
+                        socket.id,
+                        userId || 'guest_' + socket.id,
+                        playerName || 'Player',
+                        password
+                    );
                     socket.join(roomId);
                     this.io.to(roomId).emit('room_state_updated', room);
 

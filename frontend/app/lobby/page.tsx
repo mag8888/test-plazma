@@ -36,8 +36,9 @@ export default function Lobby() {
         const userStr = localStorage.getItem('user');
         const user = userStr ? JSON.parse(userStr) : {};
         const playerName = user.firstName || user.username || 'Guest';
+        const userId = user._id || user.id || 'guest-' + Math.random();
 
-        socket.emit('create_room', { name: newRoomName, maxPlayers: 4, timer: 120, playerName }, (response: any) => {
+        socket.emit('create_room', { name: newRoomName, maxPlayers: 4, timer: 120, playerName, userId }, (response: any) => {
             if (response.success) {
                 router.push(`/game/${response.room.id}`);
             } else {
