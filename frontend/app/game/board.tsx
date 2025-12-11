@@ -247,6 +247,36 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                 {/* RIGHT SIDEBAR (Desktop Only for Actions History/Chat?) - Hidden on Mobile */}
                 <div className="hidden lg:flex flex-col w-[300px] border-l border-slate-800 bg-[#0B0E14] p-4">
+                    {/* Desktop Actions Panel */}
+                    <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 shadow-lg mb-4">
+                        <h3 className="text-slate-400 text-xs uppercase tracking-widest font-bold mb-4 flex items-center gap-2">
+                            <span className="text-yellow-500">⚡</span> Действия
+                        </h3>
+
+                        <div className="grid grid-cols-2 gap-2 mb-4">
+                            <button
+                                onClick={handleRoll}
+                                disabled={!isMyTurn || state.phase !== 'ROLL'}
+                                className={`p-4 rounded-xl border border-slate-700 hover:bg-slate-700 flex flex-col items-center gap-1 group transition-all ${isMyTurn && state.phase === 'ROLL' ? 'bg-green-600 text-white shadow-lg shadow-green-900/30 ring-2 ring-green-400/50' : 'bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed'}`}
+                            >
+                                <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">🎲</span>
+                                <span className="text-[10px] font-bold">БРОСОК</span>
+                            </button>
+                            <button
+                                onClick={handleEndTurn}
+                                disabled={!isMyTurn || state.phase === 'ROLL'}
+                                className={`p-4 rounded-xl border border-slate-700 hover:bg-slate-700 flex flex-col items-center gap-1 group transition-all ${isMyTurn && state.phase !== 'ROLL' ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30 ring-2 ring-blue-400/50' : 'bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed'}`}
+                            >
+                                <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">➡</span>
+                                <span className="text-[10px] font-bold">ДАЛЕЕ</span>
+                            </button>
+                        </div>
+                        <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center justify-center gap-2 group transition-all hover:border-slate-600">
+                            <span className="text-xl group-hover:scale-110 transition-transform">🏦</span>
+                            <span className="text-xs text-slate-300 font-bold uppercase">Открыть Банк</span>
+                        </button>
+                    </div>
+
                     <h3 className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-4">События</h3>
                     <div className="flex-1 bg-slate-900/30 rounded-xl border border-slate-800 p-2 overflow-y-auto font-mono text-xs space-y-2 custom-scrollbar">
                         {state.log?.slice().reverse().map((entry: string, i: number) => (
@@ -257,8 +287,8 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
             </div>
 
-            {/* BOTTOM NAVIGATION BAR (Mobile & Desktop) */}
-            <div className="bg-[#0B0E14] border-t border-slate-800 p-2 pb-6 lg:pb-2 z-50">
+            {/* BOTTOM NAVIGATION BAR (Mobile Only) */}
+            <div className="lg:hidden bg-[#0B0E14] border-t border-slate-800 p-2 pb-6 z-50">
                 <div className="max-w-md mx-auto flex justify-between items-center gap-2">
                     {/* MENU */}
                     <button
