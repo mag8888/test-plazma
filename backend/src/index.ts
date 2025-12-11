@@ -12,6 +12,7 @@ import { connectDatabase } from './database';
 dotenv.config();
 
 const app = express();
+app.set('trust proxy', 1); // Enable Trust Proxy for Railway LB
 const httpServer = createServer(app);
 
 // Connect to Database
