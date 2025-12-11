@@ -47,7 +47,7 @@ app.get('/game/:id', (req, res) => {
 
 app.use(express.static(path.join(__dirname, '../../frontend/out')));
 
-app.get('/*', (req, res) => {
+app.get('*', (req, res) => {
     // API routes should be handled above or ignored here if strict
     if (req.path.startsWith('/api')) {
         res.status(404).json({ error: 'Not Found' });
