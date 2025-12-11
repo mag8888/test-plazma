@@ -1,74 +1,122 @@
 import React from 'react';
 
 export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId }: any) => {
-    // 24 Steps Rat Race - Rectangular Path
-    // 9x9 Grid: 0-8 indices
-    // Inner Loop: (2,2) to (6,6) approx
+    // 13x13 Grid Layout
+    // Outer Ring (Fast Track): 1-13
+    // Inner Ring (Rat Race): 4-10
+    // Center: 5-9
 
-    // Mapping 0-23 to Grid Coordinates (row, col)
-    const getPos = (index: number) => {
-        // Bottom Row: 0-6 -> (7, 7) to (7, 1) [Right to Left]
-        if (index <= 6) return { r: 7, c: 7 - index };
-        // Left Column: 7-11 -> (6, 1) to (2, 1) [Bottom to Top]
-        if (index <= 11) return { r: 7 - (index - 6), c: 1 };
-        // Top Row: 12-18 -> (1, 1) to (1, 7) [Left to Right]
-        if (index <= 18) return { r: 1, c: 1 + (index - 12) };
-        // Right Column: 19-23 -> (2, 7) to (6, 7) [Top to Bottom]
-        return { r: 1 + (index - 18), c: 7 };
+    const getPos = (index: number, isFastTrack: boolean) => {
+        if (!isFastTrack) {
+            // RAT RACE (Indices 0-23)
+            // Occupies rows/cols 4-10 (7x7 square)
+
+            // Bottom Row: 0-6 -> (10, 10) to (10, 4)
+            if (index <= 6) return { r: 10, c: 10 - index };
+
+            // Left Column: 7-11 -> (9, 4) to (5, 4)
+            if (index <= 11) return { r: 10 - (index - 6), c: 4 }; // index 7 -> r9, index 11 -> r5
+
+            // Top Row: 12-18 -> (4, 4) to (4, 10)
+            if (index <= 18) return { r: 4, c: 4 + (index - 12) };
+
+            // Right Column: 19-23 -> (5, 10) to (9, 10)
+            return { r: 4 + (index - 18), c: 10 };
+        } else {
+            // FAST TRACK (Indices 0-47 relative to start of FT) or 24-71 absolute?
+            // Assuming Fast Track squares are stored in `board` array from index 24 to 71.
+            // Let's normalize index:
+            const ftIndex = index >= 24 ? index - 24 : index;
+
+            // 48 Squares total
+            // Grid 1-13 (13x13)
+            // Bottom: 13 squares (0-12) -> (13, 13) to (13, 1)
+            if (ftIndex <= 12) return { r: 13, c: 13 - ftIndex };
+
+            // Left: 11 squares (13-23) -> (12, 1) to (2, 1)
+            if (ftIndex <= 23) return { r: 13 - (ftIndex - 12), c: 1 };
+
+            // Top: 13 squares (24-36) -> (1, 1) to (1, 13)
+            if (ftIndex <= 36) return { r: 1, c: 1 + (ftIndex - 24) };
+
+            // Right: 11 squares (37-47) -> (2, 13) to (12, 13)
+            return { r: 1 + (ftIndex - 37), c: 13 };
+        }
     };
 
+    const isFastTrackSquare = (index: number) => index >= 24;
+
     return (
-        <>
+        <div className="w-full h-full grid grid-cols-13 grid-rows-13 gap-1 p-2">
             {/* Draw Path Squares */}
-            {board.slice(0, 24).map((sq: any) => {
-                const { r, c } = getPos(sq.index);
+            {board.map((sq: any) => {
+                const isFT = isFastTrackSquare(sq.index);
+                const { r, c } = getPos(sq.index, isFT);
+
+                // Color Logic
+                let bgColor = 'bg-slate-800';
+                let borderColor = 'border-slate-600';
+
+                if (isFT) {
+                    bgColor = 'bg-slate-900';
+                    borderColor = 'border-amber-900/50';
+                    if (sq.type === 'CASHFLOW') { bgColor = 'bg-emerald-900/40'; borderColor = 'border-emerald-600'; }
+                    if (sq.type === 'Opportunity') { bgColor = 'bg-blue-900/40'; borderColor = 'border-blue-600'; }
+                } else {
+                    if (sq.type === 'PAYDAY') { bgColor = 'bg-yellow-900/60'; borderColor = 'border-yellow-500'; }
+                    if (sq.type === 'OOW') { bgColor = 'bg-red-900/60'; borderColor = 'border-red-500'; }
+                    if (sq.type === 'BABY') { bgColor = 'bg-pink-900/60'; borderColor = 'border-pink-500'; }
+                    if (sq.type === 'OPPORTUNITY') { bgColor = 'bg-green-900/20'; borderColor = 'border-green-600/50'; }
+                }
+
+                if (state.currentPlayerIndex !== undefined && board[state.players[state.currentPlayerIndex]?.position]?.index === sq.index) {
+                    // Highlight current target square maybe?
+                }
+
                 return (
                     <div
                         key={sq.index}
                         className={`
-                            border border-slate-600 rounded-lg flex items-center justify-center text-xs text-center relative
-                            ${sq.type === 'PAYDAY' ? 'bg-yellow-900/50 border-yellow-500' : 'bg-slate-800'}
-                            ${sq.type === 'OOW' ? 'bg-red-900/50 border-red-500' : ''}
-                            ${sq.type === 'BABY' ? 'bg-pink-900/50 border-pink-500' : ''}
+                            relative border rounded flex items-center justify-center text-center transition-all hover:bg-slate-700
+                            ${bgColor} ${borderColor}
+                            ${isFT ? 'text-[9px]' : 'text-[10px]'}
                         `}
                         style={{
                             gridRow: r,
                             gridColumn: c,
                         }}
+                        title={sq.name}
                     >
-                        <span className="z-10 text-[10px] uppercase font-bold text-slate-400">{sq.name}</span>
-                        <span className="absolute top-0.5 right-1 text-[8px] text-slate-600">{sq.index}</span>
-
-                        {/* Icon based on Type */}
-                        <div className="absolute inset-0 flex items-center justify-center opacity-20 text-3xl">
-                            {sq.type === 'MARKET' && '📈'}
-                            {sq.type === 'DEAL' && '🤝'}
-                            {sq.type === 'EXPENSE' && '💸'}
-                            {sq.type === 'BABY' && '👶'}
-                            {sq.type === 'PAYDAY' && '💰'}
+                        {/* Name/Icon */}
+                        <div className="z-10 px-0.5 overflow-hidden flex flex-col items-center leading-none">
+                            <span className={`font-bold ${isFT ? 'text-amber-500/70' : 'text-slate-400'}`}>
+                                {sq.type === 'PAYDAY' ? '💰' : ''}
+                                {sq.type === 'CASHFLOW' ? '🤑' : ''}
+                                {sq.type === 'BABY' ? '👶' : ''}
+                                {sq.type === 'OOW' ? '📉' : ''}
+                            </span>
+                            <span className="truncate w-full opacity-80 scale-90">{sq.name}</span>
                         </div>
+                        <span className="absolute top-0 right-0.5 text-[6px] text-slate-600 font-mono">{sq.index}</span>
                     </div>
                 );
             })}
 
             {/* Players Tokens */}
-            {players.map((p: any) => {
-                if (p.isFastTrack) return null; // Logic for Fast Track separate
+            {players.map((p: any, idx: number) => {
                 const posIndex = animatingPos[p.id] ?? p.position;
-                const { r, c } = getPos(posIndex);
+                const { r, c } = getPos(posIndex, p.isFastTrack);
 
                 return (
                     <div
                         key={p.id}
-                        className="absolute w-8 h-8 flex items-center justify-center text-xl transition-all duration-300 z-50 drop-shadow-lg"
+                        className="absolute w-6 h-6 flex items-center justify-center text-lg z-50 drop-shadow-md transition-all duration-300 pointer-events-none"
                         style={{
-                            // Convert Grid Row/Col to pixels roughly or use grid alignment if parent relative
-                            // Using direct grid placement for the token div if container is grid
                             gridRow: r,
                             gridColumn: c,
                             justifySelf: 'center',
                             alignSelf: 'center',
-                            marginTop: (players.findIndex((pl: any) => pl.id === p.id) * 4) - 2 // Offset for overlaps
+                            transform: `translate(${(idx % 2 === 0 ? -2 : 2) * (players.length > 1 ? 1 : 0)}px, ${(idx > 1 ? 2 : -2) * (players.length > 2 ? 1 : 0)}px)`
                         }}
                     >
                         {p.token || '🔴'}
@@ -76,13 +124,14 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId 
                 );
             })}
 
-            {/* Center Logo */}
-            <div className="row-start-3 row-end-6 col-start-3 col-end-6 bg-slate-950 rounded-full border-4 border-slate-700 flex items-center justify-center shadow-inner">
-                <div className="text-center">
-                    <h1 className="text-4xl font-black bg-gradient-to-r from-yellow-500 to-amber-700 bg-clip-text text-transparent">MONEO</h1>
-                    <p className="text-slate-500 text-xs tracking-widest mt-2">ENERGY OF MONEY</p>
+            {/* Center Logo Area */}
+            <div className="row-start-5 row-end-10 col-start-5 col-end-10 flex items-center justify-center p-4">
+                <div className="w-full h-full rounded-full border-4 border-slate-800/50 flex flex-col items-center justify-center bg-radial-gradient from-slate-900 to-black shadow-2xl relative overflow-hidden">
+                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
+                    <h1 className="text-4xl lg:text-5xl font-black bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 bg-clip-text text-transparent z-10 animate-pulse">MONEO</h1>
+                    <p className="text-slate-500 text-[10px] uppercase tracking-[0.3em] mt-2 z-10 font-bold">Energy of Money</p>
                 </div>
             </div>
-        </>
+        </div>
     );
 };
