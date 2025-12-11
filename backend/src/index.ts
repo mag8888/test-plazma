@@ -34,6 +34,7 @@ const botService = new BotService();
 const gameGateway = new GameGateway(io);
 
 import path from 'path';
+import fs from 'fs';
 
 // ... (imports)
 
@@ -54,9 +55,36 @@ app.get(/.*/, (req, res) => {
         return;
     }
     const indexPath = path.join(__dirname, '../../frontend/out/index.html');
+
+    // DEBUG LOGGING
+    console.log('DEBUG: Request to', req.path);
+    console.log('DEBUG: __dirname:', __dirname);
+    console.log('DEBUG: Resolved indexPath:', indexPath);
+    console.log('DEBUG: Exists:', fs.existsSync(indexPath));
+
+    try {
+        const rootDir = path.join(__dirname, '../../');
+        console.log(`DEBUG: Contents of ${rootDir}:`, fs.readdirSync(rootDir));
+        const frontendDir = path.join(__dirname, '../../frontend');
+        if (fs.existsSync(frontendDir)) {
+            console.log(`DEBUG: Contents of ${frontendDir}:`, fs.readdirSync(frontendDir));
+            const outDir = path.join(frontendDir, 'out');
+            if (fs.existsSync(outDir)) {
+                console.log(`DEBUG: Contents of ${outDir}:`, fs.readdirSync(outDir));
+            } else {
+                console.log('DEBUG: frontend/out does NOT exist');
+            }
+        } else {
+            console.log('DEBUG: frontend directory does NOT exist');
+        }
+    } catch (e) {
+        console.error('DEBUG: Error listing directories:', e);
+    }
+
     res.sendFile(indexPath, (err) => {
         if (err) {
-            res.status(500).send('Frontend not built or missing.');
+            console.error('SendFile Error:', err);
+            res.status(500).send('Frontend not built or missing. Check server logs.');
         }
     });
 });
