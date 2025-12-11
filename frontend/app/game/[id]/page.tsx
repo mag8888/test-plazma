@@ -28,7 +28,8 @@ export default function GameRoom() {
 
     const [room, setRoom] = useState<Room | null>(null);
     const [isReady, setIsReady] = useState(false);
-    const [dream, setDream] = useState('Остров'); // Mock default
+    const [dream, setDream] = useState('Остров');
+    const [token, setToken] = useState<string>('🔴'); // Default
 
     useEffect(() => {
         if (!roomId) return;
@@ -62,7 +63,7 @@ export default function GameRoom() {
     }, [roomId]);
 
     const toggleReady = () => {
-        socket.emit('player_ready', { roomId, isReady: !isReady, dream }, (res: any) => {
+        socket.emit('player_ready', { roomId, isReady: !isReady, dream, token }, (res: any) => {
             if (!res.success) alert(res.error);
         });
     };
@@ -100,7 +101,7 @@ export default function GameRoom() {
                             <div key={player.id} className="flex items-center justify-between bg-slate-900 p-3 rounded-lg">
                                 <div className="flex items-center gap-3">
                                     <div className={`w-3 h-3 rounded-full ${player.isReady ? 'bg-green-500' : 'bg-slate-500'}`} />
-                                    <span>{player.name} {player.id === socket.id && '(Вы)'}</span>
+                                    <span>{player.token || '❔'} {player.name} {player.id === socket.id && '(Вы)'}</span>
                                 </div>
                                 <div className="text-sm text-slate-400">
                                     {player.dream || 'Без мечты'}
@@ -112,33 +113,65 @@ export default function GameRoom() {
 
                 <div className="flex flex-col gap-4">
                     <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
-                        <h3 className="mb-3">Ваша подготовка</h3>
-                        <label className="flex items-center gap-2 mb-4">
-                            <span>Мечта:</span>
+                        <h3 className="mb-3 font-bold">Ваша подготовка</h3>
+
+                        {/* Token Selection */}
+                        <div className="mb-6">
+                            <label className="block mb-2 text-sm text-slate-400">Выберите фишку:</label>
+                            <div className="flex flex-wrap gap-2">
+                                {['🔴', '🟠', '🟡', '🟢', '🔵', '🟣', '⚫', '⚪', '🟤', '🎱'].map((t) => {
+                                    const isTaken = room.players.some(p => p.token === t && p.id !== socket.id);
+                                    const isSelected = token === t;
+                                    return (
+                                        <button
+                                            key={t}
+                                            onClick={() => !isReady && setToken(t)}
+                                            disabled={isTaken || isReady}
+                                            className={`w-10 h-10 text-2xl flex items-center justify-center rounded-full transition-all border-2
+                                                ${isSelected ? 'border-yellow-400 bg-slate-700 scale-110 shadow-[0_0_10px_rgba(250,204,21,0.5)]' : 'border-transparent bg-slate-900'}
+                                                ${isTaken ? 'opacity-30 cursor-not-allowed grayscale' : 'hover:bg-slate-700 cursor-pointer'}
+                                            `}
+                                        >
+                                            {t}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                        </div>
+
+                        <label className="flex flex-col gap-2 mb-6">
+                            <span className="text-sm text-slate-400">Мечта:</span>
                             <select
                                 value={dream}
                                 onChange={(e) => setDream(e.target.value)}
-                                className="bg-slate-900 border border-slate-600 rounded px-2 py-1"
+                                className="bg-slate-900 border border-slate-600 rounded-lg px-4 py-2 outline-none focus:border-blue-500"
                                 disabled={isReady}
                             >
                                 <option>Остров</option>
                                 <option>Вилла</option>
                                 <option>Яхта</option>
+                                <option>Личный самолет</option>
+                                <option>Парк развлечений</option>
+                                <option>Космический туризм</option>
                             </select>
                         </label>
 
                         <button
                             onClick={toggleReady}
-                            className={`w-full py-3 rounded-lg font-bold transition-all ${isReady ? 'bg-red-500 hover:bg-red-600' : 'bg-green-500 hover:bg-green-600'}`}
+                            className={`w-full py-4 rounded-xl font-bold text-lg transition-all shadow-lg
+                                ${isReady
+                                    ? 'bg-red-500 hover:bg-red-600 shadow-red-900/20'
+                                    : 'bg-green-600 hover:bg-green-500 shadow-green-900/20'
+                                }`}
                         >
-                            {isReady ? 'Не готов' : 'Готов к игре'}
+                            {isReady ? '✖ Не готов' : '✔ Готов к игре'}
                         </button>
                     </div>
 
                     {room.creatorId === socket.id && (
                         <button
                             onClick={startGame}
-                            className="w-full bg-blue-600 hover:bg-blue-700 py-4 rounded-xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 py-4 rounded-xl font-bold text-lg disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-blue-900/30 border border-blue-500/50"
                             disabled={!room.players.every(p => p.isReady) || room.players.length < 1}
                         >
                             🚀 Начать игру

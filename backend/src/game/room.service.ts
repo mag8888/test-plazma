@@ -102,9 +102,16 @@ export class RoomService {
             throw new Error("Выберите мечту перед тем как нажать Готов");
         }
 
+        if (token) {
+            const tokenTaken = room.players.some(p => p.id !== playerId && p.token === token);
+            if (tokenTaken) {
+                throw new Error("Эта фишка уже занята другим игроком");
+            }
+            player.token = token;
+        }
+
         player.isReady = isReady;
         if (dream) player.dream = dream;
-        if (token) player.token = token;
 
         return room;
     }
