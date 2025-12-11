@@ -35,7 +35,7 @@ export default function Lobby() {
 
         socket.emit('create_room', { name: newRoomName, maxPlayers, timer: 120, playerName, userId }, (response: any) => {
             if (response.success) {
-                router.push(`/game/${response.room.id}`);
+                router.push(`/game?id=${response.room.id}`);
             } else {
                 alert("Failed to create room: " + response.error);
             }
@@ -43,7 +43,7 @@ export default function Lobby() {
     };
 
     const joinRoom = (roomId: string) => {
-        router.push(`/game/${roomId}`);
+        router.push(`/game?id=${roomId}`);
     };
 
     return (
@@ -89,8 +89,8 @@ export default function Lobby() {
                                                 key={count}
                                                 onClick={() => setMaxPlayers(count)}
                                                 className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${isActive
-                                                        ? 'bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.5)] scale-110'
-                                                        : 'bg-slate-700 text-slate-500 hover:bg-slate-600'
+                                                    ? 'bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.5)] scale-110'
+                                                    : 'bg-slate-700 text-slate-500 hover:bg-slate-600'
                                                     }`}
                                                 title={`${count} игроков`}
                                             >

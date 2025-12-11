@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { socket } from '../../socket';
+import { socket } from '../socket';
 import { BoardVisualizer } from './BoardVisualizer';
 
 interface BoardProps {

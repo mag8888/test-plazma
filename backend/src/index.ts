@@ -33,9 +33,35 @@ const botService = new BotService();
 // Initialize Game Gateway
 const gameGateway = new GameGateway(io);
 
-app.get('/', (req, res) => {
-    res.send('Money Energy Backend is running');
+import path from 'path';
+
+// ... (imports)
+
+// ...
+
+app.get('/game/:id', (req, res) => {
+    // Redirect legacy URL to new Query Param URL
+    const id = req.params.id;
+    res.redirect(`/game?id=${id}`);
 });
+
+app.use(express.static(path.join(__dirname, '../../frontend/out')));
+
+app.get('/*', (req, res) => {
+    // API routes should be handled above or ignored here if strict
+    if (req.path.startsWith('/api')) {
+        res.status(404).json({ error: 'Not Found' });
+        return;
+    }
+    const indexPath = path.join(__dirname, '../../frontend/out/index.html');
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            res.status(500).send('Frontend not built or missing.');
+        }
+    });
+});
+
+const PORT = process.env.PORT || 3001;
 
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
@@ -45,7 +71,7 @@ io.on('connection', (socket) => {
     });
 });
 
-const PORT = process.env.PORT || 3001;
+
 
 httpServer.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

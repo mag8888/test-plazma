@@ -1,9 +1,13 @@
+
 "use client";
 
-import { useEffect, useState } from 'react';
-import { useParams, useRouter } from 'next/navigation';
-import { socket } from '../../socket';
+import { Suspense, useEffect, useState } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { socket } from '../socket';
 import GameBoard from './board';
+
+// ... (Interfaces remain same, I'll assume I don't need to retype them if I target carefully or rewriting whole file is safer?
+// Rewriting whole file is safer for structure change.)
 
 interface Player {
     id: string; // Socket ID
@@ -23,9 +27,9 @@ interface Room {
     maxPlayers?: number;
 }
 
-export default function GameRoom() {
-    const params = useParams();
-    const roomId = params.id as string;
+function GameContent() {
+    const searchParams = useSearchParams();
+    const roomId = searchParams.get('id') as string;
     const router = useRouter();
 
     const [room, setRoom] = useState<Room | null>(null);
@@ -37,7 +41,7 @@ export default function GameRoom() {
 
     const [isKickModalOpen, setIsKickModalOpen] = useState(false);
     const [playerToKick, setPlayerToKick] = useState<string | null>(null);
-    const [gameState, setGameState] = useState<any>(null); // Added gameState
+    const [gameState, setGameState] = useState<any>(null);
 
     // Initial Join & Socket Setup
     useEffect(() => {
@@ -55,7 +59,6 @@ export default function GameRoom() {
             socket.emit('join_room', { roomId, playerName, userId }, (response: any) => {
                 if (!response.success && socket.connected) {
                     console.error("Join failed:", response.error);
-                    // Optional: alert(response.error);
                 }
             });
         };
@@ -72,7 +75,6 @@ export default function GameRoom() {
         socket.on('room_state_updated', (updatedRoom: Room) => {
             console.log("Room updated:", updatedRoom);
             setRoom(updatedRoom);
-            // Sync internal state with server state if needed
             const me = updatedRoom.players.find(p => p.userId === userId);
             if (me) {
                 setIsReady(me.isReady);
@@ -87,24 +89,6 @@ export default function GameRoom() {
         });
 
         socket.on('player_kicked', (data: { playerId: string }) => {
-            // Check if WE are the one kicked.
-            // data.playerId is likely the socket ID or userId we kicked?
-            // Backend sends { playerId } where playerId is the victim's identifier. The kick logic uses userId now?
-            // Wait, backend kick passes userId (the persistent ID) to kickPlayer, but notifications?
-            // Gateway: io.to(roomId).emit('player_kicked', { playerId }); 
-            // The playerId being emitted is the one PASSED to kick_player. 
-            // In frontend confirmKick, we send: `playerId: playerToKick` (which is socket ID from UI map).
-            // So we are kicking by Socket ID still in the UI selection? 
-            // No, the UI map uses `player.id` which is socket ID. 
-            // BUT RoomService logic: kickPlayer(..., requesterUserId, playerIdToKick). 
-            // It expects `playerIdToKick` to be the stored `id` (socket ID) in the players array.
-            // SO: The Kick Flow is: 
-            // 1. Host clicks kick on User A (socketID_A).
-            // 2. Client emits 'kick_player' { roomId, playerId: socketID_A, userId: myUserId }.
-            // 3. Backend calls service.kickPlayer(..., myUserId, socketID_A).
-            // 4. Gateway emits 'player_kicked' { playerId: socketID_A }.
-            // 5. Client listens. If socket.id === socketID_A, then leave. 
-            // Correct.
             if (data.playerId === socket.id) {
                 alert("Вы были исключены из комнаты организатором.");
                 router.push('/lobby');
@@ -153,7 +137,6 @@ export default function GameRoom() {
         }
     };
 
-    // Derived state
     const isHost = room && myUserId && room.creatorId === myUserId;
 
     if (!room) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Загрузка комнаты... {error && <span className="text-red-500 ml-2">{error}</span>}</div>;
@@ -174,7 +157,6 @@ export default function GameRoom() {
     return (
         <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1a2c4e] via-[#0f172a] to-[#020617] text-white flex flex-col items-center justify-center p-4 selection:bg-blue-500/30">
             <div className="w-full max-w-5xl relative z-10">
-                {/* Header Backdrop Blur */}
                 <div className="absolute inset-0 bg-blue-500/5 blur-[100px] rounded-full pointer-events-none" />
 
                 <header className="mb-8 flex items-center justify-between relative z-20">
@@ -231,7 +213,6 @@ export default function GameRoom() {
                                             </div>
                                         </div>
 
-                                        {/* Kick Button (Host Only) */}
                                         {isHost && player.id !== myUserId && (
                                             <button
                                                 onClick={() => initiateKick(player.id)}
@@ -251,7 +232,6 @@ export default function GameRoom() {
                             </div>
                         </div>
 
-                        {/* Start Game Button for Host */}
                         {isHost && (
                             <button
                                 onClick={startGame}
@@ -269,23 +249,18 @@ export default function GameRoom() {
                     {/* RIGHT COLUMN: Settings */}
                     <div className="lg:col-span-7">
                         <div className="bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl h-full flex flex-col relative overflow-hidden">
-                            {/* Decorative Background Elements */}
                             <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
-
                             <div className="mb-8 relative z-10">
                                 <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 mb-2">Настройка персонажа</h3>
                                 <p className="text-slate-400 text-sm">Выберите аватар и определите свою мечту</p>
                             </div>
-
                             <div className="flex-1 relative z-10">
-                                {/* Token Grid */}
                                 <div className="mb-8">
                                     <label className="text-xs uppercase font-bold text-slate-500 mb-4 block tracking-wider">Выберите Аватар</label>
                                     <div className="grid grid-cols-5 sm:grid-cols-5 gap-4">
                                         {['🦁', '🦅', '🦊', '🐻', '🐅', '🐺', '🐘', '🦈', '🦉', '🐬'].map((t) => {
                                             const isTaken = room.players.some(p => p.token === t && p.id !== socket.id);
                                             const isSelected = token === t;
-
                                             return (
                                                 <button
                                                     key={t}
@@ -294,40 +269,20 @@ export default function GameRoom() {
                                                         if (!isReady) {
                                                             setToken(t);
                                                             const userStr = localStorage.getItem('user');
-                                                            const user = userStr ? JSON.parse(userStr) : {};
-                                                            const userId = user._id || user.id || 'guest-' + Math.random();
+                                                            const userId = userStr ? (JSON.parse(userStr)._id || JSON.parse(userStr).id) : 'guest'; // Simplified
                                                             socket.emit('player_ready', { roomId, isReady, dream, token: t, userId });
                                                         }
                                                     }}
-                                                    className={`
-                                                        aspect-square rounded-2xl flex items-center justify-center text-4xl relative transition-all duration-300
-                                                        ${isSelected
-                                                            ? 'bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border-indigo-400 ring-2 ring-indigo-500/50 shadow-[0_0_30px_rgba(99,102,241,0.3)] scale-110'
-                                                            : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:scale-105 border'}
-                                                        ${(isTaken || isReady) ? 'opacity-50 grayscale cursor-not-allowed scale-90' : 'cursor-pointer'}
-                                                    `}
+                                                    className={`aspect-square rounded-2xl flex items-center justify-center text-4xl relative transition-all duration-300 ${isSelected ? 'bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border-indigo-400 ring-2 ring-indigo-500/50 shadow-[0_0_30px_rgba(99,102,241,0.3)] scale-110' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:scale-105 border'} ${(isTaken || isReady) ? 'opacity-50 grayscale cursor-not-allowed scale-90' : 'cursor-pointer'}`}
                                                 >
                                                     <span className={`drop-shadow-lg ${isSelected ? 'animate-bounce-subtle' : ''}`}>{t}</span>
-                                                    {isSelected && (
-                                                        <div className="absolute -top-3 -right-3 w-8 h-8 flex items-center justify-center">
-                                                            <div className="absolute inset-0 bg-blue-500 rounded-full blur-[2px]"></div>
-                                                            <div className="relative bg-blue-500 bg-gradient-to-br from-blue-400 to-indigo-600 text-white rounded-full w-7 h-7 flex items-center justify-center border-2 border-slate-900 shadow-xl">
-                                                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg>
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {isTaken && (
-                                                        <div className="absolute inset-0 flex items-center justify-center">
-                                                            <div className="w-full h-[1px] bg-slate-500/50 rotate-45 transform scale-150"></div>
-                                                        </div>
-                                                    )}
+                                                    {isSelected && <div className="absolute -top-3 -right-3 w-8 h-8 flex items-center justify-center"><div className="absolute inset-0 bg-blue-500 rounded-full blur-[2px]"></div><div className="relative bg-blue-500 bg-gradient-to-br from-blue-400 to-indigo-600 text-white rounded-full w-7 h-7 flex items-center justify-center border-2 border-slate-900 shadow-xl"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg></div></div>}
+                                                    {isTaken && <div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-[1px] bg-slate-500/50 rotate-45 transform scale-150"></div></div>}
                                                 </button>
                                             );
                                         })}
                                     </div>
                                 </div>
-
-                                {/* Dream Selection */}
                                 <div className="mb-8">
                                     <label className="text-xs uppercase font-bold text-slate-500 mb-2 block tracking-wider">Ваша Мечта</label>
                                     <div className="relative">
@@ -337,8 +292,7 @@ export default function GameRoom() {
                                                 const newDream = e.target.value;
                                                 setDream(newDream);
                                                 const userStr = localStorage.getItem('user');
-                                                const user = userStr ? JSON.parse(userStr) : {};
-                                                const userId = user._id || user.id || 'guest-' + Math.random();
+                                                const userId = userStr ? (JSON.parse(userStr)._id || JSON.parse(userStr).id) : 'guest';
                                                 socket.emit('player_ready', { roomId, isReady, dream: newDream, token, userId });
                                             }}
                                             className="w-full bg-black/20 border border-white/10 rounded-2xl px-6 py-4 appearance-none outline-none focus:border-blue-500/50 focus:bg-black/40 transition-all text-lg font-medium text-slate-200 shadow-inner"
@@ -351,20 +305,13 @@ export default function GameRoom() {
                                             <option>🎢 Парк развлечений</option>
                                             <option>🚀 Космический туризм</option>
                                         </select>
-                                        <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                                            ▼
-                                        </div>
+                                        <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
                                     </div>
                                 </div>
                             </div>
-
                             <button
                                 onClick={toggleReady}
-                                className={`w-full py-6 rounded-2xl font-bold text-lg transition-all transform shadow-xl border
-                                    ${isReady
-                                        ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20'
-                                        : 'bg-gradient-to-r from-emerald-500 to-teal-500 border-transparent text-white hover:brightness-110 shadow-emerald-500/20 hover:scale-[1.01]'
-                                    }`}
+                                className={`w-full py-6 rounded-2xl font-bold text-lg transition-all transform shadow-xl border ${isReady ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20' : 'bg-gradient-to-r from-emerald-500 to-teal-500 border-transparent text-white hover:brightness-110 shadow-emerald-500/20 hover:scale-[1.01]'}`}
                             >
                                 {isReady ? '✖ Отменить готовность' : '✨ Я Готов!'}
                             </button>
@@ -372,25 +319,14 @@ export default function GameRoom() {
                     </div>
                 </div>
 
-                {/* Confirm Kick Modal */}
                 {playerToKick && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">
                         <div className="bg-slate-800 p-8 rounded-2xl max-w-sm w-full border border-slate-700 shadow-2xl animate-in zoom-in-95 duration-200">
                             <h3 className="text-xl font-bold mb-4 text-white">Удалить игрока?</h3>
                             <p className="text-slate-400 mb-6">Вы уверены, что хотите исключить этого игрока из комнаты?</p>
                             <div className="flex gap-4">
-                                <button
-                                    onClick={() => setPlayerToKick(null)}
-                                    className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg font-medium transition-colors"
-                                >
-                                    Отмена
-                                </button>
-                                <button
-                                    onClick={confirmKick}
-                                    className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-medium shadow-lg shadow-red-500/20 transition-colors"
-                                >
-                                    Удалить
-                                </button>
+                                <button onClick={() => setPlayerToKick(null)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg font-medium transition-colors">Отмена</button>
+                                <button onClick={confirmKick} className="flex-1 bg-red-500 hover:bg-red-600 text-white py-3 rounded-lg font-medium shadow-lg shadow-red-500/20 transition-colors">Удалить</button>
                             </div>
                         </div>
                     </div>
@@ -399,4 +335,13 @@ export default function GameRoom() {
         </div>
     );
 }
+
+export default function GameRoom() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Загрузка игры...</div>}>
+            <GameContent />
+        </Suspense>
+    );
+}
+
 

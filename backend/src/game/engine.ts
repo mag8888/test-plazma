@@ -84,12 +84,20 @@ export class GameEngine {
         // Randomly assign a profession
         const profession = PROFESSIONS[Math.floor(Math.random() * PROFESSIONS.length)];
 
+        // Populate liabilities from profession details
+        const liabilities = [];
+        if (profession.carLoan) liabilities.push({ name: 'Car Loan', value: profession.carLoan.cost, expense: profession.carLoan.payment });
+        if (profession.creditCard) liabilities.push({ name: 'Credit Card', value: profession.creditCard.cost, expense: profession.creditCard.payment });
+        if (profession.schoolLoan) liabilities.push({ name: 'School Loan', value: profession.schoolLoan.cost, expense: profession.schoolLoan.payment });
+        if (profession.mortgage) liabilities.push({ name: 'Mortgage', value: profession.mortgage.cost, expense: profession.mortgage.payment });
+        if (profession.retailDebt) liabilities.push({ name: 'Retail Debt', value: profession.retailDebt.cost, expense: profession.retailDebt.payment });
+
         return {
             ...p,
             professionName: profession.name,
             cash: profession.savings,
             assets: [],
-            liabilities: [],
+            liabilities: liabilities,
             loanDebt: 0,
             position: 0,
             isFastTrack: false,
