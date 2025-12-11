@@ -12,6 +12,17 @@ export interface GameState {
     currentCard?: Card;
     log: string[];
     winner?: string;
+    transactions: Transaction[];
+}
+
+export interface Transaction {
+    id: string;
+    timestamp: number;
+    from: string; // Player Name or 'Bank'
+    to: string;   // Player Name or 'Bank'
+    amount: number;
+    description: string;
+    type: 'TRANSFER' | 'LOAN' | 'REPAY' | 'PAYDAY' | 'EXPENSE';
 }
 
 export interface PlayerState extends IPlayer {
@@ -75,8 +86,10 @@ export class GameEngine {
             currentPlayerIndex: 0,
             currentTurnTime: 120,
             phase: 'ROLL',
+            phase: 'ROLL',
             board: FULL_BOARD,
-            log: ['Game Started']
+            log: ['Game Started'],
+            transactions: []
         };
     }
 
@@ -337,6 +350,40 @@ export class GameEngine {
         this.state.log.push(`${player.name} bought ${card.title}. Passive Income +$${card.cashflow || 0}`);
         this.checkFastTrackCondition(player);
         this.endTurn();
+    }
+
+    transferFunds(fromId: string, toId: string, amount: number) {
+        const fromPlayer = this.state.players.find(p => p.id === fromId);
+        const toPlayer = this.state.players.find(p => p.id === toId);
+
+        if (!fromPlayer || !toPlayer) return;
+        if (fromPlayer.cash < amount) {
+            this.state.log.push(`${fromPlayer.name} failed transfer: Insufficient funds.`);
+            return;
+        }
+
+        fromPlayer.cash -= amount;
+        toPlayer.cash += amount;
+
+        this.recordTransaction({
+            from: fromPlayer.name,
+            to: toPlayer.name,
+            amount,
+            description: 'Transfer',
+            type: 'TRANSFER'
+        });
+
+        this.state.log.push(`${fromPlayer.name} transferred $${amount} to ${toPlayer.name}`);
+    }
+
+    private recordTransaction(t: Omit<Transaction, 'id' | 'timestamp'>) {
+        this.state.transactions.unshift({
+            id: Math.random().toString(36).substr(2, 9),
+            timestamp: Date.now(),
+            ...t
+        });
+        // Keep last 50 transactions
+        if (this.state.transactions.length > 50) this.state.transactions.pop();
     }
 
     endTurn() {
