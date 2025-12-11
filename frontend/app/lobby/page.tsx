@@ -73,16 +73,34 @@ export default function Lobby() {
                                 className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
                             />
 
-                            <div className="flex items-center gap-4">
-                                <label className="text-slate-400 text-sm w-32">Участников: <span className="text-white font-bold">{maxPlayers}</span></label>
-                                <input
-                                    type="range"
-                                    min="2"
-                                    max="8"
-                                    value={maxPlayers}
-                                    onChange={(e) => setMaxPlayers(parseInt(e.target.value))}
-                                    className="flex-1 accent-blue-500"
-                                />
+                            <div className="flex flex-col gap-3">
+                                <label className="text-slate-400 text-sm">Количество игроков: <span className="text-white font-bold">{maxPlayers}</span></label>
+                                <div className="flex gap-2">
+                                    {[...Array(8)].map((_, i) => {
+                                        const count = i + 1;
+                                        // Start from 2 players, so hide/disable 1 player option? 
+                                        // Requirement: 2-8. So index 0 (1 player) should be disabled or effectively 2?
+                                        // Let's render 1-8 but only enable 2-8.
+                                        if (count < 2) return null;
+
+                                        const isActive = count <= maxPlayers;
+                                        return (
+                                            <button
+                                                key={count}
+                                                onClick={() => setMaxPlayers(count)}
+                                                className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${isActive
+                                                        ? 'bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.5)] scale-110'
+                                                        : 'bg-slate-700 text-slate-500 hover:bg-slate-600'
+                                                    }`}
+                                                title={`${count} игроков`}
+                                            >
+                                                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                                                </svg>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
                             </div>
 
                             <button

@@ -37,6 +37,7 @@ export default function GameRoom() {
 
     const [isKickModalOpen, setIsKickModalOpen] = useState(false);
     const [playerToKick, setPlayerToKick] = useState<string | null>(null);
+    const [gameState, setGameState] = useState<any>(null); // Added gameState
 
     // Initial Join & Socket Setup
     useEffect(() => {
@@ -80,7 +81,8 @@ export default function GameRoom() {
             }
         });
 
-        socket.on('game_started', () => {
+        socket.on('game_started', (data: any) => {
+            if (data?.state) setGameState(data.state);
             setRoom(prev => prev ? { ...prev, status: 'playing' } : null);
         });
 
@@ -157,15 +159,16 @@ export default function GameRoom() {
     if (!room) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Загрузка комнаты... {error && <span className="text-red-500 ml-2">{error}</span>}</div>;
 
     if (room.status === 'playing') {
-        return <GameBoard roomId={roomId} initialState={{
+        const initialBoardState = gameState || {
             roomId,
-            players: room.players,
+            players: room.players.map(p => ({ ...p, cash: 10000, assets: [], liabilities: [] })),
             currentPlayerIndex: 0,
             currentTurnTime: 120,
             phase: 'ROLL',
             board: [],
             log: []
-        }} />;
+        };
+        return <GameBoard roomId={roomId} initialState={initialBoardState} />;
     }
 
     return (
