@@ -10,6 +10,8 @@
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --grid-template-columns-13: repeat(13, minmax(0, 1fr));
+  --grid-template-rows-13: repeat(13, minmax(0, 1fr));
 }
 
 @media (prefers-color-scheme: dark) {

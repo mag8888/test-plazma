@@ -69,8 +69,11 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId 
                     if (sq.type === 'OPPORTUNITY') { bgColor = 'bg-green-900/20'; borderColor = 'border-green-600/50'; }
                 }
 
-                if (state.currentPlayerIndex !== undefined && board[state.players[state.currentPlayerIndex]?.position]?.index === sq.index) {
-                    // Highlight current target square maybe?
+                // Highlight mechanism can be added if we pass target square index
+                const isTarget = false;
+
+                if (isTarget) {
+                    // Highlight logic placeholder
                 }
 
                 return (
