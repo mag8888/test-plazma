@@ -86,7 +86,6 @@ export class GameEngine {
             currentPlayerIndex: 0,
             currentTurnTime: 120,
             phase: 'ROLL',
-            phase: 'ROLL',
             board: FULL_BOARD,
             log: ['Game Started'],
             transactions: []
