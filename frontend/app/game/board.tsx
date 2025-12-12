@@ -334,121 +334,164 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                         </div>
                                     )}
 
-                                    <div className="flex gap-2">
+                                    <div className="flex flex-col gap-3 w-full">
                                         {isMyTurn ? (
                                             state.currentCard.type === 'MARKET' ? (
                                                 <>
-                                                    <button onClick={handleBuy} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20">Купить</button>
-                                                    <button onClick={handleEndTurn} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm">Пас</button>
+                                                    {/* BUY BUTTON or INSUFFICIENT FUNDS */}
+                                                    {me.cash >= (state.currentCard.downPayment ?? state.currentCard.cost) ? (
+                                                        <div className="flex gap-2 w-full">
+                                                            <button onClick={handleBuy} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
+                                                                КУПИТЬ
+                                                            </button>
+                                                            <button onClick={handleEndTurn} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
+                                                                ПАС
+                                                            </button>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex flex-col gap-2 w-full animate-in slide-in-from-bottom duration-300">
+                                                            <div className="bg-red-900/40 border border-red-500/50 p-2 rounded-lg text-center">
+                                                                <div className="text-red-400 font-bold text-xs uppercase tracking-widest">Недостаточно средств</div>
+                                                                <div className="text-white font-mono text-sm">
+                                                                    Нужно еще: <span className="font-bold">${((state.currentCard.downPayment ?? state.currentCard.cost) - me.cash).toLocaleString()}</span>
+                                                                </div>
+                                                            </div>
+
+                                                            <div className="grid grid-cols-2 gap-2">
+                                                                {/* QUICK LOAN BUTTON */}
+                                                                <button
+                                                                    onClick={() => handleLoan((state.currentCard.downPayment ?? state.currentCard.cost) - me.cash)}
+                                                                    disabled={(me.loanDebt || 0) + ((state.currentCard.downPayment ?? state.currentCard.cost) - me.cash) > 38000}
+                                                                    className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-yellow-900/20 flex flex-col items-center justify-center gap-1"
+                                                                >
+                                                                    <span>🏦 Взять кредит</span>
+                                                                    {((me.loanDebt || 0) + ((state.currentCard.downPayment ?? state.currentCard.cost) - me.cash) > 38000) && <span className="text-[9px] text-red-200">(Лимит)</span>}
+                                                                </button>
+
+                                                                {/* ASK HELP / TRANSFER */}
+                                                                <button
+                                                                    onClick={() => setShowBank(true)}
+                                                                    className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                                                                >
+                                                                    🤝 Попросить
+                                                                </button>
+                                                            </div>
+
+                                                            <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-xs mt-1">
+                                                                Отказаться и завершить ход
+                                                            </button>
+                                                        </div>
+                                                    )}
                                                 </>
                                             ) : (
-                                                <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm">OK</button>
+                                                <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm shadow-lg transform hover:-translate-y-0.5 transition-all">
+                                                    OK
+                                                </button>
                                             )
-                                        ) : <div className="w-full text-center text-slate-500 text-sm animate-pulse">Ожидание игрока...</div>}
+                                        ) : <div className="w-full text-center text-slate-500 text-sm animate-pulse bg-slate-900/50 p-3 rounded-xl border border-slate-800">⏳ Ожидание игрока...</div>}
                                     </div>
                                 </div>
-                            </div>
                         )}
-                    </div>
+                            </div>
                 </div>
 
-                {/* RIGHT SIDEBAR (Desktop) */}
-                <div className="hidden lg:flex flex-col w-[350px] border-l border-slate-800 bg-[#0B0E14] p-4 relative">
+                    {/* RIGHT SIDEBAR (Desktop) */}
+                    <div className="hidden lg:flex flex-col w-[350px] border-l border-slate-800 bg-[#0B0E14] p-4 relative">
 
-                    {/* TIMER COMPONENT */}
-                    <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 shadow-lg mb-4 flex items-center justify-between">
-                        <div>
-                            <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Текущий ход</div>
-                            <div className="text-sm font-bold text-slate-200">{currentPlayer.name}</div>
+                        {/* TIMER COMPONENT */}
+                        <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 shadow-lg mb-4 flex items-center justify-between">
+                            <div>
+                                <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Текущий ход</div>
+                                <div className="text-sm font-bold text-slate-200">{currentPlayer.name}</div>
+                            </div>
+                            <div className={`text-4xl font-mono font-black ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-slate-200'}`}>
+                                {formatTime(timeLeft)}
+                            </div>
                         </div>
-                        <div className={`text-4xl font-mono font-black ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-slate-200'}`}>
-                            {formatTime(timeLeft)}
+
+                        {/* Actions Panel */}
+                        <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 shadow-lg mb-4">
+                            <h3 className="text-slate-400 text-xs uppercase tracking-widest font-bold mb-4 flex items-center gap-2">
+                                <span className="text-yellow-500">⚡</span> Действия
+                            </h3>
+
+                            <div className="grid grid-cols-2 gap-2 mb-4">
+                                <button
+                                    onClick={handleRoll}
+                                    disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard}
+                                    className={`p-4 rounded-xl border border-slate-700 flex flex-col items-center gap-1 group transition-all ${isMyTurn && state.phase === 'ROLL' && !state.currentCard ? 'bg-green-600 text-white shadow-lg shadow-green-900/30 hover:bg-green-500 cursor-pointer' : 'bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed'}`}
+                                >
+                                    <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">🎲</span>
+                                    <span className="text-[10px] font-bold">БРОСОК</span>
+                                </button>
+                                <button
+                                    onClick={handleEndTurn}
+                                    disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard)}
+                                    className={`p-4 rounded-xl border border-slate-700 flex flex-col items-center gap-1 group transition-all ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard) ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30 hover:bg-blue-500 cursor-pointer' : 'bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed'}`}
+                                >
+                                    <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">➡</span>
+                                    <span className="text-[10px] font-bold">ДАЛЕЕ</span>
+                                </button>
+                            </div>
+                            <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center justify-center gap-2 group transition-all hover:border-slate-600">
+                                <span className="text-xl group-hover:scale-110 transition-transform">🏦</span>
+                                <span className="text-xs text-slate-300 font-bold uppercase">Открыть Банк</span>
+                            </button>
+                        </div>
+
+                        <h3 className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-4">События</h3>
+                        <div className="flex-1 bg-slate-900/30 rounded-xl border border-slate-800 p-2 overflow-y-auto font-mono text-xs space-y-2 custom-scrollbar">
+                            {state.log?.slice().reverse().map((entry: string, i: number) => (
+                                <div key={i} className="text-slate-400 border-b border-slate-800/50 pb-1 last:border-0">{entry}</div>
+                            ))}
                         </div>
                     </div>
 
-                    {/* Actions Panel */}
-                    <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 shadow-lg mb-4">
-                        <h3 className="text-slate-400 text-xs uppercase tracking-widest font-bold mb-4 flex items-center gap-2">
-                            <span className="text-yellow-500">⚡</span> Действия
-                        </h3>
+                </div>
 
-                        <div className="grid grid-cols-2 gap-2 mb-4">
-                            <button
-                                onClick={handleRoll}
-                                disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard}
-                                className={`p-4 rounded-xl border border-slate-700 flex flex-col items-center gap-1 group transition-all ${isMyTurn && state.phase === 'ROLL' && !state.currentCard ? 'bg-green-600 text-white shadow-lg shadow-green-900/30 hover:bg-green-500 cursor-pointer' : 'bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed'}`}
-                            >
-                                <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">🎲</span>
-                                <span className="text-[10px] font-bold">БРОСОК</span>
-                            </button>
-                            <button
-                                onClick={handleEndTurn}
-                                disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard)}
-                                className={`p-4 rounded-xl border border-slate-700 flex flex-col items-center gap-1 group transition-all ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard) ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30 hover:bg-blue-500 cursor-pointer' : 'bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed'}`}
-                            >
-                                <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">➡</span>
-                                <span className="text-[10px] font-bold">ДАЛЕЕ</span>
-                            </button>
-                        </div>
-                        <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center justify-center gap-2 group transition-all hover:border-slate-600">
-                            <span className="text-xl group-hover:scale-110 transition-transform">🏦</span>
-                            <span className="text-xs text-slate-300 font-bold uppercase">Открыть Банк</span>
+                {/* BOTTOM NAV MOBILE */}
+                <div className="lg:hidden bg-[#0B0E14] border-t border-slate-800 p-2 pb-6 z-50">
+                    <div className="max-w-md mx-auto flex justify-between items-center gap-2">
+                        <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="flex flex-col items-center gap-1 p-2 w-16 text-slate-400">
+                            <span className="text-xl">☰</span>
+                            <span className="text-[9px]">Menu</span>
+                        </button>
+                        <button
+                            onClick={handleRoll}
+                            disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard}
+                            className={`flex-1 h-14 rounded-xl flex items-center justify-center gap-2 font-bold text-xs uppercase
+                             ${isMyTurn && state.phase === 'ROLL' && !state.currentCard ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-500 opacity-50'}`}
+                        >
+                            <span>🎲</span> ROLL
+                        </button>
+                        <button
+                            onClick={handleEndTurn}
+                            disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard)}
+                            className={`flex-1 h-14 rounded-xl flex items-center justify-center gap-2 font-bold text-xs uppercase
+                             ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard) ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-500 opacity-50'}`}
+                        >
+                            <span>➡</span> NEXT
+                        </button>
+                        {/* BANK */}
+                        <button
+                            onClick={() => setShowBank(true)}
+                            className="flex flex-col items-center gap-1 p-2 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all w-16"
+                        >
+                            <span className="text-xl">🏦</span>
+                            <span className="text-[9px] font-bold uppercase tracking-wider">Банк</span>
                         </button>
                     </div>
+                </div>
 
-                    <h3 className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-4">События</h3>
-                    <div className="flex-1 bg-slate-900/30 rounded-xl border border-slate-800 p-2 overflow-y-auto font-mono text-xs space-y-2 custom-scrollbar">
-                        {state.log?.slice().reverse().map((entry: string, i: number) => (
-                            <div key={i} className="text-slate-400 border-b border-slate-800/50 pb-1 last:border-0">{entry}</div>
-                        ))}
+                <BankModal isOpen={showBank} onClose={() => setShowBank(false)} player={me} roomId={roomId} transactions={state.transactions} players={state.players} />
+                {state.winner && (
+                    <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-md">
+                        <div className="text-8xl mb-8 animate-bounce">🏆</div>
+                        <h2 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 mb-6 tracking-tighter shadow-2xl">ПОБЕДА!</h2>
+                        <div className="text-3xl text-white mb-12 font-light"><span className="font-bold text-yellow-400">{state.winner}</span> Выграл!</div>
+                        <button onClick={() => window.location.reload()} className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-full text-xl shadow-lg">Играть снова</button>
                     </div>
-                </div>
-
+                )}
             </div>
-
-            {/* BOTTOM NAV MOBILE */}
-            <div className="lg:hidden bg-[#0B0E14] border-t border-slate-800 p-2 pb-6 z-50">
-                <div className="max-w-md mx-auto flex justify-between items-center gap-2">
-                    <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="flex flex-col items-center gap-1 p-2 w-16 text-slate-400">
-                        <span className="text-xl">☰</span>
-                        <span className="text-[9px]">Menu</span>
-                    </button>
-                    <button
-                        onClick={handleRoll}
-                        disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard}
-                        className={`flex-1 h-14 rounded-xl flex items-center justify-center gap-2 font-bold text-xs uppercase
-                             ${isMyTurn && state.phase === 'ROLL' && !state.currentCard ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-500 opacity-50'}`}
-                    >
-                        <span>🎲</span> ROLL
-                    </button>
-                    <button
-                        onClick={handleEndTurn}
-                        disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard)}
-                        className={`flex-1 h-14 rounded-xl flex items-center justify-center gap-2 font-bold text-xs uppercase
-                             ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard) ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-500 opacity-50'}`}
-                    >
-                        <span>➡</span> NEXT
-                    </button>
-                    {/* BANK */}
-                    <button
-                        onClick={() => setShowBank(true)}
-                        className="flex flex-col items-center gap-1 p-2 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all w-16"
-                    >
-                        <span className="text-xl">🏦</span>
-                        <span className="text-[9px] font-bold uppercase tracking-wider">Банк</span>
-                    </button>
-                </div>
-            </div>
-
-            <BankModal isOpen={showBank} onClose={() => setShowBank(false)} player={me} roomId={roomId} transactions={state.transactions} players={state.players} />
-            {state.winner && (
-                <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-md">
-                    <div className="text-8xl mb-8 animate-bounce">🏆</div>
-                    <h2 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 mb-6 tracking-tighter shadow-2xl">ПОБЕДА!</h2>
-                    <div className="text-3xl text-white mb-12 font-light"><span className="font-bold text-yellow-400">{state.winner}</span> Выграл!</div>
-                    <button onClick={() => window.location.reload()} className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-full text-xl shadow-lg">Играть снова</button>
-                </div>
-            )}
-        </div>
-    );
+            );
 }
