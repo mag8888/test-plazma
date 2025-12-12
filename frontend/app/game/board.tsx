@@ -56,14 +56,13 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
         setHasRolled(false);
     }, [state.currentPlayerIndex]);
 
-    const handleRoll = async () => {
-        if (!engineRef.current) return;
-        try {
-            await engineRef.current.rollDice();
-            setHasRolled(true);
-        } catch (error) {
-            console.error(error);
-        }
+    const handleRoll = () => {
+        socket.emit('roll_dice', { roomId });
+        setHasRolled(true);
+    };
+
+    const handleBuy = () => {
+        socket.emit('buy_asset', { roomId });
     };
 
     // Timer Sync & Countdown Logic
