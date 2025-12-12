@@ -160,7 +160,7 @@ function GameContent() {
     }
 
     return (
-        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#1a2c4e] via-[#0f172a] to-[#020617] text-white flex flex-col items-center justify-center p-4 selection:bg-blue-500/30">
+        <div className="min-h-screen bg-[#0b0e14] text-white flex flex-col items-center justify-center p-4 selection:bg-blue-500/30">
             <div className="w-full max-w-5xl relative z-10">
                 <div className="absolute inset-0 bg-blue-500/5 blur-[100px] rounded-full pointer-events-none" />
 
