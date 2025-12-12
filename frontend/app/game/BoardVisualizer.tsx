@@ -4,7 +4,7 @@ import React from 'react';
 const getSticker = (type: string, name: string) => {
     if (type === 'PAYDAY') return '💰';
     if (type === 'CASHFLOW') return '💸';
-    if (type === 'DEAL' || type === 'OPPORTUNITY') return '🟢'; // Green Circle for Opportunity
+    if (type === 'DEAL' || type === 'OPPORTUNITY') return '💼'; // Briefcase for Opportunity
     if (type === 'MARKET') return '🏪';
     if (type === 'EXPENSE' || type === 'DOODAD') return '🛍️';
     if (type === 'CHARITY') return '❤️';
