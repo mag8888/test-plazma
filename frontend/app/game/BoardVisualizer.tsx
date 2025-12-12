@@ -9,13 +9,19 @@ const getSticker = (type: string, name: string) => {
     if (type === 'EXPENSE' || type === 'DOODAD') return '🛍️';
     if (type === 'CHARITY') return '❤️';
     if (type === 'BABY') return '👶';
-    if (type === 'DOWNSIZED') return '📉';
+    if (type === 'BABY') return '👶';
+    if (type === 'DOWNSIZED' || type === 'LOSS') return '📉'; // Loss/Downsized
+    if (type === 'BUSINESS') return '🏢'; // Business
+    if (type === 'DREAM') return '✨'; // Dream
     return '⬜';
 };
 
 const getGradient = (type: string, isFT: boolean) => {
     if (isFT) {
-        if (type === 'CASHFLOW') return 'bg-gradient-to-br from-emerald-900 to-emerald-950 border-emerald-600/50';
+        if (type === 'CASHFLOW' || type === 'PAYDAY') return 'bg-gradient-to-br from-emerald-900 to-emerald-950 border-emerald-600/50';
+        if (type === 'BUSINESS') return 'bg-gradient-to-br from-blue-900 to-blue-950 border-blue-500/50';
+        if (type === 'DREAM') return 'bg-gradient-to-br from-fuchsia-900 to-purple-950 border-fuchsia-500/50';
+        if (type === 'LOSS') return 'bg-gradient-to-br from-red-900 to-red-950 border-red-500/50';
         return 'bg-gradient-to-br from-slate-900 to-slate-950 border-amber-900/30';
     }
     // RAT RACE COLORS
