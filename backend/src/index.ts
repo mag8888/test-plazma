@@ -50,44 +50,41 @@ app.get('/game/:id', (req, res) => {
 app.use(express.static(path.join(__dirname, '../../frontend/out')));
 
 app.get(/.*/, (req, res) => {
-    // API routes should be handled above or ignored here if strict
+    // API routes should be handled above
     if (req.path.startsWith('/api')) {
         res.status(404).json({ error: 'Not Found' });
         return;
     }
-    const indexPath = path.join(__dirname, '../../frontend/out/index.html');
 
-    // DEBUG LOGGING
-    console.log('DEBUG: Request to', req.path);
-    console.log('DEBUG: __dirname:', __dirname);
-    console.log('DEBUG: Resolved indexPath:', indexPath);
-    console.log('DEBUG: Exists:', fs.existsSync(indexPath));
+    const frontendDir = path.join(__dirname, '../../frontend/out');
 
-    try {
-        const rootDir = path.join(__dirname, '../../');
-        console.log(`DEBUG: Contents of ${rootDir}:`, fs.readdirSync(rootDir));
-        const frontendDir = path.join(__dirname, '../../frontend');
-        if (fs.existsSync(frontendDir)) {
-            console.log(`DEBUG: Contents of ${frontendDir}:`, fs.readdirSync(frontendDir));
-            const outDir = path.join(frontendDir, 'out');
-            if (fs.existsSync(outDir)) {
-                console.log(`DEBUG: Contents of ${outDir}:`, fs.readdirSync(outDir));
-            } else {
-                console.log('DEBUG: frontend/out does NOT exist');
-            }
-        } else {
-            console.log('DEBUG: frontend directory does NOT exist');
-        }
-    } catch (e) {
-        console.error('DEBUG: Error listing directories:', e);
+    // 1. Try exact match (e.g. /favicon.ico) - handled by express.static above? 
+    // express.static handles files if they exist. If we are here, express.static missed it (or it's a route).
+
+    // 2. Try adding .html (e.g. /game -> /game.html)
+    let possiblePath = path.join(frontendDir, `${req.path}.html`);
+    if (fs.existsSync(possiblePath)) {
+        res.sendFile(possiblePath);
+        return;
     }
 
-    res.sendFile(indexPath, (err) => {
-        if (err) {
-            console.error('SendFile Error:', err);
-            res.status(500).send('Frontend not built or missing. Check server logs.');
-        }
-    });
+    // 3. Try index.html in directory (e.g. /game -> /game/index.html)
+    possiblePath = path.join(frontendDir, req.path, 'index.html');
+    if (fs.existsSync(possiblePath)) {
+        res.sendFile(possiblePath);
+        return;
+    }
+
+    // 4. Fallback to root index.html (SPA Fallback)
+    // Only if we truly want SPA behavior for unknown routes, usually 404 is better for static export,
+    // but for user friendliness we might fallback to login or 404.
+    // Given the user is claiming "flies to registration", we essentially ARE falling back to index.html currently.
+    // If we want to fix "files to registration" we should serve the CORRECT page. 
+    // If the correct page doesn't exist, we SHOULD fall back to index (Login) or 404.
+
+    // Let's fallback to index.html but maybe log it
+    console.log(`Fallback to index.html for ${req.path}`);
+    res.sendFile(path.join(frontendDir, 'index.html'));
 });
 
 const PORT = process.env.PORT || 3001;
