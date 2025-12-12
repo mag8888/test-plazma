@@ -147,7 +147,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const handleEndTurn = () => socket.emit('end_turn', { roomId });
 
 
-    // So I only need to restore handleLoan, handleRepay, handleEndTurn.
+
 
     const currentPlayer = state.players[state.currentPlayerIndex];
     if (!currentPlayer) return <div>Loading...</div>; // Safety check
@@ -186,6 +186,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
         });
     }, [state.players, animatingPos]);
 
+    // Format MM:SS
     // Format MM:SS
     const formatTime = (seconds: number) => {
         const m = Math.floor(seconds / 60);
