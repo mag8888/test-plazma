@@ -309,7 +309,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         </div>
                     </div>
 
-                    <div className="flex-1 relative overflow-hidden p-2 lg:p-6 flex items-center justify-center">
+                    <div className="flex-1 relative overflow-hidden p-2 lg:p-6 flex items-start justify-center">
                         <BoardVisualizer
                             board={state.board}
                             players={state.players}
@@ -441,7 +441,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     </div>
 
                     <h3 className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-4">События</h3>
-                    <div className="flex-1 bg-slate-900/30 rounded-xl border border-slate-800 p-2 overflow-y-auto font-mono text-xs space-y-2 custom-scrollbar">
+                    <div className="flex-1 bg-slate-900/30 rounded-xl border border-slate-800 p-2 overflow-y-auto font-mono text-xs space-y-2 custom-scrollbar min-h-0">
                         {state.log?.slice().reverse().map((entry: string, i: number) => (
                             <div key={i} className="text-slate-400 border-b border-slate-800/50 pb-1 last:border-0">{entry}</div>
                         ))}
