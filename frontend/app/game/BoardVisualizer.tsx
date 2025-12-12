@@ -111,9 +111,8 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId 
 
                 </div>
 
-                {/* 2. INNER TRACK (ABSOLUTE) */}
-                {/* Reduced inset to maximize size (15% -> 4%) */}
-                <div className="absolute inset-[4%] rounded-full border border-slate-800/30 pointer-events-none">
+                {/* Reduced inset to maximize size (15% -> 4% -> 12% to fix overlap) */}
+                <div className="absolute inset-[12%] rounded-full border border-slate-800/30 pointer-events-none">
                     <div className="absolute inset-0 rounded-full border-2 border-dashed border-slate-700/20 animate-spin-slow-reverse opacity-30"></div>
                     {board.filter((sq: any) => !isFastTrackSquare(sq.index)).map((sq: any) => {
                         const style = getPosStyle(sq.index, false);
@@ -143,7 +142,7 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId 
                 </div>
 
                 {/* 3. PLAYER TOKENS (ABSOLUTE OVERLAY) */}
-                <div className="absolute inset-[4%] pointer-events-none">
+                <div className="absolute inset-[12%] pointer-events-none">
                     {/* Used same inset as Inner Track to align coordinate systems */}
                     {players.map((p: any) => {
                         const posIndex = animatingPos[p.id] ?? p.position;
