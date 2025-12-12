@@ -39,10 +39,69 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [mobileView, setMobileView] = useState<'stats' | 'players'>('stats');
 
+    // Animation & Popup States
+    const [showDice, setShowDice] = useState(false);
+    const [diceValue, setDiceValue] = useState<number | null>(null);
+    const [pendingState, setPendingState] = useState<any>(null);
+    const [squareInfo, setSquareInfo] = useState<any>(null);
+
+    // Timer State
+    const [timeLeft, setTimeLeft] = useState(120);
+
+    // Initial Timer Sync
     useEffect(() => {
-        socket.on('dice_rolled', (data) => setState(data.state));
+        if (state.currentTurnTime) setTimeLeft(state.currentTurnTime);
+    }, [state.currentTurnTime, state.currentPlayerIndex]);
+
+    // Timer Countdown
+    useEffect(() => {
+        const timer = setInterval(() => {
+            setTimeLeft((prev) => (prev > 0 ? prev - 1 : 0));
+        }, 1000);
+        return () => clearInterval(timer);
+    }, [state.currentPlayerIndex]); // Reset on turn change implicitly via effect above
+
+    useEffect(() => {
+        socket.on('dice_rolled', (data) => {
+            // 1. Show Dice Animation
+            setDiceValue(data.roll);
+            setShowDice(true);
+            setPendingState(data.state); // Queue the update
+
+            // 2. Hide Dice & Apply State after delay
+            setTimeout(() => {
+                setShowDice(false);
+                setState(data.state); // Moves tokens
+
+                // 3. Show Square Info Popup after token movement (approx 1s)
+                setTimeout(() => {
+                    const currentPlayer = data.state.players[data.state.currentPlayerIndex];
+                    const squareIndex = currentPlayer.position; // Position is already updated in state
+                    const board = data.state.board;
+                    // Find square. For now, assume board is simple array or we have helper.
+                    // Need to find square by index. 
+                    const square = board.find((s: any) => s.index === squareIndex);
+
+                    if (square && !['roll_dice', 'end_turn'].includes(data.state.phase)) {
+                        // Only show if we landed and something awaits? 
+                        // actually show for ALL squares as requested "info about cell"
+                        setSquareInfo(square);
+
+                        // Auto-hide popup after 3s unless it's an action square that stays open via Card?
+                        // The Card Overlay handles action cards. This popup is just fast info.
+                        setTimeout(() => setSquareInfo(null), 3500);
+                    }
+                }, 1000);
+
+            }, 2500); // 2.5s Dice Roll
+        });
+
         socket.on('state_updated', (data) => setState(data.state));
-        socket.on('turn_ended', (data) => setState(data.state));
+        socket.on('turn_ended', (data) => {
+            setState(data.state);
+            setSquareInfo(null); // Clear any popup
+            setTimeLeft(data.state.currentTurnTime || 120);
+        });
         socket.on('game_started', (data) => setState(data.state));
 
         return () => {
@@ -63,7 +122,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const isMyTurn = currentPlayer.id === socket.id;
     const me = state.players.find((p: any) => p.id === socket.id) || {};
 
-    // Animation State
+    // Animation State for Visualizer
     const [animatingPos, setAnimatingPos] = useState<Record<string, number>>({});
 
     useEffect(() => {
@@ -72,6 +131,8 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
         state.players.forEach((p: any) => {
             newPosMap[p.id] = animatingPos[p.id] ?? p.position;
         });
+        // Only update if different to prevent loops?
+        // Actually we want to trigger animation effect below
         setAnimatingPos(prev => ({ ...prev, ...newPosMap }));
     }, [state.players]);
 
@@ -96,6 +157,42 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
     return (
         <div className="h-screen bg-[#0f172a] text-white font-sans flex flex-col overflow-hidden relative">
+
+            {/* 🎲 DICE OVERLAY */}
+            {showDice && (
+                <div className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center pointer-events-none">
+                    <div className="flex flex-col items-center animate-bounce">
+                        <div className="text-9xl filter drop-shadow-[0_0_30px_rgba(255,255,255,0.5)] animate-spin-slow">
+                            🎲
+                        </div>
+                        {diceValue && (
+                            <div className="mt-8 text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-600 animate-pulse">
+                                {diceValue}
+                            </div>
+                        )}
+                        <div className="text-xl text-slate-300 font-bold tracking-widest uppercase mt-4">Rolling...</div>
+                    </div>
+                </div>
+            )}
+
+            {/* ℹ️ SQUARE INFO POPUP */}
+            {squareInfo && (
+                <div className="absolute top-20 left-1/2 transform -translate-x-1/2 z-[90] animate-in slide-in-from-top duration-500">
+                    <div className="bg-slate-900/90 backdrop-blur-md border border-slate-700/50 p-6 rounded-2xl shadow-2xl flex flex-col items-center gap-2 min-w-[300px]">
+                        <div className="text-4xl filter drop-shadow-md">
+                            {/* Re-use Sticker Logic or Simple mapping */}
+                            {['MARKET', 'OPPORTUNITY'].includes(squareInfo.type) ? '⚡' : '📍'}
+                        </div>
+                        <h3 className="text-xl font-bold text-white uppercase tracking-wider">{squareInfo.name}</h3>
+                        <p className="text-slate-400 text-xs text-center max-w-[200px]">
+                            You landed on {squareInfo.name}.
+                            {squareInfo.type === 'PAYDAY' ? ' Collect your salary!' : ''}
+                            {squareInfo.type === 'DOODAD' ? ' Oh no, unexpected expense!' : ''}
+                        </p>
+                    </div>
+                </div>
+            )}
+
 
             {/* MAIN CONTENT GRID */}
             <div className="flex-1 flex flex-col lg:grid lg:grid-cols-[340px_1fr_300px] overflow-hidden">
@@ -197,12 +294,28 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         </div>
                         <div className="text-center">
                             <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Ход игрока</div>
-                            <div className="text-xs font-bold text-blue-400 animate-pulse">{currentPlayer.name}</div>
+                            {/* Timer Mobile */}
+                            <div className="flex items-center justify-center gap-1">
+                                <div className="text-xs font-bold text-blue-400 animate-pulse">{currentPlayer.name}</div>
+                                <div className={`text-xs font-mono px-1.5 rounded ${timeLeft < 15 ? 'bg-red-900 text-red-400' : 'bg-slate-800 text-slate-400'}`}>00:{timeLeft.toString().padStart(2, '0')}</div>
+                            </div>
                         </div>
                     </div>
 
                     {/* Board */}
-                    <div className="flex-1 relative overflow-hidden p-2 lg:p-6">
+                    <div className="flex-1 relative overflow-hidden p-2 lg:p-6 flex items-center justify-center">
+                        {/* TIMER DESKTOP */}
+                        <div className="hidden lg:block absolute top-4 right-4 z-20">
+                            <div className="bg-slate-900/80 backdrop-blur-md rounded-2xl p-3 border border-slate-700 shadow-xl flex items-center gap-3">
+                                <div className={`text-2xl font-black font-mono ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-slate-200'}`}>
+                                    00:{timeLeft.toString().padStart(2, '0')}
+                                </div>
+                                <div className="text-[10px] uppercase text-slate-500 font-bold leading-tight">
+                                    Time<br />Left
+                                </div>
+                            </div>
+                        </div>
+
                         <BoardVisualizer
                             board={state.board}
                             players={state.players}
@@ -211,7 +324,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         />
 
                         {/* Card Overlay */}
-                        {state.currentCard && (
+                        {state.currentCard && !showDice && (
                             <div className="absolute inset-0 z-30 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
                                 <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative">
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
