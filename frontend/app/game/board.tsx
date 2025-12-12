@@ -537,51 +537,54 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     </div>
 
                     {/* Actions Panel */}
-                    <div className="bg-[#151b2b] rounded-2xl p-5 border border-slate-800 shadow-lg">
-                        <h3 className="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
-                            <span className="text-yellow-500">⚡</span> Действия
+                    <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-6 border border-slate-700/50 shadow-2xl relative overflow-hidden group">
+                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                        <h3 className="text-slate-400 text-[10px] uppercase tracking-[0.25em] font-black mb-5 flex items-center gap-2 relative z-10">
+                            <span className="text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]">⚡</span> ДЕЙСТВИЯ
                         </h3>
 
-                        <div className="grid grid-cols-2 gap-3 mb-4">
+                        <div className="grid grid-cols-2 gap-4 mb-4 relative z-10">
                             <button
                                 onClick={handleRoll}
                                 disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard || hasRolled}
-                                className={`p - 4 rounded - xl border flex flex - col items - center gap - 2 group transition - all duration - 200
+                                className={`h-[100px] rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
                                 ${isMyTurn && state.phase === 'ROLL' && !state.currentCard && !hasRolled
-                                        ? 'bg-gradient-to-b from-green-600 to-green-700 border-green-500 text-white shadow-xl shadow-green-900/40 hover:scale-[1.02] hover:shadow-green-900/60 cursor-pointer'
-                                        : 'bg-slate-800/50 border-slate-700 text-slate-500 opacity-50 cursor-not-allowed'
+                                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 border-emerald-400/50 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
+                                        : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
                                     } `}
                             >
-                                <span className="text-2xl filter drop-shadow-md group-hover:rotate-12 transition-transform duration-300">🎲</span>
-                                <span className="text-[9px] font-black uppercase tracking-widest">Бросок</span>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+                                <span className={`text-3xl filter drop-shadow-xl transition-transform duration-500 ${!hasRolled && isMyTurn ? 'group-hover:rotate-[360deg]' : ''}`}>🎲</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">Бросок</span>
                             </button>
                             <button
                                 onClick={handleEndTurn}
                                 disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard && !hasRolled)}
-                                className={`p - 4 rounded - xl border flex flex - col items - center gap - 2 group transition - all duration - 200
+                                className={`h-[100px] rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
                                 ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard || hasRolled)
-                                        ? 'bg-gradient-to-b from-blue-600 to-blue-700 border-blue-500 text-white shadow-xl shadow-blue-900/40 hover:scale-[1.02] hover:shadow-blue-900/60 cursor-pointer'
-                                        : 'bg-slate-800/50 border-slate-700 text-slate-500 opacity-50 cursor-not-allowed'
+                                        ? 'bg-gradient-to-br from-blue-500 to-blue-700 border-blue-400/50 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
+                                        : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
                                     } `}
                             >
-                                <span className="text-2xl filter drop-shadow-md group-hover:translate-x-1 transition-transform duration-300">➡</span>
-                                <span className="text-[9px] font-black uppercase tracking-widest">Далее</span>
+                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+                                <span className="text-3xl filter drop-shadow-xl group-hover:translate-x-1 transition-transform duration-300">➡</span>
+                                <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">Далее</span>
                             </button>
                         </div>
-                        <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800/80 p-3 rounded-xl border border-slate-700 hover:bg-slate-700 hover:border-slate-500 flex items-center justify-center gap-3 group transition-all">
-                            <span className="text-xl group-hover:scale-110 transition-transform">🏦</span>
-                            <span className="text-[10px] text-slate-200 font-bold uppercase tracking-widest">Открыть Банк</span>
+                        <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-700/80 hover:border-slate-500 hover:shadow-lg hover:shadow-blue-900/20 flex items-center justify-center gap-3 transition-all duration-300 group/bank active:scale-95">
+                            <span className="text-xl group-hover/bank:scale-110 group-hover/bank:rotate-12 transition-transform duration-300">🏦</span>
+                            <span className="text-[10px] text-slate-300 group-hover:text-white font-bold uppercase tracking-[0.15em]">Открыть Банк</span>
                         </button>
                     </div>
 
                     {/* Players Mini List (Moved to Right) */}
-                    <div className="bg-[#151b2b] rounded-2xl p-5 border border-slate-800 shadow-lg flex-1 min-h-[200px] overflow-y-auto custom-scrollbar">
-                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
+                    <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-lg flex-1 min-h-[200px] overflow-y-auto custom-scrollbar relative">
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2 sticky top-0 bg-[#1e293b]/95 backdrop-blur-md py-2 z-10 w-full">
                             <span>👥</span> Игроки
                         </h3>
-                        <div className="space-y-2">
+                        <div className="space-y-3 pb-2">
                             {state.players.map((p: any) => (
-                                <div key={p.id} className={`flex items - center gap - 3 p - 3 rounded - xl border transition - all ${p.id === currentPlayer.id ? 'bg-slate-800/80 border-blue-500/50 shadow-lg shadow-blue-900/10 scale-[1.02]' : 'bg-slate-900/30 border-slate-800/50'} `}>
+                                <div key={p.id} className={`flex items - center gap - 3 p - 3 rounded - 2xl border transition - all duration - 300 group ${p.id === currentPlayer.id ? 'bg-slate-800/90 border-blue-500/50 shadow-[0_4px_20px_rgba(59,130,246,0.15)] scale-[1.02]' : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60'} `}>
                                     <div className="text-lg bg-slate-950 w-8 h-8 flex items-center justify-center rounded-xl border border-slate-800 shadow-inner">{p.token}</div>
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-bold text-slate-200 truncate">{p.name}</div>
