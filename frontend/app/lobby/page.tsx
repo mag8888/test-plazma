@@ -19,19 +19,32 @@ export default function Lobby() {
     const [isCreating, setIsCreating] = useState(false);
     const [newRoomName, setNewRoomName] = useState('');
     const [maxPlayers, setMaxPlayers] = useState(4);
+    const [user, setUser] = useState<any>(null);
 
     useEffect(() => {
+        // Auth Check
+        const userStr = localStorage.getItem('user');
+        if (!userStr) {
+            router.push('/');
+            return;
+        }
+        setUser(JSON.parse(userStr));
+
         socket.emit('get_rooms', (data: Room[]) => setRooms(data));
         socket.on('rooms_updated', (data: Room[]) => setRooms(data));
         return () => { socket.off('rooms_updated'); };
-    }, []);
+    }, [router]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        router.push('/');
+    };
 
     const createRoom = () => {
-        if (!newRoomName) return;
-        const userStr = localStorage.getItem('user');
-        const user = userStr ? JSON.parse(userStr) : {};
+        if (!newRoomName || !user) return;
         const playerName = user.firstName || user.username || 'Guest';
-        const userId = user._id || user.id || 'guest-' + Math.random();
+        const userId = user._id || user.id;
 
         socket.emit('create_room', { name: newRoomName, maxPlayers, timer: 120, playerName, userId }, (response: any) => {
             if (response.success) {
@@ -46,20 +59,41 @@ export default function Lobby() {
         router.push(`/game?id=${roomId}`);
     };
 
+    if (!user) return null; // Prevent flicker
+
     return (
         <div className="min-h-screen bg-slate-900 text-white p-8">
             <div className="max-w-4xl mx-auto">
-                <header className="flex justify-between items-center mb-8">
-                    <h1 className="text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
-                        Игровые комнаты
-                    </h1>
-                    <button
-                        onClick={() => setIsCreating(!isCreating)}
-                        className="bg-blue-600 hover:bg-blue-700 px-6 py-2 rounded-lg transition-all"
-                    >
-                        + Создать комнату
-                    </button>
+                <header className="flex justify-between items-center mb-8 bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg">
+                    <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
+                            {user.username?.[0]?.toUpperCase() || 'U'}
+                        </div>
+                        <div>
+                            <div className="text-xs text-slate-400 uppercase tracking-wider font-bold">Игрок</div>
+                            <div className="font-bold text-lg leading-none">{user.username || 'Guest'}</div>
+                        </div>
+                    </div>
+
+                    <div className="flex gap-3">
+                        <button
+                            onClick={() => setIsCreating(!isCreating)}
+                            className="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg transition-all font-bold text-sm"
+                        >
+                            + Новая комната
+                        </button>
+                        <button
+                            onClick={handleLogout}
+                            className="bg-slate-700 hover:bg-red-500/80 px-4 py-2 rounded-lg transition-all text-sm font-bold border border-slate-600"
+                        >
+                            Выход
+                        </button>
+                    </div>
                 </header>
+
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-bold text-slate-300">Список комнат</h2>
+                </div>
 
                 {isCreating && (
                     <div className="bg-slate-800 p-6 rounded-xl mb-8 border border-slate-700">
