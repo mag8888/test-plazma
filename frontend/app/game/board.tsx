@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { socket } from '../socket';
 import confetti from 'canvas-confetti';
 import { BoardVisualizer } from './BoardVisualizer';
@@ -29,6 +29,34 @@ interface PlayerState {
 }
 
 import { BankModal } from './BankModal';
+
+// Helper for Cash Animation
+const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
+    const [diff, setDiff] = useState<number | null>(null);
+    const [visible, setVisible] = useState(false);
+    const prevCash = useRef(currentCash);
+
+    useEffect(() => {
+        if (prevCash.current !== currentCash) {
+            const difference = currentCash - prevCash.current;
+            setDiff(difference);
+            setVisible(true);
+            prevCash.current = currentCash;
+
+            const timer = setTimeout(() => setVisible(false), 2000);
+            return () => clearTimeout(timer);
+        }
+    }, [currentCash]);
+
+    if (!visible || !diff) return null;
+
+    return (
+        <div className={`absolute top-0 right-0 transform -translate-y-full font-bold text-lg animate-out fade-out slide-out-to-top-4 duration-2000 pointer-events-none whitespace-nowrap z-50
+            ${diff > 0 ? 'text-green-400' : 'text-red-400'}`}>
+            {diff > 0 ? '+' : ''}${Math.abs(diff).toLocaleString()}
+        </div>
+    );
+};
 
 // ... (existing interfaces)
 
@@ -369,9 +397,12 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                         <div className="grid grid-cols-2 gap-3 mb-4">
                             {/* BALANCE */}
-                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group">
+                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group relative">
                                 <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
-                                <div className="font-mono text-xl text-green-400 font-bold tracking-tight shadow-green-900/20 drop-shadow-sm group-hover:scale-105 transition-transform origin-left">${me.cash?.toLocaleString()}</div>
+                                <div className="font-mono text-xl text-green-400 font-bold tracking-tight shadow-green-900/20 drop-shadow-sm group-hover:scale-105 transition-transform origin-left relative">
+                                    ${me.cash?.toLocaleString()}
+                                    <CashChangeIndicator currentCash={me.cash} />
+                                </div>
                             </button>
 
                             {/* CREDIT */}
@@ -424,9 +455,12 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     <div className="lg:hidden flex justify-between items-center p-3 bg-[#0B0E14] border-b border-slate-800 z-10 shadow-md">
                         <div className="flex items-center gap-2">
                             <span className="text-2xl bg-slate-800 w-8 h-8 flex items-center justify-center rounded-full border border-slate-700">{me.token}</span>
-                            <div className="flex flex-col leading-none">
+                            <div className="flex flex-col leading-none relative">
                                 <span className="font-bold text-slate-200 text-sm">{me.name}</span>
-                                <span className="font-mono text-green-400 text-xs font-bold">${me.cash?.toLocaleString()}</span>
+                                <span className="font-mono text-green-400 text-xs font-bold relative">
+                                    ${me.cash?.toLocaleString()}
+                                    <CashChangeIndicator currentCash={me.cash} />
+                                </span>
                             </div>
                         </div>
                         <div className="text-center">
@@ -628,37 +662,44 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             )}
 
             {/* BOTTOM NAV MOBILE */}
-            < div className="lg:hidden bg-[#0B0E14] border-t border-slate-800 p-2 pb-6 z-50" >
-                <div className="max-w-md mx-auto flex justify-between items-center gap-2">
-                    <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="flex flex-col items-center gap-1 p-2 w-16 text-slate-400">
+            <div className="lg:hidden bg-[#0B0E14]/90 backdrop-blur-xl border-t border-slate-800/50 p-3 pb-8 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+                <div className="max-w-md mx-auto flex justify-between items-center gap-3">
+                    <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="flex flex-col items-center gap-1 p-2 w-14 text-slate-400 hover:text-white transition-colors">
                         <span className="text-xl">☰</span>
-                        <span className="text-[9px]">Menu</span>
+                        <span className="text-[9px] font-bold tracking-wider">МЕНЮ</span>
                     </button>
+
                     <button
                         onClick={handleRoll}
-                        disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard}
-                        className={`flex - 1 h - 14 rounded - xl flex items - center justify - center gap - 2 font - bold text - xs uppercase
-                              ${isMyTurn && state.phase === 'ROLL' && !state.currentCard ? 'bg-green-600 text-white' : 'bg-slate-800 text-slate-500 opacity-50'} `}
+                        disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard || hasRolled}
+                        className={`flex-1 h-12 rounded-xl flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest shadow-lg transition-all relative overflow-hidden group
+                              ${isMyTurn && state.phase === 'ROLL' && !state.currentCard && !hasRolled
+                                ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-emerald-900/40 hover:-translate-y-0.5 active:scale-95'
+                                : 'bg-slate-800/50 text-slate-500 opacity-50 cursor-not-allowed border border-slate-700/50'}`}
                     >
-                        <span>🎲</span> ROLL
+                        <span className="text-lg filter drop-shadow-md group-active:rotate-12 transition-transform">🎲</span> Бросок
                     </button>
+
                     <button
                         onClick={handleEndTurn}
-                        disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard)}
-                        className={`flex - 1 h - 14 rounded - xl flex items - center justify - center gap - 2 font - bold text - xs uppercase
-                              ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard) ? 'bg-blue-600 text-white' : 'bg-slate-800 text-slate-500 opacity-50'} `}
+                        disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard && !hasRolled)}
+                        className={`flex-1 h-12 rounded-xl flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest shadow-lg transition-all relative overflow-hidden group
+                              ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard || hasRolled)
+                                ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-900/40 hover:-translate-y-0.5 active:scale-95'
+                                : 'bg-slate-800/50 text-slate-500 opacity-50 cursor-not-allowed border border-slate-700/50'}`}
                     >
-                        <span>➡</span> NEXT
+                        <span className="text-lg filter drop-shadow-md group-active:translate-x-1 transition-transform">➡</span> Далее
                     </button>
+
                     <button
                         onClick={() => setShowBank(true)}
-                        className="flex flex-col items-center gap-1 p-2 rounded-xl text-slate-400 hover:bg-slate-800 hover:text-white transition-all w-16"
+                        className="flex flex-col items-center gap-1 p-2 rounded-xl text-slate-400 hover:text-white transition-all w-14"
                     >
                         <span className="text-xl">🏦</span>
                         <span className="text-[9px] font-bold uppercase tracking-wider">Банк</span>
                     </button>
                 </div>
-            </div >
+            </div>
 
             <BankModal isOpen={showBank} onClose={() => setShowBank(false)} player={me} roomId={roomId} transactions={state.transactions} players={state.players} />
             {
