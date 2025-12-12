@@ -41,7 +41,7 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId 
             const angleDeg = (index * (360 / totalSteps)) + angleOffset;
             const angleRad = angleDeg * (Math.PI / 180);
 
-            const radius = 32; // % of container width
+            const radius = 40; // Increased radius for larger inner track
             const x = 50 + radius * Math.cos(angleRad);
             const y = 50 + radius * Math.sin(angleRad);
 
@@ -77,7 +77,7 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId 
             <div className="relative aspect-square h-full max-h-full max-w-full">
 
                 {/* 1. OUTER TRACK (GRID) */}
-                <div className="absolute inset-0 grid grid-cols-[repeat(13,minmax(0,1fr))] grid-rows-[repeat(13,minmax(0,1fr))] gap-1 pointer-events-none">
+                <div className="absolute inset-0 grid grid-cols-[repeat(13,minmax(0,1fr))] grid-rows-[repeat(13,minmax(0,1fr))] pointer-events-none">
                     {board.filter((sq: any) => isFastTrackSquare(sq.index)).map((sq: any) => {
                         const style = getPosStyle(sq.index, true);
                         const gradient = getGradient(sq.type, true);
@@ -85,18 +85,18 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId 
                             <div
                                 key={sq.index}
                                 className={`
-                                    ${gradient} border backdrop-blur-sm rounded-sm
-                                    flex items-center justify-center text-[8px]
+                                    ${gradient} border border-slate-800/50 backdrop-blur-sm rounded-sm
+                                    flex items-center justify-center text-[10px]
                                     opacity-90 shadow-lg pointer-events-auto transition-all hover:scale-110 hover:z-20
                                 `}
                                 style={style}
                                 title={sq.name}
                             >
                                 <div className="flex flex-col items-center">
-                                    <span className="text-lg leading-none filter drop-shadow-md">{getSticker(sq.type, sq.name)}</span>
-                                    {sq.type === 'CASHFLOW' && <span className="text-emerald-400 font-bold tracking-tighter">Day</span>}
+                                    <span className="text-xl leading-none filter drop-shadow-md">{getSticker(sq.type, sq.name)}</span>
+                                    {sq.type === 'CASHFLOW' && <span className="text-emerald-400 font-bold tracking-tighter text-[6px]">Day</span>}
                                 </div>
-                                <span className="absolute top-0 right-0.5 text-[5px] text-slate-500 opacity-50">{sq.index}</span>
+                                <span className="absolute top-0.5 right-0.5 text-[8px] font-bold text-slate-400 opacity-70">{sq.index}</span>
                             </div>
                         );
                     })}

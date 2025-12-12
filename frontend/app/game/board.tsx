@@ -48,6 +48,24 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     // Timer State
     const [timeLeft, setTimeLeft] = useState(120);
 
+    // Local state to track if player has rolled this turn
+    const [hasRolled, setHasRolled] = useState(false);
+
+    // Reset hasRolled when turn changes
+    useEffect(() => {
+        setHasRolled(false);
+    }, [state.currentPlayerIndex]);
+
+    const handleRoll = async () => {
+        if (!engineRef.current) return;
+        try {
+            await engineRef.current.rollDice();
+            setHasRolled(true);
+        } catch (error) {
+            console.error(error);
+        }
+    };
+
     // Timer Sync & Countdown Logic
     useEffect(() => {
         const updateTimer = () => {
@@ -426,9 +444,9 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         <div className="grid grid-cols-2 gap-3 mb-4">
                             <button
                                 onClick={handleRoll}
-                                disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard}
+                                disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard || hasRolled}
                                 className={`p-5 rounded-2xl border flex flex-col items-center gap-2 group transition-all duration-200
-                                    ${isMyTurn && state.phase === 'ROLL' && !state.currentCard
+                                    ${isMyTurn && state.phase === 'ROLL' && !state.currentCard && !hasRolled
                                         ? 'bg-gradient-to-b from-green-600 to-green-700 border-green-500 text-white shadow-xl shadow-green-900/40 hover:scale-[1.02] hover:shadow-green-900/60 cursor-pointer'
                                         : 'bg-slate-800/50 border-slate-700 text-slate-500 opacity-50 cursor-not-allowed'}`}
                             >
@@ -437,9 +455,9 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                             </button>
                             <button
                                 onClick={handleEndTurn}
-                                disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard)}
+                                disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard && !hasRolled)}
                                 className={`p-5 rounded-2xl border flex flex-col items-center gap-2 group transition-all duration-200
-                                    ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard)
+                                    ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard || hasRolled)
                                         ? 'bg-gradient-to-b from-blue-600 to-blue-700 border-blue-500 text-white shadow-xl shadow-blue-900/40 hover:scale-[1.02] hover:shadow-blue-900/60 cursor-pointer'
                                         : 'bg-slate-800/50 border-slate-700 text-slate-500 opacity-50 cursor-not-allowed'}`}
                             >
@@ -464,12 +482,12 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                             </div>
                         ))}
                     </div>
-                </div>
+                </div >
 
-            </div>
+            </div >
 
             {/* BOTTOM NAV MOBILE */}
-            <div className="lg:hidden bg-[#0B0E14] border-t border-slate-800 p-2 pb-6 z-50">
+            < div className="lg:hidden bg-[#0B0E14] border-t border-slate-800 p-2 pb-6 z-50" >
                 <div className="max-w-md mx-auto flex justify-between items-center gap-2">
                     <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="flex flex-col items-center gap-1 p-2 w-16 text-slate-400">
                         <span className="text-xl">☰</span>
@@ -500,17 +518,19 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         <span className="text-[9px] font-bold uppercase tracking-wider">Банк</span>
                     </button>
                 </div>
-            </div>
+            </div >
 
             <BankModal isOpen={showBank} onClose={() => setShowBank(false)} player={me} roomId={roomId} transactions={state.transactions} players={state.players} />
-            {state.winner && (
-                <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-md">
-                    <div className="text-8xl mb-8 animate-bounce">🏆</div>
-                    <h2 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 mb-6 tracking-tighter shadow-2xl">ПОБЕДА!</h2>
-                    <div className="text-3xl text-white mb-12 font-light"><span className="font-bold text-yellow-400">{state.winner}</span> Выграл!</div>
-                    <button onClick={() => window.location.reload()} className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-full text-xl shadow-lg">Играть снова</button>
-                </div>
-            )}
-        </div>
+            {
+                state.winner && (
+                    <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-md">
+                        <div className="text-8xl mb-8 animate-bounce">🏆</div>
+                        <h2 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 mb-6 tracking-tighter shadow-2xl">ПОБЕДА!</h2>
+                        <div className="text-3xl text-white mb-12 font-light"><span className="font-bold text-yellow-400">{state.winner}</span> Выграл!</div>
+                        <button onClick={() => window.location.reload()} className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-full text-xl shadow-lg">Играть снова</button>
+                    </div>
+                )
+            }
+        </div >
     );
 }
