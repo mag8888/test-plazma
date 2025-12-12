@@ -185,7 +185,7 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId 
                         const angleOffset = 90;
                         const angleDeg = (posIndex * (360 / totalSteps)) + angleOffset;
                         const angleRad = angleDeg * (Math.PI / 180);
-                        const radius = 32;
+                        const radius = 42; // Increased from 32 to 42 to fill space
                         const x = 50 + radius * Math.cos(angleRad);
                         const y = 50 + radius * Math.sin(angleRad);
                         style = { left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' };
@@ -213,10 +213,10 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId 
                                 // For FT, calculate approximate % based on grid cell centers
                                 left: `${((style.gridColumn - 0.5) / 13) * 100}%`,
                                 top: `${((style.gridRow - 0.5) / 13) * 100}%`,
-                                transform: `translate(-50%, -50%) translate(${(idx % 2) * 4}px, ${(idx > 1 ? 1 : -1) * 4}px)`
+                                transform: `translate(-50%, -50%)` // Removed random offset
                             } : {
                                 ...style, // Circular absolute style
-                                transform: `${style.transform} translate(${(idx % 2) * 5}px, ${(idx > 1 ? 1 : -1) * 5}px)`
+                                transform: `${style.transform}` // Removed random offset
                             }}
                         >
                             <div className={`

@@ -13,6 +13,7 @@ export interface GameState {
     log: string[];
     winner?: string;
     transactions: Transaction[];
+    turnExpiresAt?: number;
 }
 
 export interface Transaction {
