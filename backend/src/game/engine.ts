@@ -295,11 +295,31 @@ export class GameEngine {
         const player = this.state.players.find(p => p.id === playerId);
         if (!player) return;
 
+        if (amount <= 0 || amount % 1000 !== 0) {
+            this.state.log.push(`${player.name} failed to take loan: Amount must be a multiple of 1000.`);
+            return;
+        }
+
         // Interest 10%
         const interest = amount * 0.1;
 
+        if (player.cashflow - interest < 0) {
+            this.state.log.push(`${player.name} failed to take loan: Insufficient Cashflow.`);
+            return;
+        }
+
         player.cash += amount;
         player.loanDebt += amount;
+
+        // Update Liability
+        let bankLoan = player.liabilities.find((l: any) => l.name === 'Bank Loan');
+        if (bankLoan) {
+            bankLoan.value += amount;
+            bankLoan.expense += interest;
+        } else {
+            player.liabilities.push({ name: 'Bank Loan', value: amount, expense: interest });
+        }
+
         player.expenses += interest;
         player.cashflow = player.income - player.expenses;
 
@@ -325,6 +345,7 @@ export class GameEngine {
         const player = this.state.players.find(p => p.id === playerId);
         if (!player) return;
 
+        if (amount <= 0 || amount % 1000 !== 0) return;
         if (player.loanDebt < amount) return; // Cannot overpay
         if (player.cash < amount) return;
 
@@ -332,6 +353,19 @@ export class GameEngine {
 
         player.cash -= amount;
         player.loanDebt -= amount;
+
+        // Update Liability
+        const bankLoanIndex = player.liabilities.findIndex((l: any) => l.name === 'Bank Loan');
+        if (bankLoanIndex !== -1) {
+            player.liabilities[bankLoanIndex].value -= amount;
+            player.liabilities[bankLoanIndex].expense -= interest;
+
+            // Remove if paid off (or close to 0 due to float precision, though integers used here)
+            if (player.liabilities[bankLoanIndex].value <= 0) {
+                player.liabilities.splice(bankLoanIndex, 1);
+            }
+        }
+
         player.expenses -= interest;
         player.cashflow = player.income - player.expenses;
 

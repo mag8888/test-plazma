@@ -20,9 +20,20 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
 
     if (!isOpen) return null;
 
-    const maxLoan = 38000;
+    // Dynamic Max Loan: Based on Cashflow (10% interest rule)
+    // Max Loan = (Current Cashflow / 100) * 1000
+    // Example: Cashflow 1050 -> 10 * 1000 = 10,000
+    const maxNewLoan = Math.max(0, Math.floor((player.cashflow || 0) / 100) * 1000);
     const currentLoan = player.loanDebt || 0;
-    const availableLoan = maxLoan - currentLoan; // Or however logic defines it
+    // Total max loan player can HOLD is based on income - other expenses?
+    // Actually, the requirement says "if cashflow is 1050, he can take 10000". This implies the limit is on the *incremental* loan based on *remaining* cashflow.
+    // So `maxNewLoan` is correct.
+
+    // However, the UI might want to show "Total Credit Limit".
+    // If Cashflow is 0, Max Loan is 0.
+    // If Cashflow is 400, Max Loan is 4000.
+    // So the limit is dynamic based on CURRENT cashflow.
+    const availableLoan = maxNewLoan;
 
     // Filter transactions for this player (either from or to)
     const myHistory = transactions.filter(t => t.from === player.name || t.to === player.name);
@@ -121,16 +132,17 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                             <span className="text-red-400 font-mono font-bold">${currentLoan.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between items-center mb-4 text-xs">
-                            <span className="text-slate-500">Макс:</span>
-                            <span className="text-slate-500 font-mono">${maxLoan.toLocaleString()}</span>
+                            <span className="text-slate-500">Доступно:</span>
+                            <span className="text-slate-500 font-mono text-green-400 font-bold">+${availableLoan.toLocaleString()}</span>
                         </div>
 
-                        <input
-                            type="number"
-                            className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white mb-3 outline-none focus:border-blue-500"
-                            placeholder="Сумма"
-                            value={amount || ''}
-                            onChange={e => setAmount(Number(e.target.value))}
+                        type="number"
+                        step={1000}
+                        min={0}
+                        className="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-white mb-3 outline-none focus:border-blue-500"
+                        placeholder="Сумма (кратно 1000)"
+                        value={amount || ''}
+                        onChange={e => setAmount(Number(e.target.value))}
                         />
 
                         <div className="grid grid-cols-2 gap-2">
@@ -141,6 +153,8 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                                 Взять
                             </button>
                         </div>
+                        {amount > 0 && amount % 1000 !== 0 && <div className="text-red-500 text-xs mt-2 text-center">Сумма должна быть кратна $1,000</div>}
+                        {amount > availableLoan && <div className="text-red-500 text-xs mt-2 text-center">Превышен лимит по денежному потоку</div>}
                     </div>
                 </div>
 
