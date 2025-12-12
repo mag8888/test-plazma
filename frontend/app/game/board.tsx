@@ -219,6 +219,87 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 </div>
             )}
 
+            {/* 📱 MOBILE MENU OVERLAY */}
+            {showMobileMenu && (
+                <div className="lg:hidden absolute inset-0 z-[60] bg-[#0f172a]/95 backdrop-blur-xl p-4 flex flex-col gap-4 overflow-y-auto animate-in slide-in-from-left duration-300">
+                    <div className="flex justify-between items-center mb-2">
+                        <h2 className="text-2xl font-black text-white uppercase tracking-wider">Меню</h2>
+                        <button onClick={() => setShowMobileMenu(false)} className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">✕</button>
+                    </div>
+
+                    {/* Profile Section */}
+                    <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
+                        <div className="flex items-center gap-4 mb-4">
+                            <span className="text-4xl">👷</span>
+                            <div>
+                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Профессия</span>
+                                <div className="text-xl font-bold text-white">{me.professionName || 'Выбор...'}</div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3 mb-4">
+                            <div className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800">
+                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс</div>
+                                <div className="font-mono text-xl text-green-400 font-bold">${me.cash?.toLocaleString()}</div>
+                            </div>
+                            <div className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800">
+                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит</div>
+                                <div className="font-mono text-xl text-red-400 font-bold">${me.loanDebt?.toLocaleString()}</div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
+                                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Доход</div>
+                                <div className="font-mono text-slate-300 font-medium">${me.income?.toLocaleString()}</div>
+                            </div>
+                            <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
+                                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Расходы</div>
+                                <div className="font-mono text-slate-300 font-medium">${me.expenses?.toLocaleString()}</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Assets Section */}
+                    <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
+                            <span>🏠</span> Ваши Активы
+                        </h3>
+                        {me.assets?.length > 0 ? (
+                            <div className="space-y-2">
+                                {me.assets.map((a: any, i: number) => (
+                                    <div key={i} className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50">
+                                        <span className="text-slate-300 font-medium">{a.title}</span>
+                                        <span className="font-mono text-green-400 font-bold bg-green-900/10 px-1.5 py-0.5 rounded ml-2">+${a.cashflow}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : <div className="text-xs text-slate-600 text-center py-4 italic">Нет активов</div>}
+                    </div>
+
+                    {/* Players List Section */}
+                    <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
+                            <span>👥</span> Игроки
+                        </h3>
+                        <div className="space-y-2">
+                            {state.players.map((p: any) => (
+                                <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${p.id === currentPlayer.id ? 'bg-slate-800/80 border-blue-500/50 shadow-lg shadow-blue-900/10' : 'bg-slate-900/30 border-slate-800/50'}`}>
+                                    <div className="text-lg bg-slate-950 w-8 h-8 flex items-center justify-center rounded-xl border border-slate-800 shadow-inner">{p.token}</div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="text-sm font-bold text-slate-200 truncate">{p.name}</div>
+                                        <div className="text-[10px] text-slate-500 font-mono">${p.cash?.toLocaleString()}</div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* Spacer for bottom nav */}
+                    <div className="h-20"></div>
+                </div>
+            )}
+
             {/* ⚡ OPPORTUNITY CHOICE MODAL */}
             {state.phase === 'OPPORTUNITY_CHOICE' && isMyTurn && (
                 <div className="absolute inset-0 z-[95] bg-black/80 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-300">

@@ -47,8 +47,8 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-            <div className="bg-[#1e293b] w-full max-w-4xl rounded-3xl border border-slate-700 shadow-2xl overflow-hidden flex flex-col md:flex-row h-[80vh] md:h-auto">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-2 md:p-4 animate-in fade-in duration-200">
+            <div className="bg-[#1e293b] w-full max-w-4xl rounded-3xl border border-slate-700 shadow-2xl flex flex-col md:flex-row h-[90vh] md:h-auto md:max-h-[90vh] overflow-hidden">
 
                 {/* Close Button Mobile */}
                 <button onClick={onClose} className="absolute top-4 right-4 md:hidden text-slate-400 hover:text-white">
@@ -145,7 +145,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                 </div>
 
                 {/* RIGHT PANEL: Transfer & History */}
-                <div className="w-full md:w-2/3 p-6 flex flex-col gap-6 overflow-y-auto">
+                <div className="w-full md:w-2/3 p-4 md:p-6 flex flex-col gap-4 md:gap-6 overflow-y-auto flex-1">
                     <div className="flex justify-between items-center">
                         <h3 className="text-xl font-bold text-white">Банковские операции</h3>
                         <button onClick={onClose} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:bg-slate-700 transition-colors">✕</button>
