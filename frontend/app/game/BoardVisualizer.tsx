@@ -146,94 +146,92 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId 
                                     </span>
                                 </div>
                                 <span className="absolute -top-1 -right-1 w-3 h-3 bg-slate-900 border border-slate-700 rounded-full flex items-center justify-center text-[6px] text-slate-500">{sq.index}</span>
+                                <span className="absolute -top-1 -right-1 w-3 h-3 bg-slate-900 border border-slate-700 rounded-full flex items-center justify-center text-[6px] text-slate-500">{square.index}</span>
                             </div>
                         );
-                    })}
-                </div>
-
-                {/* 3. CENTER HUB */}
-                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[25%] h-[25%] rounded-full bg-slate-950 border-4 border-slate-800/80 shadow-2xl flex flex-col items-center justify-center z-10 overflow-hidden">
-                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900 via-slate-900 to-black animate-pulse"></div>
-                    <h1 className="text-3xl lg:text-4xl font-black bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent transform -skew-x-6">MONEO</h1>
-                    <span className="text-[8px] text-slate-500 tracking-[0.4em] uppercase font-bold mt-1">Energy of Money</span>
-                </div>
-
-                {/* 4. PLAYER TOKENS */}
-                {players.map((p: any, idx: number) => {
-                    const posIndex = animatingPos[p.id] ?? p.position;
-                    const isFT = p.isFastTrack;
-
-                    // Re-calculate style for token
-                    let style: any = {};
-                    if (isFT) {
-                        // Grid logic
-                        const index = posIndex;
-                        const ftIndex = index >= 24 ? index - 24 : index;
-                        let r, c;
-                        if (ftIndex <= 12) { r = 13; c = 13 - ftIndex; }
-                        else if (ftIndex <= 23) { r = 13 - (ftIndex - 12); c = 1; }
-                        else if (ftIndex <= 36) { r = 1; c = 1 + (ftIndex - 24); }
-                        else { r = 2 + (ftIndex - 37); c = 13; }
-
-                        // Convert to % for smooth usage or keep grid? 
-                        // To keep it absolute over everything, stick to grid placement in same parent 
-                        // But parent has absolute inset grid... 
-                        style = { gridRow: r, gridColumn: c };
-                    } else {
-                        // Circle logic
-                        const totalSteps = 24;
-                        const angleOffset = 90;
-                        const angleDeg = (posIndex * (360 / totalSteps)) + angleOffset;
-                        const angleRad = angleDeg * (Math.PI / 180);
-                        const radius = 42; // Increased from 32 to 42 to fill space
-                        const x = 50 + radius * Math.cos(angleRad);
-                        const y = 50 + radius * Math.sin(angleRad);
-                        style = { left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' };
                     }
+                })}
 
-                    // Tokens must be separate layer
-                    // If IS FT, we need to be inside the Grid Container? 
-                    // No, let's make tokens absolute in the MAIN container.
-                    // But for Grid coords to work, we need a grid container. 
+                    {/* 3. CENTER HUB - Now part of the grid, spanning central cells */}
+                    <div className="col-start-4 col-end-11 row-start-4 row-end-11 relative rounded-full bg-slate-950 border-4 border-slate-800/80 shadow-2xl flex flex-col items-center justify-center z-10 overflow-hidden">
+                        <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900 via-slate-900 to-black animate-pulse"></div>
+                        <h1 className="text-3xl lg:text-4xl font-black bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent transform -skew-x-6">MONEO</h1>
+                        <span className="text-[8px] text-slate-500 tracking-[0.4em] uppercase font-bold mt-1">Energy of Money</span>
+                    </div>
 
-                    // Solution: Use a separate overlay for tokens that mimics structure or calculates absolute % for grid too.
-                    // For now, let's assume grid works if we put it in the grid layer, BUT Rat Race tokens need Circle.
+                    {/* 4. PLAYER TOKENS - Rendered as absolute elements within the main grid container */}
+                    {players.map((p: any, idx: number) => {
+                        const posIndex = animatingPos[p.id] ?? p.position;
+                        const isFT = p.isFastTrack;
 
-                    // Wait, Grid items and Absolute items in same parent? 
-                    // Let's wrapping Tokens in a layer.
+                        let style: any = {};
+                        if (isFT) {
+                            // Grid logic for FT tokens
+                            const ftIndex = posIndex >= 24 ? posIndex - 24 : posIndex;
+                            let r, c;
+                            if (ftIndex < 13) { r = 1; c = ftIndex + 1; }
+                            else if (ftIndex < 25) { r = (ftIndex - 12) + 1; c = 13; }
+                            else if (ftIndex < 37) { r = 13; c = 13 - (ftIndex - 24); }
+                            else { r = 13 - (ftIndex - 36); c = 1; }
 
-                    return (
-                        <div
-                            key={p.id}
-                            className={`
+                            // Position tokens at the center of their grid cell
+                            style = {
+                                gridRow: r,
+                                gridColumn: c,
+                                position: 'absolute' as 'absolute', // Ensure absolute positioning within the grid item
+                                left: '50%',
+                                top: '50%',
+                                transform: 'translate(-50%, -50%)'
+                            };
+                        } else {
+                            // Circle logic for Rat Race tokens
+                            const totalSteps = 24;
+                            const angleOffset = 90;
+                            const angleDeg = (posIndex * (360 / totalSteps)) + angleOffset;
+                            const angleRad = angleDeg * (Math.PI / 180);
+                            const radius = 42; // Increased from 32 to 42 to fill space
+                            const x = 50 + radius * Math.cos(angleRad);
+                            const y = 50 + radius * Math.sin(angleRad);
+                            // But for Grid coords to work, we need a grid container. 
+
+                            // Solution: Use a separate overlay for tokens that mimics structure or calculates absolute % for grid too.
+                            // For now, let's assume grid works if we put it in the grid layer, BUT Rat Race tokens need Circle.
+
+                            // Wait, Grid items and Absolute items in same parent? 
+                            // Let's wrapping Tokens in a layer.
+
+                            return (
+                                <div
+                                    key={p.id}
+                                    className={`
                                 absolute w-10 h-10 ${isFT ? 'z-30' : 'z-50'}
                                 flex items-center justify-center transition-all duration-300 ease-in-out
                             `}
-                            style={isFT ? {
-                                // For FT, calculate approximate % based on grid cell centers
-                                left: `${((style.gridColumn - 0.5) / 13) * 100}%`,
-                                top: `${((style.gridRow - 0.5) / 13) * 100}%`,
-                                transform: `translate(-50%, -50%)` // Removed random offset
-                            } : {
-                                ...style, // Circular absolute style
-                                transform: `${style.transform}` // Removed random offset
-                            }}
-                        >
-                            <div className={`
+                                    style={isFT ? {
+                                        // For FT, calculate approximate % based on grid cell centers
+                                        left: `${((style.gridColumn - 0.5) / 13) * 100}%`,
+                                        top: `${((style.gridRow - 0.5) / 13) * 100}%`,
+                                        transform: `translate(-50%, -50%)` // Removed random offset
+                                    } : {
+                                        ...style, // Circular absolute style
+                                        transform: `${style.transform}` // Removed random offset
+                                    }}
+                                >
+                                    <div className={`
                                 w-8 h-8 rounded-full bg-slate-900 border-2 ${p.id === currentPlayerId ? 'border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-110' : 'border-slate-600 shadow-md'}
                                 flex items-center justify-center text-lg relative
                             `}>
-                                {p.token}
-                                {/* Name Tag */}
-                                <div className="absolute -top-4 bg-slate-900/80 text-white text-[8px] px-2 py-0.5 rounded-full whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">
-                                    {p.name}
+                                        {p.token}
+                                        {/* Name Tag */}
+                                        <div className="absolute -top-4 bg-slate-900/80 text-white text-[8px] px-2 py-0.5 rounded-full whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">
+                                            {p.name}
+                                        </div>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
-                    );
-                })}
+                            );
+                        })}
 
+                </div>
             </div>
-        </div>
-    );
+            );
 };
