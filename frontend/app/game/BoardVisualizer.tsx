@@ -77,7 +77,7 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId 
             <div className="relative w-full aspect-square max-w-[85vh] max-h-[85vh]">
 
                 {/* 1. OUTER TRACK (GRID) */}
-                <div className="absolute inset-0 grid grid-cols-13 grid-rows-13 gap-1 pointer-events-none">
+                <div className="absolute inset-0 grid grid-cols-[repeat(13,minmax(0,1fr))] grid-rows-[repeat(13,minmax(0,1fr))] gap-1 pointer-events-none">
                     {board.filter((sq: any) => isFastTrackSquare(sq.index)).map((sq: any) => {
                         const style = getPosStyle(sq.index, true);
                         const gradient = getGradient(sq.type, true);
