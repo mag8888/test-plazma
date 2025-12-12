@@ -279,20 +279,7 @@ export class GameEngine {
         }
     }
 
-    resolveOpportunity(size: 'SMALL' | 'BIG') {
-        const player = this.state.players[this.state.currentPlayerIndex];
 
-        let card: Card;
-        if (size === 'SMALL') {
-            card = this.cardManager.drawSmallDeal();
-        } else {
-            card = this.cardManager.drawBigDeal();
-        }
-
-        this.state.currentCard = card;
-        this.state.log.push(`${player.name} chose ${size} DEAL: ${card.title}`);
-        this.state.phase = 'ACTION'; // Back to action phase to buy/pass
-    }
 
     takeLoan(playerId: string, amount: number) {
         const player = this.state.players.find(p => p.id === playerId);
