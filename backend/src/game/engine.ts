@@ -411,7 +411,10 @@ export class GameEngine {
     checkTurnTimeout(): boolean {
         // Return true if state changed (turn ended)
         if (this.state.turnExpiresAt && Date.now() > this.state.turnExpiresAt) {
-            this.state.log.push(`⌛ Turn timeout for ${this.state.players[this.state.currentPlayerIndex].name}`);
+            const player = this.state.players[this.state.currentPlayerIndex];
+            if (player) {
+                this.state.log.push(`⌛ Turn timeout for ${player.name}`);
+            }
             this.endTurn();
             return true;
         }

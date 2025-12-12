@@ -40,11 +40,15 @@ export class GameGateway {
         // Game Loop for Timers (Every 1s)
         setInterval(() => {
             this.games.forEach((game, roomId) => {
-                const changed = game.checkTurnTimeout();
-                if (changed) {
-                    this.io.to(roomId).emit('turn_ended', { state: game.getState() });
-                    // Also persist state
-                    this.saveState(roomId, game);
+                try {
+                    const changed = game.checkTurnTimeout();
+                    if (changed) {
+                        this.io.to(roomId).emit('turn_ended', { state: game.getState() });
+                        // Also persist state
+                        this.saveState(roomId, game);
+                    }
+                } catch (err) {
+                    console.error(`Error in game loop for room ${roomId}:`, err);
                 }
             });
         }, 1000);
