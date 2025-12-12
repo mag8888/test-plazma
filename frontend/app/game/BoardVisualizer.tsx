@@ -1,139 +1,238 @@
 import React from 'react';
 
+// Sticker Mapping
+const getSticker = (type: string, name: string) => {
+    if (type === 'PAYDAY') return '💰';
+    if (type === 'CASHFLOW') return '💸';
+    if (type === 'OPPORTUNITY') return '⚡';
+    if (type === 'MARKET') return '🏠'; // Or specific icons for assets
+    if (type === 'DOODAD') return '🛍️';
+    if (type === 'CHARITY') return '❤️';
+    if (type === 'BABY') return '👶';
+    if (type === 'DOWNSIZED') return '📉';
+    return '⬜';
+};
+
+const getGradient = (type: string, isFT: boolean) => {
+    if (isFT) {
+        if (type === 'CASHFLOW') return 'bg-gradient-to-br from-emerald-900 to-emerald-950 border-emerald-600/50';
+        return 'bg-gradient-to-br from-slate-900 to-slate-950 border-amber-900/30';
+    }
+    if (type === 'PAYDAY') return 'bg-gradient-to-br from-yellow-900/80 to-yellow-950 border-yellow-500/50';
+    if (type === 'OPPORTUNITY') return 'bg-gradient-to-br from-green-900/40 to-green-950 border-green-500/30';
+    if (type === 'MARKET') return 'bg-gradient-to-br from-blue-900/40 to-blue-950 border-blue-500/30';
+    if (type === 'DOODAD') return 'bg-gradient-to-br from-red-900/40 to-red-950 border-red-500/30';
+    if (type === 'BABY') return 'bg-gradient-to-br from-pink-900/40 to-pink-950 border-pink-500/30';
+    if (type === 'DOWNSIZED') return 'bg-gradient-to-br from-purple-900/40 to-purple-950 border-purple-500/50';
+    return 'bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700';
+};
+
 export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId }: any) => {
-    // 13x13 Grid Layout
-    // Outer Ring (Fast Track): 1-13
-    // Inner Ring (Rat Race): 4-10
-    // Center: 5-9
 
-    const getPos = (index: number, isFastTrack: boolean) => {
+    // Position Logic
+    const getPosStyle = (index: number, isFastTrack: boolean) => {
         if (!isFastTrack) {
-            // RAT RACE (Indices 0-23)
-            // Occupies rows/cols 4-10 (7x7 square)
+            // RAT RACE: CIRCULAR (Indices 0-23)
+            // 24 Steps. 360 / 24 = 15 degrees per step.
+            // Center is 50%, 50%. Radius approx 35%.
+            const totalSteps = 24;
+            // Shift angle so index 0 is at bottom (90 deg) or top? 
+            // Usually Payday (Index 0) is Bottom Right or Bottom. Let's put it at Bottom (90deg).
+            // Actually, in CSS, 0 deg is Right. 90 is Bottom.
+            const angleOffset = 90;
+            const angleDeg = (index * (360 / totalSteps)) + angleOffset;
+            const angleRad = angleDeg * (Math.PI / 180);
 
-            // Bottom Row: 0-6 -> (10, 10) to (10, 4)
-            if (index <= 6) return { r: 10, c: 10 - index };
+            const radius = 32; // % of container width
+            const x = 50 + radius * Math.cos(angleRad);
+            const y = 50 + radius * Math.sin(angleRad);
 
-            // Left Column: 7-11 -> (9, 4) to (5, 4)
-            if (index <= 11) return { r: 10 - (index - 6), c: 4 }; // index 7 -> r9, index 11 -> r5
+            return {
+                left: `${x}%`,
+                top: `${y}%`,
+                transform: 'translate(-50%, -50%)',
+                position: 'absolute' as 'absolute'
+            };
 
-            // Top Row: 12-18 -> (4, 4) to (4, 10)
-            if (index <= 18) return { r: 4, c: 4 + (index - 12) };
-
-            // Right Column: 19-23 -> (5, 10) to (9, 10)
-            return { r: 4 + (index - 18), c: 10 };
         } else {
-            // FAST TRACK (Indices 0-47 relative to start of FT) or 24-71 absolute?
-            // Assuming Fast Track squares are stored in `board` array from index 24 to 71.
-            // Let's normalize index:
+            // FAST TRACK: SQUARE PERIMETER (Indices 24-71 -> 0-47 rel)
+            // 48 Steps. 13x13 Grid logic is fine, mapped to CSS % directly or Grid.
+            // Let's stick to Grid for consistency or absolute % if easier. 
+            // Grid was 13x13.
+
             const ftIndex = index >= 24 ? index - 24 : index;
+            let r = 0, c = 0;
 
-            // 48 Squares total
-            // Grid 1-13 (13x13)
-            // Bottom: 13 squares (0-12) -> (13, 13) to (13, 1)
-            if (ftIndex <= 12) return { r: 13, c: 13 - ftIndex };
+            // Same logic as before but adapted
+            // Bottom (0-12): Row 13
+            if (ftIndex <= 12) { r = 13; c = 13 - ftIndex; }
+            // Left (13-23): Col 1
+            else if (ftIndex <= 23) { r = 13 - (ftIndex - 12); c = 1; }
+            // Top (24-36): Row 1
+            else if (ftIndex <= 36) { r = 1; c = 1 + (ftIndex - 24); }
+            // Right (37-47): Col 13
+            else { r = 2 + (ftIndex - 37); c = 13; }
 
-            // Left: 11 squares (13-23) -> (12, 1) to (2, 1)
-            if (ftIndex <= 23) return { r: 13 - (ftIndex - 12), c: 1 };
-
-            // Top: 13 squares (24-36) -> (1, 1) to (1, 13)
-            if (ftIndex <= 36) return { r: 1, c: 1 + (ftIndex - 24) };
-
-            // Right: 11 squares (37-47) -> (2, 13) to (12, 13)
-            return { r: 2 + (ftIndex - 37), c: 13 };
+            // Convert Grid coords (1-13) to % 
+            // Grid 1 is 0%, Grid 13 is 100% roughly? 
+            // Actually let's use the Grid parent for the Outer Track!
+            return {
+                gridRow: r,
+                gridColumn: c,
+                position: 'relative' as 'relative' // It's in a grid cell
+            };
         }
     };
 
     const isFastTrackSquare = (index: number) => index >= 24;
 
     return (
-        <div className="w-full h-full grid grid-cols-13 grid-rows-13 gap-1 p-2 relative">
-            {/* Draw Path Squares */}
-            {board.map((sq: any) => {
-                const isFT = isFastTrackSquare(sq.index);
-                const { r, c } = getPos(sq.index, isFT);
+        <div className="w-full h-full relative p-4 flex items-center justify-center">
 
-                // Color Logic
-                let bgColor = 'bg-slate-800';
-                let borderColor = 'border-slate-600';
+            {/* CONTAINER FOR EVERYTHING */}
+            <div className="relative w-full aspect-square max-w-[800px] max-h-[800px]">
 
-                if (isFT) {
-                    bgColor = 'bg-slate-900';
-                    borderColor = 'border-amber-900/50';
-                    if (sq.type === 'CASHFLOW') { bgColor = 'bg-emerald-900/40'; borderColor = 'border-emerald-600'; }
-                    if (sq.type === 'Opportunity') { bgColor = 'bg-blue-900/40'; borderColor = 'border-blue-600'; }
-                } else {
-                    if (sq.type === 'PAYDAY') { bgColor = 'bg-yellow-900/60'; borderColor = 'border-yellow-500'; }
-                    if (sq.type === 'OOW') { bgColor = 'bg-red-900/60'; borderColor = 'border-red-500'; }
-                    if (sq.type === 'BABY') { bgColor = 'bg-pink-900/60'; borderColor = 'border-pink-500'; }
-                    if (sq.type === 'OPPORTUNITY') { bgColor = 'bg-green-900/20'; borderColor = 'border-green-600/50'; }
-                }
-
-                // Highlight mechanism can be added if we pass target square index
-                const isTarget = false;
-
-                if (isTarget) {
-                    // Highlight logic placeholder
-                }
-
-                return (
-                    <div
-                        key={sq.index}
-                        className={`
-                            relative border rounded flex items-center justify-center text-center transition-all hover:bg-slate-700
-                            ${bgColor} ${borderColor}
-                            ${isFT ? 'text-[9px]' : 'text-[10px]'}
-                        `}
-                        style={{
-                            gridRow: r,
-                            gridColumn: c,
-                        }}
-                        title={sq.name}
-                    >
-                        {/* Name/Icon */}
-                        <div className="z-10 px-0.5 overflow-hidden flex flex-col items-center leading-none">
-                            <span className={`font-bold ${isFT ? 'text-amber-500/70' : 'text-slate-400'}`}>
-                                {sq.type === 'PAYDAY' ? '💰' : ''}
-                                {sq.type === 'CASHFLOW' ? '🤑' : ''}
-                                {sq.type === 'BABY' ? '👶' : ''}
-                                {sq.type === 'OOW' ? '📉' : ''}
-                            </span>
-                            <span className="truncate w-full opacity-80 scale-90">{sq.name}</span>
-                        </div>
-                        <span className="absolute top-0 right-0.5 text-[6px] text-slate-600 font-mono">{sq.index}</span>
-                    </div>
-                );
-            })}
-
-            {/* Players Tokens */}
-            {players.map((p: any, idx: number) => {
-                const posIndex = animatingPos[p.id] ?? p.position;
-                const { r, c } = getPos(posIndex, p.isFastTrack);
-
-                return (
-                    <div
-                        key={p.id}
-                        className="absolute w-6 h-6 flex items-center justify-center text-lg z-50 drop-shadow-md transition-all duration-300 pointer-events-none"
-                        style={{
-                            gridRow: r,
-                            gridColumn: c,
-                            justifySelf: 'center',
-                            alignSelf: 'center',
-                            transform: `translate(${(idx % 2 === 0 ? -2 : 2) * (players.length > 1 ? 1 : 0)}px, ${(idx > 1 ? 2 : -2) * (players.length > 2 ? 1 : 0)}px)`
-                        }}
-                    >
-                        {p.token || '🔴'}
-                    </div>
-                );
-            })}
-
-            {/* Center Logo Area */}
-            <div className="row-start-5 row-end-10 col-start-5 col-end-10 flex items-center justify-center p-4">
-                <div className="w-full h-full rounded-full border-4 border-slate-800/50 flex flex-col items-center justify-center bg-radial-gradient from-slate-900 to-black shadow-2xl relative overflow-hidden">
-                    <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
-                    <h1 className="text-4xl lg:text-5xl font-black bg-gradient-to-br from-yellow-400 via-orange-500 to-red-600 bg-clip-text text-transparent z-10 animate-pulse">MONEO</h1>
-                    <p className="text-slate-500 text-[10px] uppercase tracking-[0.3em] mt-2 z-10 font-bold">Energy of Money</p>
+                {/* 1. OUTER TRACK (FAST TRACK) - STRICTLY SQUARE (Grid) */}
+                <div className="absolute inset-0 grid grid-cols-13 grid-rows-13 gap-1 pointer-events-none">
+                    {board.filter((sq: any) => isFastTrackSquare(sq.index)).map((sq: any) => {
+                        const style = getPosStyle(sq.index, true);
+                        const gradient = getGradient(sq.type, true);
+                        return (
+                            <div
+                                key={sq.index}
+                                className={`
+                                    ${gradient} border backdrop-blur-sm rounded-sm
+                                    flex items-center justify-center text-[8px]
+                                    opacity-90 shadow-lg pointer-events-auto transition-all hover:scale-110 hover:z-20
+                                `}
+                                style={style}
+                                title={sq.name}
+                            >
+                                <div className="flex flex-col items-center">
+                                    <span className="text-lg leading-none filter drop-shadow-md">{getSticker(sq.type, sq.name)}</span>
+                                    {sq.type === 'CASHFLOW' && <span className="text-emerald-400 font-bold tracking-tighter">Day</span>}
+                                </div>
+                                <span className="absolute top-0 right-0.5 text-[5px] text-slate-500 opacity-50">{sq.index}</span>
+                            </div>
+                        );
+                    })}
                 </div>
+
+                {/* 2. INNER TRACK (RAT RACE) - CIRCULAR (Absolute) */}
+                <div className="absolute inset-[15%] rounded-full border border-slate-800/30 pointer-events-none">
+                    {/* Guidance Circle Line */}
+                    <div className="absolute inset-0 rounded-full border-2 border-dashed border-slate-700/20 animate-spin-slow-reverse opacity-30"></div>
+
+                    {board.filter((sq: any) => !isFastTrackSquare(sq.index)).map((sq: any) => {
+                        const style = getPosStyle(sq.index, false);
+                        const gradient = getGradient(sq.type, false);
+                        return (
+                            <div
+                                key={sq.index}
+                                className={`
+                                    w-[14%] h-[14%] rounded-xl shadow-xl border
+                                    flex items-center justify-center pointer-events-auto
+                                    transition-all hover:scale-125 hover:z-50 duration-300
+                                    ${gradient}
+                                `}
+                                style={style as React.CSSProperties}
+                                title={sq.name}
+                            >
+                                <div className="flex flex-col items-center justify-center transform hover:rotate-0 transition-transform">
+                                    <span className="text-xl lg:text-2xl filter drop-shadow-lg">{getSticker(sq.type, sq.name)}</span>
+                                    {/* Small Label for Clarity */}
+                                    <span className="text-[6px] font-bold text-slate-400 uppercase tracking-tight mt-[-2px] bg-black/40 px-1 rounded-full backdrop-blur-sm hidden lg:block">
+                                        {sq.type === 'OPPORTUNITY' ? (sq.name.includes('Big') ? 'Big' : 'Small') : sq.type}
+                                    </span>
+                                </div>
+                                <span className="absolute -top-1 -right-1 w-3 h-3 bg-slate-900 border border-slate-700 rounded-full flex items-center justify-center text-[6px] text-slate-500">{sq.index}</span>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* 3. CENTER HUB */}
+                <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-[25%] h-[25%] rounded-full bg-slate-950 border-4 border-slate-800/80 shadow-2xl flex flex-col items-center justify-center z-10 overflow-hidden">
+                    <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900 via-slate-900 to-black animate-pulse"></div>
+                    <h1 className="text-3xl lg:text-4xl font-black bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent transform -skew-x-6">MONEO</h1>
+                    <span className="text-[8px] text-slate-500 tracking-[0.4em] uppercase font-bold mt-1">Energy of Money</span>
+                </div>
+
+                {/* 4. PLAYER TOKENS */}
+                {players.map((p: any, idx: number) => {
+                    const posIndex = animatingPos[p.id] ?? p.position;
+                    const isFT = p.isFastTrack;
+
+                    // Re-calculate style for token
+                    let style: any = {};
+                    if (isFT) {
+                        // Grid logic
+                        const index = posIndex;
+                        const ftIndex = index >= 24 ? index - 24 : index;
+                        let r, c;
+                        if (ftIndex <= 12) { r = 13; c = 13 - ftIndex; }
+                        else if (ftIndex <= 23) { r = 13 - (ftIndex - 12); c = 1; }
+                        else if (ftIndex <= 36) { r = 1; c = 1 + (ftIndex - 24); }
+                        else { r = 2 + (ftIndex - 37); c = 13; }
+
+                        // Convert to % for smooth usage or keep grid? 
+                        // To keep it absolute over everything, stick to grid placement in same parent 
+                        // But parent has absolute inset grid... 
+                        style = { gridRow: r, gridColumn: c };
+                    } else {
+                        // Circle logic
+                        const totalSteps = 24;
+                        const angleOffset = 90;
+                        const angleDeg = (posIndex * (360 / totalSteps)) + angleOffset;
+                        const angleRad = angleDeg * (Math.PI / 180);
+                        const radius = 32;
+                        const x = 50 + radius * Math.cos(angleRad);
+                        const y = 50 + radius * Math.sin(angleRad);
+                        style = { left: `${x}%`, top: `${y}%`, transform: 'translate(-50%, -50%)' };
+                    }
+
+                    // Tokens must be separate layer
+                    // If IS FT, we need to be inside the Grid Container? 
+                    // No, let's make tokens absolute in the MAIN container.
+                    // But for Grid coords to work, we need a grid container. 
+
+                    // Solution: Use a separate overlay for tokens that mimics structure or calculates absolute % for grid too.
+                    // For now, let's assume grid works if we put it in the grid layer, BUT Rat Race tokens need Circle.
+
+                    // Wait, Grid items and Absolute items in same parent? 
+                    // Let's wrapping Tokens in a layer.
+
+                    return (
+                        <div
+                            key={p.id}
+                            className={`
+                                absolute w-10 h-10 ${isFT ? 'z-30' : 'z-50'}
+                                flex items-center justify-center transition-all duration-300 ease-in-out
+                            `}
+                            style={isFT ? {
+                                // For FT, calculate approximate % based on grid cell centers
+                                left: `${((style.gridColumn - 0.5) / 13) * 100}%`,
+                                top: `${((style.gridRow - 0.5) / 13) * 100}%`,
+                                transform: `translate(-50%, -50%) translate(${(idx % 2) * 4}px, ${(idx > 1 ? 1 : -1) * 4}px)`
+                            } : {
+                                ...style, // Circular absolute style
+                                transform: `${style.transform} translate(${(idx % 2) * 5}px, ${(idx > 1 ? 1 : -1) * 5}px)`
+                            }}
+                        >
+                            <div className={`
+                                w-8 h-8 rounded-full bg-slate-900 border-2 ${p.id === currentPlayerId ? 'border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-110' : 'border-slate-600 shadow-md'}
+                                flex items-center justify-center text-lg relative
+                            `}>
+                                {p.token}
+                                {/* Name Tag */}
+                                <div className="absolute -top-4 bg-slate-900/80 text-white text-[8px] px-2 py-0.5 rounded-full whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">
+                                    {p.name}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+
             </div>
         </div>
     );
