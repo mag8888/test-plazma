@@ -197,6 +197,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     fixed inset-0 z-50 bg-[#0B0E14]/95 backdrop-blur-md transition-transform duration-300 transform 
                     lg:relative lg:transform-none lg:flex lg:flex-col lg:bg-[#0B0E14] lg:border-r lg:border-slate-800 lg:z-auto
                     ${showMobileMenu ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+                    lg:overflow-y-auto custom-scrollbar
                 `}>
                     {/* Mobile Header */}
                     <div className="lg:hidden p-4 border-b border-slate-800 flex justify-between items-center bg-slate-900/50">
@@ -207,81 +208,86 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         <button onClick={() => setShowMobileMenu(false)} className="w-8 h-8 rounded-full bg-slate-800 text-slate-400">✕</button>
                     </div>
 
-                    <div className="p-4 overflow-y-auto custom-scrollbar h-full flex flex-col gap-4">
+                    <div className="p-4 flex flex-col gap-4">
                         {(!showMobileMenu || mobileView === 'stats') && (
                             <>
                                 {/* Profile Card (Interactive Stats) */}
-                                <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 shadow-lg">
-                                    <div className="flex justify-between items-center mb-4">
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-2xl">👷</span>
+                                <div className="bg-gradient-to-b from-[#1e293b] to-[#0f172a] rounded-2xl p-5 border border-slate-700/50 shadow-xl relative overflow-hidden group hover:border-slate-600 transition-colors">
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -mr-12 -mt-12 pointer-events-none"></div>
+                                    <div className="flex justify-between items-center mb-6 relative">
+                                        <div className="flex items-center gap-3">
+                                            <span className="text-3xl filter drop-shadow-md">👷</span>
                                             <div>
-                                                <span className="text-[10px] text-slate-500 uppercase">Профессия</span>
-                                                <div className="font-bold text-slate-200 leading-tight">{me.professionName || 'Выбор...'}</div>
+                                                <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Профессия</span>
+                                                <div className="text-xl font-bold text-white leading-tight tracking-tight">{me.professionName || 'Выбор...'}</div>
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-2 mb-4">
-                                        {/* BALANCE (Click Open Bank) */}
-                                        <button onClick={() => setShowBank(true)} className="bg-slate-900/50 p-2 rounded-lg border border-slate-800 hover:bg-slate-800 hover:border-slate-600 transition-all text-left group">
-                                            <div className="text-[10px] text-slate-500">Баланс 🏦</div>
-                                            <div className="font-mono text-green-400 group-hover:scale-105 transition-transform">${me.cash?.toLocaleString()}</div>
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        {/* BALANCE */}
+                                        <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group">
+                                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
+                                            <div className="font-mono text-xl text-green-400 font-bold tracking-tight shadow-green-900/20 drop-shadow-sm group-hover:scale-105 transition-transform origin-left">${me.cash?.toLocaleString()}</div>
                                         </button>
 
-                                        {/* CREDIT (Click Open Bank - maybe Loan tab later [TODO], for now Bank) */}
-                                        <button onClick={() => setShowBank(true)} className="bg-slate-900/50 p-2 rounded-lg border border-slate-800 hover:bg-slate-800 hover:border-slate-600 transition-all text-left group">
-                                            <div className="text-[10px] text-slate-500">Кредит 💳</div>
-                                            <div className="font-mono text-red-400 group-hover:scale-105 transition-transform">${me.loanDebt?.toLocaleString()}</div>
+                                        {/* CREDIT */}
+                                        <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group">
+                                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит 💳</div>
+                                            <div className="font-mono text-xl text-red-400 font-bold tracking-tight shadow-red-900/20 drop-shadow-sm group-hover:scale-105 transition-transform origin-left">${me.loanDebt?.toLocaleString()}</div>
                                         </button>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-2 mb-4">
-                                        <div className="bg-slate-900/50 p-2 rounded-lg border border-slate-800">
-                                            <div className="text-[10px] text-slate-500">Доход</div>
-                                            <div className="font-mono text-slate-200">${me.income?.toLocaleString()}</div>
+                                    <div className="grid grid-cols-2 gap-3 mb-4">
+                                        <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
+                                            <div className="text-[9px] text-slate-500 uppercase tracking-wider">Доход</div>
+                                            <div className="font-mono text-slate-300 font-medium">${me.income?.toLocaleString()}</div>
                                         </div>
-                                        <div className="bg-slate-900/50 p-2 rounded-lg border border-slate-800">
-                                            <div className="text-[10px] text-slate-500">Расходы</div>
-                                            <div className="font-mono text-slate-200">${me.expenses?.toLocaleString()}</div>
+                                        <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
+                                            <div className="text-[9px] text-slate-500 uppercase tracking-wider">Расходы</div>
+                                            <div className="font-mono text-slate-300 font-medium">${me.expenses?.toLocaleString()}</div>
                                         </div>
                                     </div>
 
-                                    <div className="flex justify-between items-center pt-3 border-t border-slate-800/50">
-                                        <span className="text-blue-400 font-bold text-sm">PAYDAY</span>
-                                        <span className="font-mono font-bold text-green-400">+${me.cashflow?.toLocaleString()}</span>
+                                    <div className="flex justify-between items-center pt-4 border-t border-slate-800/50">
+                                        <span className="text-blue-400 font-black text-sm tracking-widest uppercase filter drop-shadow-sm">PAYDAY</span>
+                                        <span className="font-mono font-black text-lg text-green-400 bg-green-900/10 px-2 py-0.5 rounded-md border border-green-500/20">+${me.cashflow?.toLocaleString()}</span>
                                     </div>
                                 </div>
 
                                 {/* Assets */}
-                                <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 shadow-lg">
-                                    <h3 className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-3">Ваши Активы</h3>
+                                <div className="bg-[#151b2b] rounded-2xl p-5 border border-slate-800 shadow-lg">
+                                    <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
+                                        <span>🏠</span> Ваши Активы
+                                    </h3>
                                     {me.assets?.length > 0 ? (
                                         <div className="space-y-2">
                                             {me.assets.map((a: any, i: number) => (
-                                                <div key={i} className="flex justify-between text-xs p-2 bg-slate-900/50 rounded-lg">
-                                                    <span className="text-slate-300">{a.title}</span>
-                                                    <span className="font-mono text-green-400">+${a.cashflow}</span>
+                                                <div key={i} className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-700 transition-colors">
+                                                    <span className="text-slate-300 font-medium">{a.title}</span>
+                                                    <span className="font-mono text-green-400 font-bold bg-green-900/10 px-1.5 py-0.5 rounded ml-2">+${a.cashflow}</span>
                                                 </div>
                                             ))}
                                         </div>
-                                    ) : <div className="text-xs text-slate-600 text-center py-2">Нет активов</div>}
+                                    ) : <div className="text-xs text-slate-600 text-center py-4 italic">Нет активов</div>}
                                 </div>
                             </>
                         )}
 
                         {(!showMobileMenu || mobileView === 'players') && (
-                            <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 shadow-lg flex-1">
-                                <h3 className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-3">Игроки в комнате</h3>
+                            <div className="bg-[#151b2b] rounded-2xl p-5 border border-slate-800 shadow-lg flex-1">
+                                <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
+                                    <span>👥</span> Игроки
+                                </h3>
                                 <div className="space-y-2">
                                     {state.players.map((p: any) => (
-                                        <div key={p.id} className={`flex items-center gap-3 p-2 rounded-xl border ${p.id === currentPlayer.id ? 'bg-slate-800 border-blue-500/50' : 'bg-slate-900/30 border-slate-800/50'}`}>
-                                            <div className="text-xl bg-slate-900 w-8 h-8 flex items-center justify-center rounded-lg border border-slate-800">{p.token}</div>
+                                        <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${p.id === currentPlayer.id ? 'bg-slate-800/80 border-blue-500/50 shadow-lg shadow-blue-900/10 scale-[1.02]' : 'bg-slate-900/30 border-slate-800/50'}`}>
+                                            <div className="text-lg bg-slate-950 w-10 h-10 flex items-center justify-center rounded-xl border border-slate-800 shadow-inner">{p.token}</div>
                                             <div className="flex-1 min-w-0">
-                                                <div className="text-xs font-bold text-slate-200 truncate">{p.name}</div>
+                                                <div className="text-sm font-bold text-slate-200 truncate">{p.name}</div>
                                                 <div className="text-[10px] text-slate-500 font-mono">${p.cash?.toLocaleString()}</div>
                                             </div>
-                                            {p.id === currentPlayer.id && <div className="text-[10px] text-blue-400 animate-pulse font-bold">Acting</div>}
+                                            {p.id === currentPlayer.id && <div className="text-[9px] text-blue-400 bg-blue-900/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">Ходит</div>}
                                         </div>
                                     ))}
                                 </div>
@@ -397,53 +403,65 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 </div>
 
                 {/* RIGHT SIDEBAR (Desktop) */}
-                <div className="hidden lg:flex flex-col w-[350px] border-l border-slate-800 bg-[#0B0E14] p-4 relative">
+                <div className="hidden lg:flex flex-col w-[350px] border-l border-slate-800 bg-[#0B0E14] p-4 relative overflow-y-auto custom-scrollbar">
 
                     {/* TIMER COMPONENT */}
-                    <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 shadow-lg mb-4 flex items-center justify-between">
+                    <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg mb-6 flex items-center justify-between relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/5 rounded-full blur-xl -mr-10 -mt-10 pointer-events-none"></div>
                         <div>
-                            <div className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Текущий ход</div>
-                            <div className="text-sm font-bold text-slate-200">{currentPlayer.name}</div>
+                            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-1">Ход игрока</div>
+                            <div className="text-lg font-bold text-white tracking-wide">{currentPlayer.name}</div>
                         </div>
-                        <div className={`text-4xl font-mono font-black ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-slate-200'}`}>
+                        <div className={`text-5xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'}`}>
                             {formatTime(timeLeft)}
                         </div>
                     </div>
 
                     {/* Actions Panel */}
-                    <div className="bg-[#151b2b] rounded-2xl p-4 border border-slate-800 shadow-lg mb-4">
-                        <h3 className="text-slate-400 text-xs uppercase tracking-widest font-bold mb-4 flex items-center gap-2">
+                    <div className="bg-[#151b2b] rounded-2xl p-5 border border-slate-800 shadow-lg mb-6">
+                        <h3 className="text-slate-500 text-[10px] uppercase tracking-[0.2em] font-bold mb-4 flex items-center gap-2">
                             <span className="text-yellow-500">⚡</span> Действия
                         </h3>
 
-                        <div className="grid grid-cols-2 gap-2 mb-4">
+                        <div className="grid grid-cols-2 gap-3 mb-4">
                             <button
                                 onClick={handleRoll}
                                 disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard}
-                                className={`p-4 rounded-xl border border-slate-700 flex flex-col items-center gap-1 group transition-all ${isMyTurn && state.phase === 'ROLL' && !state.currentCard ? 'bg-green-600 text-white shadow-lg shadow-green-900/30 hover:bg-green-500 cursor-pointer' : 'bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed'}`}
+                                className={`p-5 rounded-2xl border flex flex-col items-center gap-2 group transition-all duration-200
+                                    ${isMyTurn && state.phase === 'ROLL' && !state.currentCard
+                                        ? 'bg-gradient-to-b from-green-600 to-green-700 border-green-500 text-white shadow-xl shadow-green-900/40 hover:scale-[1.02] hover:shadow-green-900/60 cursor-pointer'
+                                        : 'bg-slate-800/50 border-slate-700 text-slate-500 opacity-50 cursor-not-allowed'}`}
                             >
-                                <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">🎲</span>
-                                <span className="text-[10px] font-bold">БРОСОК</span>
+                                <span className="text-3xl filter drop-shadow-md group-hover:rotate-12 transition-transform duration-300">🎲</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest">Бросок</span>
                             </button>
                             <button
                                 onClick={handleEndTurn}
                                 disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard)}
-                                className={`p-4 rounded-xl border border-slate-700 flex flex-col items-center gap-1 group transition-all ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard) ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/30 hover:bg-blue-500 cursor-pointer' : 'bg-slate-800 text-slate-500 opacity-50 cursor-not-allowed'}`}
+                                className={`p-5 rounded-2xl border flex flex-col items-center gap-2 group transition-all duration-200
+                                    ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard)
+                                        ? 'bg-gradient-to-b from-blue-600 to-blue-700 border-blue-500 text-white shadow-xl shadow-blue-900/40 hover:scale-[1.02] hover:shadow-blue-900/60 cursor-pointer'
+                                        : 'bg-slate-800/50 border-slate-700 text-slate-500 opacity-50 cursor-not-allowed'}`}
                             >
-                                <span className="text-2xl mb-1 group-hover:scale-110 transition-transform">➡</span>
-                                <span className="text-[10px] font-bold">ДАЛЕЕ</span>
+                                <span className="text-3xl filter drop-shadow-md group-hover:translate-x-1 transition-transform duration-300">➡</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest">Далее</span>
                             </button>
                         </div>
-                        <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800 p-3 rounded-xl border border-slate-700 hover:bg-slate-700 flex items-center justify-center gap-2 group transition-all hover:border-slate-600">
-                            <span className="text-xl group-hover:scale-110 transition-transform">🏦</span>
-                            <span className="text-xs text-slate-300 font-bold uppercase">Открыть Банк</span>
+                        <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800/80 p-4 rounded-xl border border-slate-700 hover:bg-slate-700 hover:border-slate-500 flex items-center justify-center gap-3 group transition-all">
+                            <span className="text-2xl group-hover:scale-110 transition-transform">🏦</span>
+                            <span className="text-xs text-slate-200 font-bold uppercase tracking-widest">Открыть Банк</span>
                         </button>
                     </div>
 
-                    <h3 className="text-xs uppercase tracking-widest text-slate-500 font-bold mb-4">События</h3>
-                    <div className="flex-1 bg-slate-900/30 rounded-xl border border-slate-800 p-2 overflow-y-auto font-mono text-xs space-y-2 custom-scrollbar min-h-0">
+                    <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-3 flex items-center gap-2">
+                        <span>📝</span> Лог событий
+                    </h3>
+                    <div className="flex-1 bg-[#0f172a]/50 rounded-xl border border-slate-800/50 p-3 overflow-y-auto font-mono text-[10px] space-y-3 custom-scrollbar min-h-[200px]">
                         {state.log?.slice().reverse().map((entry: string, i: number) => (
-                            <div key={i} className="text-slate-400 border-b border-slate-800/50 pb-1 last:border-0">{entry}</div>
+                            <div key={i} className="text-slate-400 border-b border-slate-800/50 pb-2 last:border-0 leading-relaxed">
+                                <span className="text-slate-600 mr-2">#{state.log.length - i}</span>
+                                {entry}
+                            </div>
                         ))}
                     </div>
                 </div>
