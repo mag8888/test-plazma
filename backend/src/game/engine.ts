@@ -395,11 +395,31 @@ export class GameEngine {
         if (this.state.transactions.length > 50) this.state.transactions.pop();
     }
 
+    checkTurnTimeout(): boolean {
+        // Return true if state changed (turn ended)
+        if (this.state.turnExpiresAt && Date.now() > this.state.turnExpiresAt) {
+            this.state.log.push(`⌛ Turn timeout for ${this.state.players[this.state.currentPlayerIndex].name}`);
+            this.endTurn();
+            return true;
+        }
+        return false;
+    }
+
     endTurn() {
         this.state.currentCard = undefined; // Clear card
         this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % this.state.players.length;
         this.state.phase = 'ROLL';
         this.state.currentTurnTime = 120;
+        this.state.turnExpiresAt = Date.now() + 120000; // Reset timer 120s
+
+        // Handle skipped turns for next player immediately?
+        // Simple recursion check
+        const nextPlayer = this.state.players[this.state.currentPlayerIndex];
+        if (nextPlayer.skippedTurns > 0) {
+            nextPlayer.skippedTurns--;
+            this.state.log.push(`🚫 ${nextPlayer.name} skips turn (Remaining: ${nextPlayer.skippedTurns})`);
+            this.endTurn(); // Recursively skip
+        }
     }
 
     getState(): GameState {
