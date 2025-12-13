@@ -351,6 +351,14 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         </div>
                     </div>
 
+                    {/* Exit Button in Menu */}
+                    <button
+                        onClick={handleExit}
+                        className="w-full py-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 font-bold uppercase tracking-widest text-sm hover:bg-red-500/20 active:bg-red-500/30 transition-all flex items-center justify-center gap-3"
+                    >
+                        <span>🚪</span> Выйти из игры
+                    </button>
+
                     {/* Spacer for bottom nav */}
                     <div className="h-20"></div>
                 </div>
