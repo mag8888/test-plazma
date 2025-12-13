@@ -94,6 +94,14 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
         }
     };
 
+    // Group players to handle overlap
+    const positionGroups: { [key: number]: string[] } = {};
+    players.forEach((p: any) => {
+        const pos = animatingPos[p.id] ?? p.position;
+        if (!positionGroups[pos]) positionGroups[pos] = [];
+        positionGroups[pos].push(p.id);
+    });
+
     return (
         <div className="w-full h-full relative p-2 flex items-center justify-center">
 
@@ -193,30 +201,23 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                         const posIndex = animatingPos[p.id] ?? p.position;
                         const isFT = p.isFastTrack;
 
-                        let style: any = {};
-
-                        if (isFT) {
-                            // Map Grid Coords to %
-                            const ftIndex = posIndex >= 24 ? posIndex - 24 : posIndex;
-                            let r = 0, c = 0;
-                            if (ftIndex <= 12) { r = 13; c = 13 - ftIndex; }
-                            else if (ftIndex <= 23) { r = 13 - (ftIndex - 12); c = 1; }
-                            else if (ftIndex <= 36) { r = 1; c = 1 + (ftIndex - 24); }
-                            else { r = 2 + (ftIndex - 37); c = 13; }
-
-                            // Grid is 13x13.
-                            // However, we are inside a container that might be inset differently?
-                            // Wait, the outer grid is inset-0. The Players container needs to be inset-0 for Fast Track.
-                            // BUT, for Rat Race, we need inset-[4%].
-                            // This is conflicting. We should split the container or just use logic.
-
-                            // Let's use inset-0 for this container and adjusting Rat Race logic.
-                            // Actually, I put inset-[4%] on this container. This breaks Fast Track tokens.
-                            // I need to reset this container to inset-0 and handle Rat Race radius manually or use sub-containers.
-                            // To be safe, I will use inset-0 for the Player Container and match the Math.
+                        // Calculate Offset for Overlap
+                        let offsetX = 0;
+                        let offsetY = 0;
+                        const group = positionGroups[posIndex] || [];
+                        if (group.length > 1) {
+                            const idx = group.indexOf(p.id);
+                            // Spread tokens in a small circle
+                            const spread = 2.5; // 2.5% offset
+                            // Rotation offset to ensure they don't block center sticker too much
+                            const angleOffset = -Math.PI / 2;
+                            const angle = (idx / group.length) * 2 * Math.PI + angleOffset;
+                            offsetX = spread * Math.cos(angle);
+                            offsetY = spread * Math.sin(angle);
                         }
 
-                        // RE-CALCULATING STYLE IN RENDER block to be cleaner (Logic moved above in full file replacement if needed, but here simple inline fix)
+                        let style: any = {};
+
                         if (isFT) {
                             // Fast Track (Grid) - Needs to be relative to WHOLE BOARD (inset-0)
                             const ftIndex = posIndex >= 24 ? posIndex - 24 : posIndex;
@@ -229,26 +230,9 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                             const colPerc = ((c - 0.5) / 13) * 100;
                             const rowPerc = ((r - 0.5) / 13) * 100;
 
-                            // Since the player container is inset-[4%], the 0-100% is smaller than the grid.
-                            // WE MUST REMOVE inset-[4%] from player container if we want to support Fast Track.
-                            // But Rat Race depends on radius. Radius 46 is relative to... what?
-                            // In getPosStyle, radius 46 is relative to the container.
-                            // If I use inset-0 for player container:
-                            // Rat Race: Radius 46 (relative to full board).
-                            // Inner Track container: inset-[4%]. 
-                            // If Inner Track container is inset 4%, its width is 92%.
-                            // A radius of 46% of 92% is ~42% of full board.
-                            // I want radius 46% of FULL BOARD.
-                            // So: Player Container -> inset-0.
-                            //     Rat Race Tokens -> Radius 46 (matches Full Board).
-                            //     Inner Track Squares -> Must be positioned relative to Full Board OR adjusted.
-                            //     Actually, the Inner Track SQUARES loops use `getPosStyle`.
-                            //     If I put Inner Track SQUARES in `inset-0` instead of `inset-[4%]`, then `Radius 46` places them correctly relative to full board.
-                            //     The border/dashed rings might need separate div.
-
                             style = {
-                                left: `${colPerc}%`,
-                                top: `${rowPerc}%`,
+                                left: `${colPerc + offsetX}%`,
+                                top: `${rowPerc + offsetY}%`,
                                 transform: 'translate(-50%, -50%)',
                                 position: 'absolute'
                             };
@@ -263,8 +247,8 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                             const x = 50 + radius * Math.cos(angleRad);
                             const y = 50 + radius * Math.sin(angleRad);
                             style = {
-                                left: `${x}%`,
-                                top: `${y}%`,
+                                left: `${x + offsetX}%`,
+                                top: `${y + offsetY}%`,
                                 transform: 'translate(-50%, -50%)',
                                 position: 'absolute'
                             };

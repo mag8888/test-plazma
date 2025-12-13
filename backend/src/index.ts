@@ -123,10 +123,27 @@ io.on('connection', (socket) => {
 
 
 
-const server = httpServer.listen(PORT, () => {
-    console.log(`Server is running on http://localhost:${PORT}`);
-});
+const bootstrap = async () => {
+    try {
+        await connectDatabase();
 
-// Increase Keep-Alive Timeout for Load Balancers (Railway/AWS/Nginx)
-server.keepAliveTimeout = 65000; // 65 seconds
-server.headersTimeout = 66000; // 66 seconds
+        // Initialize Bot
+        const botService = new BotService();
+        // Initialize Game Gateway
+        const gameGateway = new GameGateway(io);
+
+        const server = httpServer.listen(PORT, () => {
+            console.log(`Server is running on http://localhost:${PORT}`);
+        });
+
+        // Increase Keep-Alive Timeout for Load Balancers (Railway/AWS/Nginx)
+        server.keepAliveTimeout = 65000; // 65 seconds
+        server.headersTimeout = 66000; // 66 seconds
+    } catch (error) {
+        console.error("Failed to start server:", error);
+        process.exit(1);
+    }
+};
+
+bootstrap();
+
