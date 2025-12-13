@@ -311,6 +311,20 @@ export class GameGateway {
                 }
             });
 
+            socket.on('dismiss_card', ({ roomId }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.dismissCard();
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
             socket.on('draw_deal', ({ roomId, type }) => {
                 const game = this.games.get(roomId);
                 if (game) {

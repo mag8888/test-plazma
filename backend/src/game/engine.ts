@@ -878,6 +878,13 @@ export class GameEngine {
         });
     }
 
+    dismissCard() {
+        // Just clear the card and return to ACTION phase
+        // This allows the player to manually click End Turn later
+        this.state.currentCard = undefined;
+        this.state.phase = 'ACTION';
+    }
+
     sellAsset(playerId: string) {
         const player = this.state.players.find(p => p.id === playerId);
         const card = this.state.currentCard;
@@ -915,13 +922,8 @@ export class GameEngine {
             const mortgage = player.liabilities[mortgageIndex];
             // Pay off mortgage from proceeds? Usually Market deals say "You receive X". 
             // In Cashflow, "You receive X" usually implies Equity OR Selling Price. 
-            // If it's Selling Price, you must pay off mortgage.
-            // If it's Equity (Net), mortgage is assumed paid.
-            // User cards say: "Buyer offers $25,000 for room". (Cost was 3000). 
-            // Assuming $25,000 is Sale Price.
-            // "Room" likely has no mortgage (Cost < 5k rarely mortgaged in game logic unless explicit loan taken manually).
-            // But for "House", there might be mortgage.
-            // Logic: Pay off mortgage from Cash.
+            // If it's "Selling Price", we must pay mortgage.
+            // Assuming Offer Price is Total Price.
             player.cash -= mortgage.value;
             player.liabilities.splice(mortgageIndex, 1);
             this.state.log.push(`💸 Paid off mortgage $${mortgage.value}`);

@@ -218,6 +218,10 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
         setTransferAssetItem(null);
     };
 
+    const handleDismissCard = () => {
+        socket.emit('dismiss_card', { roomId });
+    };
+
     const handleExit = () => {
         socket.emit('leave_room', { roomId });
         router.push('/lobby');
@@ -625,23 +629,29 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                     )}
 
                                     <div className="flex flex-col gap-3 w-full">
-                                        {isMyTurn ? (
-                                            state.currentCard.type === 'MARKET' ? (
-                                                <div className="flex gap-2 w-full">
-                                                    {me.assets.some((a: any) => a.title === state.currentCard?.targetTitle) ? (
-                                                        <button onClick={() => socket.emit('sell_asset', { roomId })} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
-                                                            ПРОДАТЬ
-                                                        </button>
-                                                    ) : (
-                                                        <div className="flex-1 flex items-center justify-center bg-slate-800 text-slate-500 text-xs font-bold py-3 rounded-xl border border-slate-700">
-                                                            Нет актива
-                                                        </div>
-                                                    )}
-                                                    <button onClick={handleEndTurn} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
-                                                        ОТКАЗ
+                                        {/* MARKET: Special Logic for Global Interaction */}
+                                        {state.currentCard.type === 'MARKET' ? (
+                                            <div className="flex gap-2 w-full">
+                                                {me.assets.some((a: any) => a.title === state.currentCard?.targetTitle) ? (
+                                                    <button onClick={() => socket.emit('sell_asset', { roomId })} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
+                                                        ПРОДАТЬ
                                                     </button>
-                                                </div>
-                                            ) : (
+                                                ) : (
+                                                    <div className="flex-1 flex items-center justify-center bg-slate-800 text-slate-500 text-xs font-bold py-3 rounded-xl border border-slate-700">
+                                                        Нет актива
+                                                    </div>
+                                                )}
+
+                                                {/* Only Current Player can Dismiss (Close Market) */}
+                                                {isMyTurn && (
+                                                    <button onClick={handleDismissCard} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
+                                                        ЗАКРЫТЬ
+                                                    </button>
+                                                )}
+                                            </div>
+                                        ) : (
+                                            /* Standard Interaction (Current Player Only) */
+                                            isMyTurn ? (
                                                 me.cash >= ((state.currentCard.downPayment ?? state.currentCard.cost) || 0) ? (
                                                     <div className="flex gap-2 w-full">
                                                         <button onClick={handleBuy} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
@@ -683,8 +693,11 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                                             Отказаться
                                                         </button>
                                                     </div>
-                                                ))
-                                        ) : <div className="w-full text-center text-slate-500 text-sm animate-pulse bg-slate-900/50 p-3 rounded-xl border border-slate-800">⏳ Ожидание игрока...</div>}
+                                                )
+                                            ) : (
+                                                <div className="w-full text-center text-slate-500 text-sm animate-pulse bg-slate-900/50 p-3 rounded-xl border border-slate-800">⏳ Ожидание игрока...</div>
+                                            )
+                                        )}
                                     </div>
                                 </div>
                             </div>
