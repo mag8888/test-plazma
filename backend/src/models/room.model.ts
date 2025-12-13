@@ -42,5 +42,8 @@ const RoomSchema: Schema = new Schema({
     createdAt: { type: Date, expires: '12h', default: Date.now }
 }, { timestamps: true });
 
+// Prevent multiple waiting rooms for the same creator
+RoomSchema.index({ creatorId: 1 }, { unique: true, partialFilterExpression: { status: 'waiting' } });
+
 // Virtual to populate ID properly if needed, but _id is standard
 export const RoomModel = mongoose.model<IRoom>('Room', RoomSchema);

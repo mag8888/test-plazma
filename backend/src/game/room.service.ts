@@ -6,34 +6,48 @@ export class RoomService {
     constructor() { }
 
     async createRoom(creatorId: string, userId: string, playerName: string, name: string, maxPlayers: number = 6, timer: number = 120, password?: string): Promise<any> {
-        // Prevent Duplicates: Check if user already has a WAITING room
-        const existingRoom = await RoomModel.findOne({ creatorId: userId, status: 'waiting' });
-        if (existingRoom) {
-            if (existingRoom.name === name) {
-                // Exact match (Double click): Return existing
-                return this.sanitizeRoom(existingRoom);
-            } else {
-                // Different name: User wants a new room. Delete old one.
-                await RoomModel.findByIdAndDelete(existingRoom._id);
-            }
-        }
+        // Optimistic Locking: Try to create, handle duplicate key error
+        try {
+            const room = await RoomModel.create({
+                name,
+                creatorId: userId, // Use Persistent User ID as Creator
+                maxPlayers,
+                timer,
+                password,
+                players: [{
+                    id: creatorId,
+                    userId: userId,
+                    name: playerName,
+                    isReady: false
+                }],
+                status: 'waiting',
+                createdAt: Date.now()
+            });
+            return this.sanitizeRoom(room);
+        } catch (error: any) {
+            if (error.code === 11000) {
+                // Race condition caught: User already has a waiting room.
+                // Fetch and return it.
+                // If the name is DIFFERENT, we might want to update it? 
+                // Existing logic had a delete-and-recreate for different name.
+                // But with Unique Index, we can't create until we delete.
 
-        const room = await RoomModel.create({
-            name,
-            creatorId: userId, // Use Persistent User ID as Creator
-            maxPlayers,
-            timer,
-            password,
-            players: [{
-                id: creatorId,
-                userId: userId,
-                name: playerName,
-                isReady: false
-            }],
-            status: 'waiting',
-            createdAt: Date.now()
-        });
-        return this.sanitizeRoom(room);
+                const existing = await RoomModel.findOne({ creatorId: userId, status: 'waiting' });
+                if (existing) {
+                    if (existing.name !== name) {
+                        // Update name if different? Or just return existing?
+                        // Let's just return existing to be safe and avoid complexity.
+                        // Or better: Update the name to what the user just asked for.
+                        existing.name = name;
+                        existing.maxPlayers = maxPlayers; // Update config too
+                        await existing.save();
+                        return this.sanitizeRoom(existing);
+                    }
+                    return this.sanitizeRoom(existing);
+                }
+            }
+            throw error;
+        }
     }
 
     async joinRoom(roomId: string, playerId: string, userId: string, playerName: string, password?: string): Promise<any> {
