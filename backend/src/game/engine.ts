@@ -724,6 +724,8 @@ export class GameEngine {
     }
 
     resolveOpportunity(size: 'SMALL' | 'BIG') {
+        if (this.state.phase !== 'OPPORTUNITY_CHOICE') return;
+
         const player = this.state.players[this.state.currentPlayerIndex];
 
         let card: Card | undefined;
@@ -766,14 +768,20 @@ export class GameEngine {
             }
 
             if (cost > 0) {
-                // player.cash -= cost;
-                this.forcePayment(player, cost, `Mandatory Event: ${card.title}`);
-                // this.state.log.push(`💥 Mandatory Event: ${card.title}. Paid $${cost}.`);
-            }
+                // Do NOT force payment here. 
+                // Just log it and let the UI show the card in ACTION phase.
+                // The "Buy/Pay" button in UI will call buyAsset().
 
-            this.state.currentCard = undefined; // Card resolved
-            this.state.phase = 'ACTION';
-            return;
+                // We keep card.mandatory = true so UI knows to show "PAY" instead of "BUY".
+                this.state.phase = 'ACTION';
+                return;
+            } else {
+                // Cost is 0 (e.g. no property for Roof Leak), so we auto-resolve.
+                this.state.log.push(`😅 ${card.title}: No payment required.`);
+                this.state.currentCard = undefined;
+                this.state.phase = 'ACTION';
+                return;
+            }
         }
 
         this.state.log.push(`${player.name} chose ${size} DEAL: ${card.title}`);
