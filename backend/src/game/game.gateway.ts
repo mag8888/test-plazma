@@ -404,6 +404,13 @@ export class GameGateway {
                             if (room && room.status === 'waiting') {
                                 console.log(`Client ${socket.id} left waiting room ${roomId}`);
                                 await this.roomService.leaveRoom(roomId, socket.id);
+
+                                // Broadcast to remaining players in room
+                                const updatedRoom = await this.roomService.getRoom(roomId);
+                                if (updatedRoom) {
+                                    this.io.to(roomId).emit('room_state_updated', updatedRoom);
+                                }
+
                                 const rooms = await this.roomService.getRooms();
                                 this.io.emit('rooms_updated', rooms);
                             }
