@@ -279,8 +279,13 @@ function GameContent() {
                                                         if (!isReady) {
                                                             setToken(t);
                                                             const userStr = localStorage.getItem('user');
-                                                            const userId = userStr ? (JSON.parse(userStr)._id || JSON.parse(userStr).id) : 'guest'; // Simplified
-                                                            socket.emit('player_ready', { roomId, isReady, dream, token: t, userId });
+                                                            const userId = userStr ? (JSON.parse(userStr)._id || JSON.parse(userStr).id) : 'guest';
+                                                            socket.emit('player_ready', { roomId, isReady, dream, token: t, userId }, (res: any) => {
+                                                                if (!res.success) {
+                                                                    console.error("Set Token Failed:", res.error);
+                                                                    alert(res.error);
+                                                                }
+                                                            });
                                                         }
                                                     }}
                                                     className={`aspect-square rounded-2xl flex items-center justify-center text-4xl relative transition-all duration-300 ${isSelected ? 'bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border-indigo-400 ring-2 ring-indigo-500/50 shadow-[0_0_30px_rgba(99,102,241,0.3)] scale-110' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:scale-105 border'} ${(isTaken || isReady) ? 'opacity-50 grayscale cursor-not-allowed scale-90' : 'cursor-pointer'}`}
@@ -303,7 +308,12 @@ function GameContent() {
                                                 setDream(newDream);
                                                 const userStr = localStorage.getItem('user');
                                                 const userId = userStr ? (JSON.parse(userStr)._id || JSON.parse(userStr).id) : 'guest';
-                                                socket.emit('player_ready', { roomId, isReady, dream: newDream, token, userId });
+                                                socket.emit('player_ready', { roomId, isReady, dream: newDream, token, userId }, (res: any) => {
+                                                    if (!res.success) {
+                                                        console.error("Set Dream Failed:", res.error);
+                                                        alert(res.error);
+                                                    }
+                                                });
                                             }}
                                             className="w-full bg-black/20 border border-white/10 rounded-2xl px-6 py-4 appearance-none outline-none focus:border-blue-500/50 focus:bg-black/40 transition-all text-lg font-medium text-slate-200 shadow-inner"
                                             disabled={isReady}
