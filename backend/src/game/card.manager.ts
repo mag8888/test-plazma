@@ -179,9 +179,8 @@ const generateBigDeals = (): Card[] => {
     add(1, { title: 'Сеть автомоек', cost: 150000, cashflow: 5000, description: 'Хорошее расположение, стабильный трафик клиентов.', downPayment: 35000, businessType: 'CLASSIC' });
     add(1, { title: 'Коворкинг-центр', cost: 250000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 50000, businessType: 'CLASSIC' });
 
-    // --- NETWORK FRANCHISES ---
-    add(3, { title: 'Франшиза: Plazma Water', cost: 10000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', downPayment: 0, businessType: 'NETWORK' });
-    add(3, { title: 'Франшиза: MONEO', cost: 10000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', downPayment: 0, businessType: 'NETWORK' });
+    add(3, { title: 'Франшиза: Plazma Water', cost: 5000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' });
+    add(3, { title: 'Франшиза: MONEO', cost: 5000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', businessType: 'NETWORK' });
 
     return cards;
 };
