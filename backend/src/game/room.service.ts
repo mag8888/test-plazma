@@ -6,6 +6,9 @@ export class RoomService {
     constructor() { }
 
     async createRoom(creatorId: string, userId: string, playerName: string, name: string, maxPlayers: number = 6, timer: number = 120, password?: string): Promise<any> {
+        // Cleanup old sessions
+        await this.removeUserFromAllWaitingRooms(userId);
+
         // Optimistic Locking: Try to create, handle duplicate key error
         try {
             const room = await RoomModel.create({
@@ -70,6 +73,10 @@ export class RoomService {
         }
 
         // 2. If not found, try to PUSH new player (Atomic check for maxPlayers)
+
+        // Ensure user is not ghosting in other waiting rooms
+        await this.removeUserFromAllWaitingRooms(userId);
+
         // We need to fetch room first to check Password and Status (hard to do strictly atomically with password check)
         // But for race condition of "Adding", the $push is key.
 
@@ -132,10 +139,33 @@ export class RoomService {
             if (room.players.length === 0) {
                 await RoomModel.findByIdAndDelete(roomId);
             }
-            // NOTE: We don't automatically migrate host on simple leave anymore because 
-            // userId is persistent. Host can rejoin. 
-            // If we want to support "Host left forever", we need explicit handover or timeout.
         }
+    }
+
+    // New helper to ensure single-room consistency
+    async removeUserFromAllWaitingRooms(userId: string): Promise<string[]> {
+        const affectedRoomIds: string[] = [];
+
+        // Find rooms where this user exists
+        const rooms = await RoomModel.find({
+            status: 'waiting',
+            'players.userId': userId
+        });
+
+        for (const room of rooms) {
+            affectedRoomIds.push(room._id.toString());
+
+            // Remove player
+            room.players = room.players.filter(p => p.userId !== userId);
+
+            if (room.players.length === 0) {
+                await RoomModel.findByIdAndDelete(room._id);
+            } else {
+                await room.save();
+            }
+        }
+
+        return affectedRoomIds;
     }
 
     async kickPlayer(roomId: string, requesterUserId: string, playerIdToKick: string): Promise<void> {
