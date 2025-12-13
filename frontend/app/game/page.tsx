@@ -5,6 +5,7 @@ import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { socket } from '../socket';
 import GameBoard from './board';
+import { DREAMS } from '../lib/dreams';
 
 // ... (Interfaces remain same, I'll assume I don't need to retype them if I target carefully or rewriting whole file is safer?
 // Rewriting whole file is safer for structure change.)
@@ -35,7 +36,7 @@ function GameContent() {
     const [room, setRoom] = useState<Room | null>(null);
     const [isReady, setIsReady] = useState(false);
     const [error, setError] = useState('');
-    const [dream, setDream] = useState('Остров');
+    const [dream, setDream] = useState(DREAMS[0].name);
     const [token, setToken] = useState<string>('🦊');
     const [myUserId, setMyUserId] = useState<string | null>(null);
 
@@ -303,12 +304,11 @@ function GameContent() {
                                             className="w-full bg-black/20 border border-white/10 rounded-2xl px-6 py-4 appearance-none outline-none focus:border-blue-500/50 focus:bg-black/40 transition-all text-lg font-medium text-slate-200 shadow-inner"
                                             disabled={isReady}
                                         >
-                                            <option>🏝 Остров</option>
-                                            <option>🏰 Вилла</option>
-                                            <option>🛥 Яхта</option>
-                                            <option>🛩 Личный самолет</option>
-                                            <option>🎢 Парк развлечений</option>
-                                            <option>🚀 Космический туризм</option>
+                                            {DREAMS.map(d => (
+                                                <option key={d.id} value={d.name}>
+                                                    {d.name} (${d.cost.toLocaleString()})
+                                                </option>
+                                            ))}
                                         </select>
                                         <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
                                     </div>

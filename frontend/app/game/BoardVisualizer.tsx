@@ -105,6 +105,7 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                     {board.filter((sq: any) => isFastTrackSquare(sq.index)).map((sq: any) => {
                         const style = getPosStyle(sq.index, true);
                         const gradient = getGradient(sq.type, true);
+                        const dreamers = players.filter((p: any) => p.dream === sq.name && sq.type === 'DREAM');
                         return (
                             <div
                                 key={sq.index}
@@ -127,7 +128,20 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                         {sq.type === 'CASHFLOW' && <span className="text-emerald-400 font-bold tracking-tighter text-[6px]">Day</span>}
                                     </div>
                                 </div>
+
                                 <span className="absolute -top-1 -right-1 w-4 h-4 bg-slate-900 border border-slate-700 rounded-full flex items-center justify-center text-[8px] text-slate-500 z-10">{sq.index}</span>
+                                {
+                                    dreamers.length > 0 && (
+                                        <div className="absolute -top-2 -left-2 flex -space-x-2 z-30">
+                                            {dreamers.map((p: any) => (
+                                                <div key={p.id} className="w-6 h-6 bg-slate-900/90 rounded-full border border-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)] flex items-center justify-center text-xs relative group/dream" title={`Мечта игрока ${p.name}`}>
+                                                    <span>{p.token}</span>
+                                                    <span className="absolute -top-3 left-1/2 -translate-x-1/2 text-[8px] text-pink-300 font-bold whitespace-nowrap opacity-0 group-hover/dream:opacity-100 transition-opacity bg-black/80 px-1 rounded pointer-events-none">Мечта {p.name}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )
+                                }
                             </div>
                         );
                     })}
@@ -277,6 +291,6 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                 </div>
 
             </div>
-        </div>
+        </div >
     );
 };
