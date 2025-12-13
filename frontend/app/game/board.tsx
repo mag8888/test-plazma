@@ -150,6 +150,9 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
         return () => clearInterval(timer);
     }, [state.turnExpiresAt, state.currentTurnTime]);
 
+    // Track rolling state to prevent efficient handling of 'state_updated' race conditions
+    const isRollingRef = useRef(false);
+
     useEffect(() => {
         socket.on('dice_rolled', (data) => {
             if (data.type === 'MLM') {
@@ -165,22 +168,23 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 return;
             }
 
+            // Standard Roll
+            isRollingRef.current = true; // Block external updates
             setDiceValue(data.roll);
             setShowDice(true);
             setIsAnimating(true);
-            setPendingState(data.state);
+            // setPendingState(data.state); // Unused
 
-            // Timeouts calculation
             const DICE_DURATION = 2000;
-            const MOVE_PER_STEP = 500;
             const BUFFER = 500;
 
             // Calculate total movement time based on roll
-            const moveDuration = (data.roll || 0) * MOVE_PER_STEP;
+            const moveDuration = (data.roll || 0) * 500; // MOVE_PER_STEP matched with interval
 
             // 1. Show Dice for 2s
             setTimeout(() => {
                 setShowDice(false);
+                isRollingRef.current = false; // Allow updates again (and apply ours below)
 
                 // 2. Start Moving (State Update triggers visualizer interpolation)
                 setState(data.state);
@@ -194,17 +198,9 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     const board = data.state.board;
                     const square = board.find((s: any) => s.index === squareIndex);
 
-                    // Show popup only if phase allows (e.g. not immediately ending turn or rolling)
-                    // With manual turn flow, phase is usually ACTION.
+                    // Show popup only if phase allows
                     if (square && !['roll_dice'].includes(data.state.phase)) {
                         if (!['EXPENSE', 'MARKET', 'CHARITY', 'DEAL'].includes(square.type)) {
-                            // Only set squareInfo if it's not a type that has a custom overlay
-                            // Deal is handled via overlay usually, but logic here excludes it?
-                            // Wait, DEAL has "Small/Big" choice overlay via state.phase 'OPPORTUNITY_CHOICE'.
-                            // If phase is OPPORTUNITY_CHOICE, we don't need SquareInfo popup?
-                            // The Logic below checks types.
-                            // If type IS Deal/Market/Charity, we do NOT show squareInfo.
-                            // This seems correct for existing logic.
                             setSquareInfo(square);
                         }
                     }
@@ -213,12 +209,27 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             }, DICE_DURATION);
         });
 
-        socket.on('state_updated', (data) => setState(data.state));
+        socket.on('state_updated', (data) => {
+            // Only apply update if we are NOT currently animating a dice roll.
+            // This prevents the token from moving "underneath" the dice overlay.
+            if (!isRollingRef.current) {
+                setState(data.state);
+            } else {
+                console.log('Skipped state_updated due to active dice roll');
+            }
+        });
+
         socket.on('turn_ended', (data) => {
+            // Always apply turn ended (force sync)
+            isRollingRef.current = false;
             setState(data.state);
             setSquareInfo(null);
         });
-        socket.on('game_started', (data) => setState(data.state));
+
+        socket.on('game_started', (data) => {
+            isRollingRef.current = false;
+            setState(data.state);
+        });
 
         return () => {
             socket.off('dice_rolled');
