@@ -968,15 +968,64 @@ export class GameEngine {
         this.endTurn();
     }
 
-    buyAsset(playerId: string) {
+    buyAsset(playerId: string, quantity: number = 1) {
         const player = this.state.players.find(p => p.id === playerId);
         const card = this.state.currentCard;
 
         if (!player || !card) return;
-        if (!player || !card) return;
         if (card.type !== 'MARKET' && card.type !== 'DEAL_SMALL' && card.type !== 'DEAL_BIG' && card.type !== 'BUSINESS' && card.type !== 'DREAM' && card.type !== 'EXPENSE') return;
 
-        // Determine cost (Use Down Payment if available, else full cost)
+        // Stock Logic:
+        if (card.symbol) {
+            const costPerShare = card.cost || 0;
+            const totalCost = costPerShare * quantity;
+
+            if (player.cash < totalCost) {
+                this.state.log.push(`${player.name} cannot afford ${quantity} x ${card.title} ($${totalCost})`);
+                return;
+            }
+
+            player.cash -= totalCost;
+
+            // Find existing stock to merge
+            const existingStock = player.assets.find(a => a.symbol === card.symbol);
+            if (existingStock) {
+                // Weighted Average Cost could be calculated here if needed, but for Cashflow game usually just quantity matters for dividends? 
+                // Or just track raw quantity.
+                // We will update quantity.
+                // If cashflow is per share (Dividend), update it.
+                existingStock.quantity = (existingStock.quantity || 0) + quantity;
+                // Assuming card.cashflow is PER SHARE? usually yes.
+                const additionalIncome = (card.cashflow || 0) * quantity;
+                existingStock.cashflow = (existingStock.cashflow || 0) + additionalIncome;
+
+                player.passiveIncome += additionalIncome;
+            } else {
+                player.assets.push({
+                    title: card.title,
+                    cost: card.cost, // Cost per share
+                    cashflow: (card.cashflow || 0) * quantity,
+                    symbol: card.symbol,
+                    type: 'STOCK',
+                    quantity: quantity
+                });
+                player.passiveIncome += (card.cashflow || 0) * quantity;
+            }
+
+            player.income = player.salary + player.passiveIncome;
+            player.cashflow = player.income - player.expenses;
+
+            this.state.log.push(`${player.name} bought ${quantity} ${card.symbol} @ $${card.cost}.`);
+
+            // For stocks, do we clear card? 
+            // "Buy 1-100k". If I buy 50, can I buy another 50?
+            // Usually Turn ends after buying.
+            this.state.currentCard = undefined;
+            this.endTurn();
+            return;
+        }
+
+        // Real Estate / Business Logic (Quantity always 1)
         const costToPay = card.downPayment !== undefined ? card.downPayment : (card.cost || 0);
 
         if (player.cash < costToPay) {
@@ -1000,7 +1049,8 @@ export class GameEngine {
             cost: card.cost,
             cashflow: card.cashflow || 0,
             symbol: card.symbol,
-            type: card.symbol ? 'STOCK' : 'REAL_ESTATE'
+            type: card.symbol ? 'STOCK' : 'REAL_ESTATE',
+            quantity: 1
         });
 
         // Update Stats
@@ -1014,8 +1064,6 @@ export class GameEngine {
         if (card.downPayment !== undefined && (card.cost || 0) > card.downPayment) {
             const mortgage = (card.cost || 0) - card.downPayment;
             player.liabilities.push({ name: `Mortgage (${card.title})`, value: mortgage });
-            // Usually mortgages in this game don't add monthly interest expense directly, 
-            // it's factored into the Net Cashflow of the property.
         }
 
         this.state.log.push(`${player.name} bought ${card.title}. Passive Income +$${card.cashflow || 0}`);
@@ -1025,6 +1073,51 @@ export class GameEngine {
 
         this.checkFastTrackCondition(player);
         this.endTurn();
+    }
+
+    sellStock(playerId: string, quantity: number) {
+        const player = this.state.players.find(p => p.id === playerId);
+        const card = this.state.currentCard;
+
+        if (!player || !card) return;
+        if (!card.symbol) return; // Must be stock card
+
+        // Find stock in assets
+        const stockIndex = player.assets.findIndex(a => a.symbol === card.symbol);
+        if (stockIndex === -1) return;
+        const stock = player.assets[stockIndex];
+
+        if ((stock.quantity || 0) < quantity) {
+            this.state.log.push(`${player.name} cannot sell ${quantity} ${stock.symbol}: Only have ${stock.quantity}`);
+            return;
+        }
+
+        const price = card.cost || 0; // Current price is usually defined in card.cost for Stock Cards
+        const saleTotal = price * quantity;
+
+        player.cash += saleTotal;
+
+        // Update Asset
+        stock.quantity -= quantity;
+
+        // Reduce Cashflow (assuming proportional)
+        // If cashflow was total:
+        if (stock.cashflow) {
+            const cashflowPerShare = stock.cashflow / (stock.quantity + quantity);
+            const lostCashflow = cashflowPerShare * quantity;
+            stock.cashflow -= lostCashflow;
+            player.passiveIncome -= lostCashflow;
+            player.income = player.salary + player.passiveIncome;
+            player.cashflow = player.income - player.expenses;
+        }
+
+        if (stock.quantity <= 0) {
+            player.assets.splice(stockIndex, 1);
+        }
+
+        this.state.log.push(`📈 ${player.name} sold ${quantity} ${card.symbol} @ $${price} for $${saleTotal}`);
+
+        // Do NOT end turn. Selling stock is an open market action.
     }
 
     transferFunds(fromId: string, toId: string, amount: number) {

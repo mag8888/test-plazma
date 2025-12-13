@@ -67,6 +67,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const [state, setState] = useState(initialState);
     const [showBank, setShowBank] = useState(false);
     const [transferAssetItem, setTransferAssetItem] = useState<{ item: any, index: number } | null>(null);
+    const [stockQty, setStockQty] = useState(1);
 
     // Mobile Drawer State
     const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -207,6 +208,16 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
 
     // Duplicates removed - these are now handled via engineRef or were redefined at the top level
+
+    const handleBuyStock = () => {
+        socket.emit('buy_asset', { roomId, quantity: stockQty });
+        setStockQty(1);
+    };
+
+    const handleSellStock = () => {
+        socket.emit('sell_stock', { roomId, quantity: stockQty });
+        setStockQty(1);
+    };
 
     const handleLoan = (amount: number) => socket.emit('take_loan', { roomId, amount });
     const handleRepay = (amount: number) => socket.emit('repay_loan', { roomId, amount });
@@ -629,8 +640,62 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                     )}
 
                                     <div className="flex flex-col gap-3 w-full">
-                                        {/* MARKET: Special Logic for Global Interaction */}
-                                        {state.currentCard.type === 'MARKET' ? (
+                                        {/* STOCK LOGIC */}
+                                        {state.currentCard.symbol ? (
+                                            <div className="flex flex-col gap-2 w-full animate-in slide-in-from-bottom duration-300">
+                                                {/* Quantity Input */}
+                                                <div className="bg-slate-900/50 p-2 rounded-xl border border-slate-800 flex items-center gap-2">
+                                                    <span className="text-slate-400 text-xs font-bold uppercase ml-2">Кол-во:</span>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max="100000"
+                                                        value={stockQty}
+                                                        onChange={(e) => setStockQty(Math.max(1, parseInt(e.target.value) || 1))}
+                                                        className="flex-1 bg-transparent text-white font-mono font-bold text-lg outline-none text-right"
+                                                    />
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    {/* BUY BUTTON (Current Player Only) */}
+                                                    {isMyTurn && (
+                                                        <button
+                                                            onClick={handleBuyStock}
+                                                            disabled={me.cash < (state.currentCard.cost || 0) * stockQty}
+                                                            className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl shadow-lg shadow-green-900/20 flex flex-col items-center"
+                                                        >
+                                                            <span className="text-sm">КУПИТЬ</span>
+                                                            <span className="text-[10px] opacity-70">-${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
+                                                        </button>
+                                                    )}
+
+                                                    {/* SELL BUTTON (Anyone with stock) */}
+                                                    {me.assets.some((a: any) => a.symbol === state.currentCard.symbol && a.quantity >= stockQty) ? (
+                                                        <button
+                                                            onClick={handleSellStock}
+                                                            className="bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-orange-900/20 flex flex-col items-center"
+                                                        >
+                                                            <span className="text-sm">ПРОДАТЬ</span>
+                                                            <span className="text-[10px] opacity-70">+${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
+                                                        </button>
+                                                    ) : (
+                                                        // Placeholder to keep grid layout if not selling
+                                                        !isMyTurn && <div className="bg-slate-800/50 rounded-xl flex items-center justify-center text-slate-600 text-xs font-bold">Нет акций</div>
+                                                    )}
+                                                </div>
+
+                                                {isMyTurn && (
+                                                    <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-xs mt-1">
+                                                        ПАС (Завершить ход)
+                                                    </button>
+                                                )}
+
+                                                <div className="text-center text-[10px] text-slate-500 mt-1 animate-pulse">
+                                                    Рынок открыт: Сделки доступны всем!
+                                                </div>
+                                            </div>
+                                        ) : state.currentCard.type === 'MARKET' ? (
+                                            /* MARKET: Special Logic for Global Interaction */
                                             <div className="flex gap-2 w-full">
                                                 {me.assets.some((a: any) => a.title === state.currentCard?.targetTitle) ? (
                                                     <button onClick={() => socket.emit('sell_asset', { roomId })} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
