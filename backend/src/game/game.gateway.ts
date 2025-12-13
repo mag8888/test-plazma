@@ -283,6 +283,20 @@ export class GameGateway {
                 }
             });
 
+            socket.on('transfer_asset', ({ roomId, toPlayerId, assetIndex }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.transferAsset(socket.id, toPlayerId, assetIndex);
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
             socket.on('sell_asset', ({ roomId }) => {
                 const game = this.games.get(roomId);
                 if (game) {

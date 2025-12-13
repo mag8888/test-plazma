@@ -30,6 +30,7 @@ interface PlayerState {
 }
 
 import { BankModal } from './BankModal';
+import { TransferModal } from './TransferModal';
 
 // Helper for Cash Animation
 const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
@@ -65,6 +66,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const router = useRouter();
     const [state, setState] = useState(initialState);
     const [showBank, setShowBank] = useState(false);
+    const [transferAssetItem, setTransferAssetItem] = useState<{ item: any, index: number } | null>(null);
 
     // Mobile Drawer State
     const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -210,19 +212,26 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const handleRepay = (amount: number) => socket.emit('repay_loan', { roomId, amount });
     const handleEndTurn = () => socket.emit('end_turn', { roomId });
 
+    const handleTransferAsset = (toId: string) => {
+        if (!transferAssetItem) return;
+        socket.emit('transfer_asset', { roomId, toPlayerId: toId, assetIndex: transferAssetItem.index });
+        setTransferAssetItem(null);
+    };
+
     const handleExit = () => {
         socket.emit('leave_room', { roomId });
         router.push('/lobby');
     };
 
+    const me = state.players.find((p: any) => p.id === socket.id) || initialState.players[0];
+    const isMyTurn = state.players[state.currentPlayerIndex]?.id === me?.id;
+    const currentTurnPlayer = state.players[state.currentPlayerIndex];
+    const currentPlayer = currentTurnPlayer; // Alias for existing code
 
+    // Calculate total asset yield
+    const totalAssetYield = me.assets?.reduce((sum: number, a: any) => sum + (a.cashflow || 0), 0) || 0;
 
-
-    const currentPlayer = state.players[state.currentPlayerIndex];
-    if (!currentPlayer) return <div>Loading...</div>; // Safety check
-
-    const isMyTurn = currentPlayer.id === socket.id;
-    const me = state.players.find((p: any) => p.id === socket.id) || {};
+    if (!currentTurnPlayer) return <div>Loading...</div>; // Safety check
 
     // Animation State for Visualizer
     const [animatingPos, setAnimatingPos] = useState<Record<string, number>>({});
@@ -321,15 +330,25 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                     {/* Assets Section */}
                     <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
-                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
-                            <span>🏠</span> Ваши Активы
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2">
+                            <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
+                            <span className="font-mono text-green-400">+${totalAssetYield}</span>
                         </h3>
                         {me.assets?.length > 0 ? (
                             <div className="space-y-2">
                                 {me.assets.map((a: any, i: number) => (
                                     <div key={i} className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50">
-                                        <span className="text-slate-300 font-medium">{a.title}</span>
-                                        <span className="font-mono text-green-400 font-bold bg-green-900/10 px-1.5 py-0.5 rounded ml-2">+${a.cashflow}</span>
+                                        <div className="flex flex-col">
+                                            <span className="text-slate-300 font-medium">{a.title}</span>
+                                            <span className="font-mono text-green-400 font-bold text-[10px]">+${a.cashflow}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => setTransferAssetItem({ item: a, index: i })}
+                                            className="ml-2 p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors text-slate-500 hover:text-blue-400"
+                                            title="Передать актив"
+                                        >
+                                            ➡️
+                                        </button>
                                     </div>
                                 ))}
                             </div>
@@ -523,15 +542,25 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                     {/* Assets */}
                     <div className="bg-[#151b2b] rounded-2xl p-5 border border-slate-800 shadow-lg flex-1 flex flex-col min-h-0 relative overflow-hidden">
-                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2 flex-shrink-0">
-                            <span>🏠</span> Ваши Активы
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2 flex-shrink-0">
+                            <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
+                            <span className="font-mono text-green-400">+${totalAssetYield}</span>
                         </h3>
                         {me.assets?.length > 0 ? (
                             <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1">
                                 {me.assets.map((a: any, i: number) => (
-                                    <div key={i} className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-700 transition-colors">
-                                        <span className="text-slate-300 font-medium">{a.title}</span>
-                                        <span className="font-mono text-green-400 font-bold bg-green-900/10 px-1.5 py-0.5 rounded ml-2">+${a.cashflow}</span>
+                                    <div key={i} className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-700 transition-colors group">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-slate-300 font-medium">{a.title}</span>
+                                            <span className="font-mono text-green-400 font-bold bg-green-900/10 px-1.5 py-0.5 rounded">+${a.cashflow}</span>
+                                        </div>
+                                        <button
+                                            onClick={() => setTransferAssetItem({ item: a, index: i })}
+                                            className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-700/50 rounded-lg transition-all text-slate-500 hover:text-blue-400"
+                                            title="Передать актив"
+                                        >
+                                            ➡️
+                                        </button>
                                     </div>
                                 ))}
                             </div>
@@ -866,6 +895,14 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             </div>
 
             <BankModal isOpen={showBank} onClose={() => setShowBank(false)} player={me} roomId={roomId} transactions={state.transactions} players={state.players} />
+            <TransferModal
+                isOpen={!!transferAssetItem}
+                onClose={() => setTransferAssetItem(null)}
+                asset={transferAssetItem?.item}
+                players={state.players}
+                myId={me.id}
+                onTransfer={handleTransferAsset}
+            />
             {
                 state.winner && (
                     <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-md">

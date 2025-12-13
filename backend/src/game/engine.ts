@@ -811,6 +811,73 @@ export class GameEngine {
         this.checkFastTrackCondition(player);
     }
 
+    transferAsset(fromPlayerId: string, toPlayerId: string, assetIndex: number) {
+        const fromPlayer = this.state.players.find(p => p.id === fromPlayerId);
+        const toPlayer = this.state.players.find(p => p.id === toPlayerId);
+
+        if (!fromPlayer || !toPlayer) return;
+        if (assetIndex < 0 || assetIndex >= fromPlayer.assets.length) return;
+
+        const asset = fromPlayer.assets[assetIndex];
+
+        // 1. Remove from source
+        fromPlayer.assets.splice(assetIndex, 1);
+
+        // 2. Remove Cashflow from source
+        if (asset.cashflow) {
+            fromPlayer.passiveIncome -= asset.cashflow;
+            fromPlayer.income = fromPlayer.salary + fromPlayer.passiveIncome;
+            fromPlayer.cashflow = fromPlayer.income - fromPlayer.expenses;
+        }
+
+        // 3. Check for associated Mortgage (Liability) and move it
+        const mortgageIndex = fromPlayer.liabilities.findIndex((l: any) => l.name.includes(asset.title));
+        let mortgage = null;
+        if (mortgageIndex !== -1) {
+            mortgage = fromPlayer.liabilities[mortgageIndex];
+            fromPlayer.liabilities.splice(mortgageIndex, 1);
+            // Mortgage logic: does it have expense? Usually not in this generic model, mostly value.
+            // If it had expense, we should reduce it from source expenses.
+            if (mortgage.expense) {
+                fromPlayer.expenses -= mortgage.expense;
+                fromPlayer.cashflow = fromPlayer.income - fromPlayer.expenses;
+            }
+        }
+
+        // 4. Add to target
+        toPlayer.assets.push(asset);
+
+        // 5. Add Cashflow to target
+        if (asset.cashflow) {
+            toPlayer.passiveIncome += asset.cashflow;
+            toPlayer.income = toPlayer.salary + toPlayer.passiveIncome;
+            toPlayer.cashflow = toPlayer.income - toPlayer.expenses;
+        }
+
+        // 6. Add Mortgage to target
+        if (mortgage) {
+            toPlayer.liabilities.push(mortgage);
+            if (mortgage.expense) {
+                toPlayer.expenses += mortgage.expense;
+                toPlayer.cashflow = toPlayer.income - toPlayer.expenses;
+            }
+        }
+
+        // 7. Check Fast Track for both
+        this.checkFastTrackCondition(fromPlayer);
+        this.checkFastTrackCondition(toPlayer);
+
+        // 8. Log and Record
+        this.state.log.push(`🤝 ${fromPlayer.name} transferred ${asset.title} to ${toPlayer.name}`);
+        this.recordTransaction({
+            from: fromPlayer.name,
+            to: toPlayer.name,
+            amount: 0, // Asset transfer, strict monetary value unclear? Or assume gift?
+            description: `Transferred Asset: ${asset.title}`,
+            type: 'TRANSFER'
+        });
+    }
+
     sellAsset(playerId: string) {
         const player = this.state.players.find(p => p.id === playerId);
         const card = this.state.currentCard;
