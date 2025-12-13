@@ -3,11 +3,18 @@ import { SMALL_DEALS, BIG_DEALS, MARKET_CARDS, EXPENSE_CARDS, Card } from './car
 
 interface RulesModalProps {
     onClose: () => void;
+    counts?: {
+        small: { remaining: number; total: number };
+        big: { remaining: number; total: number };
+        market: { remaining: number; total: number };
+        expense: { remaining: number; total: number };
+    };
 }
 
-export const RulesModal: React.FC<RulesModalProps> = ({ onClose }) => {
+export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
     const [activeTab, setActiveTab] = useState<'RULES' | 'SMALL' | 'BIG' | 'MARKET' | 'EXPENSE'>('RULES');
 
+    // ... (renderCard and getTabContent remain same)
     const renderCard = (card: Card) => (
         <div key={card.id} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-2 hover:bg-slate-800 transition-colors">
             <div className="flex justify-between items-start">
@@ -90,14 +97,6 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose }) => {
 
                         <section>
                             <h3 className="text-lg font-bold text-white mb-2">💰 Карточки и Бонусы</h3>
-                            <p className="text-slate-300 mb-2">
-                                В игре есть особые карточки "Друг просит в займ", которые могут выпасть в "Мелких Сделках" или "Возможностях".
-                                <ul className="list-disc list-inside mt-2 space-y-1 text-slate-400">
-                                    <li><strong>Друг просит в займ (Неудачно):</strong> Вы теряете $5,000. Друг пропадает с деньгами.</li>
-                                    <li><strong>Друг просит в займ (Бизнес):</strong> Вы платите $5,000, но друг возвращает вам долю в бизнесе. Вы получаете актив +$500/мес.</li>
-                                    <li><strong>Друг просит в займ (Удача/Мудрость):</strong> Вы платите $5,000. В благодарность друг учит вас мудрости. Вы получаете возможность бросать <strong>2 кубика</strong> в течение следующих 3 ходов (аналог Благотворительности).</li>
-                                </ul>
-                            </p>
                             <p className="text-slate-300 mt-2">
                                 <strong>Благотворительность:</strong> Пожертвуйте 10% от общего дохода, чтобы бросать 1 или 2 кубика следующие 3 хода.
                             </p>
@@ -108,6 +107,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose }) => {
                 );
         }
     };
+    // ...
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
@@ -117,9 +117,18 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose }) => {
                 <div className="p-6 border-b border-slate-700 flex justify-between items-center bg-[#0f172a] rounded-t-2xl flex-shrink-0">
                     <h2 className="text-2xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-violet-400">
                         {activeTab === 'RULES' ? 'Правила Игры' :
-                            activeTab === 'SMALL' ? 'Малые Сделки' :
-                                activeTab === 'BIG' ? 'Крупные Сделки' :
-                                    activeTab === 'MARKET' ? 'Рынок' : 'Расходы'}
+                            activeTab === 'SMALL' ? `Малые Сделки` :
+                                activeTab === 'BIG' ? `Крупные Сделки` :
+                                    activeTab === 'MARKET' ? `Рынок` : `Расходы`}
+                        {/* Show counts in header if not rules */}
+                        {activeTab !== 'RULES' && counts && (
+                            <span className="ml-3 text-red-500 text-lg font-mono">
+                                {activeTab === 'SMALL' && `${counts.small.remaining}/${counts.small.total}`}
+                                {activeTab === 'BIG' && `${counts.big.remaining}/${counts.big.total}`}
+                                {activeTab === 'MARKET' && `${counts.market.remaining}/${counts.market.total}`}
+                                {activeTab === 'EXPENSE' && `${counts.expense.remaining}/${counts.expense.total}`}
+                            </span>
+                        )}
                     </h2>
                     <button
                         onClick={onClose}
@@ -141,27 +150,31 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose }) => {
                     <div className="flex gap-2 flex-wrap">
                         <button
                             onClick={() => setActiveTab('SMALL')}
-                            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${activeTab === 'SMALL' ? 'bg-green-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'SMALL' ? 'bg-green-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                         >
-                            Малые
+                            <span>Малые</span>
+                            {counts && <span className="text-[9px] opacity-70">{counts.small.remaining}/{counts.small.total}</span>}
                         </button>
                         <button
                             onClick={() => setActiveTab('BIG')}
-                            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${activeTab === 'BIG' ? 'bg-purple-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'BIG' ? 'bg-purple-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                         >
-                            Крупные
+                            <span>Крупные</span>
+                            {counts && <span className="text-[9px] opacity-70">{counts.big.remaining}/{counts.big.total}</span>}
                         </button>
                         <button
                             onClick={() => setActiveTab('MARKET')}
-                            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${activeTab === 'MARKET' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'MARKET' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                         >
-                            Рынок
+                            <span>Рынок</span>
+                            {counts && <span className="text-[9px] opacity-70">{counts.market.remaining}/{counts.market.total}</span>}
                         </button>
                         <button
                             onClick={() => setActiveTab('EXPENSE')}
-                            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all ${activeTab === 'EXPENSE' ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'EXPENSE' ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                         >
-                            Всячина
+                            <span>Всячина</span>
+                            {counts && <span className="text-[9px] opacity-70">{counts.expense.remaining}/{counts.expense.total}</span>}
                         </button>
                     </div>
 

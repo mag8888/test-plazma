@@ -19,6 +19,7 @@ export interface Card {
     businessType?: 'CLASSIC' | 'NETWORK';
     subtype?: 'MLM_ROLL' | 'CHARITY_ROLL';
     assetType?: 'REAL_ESTATE' | 'BUSINESS' | 'STOCK' | 'OTHER';
+    maxQuantity?: number;
 }
 
 // Expense Cards
@@ -60,8 +61,42 @@ const generateSmallDeals = (): Card[] => {
     };
 
     // --- STOCKS (Kept based on assumption this is default) ---
-    add(2, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 30, description: 'Цена $30. Колебания $10-$40.', assetType: 'STOCK' });
-    add(2, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 30, description: 'Цена $30. Колебания $10-$40.', assetType: 'STOCK' });
+    // --- STOCKS ---
+    // User Request: 1@5, 2@10, 2@20, 2@30, 1@40
+    const stockPrices = [5, 10, 10, 20, 20, 30, 30, 40];
+
+    // TSLA
+    stockPrices.forEach(price => {
+        add(1, { title: 'Акции: Tesla', symbol: 'TSLA', cost: price, description: `Цена $${price}. Колебания $5-$40.`, assetType: 'STOCK' });
+    });
+
+    // MSFT
+    stockPrices.forEach(price => {
+        add(1, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: price, description: `Цена $${price}. Колебания $5-$40.`, assetType: 'STOCK' });
+    });
+
+    // ID: 6612 - NEW INCOME STOCKS
+    // AT&T (T) - Preferred, Cost $5000, Cashflow $50, Max 1000
+    add(2, {
+        title: 'Акции: AT&T (Pref)',
+        symbol: 'T',
+        cost: 5000,
+        cashflow: 50,
+        maxQuantity: 1000,
+        description: 'Привилегированные акции AT&T. Дивиденды $50/акцию. Макс 1000 шт.',
+        assetType: 'STOCK'
+    });
+
+    // P&G (PG) - Preferred, Cost $2000, Cashflow $10, Max 1000
+    add(2, {
+        title: 'Акции: P&G (Pref)',
+        symbol: 'PG',
+        cost: 2000,
+        cashflow: 10,
+        maxQuantity: 1000,
+        description: 'Привилегированные акции P&G. Дивиденды $10/акцию. Макс 1000 шт.',
+        assetType: 'STOCK'
+    });
     // Or should I replace ALL with user list? User list didn't include stocks but "Deals" section had Market effects.
     // User list:
     // 5x Room in suburbs, 2x Manicure, 2x Coffee, 2x Partner, 2x Land, 1x Drone, 5x Flipping Studio.
@@ -257,5 +292,17 @@ export class CardManager {
         if (this.expenseDeck.length === 0) this.expenseDeck = this.shuffle([...EXPENSE_CARDS]);
         const card = this.expenseDeck.shift();
         return card!;
+    }
+
+    getDeckCounts() {
+        return {
+            small: { remaining: this.smallDeals.length, total: this.smallDeals.length + this.smallDealsDiscard.length },
+            big: { remaining: this.bigDeals.length, total: this.bigDeals.length + this.bigDealsDiscard.length },
+            market: { remaining: this.marketDeck.length, total: this.marketDeck.length + this.marketDeckDiscard.length },
+            expense: { remaining: this.expenseDeck.length, total: this.expenseDeck.length } // Expenses don't have explicit discard array usage in this class yet, but logic suggests simple cycle?
+            // Actually users asked for "Discard Shuffled". Current drawExpense reshuffles default EXPENSE_CARDS if empty.
+            // This implies "Cards in hand" event logic is instant? (You pay and it's done).
+            // So Total is constant 12.
+        };
     }
 }

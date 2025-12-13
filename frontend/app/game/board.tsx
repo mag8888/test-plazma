@@ -1156,7 +1156,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     </div>
                 )
             }
-            {showRules && <RulesModal onClose={() => setShowRules(false)} />}
+            {showRules && <RulesModal onClose={() => setShowRules(false)} counts={state.deckCounts} />}
         </div >
     );
 }

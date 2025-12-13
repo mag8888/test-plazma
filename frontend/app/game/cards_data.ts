@@ -19,6 +19,7 @@ export interface Card {
     businessType?: 'CLASSIC' | 'NETWORK';
     subtype?: 'MLM_ROLL' | 'CHARITY_ROLL';
     assetType?: 'REAL_ESTATE' | 'BUSINESS' | 'STOCK' | 'OTHER';
+    maxQuantity?: number;
 }
 
 // Helper to expand counts
@@ -55,6 +56,29 @@ export const SMALL_DEALS: Card[] = [
     ...expand(2, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 20, description: 'Цена $20. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
     ...expand(2, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 30, description: 'Цена $30. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
     { id: 'sd_msft_40', title: 'Акции: Microsoft', symbol: 'MSFT', cost: 40, description: 'Цена $40. Колебания $5-$40.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+
+    // AT&T
+    ...expand(2, {
+        title: 'Акции: AT&T (Pref)',
+        symbol: 'T',
+        cost: 5000,
+        cashflow: 50,
+        maxQuantity: 1000,
+        description: 'Привилегированные акции AT&T. Дивиденды $50/акцию. Макс 1000 шт.',
+        assetType: 'STOCK'
+    }, 'DEAL_SMALL'),
+
+    // P&G
+    ...expand(2, {
+        title: 'Акции: P&G (Pref)',
+        symbol: 'PG',
+        cost: 2000,
+        cashflow: 10,
+        maxQuantity: 1000,
+        description: 'Привилегированные акции P&G. Дивиденды $10/акцию. Макс 1000 шт.',
+        assetType: 'STOCK'
+    }, 'DEAL_SMALL'),
+
     ...expand(5, { title: 'Комната в пригороде', cost: 3000, cashflow: 250, description: 'Сдача в аренду. ROI ~100%.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
     ...expand(2, { title: 'Студия маникюра', cost: 4900, cashflow: 200, description: 'Студия маникюра на 1 место.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
     ...expand(2, { title: 'Кофейня', cost: 4900, cashflow: 100, description: 'Небольшая кофейня.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
