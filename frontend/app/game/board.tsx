@@ -744,15 +744,40 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                                                 <div className="grid grid-cols-2 gap-2">
                                                     {/* BUY BUTTON (Current Player Only) */}
+                                                    {/* BUY BUTTON (Current Player Only) */}
                                                     {isMyTurn && (
-                                                        <button
-                                                            onClick={handleBuyStock}
-                                                            disabled={me.cash < (state.currentCard.cost || 0) * stockQty}
-                                                            className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl shadow-lg shadow-green-900/20 flex flex-col items-center"
-                                                        >
-                                                            <span className="text-sm">КУПИТЬ</span>
-                                                            <span className="text-[10px] opacity-70">-${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
-                                                        </button>
+                                                        me.cash < (state.currentCard.cost || 0) * stockQty ? (
+                                                            // INSUFFICIENT FUNDS -> SHOW LOAN
+                                                            <div className="flex flex-col gap-1 w-full">
+                                                                <button
+                                                                    className="bg-red-600/50 cursor-not-allowed opacity-50 text-white font-bold py-2 rounded-xl flex flex-col items-center"
+                                                                    disabled
+                                                                >
+                                                                    <span className="text-sm">Не хватает средств</span>
+                                                                    <span className="text-[10px]">-${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
+                                                                </button>
+                                                                <button
+                                                                    onClick={() => {
+                                                                        const deficit = ((state.currentCard.cost || 0) * stockQty) - me.cash;
+                                                                        const loanAmount = Math.ceil(deficit / 1000) * 1000;
+                                                                        handleLoan(loanAmount);
+                                                                    }}
+                                                                    disabled={(me.loanDebt || 0) + ((state.currentCard.cost || 0) * stockQty - me.cash) > 38000}
+                                                                    className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold py-2 rounded-xl shadow-lg shadow-yellow-900/20"
+                                                                >
+                                                                    🏦 Взять кредит (+${Math.ceil(((state.currentCard.cost || 0) * stockQty - me.cash) / 1000) * 1000})
+                                                                </button>
+                                                            </div>
+                                                        ) : (
+                                                            // SUFFICIENT FUNDS -> SHOW BUY
+                                                            <button
+                                                                onClick={handleBuyStock}
+                                                                className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-900/20 flex flex-col items-center"
+                                                            >
+                                                                <span className="text-sm">КУПИТЬ</span>
+                                                                <span className="text-[10px] opacity-70">-${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
+                                                            </button>
+                                                        )
                                                     )}
 
                                                     {/* SELL BUTTON (Anyone with stock) */}
