@@ -130,7 +130,40 @@ const bootstrap = async () => {
         // Initialize Bot
         const botService = new BotService();
         // Initialize Game Gateway
+        // Initialize Game Gateway
         const gameGateway = new GameGateway(io);
+
+        // --- DB CLEANUP & INDEX SYNC ---
+        try {
+            console.log('--- STARTING DB MAINTENANCE ---');
+            const RoomModel = (await import('./models/room.model')).RoomModel;
+
+            // 1. Find duplicates
+            const duplicates = await RoomModel.aggregate([
+                { $match: { status: 'waiting' } },
+                { $group: { _id: "$creatorId", count: { $sum: 1 }, rooms: { $push: "$_id" } } },
+                { $match: { count: { $gt: 1 } } }
+            ]);
+
+            if (duplicates.length > 0) {
+                console.log(`Found ${duplicates.length} users with duplicate waiting rooms. Cleaning up...`);
+                for (const dup of duplicates) {
+                    const roomsToDelete = dup.rooms.slice(0, dup.rooms.length - 1); // Keep one
+                    await RoomModel.deleteMany({ _id: { $in: roomsToDelete } });
+                }
+                console.log('Duplicates removed.');
+            }
+
+            // 2. Sync Indexes
+            console.log('Syncing Indexes...');
+            await RoomModel.syncIndexes();
+            console.log('Indexes Synced Successfully.');
+            console.log('--- DB MAINTENANCE COMPLETE ---');
+        } catch (dbErr) {
+            console.error('DB MAINTENANCE FAILED:', dbErr);
+        }
+        // -------------------------------
+
         try {
             await gameGateway.initialize();
         } catch (initErr) {
