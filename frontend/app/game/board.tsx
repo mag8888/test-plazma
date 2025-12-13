@@ -693,7 +693,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         />
 
                         {/* Action Card Overlay */}
-                        {state.currentCard && !showDice && (
+                        {state.currentCard && !showDice && !isAnimating && (
                             <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
                                 <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative">
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
@@ -857,7 +857,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
 
                     {/* Charity Overlay */}
-                    {state.phase === 'CHARITY_CHOICE' && isMyTurn && (
+                    {state.phase === 'CHARITY_CHOICE' && isMyTurn && !isAnimating && (
                         <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
                             <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative text-center">
                                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-red-500"></div>
@@ -880,7 +880,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     )}
 
                     {/* Opportunity Choice Overlay */}
-                    {state.phase === 'OPPORTUNITY_CHOICE' && (
+                    {state.phase === 'OPPORTUNITY_CHOICE' && !isAnimating && (
                         <div className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
                             {isMyTurn ? (
                                 <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative text-center">
