@@ -187,10 +187,12 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             // 1. Show Dice for 2s
             setTimeout(() => {
                 setShowDice(false);
-                isRollingRef.current = false; // Allow updates again (and apply ours below)
+                isRollingRef.current = false;
 
-                // 2. Start Moving (State Update triggers visualizer interpolation)
-                setState(data.state);
+                // 2. Start Moving AFTER a slight delay to let Dice fade out
+                setTimeout(() => {
+                    setState(data.state);
+                }, 500);
 
                 // 3. Wait for movement to finish before showing popup
                 setTimeout(() => {

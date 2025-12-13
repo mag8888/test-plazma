@@ -40,7 +40,10 @@ export class GameGateway {
     }
 
     private saveState(roomId: string, game: GameEngine) {
-        this.roomService.saveGameState(roomId, game.getState()).catch(err => console.error("Persist Error:", err));
+        const state = game.getState();
+        // Debug Logging for Turn Persistence
+        // console.log(`[Persist] Room ${roomId} | Turn Index: ${state.currentPlayerIndex} | Player: ${state.players[state.currentPlayerIndex]?.name}`);
+        this.roomService.saveGameState(roomId, state).catch(err => console.error("Persist Error:", err));
     }
 
     initEvents() {
