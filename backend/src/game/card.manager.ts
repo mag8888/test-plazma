@@ -44,7 +44,7 @@ const generateSmallDeals = (): Card[] => {
                 description: template.description || '',
                 cost: template.cost || 0,
                 cashflow: template.cashflow || 0,
-                price: template.price, // For stocks, Price is usually Cost in the context of buying
+                price: template.price,
                 symbol: template.symbol,
                 mandatory: template.mandatory,
                 ...template
@@ -52,62 +52,119 @@ const generateSmallDeals = (): Card[] => {
         }
     };
 
-    // --- STOCKS ---
-    // Tesla (TSLA)
-    add(1, { title: 'Stock Split: Tesla', symbol: 'TSLA', cost: 10, description: 'Price $10. Trading Range $10-$40.' });
-    add(3, { title: 'Stock: Tesla', symbol: 'TSLA', cost: 20, description: 'Price $20. Trading Range $10-$40.' });
-    add(3, { title: 'Stock: Tesla', symbol: 'TSLA', cost: 30, description: 'Price $30. Trading Range $10-$40.' });
-    add(1, { title: 'Stock: Tesla', symbol: 'TSLA', cost: 40, description: 'Price $40. Trading Range $10-$40.' });
-    add(1, { title: 'Stock Top: Tesla', symbol: 'TSLA', cost: 50, description: 'Price $50. Trading Range $10-$40.' });
+    // --- STOCKS (Small Deal) ---
+    // Tesla
+    add(1, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 10, description: 'Цена $10. Колебания $10-$40.' });
+    add(3, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 20, description: 'Цена $20. Колебания $10-$40.' });
+    add(3, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 30, description: 'Цена $30. Колебания $10-$40.' });
+    add(1, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 40, description: 'Цена $40. Колебания $10-$40.' });
+    add(1, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 50, description: 'Цена $50. Колебания $10-$40.' });
 
-    // Microsoft (MSFT)
-    add(1, { title: 'Stock Split: Microsoft', symbol: 'MSFT', cost: 10, description: 'Price $10. Range $10-$40.' });
-    add(3, { title: 'Stock: Microsoft', symbol: 'MSFT', cost: 20, description: 'Price $20. Range $10-$40.' });
-    add(2, { title: 'Stock: Microsoft', symbol: 'MSFT', cost: 30, description: 'Price $30. Range $10-$40.' });
-    add(2, { title: 'Stock: Microsoft', symbol: 'MSFT', cost: 40, description: 'Price $40. Range $10-$40.' });
-    add(1, { title: 'Stock Top: Microsoft', symbol: 'MSFT', cost: 50, description: 'Price $50. Range $10-$40.' });
+    // Microsoft
+    add(1, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 10, description: 'Цена $10. Колебания $10-$40.' });
+    add(3, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 20, description: 'Цена $20. Колебания $10-$40.' });
+    add(2, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 30, description: 'Цена $30. Колебания $10-$40.' });
+    add(2, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 40, description: 'Цена $40. Колебания $10-$40.' });
+    add(1, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 50, description: 'Цена $50. Колебания $10-$40.' });
 
-    // Nvidia (NVDA)
-    add(2, { title: 'Stock: Nvidia', symbol: 'NVDA', cost: 10, description: 'Price $10. Range $10-$40.' });
-    add(3, { title: 'Stock: Nvidia', symbol: 'NVDA', cost: 20, description: 'Price $20. Range $10-$40.' });
-    add(3, { title: 'Stock: Nvidia', symbol: 'NVDA', cost: 30, description: 'Price $30. Range $10-$40.' });
-    add(2, { title: 'Stock: Nvidia', symbol: 'NVDA', cost: 40, description: 'Price $40. Range $10-$40.' });
+    // Nvidia
+    add(2, { title: 'Акции: Nvidia', symbol: 'NVDA', cost: 10, description: 'Цена $10. Колебания $10-$40.' });
+    add(3, { title: 'Акции: Nvidia', symbol: 'NVDA', cost: 20, description: 'Цена $20. Колебания $10-$40.' });
+    add(3, { title: 'Акции: Nvidia', symbol: 'NVDA', cost: 30, description: 'Цена $30. Колебания $10-$40.' });
+    add(2, { title: 'Акции: Nvidia', symbol: 'NVDA', cost: 40, description: 'Цена $40. Колебания $10-$40.' });
 
-    // Apple (AAPL)
-    add(2, { title: 'Stock: Apple', symbol: 'AAPL', cost: 10, description: 'Price $10. Range $10-$40.' });
-    add(5, { title: 'Stock: Apple', symbol: 'AAPL', cost: 20, description: 'Price $20. Range $10-$40.' });
-    add(3, { title: 'Stock: Apple', symbol: 'AAPL', cost: 30, description: 'Price $30. Range $10-$40.' });
-    add(2, { title: 'Stock: Apple', symbol: 'AAPL', cost: 40, description: 'Price $40. Range $10-$40.' });
+    // Apple
+    add(2, { title: 'Акции: Apple', symbol: 'AAPL', cost: 10, description: 'Цена $10. Колебания $10-$40.' });
+    add(5, { title: 'Акции: Apple', symbol: 'AAPL', cost: 20, description: 'Цена $20. Колебания $10-$40.' });
+    add(3, { title: 'Акции: Apple', symbol: 'AAPL', cost: 30, description: 'Цена $30. Колебания $10-$40.' });
+    add(2, { title: 'Акции: Apple', symbol: 'AAPL', cost: 40, description: 'Цена $40. Колебания $10-$40.' });
 
-    // Bitcoin (BTC)
-    add(1, { title: 'Bitcoin Crash', symbol: 'BTC', cost: 1000, description: 'Price $1,000. Low.' });
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 5000, description: 'Price $5,000.' });
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 10000, description: 'Price $10,000.' });
-    add(5, { title: 'Bitcoin Rally', symbol: 'BTC', cost: 20000, description: 'Price $20,000.' });
-    add(1, { title: 'Bitcoin Surge', symbol: 'BTC', cost: 50000, description: 'Price $50,000.' });
-    add(1, { title: 'Bitcoin Moon', symbol: 'BTC', cost: 100000, description: 'Price $100,000.' });
+    // Bitcoin
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 1000, description: 'Цена $1,000. Высокий риск.' });
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 5000, description: 'Цена $5,000.' });
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 10000, description: 'Цена $10,000.' });
+    add(5, { title: 'Bitcoin', symbol: 'BTC', cost: 20000, description: 'Цена $20,000.' });
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 50000, description: 'Цена $50,000.' });
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 100000, description: 'Цена $100,000.' });
 
     // Preferred Stocks
-    add(2, { title: 'Pref Stock: AT&T', symbol: 'T-PREF', cost: 5000, cashflow: 50, description: 'Preferred Stock. 12% Annual Yield.' });
-    add(2, { title: 'Pref Stock: P&G', symbol: 'PG-PREF', cost: 2000, cashflow: 10, description: 'Preferred Stock. 6% Annual Yield.' });
+    add(2, { title: 'Прив. акции: AT&T', symbol: 'T-PREF', cost: 5000, cashflow: 50, description: 'Доход $50/мес. Привилегированные акции.' });
+    add(2, { title: 'Прив. акции: P&G', symbol: 'PG-PREF', cost: 2000, cashflow: 10, description: 'Доход $10/мес. Привилегированные акции.' });
 
-    // --- REAL ESTATE / BUSINESS ---
-    add(5, { title: 'Commuter Room', cost: 3000, cashflow: 250, description: 'Комната в пригороде. ROI 100%.' });
-    add(2, { title: 'Manicure Studio', cost: 4900, cashflow: 200, description: 'Студия маникюра на 1 место.' });
-    add(2, { title: 'Coffee Shop', cost: 4900, cashflow: 100, description: 'Кофейня.' });
-    add(2, { title: 'Auto Repair Partner', cost: 4500, cashflow: 350, description: 'Партнёрство в автомастерской.' });
-    add(2, { title: 'Raw Land', cost: 5000, cashflow: 0, description: 'Участок земли 20га. No Cashflow.' });
-    add(1, { title: 'Drone for Filming', cost: 3000, cashflow: 50, description: 'Покупка дрона для съёмок.' });
-    add(5, { title: 'Studio Flip', cost: 5000, cashflow: 50, description: 'Флипинг студии.' }); // Cashflow 50? Or just buy/sell? Assuming flow for now or "Deal" to sell later? "Flip" implies selling. Cost 5k, Flow 50. 
+    // --- REAL ESTATE / BUSINESS (Small) ---
+    add(5, { title: 'Комната в пригороде', cost: 3000, cashflow: 250, description: 'Сдача в аренду. ROI ~100%.' });
+    add(2, { title: 'Студия маникюра', cost: 4900, cashflow: 200, description: 'Студия маникюра на 1 место.' });
+    add(2, { title: 'Кофейня', cost: 4900, cashflow: 100, description: 'Небольшая кофейня.' });
+    add(2, { title: 'Партнёрство в автомастерской', cost: 4500, cashflow: 350, description: 'Доля в бизнесе.' });
+    add(2, { title: 'Участок земли 20га', cost: 5000, cashflow: 0, description: 'Земля без дохода.' });
+    add(1, { title: 'Покупка дрона', cost: 3000, cashflow: 50, description: 'Дрон для съёмок.' });
+    add(5, { title: 'Флипинг студии', cost: 5000, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).' });
 
-    // --- SPECIAL / EXPENSES ---
-    add(1, { title: 'Loan to Friend', cost: 5000, cashflow: 0, description: 'Друг просит в займ. Рискованно.', mandatory: true });
-    add(1, { title: 'Cat Shelter', cost: 5000, cashflow: 0, description: 'Пожертвование на приют кошкам.', mandatory: true });
-    add(1, { title: 'Help Homeless', cost: 5000, cashflow: 0, description: 'Накормите бездомных.', mandatory: true });
+    // --- EXPENSES / SPECIAL ---
+    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Рискованно.', mandatory: true });
+    add(1, { title: 'Приют кошкам', cost: 5000, cashflow: 0, description: 'Пожертвование.', mandatory: true });
+    add(1, { title: 'Накормите бездомных', cost: 5000, cashflow: 0, description: 'Благотворительность.', mandatory: true });
 
     // --- DAMAGES ---
-    add(2, { title: 'Roof Leak', cost: 5000, cashflow: 0, description: 'Крыша протекла. Pay $5,000 IF you own property.', mandatory: true });
-    add(3, { title: 'Sewer Break', cost: 2000, cashflow: 0, description: 'Прорыв канализации. Pay $2,000.', mandatory: true });
+    add(2, { title: 'Протекла крыша', cost: 5000, cashflow: 0, description: 'Возможность обновить крышу (Если есть недвижимость).', mandatory: true });
+    add(3, { title: 'Прорыв канализации', cost: 2000, cashflow: 0, description: 'Возможность починить канализацию.', mandatory: true });
+
+    return cards;
+};
+
+// Generator for Big Deals
+const generateBigDeals = (): Card[] => {
+    let idCounter = 1;
+    const cards: Card[] = [];
+
+    const add = (count: number, template: Partial<Card>) => {
+        for (let i = 0; i < count; i++) {
+            cards.push({
+                id: `bd_${idCounter++}`,
+                type: 'DEAL_BIG',
+                title: template.title!,
+                description: template.description || '',
+                cost: template.cost || 0,
+                cashflow: template.cashflow || 0,
+                downPayment: template.downPayment, // Optional, can be calc'd
+                roi: template.roi,
+                ...template
+            } as Card);
+        }
+    };
+
+    // 1. 24 House Cards (Randomized Cost 7-10k, Flow 100-300)
+    for (let i = 0; i < 24; i++) {
+        // Random Cost 7000-10000 (step 500)
+        const cost = 7000 + Math.floor(Math.random() * 7) * 500;
+        // Random Flow 100-300 (step 50)
+        const cashflow = 100 + Math.floor(Math.random() * 5) * 50;
+
+        cards.push({
+            id: `bd_house_${i}`,
+            type: 'DEAL_BIG',
+            title: `Дом (3Br/2Ba)`,
+            description: `Дом под сдачу. Цена $${cost}. Доход $${cashflow}.`,
+            cost: cost,
+            cashflow: cashflow,
+            downPayment: 0, // Usually small deals don't have downpayment? Wait, these are BIG deals? 
+            // "House cost 7000-10000" sounds like Small Deal territory. 
+            // BUT User put it under "Big Deals". "для больших сделок нужно сформировать 24 карточек дома стоимость 7000-10000"
+            // If they are Big Deals, they usually have Down Payment option. 
+            // But 7000 is very cheap. Maybe these are "Down Payments" themselves?
+            // "стоимость 7000-10000" = Cost.
+            // If Cost is 10k, it's a small deal. But requested in Big Deals. I will respect request.
+            // I'll set DownPayment = Cost (Cash deal) or let helper handle it.
+            // I'll leave downPayment undefined = pay full cost.
+        });
+    }
+
+    // 2. Specific Business Cards
+    add(2, { title: 'Мини-отель', cost: 80000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 20000 });
+    add(2, { title: 'Сеть кафе быстрого питания', cost: 200000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 40000 });
+    add(1, { title: 'Ферма органических овощей', cost: 120000, cashflow: 4500, description: 'Экологичное хозяйство с контрактами на поставку.', downPayment: 30000 });
+    add(1, { title: 'Сеть автомоек', cost: 150000, cashflow: 5000, description: 'Хорошее расположение, стабильный трафик клиентов.', downPayment: 35000 });
+    add(1, { title: 'Коворкинг-центр', cost: 250000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 50000 });
 
     return cards;
 };
@@ -116,31 +173,14 @@ export class CardManager {
     private smallDeals: Card[] = [];
     private smallDealsDiscard: Card[] = [];
 
-    private bigDeals: Card[] = [
-        // Big Deals (Cost > $6,000, Apartments, etc)
-        {
-            id: 'm5', type: 'DEAL_BIG', title: '4-Plex Apartment', description: 'Steady cashflow machine.',
-            cost: 120000, downPayment: 12000, cashflow: 800, roi: 80
-        },
-        {
-            id: 'm6', type: 'DEAL_BIG', title: 'Car Wash', description: 'Automated car wash business.',
-            cost: 150000, downPayment: 30000, cashflow: 2500, roi: 100
-        },
-        {
-            id: 'm7', type: 'DEAL_BIG', title: '8-Unit Building', description: 'Fully occupied. Good management.',
-            cost: 240000, downPayment: 40000, cashflow: 1800, roi: 54
-        },
-        {
-            id: 'm8', type: 'DEAL_BIG', title: 'Shopping Mall Share', description: 'Limited partnership in a mall.',
-            cost: 20000, downPayment: 20000, cashflow: 1000, roi: 60
-        }
-    ];
+    private bigDeals: Card[] = [];
     private bigDealsDiscard: Card[] = [];
 
     expenseDeck: Card[] = [...EXPENSE_CARDS];
 
     constructor() {
         this.smallDeals = this.shuffle(generateSmallDeals());
+        this.bigDeals = this.shuffle(generateBigDeals());
     }
 
     drawSmallDeal(): Card | undefined {

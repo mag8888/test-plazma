@@ -24,6 +24,7 @@ const getSticker = (type: string, name: string) => {
     if (type === 'DOWNSIZED') return '📉';
     if (type === 'BUSINESS') return '🏢';
     if (type === 'DREAM') return '✨';
+    if (type === 'LOTTERY') return '🎰';
     return '⬜';
 };
 
@@ -34,6 +35,7 @@ const getGradient = (type: string, isFT: boolean) => {
         if (type === 'DREAM') return 'bg-gradient-to-br from-fuchsia-900 to-purple-950 border-fuchsia-500/50 shadow-[0_0_15px_rgba(217,70,239,0.3)]';
         if (type === 'LOSS') return 'bg-gradient-to-br from-red-900 to-red-950 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)]';
         if (type === 'STOCK_EXCHANGE') return 'bg-gradient-to-br from-indigo-900 to-indigo-950 border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.3)]';
+        if (type === 'LOTTERY') return 'bg-gradient-to-br from-yellow-700 to-amber-900 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.3)]';
         return 'bg-gradient-to-br from-slate-900 to-slate-950 border-amber-900/30';
     }
     // RAT RACE COLORS
@@ -124,7 +126,7 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId 
                                         {sq.type === 'CASHFLOW' && <span className="text-emerald-400 font-bold tracking-tighter text-[6px]">Day</span>}
                                     </div>
                                 </div>
-                                <span className="absolute top-0.5 right-0.5 text-[6px] font-bold text-slate-500 opacity-50">{sq.index}</span>
+                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-slate-900 border border-slate-700 rounded-full flex items-center justify-center text-[8px] text-slate-500 z-10">{sq.index}</span>
                             </div>
                         );
                     })}

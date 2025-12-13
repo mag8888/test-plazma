@@ -46,7 +46,7 @@ export interface PlayerState extends IPlayer {
 
 export interface BoardSquare {
     index: number;
-    type: 'DEAL' | 'MARKET' | 'EXPENSE' | 'PAYDAY' | 'BABY' | 'CHARITY' | 'DOWNSIZED' | 'DREAM' | 'BUSINESS' | 'LOSS' | 'STOCK_EXCHANGE';
+    type: 'DEAL' | 'MARKET' | 'EXPENSE' | 'PAYDAY' | 'BABY' | 'CHARITY' | 'DOWNSIZED' | 'DREAM' | 'BUSINESS' | 'LOSS' | 'STOCK_EXCHANGE' | 'LOTTERY';
     name: string;
     cost?: number;
     cashflow?: number;
@@ -128,16 +128,16 @@ export const FAST_TRACK_SQUARES: BoardSquare[] = [
     { index: 44, type: 'BUSINESS', name: 'Салон красоты', cost: 500000, cashflow: 15000, description: 'Салон красоты / Барбершоп' },
     // 22 (45) Dream
     { index: 45, type: 'DREAM', name: 'Мировой фестиваль', cost: 200000, description: 'Организовать мировой фестиваль' },
-    // 23 (46) Payday
-    { index: 46, type: 'PAYDAY', name: 'CASHFLOW Day', description: 'Вам выплачивается доход от ваших инвестиций' },
+    // 23 (46)
+    { index: 46, type: 'LOSS', name: 'Пожар', description: 'Вы теряете бизнес с минимальным доходом.', action: 'FIRE' },
     // 24
     { index: 47, type: 'BUSINESS', name: 'Онлайн-магазин', cost: 110000, cashflow: 3000, description: 'Онлайн-магазин одежды' },
-    // 25
-    { index: 48, type: 'LOSS', name: 'Пожар', description: 'Вы теряете бизнес с минимальным доходом.', action: 'FIRE' },
-    // 26
-    { index: 49, type: 'DREAM', name: 'Ретрит-центр', cost: 500000, description: 'Построить ретрит-центр' },
-    // 27
-    { index: 50, type: 'DREAM', name: 'Фонд талантов', cost: 300000, description: 'Создать фонд поддержки талантов' },
+    // 25 (48)
+    { index: 48, type: 'PAYDAY', name: 'CASHFLOW Day', description: 'Вам выплачивается доход от ваших инвестиций' },
+    // 26 (49)
+    { index: 49, type: 'DREAM', name: 'Фонд талантов', cost: 300000, description: 'Создать фонд поддержки талантов' },
+    // 27 (50)
+    { index: 50, type: 'BUSINESS', name: 'Ретрит-центр', cost: 500000, cashflow: 5000, description: 'Построить ретрит-центр' },
     // 28
     { index: 51, type: 'DREAM', name: 'Кругосветка', cost: 200000, description: 'Кругосветное плавание на паруснике' },
     // 29
@@ -179,7 +179,7 @@ export const FAST_TRACK_SQUARES: BoardSquare[] = [
     // 47
     { index: 70, type: 'BUSINESS', name: 'Образовательная платформа', cost: 200000, cashflow: 5000, description: 'Онлайн-образовательная платформа' },
     // 48 (Padding to complete loop - Index 71)
-    { index: 71, type: 'PAYDAY', name: 'CASHFLOW Day', description: 'Вам выплачивается доход от ваших инвестиций' }
+    { index: 71, type: 'LOTTERY', name: 'Лотерея', description: 'Выпадет любая сделка внешнего круга.' }
 ];
 
 export const FULL_BOARD = [...RAT_RACE_SQUARES, ...FAST_TRACK_SQUARES];
@@ -362,8 +362,14 @@ export class GameEngine {
         return this.state.board[pos];
     }
 
-    handleFastTrackSquare(player: PlayerState, position: number) {
-        const square = this.getSquare(position); // Use the actual square data
+    handleFastTrackSquare(player: PlayerState, position: number | BoardSquare) {
+        let square: BoardSquare;
+        if (typeof position === 'number') {
+            square = this.getSquare(position);
+        } else {
+            square = position;
+        }
+
         this.state.log.push(`${player.name} landed on ${square.type}: ${square.name}`);
 
         // WIN CONDITION: Cashflow >= 50,000 (Simplified rule)
@@ -429,8 +435,21 @@ export class GameEngine {
                     this.state.log.push(`📉 Stock Exchange: Rolled ${roll}. No profit.`);
                 }
                 break;
+
+            case 'LOTTERY':
+                // Pick any random square from Fast Track (indices 24 to 70)
+                // Filter out LOTTERY itself to avoid infinite recursion if we only have one lottery square? 
+                // Or just pick randomly.
+                const eligibleSquares = FAST_TRACK_SQUARES.filter(sq => sq.type !== 'LOTTERY' && sq.type !== 'PAYDAY'); // Exclude Payday? User said "Any DEAL". Let's exclude Payday to be exciting. Or include all? "Any card of the big track". Let's include all except Lottery itself.
+                const randomSquare = eligibleSquares[Math.floor(Math.random() * eligibleSquares.length)];
+
+                this.state.log.push(`🎰 LOTTERY! Teleporting effect to: ${randomSquare.name}`);
+                // Recursive call with square object
+                this.handleFastTrackSquare(player, randomSquare);
+                break;
         }
     }
+
 
     handleFastTrackLoss(player: PlayerState, square: BoardSquare) {
         if (!square.action) return;
@@ -506,12 +525,13 @@ export class GameEngine {
                 const roll = Math.floor(Math.random() * 6) + 1;
                 if (roll <= 4) {
                     player.childrenCount++;
-                    player.expenses += player.childCost;
+                    const childExpense = 400; // Fixed per user rule
+                    player.expenses += childExpense;
                     player.cashflow = player.income - player.expenses;
-                    // "3 разово выплачивается 5000$" - Assuming generic "Gift" based on Congratulations or Cost?
+                    // "3 разово выплачивается 5000$"
                     player.cash += 5000;
 
-                    this.state.log.push(`👶 Baby Born! (Roll: ${roll}). +$5000 Gift. Expenses +$${player.childCost}/mo`);
+                    this.state.log.push(`👶 Baby Born! (Roll: ${roll}). +$5000 Gift. Expenses +$${childExpense}/mo`);
                     this.state.lastEvent = { type: 'BABY_BORN', payload: { player: player.name } };
                 } else {
                     this.state.log.push(`No Baby (Roll: ${roll}).`);
