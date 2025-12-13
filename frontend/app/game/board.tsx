@@ -178,7 +178,11 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     const square = board.find((s: any) => s.index === squareIndex);
 
                     if (square && !['roll_dice', 'end_turn'].includes(data.state.phase)) {
-                        // setSquareInfo(square); // Disable auto-popup per user feedback
+                        // Only show popup for types that DON'T have their own Overlay (Expense/Market=Card, Charity=Overlay)
+                        // DEAL needs this for "Small/Big" choice.
+                        if (!['EXPENSE', 'MARKET', 'CHARITY'].includes(square.type)) {
+                            setSquareInfo(square);
+                        }
                     }
                 }, 2000); // 2s Delay to allow piece to move before showing info/cards
             }, 2000); // 2s Dice spin
