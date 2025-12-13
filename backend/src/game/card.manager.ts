@@ -20,18 +20,18 @@ export interface Card {
 
 // Expense Cards
 export const EXPENSE_CARDS: Card[] = [
-    { id: 'e1', type: 'EXPENSE', title: 'New Phone', description: 'Bought latest model', cost: 800 },
-    { id: 'e2', type: 'EXPENSE', title: 'Car Repair', description: 'Engine failure', cost: 1200 },
-    { id: 'e3', type: 'EXPENSE', title: 'Tax Audit', description: 'Pay back taxes', cost: 500 },
-    { id: 'e4', type: 'EXPENSE', title: 'Shopping Spree', description: 'Clothes and shoes', cost: 1000 },
-    { id: 'e5', type: 'EXPENSE', title: 'Family Vacation', description: 'Disneyland trip', cost: 2000 },
-    { id: 'e6', type: 'EXPENSE', title: 'Medical Bill', description: 'Unexpected surgery', cost: 1500 },
-    { id: 'e7', type: 'EXPENSE', title: 'House Repairs', description: 'Fixing the roof', cost: 800 },
-    { id: 'e8', type: 'EXPENSE', title: 'New TV', description: 'OLED 4K TV', cost: 2000 },
-    { id: 'e9', type: 'EXPENSE', title: 'Concert Tickets', description: 'VIP seats', cost: 300 },
-    { id: 'e10', type: 'EXPENSE', title: 'Charity Ball', description: 'Donation', cost: 500 },
-    { id: 'e11', type: 'EXPENSE', title: 'Boat Maintenance', description: 'If you own a boat', cost: 1000 }, // Conditional?
-    { id: 'e12', type: 'EXPENSE', title: 'New Tires', description: 'For your car', cost: 400 },
+    { id: 'e1', type: 'EXPENSE', title: 'Новый телефон', description: 'Купили последнюю модель.', cost: 800, mandatory: true },
+    { id: 'e2', type: 'EXPENSE', title: 'Ремонт машины', description: 'Сломался двигатель.', cost: 1200, mandatory: true },
+    { id: 'e3', type: 'EXPENSE', title: 'Налоговый аудит', description: 'Уплата налогов.', cost: 500, mandatory: true },
+    { id: 'e4', type: 'EXPENSE', title: 'Шопинг', description: 'Одежда и обувь.', cost: 1000, mandatory: true },
+    { id: 'e5', type: 'EXPENSE', title: 'Отпуск', description: 'Поездка с семьей.', cost: 2000, mandatory: true },
+    { id: 'e6', type: 'EXPENSE', title: 'Медицинский счет', description: 'Неожиданное лечение.', cost: 1500, mandatory: true },
+    { id: 'e7', type: 'EXPENSE', title: 'Ремонт дома', description: 'Починка крыши.', cost: 800, mandatory: true },
+    { id: 'e8', type: 'EXPENSE', title: 'Новый ТВ', description: 'OLED 4K Телевизор.', cost: 2000, mandatory: true },
+    { id: 'e9', type: 'EXPENSE', title: 'Концерт', description: 'VIP места.', cost: 300, mandatory: true },
+    { id: 'e10', type: 'EXPENSE', title: 'Благотворительность', description: 'Пожертвование.', cost: 500, mandatory: true },
+    { id: 'e11', type: 'EXPENSE', title: 'Обслуживание лодки', description: 'Если есть лодка.', cost: 1000, mandatory: true },
+    { id: 'e12', type: 'EXPENSE', title: 'Новые шины', description: 'Для автомобиля.', cost: 400, mandatory: true },
 ];
 
 // Generator for Small Deals

@@ -574,9 +574,9 @@ export class GameEngine {
         } else if (square.type === 'EXPENSE') {
             const card = this.cardManager.drawExpense();
             this.state.currentCard = card;
-            player.cash -= (card.cost || 0);
-            this.state.log.push(`Paid $${card.cost} for ${card.title}`);
-            // TODO: Check bankruptcy / Credit needed
+            // Removed automatic deduction. Now handled via buyAsset (Mandatory Pay)
+            this.state.log.push(`💸 Expense: ${card.title} ($${card.cost})`);
+            this.state.phase = 'ACTION';
         } else if (square.type === 'BABY') {
             if (player.childrenCount >= 3) {
                 this.state.log.push(`${player.name} already has max children.`);
@@ -865,7 +865,8 @@ export class GameEngine {
         const card = this.state.currentCard;
 
         if (!player || !card) return;
-        if (card.type !== 'MARKET' && card.type !== 'DEAL_SMALL' && card.type !== 'DEAL_BIG' && card.type !== 'BUSINESS' && card.type !== 'DREAM') return;
+        if (!player || !card) return;
+        if (card.type !== 'MARKET' && card.type !== 'DEAL_SMALL' && card.type !== 'DEAL_BIG' && card.type !== 'BUSINESS' && card.type !== 'DREAM' && card.type !== 'EXPENSE') return;
 
         // Determine cost (Use Down Payment if available, else full cost)
         const costToPay = card.downPayment !== undefined ? card.downPayment : (card.cost || 0);
@@ -876,6 +877,14 @@ export class GameEngine {
         }
 
         player.cash -= costToPay;
+
+        // Handle Expense Payment (No Asset added)
+        if (card.type === 'EXPENSE') {
+            this.state.log.push(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
+            this.state.currentCard = undefined;
+            this.endTurn();
+            return;
+        }
 
         // Add Asset
         player.assets.push({
