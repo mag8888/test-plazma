@@ -285,7 +285,8 @@ export class GameEngine {
         if (player.skippedTurns > 0) {
             player.skippedTurns--;
             this.state.log.push(`${player.name} skips turn (Remaining: ${player.skippedTurns})`);
-            this.endTurn();
+            // Do NOT auto end turn. Let user click Next.
+            this.state.phase = 'ACTION';
             return 0;
         }
 
@@ -479,15 +480,7 @@ export class GameEngine {
 
             case 'LOSS':
                 this.handleFastTrackLoss(player, square);
-                this.endTurn(); // LOSS ends turn usually? Or immediate effect then end.
-                // handleFastTrackLoss doesn't end turn. But we should.
-                // Assuming LOSS doesn't require player input (manual OK button?).
-                // Current UI doesn't support generic OK for LOSS. 
-                // Let's just end turn to keep it auto.
-                // Wait, users might want to see what happened.
-                // Let's rely on standard endTurn flow if handled.
-                // But handleFastTrackLoss just modifies state.
-                this.endTurn();
+                this.state.phase = 'ACTION';
                 break;
 
             case 'CHARITY':
@@ -504,7 +497,7 @@ export class GameEngine {
                 } else {
                     this.state.log.push(`📉 Stock Exchange: Rolled ${roll}. No profit.`);
                 }
-                this.endTurn();
+                this.state.phase = 'ACTION'; // Manual Next
                 break;
 
             case 'LOTTERY':
@@ -676,7 +669,7 @@ export class GameEngine {
             this.state.phase = 'ACTION';
         } else {
             this.state.log.push(`No ${type} deals left!`);
-            this.endTurn();
+            this.state.phase = 'ACTION';
         }
     }
 
@@ -778,7 +771,7 @@ export class GameEngine {
             // If we set phase to ACTION, user has "Pass" button? 
             // We should just clear card and effectively End Turn or allow standard end.
             this.state.currentCard = undefined; // Card resolved
-            this.endTurn();
+            this.state.phase = 'ACTION';
             return;
         }
 

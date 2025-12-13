@@ -80,6 +80,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const [pendingState, setPendingState] = useState<any | null>(null);
     const [squareInfo, setSquareInfo] = useState<any>(null);
     const [babyNotification, setBabyNotification] = useState<string | null>(null);
+    const [isAnimating, setIsAnimating] = useState(false);
 
     // Timer State
     const [timeLeft, setTimeLeft] = useState(120);
@@ -166,27 +167,26 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
             setDiceValue(data.roll);
             setShowDice(true);
-            setPendingState(data.state); // Store full state for later
+            setIsAnimating(true);
+            setPendingState(data.state);
 
-            // Immediate: Update positions for animation ONLY (if we had separated position state, but we rely on full state for rendering board tokens...)
-            // Workaround: We set state but maybe suppress modals via local flag?
-            // Actually, existing code sets state inside timeout.
-            // Let's adjust the timeouts to be more deliberate.
+            // Timeouts calculation
+            const DICE_DURATION = 2000;
+            const MOVE_PER_STEP = 500;
+            const BUFFER = 500;
 
-            // 1. Show Dice (Already happens)
+            // Calculate total movement time based on roll
+            const moveDuration = (data.roll || 0) * MOVE_PER_STEP;
+
+            // 1. Show Dice for 2s
             setTimeout(() => {
                 setShowDice(false);
 
-                // 2. Start Moving (Update State to trigger visualizer movement)
+                // 2. Start Moving (State Update triggers visualizer interpolation)
                 setState(data.state);
 
-                // 3. WAIT checks (Square Info & Modals)
-                // calculated delay based on steps? For now fixed 1s after move starts + move duration?
-                // The visualizer takes about 300ms/step? 
-                // Let's add a robust delay before showing 'square info' or unlocking UI.
-
+                // 3. Wait for movement to finish before showing popup
                 setTimeout(() => {
-                    // Find player to get position
                     const currentPlayer = data.state.players[data.state.currentPlayerIndex];
                     if (!currentPlayer) return;
 
@@ -194,15 +194,23 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     const board = data.state.board;
                     const square = board.find((s: any) => s.index === squareIndex);
 
-                    if (square && !['roll_dice', 'end_turn'].includes(data.state.phase)) {
-                        // Only show popup for types that DON'T have their own Overlay (Expense/Market=Card, Charity=Overlay)
-                        // DEAL needs this for "Small/Big" choice.
+                    // Show popup only if phase allows (e.g. not immediately ending turn or rolling)
+                    // With manual turn flow, phase is usually ACTION.
+                    if (square && !['roll_dice'].includes(data.state.phase)) {
                         if (!['EXPENSE', 'MARKET', 'CHARITY', 'DEAL'].includes(square.type)) {
+                            // Only set squareInfo if it's not a type that has a custom overlay
+                            // Deal is handled via overlay usually, but logic here excludes it?
+                            // Wait, DEAL has "Small/Big" choice overlay via state.phase 'OPPORTUNITY_CHOICE'.
+                            // If phase is OPPORTUNITY_CHOICE, we don't need SquareInfo popup?
+                            // The Logic below checks types.
+                            // If type IS Deal/Market/Charity, we do NOT show squareInfo.
+                            // This seems correct for existing logic.
                             setSquareInfo(square);
                         }
                     }
-                }, 2000); // 2s Delay to allow piece to move before showing info/cards
-            }, 2000); // 2s Dice spin
+                    setIsAnimating(false);
+                }, moveDuration + BUFFER);
+            }, DICE_DURATION);
         });
 
         socket.on('state_updated', (data) => setState(data.state));
@@ -287,7 +295,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     const max = p.isFastTrack ? 48 : 24;
                     nextPos = (nextPos + 1) % max;
                     setAnimatingPos(prev => ({ ...prev, [p.id]: nextPos }));
-                }, 300);
+                }, 500);
                 return () => clearInterval(interval);
             }
         });
@@ -929,9 +937,9 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                             )}
                             <button
                                 onClick={handleEndTurn}
-                                disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard && !hasRolled)}
+                                disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard && !hasRolled) || isAnimating}
                                 className={`h-24 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
-                                ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard || hasRolled)
+                                ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard || hasRolled) && !isAnimating
                                         ? 'bg-gradient-to-br from-blue-500 to-blue-700 border-blue-400/50 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
                                         : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
                                     } `}
@@ -1028,9 +1036,9 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                     <button
                         onClick={handleEndTurn}
-                        disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard && !hasRolled)}
+                        disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard && !hasRolled) || isAnimating}
                         className={`flex-1 h-12 rounded-xl flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest shadow-lg transition-all relative overflow-hidden group
-                              ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard || hasRolled)
+                              ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard || hasRolled) && !isAnimating
                                 ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-900/40 hover:-translate-y-0.5 active:scale-95'
                                 : 'bg-slate-800/50 text-slate-500 opacity-50 cursor-not-allowed border border-slate-700/50'}`}
                     >
