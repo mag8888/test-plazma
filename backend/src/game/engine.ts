@@ -1036,9 +1036,17 @@ export class GameEngine {
 
     buyAsset(playerId: string, quantity: number = 1) {
         const player = this.state.players.find(p => p.id === playerId);
-        const card = this.state.currentCard;
+        const currentPlayer = this.state.players[this.state.currentPlayerIndex];
 
-        if (!player || !card) return;
+        if (!player || !this.state.currentCard) return;
+
+        // Restriction: Only current player can buy the deal on the table
+        if (player.id !== currentPlayer.id) {
+            this.state.log.push(`⚠️ ${player.name} tried to buy out of turn!`);
+            return;
+        }
+
+        const card = this.state.currentCard;
         if (card.type !== 'MARKET' && card.type !== 'DEAL_SMALL' && card.type !== 'DEAL_BIG' && card.type !== 'BUSINESS' && card.type !== 'DREAM' && card.type !== 'EXPENSE') return;
 
         // Stock Logic:
