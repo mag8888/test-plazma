@@ -6,6 +6,12 @@ export class RoomService {
     constructor() { }
 
     async createRoom(creatorId: string, userId: string, playerName: string, name: string, maxPlayers: number = 6, timer: number = 120, password?: string): Promise<any> {
+        // Prevent Duplicates: Check if user already has a WAITING room
+        const existingRoom = await RoomModel.findOne({ creatorId: userId, status: 'waiting' });
+        if (existingRoom) {
+            return this.sanitizeRoom(existingRoom);
+        }
+
         const room = await RoomModel.create({
             name,
             creatorId: userId, // Use Persistent User ID as Creator
