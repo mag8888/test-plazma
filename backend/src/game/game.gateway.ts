@@ -87,6 +87,7 @@ export class GameGateway {
                     this.io.emit('rooms_updated', rooms); // Broadcast update
                     callback({ success: true, room });
                 } catch (e: any) {
+                    console.error("Create Room Error:", e);
                     callback({ success: false, error: e.message });
                 }
             });
@@ -94,6 +95,8 @@ export class GameGateway {
             // Join Room
             socket.on('join_room', async (data, callback) => {
                 try {
+                    // ... (no change to logic, just context)
+                    console.log(`Join Request: Room ${data.roomId} User ${data.userId}`);
                     const { roomId, password, playerName, userId } = data; // Expect userId
                     const room = await this.roomService.joinRoom(
                         roomId,
@@ -118,6 +121,7 @@ export class GameGateway {
                     this.io.emit('rooms_updated', rooms);
                     callback({ success: true, room });
                 } catch (e: any) {
+                    console.error("Join Room Error:", e);
                     callback({ success: false, error: e.message });
                 }
             });
