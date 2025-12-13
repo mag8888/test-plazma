@@ -59,17 +59,18 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
 
     return (
         <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-2 md:p-4 animate-in fade-in duration-300">
-            <div className="bg-[#1e293b]/90 backdrop-blur-2xl w-full max-w-4xl rounded-3xl border border-slate-700/50 shadow-[0_0_50px_rgba(30,41,59,0.5)] flex flex-col md:flex-row h-[90vh] md:h-auto md:max-h-[90vh] overflow-hidden relative group">
+            <div className="bg-[#1e293b]/90 backdrop-blur-2xl w-full max-w-4xl rounded-3xl border border-slate-700/50 shadow-[0_0_50px_rgba(30,41,59,0.5)] flex flex-col md:flex-row h-[90vh] md:h-auto md:max-h-[90vh] overflow-y-auto md:overflow-hidden relative group custom-scrollbar">
                 {/* Background Glow */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
                 {/* Close Button Mobile */}
-                <button onClick={onClose} className="absolute top-4 right-4 md:hidden text-slate-400 hover:text-white z-50">
+                {/* Close Button Mobile - Sticky to ensure visibility */}
+                <button onClick={onClose} className="absolute top-4 right-4 md:hidden text-slate-400 hover:text-white z-50 bg-slate-900/50 rounded-full w-8 h-8 flex items-center justify-center backdrop-blur-sm">
                     ✕
                 </button>
 
                 {/* LEFT PANEL: Bank Status & Loan */}
-                <div className="w-full md:w-1/3 bg-slate-900/60 p-8 flex flex-col gap-6 border-r border-slate-700/50 relative overflow-y-auto custom-scrollbar">
+                <div className="w-full md:w-1/3 bg-slate-900/60 p-8 flex flex-col gap-6 border-r border-slate-700/50 relative md:overflow-y-auto custom-scrollbar shrink-0">
                     <div className="absolute inset-0 bg-gradient-to-b from-slate-800/20 to-transparent pointer-events-none"></div>
 
                     <button onClick={onClose} className="hidden md:flex items-center gap-2 absolute top-6 left-6 text-slate-500 hover:text-white transition-colors text-xs font-bold uppercase tracking-widest z-10">
@@ -173,7 +174,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                 </div>
 
                 {/* RIGHT PANEL: Transfer & History */}
-                <div className="w-full md:w-2/3 p-4 md:p-8 flex flex-col gap-6 overflow-y-auto flex-1 bg-slate-900/40 relative z-10">
+                <div className="w-full md:w-2/3 p-4 md:p-8 flex flex-col gap-6 md:overflow-y-auto flex-1 bg-slate-900/40 relative z-10">
                     <div className="flex justify-between items-center">
                         <h3 className="text-xl font-black text-white uppercase tracking-wider flex items-center gap-2">
                             <span className="text-blue-400">⚡</span> Операции
