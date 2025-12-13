@@ -358,20 +358,31 @@ export class GameEngine {
 
                 const globalIndex = 24 + squareIndex;
                 const square = this.getSquare(globalIndex);
-                if (square && square.type === 'PAYDAY') {
+                if (square && square.type === 'PAYDAY' && i !== steps) {
                     player.cash += player.cashflow;
                     this.state.log.push(`💰 ${player.name} passed Payday! +$${player.cashflow}`);
+                    this.recordTransaction({
+                        from: 'Bank',
+                        to: player.name,
+                        amount: player.cashflow,
+                        description: 'Payday (Passed)',
+                        type: 'PAYDAY'
+                    });
                 }
-
-                // Also handling the generic "Bank Settlement" at start/wrap? 
-                // If index 0 of Fast Track (Global 24) is Payday, it's covered above.
 
             } else {
                 // Rat Race
                 const square = this.getSquare(squareIndex);
-                if (square && square.type === 'PAYDAY') {
+                if (square && square.type === 'PAYDAY' && i !== steps) {
                     player.cash += player.cashflow;
                     this.state.log.push(`💰 ${player.name} passed Payday! +$${player.cashflow}`);
+                    this.recordTransaction({
+                        from: 'Bank',
+                        to: player.name,
+                        amount: player.cashflow,
+                        description: 'Payday (Passed)',
+                        type: 'PAYDAY'
+                    });
                 }
             }
         }
@@ -553,6 +564,13 @@ export class GameEngine {
             if (square.index !== 0) {
                 player.cash += player.cashflow;
                 this.state.log.push(`Checking Day! +$${player.cashflow}`);
+                this.recordTransaction({
+                    from: 'Bank',
+                    to: player.name,
+                    amount: player.cashflow,
+                    description: 'Payday (Landed)',
+                    type: 'PAYDAY'
+                });
             } else {
                 this.state.log.push(`Entered Payday (Start)!`);
             }
