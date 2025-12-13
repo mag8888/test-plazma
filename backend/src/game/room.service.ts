@@ -157,44 +157,63 @@ export class RoomService {
     }
 
     async setPlayerReady(roomId: string, playerId: string, userId: string, isReady: boolean, dream?: string, token?: string): Promise<any> {
-        const room = await RoomModel.findById(roomId);
-        if (!room) throw new Error("Room not found");
+        // 1. Fetch room to validate Logic (Token uniqueness, existence)
+        const roomCheck = await RoomModel.findById(roomId).lean();
+        if (!roomCheck) throw new Error("Room not found");
 
-        let player = room.players.find(p => p.id === playerId);
+        let player = roomCheck.players.find(p => p.id === playerId);
 
-        // JIT Reconnection fallback
+        // JIT Reconnect: If not found by socket ID, try User ID
         if (!player && userId) {
-            player = room.players.find(p => p.userId === userId);
-            if (player) {
-                // Update the stale socket ID to the new one
-                player.id = playerId;
-            }
+            player = roomCheck.players.find(p => p.userId === userId);
+            // If found by User ID, we must update the Socket ID atomically first or during the main update
+            // We can handle it in the main update query query filter.
         }
 
         if (!player) throw new Error("Player not in room");
 
-        // Validate Dream (Mandatory per requirements)
+        // Validate Dream
         if (isReady && !dream) {
             throw new Error("Выберите мечту перед тем как нажать Готов");
         }
 
+        // Validate Token Uniqueness
         if (token) {
-            // Check based on Token uniqueness. 
-            // Exclude SELF using userId if possible, or socketId.
-            // player.id is now up to date.
-            const tokenTaken = room.players.some(p => p.token === token && p.id !== player!.id);
+            const tokenTaken = roomCheck.players.some(p => p.token === token && p.userId !== player!.userId);
             if (tokenTaken) {
+                console.error(`Token ${token} taken by another player in room ${roomId}`);
                 throw new Error("Эта фишка уже занята другим игроком");
             }
-            player.token = token;
         }
 
-        if (dream) player.dream = dream;
-        player.isReady = isReady;
+        // 2. Atomic Update
+        // We match by roomId AND (playerId OR userId) to be safe.
+        // Actually, we should match by the immutable identifier we found: userId if available, else socketId.
+        // Since we trust userId most:
+        const matchQuery = userId
+            ? { _id: roomId, "players.userId": userId }
+            : { _id: roomId, "players.id": playerId };
 
-        room.markModified('players'); // Force update detection for subdocuments
-        await room.save();
-        return this.sanitizeRoom(room);
+        const update: any = {
+            $set: {
+                "players.$.isReady": isReady
+            }
+        };
+
+        if (dream) update.$set["players.$.dream"] = dream;
+        if (token) update.$set["players.$.token"] = token;
+        // Always update / confirm socket ID
+        update.$set["players.$.id"] = playerId;
+
+        const updatedRoom = await RoomModel.findOneAndUpdate(
+            matchQuery,
+            update,
+            { new: true }
+        ).lean();
+
+        if (!updatedRoom) throw new Error("Update failed (Player lost?)");
+
+        return this.sanitizeRoom(updatedRoom);
     }
 
     async checkAllReady(roomId: string): Promise<boolean> {
