@@ -339,7 +339,8 @@ export class GameEngine {
     movePlayer(steps: number) {
         const player = this.state.players[this.state.currentPlayerIndex];
         const oldPos = player.position;
-        const trackLength = player.isFastTrack ? 47 : 24;
+        // Fast Track has 48 squares (Indices 24 to 71)
+        const trackLength = player.isFastTrack ? 48 : 24;
 
         let currentPos = oldPos;
 
