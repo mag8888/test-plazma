@@ -832,7 +832,7 @@ export class GameEngine {
         this.checkFastTrackCondition(player);
     }
 
-    transferAsset(fromPlayerId: string, toPlayerId: string, assetIndex: number) {
+    transferAsset(fromPlayerId: string, toPlayerId: string, assetIndex: number, quantity: number = 1) {
         const fromPlayer = this.state.players.find(p => p.id === fromPlayerId);
         const toPlayer = this.state.players.find(p => p.id === toPlayerId);
 
@@ -841,45 +841,86 @@ export class GameEngine {
 
         const asset = fromPlayer.assets[assetIndex];
 
-        // 1. Remove from source
-        fromPlayer.assets.splice(assetIndex, 1);
+        // Partial Transfer Logic (Stocks)
+        let transferAsset: any = asset;
+        let isPartial = false;
 
-        // 2. Remove Cashflow from source
-        if (asset.cashflow) {
-            fromPlayer.passiveIncome -= asset.cashflow;
-            fromPlayer.income = fromPlayer.salary + fromPlayer.passiveIncome;
-            fromPlayer.cashflow = fromPlayer.income - fromPlayer.expenses;
-        }
+        if ((asset.symbol || (asset.quantity && asset.quantity > 1)) && quantity < (asset.quantity || 1)) {
+            // Split Asset
+            isPartial = true;
+            // Determine cashflow part
+            const totalQuantity = asset.quantity || 1;
+            const transferRatio = quantity / totalQuantity;
+            const transferCashflow = Math.floor((asset.cashflow || 0) * transferRatio);
 
-        // 3. Check for associated Mortgage (Liability) and move it
-        const mortgageIndex = fromPlayer.liabilities.findIndex((l: any) => l.name.includes(asset.title));
-        let mortgage = null;
-        if (mortgageIndex !== -1) {
-            mortgage = fromPlayer.liabilities[mortgageIndex];
-            fromPlayer.liabilities.splice(mortgageIndex, 1);
-            // Mortgage logic: does it have expense? Usually not in this generic model, mostly value.
-            // If it had expense, we should reduce it from source expenses.
-            if (mortgage.expense) {
-                fromPlayer.expenses -= mortgage.expense;
+            // Create new asset object to transfer
+            transferAsset = {
+                ...asset,
+                quantity: quantity,
+                cashflow: transferCashflow
+            };
+
+            // Reduce source asset
+            asset.quantity -= quantity;
+            asset.cashflow -= transferCashflow;
+
+            // Update source passive income
+            if (transferCashflow > 0) {
+                fromPlayer.passiveIncome -= transferCashflow;
+                fromPlayer.income = fromPlayer.salary + fromPlayer.passiveIncome;
                 fromPlayer.cashflow = fromPlayer.income - fromPlayer.expenses;
+            }
+        } else {
+            // Full Transfer
+            // 1. Remove from source
+            fromPlayer.assets.splice(assetIndex, 1);
+
+            // 2. Remove Cashflow from source
+            if (asset.cashflow) {
+                fromPlayer.passiveIncome -= asset.cashflow;
+                fromPlayer.income = fromPlayer.salary + fromPlayer.passiveIncome;
+                fromPlayer.cashflow = fromPlayer.income - fromPlayer.expenses;
+            }
+
+            // 3. Liability Logic (Only for Full Transfer currently logic doesn't support partial mortgage split easily)
+            // Assuming Stocks don't have specific mortgages linked by name usually.
+            if (!asset.symbol) {
+                const mortgageIndex = fromPlayer.liabilities.findIndex((l: any) => l.name.includes(asset.title));
+                if (mortgageIndex !== -1) {
+                    const mortgage = fromPlayer.liabilities[mortgageIndex];
+                    fromPlayer.liabilities.splice(mortgageIndex, 1);
+                    if (mortgage.expense) {
+                        fromPlayer.expenses -= mortgage.expense;
+                        fromPlayer.cashflow = fromPlayer.income - fromPlayer.expenses;
+                    }
+                    // Pass mortgage to dest
+                    toPlayer.liabilities.push(mortgage);
+                    if (mortgage.expense) {
+                        toPlayer.expenses += mortgage.expense;
+                        toPlayer.cashflow = toPlayer.income - toPlayer.expenses;
+                    }
+                }
             }
         }
 
         // 4. Add to target
-        toPlayer.assets.push(asset);
-
-        // 5. Add Cashflow to target
-        if (asset.cashflow) {
-            toPlayer.passiveIncome += asset.cashflow;
-            toPlayer.income = toPlayer.salary + toPlayer.passiveIncome;
-            toPlayer.cashflow = toPlayer.income - toPlayer.expenses;
-        }
-
-        // 6. Add Mortgage to target
-        if (mortgage) {
-            toPlayer.liabilities.push(mortgage);
-            if (mortgage.expense) {
-                toPlayer.expenses += mortgage.expense;
+        // Check if target has same stock to merge?
+        const existingStock = toPlayer.assets.find(a => a.symbol === transferAsset.symbol && a.symbol !== undefined);
+        if (existingStock) {
+            existingStock.quantity = (existingStock.quantity || 0) + (transferAsset.quantity || 1);
+            existingStock.cashflow = (existingStock.cashflow || 0) + (transferAsset.cashflow || 0);
+            // Add Cashflow to target
+            if (transferAsset.cashflow) {
+                toPlayer.passiveIncome += transferAsset.cashflow;
+                toPlayer.income = toPlayer.salary + toPlayer.passiveIncome;
+                toPlayer.cashflow = toPlayer.income - toPlayer.expenses;
+            }
+        } else {
+            toPlayer.assets.push(transferAsset);
+            // Add Cashflow to target
+            if (transferAsset.cashflow) {
+                toPlayer.passiveIncome += transferAsset.cashflow;
+                toPlayer.income = toPlayer.salary + toPlayer.passiveIncome;
                 toPlayer.cashflow = toPlayer.income - toPlayer.expenses;
             }
         }
@@ -889,12 +930,12 @@ export class GameEngine {
         this.checkFastTrackCondition(toPlayer);
 
         // 8. Log and Record
-        this.state.log.push(`🤝 ${fromPlayer.name} transferred ${asset.title} to ${toPlayer.name}`);
+        this.state.log.push(`🤝 ${fromPlayer.name} transferred ${quantity}x ${asset.title} to ${toPlayer.name}`);
         this.recordTransaction({
             from: fromPlayer.name,
             to: toPlayer.name,
-            amount: 0, // Asset transfer, strict monetary value unclear? Or assume gift?
-            description: `Transferred Asset: ${asset.title}`,
+            amount: 0, // Asset transfer
+            description: `Transferred ${quantity}x ${asset.title}`,
             type: 'TRANSFER'
         });
     }
@@ -1061,6 +1102,22 @@ export class GameEngine {
         if (player.cash < costToPay) {
             this.state.log.push(`${player.name} cannot afford ${card.title} ($${costToPay})`);
             return;
+        }
+
+        // MLM Logic (Subtype check)
+        if (card.subtype === 'MLM_ROLL') {
+            // Roll dice to determine partners
+            const partners = Math.floor(Math.random() * 6) + 1; // 1-6
+            // Calculate cashflow
+            // Formula: Cost 200 -> Per partner 100 which is 0.5 ratio
+            const cashflowPerPartner = (card.cost || 0) * 0.5;
+            const totalCashflow = partners * cashflowPerPartner;
+
+            // Modify card/asset properties for this transaction
+            card.cashflow = totalCashflow;
+            card.title = `${card.title} (${partners} Partners)`;
+
+            this.state.log.push(`🎲 Rolled ${partners}! Recruited ${partners} partners.`);
         }
 
         player.cash -= costToPay;

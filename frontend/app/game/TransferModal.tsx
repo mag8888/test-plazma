@@ -8,22 +8,24 @@ interface TransferModalProps {
     asset: any;
     players: any[];
     myId: string;
-    onTransfer: (toId: string) => void;
+    onTransfer: (toId: string, quantity?: number) => void;
 }
 
 export const TransferModal = ({ isOpen, onClose, asset, players, myId, onTransfer }: TransferModalProps) => {
     const [selectedPlayerId, setSelectedPlayerId] = useState('');
+    const [quantity, setQuantity] = useState(1);
+
+    const handleConfirm = () => {
+        if (selectedPlayerId) {
+            onTransfer(selectedPlayerId, quantity);
+            onClose();
+        }
+    };
 
     if (!isOpen || !asset) return null;
 
     const availablePlayers = players.filter(p => p.id !== myId);
 
-    const handleConfirm = () => {
-        if (selectedPlayerId) {
-            onTransfer(selectedPlayerId);
-            onClose();
-        }
-    };
 
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
@@ -35,6 +37,22 @@ export const TransferModal = ({ isOpen, onClose, asset, players, myId, onTransfe
                     <div className="text-sm text-slate-400 mb-1">Актив:</div>
                     <div className="font-bold text-lg text-white">{asset.title}</div>
                     <div className="font-mono text-green-400 text-sm mt-1">+${asset.cashflow} / мес</div>
+                    {asset.quantity && asset.quantity > 1 && (
+                        <div className="mt-4 pt-4 border-t border-slate-800">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-slate-400 text-xs font-bold uppercase">Кол-во для передачи:</span>
+                                <span className="text-white font-mono font-bold">{quantity} / {asset.quantity}</span>
+                            </div>
+                            <input
+                                type="range"
+                                min="1"
+                                max={asset.quantity}
+                                value={quantity}
+                                onChange={(e) => setQuantity(Number(e.target.value))}
+                                className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:accent-blue-400 transition-all"
+                            />
+                        </div>
+                    )}
                 </div>
 
                 <div className="space-y-4 mb-6">

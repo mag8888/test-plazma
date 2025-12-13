@@ -311,11 +311,11 @@ export class GameGateway {
                 }
             });
 
-            socket.on('transfer_asset', ({ roomId, toPlayerId, assetIndex }) => {
+            socket.on('transfer_asset', ({ roomId, toPlayerId, assetIndex, quantity }) => {
                 const game = this.games.get(roomId);
                 if (game) {
                     try {
-                        game.transferAsset(socket.id, toPlayerId, assetIndex);
+                        game.transferAsset(socket.id, toPlayerId, assetIndex, quantity);
                         const state = game.getState();
                         this.io.to(roomId).emit('state_updated', { state });
                         saveState(roomId, game);

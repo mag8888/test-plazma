@@ -223,9 +223,9 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const handleRepay = (amount: number) => socket.emit('repay_loan', { roomId, amount });
     const handleEndTurn = () => socket.emit('end_turn', { roomId });
 
-    const handleTransferAsset = (toId: string) => {
+    const handleTransferAsset = (toId: string, quantity?: number) => {
         if (!transferAssetItem) return;
-        socket.emit('transfer_asset', { roomId, toPlayerId: toId, assetIndex: transferAssetItem.index });
+        socket.emit('transfer_asset', { roomId, toPlayerId: toId, assetIndex: transferAssetItem.index, quantity });
         setTransferAssetItem(null);
     };
 

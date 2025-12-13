@@ -17,6 +17,7 @@ export interface Card {
     targetTitle?: string;
     offerPrice?: number;
     businessType?: 'CLASSIC' | 'NETWORK';
+    subtype?: 'MLM_ROLL';
 }
 
 // Expense Cards
@@ -77,6 +78,8 @@ const generateSmallDeals = (): Card[] => {
 
     // --- NETWORK MARKETING ---
     add(3, { title: 'Сетевой бизнес', cost: 500, cashflow: 100, description: 'Старт в MLM компании.', businessType: 'NETWORK' });
+    add(3, { title: 'Сетевой бизнес: Plazma Water', cost: 200, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' });
+    add(3, { title: 'Сетевой бизнес: MONEO', cost: 100, cashflow: 0, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($50/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' });
 
     // --- USER DEFINED "DEALS" (Expenses/Donations) ---
     add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Рискованное вложение.', mandatory: true });
@@ -175,6 +178,10 @@ const generateBigDeals = (): Card[] => {
     add(1, { title: 'Ферма органических овощей', cost: 120000, cashflow: 4500, description: 'Экологичное хозяйство с контрактами на поставку.', downPayment: 30000, businessType: 'CLASSIC' });
     add(1, { title: 'Сеть автомоек', cost: 150000, cashflow: 5000, description: 'Хорошее расположение, стабильный трафик клиентов.', downPayment: 35000, businessType: 'CLASSIC' });
     add(1, { title: 'Коворкинг-центр', cost: 250000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 50000, businessType: 'CLASSIC' });
+
+    // --- NETWORK FRANCHISES ---
+    add(3, { title: 'Франшиза: Plazma Water', cost: 10000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', downPayment: 0, businessType: 'NETWORK' });
+    add(3, { title: 'Франшиза: MONEO', cost: 10000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', downPayment: 0, businessType: 'NETWORK' });
 
     return cards;
 };
