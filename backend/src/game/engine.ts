@@ -598,16 +598,42 @@ export class GameEngine {
                 }
             }
         } else if (square.type === 'DOWNSIZED') {
+            player.skippedTurns = 2; // Fixed 2 turns
             const expenses = player.expenses;
-            player.cash -= expenses; // Pay full expenses
-            player.skippedTurns = 2; // Lose 2 turns
-            this.state.log.push(`🚫 DOWNSIZED! Paid -$${expenses} and skip 2 turns.`);
+            player.cash -= expenses;
+            this.endTurn(); // Auto end for now
         } else if (square.type === 'CHARITY') {
             this.state.phase = 'CHARITY_CHOICE';
             this.state.log.push(`❤️ Charity: Donate 10% of total income to roll extra dice?`);
         }
     }
 
+    drawDeal(playerId: string, type: 'SMALL' | 'BIG') {
+        const player = this.state.players.find(p => p.id === playerId);
+        if (!player || player.id !== this.state.players[this.state.currentPlayerIndex].id) {
+            throw new Error("Not your turn!");
+        }
+
+        if (this.state.phase !== 'OPPORTUNITY_CHOICE') {
+            throw new Error("Not in deal choice phase!");
+        }
+
+        let card: Card | undefined;
+        if (type === 'SMALL') {
+            card = this.cardManager.drawSmallDeal();
+        } else {
+            card = this.cardManager.drawBigDeal();
+        }
+
+        if (card) {
+            this.state.currentCard = card;
+            this.state.log.push(`Selected ${type} deal: ${card.title}`);
+            this.state.phase = 'ACTION';
+        } else {
+            this.state.log.push(`No ${type} deals left!`);
+            this.endTurn();
+        }
+    }
 
 
     takeLoan(playerId: string, amount: number) {

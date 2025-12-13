@@ -177,7 +177,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                     if (square && !['roll_dice', 'end_turn'].includes(data.state.phase)) {
                         setSquareInfo(square);
-                        setTimeout(() => setSquareInfo(null), 3000); // reduced from 3500
+                        // Removed auto-close timeout per user request
                     }
                 }, 2000); // 2s Delay to allow piece to move before showing info/cards
             }, 2000); // 2s Dice spin
@@ -349,36 +349,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 </div>
             )}
 
-            {/* ⚡ OPPORTUNITY CHOICE MODAL */}
-            {state.phase === 'OPPORTUNITY_CHOICE' && isMyTurn && (
-                <div className="absolute inset-0 z-[95] bg-black/80 backdrop-blur-md flex items-center justify-center animate-in fade-in duration-300">
-                    <div className="bg-[#1e293b] border border-slate-600 p-8 rounded-3xl shadow-2xl max-w-lg w-full text-center relative overflow-hidden">
-                        <div className="absolute top-0 left-0 w-full h-2 bg-gradient-to-r from-yellow-500 via-orange-500 to-red-500"></div>
-                        <h2 className="text-3xl font-black text-white mb-2 tracking-wide uppercase">Opportunity!</h2>
-                        <p className="text-slate-400 mb-8">Choose the size of your deal.</p>
 
-                        <div className="grid grid-cols-2 gap-4">
-                            <button
-                                onClick={() => socket.emit('resolve_opportunity', { roomId, size: 'SMALL' })}
-                                className="group relative p-6 rounded-2xl bg-slate-800 border border-slate-700 hover:border-green-500 hover:bg-slate-700/50 transition-all duration-300"
-                            >
-                                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">🐟</div>
-                                <div className="text-lg font-bold text-green-400 mb-1">Small Deal</div>
-                                <div className="text-xs text-slate-500 font-mono">Cost $0 - $5,000</div>
-                            </button>
-
-                            <button
-                                onClick={() => socket.emit('resolve_opportunity', { roomId, size: 'BIG' })}
-                                className="group relative p-6 rounded-2xl bg-slate-800 border border-slate-700 hover:border-yellow-500 hover:bg-slate-700/50 transition-all duration-300"
-                            >
-                                <div className="text-4xl mb-3 group-hover:scale-110 transition-transform">🐋</div>
-                                <div className="text-lg font-bold text-yellow-400 mb-1">Big Deal</div>
-                                <div className="text-xs text-slate-500 font-mono">Cost $6,000+</div>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* ℹ️ SQUARE INFO POPUP */}
             {squareInfo && (
@@ -438,9 +409,30 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                                     {/* Fallback if neither */}
                                     {!squareInfo.cost && !squareInfo.cashflow && (
-                                        <span className="text-slate-400 italic text-sm text-center block py-2">
-                                            {squareInfo.description ? 'Следуйте инструкциям на карточке' : 'Информация отсутствует'}
-                                        </span>
+                                        <div className="text-center">
+                                            {state.phase === 'OPPORTUNITY_CHOICE' && isMyTurn && squareInfo.type === 'DEAL' ? (
+                                                <div className="flex gap-2 mt-4">
+                                                    <button
+                                                        onClick={() => socket.emit('draw_deal', { roomId, type: 'SMALL' })}
+                                                        className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg transition-transform active:scale-95 flex flex-col items-center"
+                                                    >
+                                                        <span>Малая сделка</span>
+                                                        <span className="text-[10px] opacity-70">До $5,000</span>
+                                                    </button>
+                                                    <button
+                                                        onClick={() => socket.emit('draw_deal', { roomId, type: 'BIG' })}
+                                                        className="flex-1 bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded-xl shadow-lg transition-transform active:scale-95 flex flex-col items-center"
+                                                    >
+                                                        <span>Крупная сделка</span>
+                                                        <span className="text-[10px] opacity-70">От $6,000</span>
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                <span className="text-slate-400 italic text-sm block py-2">
+                                                    {squareInfo.description ? 'Следуйте инструкциям на карточке' : 'Информация отсутствует'}
+                                                </span>
+                                            )}
+                                        </div>
                                     )}
                                 </>
                             )}
