@@ -9,7 +9,13 @@ export class RoomService {
         // Prevent Duplicates: Check if user already has a WAITING room
         const existingRoom = await RoomModel.findOne({ creatorId: userId, status: 'waiting' });
         if (existingRoom) {
-            return this.sanitizeRoom(existingRoom);
+            if (existingRoom.name === name) {
+                // Exact match (Double click): Return existing
+                return this.sanitizeRoom(existingRoom);
+            } else {
+                // Different name: User wants a new room. Delete old one.
+                await RoomModel.findByIdAndDelete(existingRoom._id);
+            }
         }
 
         const room = await RoomModel.create({

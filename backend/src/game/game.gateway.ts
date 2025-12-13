@@ -390,9 +390,27 @@ export class GameGateway {
                 }
             });
 
+            socket.on('disconnecting', async () => {
+                for (const roomId of socket.rooms) {
+                    if (roomId !== socket.id) {
+                        try {
+                            // Clean up WAITING rooms (remove player, delete if empty)
+                            const room = await this.roomService.getRoom(roomId);
+                            if (room && room.status === 'waiting') {
+                                console.log(`Client ${socket.id} left waiting room ${roomId}`);
+                                await this.roomService.leaveRoom(roomId, socket.id);
+                                const rooms = await this.roomService.getRooms();
+                                this.io.emit('rooms_updated', rooms);
+                            }
+                            // If playing, do NOT remove player to allow reconnection
+                        } catch (e) {
+                            console.error(`Disconnect error for room ${roomId}:`, e);
+                        }
+                    }
+                }
+            });
+
             socket.on('disconnect', () => {
-                // Handle unclean disconnects (find which room they were in?)
-                // Complexe without user mapping. For now, rely on explicit leave or timeout.
                 console.log('Client disconnected:', socket.id);
             });
         });
