@@ -12,6 +12,10 @@ export interface Card {
     roi?: number;
     symbol?: string; // For stocks
     mandatory?: boolean; // For damage/events that must be accepted
+    // Market specific
+    action?: 'OFFER';
+    targetTitle?: string;
+    offerPrice?: number;
 }
 
 // Expense Cards
@@ -52,46 +56,16 @@ const generateSmallDeals = (): Card[] => {
         }
     };
 
-    // --- STOCKS (Small Deal) ---
-    // Tesla
-    add(1, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 10, description: 'Цена $10. Колебания $10-$40.' });
-    add(3, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 20, description: 'Цена $20. Колебания $10-$40.' });
-    add(3, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 30, description: 'Цена $30. Колебания $10-$40.' });
-    add(1, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 40, description: 'Цена $40. Колебания $10-$40.' });
-    add(1, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 50, description: 'Цена $50. Колебания $10-$40.' });
-
-    // Microsoft
-    add(1, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 10, description: 'Цена $10. Колебания $10-$40.' });
-    add(3, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 20, description: 'Цена $20. Колебания $10-$40.' });
+    // --- STOCKS (Kept based on assumption this is default) ---
+    add(2, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 30, description: 'Цена $30. Колебания $10-$40.' });
     add(2, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 30, description: 'Цена $30. Колебания $10-$40.' });
-    add(2, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 40, description: 'Цена $40. Колебания $10-$40.' });
-    add(1, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 50, description: 'Цена $50. Колебания $10-$40.' });
+    // Or should I replace ALL with user list? User list didn't include stocks but "Deals" section had Market effects.
+    // User list:
+    // 5x Room in suburbs, 2x Manicure, 2x Coffee, 2x Partner, 2x Land, 1x Drone, 5x Flipping Studio.
+    // 1x Friend Loan, 1x Cat Shelter, 1x Feed Homeless.
+    // 2x Roof leak, 3x Sewer break.
 
-    // Nvidia
-    add(2, { title: 'Акции: Nvidia', symbol: 'NVDA', cost: 10, description: 'Цена $10. Колебания $10-$40.' });
-    add(3, { title: 'Акции: Nvidia', symbol: 'NVDA', cost: 20, description: 'Цена $20. Колебания $10-$40.' });
-    add(3, { title: 'Акции: Nvidia', symbol: 'NVDA', cost: 30, description: 'Цена $30. Колебания $10-$40.' });
-    add(2, { title: 'Акции: Nvidia', symbol: 'NVDA', cost: 40, description: 'Цена $40. Колебания $10-$40.' });
-
-    // Apple
-    add(2, { title: 'Акции: Apple', symbol: 'AAPL', cost: 10, description: 'Цена $10. Колебания $10-$40.' });
-    add(5, { title: 'Акции: Apple', symbol: 'AAPL', cost: 20, description: 'Цена $20. Колебания $10-$40.' });
-    add(3, { title: 'Акции: Apple', symbol: 'AAPL', cost: 30, description: 'Цена $30. Колебания $10-$40.' });
-    add(2, { title: 'Акции: Apple', symbol: 'AAPL', cost: 40, description: 'Цена $40. Колебания $10-$40.' });
-
-    // Bitcoin
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 1000, description: 'Цена $1,000. Высокий риск.' });
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 5000, description: 'Цена $5,000.' });
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 10000, description: 'Цена $10,000.' });
-    add(5, { title: 'Bitcoin', symbol: 'BTC', cost: 20000, description: 'Цена $20,000.' });
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 50000, description: 'Цена $50,000.' });
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 100000, description: 'Цена $100,000.' });
-
-    // Preferred Stocks
-    add(2, { title: 'Прив. акции: AT&T', symbol: 'T-PREF', cost: 5000, cashflow: 50, description: 'Доход $50/мес. Привилегированные акции.' });
-    add(2, { title: 'Прив. акции: P&G', symbol: 'PG-PREF', cost: 2000, cashflow: 10, description: 'Доход $10/мес. Привилегированные акции.' });
-
-    // --- REAL ESTATE / BUSINESS (Small) ---
+    // --- USER DEFINED ASSETS ---
     add(5, { title: 'Комната в пригороде', cost: 3000, cashflow: 250, description: 'Сдача в аренду. ROI ~100%.' });
     add(2, { title: 'Студия маникюра', cost: 4900, cashflow: 200, description: 'Студия маникюра на 1 место.' });
     add(2, { title: 'Кофейня', cost: 4900, cashflow: 100, description: 'Небольшая кофейня.' });
@@ -100,17 +74,57 @@ const generateSmallDeals = (): Card[] => {
     add(1, { title: 'Покупка дрона', cost: 3000, cashflow: 50, description: 'Дрон для съёмок.' });
     add(5, { title: 'Флипинг студии', cost: 5000, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).' });
 
-    // --- EXPENSES / SPECIAL ---
-    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Рискованно.', mandatory: true });
-    add(1, { title: 'Приют кошкам', cost: 5000, cashflow: 0, description: 'Пожертвование.', mandatory: true });
-    add(1, { title: 'Накормите бездомных', cost: 5000, cashflow: 0, description: 'Благотворительность.', mandatory: true });
+    // --- USER DEFINED "DEALS" (Expenses/Donations) ---
+    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Рискованное вложение.', mandatory: true });
+    add(1, { title: 'Приют кошкам', cost: 5000, cashflow: 0, description: 'Пожертвование на приют.', mandatory: true });
+    add(1, { title: 'Накормите бездомных', cost: 5000, cashflow: 0, description: 'Благотворительный обед.', mandatory: true });
 
-    // --- DAMAGES ---
-    add(2, { title: 'Протекла крыша', cost: 5000, cashflow: 0, description: 'Возможность обновить крышу (Если есть недвижимость).', mandatory: true });
-    add(3, { title: 'Прорыв канализации', cost: 2000, cashflow: 0, description: 'Возможность починить канализацию.', mandatory: true });
+    // --- USER DEFINED DAMAGES ---
+    add(2, { title: 'Крыша протекла', cost: 5000, cashflow: 0, description: 'Обновить крышу. Платите $5000 ЕСЛИ есть недвижимость.', mandatory: true });
+    add(3, { title: 'Прорыв канализации', cost: 2000, cashflow: 0, description: 'Починить канализацию. Платите $2000 ЕСЛИ есть недвижимость.', mandatory: true });
+
 
     return cards;
 };
+
+// Generator for Market Cards (Selling Opportunities)
+const generateMarketCards = (): Card[] => {
+    let idCounter = 1;
+    const cards: Card[] = [];
+
+    const add = (count: number, template: Partial<Card>) => {
+        for (let i = 0; i < count; i++) {
+            cards.push({
+                id: `mkt_${idCounter++}`,
+                type: 'MARKET',
+                title: template.title!,
+                description: template.description || '',
+                action: 'OFFER',
+                targetTitle: template.targetTitle,
+                offerPrice: template.offerPrice,
+                ...template
+            } as Card);
+        }
+    };
+
+    // User provided Market Mappings
+    // Room in suburbs -> Buyer 25k
+    add(4, { title: 'Покупатель жилья', targetTitle: 'Комната в пригороде', offerPrice: 25000, description: 'Старое жилье идет под снос. Предлагают $25,000 за комнату.' });
+    // Manicure -> Network buyout 100k
+    add(2, { title: 'Слияние сетей', targetTitle: 'Студия маникюра', offerPrice: 100000, description: 'Большая сеть выкупает все маникюрные салоны. Предлагают $100,000.' });
+    // Coffee -> Buyer 25k
+    add(2, { title: 'Инвестор кофейни', targetTitle: 'Кофейня', offerPrice: 25000, description: 'Покупатель кофейни предлагает $25,000.' });
+    // Auto Partner -> Buyer 50k
+    add(2, { title: 'Выкуп доли', targetTitle: 'Партнёрство в автомастерской', offerPrice: 50000, description: 'Есть покупатель на партнерство за $50,000.' });
+    // Land 20ha -> Buyer 100k
+    add(2, { title: 'Застройщик', targetTitle: 'Участок земли 20га', offerPrice: 100000, description: 'Застройщик ищет землю. Предлагает $100,000.' });
+    // Flipping Studio -> Buyer 7k
+    add(4, { title: 'Покупатель студии', targetTitle: 'Флипинг студии', offerPrice: 7000, description: 'Покупатель квартиры студии (субаренда) за $7,000.' });
+
+    // General "Inflation" or generic market events could be added here if deck is too small, but user list is specific.
+    return cards;
+}
+
 
 // Generator for Big Deals
 const generateBigDeals = (): Card[] => {
@@ -135,9 +149,9 @@ const generateBigDeals = (): Card[] => {
 
     // 1. 24 House Cards (Randomized Cost 7-10k, Flow 100-300)
     for (let i = 0; i < 24; i++) {
-        // Random Cost 7000-10000 (step 500)
+        // Cost 7000-10000 (step 500)
         const cost = 7000 + Math.floor(Math.random() * 7) * 500;
-        // Random Flow 100-300 (step 50)
+        // Flow 100-300 (step 50)
         const cashflow = 100 + Math.floor(Math.random() * 5) * 50;
 
         cards.push({
@@ -147,15 +161,7 @@ const generateBigDeals = (): Card[] => {
             description: `Дом под сдачу. Цена $${cost}. Доход $${cashflow}.`,
             cost: cost,
             cashflow: cashflow,
-            downPayment: 0, // Usually small deals don't have downpayment? Wait, these are BIG deals? 
-            // "House cost 7000-10000" sounds like Small Deal territory. 
-            // BUT User put it under "Big Deals". "для больших сделок нужно сформировать 24 карточек дома стоимость 7000-10000"
-            // If they are Big Deals, they usually have Down Payment option. 
-            // But 7000 is very cheap. Maybe these are "Down Payments" themselves?
-            // "стоимость 7000-10000" = Cost.
-            // If Cost is 10k, it's a small deal. But requested in Big Deals. I will respect request.
-            // I'll set DownPayment = Cost (Cash deal) or let helper handle it.
-            // I'll leave downPayment undefined = pay full cost.
+            downPayment: 0
         });
     }
 
@@ -176,11 +182,15 @@ export class CardManager {
     private bigDeals: Card[] = [];
     private bigDealsDiscard: Card[] = [];
 
+    private marketDeck: Card[] = [];
+    private marketDeckDiscard: Card[] = [];
+
     expenseDeck: Card[] = [...EXPENSE_CARDS];
 
     constructor() {
         this.smallDeals = this.shuffle(generateSmallDeals());
         this.bigDeals = this.shuffle(generateBigDeals());
+        this.marketDeck = this.shuffle(generateMarketCards());
     }
 
     drawSmallDeal(): Card | undefined {
@@ -203,6 +213,15 @@ export class CardManager {
         return this.bigDeals.shift();
     }
 
+    drawMarket(): Card | undefined {
+        if (this.marketDeck.length === 0) {
+            if (this.marketDeckDiscard.length === 0) return undefined;
+            this.marketDeck = this.shuffle([...this.marketDeckDiscard]);
+            this.marketDeckDiscard = [];
+        }
+        return this.marketDeck.shift();
+    }
+
     discard(card: Card) {
         if (card.type === 'DEAL_SMALL') {
             this.smallDealsDiscard.push(card);
@@ -210,6 +229,8 @@ export class CardManager {
             this.bigDealsDiscard.push(card);
         } else if (card.type === 'EXPENSE') {
             this.expenseDeck.push(card);
+        } else if (card.type === 'MARKET') {
+            this.marketDeckDiscard.push(card);
         }
     }
 
@@ -219,12 +240,6 @@ export class CardManager {
             [array[i], array[j]] = [array[j], array[i]];
         }
         return array;
-    }
-
-    drawMarket(): Card | undefined {
-        // This method might be deprecated if we call drawSmallDeal/BigDeal directly based on user choice
-        // But keeping it for safety
-        return Math.random() > 0.5 ? this.drawSmallDeal() : this.drawBigDeal();
     }
 
     drawExpense(): Card {

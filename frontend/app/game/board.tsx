@@ -386,11 +386,11 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     <div className="bg-[#1e293b] border border-slate-600 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center relative overflow-hidden" onClick={e => e.stopPropagation()}>
                         {/* Gradient Line handled by helper */}
                         <div className={`absolute top-0 left-0 w-full h-2 bg-gradient-to-r ${['DREAM'].includes(squareInfo.type) ? 'from-fuchsia-600 to-purple-600' :
-                                ['BUSINESS', 'MARKET', 'DEAL', 'OPPORTUNITY'].includes(squareInfo.type) ? 'from-emerald-500 to-green-600' :
-                                    ['LOSS', 'EXPENSE', 'DOODAD', 'DOWNSIZED', 'TAX'].includes(squareInfo.type) ? 'from-red-700 to-rose-900' :
-                                        squareInfo.type === 'PAYDAY' ? 'from-yellow-500 to-amber-500' :
-                                            squareInfo.type === 'BABY' ? 'from-pink-400 to-blue-400' :
-                                                'from-blue-500 to-indigo-500' // Default
+                            ['BUSINESS', 'MARKET', 'DEAL', 'OPPORTUNITY'].includes(squareInfo.type) ? 'from-emerald-500 to-green-600' :
+                                ['LOSS', 'EXPENSE', 'DOODAD', 'DOWNSIZED', 'TAX'].includes(squareInfo.type) ? 'from-red-700 to-rose-900' :
+                                    squareInfo.type === 'PAYDAY' ? 'from-yellow-500 to-amber-500' :
+                                        squareInfo.type === 'BABY' ? 'from-pink-400 to-blue-400' :
+                                            'from-blue-500 to-indigo-500' // Default
                             }`}></div>
 
                         {/* Close Button */}
@@ -557,7 +557,13 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                     <h2 className="text-xl font-bold text-white mb-2 text-center">{state.currentCard.title}</h2>
                                     <p className="text-slate-400 text-sm mb-6 text-center">{state.currentCard.description}</p>
 
-                                    {state.currentCard.cost && (
+                                    {state.currentCard.type === 'MARKET' ? (
+                                        <div className="bg-slate-900/50 p-3 rounded-xl mb-6 border border-slate-800 text-center">
+                                            <div className="text-[10px] text-slate-500 uppercase">Предложение</div>
+                                            <div className="text-2xl font-mono text-green-400 font-bold">${(state.currentCard.offerPrice || 0).toLocaleString()}</div>
+                                            <div className="text-slate-400 text-xs mt-1">за: {state.currentCard.targetTitle}</div>
+                                        </div>
+                                    ) : state.currentCard.cost && (
                                         <div className="bg-slate-900/50 p-3 rounded-xl mb-6 border border-slate-800 text-center">
                                             <div className="text-[10px] text-slate-500 uppercase">Цена</div>
                                             <div className="text-2xl font-mono text-white font-bold">${(state.currentCard.downPayment ?? state.currentCard.cost).toLocaleString()}</div>
@@ -568,55 +574,64 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                     <div className="flex flex-col gap-3 w-full">
                                         {isMyTurn ? (
                                             state.currentCard.type === 'MARKET' ? (
-                                                <>
-                                                    {/* BUY BUTTON or INSUFFICIENT FUNDS */}
-                                                    {me.cash >= (state.currentCard.downPayment ?? state.currentCard.cost) ? (
-                                                        <div className="flex gap-2 w-full">
-                                                            <button onClick={handleBuy} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
-                                                                КУПИТЬ
-                                                            </button>
+                                                <div className="flex gap-2 w-full">
+                                                    {me.assets.some((a: any) => a.title === state.currentCard?.targetTitle) ? (
+                                                        <button onClick={() => socket.emit('sell_asset', { roomId })} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
+                                                            ПРОДАТЬ
+                                                        </button>
+                                                    ) : (
+                                                        <div className="flex-1 flex items-center justify-center bg-slate-800 text-slate-500 text-xs font-bold py-3 rounded-xl border border-slate-700">
+                                                            Нет актива
+                                                        </div>
+                                                    )}
+                                                    <button onClick={handleEndTurn} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
+                                                        ОТКАЗ
+                                                    </button>
+                                                </div>
+                                            ) : (
+                                                me.cash >= ((state.currentCard.downPayment ?? state.currentCard.cost) || 0) ? (
+                                                    <div className="flex gap-2 w-full">
+                                                        <button onClick={handleBuy} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
+                                                            {state.currentCard.mandatory ? 'ОПЛАТИТЬ' : 'КУПИТЬ'}
+                                                        </button>
+                                                        {!state.currentCard.mandatory && (
                                                             <button onClick={handleEndTurn} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
                                                                 ПАС
                                                             </button>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <div className="flex flex-col gap-2 w-full animate-in slide-in-from-bottom duration-300">
+                                                        <div className="bg-red-900/40 border border-red-500/50 p-2 rounded-lg text-center">
+                                                            <div className="text-red-400 font-bold text-xs uppercase tracking-widest">Недостаточно средств</div>
+                                                            <div className="text-white font-mono text-sm">
+                                                                Нужно еще: <span className="font-bold">${(((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash).toLocaleString()}</span>
+                                                            </div>
                                                         </div>
-                                                    ) : (
-                                                        <div className="flex flex-col gap-2 w-full animate-in slide-in-from-bottom duration-300">
-                                                            <div className="bg-red-900/40 border border-red-500/50 p-2 rounded-lg text-center">
-                                                                <div className="text-red-400 font-bold text-xs uppercase tracking-widest">Недостаточно средств</div>
-                                                                <div className="text-white font-mono text-sm">
-                                                                    Нужно еще: <span className="font-bold">${((state.currentCard.downPayment ?? state.currentCard.cost) - me.cash).toLocaleString()}</span>
-                                                                </div>
-                                                            </div>
 
-                                                            <div className="grid grid-cols-2 gap-2">
-                                                                <button
-                                                                    onClick={() => handleLoan((state.currentCard.downPayment ?? state.currentCard.cost) - me.cash)}
-                                                                    disabled={(me.loanDebt || 0) + ((state.currentCard.downPayment ?? state.currentCard.cost) - me.cash) > 38000}
-                                                                    className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-yellow-900/20 flex flex-col items-center justify-center gap-1"
-                                                                >
-                                                                    <span>🏦 Взять кредит</span>
-                                                                    {((me.loanDebt || 0) + ((state.currentCard.downPayment ?? state.currentCard.cost) - me.cash) > 38000) && <span className="text-[9px] text-red-200">(Лимит)</span>}
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => setShowBank(true)}
-                                                                    className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
-                                                                >
-                                                                    🤝 Попросить
-                                                                </button>
-                                                            </div>
-
-                                                            <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-xs mt-1">
-                                                                Отказаться
+                                                        <div className="grid grid-cols-2 gap-2">
+                                                            <button
+                                                                onClick={() => handleLoan(((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash)}
+                                                                disabled={(me.loanDebt || 0) + (((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash) > 38000}
+                                                                className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-yellow-900/20 flex flex-col items-center justify-center gap-1"
+                                                            >
+                                                                <span>🏦 Взять кредит</span>
+                                                                {((me.loanDebt || 0) + (((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash) > 38000) && <span className="text-[9px] text-red-200">(Лимит)</span>}
+                                                            </button>
+                                                            <button
+                                                                onClick={() => setShowBank(true)}
+                                                                className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                                                            >
+                                                                🤝 Попросить
                                                             </button>
                                                         </div>
-                                                    )}
-                                                </>
-                                            ) : (
-                                                <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm shadow-lg transform hover:-translate-y-0.5 transition-all">
-                                                    OK
-                                                </button>
-                                            )
-                                        ) : <div className="w-full text-center text-slate-500 text-sm animate-pulse bg-slate-900/50 p-3 rounded-xl border border-slate-800">⏳ Ожидание игрока...</div>}
+
+                                                        <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-xs mt-1">
+                                                            Отказаться
+                                                        </button>
+                                                    </div>
+                                                ))
+                                    ) : <div className="w-full text-center text-slate-500 text-sm animate-pulse bg-slate-900/50 p-3 rounded-xl border border-slate-800">⏳ Ожидание игрока...</div>}
                                     </div>
                                 </div>
                             </div>
@@ -716,19 +731,21 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             {/* End Main Grid */}
 
             {/* BABY NOTIFICATION OVERLAY */}
-            {babyNotification && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-                    <div className="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-3xl shadow-2xl animate-in zoom-in-50 duration-500 flex flex-col items-center gap-4">
-                        <div className="text-6xl animate-bounce">👶</div>
-                        <div className="text-3xl font-black text-white text-center drop-shadow-lg leading-tight">
-                            {babyNotification}
-                        </div>
-                        <div className="text-white/80 text-xl font-bold bg-green-500/20 px-4 py-2 rounded-xl mt-2 border border-green-500/50">
-                            +$5,000 Подарок!
+            {
+                babyNotification && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+                        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-3xl shadow-2xl animate-in zoom-in-50 duration-500 flex flex-col items-center gap-4">
+                            <div className="text-6xl animate-bounce">👶</div>
+                            <div className="text-3xl font-black text-white text-center drop-shadow-lg leading-tight">
+                                {babyNotification}
+                            </div>
+                            <div className="text-white/80 text-xl font-bold bg-green-500/20 px-4 py-2 rounded-xl mt-2 border border-green-500/50">
+                                +$5,000 Подарок!
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
+                )
+            }
 
             {/* BOTTOM NAV MOBILE */}
             <div className="lg:hidden bg-[#0B0E14]/90 backdrop-blur-xl border-t border-slate-800/50 p-3 pb-8 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">

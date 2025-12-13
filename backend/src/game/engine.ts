@@ -531,9 +531,21 @@ export class GameEngine {
             } else {
                 this.state.log.push(`Entered Payday (Start)!`);
             }
-        } else if (square.type === 'MARKET' || square.type === 'DEAL') {
-            // STOP AUTO-DRAW. Prompt for Small/Big Deal.
+        } else if (square.type === 'DEAL') {
+            // Prompt for Small/Big Deal.
             this.state.phase = 'OPPORTUNITY_CHOICE';
+        } else if (square.type === 'MARKET') {
+            // Draw Market Card immediately
+            const card = this.cardManager.drawMarket();
+            if (card) {
+                this.state.currentCard = card;
+                this.state.log.push(`🏪 MARKET: ${card.title} - ${card.description}`);
+                // Check if player has the asset?
+                // Visuals will handle "Sell" button visibility.
+                this.state.phase = 'ACTION';
+            } else {
+                this.state.log.push(`🏪 MARKET: No cards left.`);
+            }
         } else if (square.type === 'EXPENSE') {
             const card = this.cardManager.drawExpense();
             this.state.currentCard = card;
@@ -630,22 +642,22 @@ export class GameEngine {
             let cost = card.cost || 0;
 
             // Special Logic Checks
-            if (card.title.includes('Roof Leak')) {
+            // Special Logic Checks
+            if (card.title.includes('Roof Leak') || card.title.includes('Крыша протекла')) {
                 // Only pay if player owns property (Real Estate)
-                const hasProperty = player.assets.some(a => a.type === 'REAL_ESTATE' || a.title.includes('Condo') || a.title.includes('Plex') || a.title.includes('House'));
-                // Simple heuristic if type not yet populated on old assets: check cashflow > 0 or specific titles
-                if (!hasProperty && player.assets.length === 0) {
+                const hasProperty = player.assets.some(a => a.type === 'REAL_ESTATE' || a.title.includes('Home') || a.title.includes('House') || a.title.includes('Condo') || a.title.includes('Plex') || a.title.includes('Дом') || a.title.includes('Квартира') || a.title.includes('Таунхаус'));
+
+                if (!hasProperty) {
                     cost = 0;
-                    this.state.log.push(`😅 ${card.title}: You own no property. You pay $0.`);
+                    this.state.log.push(`😅 ${card.title}: Нет недвижимости. Вы ничего не платите.`);
                 }
-            } else if (card.title.includes('Sewer')) {
-                // Usually sewer is also property related but user list didn't specify strict condition, typically implies ownership
-                // Assuming mandatory for simplicty unless standard rules say otherwise. User said "opportunity to fix" -> "You HAVE opportunity" usually means propery options.
-                // But generally damages are strictly tied to ownership. 
-                // Let's safe check assets > 0
-                if (player.assets.length === 0) {
+            } else if (card.title.includes('Sewer') || card.title.includes('Прорыв канализации')) {
+                // Also requires property ownership usually
+                const hasProperty = player.assets.some(a => a.type === 'REAL_ESTATE' || a.title.includes('Home') || a.title.includes('House') || a.title.includes('Condo') || a.title.includes('Plex') || a.title.includes('Дом') || a.title.includes('Квартира') || a.title.includes('Таунхаус'));
+
+                if (!hasProperty) {
                     cost = 0;
-                    this.state.log.push(`😅 ${card.title}: You own no assets. You pay $0.`);
+                    this.state.log.push(`😅 ${card.title}: Нет недвижимости. Вы ничего не платите.`);
                 }
             }
 
@@ -670,6 +682,11 @@ export class GameEngine {
     }
 
     repayLoan(playerId: string, amount: number) {
+        // ... (existing code, keeping unrelated logic intact if not editing it)
+        // Actually, I am replacing the method or appending? 
+        // I will use replace_file_content to INSERT after repayLoan block ends.
+        // It's safer to target checking where repayLoan ends.
+        // repayLoan ends at line 704: this.checkFastTrackCondition(player); }
         const player = this.state.players.find(p => p.id === playerId);
         if (!player) return;
 
@@ -701,6 +718,62 @@ export class GameEngine {
 
         // Check Fast Track after repaying loan (might free up cashflow condition)
         this.checkFastTrackCondition(player);
+    }
+
+    sellAsset(playerId: string) {
+        const player = this.state.players.find(p => p.id === playerId);
+        const card = this.state.currentCard;
+
+        if (!player || !card) return;
+        if (card.type !== 'MARKET' || !card.targetTitle || !card.offerPrice) return;
+
+        // Find Asset
+        const assetIndex = player.assets.findIndex(a => a.title === card.targetTitle);
+        if (assetIndex === -1) {
+            this.state.log.push(`${player.name} cannot sell: Don't own ${card.targetTitle}`);
+            return;
+        }
+
+        const asset = player.assets[assetIndex];
+
+        // Process Sale
+        player.cash += card.offerPrice;
+
+        // Remove Asset
+        player.assets.splice(assetIndex, 1);
+
+        // Update Stats (Remove Cashflow)
+        if (asset.cashflow) {
+            player.passiveIncome -= asset.cashflow;
+            player.income = player.salary + player.passiveIncome;
+            player.cashflow = player.income - player.expenses;
+        }
+
+        // Check for Mortgage (Liability) match
+        // Heuristic: Name contains asset title
+        // Or specific naming convention used in buyAsset: `Mortgage (${card.title})`
+        const mortgageIndex = player.liabilities.findIndex((l: any) => l.name.includes(asset.title));
+        if (mortgageIndex !== -1) {
+            const mortgage = player.liabilities[mortgageIndex];
+            // Pay off mortgage from proceeds? Usually Market deals say "You receive X". 
+            // In Cashflow, "You receive X" usually implies Equity OR Selling Price. 
+            // If it's Selling Price, you must pay off mortgage.
+            // If it's Equity (Net), mortgage is assumed paid.
+            // User cards say: "Buyer offers $25,000 for room". (Cost was 3000). 
+            // Assuming $25,000 is Sale Price.
+            // "Room" likely has no mortgage (Cost < 5k rarely mortgaged in game logic unless explicit loan taken manually).
+            // But for "House", there might be mortgage.
+            // Logic: Pay off mortgage from Cash.
+            player.cash -= mortgage.value;
+            player.liabilities.splice(mortgageIndex, 1);
+            this.state.log.push(`💸 Paid off mortgage $${mortgage.value}`);
+        }
+
+        this.state.log.push(`🤝 SOLD ${asset.title} for $${card.offerPrice}.`);
+
+        // Clear card
+        this.state.currentCard = undefined;
+        this.endTurn();
     }
 
     buyAsset(playerId: string) {
