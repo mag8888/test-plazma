@@ -189,9 +189,10 @@ export class RoomService {
             player.token = token;
         }
 
-        player.isReady = isReady;
         if (dream) player.dream = dream;
+        player.isReady = isReady;
 
+        room.markModified('players'); // Force update detection for subdocuments
         await room.save();
         return this.sanitizeRoom(room);
     }
