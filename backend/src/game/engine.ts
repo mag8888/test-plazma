@@ -1131,6 +1131,10 @@ export class GameEngine {
 
             this.state.log.push(`🎲 Rolled ${partners}! Recruited ${partners} partners.`);
             mlmResult = { mlmRoll: partners, mlmCashflow: totalCashflow };
+        } else if (card.subtype === 'CHARITY_ROLL') {
+            // "Friend teaches wisdom": 2 dice for 3 turns.
+            player.charityTurns = 3;
+            this.state.log.push(`🎲 ${player.name} gained wisdom! Can roll extra dice for 3 turns.`);
         }
 
         player.cash -= costToPay;

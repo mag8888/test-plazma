@@ -17,7 +17,7 @@ export interface Card {
     targetTitle?: string;
     offerPrice?: number;
     businessType?: 'CLASSIC' | 'NETWORK';
-    subtype?: 'MLM_ROLL';
+    subtype?: 'MLM_ROLL' | 'CHARITY_ROLL';
     assetType?: 'REAL_ESTATE' | 'BUSINESS' | 'STOCK' | 'OTHER';
 }
 
@@ -83,9 +83,9 @@ const generateSmallDeals = (): Card[] => {
     add(3, { title: 'Сетевой бизнес: MONEO', cost: 100, cashflow: 0, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($50/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' });
 
     // --- USER DEFINED "DEALS" (Expenses/Donations) ---
-    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Рискованное вложение.', mandatory: true });
-    add(1, { title: 'Приют кошкам', cost: 5000, cashflow: 0, description: 'Пожертвование на приют.', mandatory: true });
-    add(1, { title: 'Накормите бездомных', cost: 5000, cashflow: 0, description: 'Благотворительный обед.', mandatory: true });
+    add(1, { title: 'Друг просит в займ (Неудачно)', cost: 5000, cashflow: 0, description: 'Слезы и обещания. Деньги пропали.', mandatory: true, type: 'DEAL_SMALL' });
+    add(1, { title: 'Друг просит в займ (Бизнес)', cost: 5000, cashflow: 500, description: 'Друг раскрутился! Возвращает долей в бизнесе.', assetType: 'BUSINESS', type: 'DEAL_SMALL' });
+    add(1, { title: 'Друг просит в займ (Удача)', cost: 5000, cashflow: 0, description: 'В благодарность друг научил вас мудрости. 2 кубика на 3 хода.', mandatory: true, type: 'DEAL_SMALL', subtype: 'CHARITY_ROLL' });
 
     // --- USER DEFINED DAMAGES ---
     add(2, { title: 'Крыша протекла', cost: 5000, cashflow: 0, description: 'Обновить крышу. Платите $5000 ЕСЛИ есть недвижимость.', mandatory: true });
