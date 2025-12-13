@@ -404,8 +404,6 @@ export class GameEngine {
             this.state.log.push(`${player.name} moved to ${square.name}`);
             this.handleSquare(player, square);
         }
-
-        this.state.phase = 'ACTION';
     }
 
     private getSquare(pos: number): BoardSquare {
@@ -413,6 +411,9 @@ export class GameEngine {
     }
 
     handleFastTrackSquare(player: PlayerState, position: number | BoardSquare) {
+        // Default to ACTION, can be overridden by specific square logic (e.g. Win -> END)
+        this.state.phase = 'ACTION';
+
         let square: BoardSquare;
         if (typeof position === 'number') {
             square = this.getSquare(position);
@@ -553,6 +554,10 @@ export class GameEngine {
     }
 
     handleSquare(player: PlayerState, square: BoardSquare) {
+        // Default phase to ACTION. Specific squares (Deal, Charity, Downsized) will override this.
+        // Payday, Baby, etc. will remain ACTION.
+        this.state.phase = 'ACTION';
+
         this.state.log.push(`${player.name} landed on ${square.type}`);
 
         if (square.type === 'PAYDAY') {
