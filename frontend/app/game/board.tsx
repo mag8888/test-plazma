@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { socket } from '../socket';
 import confetti from 'canvas-confetti';
 import { BoardVisualizer } from './BoardVisualizer';
@@ -61,6 +62,7 @@ const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
 // ... (existing interfaces)
 
 export default function GameBoard({ roomId, initialState }: BoardProps) {
+    const router = useRouter();
     const [state, setState] = useState(initialState);
     const [showBank, setShowBank] = useState(false);
 
@@ -204,6 +206,11 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const handleLoan = (amount: number) => socket.emit('take_loan', { roomId, amount });
     const handleRepay = (amount: number) => socket.emit('repay_loan', { roomId, amount });
     const handleEndTurn = () => socket.emit('end_turn', { roomId });
+
+    const handleExit = () => {
+        socket.emit('leave_room', { roomId });
+        router.push('/lobby');
+    };
 
 
 
@@ -777,6 +784,14 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                             </div>
                         ))}
                     </div>
+
+                    {/* Exit Button */}
+                    <button
+                        onClick={handleExit}
+                        className="mt-3 w-full py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold uppercase tracking-widest text-xs hover:bg-red-500/20 transition-all flex items-center justify-center gap-2 group"
+                    >
+                        <span className="group-hover:-translate-x-1 transition-transform">🚪</span> Выход
+                    </button>
                 </div >
 
             </div>
