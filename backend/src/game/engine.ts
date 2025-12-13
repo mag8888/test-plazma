@@ -1170,7 +1170,7 @@ export class GameEngine {
             cost: card.cost,
             cashflow: card.cashflow || 0,
             symbol: card.symbol,
-            type: card.symbol ? 'STOCK' : 'REAL_ESTATE',
+            type: card.assetType || (card.symbol ? 'STOCK' : 'REAL_ESTATE'), // Use explicit type or fallback
             quantity: 1,
             businessType: card.businessType // Store business type
         });
