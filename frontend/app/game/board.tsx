@@ -27,10 +27,12 @@ interface PlayerState {
     passiveIncome: number;
     token?: string;
     professionName?: string;
+    isBankrupted?: boolean;
 }
 
 import { BankModal } from './BankModal';
 import { TransferModal } from './TransferModal';
+import { RulesModal } from './RulesModal';
 
 // Helper for Cash Animation
 const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
@@ -66,6 +68,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const router = useRouter();
     const [state, setState] = useState(initialState);
     const [showBank, setShowBank] = useState(false);
+    const [showRules, setShowRules] = useState(false);
     const [transferAssetItem, setTransferAssetItem] = useState<{ item: any, index: number } | null>(null);
     const [stockQty, setStockQty] = useState(1);
 
@@ -433,6 +436,14 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                 ))}
                             </div>
                         </div>
+
+                        {/* Rules Button in Menu */}
+                        <button
+                            onClick={() => setShowRules(true)}
+                            className="w-full py-4 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 font-bold uppercase tracking-widest text-sm hover:bg-violet-500/20 active:bg-violet-500/30 transition-all flex items-center justify-center gap-3"
+                        >
+                            <span>📜</span> Правила
+                        </button>
 
                         {/* Exit Button in Menu */}
                         <button
@@ -1018,6 +1029,14 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         ))}
                     </div>
 
+                    {/* Rules Button */}
+                    <button
+                        onClick={() => setShowRules(true)}
+                        className="mt-auto w-full py-3 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 font-bold uppercase tracking-widest text-xs hover:bg-violet-500/20 transition-all flex items-center justify-center gap-2 group"
+                    >
+                        <span className="group-hover:scale-110 transition-transform">📜</span> Правила
+                    </button>
+
                     {/* Exit Button */}
                     <button
                         onClick={handleExit}
@@ -1106,6 +1125,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     </div>
                 )
             }
+            {showRules && <RulesModal onClose={() => setShowRules(false)} />}
         </div >
     );
 }

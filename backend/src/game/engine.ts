@@ -234,7 +234,8 @@ export class GameEngine {
             expenses: profession.expenses,
             cashflow: profession.salary - profession.expenses,
             skippedTurns: 0,
-            charityTurns: 0
+            charityTurns: 0,
+            isBankrupted: false
         };
     }
 
@@ -637,8 +638,8 @@ export class GameEngine {
         } else if (square.type === 'DOWNSIZED') {
             player.skippedTurns = 2; // Fixed 2 turns
             const expenses = player.expenses;
-            player.cash -= expenses;
-            this.state.log.push(`📉 ${player.name} Downsized! Paid expenses $${expenses} and skips 2 turns.`);
+            this.state.log.push(`📉 ${player.name} Downsized! Due: $${expenses}.`);
+            this.forcePayment(player, expenses, 'Downsized Expenses');
             // Do NOT end turn automatically. Let user see the popup.
         } else if (square.type === 'CHARITY') {
             this.state.phase = 'CHARITY_CHOICE';
@@ -680,6 +681,11 @@ export class GameEngine {
 
         if (amount <= 0 || amount % 1000 !== 0) {
             this.state.log.push(`${player.name} failed to take loan: Amount must be a multiple of 1000.`);
+            return;
+        }
+
+        if (player.isBankrupted) {
+            this.state.log.push(`${player.name} cannot take loans (Bankrupt).`);
             return;
         }
 
@@ -760,16 +766,11 @@ export class GameEngine {
             }
 
             if (cost > 0) {
-                player.cash -= cost;
-                this.state.log.push(`💥 Mandatory Event: ${card.title}. Paid $${cost}.`);
+                // player.cash -= cost;
+                this.forcePayment(player, cost, `Mandatory Event: ${card.title}`);
+                // this.state.log.push(`💥 Mandatory Event: ${card.title}. Paid $${cost}.`);
             }
 
-            // Auto discard and end phase?
-            // Actually, we should end phase or return to ACTION?
-            // Usually damages turn ends.
-            this.state.phase = 'ACTION'; // Or END? 
-            // If we set phase to ACTION, user has "Pass" button? 
-            // We should just clear card and effectively End Turn or allow standard end.
             this.state.currentCard = undefined; // Card resolved
             this.state.phase = 'ACTION';
             return;
@@ -1120,6 +1121,35 @@ export class GameEngine {
 
         // Handle Expense Payment (No Asset added)
         if (card.type === 'EXPENSE') {
+            // this.state.log.push(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
+            // Handled by forcePayment if mandatory? 
+            // Wait, buyAsset is "Optional" for Expense? No, Expense is mandatory usually.
+            // But buyAsset calls imply "User Clicked Pay".
+            // If user clicked pay, we just deduce.
+            // But if costToPay > cash?
+            // We should use forcePayment behavior logic OR standard logic.
+            // User requested "Prevent negative balance".
+
+            // Revert deduction line 1119 (player.cash -= costToPay) for Expenses?
+            // No, Line 1119 is explicit.
+            // Let's modify logic to Check Balance first.
+
+            // Actually, Expense cards via `buyAsset` means user manually paid.
+            // If user manually paid, they must have cash or taken loan manually.
+            // We should just enforce "Cannot buy if insufficient". 
+            // Line 1096 ALREADY enforces `player.cash < costToPay` return.
+            // So if `buyAsset` is called, they CAN pay.
+            // For Mandatory items (Losses/Events), that flow is via `resolveOpportunity`.
+            // Expense cards drawn from square type 'EXPENSE' are auto-drawn but handled differently. 
+            // `handleSquare` line 611 -> sets currentCard -> `buyAsset` button appears.
+            // So user manually pays.
+            // If they can't pay? They must take loan.
+            // We need to allow them to take loan.
+            // This is already handled by UI "Take Loan" then "Pay".
+
+            // So buyAsset works for Expense IF checks pass.
+            // Line 1123 log.
+
             this.state.log.push(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
             this.state.currentCard = undefined;
             this.endTurn();
@@ -1278,6 +1308,90 @@ export class GameEngine {
             this.state.lastEvent = { type: 'TURN_SKIPPED', payload: { player: nextPlayer.name, remaining: nextPlayer.skippedTurns } };
             this.endTurn(); // Recursively skip
         }
+    }
+
+    private forcePayment(player: PlayerState, amount: number, description: string) {
+        if (amount <= 0) return;
+
+        if (player.cash >= amount) {
+            player.cash -= amount;
+            this.state.log.push(`💸 ${player.name} paid $${amount} for ${description}`);
+            return;
+        }
+
+        // Insufficient Funds
+        const deficit = amount - player.cash;
+
+        // Max Loan Check: 
+        // Existing logic: Loan allowed if Cashflow - Interest >= 0.
+        // Interest = 10% of Loan.
+        // So Max Loan = Cashflow * 10
+        // But we must also support existing debt.
+        // Actually, `takeLoan` checks future state.
+        // `player.cashflow - interest < 0` where interest is NEW interest.
+        // So we just iterate taking 1000s until covered or failed.
+
+        // Calculate needed loan
+        const neededLoan = Math.ceil(deficit / 1000) * 1000;
+
+        // Dry run check
+        const potentialInterest = neededLoan * 0.1;
+
+        if (player.cashflow - potentialInterest >= 0 && !player.isBankrupted) {
+            // Auto Take Loan through public method to ensure strict logic
+            this.state.log.push(`⚠️ ${player.name} forcing loan $${neededLoan} for ${description}...`);
+
+            // We need to bypass "turn check" if any? No, takeLoan is open.
+            // But takeLoan uses `state.players.find...`. 
+            // Better to call internal logic or just `this.takeLoan`.
+            this.takeLoan(player.id, neededLoan);
+
+            // Verify if loan was taken (cash increased)
+            if (player.cash >= amount) {
+                player.cash -= amount;
+                this.state.log.push(`💸 Paid $${amount} after loan.`);
+            } else {
+                // Failed to take loan despite check? (Maybe block logic?)
+                this.bankruptPlayer(player);
+            }
+        } else {
+            // Cannot afford loan -> Bankrupt
+            this.bankruptPlayer(player);
+        }
+    }
+
+    private bankruptPlayer(player: PlayerState) {
+        this.state.log.push(`☠️ ${player.name} IS BANKRUPT! Resetting...`);
+        this.state.lastEvent = { type: 'BANKRUPTCY', payload: { player: player.name } };
+
+        // Reset Logic
+        player.isBankrupted = true;
+
+        // Reset finances
+        const profession = PROFESSIONS.find(p => p.name === player.professionName) || PROFESSIONS[0];
+
+        player.cash = profession.savings;
+        player.income = profession.salary;
+        player.expenses = profession.expenses;
+        player.cashflow = profession.salary - profession.expenses;
+        player.passiveIncome = 0;
+
+        player.assets = [];
+        // Restore initial liabilities
+        const liabilities = [];
+        if (profession.carLoan) liabilities.push({ name: 'Car Loan', value: profession.carLoan.cost, expense: profession.carLoan.payment });
+        if (profession.creditCard) liabilities.push({ name: 'Credit Card', value: profession.creditCard.cost, expense: profession.creditCard.payment });
+        if (profession.schoolLoan) liabilities.push({ name: 'School Loan', value: profession.schoolLoan.cost, expense: profession.schoolLoan.payment });
+        if (profession.mortgage) liabilities.push({ name: 'Mortgage', value: profession.mortgage.cost, expense: profession.mortgage.payment });
+        if (profession.retailDebt) liabilities.push({ name: 'Retail Debt', value: profession.retailDebt.cost, expense: profession.retailDebt.payment });
+        player.liabilities = liabilities;
+
+        player.loanDebt = 0;
+        player.position = 0;
+        player.isFastTrack = false;
+        player.childrenCount = 0;
+        player.charityTurns = 0;
+        player.skippedTurns = 0;
     }
 
     getState(): GameState {
