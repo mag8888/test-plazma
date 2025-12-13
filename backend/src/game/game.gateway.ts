@@ -10,11 +10,11 @@ export class GameGateway {
     constructor(io: Server) {
         this.io = io;
         this.roomService = new RoomService();
-        this.initGames(); // Restore games from DB
+        // Moved initGames to explicit initialize() call
         this.initEvents();
     }
 
-    async initGames() {
+    async initialize() {
         // Restore active games from DB on server restart
         const activeRooms = await this.roomService.getActiveGames();
         console.log(`Restoring ${activeRooms.length} active games...`);

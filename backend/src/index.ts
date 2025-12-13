@@ -131,6 +131,7 @@ const bootstrap = async () => {
         const botService = new BotService();
         // Initialize Game Gateway
         const gameGateway = new GameGateway(io);
+        await gameGateway.initialize();
 
         const server = httpServer.listen(PORT, () => {
             console.log(`Server is running on http://localhost:${PORT}`);
