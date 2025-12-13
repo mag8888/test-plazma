@@ -58,8 +58,12 @@ function GameContent() {
         const joinGame = () => {
             console.log("Joining room...", { roomId, playerName, userId });
             socket.emit('join_room', { roomId, playerName, userId }, (response: any) => {
-                if (!response.success && socket.connected) {
+                if (!response.success) {
                     console.error("Join failed:", response.error);
+                    setError(response.error);
+                    if (response.error === "Room not found") {
+                        setTimeout(() => router.push('/lobby'), 1500);
+                    }
                 }
             });
         };
