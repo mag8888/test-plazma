@@ -14,6 +14,17 @@ export class BotService {
     constructor() {
         if (token) {
             this.bot = new TelegramBot(token, { polling: true });
+
+            // Handle Polling Errors to prevent crash/spam
+            this.bot.on('polling_error', (error) => {
+                // Mute 409 Conflict locally if desired, or just log cleanly
+                if (error.message.includes('ETELEGRAM: 409 Conflict')) {
+                    console.log("⚠️ Telegram Bot Conflict: Another instance is running!");
+                } else {
+                    console.error("Telegram Polling Error:", error.message);
+                }
+            });
+
             this.initHandlers();
             console.log("Telegram Bot started.");
         }
