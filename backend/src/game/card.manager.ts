@@ -67,12 +67,12 @@ const generateSmallDeals = (): Card[] => {
 
     // TSLA
     stockPrices.forEach(price => {
-        add(1, { title: 'Акции: Tesla', symbol: 'TSLA', cost: price, description: `Цена $${price}. Колебания $5-$40.`, assetType: 'STOCK' });
+        add(1, { title: 'Акции: Tesla', symbol: 'TSLA', cost: price, description: `Цена $${price}. Колебания $10-$40.`, assetType: 'STOCK' });
     });
 
     // MSFT
     stockPrices.forEach(price => {
-        add(1, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: price, description: `Цена $${price}. Колебания $5-$40.`, assetType: 'STOCK' });
+        add(1, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: price, description: `Цена $${price}. Колебания $10-$40.`, assetType: 'STOCK' });
     });
 
     // ID: 6612 - NEW INCOME STOCKS
@@ -113,14 +113,13 @@ const generateSmallDeals = (): Card[] => {
     add(5, { title: 'Флипинг студии', cost: 5000, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).', assetType: 'REAL_ESTATE' });
 
     // --- NETWORK MARKETING ---
-    add(3, { title: 'Сетевой бизнес', cost: 500, cashflow: 100, description: 'Старт в MLM компании.', businessType: 'NETWORK' });
     add(3, { title: 'Сетевой бизнес: Plazma Water', cost: 200, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' });
     add(3, { title: 'Сетевой бизнес: MONEO', cost: 100, cashflow: 0, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($50/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' });
 
     // --- USER DEFINED "DEALS" (Expenses/Donations) ---
-    add(1, { title: 'Друг просит в займ (Неудачно)', cost: 5000, cashflow: 0, description: 'Слезы и обещания. Деньги пропали.', mandatory: true, type: 'DEAL_SMALL' });
-    add(1, { title: 'Друг просит в займ (Бизнес)', cost: 5000, cashflow: 500, description: 'Друг раскрутился! Возвращает долей в бизнесе.', assetType: 'BUSINESS', type: 'DEAL_SMALL' });
-    add(1, { title: 'Друг просит в займ (Удача)', cost: 5000, cashflow: 0, description: 'В благодарность друг научил вас мудрости. 2 кубика на 3 хода.', mandatory: true, type: 'DEAL_SMALL', subtype: 'CHARITY_ROLL' });
+    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Слезы и обещания. Деньги пропали.', mandatory: true, type: 'DEAL_SMALL' });
+    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 500, description: 'Друг раскрутился! Возвращает долей в бизнесе.', assetType: 'BUSINESS', type: 'DEAL_SMALL' });
+    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'В благодарность друг научил вас мудрости. 2 кубика на 3 хода.', mandatory: true, type: 'DEAL_SMALL', subtype: 'CHARITY_ROLL' });
 
     // --- USER DEFINED DAMAGES ---
     add(2, { title: 'Крыша протекла', cost: 5000, cashflow: 0, description: 'Обновить крышу. Платите $5000 ЕСЛИ есть недвижимость.', mandatory: true });
@@ -215,7 +214,7 @@ const generateBigDeals = (): Card[] => {
     add(1, { title: 'Коворкинг-центр', cost: 250000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 50000, businessType: 'CLASSIC', assetType: 'BUSINESS' });
 
     add(3, { title: 'Франшиза: Plazma Water', cost: 5000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' });
-    add(3, { title: 'Франшиза: MONEO', cost: 5000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', businessType: 'NETWORK' });
+    add(3, { title: 'Франшиза: MONEO', cost: 1000, cashflow: 0, description: 'Франшиза MONEO. Кол-во партнеров = Бросок кубика. ($500/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' });
 
     return cards;
 };
