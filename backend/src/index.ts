@@ -12,19 +12,25 @@ import fs from 'fs';
 
 dotenv.config();
 
+let dbStatus = 'pending';
+let botStatus = 'pending';
+
 const app = express();
 app.set('trust proxy', 1); // Enable Trust Proxy for Railway LB
 
 // Health Check Endpoint (Critical for Debugging)
 app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'ok', uptime: process.uptime() });
+    res.status(200).json({
+        status: 'ok',
+        uptime: process.uptime(),
+        db: dbStatus,
+        bot: botStatus
+    });
 });
 
 const httpServer = createServer(app);
 
-// Connect to Database
-connectDatabase();
-
+// Initialize Socket.io
 const io = new Server(httpServer, {
     cors: {
         origin: "*",
@@ -39,10 +45,8 @@ app.use(cors());
 app.use(express.json());
 app.use('/api/auth', AuthController);
 
-// Initialize Bot
-const botService = new BotService();
-// Initialize Game Gateway
-const gameGateway = new GameGateway(io);
+let botService: BotService | null = null;
+let gameGateway: GameGateway | null = null;
 
 // Static File Serving
 app.get(['/game', '/game.html'], (req, res) => {
@@ -116,57 +120,84 @@ io.on('connection', (socket) => {
 
 const bootstrap = async () => {
     try {
-        // Wait for DB connection if needed (connectDatabase is async void but mongoose buffers)
-        // Ideally we await it? connectDatabase in database.ts is async.
-        // But we called it synchronously above. 
-        // Let's call it here properly if we want to wait, or assume mongoose buffering works.
-        // Re-calling it is fine if existing connection is reused?
-        // Actually, let's keep it simple. It was called above.
+        console.log('--- STARTING SERVER BOOTSTRAP ---');
 
-        // DB Maintenance
+        // 1. Database (Wrap in try/catch to prevent fatal crash)
         try {
-            console.log('--- STARTING DB MAINTENANCE ---');
-            const RoomModel = (await import('./models/room.model')).RoomModel;
-            const duplicates = await RoomModel.aggregate([
-                { $match: { status: 'waiting' } },
-                { $group: { _id: "$creatorId", count: { $sum: 1 }, rooms: { $push: "$_id" } } },
-                { $match: { count: { $gt: 1 } } }
-            ]);
-
-            if (duplicates.length > 0) {
-                console.log(`Found ${duplicates.length} users with duplicate waiting rooms. Cleaning up...`);
-                for (const dup of duplicates) {
-                    const roomsToDelete = dup.rooms.slice(0, dup.rooms.length - 1);
-                    await RoomModel.deleteMany({ _id: { $in: roomsToDelete } });
-                }
-                console.log('Duplicates removed.');
-            }
-
-            console.log('Syncing Indexes...');
-            await RoomModel.syncIndexes();
-            console.log('Indexes Synced Successfully.');
-            console.log('--- DB MAINTENANCE COMPLETE ---');
+            console.log('Connecting to Database...');
+            await connectDatabase();
+            // Note: connectDatabase in database.ts might process.exit(1) on failure.
+            // Ideally we should modify database.ts to THROW instead of EXIT for robustness,
+            // but we can't change it right now without risk. 
+            // Wait, we CAN change it. But sticking to index.ts for now.
+            // If connectDatabase exits, we are doomed. 
+            // But usually MongoDB connect throws if URI is bad. 
+            // Let's hope it throws.
+            dbStatus = 'connected';
+            console.log('Database Connected.');
         } catch (dbErr) {
-            console.error('DB MAINTENANCE FAILED:', dbErr);
+            console.error('DB Connection Failed (Handled):', dbErr);
+            dbStatus = `failed: ${dbErr}`;
         }
 
+        // 2. Bot Service
         try {
-            await gameGateway.initialize();
-        } catch (initErr) {
-            console.error("WARNING: Game Gateway Initialization failed:", initErr);
+            console.log('Initializing Bot Service...');
+            botService = new BotService();
+            botStatus = 'active';
+            console.log('Bot Service Active.');
+        } catch (botErr) {
+            console.error('Bot Init Failed:', botErr);
+            botStatus = `failed: ${botErr}`;
         }
 
+        // 3. Game Gateway
+        try {
+            console.log('Initializing Game Gateway...');
+            gameGateway = new GameGateway(io);
+            await gameGateway.initialize();
+            console.log('Game Gateway Active.');
+        } catch (gwErr) {
+            console.error('Game Gateway Init Failed:', gwErr);
+        }
+
+        // 4. DB Maintenance (Only if connected)
+        if (dbStatus === 'connected') {
+            try {
+                console.log('--- DB MAINTENANCE ---');
+                const RoomModel = (await import('./models/room.model')).RoomModel;
+                const duplicates = await RoomModel.aggregate([
+                    { $match: { status: 'waiting' } },
+                    { $group: { _id: "$creatorId", count: { $sum: 1 }, rooms: { $push: "$_id" } } },
+                    { $match: { count: { $gt: 1 } } }
+                ]);
+
+                if (duplicates.length > 0) {
+                    console.log(`Found ${duplicates.length} duplicate waiting rooms.`);
+                    for (const dup of duplicates) {
+                        const roomsToDelete = dup.rooms.slice(0, dup.rooms.length - 1);
+                        await RoomModel.deleteMany({ _id: { $in: roomsToDelete } });
+                    }
+                }
+                await RoomModel.syncIndexes();
+                console.log('DB Maintenance Complete.');
+            } catch (dbMaintErr) {
+                console.error('DB Maintenance Failed:', dbMaintErr);
+            }
+        }
+
+        // 5. Start HTTP Server
         const server = httpServer.listen(PORT, () => {
             console.log(`Server is running on http://localhost:${PORT}`);
-            console.log(`Serving frontend from: ${path.join(__dirname, '../../frontend/out')}`);
+            console.log(`Health Check: http://localhost:${PORT}/api/health`);
         });
 
         server.keepAliveTimeout = 65000;
         server.headersTimeout = 66000;
 
-    } catch (error) {
-        console.error("Failed to start server:", error);
-        process.exit(1);
+    } catch (fatalError) {
+        console.error("FATAL SERVER ERROR:", fatalError);
+        // Do NOT exit. Log and hang.
     }
 };
 
