@@ -7,6 +7,9 @@ export interface IUser extends Document {
     last_name?: string;
     photo_url?: string;
     telegram_id?: number;
+    referralBalance: number;
+    referralsCount: number;
+    referredBy?: string;
     createdAt: Date;
 }
 
@@ -17,6 +20,9 @@ const UserSchema: Schema = new Schema({
     last_name: { type: String },
     photo_url: { type: String },
     telegram_id: { type: Number, unique: true, sparse: true },
+    referralBalance: { type: Number, default: 0 },
+    referralsCount: { type: Number, default: 0 },
+    referredBy: { type: String }, // Store referrer's username or ID
 }, { timestamps: true });
 
 export const UserModel = mongoose.model<IUser>('User', UserSchema);

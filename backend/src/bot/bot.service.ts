@@ -33,12 +33,21 @@ export class BotService {
     initHandlers() {
         if (!this.bot) return;
 
-        // /start command
-        this.bot.onText(/\/start/, (msg) => {
+        // /start command (supports ?start=referrerId)
+        this.bot.onText(/\/start(.*)/, async (msg, match) => {
             const chatId = msg.chat.id;
+            const telegramId = msg.from?.id;
             const firstName = msg.from?.first_name || 'Friend';
+            const username = msg.from?.username || `user_${telegramId}`;
 
-            const text = `👋 Привет, ${firstName}! 👑\n\n` +
+            // Check for referral code
+            const referralCode = match && match[1] ? match[1].trim() : null;
+
+            if (telegramId) {
+                await this.handleUserRegistration(telegramId, username, firstName, referralCode);
+            }
+
+            const welcomeText = `👋 Привет, ${firstName}! 👑\n\n` +
                 `Добро пожаловать в Энергию Денег ✨\n` +
                 `— пространство, где игра соединяется с реальными возможностями в квантовом поле.\n\n` +
                 `Здесь ты сможешь:\n` +
@@ -48,69 +57,178 @@ export class BotService {
                 `🎲 Играть и развиваться\n\n` +
                 `🎯 Выбирай, что интересно прямо сейчас 👇`;
 
-            if (this.bot) {
-                this.bot.sendMessage(chatId, text, {
-                    reply_markup: {
-                        inline_keyboard: [
-                            [{ text: 'ℹ️ О проекте', callback_data: 'about' }],
-                            [{ text: '🤝 Получить клиентов', callback_data: 'clients' }],
-                            [{ text: '💸 Заработать', callback_data: 'earn' }],
-                            [{ text: '🎲 Играть', callback_data: 'play' }], // Will link to Web App
-                            [{ text: '🌐 Сообщество', callback_data: 'community' }],
-                            [{ text: '💰 Доход (Реф)', callback_data: 'income' }]
-                        ]
-                    }
-                });
+            this.sendMainMenu(chatId, welcomeText);
+        });
+
+        // Handle text messages (Menu Buttons)
+        this.bot.on('message', async (msg) => {
+            const chatId = msg.chat.id;
+            const text = msg.text;
+
+            if (!text) return;
+
+            if (text === '💸 Заработать') {
+                await this.handleEarn(chatId, msg.from?.id);
+            } else if (text === '🎲 Играть') {
+                this.handlePlay(chatId);
+            } else if (text === '🤝 Получить клиентов') {
+                this.handleClients(chatId);
+            } else if (text === '🌐 Сообщество') {
+                this.handleCommunity(chatId);
+            } else if (text === 'ℹ️ О проекте') {
+                this.handleAbout(chatId);
             }
         });
 
-        // Callback Queries
+        // Keep callback query handler for inline buttons (like in 'Earn' or deep links)
         this.bot.on('callback_query', (query) => {
             const chatId = query.message?.chat.id;
-            if (!chatId) return;
-
             const data = query.data;
+            if (!chatId || !data) return;
 
-            if (data === 'about') {
-                // TODO: Send video if available
-                this.bot?.sendMessage(chatId,
-                    `«Энергия Денег» — это новая образовательная игра, созданная на основе принципов CashFlow.\n` +
-                    `Она помогает менять мышление, прокачивать навыки и открывать новые финансовые возможности.`
-                );
-            } else if (data === 'clients') {
-                this.bot?.sendMessage(chatId,
-                    `Через игру ты можешь находить новых клиентов и партнёров.\n` +
-                    `Это современный инструмент продвижения твоего бизнеса и укрепления связей.`,
-                    {
-                        reply_markup: {
-                            inline_keyboard: [[{ text: 'Стать мастером', callback_data: 'become_master' }]]
-                        }
-                    }
-                );
+            if (data === 'apply_earn') {
+                this.bot?.sendMessage(chatId, 'Отлично! Напишите менеджеру: @Arctur_888');
             } else if (data === 'become_master') {
-                this.bot?.sendMessage(chatId, `С вами свяжется менеджер.`);
-            } else if (data === 'earn') {
-                this.bot?.sendMessage(chatId,
-                    `Хочешь зарабатывать вместе с «Энергией Денег»?\n` +
-                    `Стань партнёром проекта и получай доход, играя и помогая другим людям развиваться.`,
-                    {
-                        reply_markup: {
-                            inline_keyboard: [[{ text: 'Оставить заявку', callback_data: 'apply_earn' }]]
-                        }
-                    }
-                );
-            } else if (data === 'play') {
-                this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас!`, {
-                    reply_markup: {
-                        inline_keyboard: [[{ text: '🚀 ЗАПУСТИТЬ', url: process.env.WEB_APP_URL || 'https://google.com' }]]
-                    }
-                });
-            } else if (data === 'community') {
-                this.bot?.sendMessage(chatId,
-                    `Добро пожаловать в наше сообщество 🌐\n` +
-                    `Здесь мы объединяем людей, которые хотят расти, делиться опытом и находить новых друзей...`
-                );
+                this.bot?.sendMessage(chatId, 'Чтобы стать мастером, напишите: @Arctur_888');
             }
         });
+    }
+
+    sendMainMenu(chatId: number, text: string) {
+        this.bot?.sendMessage(chatId, text, {
+            reply_markup: {
+                keyboard: [
+                    [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
+                    [{ text: '🤝 Получить клиентов' }],
+                    [{ text: '🌐 Сообщество' }, { text: 'ℹ️ О проекте' }]
+                ],
+                resize_keyboard: true
+            }
+        });
+    }
+
+    async handleUserRegistration(telegramId: number, username: string, firstName: string, referralCode: string | null) {
+        try {
+            const { UserModel } = await import('../models/user.model');
+
+            let user = await UserModel.findOne({ telegram_id: telegramId });
+
+            if (!user) {
+                // Check if username exists (rare collision case for telegram users)
+                const existingUsername = await UserModel.findOne({ username });
+                if (existingUsername) {
+                    // Append random to username to make unique
+                    username = `${username}_${Math.floor(Math.random() * 1000)}`;
+                }
+
+                user = new UserModel({
+                    username,
+                    first_name: firstName,
+                    telegram_id: telegramId,
+                    referralBalance: 0,
+                    referralsCount: 0
+                });
+
+                // Process Referral
+                if (referralCode) {
+                    // Start payload often comes as '12345' (referrer's telegramId or database Id?)
+                    // Let's assume it's username or ID.
+                    // If param is simple string, it's likely username or id.
+
+                    // Try to find referrer
+                    // We support referral by: @MONEO_game_bot?start=referrer_username
+                    // OR ?start=referrer_id
+
+                    let referrer = await UserModel.findOne({ username: referralCode });
+                    if (!referrer) {
+                        // Try finding by telegram_id? (If referral code is number)
+                        if (!isNaN(Number(referralCode))) {
+                            referrer = await UserModel.findOne({ telegram_id: Number(referralCode) });
+                        }
+                    }
+
+                    if (referrer && referrer.id !== user.id) {
+                        user.referredBy = referrer.username;
+
+                        // Award Referrer
+                        referrer.referralBalance += 10;
+                        referrer.referralsCount += 1;
+                        await referrer.save();
+
+                        this.bot?.sendMessage(referrer.telegram_id!, `🎉 У вас новый реферал: ${firstName}! Баланс +$10.`);
+                    }
+                }
+
+                await user.save();
+                console.log(`New user registered via bot: ${username}`);
+            }
+        } catch (e) {
+            console.error("Error registering user:", e);
+        }
+    }
+
+    async handleEarn(chatId: number, telegramId?: number) {
+        if (!telegramId) return;
+
+        try {
+            const { UserModel } = await import('../models/user.model');
+            const user = await UserModel.findOne({ telegram_id: telegramId });
+
+            if (!user) {
+                this.bot?.sendMessage(chatId, "Ошибка: Пользватель не найден. Введите /start");
+                return;
+            }
+
+            const refLink = `https://t.me/MONEO_game_bot?start=${user.username}`;
+            // Fallback if no username? Use ID? But user request said "username if available, else ID".
+            // User schema requires unique username. Bot users usually have one, or we generated one.
+
+            const text = `💰 **Партнёрская программа**\n\n` +
+                `Приглашай друзей и получай $10 на игровой баланс за каждого!\n\n` +
+                `🔗 **Твоя ссылка:**\n${refLink}\n\n` +
+                `💳 **Твой баланс:** $${user.referralBalance}\n` +
+                `👥 **Приглашено:** ${user.referralsCount}\n\n` +
+                `Хочешь зарабатывать больше как партнёр проекта?`;
+
+            this.bot?.sendMessage(chatId, text, {
+                reply_markup: {
+                    inline_keyboard: [[{ text: 'Оставить заявку', callback_data: 'apply_earn' }]]
+                }
+            });
+
+        } catch (e) {
+            console.error("Error in handleEarn:", e);
+        }
+    }
+
+    handlePlay(chatId: number) {
+        this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас!`, {
+            reply_markup: {
+                inline_keyboard: [[{ text: '🚀 ЗАПУСТИТЬ', url: process.env.WEB_APP_URL || 'https://google.com' }]]
+            }
+        });
+    }
+
+    handleClients(chatId: number) {
+        this.bot?.sendMessage(chatId,
+            `Через игру ты можешь находить новых клиентов и партнёров.\n` +
+            `Это современный инструмент продвижения твоего бизнеса и укрепления связей.`,
+            {
+                reply_markup: {
+                    inline_keyboard: [[{ text: 'Стать мастером', callback_data: 'become_master' }]]
+                }
+            }
+        );
+    }
+
+    handleCommunity(chatId: number) {
+        this.bot?.sendMessage(chatId, `Добро пожаловать в наше сообщество! 🌐\nПодключайся к чату: @Arctur_888`);
+    }
+
+    handleAbout(chatId: number) {
+        this.bot?.sendMessage(chatId,
+            `«Энергия Денег» — это новая образовательная игра, созданная на основе принципов CashFlow.\n` +
+            `Она помогает менять мышление, прокачивать навыки и открывать новые финансовые возможности.`
+        );
     }
 }
