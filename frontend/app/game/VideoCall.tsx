@@ -89,11 +89,11 @@ export const VideoCall = ({ className = "" }: { className?: string }) => {
             };
 
             recognition.onerror = (event: any) => {
-                if (event.error === 'no-speech') {
-                    // Ignore no-speech error, it just means silence
+                if (event.error === 'no-speech' || event.error === 'aborted') {
+                    // Ignore benign errors
                     return;
                 }
-                console.error("Speech recognition error", event.error);
+                console.warn("Speech recognition warning:", event.error);
             };
 
             if (!isMuted) {
@@ -179,8 +179,8 @@ export const VideoCall = ({ className = "" }: { className?: string }) => {
                 <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Live Transcript</span>
                     <span className={`text-[8px] px-1.5 py-0.5 rounded border transition-colors ${isListening
-                            ? 'text-emerald-400 bg-emerald-900/20 border-emerald-500/20 animate-pulse'
-                            : 'text-slate-500 bg-slate-800/20 border-slate-700/50'
+                        ? 'text-emerald-400 bg-emerald-900/20 border-emerald-500/20 animate-pulse'
+                        : 'text-slate-500 bg-slate-800/20 border-slate-700/50'
                         }`}>
                         {isListening ? '⬤ Listening' : '○ Paused'}
                     </span>

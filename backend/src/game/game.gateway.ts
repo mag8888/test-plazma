@@ -108,7 +108,9 @@ export class GameGateway {
                         playerName || 'Player',
                         password
                     );
-                    socket.join(roomId);
+                    socket.join(room.id);
+                    // Broadcast update to Lobby so player counts update in real-time
+                    this.io.emit('rooms_updated', await this.roomService.getRooms());
 
                     // Sync Active Game Engine if exists
                     const game = this.games.get(roomId);

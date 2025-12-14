@@ -565,6 +565,11 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             {/* MAIN LAYOUT CONTAINER - FLEXBOX for Aspect Ratio Control */}
             <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-[100dvh] lg:h-screen lg:max-h-screen overflow-hidden items-center justify-center">
 
+                {/* MOBILE VIDEO CALL (MOVED TO TOP) */}
+                <div className="lg:hidden w-full px-0 py-0 flex-1 z-0 min-h-0 order-first">
+                    <VideoCall className="w-full h-full shadow-lg rounded-none object-cover" />
+                </div>
+
                 {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
                 <div className="hidden lg:flex flex-col gap-4 h-full overflow-hidden flex-1 min-w-0">
                     <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden group">
@@ -909,10 +914,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
 
 
-                {/* MOBILE VIDEO CALL (Visible only on mobile, below board) */}
-                <div className="lg:hidden w-full px-0 py-0 flex-1 z-0 min-h-0">
-                    <VideoCall className="w-full h-full shadow-lg rounded-none object-cover" />
-                </div>
+
 
                 {/* RIGHT SIDEBAR (Desktop) */}
                 <div className="hidden lg:flex flex-col flex-1 h-full border-l border-slate-800/0 p-0 relative overflow-y-auto custom-scrollbar gap-4 min-w-0">

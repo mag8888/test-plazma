@@ -37,9 +37,23 @@ export default function Lobby() {
             router.push('/');
         }
 
-        socket.emit('get_rooms', (data: Room[]) => setRooms(data));
+        const fetchRooms = () => {
+            console.log("Fetching rooms...");
+            socket.emit('get_rooms', (data: Room[]) => {
+                console.log("Rooms received:", data);
+                setRooms(data);
+            });
+        };
+
+        fetchRooms();
+
+        socket.on('connect', fetchRooms);
         socket.on('rooms_updated', (data: Room[]) => setRooms(data));
-        return () => { socket.off('rooms_updated'); };
+
+        return () => {
+            socket.off('connect', fetchRooms);
+            socket.off('rooms_updated');
+        };
     }, []);
 
     const handleLogout = () => {
