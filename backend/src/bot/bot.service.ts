@@ -148,6 +148,28 @@ export class BotService {
                 this.bot?.sendMessage(chatId, 'Отлично! Напишите менеджеру: @Arctur_888');
             } else if (data === 'become_master') {
                 this.bot?.sendMessage(chatId, 'Чтобы стать мастером, напишите: @Aurelia_8888');
+            } else if (data === 'admin_users') {
+                // Fetch last 10 users
+                import('../models/user.model').then(async ({ UserModel }) => {
+                    const users = await UserModel.find().sort({ createdAt: -1 }).limit(10);
+                    const list = users.map(u => `👤 ${u.username} (Bal: $${u.referralBalance})`).join('\n');
+                    this.bot?.sendMessage(chatId, `**Last 10 Users:**\n${list}`, { parse_mode: 'Markdown' });
+                });
+            } else if (data === 'admin_partners') {
+                // Fetch top referrers
+                import('../models/user.model').then(async ({ UserModel }) => {
+                    const users = await UserModel.find({ referralsCount: { $gt: 0 } }).sort({ referralsCount: -1 }).limit(10);
+                    const list = users.map(u => `🤝 ${u.username}: ${u.referralsCount} refs`).join('\n');
+                    this.bot?.sendMessage(chatId, `**Top Partners:**\n${list}`, { parse_mode: 'Markdown' });
+                });
+            } else if (data === 'admin_balance') {
+                const adminId = process.env.TELEGRAM_ADMIN_ID;
+                if (chatId.toString() === adminId) {
+                    this.adminStates.set(chatId, { state: 'WAITING_FOR_BALANCE_USER' });
+                    this.bot?.sendMessage(chatId, "Enter **Username** or **Telegram ID** to credit:", { parse_mode: 'Markdown' });
+                }
+            } else if (data === 'admin_upload') {
+                this.bot?.sendMessage(chatId, "Send me a photo to upload it to Cloudinary.");
             }
         });
         // Handle Photos for Cloudinary Upload
