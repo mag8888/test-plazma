@@ -1031,438 +1031,436 @@ export class GameEngine {
         this.state.log.push(`🔄 Returned ${asset.title} card to ${inferredType === 'DEAL_BIG' ? 'Big Deals' : 'Small Deals'} deck.`);
 
         this.state.log.push(`💰 ${player.name} sold ${asset.title} to Market for $${card.offerPrice}`);
-        this.state.log.push(`💸 Paid off mortgage $${mortgage.value}`);
-    }
 
         this.recordTransaction({
-        from: 'Market',
-        to: player.name,
-        amount: card.offerPrice,
-        description: `Sold ${asset.title}`,
-        type: 'PAYDAY' // Use Payday type or Generic Income? Maybe new type 'SALE'? Reusing PAYDAY for Green Color in UI usually. Or 'TRANSFER'.
-    });
+            from: 'Market',
+            to: player.name,
+            amount: card.offerPrice,
+            description: `Sold ${asset.title}`,
+            type: 'PAYDAY' // Use Payday type or Generic Income? Maybe new type 'SALE'? Reusing PAYDAY for Green Color in UI usually. Or 'TRANSFER'.
+        });
 
-this.state.log.push(`🤝 ${player.name} SOLD ${asset.title} for $${card.offerPrice}. (Cash: ${oldCash} -> ${player.cash})`);
+        this.state.log.push(`🤝 ${player.name} SOLD ${asset.title} for $${card.offerPrice}. (Cash: ${oldCash} -> ${player.cash})`);
 
-// Clear card
-this.state.currentCard = undefined;
-this.endTurn();
-    }
-
-donateCharity(playerId: string) {
-    const player = this.state.players.find(p => p.id === playerId);
-    if (!player) return;
-
-    let amount = 0;
-    if (player.isFastTrack) {
-        amount = 100000;
-    } else {
-        amount = Math.floor(player.income * 0.1);
-    }
-
-    if (player.cash < amount) {
-        this.state.log.push(`⚠️ Cannot afford Charity donation ($${amount}).`);
-        return;
-    }
-
-    player.cash -= amount;
-    player.charityTurns = 3; // 3 turns of extra dice
-    this.state.log.push(`❤️ ${player.name} donated $${amount}. Can now roll extra dice for 3 turns!`);
-
-    this.state.phase = 'ROLL'; // Re-enable roll? No, Charity replaces turn action usually?
-    // Wait, rule: "Land on Charity -> Donate -> End Turn. Next turns you roll extra."
-    // Or "Donate -> Roll"? 
-    // Standard: Land on Charity -> Donate (Optional) -> End Turn.
-    this.endTurn();
-}
-
-skipCharity(playerId: string) {
-    this.state.log.push(`${this.state.players.find(p => p.id === playerId)?.name} declined Charity.`);
-    this.endTurn();
-}
-
-buyAsset(playerId: string, quantity: number = 1) {
-    const player = this.state.players.find(p => p.id === playerId);
-    const currentPlayer = this.state.players[this.state.currentPlayerIndex];
-
-    if (!player || !this.state.currentCard) return;
-
-    // Restriction: Only current player can buy the deal on the table
-    if (player.id !== currentPlayer.id) {
-        this.state.log.push(`⚠️ ${player.name} tried to buy out of turn!`);
-        return;
-    }
-
-    const card = this.state.currentCard;
-    if (card.type !== 'MARKET' && card.type !== 'DEAL_SMALL' && card.type !== 'DEAL_BIG' && card.type !== 'BUSINESS' && card.type !== 'DREAM' && card.type !== 'EXPENSE') return;
-
-    // Stock Logic:
-    if (card.symbol) {
-        const costPerShare = card.cost || 0;
-        const totalCost = costPerShare * quantity;
-
-        // Check Max Quantity
-        if (card.maxQuantity && quantity > card.maxQuantity) {
-            this.state.log.push(`${player.name} cannot buy ${quantity} shares. Limit is ${card.maxQuantity}.`);
-            return;
-        }
-
-        if (player.cash < totalCost) {
-            this.state.log.push(`${player.name} cannot afford ${quantity} x ${card.title} ($${totalCost})`);
-            return;
-        }
-
-        player.cash -= totalCost;
-
-        // Find existing stock to merge
-        const existingStock = player.assets.find(a => a.symbol === card.symbol);
-        if (existingStock) {
-            // Weighted Average Cost could be calculated here if needed, but for Cashflow game usually just quantity matters for dividends? 
-            // Or just track raw quantity.
-            // We will update quantity.
-            // If cashflow is per share (Dividend), update it.
-            existingStock.quantity = (existingStock.quantity || 0) + quantity;
-            // Assuming card.cashflow is PER SHARE? usually yes.
-            const additionalIncome = (card.cashflow || 0) * quantity;
-            existingStock.cashflow = (existingStock.cashflow || 0) + additionalIncome;
-
-            player.passiveIncome += additionalIncome;
-        } else {
-            player.assets.push({
-                title: card.title,
-                cost: card.cost, // Cost per share
-                cashflow: (card.cashflow || 0) * quantity,
-                symbol: card.symbol,
-                type: 'STOCK',
-                quantity: quantity
-            });
-            player.passiveIncome += (card.cashflow || 0) * quantity;
-        }
-
-        player.income = player.salary + player.passiveIncome;
-        player.cashflow = player.income - player.expenses;
-
-        this.state.log.push(`${player.name} bought ${quantity} ${card.symbol} @ $${card.cost}.`);
-
-        // For stocks, do we clear card? 
-        // "Buy 1-100k". If I buy 50, can I buy another 50?
-        // Usually Turn ends after buying.
-        this.state.currentCard = undefined;
-        this.state.phase = 'ACTION';
-        return;
-    }
-
-    // Real Estate / Business Logic (Quantity always 1)
-    const costToPay = card.downPayment !== undefined ? card.downPayment : (card.cost || 0);
-
-    if (player.cash < costToPay) {
-        this.state.log.push(`${player.name} cannot afford ${card.title} ($${costToPay})`);
-        return;
-    }
-
-    let mlmResult = undefined;
-
-    // MLM Logic (Subtype check)
-    if (card.subtype === 'MLM_ROLL') {
-        // Roll dice to determine partners
-        const partners = Math.floor(Math.random() * 6) + 1; // 1-6
-        // Calculate cashflow
-        const cashflowPerPartner = (card.cost || 0) * 0.5;
-        const totalCashflow = partners * cashflowPerPartner;
-
-        // Modify card/asset properties for this transaction
-        card.cashflow = totalCashflow;
-        card.title = `${card.title} (${partners} Partners)`;
-
-        this.state.log.push(`🎲 Rolled ${partners}! Recruited ${partners} partners.`);
-        mlmResult = { mlmRoll: partners, mlmCashflow: totalCashflow };
-    } else if (card.subtype === 'CHARITY_ROLL') {
-        // "Friend teaches wisdom": 2 dice for 3 turns.
-        player.charityTurns = 3;
-        this.state.log.push(`🎲 ${player.name} gained wisdom! Can roll extra dice for 3 turns.`);
-    }
-
-    player.cash -= costToPay;
-
-    // Handle Expense Payment (No Asset added)
-    if (card.type === 'EXPENSE') {
-        // this.state.log.push(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
-        // Handled by forcePayment if mandatory? 
-        // Wait, buyAsset is "Optional" for Expense? No, Expense is mandatory usually.
-        // But buyAsset calls imply "User Clicked Pay".
-        // If user clicked pay, we just deduce.
-        // But if costToPay > cash?
-        // We should use forcePayment behavior logic OR standard logic.
-        // User requested "Prevent negative balance".
-
-        // Revert deduction line 1119 (player.cash -= costToPay) for Expenses?
-        // No, Line 1119 is explicit.
-        // Let's modify logic to Check Balance first.
-
-        // Actually, Expense cards via `buyAsset` means user manually paid.
-        // If user manually paid, they must have cash or taken loan manually.
-        // We should just enforce "Cannot buy if insufficient". 
-        // Line 1096 ALREADY enforces `player.cash < costToPay` return.
-        // So if `buyAsset` is called, they CAN pay.
-        // For Mandatory items (Losses/Events), that flow is via `resolveOpportunity`.
-        // Expense cards drawn from square type 'EXPENSE' are auto-drawn but handled differently. 
-        // `handleSquare` line 611 -> sets currentCard -> `buyAsset` button appears.
-        // So user manually pays.
-        // If they can't pay? They must take loan.
-        // We need to allow them to take loan.
-        // This is already handled by UI "Take Loan" then "Pay".
-
-        // So buyAsset works for Expense IF checks pass.
-        // Line 1123 log.
-
-        this.state.log.push(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
+        // Clear card
         this.state.currentCard = undefined;
         this.endTurn();
-        return;
     }
 
-    // Add Asset
-    player.assets.push({
-        title: card.title,
-        cost: card.cost,
-        cashflow: card.cashflow || 0,
-        symbol: card.symbol,
-        type: card.assetType || (card.symbol ? 'STOCK' : 'REAL_ESTATE'), // Use explicit type or fallback
-        quantity: 1,
-        businessType: card.businessType // Store business type
-    });
+    donateCharity(playerId: string) {
+        const player = this.state.players.find(p => p.id === playerId);
+        if (!player) return;
 
-    // Update Stats
-    if (card.cashflow) {
-        player.passiveIncome += card.cashflow;
-        player.income = player.salary + player.passiveIncome;
-        player.cashflow = player.income - player.expenses;
+        let amount = 0;
+        if (player.isFastTrack) {
+            amount = 100000;
+        } else {
+            amount = Math.floor(player.income * 0.1);
+        }
+
+        if (player.cash < amount) {
+            this.state.log.push(`⚠️ Cannot afford Charity donation ($${amount}).`);
+            return;
+        }
+
+        player.cash -= amount;
+        player.charityTurns = 3; // 3 turns of extra dice
+        this.state.log.push(`❤️ ${player.name} donated $${amount}. Can now roll extra dice for 3 turns!`);
+
+        this.state.phase = 'ROLL'; // Re-enable roll? No, Charity replaces turn action usually?
+        // Wait, rule: "Land on Charity -> Donate -> End Turn. Next turns you roll extra."
+        // Or "Donate -> Roll"? 
+        // Standard: Land on Charity -> Donate (Optional) -> End Turn.
+        this.endTurn();
     }
 
-    // Add Liability (Mortgage) if downpayment was used
-    if (card.downPayment !== undefined && (card.cost || 0) > card.downPayment) {
-        const mortgage = (card.cost || 0) - card.downPayment;
-        player.liabilities.push({ name: `Mortgage (${card.title})`, value: mortgage });
+    skipCharity(playerId: string) {
+        this.state.log.push(`${this.state.players.find(p => p.id === playerId)?.name} declined Charity.`);
+        this.endTurn();
     }
 
-    this.state.log.push(`${player.name} bought ${card.title}. Passive Income +$${card.cashflow || 0}`);
+    buyAsset(playerId: string, quantity: number = 1) {
+        const player = this.state.players.find(p => p.id === playerId);
+        const currentPlayer = this.state.players[this.state.currentPlayerIndex];
 
-    // Clear card so it isn't discarded in endTurn
-    this.state.currentCard = undefined;
+        if (!player || !this.state.currentCard) return;
 
-    this.checkFastTrackCondition(player);
-    // Do NOT end turn. Allow player to continue actions.
-    this.state.phase = 'ACTION';
+        // Restriction: Only current player can buy the deal on the table
+        if (player.id !== currentPlayer.id) {
+            this.state.log.push(`⚠️ ${player.name} tried to buy out of turn!`);
+            return;
+        }
 
-    return mlmResult;
-}
+        const card = this.state.currentCard;
+        if (card.type !== 'MARKET' && card.type !== 'DEAL_SMALL' && card.type !== 'DEAL_BIG' && card.type !== 'BUSINESS' && card.type !== 'DREAM' && card.type !== 'EXPENSE') return;
 
-sellStock(playerId: string, quantity: number) {
-    const player = this.state.players.find(p => p.id === playerId);
-    const card = this.state.currentCard;
+        // Stock Logic:
+        if (card.symbol) {
+            const costPerShare = card.cost || 0;
+            const totalCost = costPerShare * quantity;
 
-    if (!player || !card) return;
-    if (!card.symbol) return; // Must be stock card
+            // Check Max Quantity
+            if (card.maxQuantity && quantity > card.maxQuantity) {
+                this.state.log.push(`${player.name} cannot buy ${quantity} shares. Limit is ${card.maxQuantity}.`);
+                return;
+            }
 
-    // Find stock in assets
-    const stockIndex = player.assets.findIndex(a => a.symbol === card.symbol);
-    if (stockIndex === -1) return;
-    const stock = player.assets[stockIndex];
+            if (player.cash < totalCost) {
+                this.state.log.push(`${player.name} cannot afford ${quantity} x ${card.title} ($${totalCost})`);
+                return;
+            }
 
-    if ((stock.quantity || 0) < quantity) {
-        this.state.log.push(`${player.name} cannot sell ${quantity} ${stock.symbol}: Only have ${stock.quantity}`);
-        return;
+            player.cash -= totalCost;
+
+            // Find existing stock to merge
+            const existingStock = player.assets.find(a => a.symbol === card.symbol);
+            if (existingStock) {
+                // Weighted Average Cost could be calculated here if needed, but for Cashflow game usually just quantity matters for dividends? 
+                // Or just track raw quantity.
+                // We will update quantity.
+                // If cashflow is per share (Dividend), update it.
+                existingStock.quantity = (existingStock.quantity || 0) + quantity;
+                // Assuming card.cashflow is PER SHARE? usually yes.
+                const additionalIncome = (card.cashflow || 0) * quantity;
+                existingStock.cashflow = (existingStock.cashflow || 0) + additionalIncome;
+
+                player.passiveIncome += additionalIncome;
+            } else {
+                player.assets.push({
+                    title: card.title,
+                    cost: card.cost, // Cost per share
+                    cashflow: (card.cashflow || 0) * quantity,
+                    symbol: card.symbol,
+                    type: 'STOCK',
+                    quantity: quantity
+                });
+                player.passiveIncome += (card.cashflow || 0) * quantity;
+            }
+
+            player.income = player.salary + player.passiveIncome;
+            player.cashflow = player.income - player.expenses;
+
+            this.state.log.push(`${player.name} bought ${quantity} ${card.symbol} @ $${card.cost}.`);
+
+            // For stocks, do we clear card? 
+            // "Buy 1-100k". If I buy 50, can I buy another 50?
+            // Usually Turn ends after buying.
+            this.state.currentCard = undefined;
+            this.state.phase = 'ACTION';
+            return;
+        }
+
+        // Real Estate / Business Logic (Quantity always 1)
+        const costToPay = card.downPayment !== undefined ? card.downPayment : (card.cost || 0);
+
+        if (player.cash < costToPay) {
+            this.state.log.push(`${player.name} cannot afford ${card.title} ($${costToPay})`);
+            return;
+        }
+
+        let mlmResult = undefined;
+
+        // MLM Logic (Subtype check)
+        if (card.subtype === 'MLM_ROLL') {
+            // Roll dice to determine partners
+            const partners = Math.floor(Math.random() * 6) + 1; // 1-6
+            // Calculate cashflow
+            const cashflowPerPartner = (card.cost || 0) * 0.5;
+            const totalCashflow = partners * cashflowPerPartner;
+
+            // Modify card/asset properties for this transaction
+            card.cashflow = totalCashflow;
+            card.title = `${card.title} (${partners} Partners)`;
+
+            this.state.log.push(`🎲 Rolled ${partners}! Recruited ${partners} partners.`);
+            mlmResult = { mlmRoll: partners, mlmCashflow: totalCashflow };
+        } else if (card.subtype === 'CHARITY_ROLL') {
+            // "Friend teaches wisdom": 2 dice for 3 turns.
+            player.charityTurns = 3;
+            this.state.log.push(`🎲 ${player.name} gained wisdom! Can roll extra dice for 3 turns.`);
+        }
+
+        player.cash -= costToPay;
+
+        // Handle Expense Payment (No Asset added)
+        if (card.type === 'EXPENSE') {
+            // this.state.log.push(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
+            // Handled by forcePayment if mandatory? 
+            // Wait, buyAsset is "Optional" for Expense? No, Expense is mandatory usually.
+            // But buyAsset calls imply "User Clicked Pay".
+            // If user clicked pay, we just deduce.
+            // But if costToPay > cash?
+            // We should use forcePayment behavior logic OR standard logic.
+            // User requested "Prevent negative balance".
+
+            // Revert deduction line 1119 (player.cash -= costToPay) for Expenses?
+            // No, Line 1119 is explicit.
+            // Let's modify logic to Check Balance first.
+
+            // Actually, Expense cards via `buyAsset` means user manually paid.
+            // If user manually paid, they must have cash or taken loan manually.
+            // We should just enforce "Cannot buy if insufficient". 
+            // Line 1096 ALREADY enforces `player.cash < costToPay` return.
+            // So if `buyAsset` is called, they CAN pay.
+            // For Mandatory items (Losses/Events), that flow is via `resolveOpportunity`.
+            // Expense cards drawn from square type 'EXPENSE' are auto-drawn but handled differently. 
+            // `handleSquare` line 611 -> sets currentCard -> `buyAsset` button appears.
+            // So user manually pays.
+            // If they can't pay? They must take loan.
+            // We need to allow them to take loan.
+            // This is already handled by UI "Take Loan" then "Pay".
+
+            // So buyAsset works for Expense IF checks pass.
+            // Line 1123 log.
+
+            this.state.log.push(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
+            this.state.currentCard = undefined;
+            this.endTurn();
+            return;
+        }
+
+        // Add Asset
+        player.assets.push({
+            title: card.title,
+            cost: card.cost,
+            cashflow: card.cashflow || 0,
+            symbol: card.symbol,
+            type: card.assetType || (card.symbol ? 'STOCK' : 'REAL_ESTATE'), // Use explicit type or fallback
+            quantity: 1,
+            businessType: card.businessType // Store business type
+        });
+
+        // Update Stats
+        if (card.cashflow) {
+            player.passiveIncome += card.cashflow;
+            player.income = player.salary + player.passiveIncome;
+            player.cashflow = player.income - player.expenses;
+        }
+
+        // Add Liability (Mortgage) if downpayment was used
+        if (card.downPayment !== undefined && (card.cost || 0) > card.downPayment) {
+            const mortgage = (card.cost || 0) - card.downPayment;
+            player.liabilities.push({ name: `Mortgage (${card.title})`, value: mortgage });
+        }
+
+        this.state.log.push(`${player.name} bought ${card.title}. Passive Income +$${card.cashflow || 0}`);
+
+        // Clear card so it isn't discarded in endTurn
+        this.state.currentCard = undefined;
+
+        this.checkFastTrackCondition(player);
+        // Do NOT end turn. Allow player to continue actions.
+        this.state.phase = 'ACTION';
+
+        return mlmResult;
     }
 
-    const price = card.cost || 0; // Current price is usually defined in card.cost for Stock Cards
-    const saleTotal = price * quantity;
+    sellStock(playerId: string, quantity: number) {
+        const player = this.state.players.find(p => p.id === playerId);
+        const card = this.state.currentCard;
 
-    player.cash += saleTotal;
+        if (!player || !card) return;
+        if (!card.symbol) return; // Must be stock card
 
-    // Update Asset
-    stock.quantity -= quantity;
+        // Find stock in assets
+        const stockIndex = player.assets.findIndex(a => a.symbol === card.symbol);
+        if (stockIndex === -1) return;
+        const stock = player.assets[stockIndex];
 
-    // Reduce Cashflow (assuming proportional)
-    // If cashflow was total:
-    if (stock.cashflow) {
-        const cashflowPerShare = stock.cashflow / (stock.quantity + quantity);
-        const lostCashflow = cashflowPerShare * quantity;
-        stock.cashflow -= lostCashflow;
-        player.passiveIncome -= lostCashflow;
-        player.income = player.salary + player.passiveIncome;
-        player.cashflow = player.income - player.expenses;
+        if ((stock.quantity || 0) < quantity) {
+            this.state.log.push(`${player.name} cannot sell ${quantity} ${stock.symbol}: Only have ${stock.quantity}`);
+            return;
+        }
+
+        const price = card.cost || 0; // Current price is usually defined in card.cost for Stock Cards
+        const saleTotal = price * quantity;
+
+        player.cash += saleTotal;
+
+        // Update Asset
+        stock.quantity -= quantity;
+
+        // Reduce Cashflow (assuming proportional)
+        // If cashflow was total:
+        if (stock.cashflow) {
+            const cashflowPerShare = stock.cashflow / (stock.quantity + quantity);
+            const lostCashflow = cashflowPerShare * quantity;
+            stock.cashflow -= lostCashflow;
+            player.passiveIncome -= lostCashflow;
+            player.income = player.salary + player.passiveIncome;
+            player.cashflow = player.income - player.expenses;
+        }
+
+        if (stock.quantity <= 0) {
+            player.assets.splice(stockIndex, 1);
+        }
+
+        this.state.log.push(`📈 ${player.name} sold ${quantity} ${card.symbol} @ $${price} for $${saleTotal}`);
+
+        // Do NOT end turn. Selling stock is an open market action.
     }
 
-    if (stock.quantity <= 0) {
-        player.assets.splice(stockIndex, 1);
+    transferFunds(fromId: string, toId: string, amount: number) {
+        const fromPlayer = this.state.players.find(p => p.id === fromId);
+        const toPlayer = this.state.players.find(p => p.id === toId);
+
+        if (!fromPlayer || !toPlayer) return;
+        if (fromPlayer.cash < amount) {
+            this.state.log.push(`${fromPlayer.name} failed transfer: Insufficient funds.`);
+            return;
+        }
+
+        fromPlayer.cash -= amount;
+        toPlayer.cash += amount;
+
+        this.recordTransaction({
+            from: fromPlayer.name,
+            to: toPlayer.name,
+            amount,
+            description: 'Transfer',
+            type: 'TRANSFER'
+        });
+
+        this.state.log.push(`${fromPlayer.name} transferred $${amount} to ${toPlayer.name}`);
     }
-
-    this.state.log.push(`📈 ${player.name} sold ${quantity} ${card.symbol} @ $${price} for $${saleTotal}`);
-
-    // Do NOT end turn. Selling stock is an open market action.
-}
-
-transferFunds(fromId: string, toId: string, amount: number) {
-    const fromPlayer = this.state.players.find(p => p.id === fromId);
-    const toPlayer = this.state.players.find(p => p.id === toId);
-
-    if (!fromPlayer || !toPlayer) return;
-    if (fromPlayer.cash < amount) {
-        this.state.log.push(`${fromPlayer.name} failed transfer: Insufficient funds.`);
-        return;
-    }
-
-    fromPlayer.cash -= amount;
-    toPlayer.cash += amount;
-
-    this.recordTransaction({
-        from: fromPlayer.name,
-        to: toPlayer.name,
-        amount,
-        description: 'Transfer',
-        type: 'TRANSFER'
-    });
-
-    this.state.log.push(`${fromPlayer.name} transferred $${amount} to ${toPlayer.name}`);
-}
 
     private recordTransaction(t: Omit<Transaction, 'id' | 'timestamp'>) {
-    this.state.transactions.unshift({
-        id: Math.random().toString(36).substr(2, 9),
-        timestamp: Date.now(),
-        ...t
-    });
-    // Keep last 50 transactions
-    if (this.state.transactions.length > 50) this.state.transactions.pop();
-}
+        this.state.transactions.unshift({
+            id: Math.random().toString(36).substr(2, 9),
+            timestamp: Date.now(),
+            ...t
+        });
+        // Keep last 50 transactions
+        if (this.state.transactions.length > 50) this.state.transactions.pop();
+    }
 
-checkTurnTimeout(): boolean {
-    // Return true if state changed (turn ended)
-    if (this.state.turnExpiresAt && Date.now() > this.state.turnExpiresAt) {
-        const player = this.state.players[this.state.currentPlayerIndex];
-        if (player) {
-            this.state.log.push(`⌛ Turn timeout for ${player.name}`);
+    checkTurnTimeout(): boolean {
+        // Return true if state changed (turn ended)
+        if (this.state.turnExpiresAt && Date.now() > this.state.turnExpiresAt) {
+            const player = this.state.players[this.state.currentPlayerIndex];
+            if (player) {
+                this.state.log.push(`⌛ Turn timeout for ${player.name}`);
+            }
+            this.endTurn();
+            return true;
         }
-        this.endTurn();
-        return true;
-    }
-    return false;
-}
-
-endTurn() {
-    // Discard current card if it exists (was not bought)
-    if (this.state.currentCard) {
-        this.cardManager.discard(this.state.currentCard);
-        this.state.currentCard = undefined;
+        return false;
     }
 
-    // Clear events
-    this.state.lastEvent = undefined;
+    endTurn() {
+        // Discard current card if it exists (was not bought)
+        if (this.state.currentCard) {
+            this.cardManager.discard(this.state.currentCard);
+            this.state.currentCard = undefined;
+        }
 
-    this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % this.state.players.length;
-    this.state.phase = 'ROLL';
-    this.state.currentTurnTime = 120;
-    this.state.turnExpiresAt = Date.now() + 120000; // Reset timer 120s
+        // Clear events
+        this.state.lastEvent = undefined;
 
-    // Handle skipped turns for next player immediately?
-    // Simple recursion check
-    const nextPlayer = this.state.players[this.state.currentPlayerIndex];
-    if (nextPlayer.skippedTurns > 0) {
-        nextPlayer.skippedTurns--;
-        this.state.log.push(`🚫 ${nextPlayer.name} skips turn (Remaining: ${nextPlayer.skippedTurns})`);
-        this.state.lastEvent = { type: 'TURN_SKIPPED', payload: { player: nextPlayer.name, remaining: nextPlayer.skippedTurns } };
-        this.endTurn(); // Recursively skip
+        this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % this.state.players.length;
+        this.state.phase = 'ROLL';
+        this.state.currentTurnTime = 120;
+        this.state.turnExpiresAt = Date.now() + 120000; // Reset timer 120s
+
+        // Handle skipped turns for next player immediately?
+        // Simple recursion check
+        const nextPlayer = this.state.players[this.state.currentPlayerIndex];
+        if (nextPlayer.skippedTurns > 0) {
+            nextPlayer.skippedTurns--;
+            this.state.log.push(`🚫 ${nextPlayer.name} skips turn (Remaining: ${nextPlayer.skippedTurns})`);
+            this.state.lastEvent = { type: 'TURN_SKIPPED', payload: { player: nextPlayer.name, remaining: nextPlayer.skippedTurns } };
+            this.endTurn(); // Recursively skip
+        }
     }
-}
 
     private forcePayment(player: PlayerState, amount: number, description: string) {
-    if (amount <= 0) return;
+        if (amount <= 0) return;
 
-    if (player.cash >= amount) {
-        player.cash -= amount;
-        this.state.log.push(`💸 ${player.name} paid $${amount} for ${description}`);
-        return;
-    }
-
-    // Insufficient Funds
-    const deficit = amount - player.cash;
-
-    // Max Loan Check: 
-    // Existing logic: Loan allowed if Cashflow - Interest >= 0.
-    // Interest = 10% of Loan.
-    // So Max Loan = Cashflow * 10
-    // But we must also support existing debt.
-    // Actually, `takeLoan` checks future state.
-    // `player.cashflow - interest < 0` where interest is NEW interest.
-    // So we just iterate taking 1000s until covered or failed.
-
-    // Calculate needed loan
-    const neededLoan = Math.ceil(deficit / 1000) * 1000;
-
-    // Dry run check
-    const potentialInterest = neededLoan * 0.1;
-
-    if (player.cashflow - potentialInterest >= 0 && !player.isBankrupted) {
-        // Auto Take Loan through public method to ensure strict logic
-        this.state.log.push(`⚠️ ${player.name} forcing loan $${neededLoan} for ${description}...`);
-
-        // We need to bypass "turn check" if any? No, takeLoan is open.
-        // But takeLoan uses `state.players.find...`. 
-        // Better to call internal logic or just `this.takeLoan`.
-        this.takeLoan(player.id, neededLoan);
-
-        // Verify if loan was taken (cash increased)
         if (player.cash >= amount) {
             player.cash -= amount;
-            this.state.log.push(`💸 Paid $${amount} after loan.`);
+            this.state.log.push(`💸 ${player.name} paid $${amount} for ${description}`);
+            return;
+        }
+
+        // Insufficient Funds
+        const deficit = amount - player.cash;
+
+        // Max Loan Check: 
+        // Existing logic: Loan allowed if Cashflow - Interest >= 0.
+        // Interest = 10% of Loan.
+        // So Max Loan = Cashflow * 10
+        // But we must also support existing debt.
+        // Actually, `takeLoan` checks future state.
+        // `player.cashflow - interest < 0` where interest is NEW interest.
+        // So we just iterate taking 1000s until covered or failed.
+
+        // Calculate needed loan
+        const neededLoan = Math.ceil(deficit / 1000) * 1000;
+
+        // Dry run check
+        const potentialInterest = neededLoan * 0.1;
+
+        if (player.cashflow - potentialInterest >= 0 && !player.isBankrupted) {
+            // Auto Take Loan through public method to ensure strict logic
+            this.state.log.push(`⚠️ ${player.name} forcing loan $${neededLoan} for ${description}...`);
+
+            // We need to bypass "turn check" if any? No, takeLoan is open.
+            // But takeLoan uses `state.players.find...`. 
+            // Better to call internal logic or just `this.takeLoan`.
+            this.takeLoan(player.id, neededLoan);
+
+            // Verify if loan was taken (cash increased)
+            if (player.cash >= amount) {
+                player.cash -= amount;
+                this.state.log.push(`💸 Paid $${amount} after loan.`);
+            } else {
+                // Failed to take loan despite check? (Maybe block logic?)
+                this.bankruptPlayer(player);
+            }
         } else {
-            // Failed to take loan despite check? (Maybe block logic?)
+            // Cannot afford loan -> Bankrupt
             this.bankruptPlayer(player);
         }
-    } else {
-        // Cannot afford loan -> Bankrupt
-        this.bankruptPlayer(player);
     }
-}
 
     private bankruptPlayer(player: PlayerState) {
-    this.state.log.push(`☠️ ${player.name} IS BANKRUPT! Resetting...`);
-    this.state.lastEvent = { type: 'BANKRUPTCY', payload: { player: player.name } };
+        this.state.log.push(`☠️ ${player.name} IS BANKRUPT! Resetting...`);
+        this.state.lastEvent = { type: 'BANKRUPTCY', payload: { player: player.name } };
 
-    // Reset Logic
-    player.isBankrupted = true;
+        // Reset Logic
+        player.isBankrupted = true;
 
-    // Reset finances
-    const profession = PROFESSIONS.find(p => p.name === player.professionName) || PROFESSIONS[0];
+        // Reset finances
+        const profession = PROFESSIONS.find(p => p.name === player.professionName) || PROFESSIONS[0];
 
-    player.cash = profession.savings;
-    player.income = profession.salary;
-    player.expenses = profession.expenses;
-    player.cashflow = profession.salary - profession.expenses;
-    player.passiveIncome = 0;
+        player.cash = profession.savings;
+        player.income = profession.salary;
+        player.expenses = profession.expenses;
+        player.cashflow = profession.salary - profession.expenses;
+        player.passiveIncome = 0;
 
-    player.assets = [];
-    // Restore initial liabilities
-    const liabilities = [];
-    if (profession.carLoan) liabilities.push({ name: 'Car Loan', value: profession.carLoan.cost, expense: profession.carLoan.payment });
-    if (profession.creditCard) liabilities.push({ name: 'Credit Card', value: profession.creditCard.cost, expense: profession.creditCard.payment });
-    if (profession.schoolLoan) liabilities.push({ name: 'School Loan', value: profession.schoolLoan.cost, expense: profession.schoolLoan.payment });
-    if (profession.mortgage) liabilities.push({ name: 'Mortgage', value: profession.mortgage.cost, expense: profession.mortgage.payment });
-    if (profession.retailDebt) liabilities.push({ name: 'Retail Debt', value: profession.retailDebt.cost, expense: profession.retailDebt.payment });
-    player.liabilities = liabilities;
+        player.assets = [];
+        // Restore initial liabilities
+        const liabilities = [];
+        if (profession.carLoan) liabilities.push({ name: 'Car Loan', value: profession.carLoan.cost, expense: profession.carLoan.payment });
+        if (profession.creditCard) liabilities.push({ name: 'Credit Card', value: profession.creditCard.cost, expense: profession.creditCard.payment });
+        if (profession.schoolLoan) liabilities.push({ name: 'School Loan', value: profession.schoolLoan.cost, expense: profession.schoolLoan.payment });
+        if (profession.mortgage) liabilities.push({ name: 'Mortgage', value: profession.mortgage.cost, expense: profession.mortgage.payment });
+        if (profession.retailDebt) liabilities.push({ name: 'Retail Debt', value: profession.retailDebt.cost, expense: profession.retailDebt.payment });
+        player.liabilities = liabilities;
 
-    player.loanDebt = 0;
-    player.position = 0;
-    player.isFastTrack = false;
-    player.childrenCount = 0;
-    player.charityTurns = 0;
-    player.skippedTurns = 0;
-}
+        player.loanDebt = 0;
+        player.position = 0;
+        player.isFastTrack = false;
+        player.childrenCount = 0;
+        player.charityTurns = 0;
+        player.skippedTurns = 0;
+    }
 
-getState(): GameState {
-    return {
-        ...this.state,
-        deckCounts: this.cardManager.getDeckCounts()
-    };
-}
+    getState(): GameState {
+        return {
+            ...this.state,
+            deckCounts: this.cardManager.getDeckCounts()
+        };
+    }
 }
