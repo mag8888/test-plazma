@@ -10,6 +10,7 @@ if (!token) {
 
 export class BotService {
     bot: TelegramBot | null = null;
+    adminStates: Map<number, { state: string, targetUser?: any }> = new Map();
 
     constructor() {
         if (token) {
@@ -67,10 +68,59 @@ export class BotService {
 
             if (!text) return;
 
+            // Admin State Handling
+            const adminState = this.adminStates.get(chatId);
+            if (adminState) {
+                if (adminState.state === 'WAITING_FOR_BALANCE_USER') {
+                    // Try to find user
+                    const { UserModel } = await import('../models/user.model');
+                    let targetUser = await UserModel.findOne({ username: text.replace('@', '') });
+                    if (!targetUser && !isNaN(Number(text))) {
+                        targetUser = await UserModel.findOne({ telegram_id: Number(text) });
+                    }
+
+                    if (targetUser) {
+                        this.adminStates.set(chatId, { state: 'WAITING_FOR_BALANCE_AMOUNT', targetUser: targetUser });
+                        this.bot?.sendMessage(chatId, `Selected: ${targetUser.username} (Bal: $${targetUser.referralBalance}).\nEnter amount to add (e.g. 10):`);
+                    } else {
+                        this.bot?.sendMessage(chatId, "User not found. Try again or /cancel.");
+                    }
+                    return;
+                } else if (adminState.state === 'WAITING_FOR_BALANCE_AMOUNT') {
+                    const amount = Number(text);
+                    if (!isNaN(amount)) {
+                        const targetUser = adminState.targetUser;
+                        targetUser.referralBalance += amount;
+                        await targetUser.save();
+                        this.bot?.sendMessage(chatId, `✅ Added $${amount} to ${targetUser.username}. New Balance: $${targetUser.referralBalance}`);
+                        this.bot?.sendMessage(targetUser.telegram_id, `💰 Ваш баланс пополнен на $${amount}!`);
+                        this.adminStates.delete(chatId);
+                    } else {
+                        this.bot?.sendMessage(chatId, "Invalid amount. Enter a number.");
+                    }
+                    return;
+                }
+            }
+
+            if (text === '/cancel') {
+                this.adminStates.delete(chatId);
+                this.bot?.sendMessage(chatId, "Action canceled.");
+                return;
+            }
+
             if (text === '/admin') {
                 const adminId = process.env.TELEGRAM_ADMIN_ID;
                 if (adminId && chatId.toString() === adminId) {
-                    this.bot?.sendMessage(chatId, "👑 Admin Panel (Coming Soon)\n- Stats\n- Broadcast");
+                    this.bot?.sendMessage(chatId, "👑 **Admin Panel**\nSelect an action:", {
+                        parse_mode: 'Markdown',
+                        reply_markup: {
+                            inline_keyboard: [
+                                [{ text: '👥 Users', callback_data: 'admin_users' }, { text: '🤝 Partners', callback_data: 'admin_partners' }],
+                                [{ text: '💰 Add Balance', callback_data: 'admin_balance' }],
+                                [{ text: '📤 Upload Photo', callback_data: 'admin_upload' }]
+                            ]
+                        }
+                    });
                 }
                 return;
             }
