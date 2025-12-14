@@ -1,5 +1,5 @@
 import { v4 as uuidv4 } from 'uuid';
-import { RoomModel, IRoom } from '../models/room.model';
+import { RoomModel, IRoom, IPlayer } from '../models/room.model';
 
 export class RoomService {
 
@@ -112,7 +112,7 @@ export class RoomService {
             if (!refetch) throw new Error("Room not found");
 
             // If user IS in room now (race won by another request), update socket ID just in case
-            const p = refetch.players.find(p => p.userId === userId);
+            const p = refetch.players.find((p: IPlayer) => p.userId === userId);
             if (p) {
                 // Update socket ID via recursion or simple set
                 p.id = playerId;
@@ -156,7 +156,7 @@ export class RoomService {
             affectedRoomIds.push(room._id.toString());
 
             // Remove player
-            room.players = room.players.filter(p => p.userId !== userId);
+            room.players = room.players.filter((p: IPlayer) => p.userId !== userId);
 
             if (room.players.length === 0) {
                 await RoomModel.findByIdAndDelete(room._id);
@@ -177,7 +177,7 @@ export class RoomService {
         }
 
         // Check if hitting self (by socket ID)
-        const player = room.players.find(p => p.id === playerIdToKick);
+        const player = room.players.find((p: IPlayer) => p.id === playerIdToKick);
         if (player && player.userId === requesterUserId) {
             throw new Error("Host cannot kick themselves");
         }
@@ -205,11 +205,11 @@ export class RoomService {
         const roomCheck = await RoomModel.findById(roomId).lean();
         if (!roomCheck) throw new Error("Room not found");
 
-        let player = roomCheck.players.find(p => p.id === playerId);
+        let player = roomCheck.players.find((p: IPlayer) => p.id === playerId);
 
         // JIT Reconnect: If not found by socket ID, try User ID
         if (!player && userId) {
-            player = roomCheck.players.find(p => p.userId === userId);
+            player = roomCheck.players.find((p: IPlayer) => p.userId === userId);
             // If found by User ID, we must update the Socket ID atomically first or during the main update
             // We can handle it in the main update query query filter.
         }
@@ -223,7 +223,7 @@ export class RoomService {
 
         // Validate Token Uniqueness
         if (token) {
-            const tokenTaken = roomCheck.players.some(p => p.token === token && p.userId !== player!.userId);
+            const tokenTaken = roomCheck.players.some((p: IPlayer) => p.token === token && p.userId !== player!.userId);
             if (tokenTaken) {
                 console.error(`Token ${token} taken by another player in room ${roomId}`);
                 throw new Error("Эта фишка уже занята другим игроком");
@@ -274,7 +274,7 @@ export class RoomService {
         }
 
         // Find modified player to log result
-        const p = updatedRoom.players.find(p => p.userId === userId || p.id === playerId);
+        const p = updatedRoom.players.find((p: IPlayer) => p.userId === userId || p.id === playerId);
         console.log('RoomService.setPlayerReady SUCCESS. Updated player:', JSON.stringify(p));
 
         return this.sanitizeRoom(updatedRoom);
@@ -283,7 +283,7 @@ export class RoomService {
     async checkAllReady(roomId: string): Promise<boolean> {
         const room = await RoomModel.findById(roomId);
         if (!room || room.players.length === 0) return false;
-        return room.players.every(p => p.isReady);
+        return room.players.every((p: IPlayer) => p.isReady);
     }
 
     async startGame(roomId: string, requesterUserId: string): Promise<void> {
