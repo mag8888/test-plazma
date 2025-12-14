@@ -177,6 +177,12 @@ const bootstrap = async () => {
                 // Note: using dynamic import if needed, or static if already imported top level? 
                 // We imported connectDatabase. RoomModel is inside room.model.ts
                 const RoomModel = (await import('./models/room.model')).RoomModel;
+
+                // Debug Persistence: List all rooms
+                const allRooms = await RoomModel.find({});
+                console.log(`[PERSISTENCE DEBUG] Total Rooms in DB: ${allRooms.length}`);
+                allRooms.forEach(r => console.log(` - Room: ${r.name} [${r.status}] Creator: ${r.creatorId} Players: ${r.players.length}`));
+
                 const duplicates = await RoomModel.aggregate([
                     { $match: { status: 'waiting' } },
                     { $group: { _id: "$creatorId", count: { $sum: 1 }, rooms: { $push: "$_id" } } },
