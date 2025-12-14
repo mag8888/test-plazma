@@ -135,6 +135,16 @@ export class GameGateway {
                 }
             });
 
+            // WebRTC Signaling
+            socket.on('signal', (data) => {
+                // Forward signal to specific target
+                // data: { to: socketId, signal: any }
+                const { to, signal } = data;
+                if (to) {
+                    this.io.to(to).emit('signal', { from: socket.id, signal });
+                }
+            });
+
             // Leave Room
             socket.on('leave_room', async (data) => {
                 const { roomId } = data;

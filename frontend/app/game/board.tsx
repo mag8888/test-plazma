@@ -273,8 +273,10 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     };
 
     const handleExit = () => {
-        socket.emit('leave_room', { roomId });
-        router.push('/lobby');
+        if (window.confirm("Вы уверены, что хотите выйти? Если вы организатор, комната будет удалена.")) {
+            socket.emit('leave_room', { roomId });
+            router.push('/lobby');
+        }
     };
 
     const me = state.players.find((p: any) => p.id === socket.id) || initialState.players[0];
@@ -572,6 +574,8 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         balance={me.cash}
                         credit={me.loanDebt}
                         turnPlayerName={currentPlayer?.name}
+                        players={state.players}
+                        currentUserId={me.id}
                     />
                 </div>
 
@@ -924,7 +928,14 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 {/* RIGHT SIDEBAR (Desktop) */}
                 <div className="hidden lg:flex flex-col flex-1 h-full border-l border-slate-800/0 p-0 relative overflow-y-auto custom-scrollbar gap-4 min-w-0">
                     {/* DESKTOP VIDEO CALL */}
-                    <VideoCall className="w-full h-[200px] flex-shrink-0 shadow-lg" />
+                    <VideoCall
+                        className="w-full h-[200px] flex-shrink-0 shadow-lg"
+                        balance={me.cash}
+                        credit={me.loanDebt}
+                        turnPlayerName={currentPlayer?.name}
+                        players={state.players}
+                        currentUserId={me.id}
+                    />
 
                     {/* TIMER COMPONENT */}
                     <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden">

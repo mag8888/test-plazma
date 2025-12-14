@@ -57,10 +57,22 @@ function GameContent() {
         if (!roomId) return;
 
         // Initialize User Identity
+        // Initialize User Identity with Persistence
         const userStr = localStorage.getItem('user');
         const user = userStr ? JSON.parse(userStr) : {};
         const playerName = user.firstName || user.username || 'Guest';
-        const userId = user._id || user.id || 'guest-' + Math.random();
+
+        let userId = user._id || user.id;
+        if (!userId) {
+            // Check for persistent guest ID
+            const storedGuestId = localStorage.getItem('guest_id');
+            if (storedGuestId) {
+                userId = storedGuestId;
+            } else {
+                userId = 'guest-' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('guest_id', userId);
+            }
+        }
         setMyUserId(userId);
 
         const joinGame = () => {

@@ -4,12 +4,16 @@ export const VideoCall = ({
     className = "",
     balance,
     credit,
-    turnPlayerName
+    turnPlayerName,
+    players,
+    currentUserId
 }: {
     className?: string;
     balance?: number;
     credit?: number;
     turnPlayerName?: string;
+    players?: any[];
+    currentUserId?: string;
 }) => {
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(false);
@@ -136,10 +140,102 @@ export const VideoCall = ({
         setIsVideoOff(prev => !prev);
     };
 
+    // WebRTC Logic
+    const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
+    const peersRef = React.useRef<Map<string, RTCPeerConnection>>(new Map());
+
+    useEffect(() => {
+        if (!players || !currentUserId || !stream) return;
+
+        // 1. Handle Incoming Signals
+        const handleSignal = async ({ from, signal }: { from: string, signal: any }) => {
+            let peer = peersRef.current.get(from);
+
+            if (!peer) {
+                // Incoming Signal from unknown peer (they initiated)
+                peer = createPeer(from, false);
+            }
+
+            try {
+                if (signal.description) {
+                    await peer.setRemoteDescription(new RTCSessionDescription(signal.description));
+                    if (signal.description.type === 'offer') {
+                        const answer = await peer.createAnswer();
+                        await peer.setLocalDescription(answer);
+                        socket.emit('signal', { to: from, signal: { description: answer } });
+                    }
+                } else if (signal.candidate) {
+                    await peer.addIceCandidate(new RTCIceCandidate(signal.candidate));
+                }
+            } catch (err) {
+                console.error("WebRTC Error:", err);
+            }
+        };
+
+        socket.on('signal', handleSignal);
+
+        // 2. Connect to New Peers
+        players.forEach(p => {
+            if (p.id === currentUserId) return;
+            if (!peersRef.current.has(p.id)) {
+                // Simple Mesh: We initiate if our ID > their ID to avoid collision? 
+                // Or just initiate if we don't have them? 
+                // Better: Use a reliable convention. "Lexical Sort"?
+                // Let's rely on "Already In Room" vs "Joiner"?
+                // Hack: Just initiate connection blindly if not exists.
+                // Actually, collision is real.
+                // Let's use: Initiate if myId > theirId.
+                if (currentUserId > p.id) {
+                    createPeer(p.id, true);
+                }
+            }
+        });
+
+        return () => {
+            socket.off('signal', handleSignal);
+        };
+    }, [players, currentUserId, stream]);
+
+    const createPeer = (targetId: string, initiator: boolean) => {
+        const peer = new RTCPeerConnection({
+            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+        });
+
+        if (stream) {
+            stream.getTracks().forEach(track => peer.addTrack(track, stream));
+        }
+
+        peer.onicecandidate = (event) => {
+            if (event.candidate) {
+                socket.emit('signal', { to: targetId, signal: { candidate: event.candidate } });
+            }
+        };
+
+        peer.ontrack = (event) => {
+            setRemoteStreams(prev => new Map(prev).set(targetId, event.streams[0]));
+        };
+
+        if (initiator) {
+            peer.onnegotiationneeded = async () => {
+                try {
+                    const offer = await peer.createOffer();
+                    await peer.setLocalDescription(offer);
+                    socket.emit('signal', { to: targetId, signal: { description: offer } });
+                } catch (err) {
+                    console.error("Offer Error:", err);
+                }
+            };
+        }
+
+        peersRef.current.set(targetId, peer);
+        return peer;
+    };
+
     return (
         <div className={`flex flex-col bg-slate-900/80 border border-slate-700 rounded-xl overflow-hidden backdrop-blur-md ${className}`}>
             {/* Video Area */}
             <div className="flex-1 min-h-[120px] bg-slate-950 relative flex items-center justify-center group overflow-hidden">
+                {/* SELF VIDEO */}
                 {!isVideoOff ? (
                     <div className="w-full h-full relative">
                         <video
@@ -147,10 +243,23 @@ export const VideoCall = ({
                             autoPlay
                             muted
                             playsInline
-                            className="w-full h-full object-cover transform scale-x-[-1]" // Mirror effect
+                            className="w-full h-full object-cover transform scale-x-[-1]"
                         />
-                        <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/60 rounded-lg backdrop-blur-sm border border-white/10">
-                            <span className="text-[10px] text-white font-medium">You</span>
+                        {/* REMOTE VIDEOS OVERLAY (Small PIPs) */}
+                        <div className="absolute bottom-20 right-2 flex flex-col gap-2 z-30">
+                            {Array.from(remoteStreams.entries()).map(([id, stream]) => (
+                                <div key={id} className="w-20 h-20 bg-black rounded-lg border border-slate-600 overflow-hidden shadow-lg relative">
+                                    <video
+                                        autoPlay
+                                        playsInline
+                                        ref={el => { if (el) el.srcObject = stream; }}
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute bottom-0 right-0 bg-black/60 text-[8px] text-white px-1">
+                                        {players?.find(p => p.id === id)?.name || 'User'}
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 ) : (

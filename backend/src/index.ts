@@ -201,7 +201,7 @@ const bootstrap = async () => {
         // 5. Notify Admin (User Request)
         if (botService) {
             const upTime = new Date().toISOString();
-            botService.sendAdminMessage(`🚀 <b>Server Restarted</b>\n\nEnvironment: Production\nTime: ${upTime}\nStatus: Online`).catch(err => console.error("Failed to notify admin:", err));
+            botService.sendAdminMessage(`🚀 <b>Server Restarted</b>\n\nEnvironment: Production\nTime: ${upTime}\nStatus: Online\nCC: @roman_arctur`).catch(err => console.error("Failed to notify admin:", err));
         }
 
     } catch (fatalError) {
