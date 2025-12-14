@@ -270,11 +270,11 @@ function GameContent() {
                             <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
                             <div className="mb-8 relative z-10">
                                 <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 mb-2">Настройка персонажа</h3>
-                                <p className="text-slate-400 text-sm">Выберите аватар и определите свою мечту</p>
+                                <p className="text-slate-400 text-sm">Выберите фишку и определите свою мечту</p>
                             </div>
                             <div className="flex-1 relative z-10">
-                                <div className="mb-8">
-                                    <label className="text-xs uppercase font-bold text-slate-500 mb-4 block tracking-wider">Выберите Аватар</label>
+                                <div className={`mb-8 p-4 rounded-3xl transition-all duration-500 ${!token ? 'bg-indigo-500/10 border border-indigo-500/30 shadow-[0_0_30px_rgba(99,102,241,0.15)] animate-pulse-slow' : ''}`}>
+                                    <label className={`text-xs uppercase font-bold mb-4 block tracking-wider transition-colors ${!token ? 'text-indigo-400' : 'text-slate-500'}`}>ВЫБЕРИТЕ ФИШКУ</label>
                                     <div className="grid grid-cols-5 sm:grid-cols-5 gap-4">
                                         {['🦁', '🦅', '🦊', '🐻', '🐅', '🐺', '🐘', '🦈', '🦉', '🐬'].map((t) => {
                                             const isTaken = room.players.some(p => p.token === t && p.id !== socket.id);
@@ -306,8 +306,8 @@ function GameContent() {
                                         })}
                                     </div>
                                 </div>
-                                <div className="mb-8">
-                                    <label className="text-xs uppercase font-bold text-slate-500 mb-2 block tracking-wider">Ваша Мечта</label>
+                                <div className={`mb-8 p-4 rounded-3xl transition-all duration-500 ${token ? 'bg-purple-500/10 border border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.15)] animate-pulse-slow' : ''}`}>
+                                    <label className={`text-xs uppercase font-bold mb-2 block tracking-wider transition-colors ${token ? 'text-purple-400' : 'text-slate-500'}`}>Ваша Мечта</label>
                                     <div className="relative">
                                         <select
                                             value={dream}
