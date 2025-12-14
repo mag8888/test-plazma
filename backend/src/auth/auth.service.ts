@@ -82,7 +82,7 @@ export class AuthService {
     async createAuthCode(telegramId: number): Promise<string> {
         // Generate random 8-char code
         const code = crypto.randomBytes(4).toString('hex');
-        const expires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+        const expires = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12 hours (User Request)
 
         await UserModel.findOneAndUpdate(
             { telegram_id: telegramId },
@@ -108,10 +108,10 @@ export class AuthService {
             return null;
         }
 
-        // Consume code (security)
-        user.authCode = undefined;
-        user.authCodeExpires = undefined;
-        await user.save();
+        // DO NOT consume code (User Request: Link valid for 12 hours)
+        // user.authCode = undefined;
+        // user.authCodeExpires = undefined;
+        // await user.save();
 
         return user;
     }

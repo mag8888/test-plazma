@@ -84,16 +84,16 @@ export default function Lobby() {
                         </div>
                     </div>
 
-                    <div className="flex gap-3">
+                    <div className="flex gap-2 sm:gap-3">
                         <button
                             onClick={() => setIsCreating(!isCreating)}
-                            className="bg-green-600 hover:bg-green-500 px-4 py-2 rounded-lg transition-all font-bold text-sm"
+                            className="bg-green-600 hover:bg-green-500 px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-all font-bold text-xs sm:text-sm whitespace-nowrap flex-1 text-center"
                         >
-                            + Новая комната
+                            + Новая
                         </button>
                         <button
                             onClick={handleLogout}
-                            className="bg-slate-700 hover:bg-red-500/80 px-4 py-2 rounded-lg transition-all text-sm font-bold border border-slate-600"
+                            className="bg-slate-700 hover:bg-red-500/80 px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-all text-xs sm:text-sm font-bold border border-slate-600 whitespace-nowrap"
                         >
                             Выход
                         </button>

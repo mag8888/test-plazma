@@ -58,20 +58,63 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
     // Helper: Position Logic
     const getPosStyle = (index: number, isFastTrack: boolean) => {
         if (!isFastTrack) {
-            // RAT RACE: CIRCULAR
-            const totalSteps = 24;
-            const angleOffset = 90;
-            const angleDeg = (index * (360 / totalSteps)) + angleOffset;
-            const angleDegCorrected = angleDeg; // removed offset logic if redundant, but keeping for rotation
-            const angleRad = angleDeg * (Math.PI / 180);
+            // RAT RACE: SQUARE TRACK (Optimized for Mobile)
+            // Total 24 steps
+            // 0-6: Right (Top Edge)
+            // 6-12: Down (Right Edge)
+            // 12-18: Left (Bottom Edge)
+            // 18-24: Up (Left Edge)
 
-            const radius = 46; // Maximized radius
-            const x = 50 + radius * Math.cos(angleRad);
-            const y = 50 + radius * Math.sin(angleRad);
+            // Adjusted mapping to start from Bottom-Right or standard Monopoly style?
+            // Existing circular was clockwise starting from right-ish?
+            // Let's assume index 0 is Start (Bottom Right usually).
+            // Let's map 24 steps to 4 sides of 6 steps each.
+
+            // We want the track to be INSIDE the container (inset 12%)
+            // Grid range roughly 0 to 100%
+
+            const side = 6;
+            const segment = index % side;
+            const pos = Math.floor(index / side);
+
+            // Coordinates in percentage (0 to 100)
+            let top = 0;
+            let left = 0;
+
+            // OFFSET for visual centering on track line
+            const inset = 10;
+            const step = (100 - (inset * 2)) / side;
+
+            // Shift index to match visual flow if needed. 
+            // Current circular angle was: index * (360/24) + 90. 
+            // 0 -> 90deg (Bottom)
+            // 6 -> 180deg (Left)
+            // 12 -> 270deg (Top)
+            // 18 -> 0deg (Right)
+
+            // Let's mimic this:
+            // 0-6: Bottom Edge (Right to Left)
+            // 6-12: Left Edge (Bottom to Top)
+            // 12-18: Top Edge (Left to Right)
+            // 18-24: Right Edge (Top to Bottom)
+
+            if (index >= 0 && index < 6) { // Bottom (Right to Left)
+                top = 100 - inset;
+                left = 100 - inset - (index * step);
+            } else if (index >= 6 && index < 12) { // Left (Bottom to Top)
+                top = 100 - inset - ((index - 6) * step);
+                left = inset;
+            } else if (index >= 12 && index < 18) { // Top (Left to Right)
+                top = inset;
+                left = inset + ((index - 12) * step);
+            } else { // Right (Top to Bottom)
+                top = inset + ((index - 18) * step);
+                left = 100 - inset;
+            }
 
             return {
-                left: `${x}%`,
-                top: `${y}%`,
+                left: `${left}%`,
+                top: `${top}%`,
                 transform: 'translate(-50%, -50%)',
                 position: 'absolute' as 'absolute'
             };
@@ -237,15 +280,29 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                 position: 'absolute'
                             };
                         } else {
-                            // Rat Race (Circular)
-                            // Radius 46 relative to inset-0 container
-                            const totalSteps = 24;
-                            const angleOffset = 90;
-                            const angleDeg = (posIndex * (360 / totalSteps)) + angleOffset;
-                            const angleRad = angleDeg * (Math.PI / 180);
-                            const radius = 35; // Adjusted for inset-0 container (46 * 0.76)
-                            const x = 50 + radius * Math.cos(angleRad);
-                            const y = 50 + radius * Math.sin(angleRad);
+                            // Rat Race (Square)
+                            const side = 6;
+                            const segment = posIndex % side;
+                            const inset = 10;
+                            const step = (100 - (inset * 2)) / side;
+
+                            let x = 0;
+                            let y = 0;
+
+                            if (posIndex >= 0 && posIndex < 6) { // Bottom
+                                y = 100 - inset;
+                                x = 100 - inset - (posIndex * step);
+                            } else if (posIndex >= 6 && posIndex < 12) { // Left
+                                y = 100 - inset - ((posIndex - 6) * step);
+                                x = inset;
+                            } else if (posIndex >= 12 && posIndex < 18) { // Top
+                                y = inset;
+                                x = inset + ((posIndex - 12) * step);
+                            } else { // Right
+                                y = inset + ((posIndex - 18) * step);
+                                x = 100 - inset;
+                            }
+
                             style = {
                                 left: `${x + offsetX}%`,
                                 top: `${y + offsetY}%`,
