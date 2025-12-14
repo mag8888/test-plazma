@@ -45,22 +45,41 @@ export const VideoCall = ({ className = "" }: { className?: string }) => {
     }, [isVideoOff]);
 
     // Speech Recognition
+    const [isListening, setIsListening] = useState(false);
+
     useEffect(() => {
+        let recognition: any = null;
+
         if ('webkitSpeechRecognition' in window) {
-            const recognition = new (window as any).webkitSpeechRecognition();
+            recognition = new (window as any).webkitSpeechRecognition();
             recognition.continuous = true;
             recognition.interimResults = true;
             recognition.lang = 'ru-RU';
 
+            recognition.onstart = () => {
+                setIsListening(true);
+            };
+
+            recognition.onend = () => {
+                setIsListening(false);
+                // Auto-restart if not muted (and simplistic keep-alive)
+                if (!isMuted) {
+                    setTimeout(() => {
+                        try {
+                            recognition.start();
+                        } catch (e) {
+                            // ignore already started
+                        }
+                    }, 1000);
+                }
+            };
+
             recognition.onresult = (event: any) => {
-                let interimTranscript = '';
                 let finalTranscript = '';
 
                 for (let i = event.resultIndex; i < event.results.length; ++i) {
                     if (event.results[i].isFinal) {
                         finalTranscript += event.results[i][0].transcript;
-                    } else {
-                        interimTranscript += event.results[i][0].transcript;
                     }
                 }
 
@@ -70,6 +89,10 @@ export const VideoCall = ({ className = "" }: { className?: string }) => {
             };
 
             recognition.onerror = (event: any) => {
+                if (event.error === 'no-speech') {
+                    // Ignore no-speech error, it just means silence
+                    return;
+                }
                 console.error("Speech recognition error", event.error);
             };
 
@@ -80,11 +103,11 @@ export const VideoCall = ({ className = "" }: { className?: string }) => {
                     // Algorithm: handle if already started
                 }
             }
-
-            return () => {
-                recognition.stop();
-            };
         }
+
+        return () => {
+            if (recognition) recognition.stop();
+        };
     }, [isMuted]);
 
     // Mock transcript generation (keep for demo if detecting nothing?)
@@ -152,11 +175,15 @@ export const VideoCall = ({ className = "" }: { className?: string }) => {
                 </div>
             </div>
 
-            {/* Transcript / AI Analysis Area */}
             <div className="h-[80px] border-t border-slate-800 bg-slate-900/50 p-2 overflow-y-auto custom-scrollbar">
                 <div className="flex items-center justify-between mb-1">
                     <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Live Transcript</span>
-                    <span className="text-[8px] text-emerald-400 bg-emerald-900/20 px-1.5 py-0.5 rounded border border-emerald-500/20">AI Active</span>
+                    <span className={`text-[8px] px-1.5 py-0.5 rounded border transition-colors ${isListening
+                            ? 'text-emerald-400 bg-emerald-900/20 border-emerald-500/20 animate-pulse'
+                            : 'text-slate-500 bg-slate-800/20 border-slate-700/50'
+                        }`}>
+                        {isListening ? '⬤ Listening' : '○ Paused'}
+                    </span>
                 </div>
                 <div className="space-y-1">
                     {transcript.map((line, i) => (

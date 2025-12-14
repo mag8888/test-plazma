@@ -357,11 +357,6 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             {
                 showMobileMenu && (
                     <div className="lg:hidden absolute inset-0 z-[60] bg-[#0f172a]/95 backdrop-blur-xl p-4 flex flex-col gap-4 overflow-y-auto animate-in slide-in-from-left duration-300">
-                        <div className="flex justify-between items-center mb-2">
-                            <h2 className="text-2xl font-black text-white uppercase tracking-wider">Меню</h2>
-                            <button onClick={() => setShowMobileMenu(false)} className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400">✕</button>
-                        </div>
-
                         {/* Profile Section */}
                         <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
                             <div className="flex items-center gap-4 mb-4">
@@ -651,39 +646,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                 {/* CENTER BOARD (Strict Aspect Square) */}
                 <div className="w-full lg:w-auto lg:h-full aspect-square flex-shrink-0 relative bg-[#0f172a] overflow-hidden flex flex-col rounded-3xl border border-slate-800/50 shadow-2xl max-h-full">
-                    {/* Mobile Top Bar */}
-                    <div className="lg:hidden flex justify-between items-center p-3 bg-[#0B0E14] border-b border-slate-800 z-10 shadow-md">
-                        <div className="flex items-center gap-3">
-                            <span className="text-2xl bg-slate-800 w-9 h-9 flex items-center justify-center rounded-full border border-slate-700 shadow-sm">{me.token}</span>
-                            <div className="flex flex-col leading-tight">
-                                <span className="font-bold text-slate-200 text-sm truncate max-w-[100px]">{me.name}</span>
-                                <span className="font-mono text-green-400 text-xs font-bold relative flex items-center gap-1">
-                                    ${me.cash?.toLocaleString()}
-                                    <CashChangeIndicator currentCash={me.cash} />
-                                </span>
-                            </div>
-                        </div>
 
-                        {/* Income Stats Mobile */}
-                        <div className="flex items-center gap-3 mx-2">
-                            <div className="flex flex-col items-center">
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-0.5">Пассив</span>
-                                <span className="font-mono text-xs text-blue-400 font-bold">+${(me.passiveIncome || 0).toLocaleString()}</span>
-                            </div>
-                            <div className="h-6 w-px bg-slate-800"></div>
-                            <div className="flex flex-col items-center">
-                                <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wider leading-none mb-0.5">Net</span>
-                                <span className="font-mono text-xs text-green-400 font-bold">+${(me.cashflow || 0).toLocaleString()}</span>
-                            </div>
-                        </div>
-
-                        <div className="text-center min-w-[50px]">
-                            <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Turn</div>
-                            <div className={`text-sm font-mono font-bold ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-blue-400'}`}>
-                                {formatTime(timeLeft)}
-                            </div>
-                        </div>
-                    </div>
 
                     <div className="flex-1 relative overflow-hidden p-0 flex items-center justify-center">
                         <BoardVisualizer
@@ -947,8 +910,8 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
 
                 {/* MOBILE VIDEO CALL (Visible only on mobile, below board) */}
-                <div className="lg:hidden w-full px-0 py-0 flex-none z-0 aspect-square max-h-[50vh]">
-                    <VideoCall className="w-full h-full shadow-lg rounded-none" />
+                <div className="lg:hidden w-full px-0 py-0 flex-1 z-0 min-h-0">
+                    <VideoCall className="w-full h-full shadow-lg rounded-none object-cover" />
                 </div>
 
                 {/* RIGHT SIDEBAR (Desktop) */}
