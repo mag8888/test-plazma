@@ -122,17 +122,19 @@ const bootstrap = async () => {
     try {
         console.log('--- STARTING SERVER BOOTSTRAP ---');
 
+        // 0. Start HTTP Server IMMEDIATELY to pass Health Checks
+        const server = httpServer.listen(Number(PORT), '0.0.0.0', () => {
+            console.log(`Server is running on http://0.0.0.0:${PORT}`);
+            console.log(`Health Check: http://0.0.0.0:${PORT}/api/health`);
+        });
+
+        server.keepAliveTimeout = 65000;
+        server.headersTimeout = 66000;
+
         // 1. Database (Wrap in try/catch to prevent fatal crash)
         try {
             console.log('Connecting to Database...');
             await connectDatabase();
-            // Note: connectDatabase in database.ts might process.exit(1) on failure.
-            // Ideally we should modify database.ts to THROW instead of EXIT for robustness,
-            // but we can't change it right now without risk. 
-            // Wait, we CAN change it. But sticking to index.ts for now.
-            // If connectDatabase exits, we are doomed. 
-            // But usually MongoDB connect throws if URI is bad. 
-            // Let's hope it throws.
             dbStatus = 'connected';
             console.log('Database Connected.');
         } catch (dbErr) {
@@ -165,6 +167,8 @@ const bootstrap = async () => {
         if (dbStatus === 'connected') {
             try {
                 console.log('--- DB MAINTENANCE ---');
+                // Note: using dynamic import if needed, or static if already imported top level? 
+                // We imported connectDatabase. RoomModel is inside room.model.ts
                 const RoomModel = (await import('./models/room.model')).RoomModel;
                 const duplicates = await RoomModel.aggregate([
                     { $match: { status: 'waiting' } },
@@ -186,18 +190,8 @@ const bootstrap = async () => {
             }
         }
 
-        // 5. Start HTTP Server
-        const server = httpServer.listen(Number(PORT), '0.0.0.0', () => {
-            console.log(`Server is running on http://0.0.0.0:${PORT}`);
-            console.log(`Health Check: http://0.0.0.0:${PORT}/api/health`);
-        });
-
-        server.keepAliveTimeout = 65000;
-        server.headersTimeout = 66000;
-
     } catch (fatalError) {
         console.error("FATAL SERVER ERROR:", fatalError);
-        // Do NOT exit. Log and hang.
     }
 };
 
