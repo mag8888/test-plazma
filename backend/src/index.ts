@@ -187,9 +187,9 @@ const bootstrap = async () => {
         }
 
         // 5. Start HTTP Server
-        const server = httpServer.listen(PORT, () => {
-            console.log(`Server is running on http://localhost:${PORT}`);
-            console.log(`Health Check: http://localhost:${PORT}/api/health`);
+        const server = httpServer.listen(Number(PORT), '0.0.0.0', () => {
+            console.log(`Server is running on http://0.0.0.0:${PORT}`);
+            console.log(`Health Check: http://0.0.0.0:${PORT}/api/health`);
         });
 
         server.keepAliveTimeout = 65000;
