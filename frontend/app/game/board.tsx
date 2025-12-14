@@ -566,10 +566,11 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             }
 
             {/* MAIN GRID */}
-            <div className="flex-1 w-full max-w-[1920px] mx-auto p-2 lg:p-4 grid grid-cols-1 lg:grid-cols-[380px_1fr_300px] gap-2 lg:gap-4 h-[calc(100vh-80px)] lg:h-screen lg:max-h-screen overflow-hidden">
+            {/* MAIN LAYOUT CONTAINER - FLEXBOX for Aspect Ratio Control */}
+            <div className="flex-1 w-full max-w-[1920px] mx-auto p-2 lg:p-4 flex flex-col lg:flex-row gap-2 lg:gap-4 h-[calc(100vh-80px)] lg:h-screen lg:max-h-screen overflow-hidden items-center justify-center">
 
-                {/* LEFT SIDEBAR - PLAYER INFO */}
-                <div className="hidden lg:flex flex-col gap-4 h-full overflow-hidden">
+                {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
+                <div className="hidden lg:flex flex-col gap-4 h-full overflow-hidden flex-1 min-w-0">
                     <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden group">
                         {/* Glow effect */}
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500"></div>
@@ -647,8 +648,8 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                 </div>
 
-                {/* CENTER BOARD */}
-                <div className="flex-1 relative bg-[#0f172a] overflow-hidden flex flex-col rounded-3xl border border-slate-800/50 shadow-2xl">
+                {/* CENTER BOARD (Strict Aspect Square) */}
+                <div className="w-full lg:w-auto lg:h-full aspect-square flex-shrink-0 relative bg-[#0f172a] overflow-hidden flex flex-col rounded-3xl border border-slate-800/50 shadow-2xl max-h-full">
                     {/* Mobile Top Bar */}
                     <div className="lg:hidden flex justify-between items-center p-3 bg-[#0B0E14] border-b border-slate-800 z-10 shadow-md">
                         <div className="flex items-center gap-3">
@@ -943,7 +944,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 </div>
 
                 {/* RIGHT SIDEBAR (Desktop) */}
-                <div className="hidden lg:flex flex-col w-[300px] border-l border-slate-800/0 p-0 relative overflow-y-auto custom-scrollbar gap-4">
+                <div className="hidden lg:flex flex-col flex-1 h-full border-l border-slate-800/0 p-0 relative overflow-y-auto custom-scrollbar gap-4 min-w-0">
 
                     {/* TIMER COMPONENT */}
                     <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden">

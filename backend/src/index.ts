@@ -49,7 +49,6 @@ const io = new Server(httpServer, {
     transports: ['polling', 'websocket']
 });
 
-app.use(cors());
 app.use(express.json());
 app.use('/api/auth', AuthController);
 
