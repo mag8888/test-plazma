@@ -1,5 +1,5 @@
-import express from 'express';
-import { createServer } from 'http';
+const express = require('express');
+const { createServer } = require('http');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
