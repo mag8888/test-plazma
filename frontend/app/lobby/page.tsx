@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { socket } from '../socket';
 import { RulesModal } from '../game/RulesModal';
+import { DREAMS } from '../lib/dreams';
 
 interface Room {
     id: string;
@@ -68,7 +69,15 @@ export default function Lobby() {
         const playerName = user.firstName || user.username || 'Guest';
         const userId = user._id || user.id;
 
-        socket.emit('create_room', { name: newRoomName, maxPlayers, timer: 120, playerName, userId }, (response: any) => {
+        socket.emit('create_room', {
+            name: newRoomName,
+            maxPlayers,
+            timer: 120,
+            playerName,
+            userId,
+            token: '🦊',
+            dream: DREAMS[0].name
+        }, (response: any) => {
             setIsSubmitting(false);
             if (response.success) {
                 router.push(`/game?id=${response.room.id}`);

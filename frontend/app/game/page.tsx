@@ -65,7 +65,13 @@ function GameContent() {
 
         const joinGame = () => {
             console.log("Joining room...", { roomId, playerName, userId });
-            socket.emit('join_room', { roomId, playerName, userId }, (response: any) => {
+            socket.emit('join_room', {
+                roomId,
+                playerName,
+                userId,
+                token: token || '🦊',
+                dream: dream || DREAMS[0].name
+            }, (response: any) => {
                 if (!response.success) {
                     console.error("Join failed:", response.error);
                     setError(response.error);

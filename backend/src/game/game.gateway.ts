@@ -83,7 +83,9 @@ export class GameGateway {
                         name,
                         maxPlayers,
                         timer,
-                        password
+                        password,
+                        data.token,
+                        data.dream
                     );
                     socket.join(room.id);
                     const rooms = await this.roomService.getRooms();
@@ -106,7 +108,9 @@ export class GameGateway {
                         socket.id,
                         userId || 'guest_' + socket.id,
                         playerName || 'Player',
-                        password
+                        password,
+                        data.token,
+                        data.dream
                     );
                     socket.join(room.id);
                     // Broadcast update to Lobby so player counts update in real-time

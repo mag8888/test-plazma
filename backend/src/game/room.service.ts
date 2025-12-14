@@ -5,7 +5,7 @@ export class RoomService {
 
     constructor() { }
 
-    async createRoom(creatorId: string, userId: string, playerName: string, name: string, maxPlayers: number = 6, timer: number = 120, password?: string): Promise<any> {
+    async createRoom(creatorId: string, userId: string, playerName: string, name: string, maxPlayers: number = 6, timer: number = 120, password?: string, token?: string, dream?: string): Promise<any> {
         // 1. Cleanup: Remove user from ALL waiting rooms (Auto-Leave)
         await this.removeUserFromAllWaitingRooms(userId);
 
@@ -30,7 +30,9 @@ export class RoomService {
                 id: creatorId, // Socket ID
                 userId: userId,
                 name: playerName,
-                isReady: false
+                isReady: false,
+                token: '🦊', // Default fallback
+                dream: 'Дом мечты ($100 000)' // Default fallback
             }],
             status: 'waiting',
             createdAt: Date.now()
@@ -39,14 +41,16 @@ export class RoomService {
         return this.sanitizeRoom(room);
     }
 
-    async joinRoom(roomId: string, playerId: string, userId: string, playerName: string, password?: string): Promise<any> {
+    async joinRoom(roomId: string, playerId: string, userId: string, playerName: string, password?: string, token?: string, dream?: string): Promise<any> {
         // 1. Try to update EXISTING player (Atomic)
         let room = await RoomModel.findOneAndUpdate(
             { _id: roomId, "players.userId": userId },
             {
                 $set: {
                     "players.$.id": playerId,
-                    "players.$.name": playerName
+                    "players.$.name": playerName,
+                    "players.$.token": token || '🦊',
+                    "players.$.dream": dream || 'Дом мечты ($100 000)'
                 }
             },
             { new: true }
@@ -84,7 +88,9 @@ export class RoomService {
                         id: playerId,
                         userId: userId,
                         name: playerName,
-                        isReady: false
+                        isReady: false,
+                        token: token || '🦊',
+                        dream: dream || 'Дом мечты ($100 000)'
                     }
                 }
             },
