@@ -567,7 +567,12 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                 {/* MOBILE VIDEO CALL (MOVED TO TOP) */}
                 <div className="lg:hidden w-full px-0 py-0 flex-1 z-0 min-h-0 order-first">
-                    <VideoCall className="w-full h-full shadow-lg rounded-none object-cover" />
+                    <VideoCall
+                        className="w-full h-full shadow-lg rounded-none object-cover"
+                        balance={me.cash}
+                        credit={me.loanDebt}
+                        turnPlayerName={currentPlayer?.name}
+                    />
                 </div>
 
                 {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}

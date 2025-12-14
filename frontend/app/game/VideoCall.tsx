@@ -1,6 +1,16 @@
 import React, { useState, useEffect } from 'react';
 
-export const VideoCall = ({ className = "" }: { className?: string }) => {
+export const VideoCall = ({
+    className = "",
+    balance,
+    credit,
+    turnPlayerName
+}: {
+    className?: string;
+    balance?: number;
+    credit?: number;
+    turnPlayerName?: string;
+}) => {
     const [isMuted, setIsMuted] = useState(false);
     const [isVideoOff, setIsVideoOff] = useState(false);
     const [stream, setStream] = useState<MediaStream | null>(null);
@@ -150,10 +160,37 @@ export const VideoCall = ({ className = "" }: { className?: string }) => {
                     </div>
                 )}
 
-                {/* Rec Indicator */}
-                <div className="absolute top-2 left-2 flex items-center space-x-1.5 px-2 py-1 bg-red-900/60 rounded-full border border-red-500/30 backdrop-blur-sm z-10">
+                {/* OVERLAY STATS (Mobile) */}
+                {(balance !== undefined || credit !== undefined) && (
+                    <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-20 pointer-events-none">
+                        {balance !== undefined && (
+                            <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-green-500/20 flex items-center gap-1">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">Cash</span>
+                                <span className="text-xs font-mono font-bold text-green-400">${balance.toLocaleString()}</span>
+                            </div>
+                        )}
+                        {credit !== undefined && credit > 0 && (
+                            <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-red-500/20 flex items-center gap-1">
+                                <span className="text-[10px] text-slate-400 font-bold uppercase">Debt</span>
+                                <span className="text-xs font-mono font-bold text-red-400">${credit.toLocaleString()}</span>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {turnPlayerName && (
+                    <div className="absolute top-2 right-2 flex items-center gap-2 z-20 pointer-events-none">
+                        <div className="bg-blue-900/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-blue-500/30 shadow-lg">
+                            <span className="text-[10px] text-blue-200 uppercase font-bold mr-1">Turn</span>
+                            <span className="text-xs font-bold text-white max-w-[100px] truncate">{turnPlayerName}</span>
+                        </div>
+                    </div>
+                )}
+
+                {/* Rec Indicator (Moved to Bottom Left) */}
+                <div className="absolute bottom-2 left-2 flex items-center space-x-1.5 px-2 py-1 bg-red-900/40 rounded-full border border-red-500/20 backdrop-blur-sm z-10 scale-90 origin-bottom-left">
                     <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                    <span className="text-[10px] text-red-200 font-mono tracking-wider font-bold">REC</span>
+                    <span className="text-[8px] text-red-200 font-mono tracking-wider font-bold">REC</span>
                 </div>
 
                 {/* Hover Controls */}

@@ -73,7 +73,10 @@ export class RoomService {
         const roomCheck = await RoomModel.findById(roomId);
         if (!roomCheck) throw new Error("Room not found");
         if (roomCheck.password && roomCheck.password !== password) throw new Error("Invalid password");
-        if (roomCheck.status !== 'waiting') throw new Error("Game already started");
+
+        // Allow rejoin if player is already in the list
+        const isAlreadyInRoom = roomCheck.players.some((p: any) => p.userId === userId);
+        if (roomCheck.status !== 'waiting' && !isAlreadyInRoom) throw new Error("Game already started");
 
         // Atomic Push with Max Players check using query
         room = await RoomModel.findOneAndUpdate(
