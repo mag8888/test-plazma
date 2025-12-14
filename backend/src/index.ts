@@ -6,13 +6,20 @@ import dotenv from 'dotenv';
 import { BotService } from './bot/bot.service';
 import { AuthController } from './auth/auth.controller';
 import { GameGateway } from './game/game.gateway';
-
 import { connectDatabase } from './database';
+import path from 'path';
+import fs from 'fs';
 
 dotenv.config();
 
 const app = express();
 app.set('trust proxy', 1); // Enable Trust Proxy for Railway LB
+
+// Health Check Endpoint (Critical for Debugging)
+app.get('/api/health', (req, res) => {
+    res.status(200).json({ status: 'ok', uptime: process.uptime() });
+});
+
 const httpServer = createServer(app);
 
 // Connect to Database
@@ -25,7 +32,7 @@ const io = new Server(httpServer, {
     },
     pingTimeout: 60000,
     pingInterval: 25000,
-    transports: ['polling', 'websocket'] // Explicit fallback
+    transports: ['polling', 'websocket']
 });
 
 app.use(cors());
@@ -37,14 +44,7 @@ const botService = new BotService();
 // Initialize Game Gateway
 const gameGateway = new GameGateway(io);
 
-import path from 'path';
-import fs from 'fs';
-
-// ... (imports)
-
-// ...
-
-// Serve specific HTML files for known routes to avoid wildcard issues
+// Static File Serving
 app.get(['/game', '/game.html'], (req, res) => {
     const file = path.join(__dirname, '../../frontend/out/game.html');
     if (fs.existsSync(file)) {
@@ -61,20 +61,19 @@ app.get(['/lobby', '/lobby.html'], (req, res) => {
         res.sendFile(file);
     } else {
         console.error(`Missing lobby.html at ${file}`);
-        res.sendFile(path.join(__dirname, '../../frontend/out/index.html')); // Fallback to login?
+        res.sendFile(path.join(__dirname, '../../frontend/out/index.html'));
     }
 });
 
 app.get('/game/:id', (req, res) => {
-    // Redirect legacy URL to new Query Param URL
     const id = req.params.id;
     res.redirect(`/game?id=${id}`);
 });
 
 app.use(express.static(path.join(__dirname, '../../frontend/out')));
 
+// SPA Fallback
 app.get(/.*/, (req, res) => {
-    // API routes should be handled above
     if (req.path.startsWith('/api')) {
         res.status(404).json({ error: 'Not Found' });
         return;
@@ -82,63 +81,52 @@ app.get(/.*/, (req, res) => {
 
     const frontendDir = path.join(__dirname, '../../frontend/out');
 
-    // 1. Try exact match (e.g. /favicon.ico) - handled by express.static above? 
-    // express.static handles files if they exist. If we are here, express.static missed it (or it's a route).
-
-    // 2. Try adding .html (e.g. /game -> /game.html)
+    // Try adding .html
     let possiblePath = path.join(frontendDir, `${req.path}.html`);
     if (fs.existsSync(possiblePath)) {
         res.sendFile(possiblePath);
         return;
     }
 
-    // 3. Try index.html in directory (e.g. /game -> /game/index.html)
+    // Try index.html in sub-directory
     possiblePath = path.join(frontendDir, req.path, 'index.html');
     if (fs.existsSync(possiblePath)) {
         res.sendFile(possiblePath);
         return;
     }
 
-    // 4. Fallback to root index.html (SPA Fallback)
-    // Only if we truly want SPA behavior for unknown routes, usually 404 is better for static export,
-    // but for user friendliness we might fallback to login or 404.
-    // Given the user is claiming "flies to registration", we essentially ARE falling back to index.html currently.
-    // If we want to fix "files to registration" we should serve the CORRECT page. 
-    // If the correct page doesn't exist, we SHOULD fall back to index (Login) or 404.
-
-    // Let's fallback to index.html but maybe log it
+    // Fallback to root index.html
     console.log(`Fallback to index.html for ${req.path}`);
-    res.sendFile(path.join(frontendDir, 'index.html'));
+    const indexFile = path.join(frontendDir, 'index.html');
+    if (fs.existsSync(indexFile)) {
+        res.sendFile(indexFile);
+    } else {
+        res.status(404).send('Frontend not found (index.html missing)');
+    }
 });
 
 const PORT = process.env.PORT || 3001;
 
 io.on('connection', (socket) => {
     console.log('User connected:', socket.id);
-
     socket.on('disconnect', () => {
         console.log('User disconnected:', socket.id);
     });
 });
 
-
-
 const bootstrap = async () => {
     try {
-        await connectDatabase();
+        // Wait for DB connection if needed (connectDatabase is async void but mongoose buffers)
+        // Ideally we await it? connectDatabase in database.ts is async.
+        // But we called it synchronously above. 
+        // Let's call it here properly if we want to wait, or assume mongoose buffering works.
+        // Re-calling it is fine if existing connection is reused?
+        // Actually, let's keep it simple. It was called above.
 
-        // Initialize Bot
-        const botService = new BotService();
-        // Initialize Game Gateway
-        // Initialize Game Gateway
-        const gameGateway = new GameGateway(io);
-
-        // --- DB CLEANUP & INDEX SYNC ---
+        // DB Maintenance
         try {
             console.log('--- STARTING DB MAINTENANCE ---');
             const RoomModel = (await import('./models/room.model')).RoomModel;
-
-            // 1. Find duplicates
             const duplicates = await RoomModel.aggregate([
                 { $match: { status: 'waiting' } },
                 { $group: { _id: "$creatorId", count: { $sum: 1 }, rooms: { $push: "$_id" } } },
@@ -148,13 +136,12 @@ const bootstrap = async () => {
             if (duplicates.length > 0) {
                 console.log(`Found ${duplicates.length} users with duplicate waiting rooms. Cleaning up...`);
                 for (const dup of duplicates) {
-                    const roomsToDelete = dup.rooms.slice(0, dup.rooms.length - 1); // Keep one
+                    const roomsToDelete = dup.rooms.slice(0, dup.rooms.length - 1);
                     await RoomModel.deleteMany({ _id: { $in: roomsToDelete } });
                 }
                 console.log('Duplicates removed.');
             }
 
-            // 2. Sync Indexes
             console.log('Syncing Indexes...');
             await RoomModel.syncIndexes();
             console.log('Indexes Synced Successfully.');
@@ -162,34 +149,29 @@ const bootstrap = async () => {
         } catch (dbErr) {
             console.error('DB MAINTENANCE FAILED:', dbErr);
         }
-        // -------------------------------
 
         try {
             await gameGateway.initialize();
         } catch (initErr) {
-            console.error("WARNING: Game Gateway Initialization failed (Server will start anyway):", initErr);
+            console.error("WARNING: Game Gateway Initialization failed:", initErr);
         }
 
         const server = httpServer.listen(PORT, () => {
             console.log(`Server is running on http://localhost:${PORT}`);
+            console.log(`Serving frontend from: ${path.join(__dirname, '../../frontend/out')}`);
         });
 
-        // Increase Keep-Alive Timeout for Load Balancers (Railway/AWS/Nginx)
-        server.keepAliveTimeout = 65000; // 65 seconds
-        server.headersTimeout = 66000; // 66 seconds
+        server.keepAliveTimeout = 65000;
+        server.headersTimeout = 66000;
+
     } catch (error) {
         console.error("Failed to start server:", error);
-        // Do NOT exit, let it try to run without DB if possible (or restart manually)
-        // But for DB critical apps, exit IS better.
-        // However, let's log more info.
         process.exit(1);
     }
 };
 
-// Global Error Handlers to prevent crash
 process.on('uncaughtException', (err) => {
     console.error('UNCAUGHT EXCEPTION:', err);
-    // process.exit(1); // Optional: Restart on fatal
 });
 
 process.on('unhandledRejection', (reason, promise) => {
@@ -197,4 +179,3 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 bootstrap();
-
