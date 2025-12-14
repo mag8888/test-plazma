@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { socket } from '../socket';
 import confetti from 'canvas-confetti';
 import { BoardVisualizer } from './BoardVisualizer';
+import { VideoCall } from './VideoCall';
 
 interface BoardProps {
     roomId: string;
@@ -567,7 +568,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
             {/* MAIN GRID */}
             {/* MAIN LAYOUT CONTAINER - FLEXBOX for Aspect Ratio Control */}
-            <div className="flex-1 w-full max-w-[1920px] mx-auto p-2 lg:p-4 flex flex-col lg:flex-row gap-2 lg:gap-4 h-[calc(100vh-80px)] lg:h-screen lg:max-h-screen overflow-hidden items-center justify-center">
+            <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-[calc(100vh-80px)] lg:h-screen lg:max-h-screen overflow-hidden items-center justify-center">
 
                 {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
                 <div className="hidden lg:flex flex-col gap-4 h-full overflow-hidden flex-1 min-w-0">
@@ -943,8 +944,15 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     )}
                 </div>
 
+                {/* MOBILE VIDEO CALL (Visible only on mobile, below board) */}
+                <div className="lg:hidden w-full px-2 py-0.5 flex-none z-0">
+                    <VideoCall className="w-full h-[150px] shadow-lg" />
+                </div>
+
                 {/* RIGHT SIDEBAR (Desktop) */}
                 <div className="hidden lg:flex flex-col flex-1 h-full border-l border-slate-800/0 p-0 relative overflow-y-auto custom-scrollbar gap-4 min-w-0">
+                    {/* DESKTOP VIDEO CALL */}
+                    <VideoCall className="w-full h-[200px] flex-shrink-0 shadow-lg" />
 
                     {/* TIMER COMPONENT */}
                     <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden">
