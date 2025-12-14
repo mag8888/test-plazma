@@ -180,7 +180,7 @@ export class BotService {
                         }
                     }
 
-                    if (referrer && referrer.id !== user.id) {
+                    if (referrer && referrer._id.toString() !== user._id.toString()) {
                         user.referredBy = referrer.username;
 
                         // Award Referrer

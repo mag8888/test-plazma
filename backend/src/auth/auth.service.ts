@@ -75,48 +75,44 @@ export class AuthService {
         }
         return null;
     }
-}
-        }
-return null;
-    }
 
     /**
      * Generates a one-time auth code for the user
      */
-    async createAuthCode(telegramId: number): Promise < string > {
-    // Generate random 8-char code
-    const code = crypto.randomBytes(4).toString('hex');
-    const expires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    async createAuthCode(telegramId: number): Promise<string> {
+        // Generate random 8-char code
+        const code = crypto.randomBytes(4).toString('hex');
+        const expires = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
 
-    await UserModel.findOneAndUpdate(
-        { telegram_id: telegramId },
-        {
-            authCode: code,
-            authCodeExpires: expires
-        }
-    );
+        await UserModel.findOneAndUpdate(
+            { telegram_id: telegramId },
+            {
+                authCode: code,
+                authCodeExpires: expires
+            }
+        );
 
-    return code;
-}
+        return code;
+    }
 
     /**
      * Verifies and consumes an auth code
      */
-    async verifyAuthCode(code: string): Promise < any > {
-    const user = await UserModel.findOne({ authCode: code });
+    async verifyAuthCode(code: string): Promise<any> {
+        const user = await UserModel.findOne({ authCode: code });
 
-    if(!user) return null;
+        if (!user) return null;
 
-    // Check expiry
-    if(user.authCodeExpires && user.authCodeExpires < new Date()) {
-    return null;
-}
+        // Check expiry
+        if (user.authCodeExpires && user.authCodeExpires < new Date()) {
+            return null;
+        }
 
-// Consume code (security)
-user.authCode = undefined;
-user.authCodeExpires = undefined;
-await user.save();
+        // Consume code (security)
+        user.authCode = undefined;
+        user.authCodeExpires = undefined;
+        await user.save();
 
-return user;
+        return user;
     }
 }

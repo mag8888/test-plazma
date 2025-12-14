@@ -69,9 +69,6 @@ router.post('/login/telegram', async (req: Request, res: Response) => {
     }
 });
 
-    }
-});
-
 router.post('/magic-login', async (req: Request, res: Response) => {
     try {
         const { code } = req.body;
