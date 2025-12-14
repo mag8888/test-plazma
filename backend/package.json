@@ -21,6 +21,7 @@
     "@types/node-telegram-bot-api": "^0.64.13",
     "@types/uuid": "^10.0.0",
     "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.8.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.3",
     "express": "^5.2.1",

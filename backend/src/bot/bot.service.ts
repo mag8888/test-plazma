@@ -92,6 +92,39 @@ export class BotService {
                 this.bot?.sendMessage(chatId, 'Чтобы стать мастером, напишите: @Arctur_888');
             }
         });
+        // Handle Photos for Cloudinary Upload
+        this.bot.on('photo', async (msg) => {
+            const chatId = msg.chat.id;
+
+            // Allow anyone or restrict? "User said bot could upload".
+            // Let's just allow it for simplicity.
+
+            if (!msg.photo || msg.photo.length === 0) return;
+
+            // Get the largest photo
+            const photo = msg.photo[msg.photo.length - 1];
+            const fileId = photo.file_id;
+
+            this.bot?.sendMessage(chatId, "⏳ Uploading to Cloudinary...");
+
+            try {
+                // Get file link
+                const fileLink = await this.bot?.getFileLink(fileId);
+                if (!fileLink) throw new Error("Could not get file link");
+
+                // Dynamic Import Service
+                const { CloudinaryService } = await import('../services/cloudinary.service');
+                const cloudinaryService = new CloudinaryService();
+
+                const url = await cloudinaryService.uploadImage(fileLink);
+
+                this.bot?.sendMessage(chatId, `✅ **Image Uploaded!**\n\n\`${url}\``, { parse_mode: 'Markdown' });
+
+            } catch (error: any) {
+                console.error("Upload failed", error);
+                this.bot?.sendMessage(chatId, `❌ Upload failed: ${error.message}`);
+            }
+        });
     }
 
     sendMainMenu(chatId: number, text: string) {
