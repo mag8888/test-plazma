@@ -1,13 +1,44 @@
 "use client";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 
 export default function Home() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    const authCode = searchParams.get('auth');
+    if (authCode) {
+      handleMagicLogin(authCode);
+    }
+  }, [searchParams]);
+
+  const handleMagicLogin = async (code: string) => {
+    setLoading(true);
+    try {
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/auth/magic-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error);
+
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      router.replace('/lobby');
+    } catch (e) {
+      console.error("Magic login failed", e);
+      setError("Auto-login failed. Please try again.");
+      setLoading(false);
+    }
+  };
 
   const getApiUrl = () => {
     let url = (process.env.NEXT_PUBLIC_API_URL || '').trim();

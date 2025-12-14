@@ -69,4 +69,34 @@ router.post('/login/telegram', async (req: Request, res: Response) => {
     }
 });
 
+    }
+});
+
+router.post('/magic-login', async (req: Request, res: Response) => {
+    try {
+        const { code } = req.body;
+        if (!code) return res.status(400).json({ error: "Missing code" });
+
+        const user = await authService.verifyAuthCode(code);
+        if (!user) {
+            return res.status(401).json({ error: "Invalid or expired code" });
+        }
+
+        return res.json({
+            token: "mock-jwt-token-for-" + user.id, // In prod use JWT
+            user: {
+                id: user.id,
+                username: user.username,
+                firstName: user.first_name,
+                lastName: user.last_name,
+                photoUrl: user.photo_url
+            }
+        });
+
+    } catch (error) {
+        console.error("Magic login error:", error);
+        return res.status(500).json({ error: "Internal Server Error" });
+    }
+});
+
 export const AuthController = router;

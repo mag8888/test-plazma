@@ -201,12 +201,38 @@ export class BotService {
         }
     }
 
-    handlePlay(chatId: number) {
-        this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас!`, {
-            reply_markup: {
-                inline_keyboard: [[{ text: '🚀 ЗАПУСТИТЬ', url: process.env.WEB_APP_URL || 'https://google.com' }]]
-            }
-        });
+    async handlePlay(chatId: number) {
+        // Find user by chatId (assuming chatId = telegramId for private chats, which is true usually)
+        // Or pass telegramId
+        // Ideally we should pass telegramId to handlePlay
+
+        // Quick fetch to get code
+        try {
+            // We need to initialize AuthService here or dependency inject it.
+            // Or simpler: Just import it dynamically like we did for UserModel
+            const { AuthService } = await import('../auth/auth.service');
+            const authService = new AuthService();
+
+            // ChatId might be same as User ID
+            const code = await authService.createAuthCode(chatId);
+
+            const link = `${process.env.WEB_APP_URL || 'https://moneo.app'}/?auth=${code}`;
+
+            this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас!`, {
+                reply_markup: {
+                    inline_keyboard: [[{ text: '🚀 ЗАПУСТИТЬ', url: link }]]
+                }
+            });
+
+        } catch (e) {
+            console.error("Error generating play link:", e);
+            // Fallback
+            this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас!`, {
+                reply_markup: {
+                    inline_keyboard: [[{ text: '🚀 ЗАПУСТИТЬ', url: process.env.WEB_APP_URL || 'https://google.com' }]]
+                }
+            });
+        }
     }
 
     handleClients(chatId: number) {

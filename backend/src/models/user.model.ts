@@ -10,6 +10,8 @@ export interface IUser extends Document {
     referralBalance: number;
     referralsCount: number;
     referredBy?: string;
+    authCode?: string;
+    authCodeExpires?: Date;
     createdAt: Date;
 }
 
@@ -23,6 +25,8 @@ const UserSchema: Schema = new Schema({
     referralBalance: { type: Number, default: 0 },
     referralsCount: { type: Number, default: 0 },
     referredBy: { type: String }, // Store referrer's username or ID
+    authCode: { type: String },
+    authCodeExpires: { type: Date }
 }, { timestamps: true });
 
 export const UserModel = mongoose.model<IUser>('User', UserSchema);
