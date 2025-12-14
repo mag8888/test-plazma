@@ -44,20 +44,58 @@ export const VideoCall = ({ className = "" }: { className?: string }) => {
         };
     }, [isVideoOff]);
 
-    // Mock transcript generation
+    // Speech Recognition
+    useEffect(() => {
+        if ('webkitSpeechRecognition' in window) {
+            const recognition = new (window as any).webkitSpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'ru-RU';
+
+            recognition.onresult = (event: any) => {
+                let interimTranscript = '';
+                let finalTranscript = '';
+
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        finalTranscript += event.results[i][0].transcript;
+                    } else {
+                        interimTranscript += event.results[i][0].transcript;
+                    }
+                }
+
+                if (finalTranscript) {
+                    setTranscript(prev => [...prev.slice(-4), `You: ${finalTranscript}`]);
+                }
+            };
+
+            recognition.onerror = (event: any) => {
+                console.error("Speech recognition error", event.error);
+            };
+
+            if (!isMuted) {
+                try {
+                    recognition.start();
+                } catch (e) {
+                    // Algorithm: handle if already started
+                }
+            }
+
+            return () => {
+                recognition.stop();
+            };
+        }
+    }, [isMuted]);
+
+    // Mock transcript generation (keep for demo if detecting nothing?)
+    // Removing Mock or keeping it as "System" updates only?
+    // Let's keep System updates but remove Fake Player Text to avoid confusion if real transcription works.
     useEffect(() => {
         const interval = setInterval(() => {
-            if (Math.random() > 0.7) {
-                const phrases = [
-                    "Игрок 1: Надо покупать эту сделку!",
-                    "Игрок 2: У меня не хватает кэша...",
-                    "Игрок 3: Кто хочет благотворительность?",
-                    "System: Market trend updated.",
-                ];
-                const msg = phrases[Math.floor(Math.random() * phrases.length)];
-                setTranscript(prev => [...prev.slice(-4), msg]); // Keep last 5 lines
+            if (Math.random() > 0.8) {
+                setTranscript(prev => [...prev.slice(-4), "System: AI analyzing context..."]);
             }
-        }, 5000);
+        }, 10000);
         return () => clearInterval(interval);
     }, []);
 

@@ -568,7 +568,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
             {/* MAIN GRID */}
             {/* MAIN LAYOUT CONTAINER - FLEXBOX for Aspect Ratio Control */}
-            <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-[calc(100vh-80px)] lg:h-screen lg:max-h-screen overflow-hidden items-center justify-center">
+            <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-[100dvh] lg:h-screen lg:max-h-screen overflow-hidden items-center justify-center">
 
                 {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
                 <div className="hidden lg:flex flex-col gap-4 h-full overflow-hidden flex-1 min-w-0">
@@ -944,169 +944,171 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     )}
                 </div>
 
-                {/* MOBILE VIDEO CALL (Visible only on mobile, below board) */}
-                <div className="lg:hidden w-full px-2 py-0.5 flex-none z-0">
-                    <VideoCall className="w-full h-[150px] shadow-lg" />
+            </div>
+
+            {/* MOBILE VIDEO CALL (Visible only on mobile, below board) */}
+            <div className="lg:hidden w-full px-0 py-0 flex-none z-0 aspect-square max-h-[50vh]">
+                <VideoCall className="w-full h-full shadow-lg rounded-none" />
+            </div>
+
+            {/* RIGHT SIDEBAR (Desktop) */}
+            <div className="hidden lg:flex flex-col flex-1 h-full border-l border-slate-800/0 p-0 relative overflow-y-auto custom-scrollbar gap-4 min-w-0">
+                {/* DESKTOP VIDEO CALL */}
+                <VideoCall className="w-full h-[200px] flex-shrink-0 shadow-lg" />
+
+                {/* TIMER COMPONENT */}
+                <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden">
+                    <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/5 rounded-full blur-xl -mr-10 -mt-10 pointer-events-none"></div>
+                    <div>
+                        <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-1">Ход игрока</div>
+                        <div className="text-lg font-bold text-white tracking-wide">{currentPlayer.name}</div>
+                    </div>
+                    <div className={`text - 4xl font - mono font - black tracking - tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
+                        {formatTime(timeLeft)}
+                    </div>
                 </div>
 
-                {/* RIGHT SIDEBAR (Desktop) */}
-                <div className="hidden lg:flex flex-col flex-1 h-full border-l border-slate-800/0 p-0 relative overflow-y-auto custom-scrollbar gap-4 min-w-0">
-                    {/* DESKTOP VIDEO CALL */}
-                    <VideoCall className="w-full h-[200px] flex-shrink-0 shadow-lg" />
+                {/* Actions Panel */}
+                <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-2xl relative group">
+                    <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
+                    <h3 className="text-slate-400 text-[10px] uppercase tracking-[0.25em] font-black mb-5 flex items-center gap-2 relative z-10">
+                        <span className="text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]">⚡</span> ДЕЙСТВИЯ
+                    </h3>
 
-                    {/* TIMER COMPONENT */}
-                    <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/5 rounded-full blur-xl -mr-10 -mt-10 pointer-events-none"></div>
-                        <div>
-                            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-1">Ход игрока</div>
-                            <div className="text-lg font-bold text-white tracking-wide">{currentPlayer.name}</div>
-                        </div>
-                        <div className={`text - 4xl font - mono font - black tracking - tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
-                            {formatTime(timeLeft)}
-                        </div>
-                    </div>
-
-                    {/* Actions Panel */}
-                    <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-2xl relative group">
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                        <h3 className="text-slate-400 text-[10px] uppercase tracking-[0.25em] font-black mb-5 flex items-center gap-2 relative z-10">
-                            <span className="text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]">⚡</span> ДЕЙСТВИЯ
-                        </h3>
-
-                        <div className="grid grid-cols-2 gap-4 mb-4 relative z-10">
-                            {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
-                                <div className="h-[100px] rounded-2xl border border-slate-700/50 bg-slate-800/40 p-2 flex flex-col gap-1 shadow-inner">
-                                    <div className="flex-1 flex gap-1">
-                                        <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
-                                            <span className="text-xl">🎲</span>
-                                            <span className="text-[8px] font-bold">1</span>
+                    <div className="grid grid-cols-2 gap-4 mb-4 relative z-10">
+                        {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+                            <div className="h-[100px] rounded-2xl border border-slate-700/50 bg-slate-800/40 p-2 flex flex-col gap-1 shadow-inner">
+                                <div className="flex-1 flex gap-1">
+                                    <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
+                                        <span className="text-xl">🎲</span>
+                                        <span className="text-[8px] font-bold">1</span>
+                                    </button>
+                                    <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
+                                        <span className="text-xl">🎲🎲</span>
+                                        <span className="text-[8px] font-bold">2</span>
+                                    </button>
+                                    {me.isFastTrack && (
+                                        <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
+                                            <span className="text-xl">🎲 x3</span>
+                                            <span className="text-[8px] font-bold">3</span>
                                         </button>
-                                        <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
-                                            <span className="text-xl">🎲🎲</span>
-                                            <span className="text-[8px] font-bold">2</span>
-                                        </button>
-                                        {me.isFastTrack && (
-                                            <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
-                                                <span className="text-xl">🎲 x3</span>
-                                                <span className="text-[8px] font-bold">3</span>
-                                            </button>
-                                        )}
-                                    </div>
-                                    <div className="text-[8px] text-center text-pink-400 font-bold uppercase tracking-wider">Charity Bonus ({me.charityTurns})</div>
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={() => handleRoll()}
-                                    disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard || hasRolled}
-                                    className={`h-24 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
-                                    ${isMyTurn && state.phase === 'ROLL' && !state.currentCard && !hasRolled
-                                            ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 border-emerald-400/50 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
-                                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
-                                        } `}
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-                                    {hasRolled ? (
-                                        <div className="flex flex-col items-center animate-in zoom-in duration-300">
-                                            <span className="text-4xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">{diceValue}</span>
-                                            <span className="text-[8px] text-emerald-200 uppercase tracking-wider font-bold">Выпало</span>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <span className={`text-3xl filter drop-shadow-xl transition-transform duration-500 ${!hasRolled && isMyTurn ? 'group-hover:rotate-[360deg]' : ''}`}>🎲</span>
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">Бросок</span>
-                                        </>
                                     )}
-                                </button>
-                            )}
+                                </div>
+                                <div className="text-[8px] text-center text-pink-400 font-bold uppercase tracking-wider">Charity Bonus ({me.charityTurns})</div>
+                            </div>
+                        ) : (
                             <button
-                                onClick={handleEndTurn}
-                                disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard && !hasRolled) || isAnimating}
+                                onClick={() => handleRoll()}
+                                disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard || hasRolled}
                                 className={`h-24 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
-                                ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard || hasRolled) && !isAnimating
-                                        ? 'bg-gradient-to-br from-blue-500 to-blue-700 border-blue-400/50 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
+                                    ${isMyTurn && state.phase === 'ROLL' && !state.currentCard && !hasRolled
+                                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 border-emerald-400/50 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
                                         : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
                                     } `}
                             >
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-                                <span className="text-3xl filter drop-shadow-xl group-hover:translate-x-1 transition-transform duration-300">➡</span>
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">Далее</span>
+                                {hasRolled ? (
+                                    <div className="flex flex-col items-center animate-in zoom-in duration-300">
+                                        <span className="text-4xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">{diceValue}</span>
+                                        <span className="text-[8px] text-emerald-200 uppercase tracking-wider font-bold">Выпало</span>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <span className={`text-3xl filter drop-shadow-xl transition-transform duration-500 ${!hasRolled && isMyTurn ? 'group-hover:rotate-[360deg]' : ''}`}>🎲</span>
+                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">Бросок</span>
+                                    </>
+                                )}
                             </button>
-                        </div>
-                        <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-700/80 hover:border-slate-500 hover:shadow-lg hover:shadow-blue-900/20 flex items-center justify-center gap-3 transition-all duration-300 group/bank active:scale-95">
-                            <span className="text-xl group-hover/bank:scale-110 group-hover/bank:rotate-12 transition-transform duration-300">🏦</span>
-                            <span className="text-[10px] text-slate-300 group-hover:text-white font-bold uppercase tracking-[0.15em]">Открыть Банк</span>
+                        )}
+                        <button
+                            onClick={handleEndTurn}
+                            disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard && !hasRolled) || isAnimating}
+                            className={`h-24 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
+                                ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard || hasRolled) && !isAnimating
+                                    ? 'bg-gradient-to-br from-blue-500 to-blue-700 border-blue-400/50 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
+                                    : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
+                                } `}
+                        >
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+                            <span className="text-3xl filter drop-shadow-xl group-hover:translate-x-1 transition-transform duration-300">➡</span>
+                            <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">Далее</span>
                         </button>
                     </div>
+                    <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-700/80 hover:border-slate-500 hover:shadow-lg hover:shadow-blue-900/20 flex items-center justify-center gap-3 transition-all duration-300 group/bank active:scale-95">
+                        <span className="text-xl group-hover/bank:scale-110 group-hover/bank:rotate-12 transition-transform duration-300">🏦</span>
+                        <span className="text-[10px] text-slate-300 group-hover:text-white font-bold uppercase tracking-[0.15em]">Открыть Банк</span>
+                    </button>
+                </div>
 
-                    {/* Players Mini List (Moved to Right) */}
-                    <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-lg flex-1 min-h-[200px] overflow-y-auto custom-scrollbar relative">
-                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2 sticky top-0 bg-[#1e293b]/95 backdrop-blur-md py-2 z-10 w-full">
-                            <span>👥</span> Игроки
-                        </h3>
-                        <div className="space-y-3 pb-2">
-                            {state.players.map((p: any) => (
-                                <div key={p.id} className={`flex items - center gap - 3 p - 3 rounded - 2xl border transition - all duration - 300 group ${p.id === currentPlayer.id ? 'bg-slate-800/90 border-blue-500/50 shadow-[0_4px_20px_rgba(59,130,246,0.15)] scale-[1.02]' : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60'} `}>
-                                    <div className="text-lg bg-slate-950 w-8 h-8 flex items-center justify-center rounded-xl border border-slate-800 shadow-inner">{p.token}</div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-bold text-slate-200 truncate">{p.name}</div>
-                                        <div className="text-[10px] text-slate-500 font-mono">${p.cash?.toLocaleString()}</div>
-                                    </div>
-                                    {p.id === currentPlayer.id && <div className="text-[8px] text-blue-400 bg-blue-900/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">Ходит</div>}
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-
-                    <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-3 flex items-center gap-2">
-                        <span>📝</span> Лог событий
+                {/* Players Mini List (Moved to Right) */}
+                <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-lg flex-1 min-h-[200px] overflow-y-auto custom-scrollbar relative">
+                    <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2 sticky top-0 bg-[#1e293b]/95 backdrop-blur-md py-2 z-10 w-full">
+                        <span>👥</span> Игроки
                     </h3>
-                    <div className="flex-1 bg-[#0f172a]/50 rounded-xl border border-slate-800/50 p-3 overflow-y-auto font-mono text-[9px] space-y-2 custom-scrollbar min-h-[150px]">
-                        {state.log?.slice().reverse().map((entry: string, i: number) => (
-                            <div key={i} className="text-slate-400 border-b border-slate-800/50 pb-2 last:border-0 leading-relaxed">
-                                <span className="text-slate-600 mr-2">#{state.log.length - i}</span>
-                                {entry}
+                    <div className="space-y-3 pb-2">
+                        {state.players.map((p: any) => (
+                            <div key={p.id} className={`flex items - center gap - 3 p - 3 rounded - 2xl border transition - all duration - 300 group ${p.id === currentPlayer.id ? 'bg-slate-800/90 border-blue-500/50 shadow-[0_4px_20px_rgba(59,130,246,0.15)] scale-[1.02]' : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60'} `}>
+                                <div className="text-lg bg-slate-950 w-8 h-8 flex items-center justify-center rounded-xl border border-slate-800 shadow-inner">{p.token}</div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="text-sm font-bold text-slate-200 truncate">{p.name}</div>
+                                    <div className="text-[10px] text-slate-500 font-mono">${p.cash?.toLocaleString()}</div>
+                                </div>
+                                {p.id === currentPlayer.id && <div className="text-[8px] text-blue-400 bg-blue-900/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">Ходит</div>}
                             </div>
                         ))}
                     </div>
+                </div>
 
-                    {/* Rules Button */}
-                    <button
-                        onClick={() => setShowRules(true)}
-                        className="mt-auto w-full py-3 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 font-bold uppercase tracking-widest text-xs hover:bg-violet-500/20 transition-all flex items-center justify-center gap-2 group"
-                    >
-                        <span className="group-hover:scale-110 transition-transform">📜</span> Правила
-                    </button>
-
-                    {/* Exit Button */}
-                    <button
-                        onClick={handleExit}
-                        className="mt-3 w-full py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold uppercase tracking-widest text-xs hover:bg-red-500/20 transition-all flex items-center justify-center gap-2 group"
-                    >
-                        <span className="group-hover:-translate-x-1 transition-transform">🚪</span> Выход
-                    </button>
-                </div >
-
-            </div>
-            {/* End Main Grid */}
-
-            {/* BABY NOTIFICATION OVERLAY */}
-            {
-                babyNotification && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-                        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-3xl shadow-2xl animate-in zoom-in-50 duration-500 flex flex-col items-center gap-4">
-                            <div className="text-6xl animate-bounce">👶</div>
-                            <div className="text-3xl font-black text-white text-center drop-shadow-lg leading-tight">
-                                {babyNotification}
-                            </div>
-                            <div className="text-white/80 text-xl font-bold bg-green-500/20 px-4 py-2 rounded-xl mt-2 border border-green-500/50">
-                                +$5,000 Подарок!
-                            </div>
+                <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-3 flex items-center gap-2">
+                    <span>📝</span> Лог событий
+                </h3>
+                <div className="flex-1 bg-[#0f172a]/50 rounded-xl border border-slate-800/50 p-3 overflow-y-auto font-mono text-[9px] space-y-2 custom-scrollbar min-h-[150px]">
+                    {state.log?.slice().reverse().map((entry: string, i: number) => (
+                        <div key={i} className="text-slate-400 border-b border-slate-800/50 pb-2 last:border-0 leading-relaxed">
+                            <span className="text-slate-600 mr-2">#{state.log.length - i}</span>
+                            {entry}
                         </div>
-                    </div>
-                )
-            }
+                    ))}
+                </div>
 
-            {/* BOTTOM NAV MOBILE */}
+                {/* Rules Button */}
+                <button
+                    onClick={() => setShowRules(true)}
+                    className="mt-auto w-full py-3 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 font-bold uppercase tracking-widest text-xs hover:bg-violet-500/20 transition-all flex items-center justify-center gap-2 group"
+                >
+                    <span className="group-hover:scale-110 transition-transform">📜</span> Правила
+                </button>
+
+                {/* Exit Button */}
+                <button
+                    onClick={handleExit}
+                    className="mt-3 w-full py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold uppercase tracking-widest text-xs hover:bg-red-500/20 transition-all flex items-center justify-center gap-2 group"
+                >
+                    <span className="group-hover:-translate-x-1 transition-transform">🚪</span> Выход
+                </button>
+            </div >
+
+        </div>
+            {/* End Main Grid */ }
+
+    {/* BABY NOTIFICATION OVERLAY */ }
+    {
+        babyNotification && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-3xl shadow-2xl animate-in zoom-in-50 duration-500 flex flex-col items-center gap-4">
+                    <div className="text-6xl animate-bounce">👶</div>
+                    <div className="text-3xl font-black text-white text-center drop-shadow-lg leading-tight">
+                        {babyNotification}
+                    </div>
+                    <div className="text-white/80 text-xl font-bold bg-green-500/20 px-4 py-2 rounded-xl mt-2 border border-green-500/50">
+                        +$5,000 Подарок!
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    {/* BOTTOM NAV MOBILE */ }
             <div className="lg:hidden bg-[#0B0E14]/90 backdrop-blur-xl border-t border-slate-800/50 p-3 pb-8 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
                 <div className="max-w-md mx-auto flex justify-between items-center gap-3">
                     <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="flex flex-col items-center gap-1 p-2 w-14 text-slate-400 hover:text-white transition-colors">
@@ -1155,17 +1157,17 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 myId={me.id}
                 onTransfer={handleTransferAsset}
             />
-            {
-                state.winner && (
-                    <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-md">
-                        <div className="text-8xl mb-8 animate-bounce">🏆</div>
-                        <h2 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 mb-6 tracking-tighter shadow-2xl">ПОБЕДА!</h2>
-                        <div className="text-3xl text-white mb-12 font-light"><span className="font-bold text-yellow-400">{state.winner}</span> Выграл!</div>
-                        <button onClick={() => window.location.reload()} className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-full text-xl shadow-lg">Играть снова</button>
-                    </div>
-                )
-            }
-            {showRules && <RulesModal onClose={() => setShowRules(false)} counts={state.deckCounts} />}
+    {
+        state.winner && (
+            <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-md">
+                <div className="text-8xl mb-8 animate-bounce">🏆</div>
+                <h2 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 mb-6 tracking-tighter shadow-2xl">ПОБЕДА!</h2>
+                <div className="text-3xl text-white mb-12 font-light"><span className="font-bold text-yellow-400">{state.winner}</span> Выграл!</div>
+                <button onClick={() => window.location.reload()} className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-full text-xl shadow-lg">Играть снова</button>
+            </div>
+        )
+    }
+    { showRules && <RulesModal onClose={() => setShowRules(false)} counts={state.deckCounts} /> }
         </div >
     );
 }

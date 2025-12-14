@@ -187,6 +187,7 @@ const bootstrap = async () => {
                     console.log(`Found ${duplicates.length} duplicate waiting rooms.`);
                     for (const dup of duplicates) {
                         const roomsToDelete = dup.rooms.slice(0, dup.rooms.length - 1);
+                        console.log(`Maintaining DB: Deleting ${roomsToDelete.length} duplicate rooms for user ${dup._id}, keeping ${dup.rooms[dup.rooms.length - 1]}`);
                         await RoomModel.deleteMany({ _id: { $in: roomsToDelete } });
                     }
                 }
