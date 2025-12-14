@@ -405,30 +405,32 @@ export class GameGateway {
             });
 
             socket.on('disconnecting', async () => {
+                // User Request: Room should NOT disappear on refresh/re-entry.
+                // We disable auto-leave on disconnect for waiting rooms.
+                // Cleanup is handled by 'createRoom' (removing old rooms) or manual 'Exit' button.
+
+                /* 
                 for (const roomId of socket.rooms) {
                     if (roomId !== socket.id) {
                         try {
-                            // Clean up WAITING rooms (remove player, delete if empty)
                             const room = await this.roomService.getRoom(roomId);
                             if (room && room.status === 'waiting') {
-                                console.log(`Client ${socket.id} left waiting room ${roomId}`);
-                                await this.roomService.leaveRoom(roomId, socket.id);
-
+                                console.log(`Client ${socket.id} disconnected from waiting room ${roomId} (Persistence Active)`);
+                                // await this.roomService.leaveRoom(roomId, socket.id);
                                 // Broadcast to remaining players in room
-                                const updatedRoom = await this.roomService.getRoom(roomId);
-                                if (updatedRoom) {
-                                    this.io.to(roomId).emit('room_state_updated', updatedRoom);
-                                }
-
-                                const rooms = await this.roomService.getRooms();
-                                this.io.emit('rooms_updated', rooms);
+                                // const updatedRoom = await this.roomService.getRoom(roomId);
+                                // if (updatedRoom) {
+                                //    this.io.to(roomId).emit('room_state_updated', updatedRoom);
+                                // }
+                                // const rooms = await this.roomService.getRooms();
+                                // this.io.emit('rooms_updated', rooms);
                             }
-                            // If playing, do NOT remove player to allow reconnection
                         } catch (e) {
                             console.error(`Disconnect error for room ${roomId}:`, e);
                         }
                     }
                 }
+                */
             });
 
             socket.on('disconnect', () => {
