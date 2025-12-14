@@ -9,8 +9,14 @@ import { GameGateway } from './game/game.gateway';
 import { connectDatabase } from './database';
 import path from 'path';
 import fs from 'fs';
+import mongoose from 'mongoose';
 
 dotenv.config();
+
+// Global type augmentation
+declare global {
+    var bot: any;
+}
 
 let dbStatus = 'pending';
 let botStatus = 'pending';
