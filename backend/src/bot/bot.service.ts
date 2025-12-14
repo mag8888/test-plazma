@@ -31,6 +31,25 @@ export class BotService {
         }
     }
 
+    async sendAdminMessage(text: string) {
+        if (!this.bot) return;
+        const adminIdsStr = process.env.ADMIN_IDS || process.env.ADMIN_ID || '';
+        const adminIds = adminIdsStr.split(',').map(id => id.trim()).filter(id => id);
+
+        if (adminIds.length === 0) {
+            console.warn("No ADMIN_IDS provided for notifications.");
+            return;
+        }
+
+        for (const id of adminIds) {
+            try {
+                await this.bot.sendMessage(id, text);
+            } catch (e) {
+                console.error(`Failed to send admin message to ${id}:`, e);
+            }
+        }
+    }
+
     initHandlers() {
         if (!this.bot) return;
 
