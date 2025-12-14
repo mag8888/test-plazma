@@ -28,6 +28,14 @@ interface Room {
     maxPlayers?: number;
 }
 
+export default function GameRoom() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Загрузка игры...</div>}>
+            <GameContent />
+        </Suspense>
+    );
+}
+
 function GameContent() {
     const searchParams = useSearchParams();
     const roomId = searchParams.get('id') as string;
@@ -355,12 +363,5 @@ function GameContent() {
     );
 }
 
-export default function GameRoom() {
-    return (
-        <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Загрузка игры...</div>}>
-            <GameContent />
-        </Suspense>
-    );
-}
 
 
