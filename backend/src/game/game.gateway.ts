@@ -135,6 +135,17 @@ export class GameGateway {
                 }
             });
 
+            // Get User's Active Rooms (Waiting or Playing)
+            socket.on('get_my_rooms', async (data, callback) => {
+                try {
+                    if (!data.userId) return callback({ success: false, error: "No userId" });
+                    const rooms = await this.roomService.getMyRooms(data.userId);
+                    callback({ success: true, rooms });
+                } catch (e: any) {
+                    callback({ success: false, error: e.message });
+                }
+            });
+
             // WebRTC Signaling
             socket.on('signal', (data) => {
                 // Forward signal to specific target

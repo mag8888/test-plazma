@@ -185,6 +185,12 @@ export class RoomService {
         return rooms.map(r => this.sanitizeRoom(r));
     }
 
+    async getMyRooms(userId: string): Promise<any[]> {
+        // Find rooms where this user is a player (Waiting or Playing)
+        const rooms = await RoomModel.find({ 'players.userId': userId }).sort({ createdAt: -1 }).lean();
+        return rooms.map(r => this.sanitizeRoom(r));
+    }
+
     async getActiveGames(): Promise<any[]> {
         const rooms = await RoomModel.find({ status: 'playing' }).lean();
         return rooms.map(r => this.sanitizeRoom(r));

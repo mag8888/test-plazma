@@ -16,12 +16,12 @@ export const VideoCall = ({
     players?: any[];
     currentUserId?: string;
 }) => {
-    const [isMuted, setIsMuted] = useState(false);
-    const [isVideoOff, setIsVideoOff] = useState(false);
+    const [isMuted, setIsMuted] = useState(true); // Default Muted (No Auto-Start)
+    const [isVideoOff, setIsVideoOff] = useState(true); // Default Video Off (No Auto-Start)
     const [stream, setStream] = useState<MediaStream | null>(null);
     const videoRef = React.useRef<HTMLVideoElement>(null);
     const [transcript, setTranscript] = useState<string[]>([
-        "System: Recording started for analysis...",
+        "System: Waiting for camera access...",
     ]);
 
     // Request Camera Access on Mount
@@ -36,9 +36,11 @@ export const VideoCall = ({
                 if (videoRef.current) {
                     videoRef.current.srcObject = localStream;
                 }
+                setIsMuted(false); // Auto-unmute when camera starts
             } catch (err) {
                 console.error("Camera access denied or failed:", err);
                 setIsVideoOff(true); // Fallback to "Off" state
+                setIsMuted(true);
             }
         };
 
@@ -264,10 +266,13 @@ export const VideoCall = ({
                         </div>
                     </div>
                 ) : (
-                    <div className="flex flex-col items-center gap-2 text-slate-500">
-                        <span className="text-3xl">🚫</span>
-                        <span className="text-xs">Camera Off</span>
-                    </div>
+                    <button
+                        onClick={toggleVideo}
+                        className="flex flex-col items-center gap-2 text-slate-500 hover:text-white transition-colors p-4 rounded-xl hover:bg-white/5"
+                    >
+                        <span className="text-3xl">📹</span>
+                        <span className="text-xs font-bold uppercase tracking-wider">Включить камеру</span>
+                    </button>
                 )}
 
                 {/* OVERLAY STATS (Mobile) */}

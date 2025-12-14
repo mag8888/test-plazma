@@ -18,6 +18,7 @@ interface Room {
 export default function Lobby() {
     const router = useRouter();
     const [rooms, setRooms] = useState<Room[]>([]);
+    const [myRooms, setMyRooms] = useState<Room[]>([]);
     const [isCreating, setIsCreating] = useState(false);
     const [newRoomName, setNewRoomName] = useState('');
     const [maxPlayers, setMaxPlayers] = useState(4);
@@ -44,12 +45,36 @@ export default function Lobby() {
                 console.log("Rooms received:", data);
                 setRooms(data);
             });
+
+            // Fetch My Rooms using either Logged In ID or Guest ID
+            const parsedUser = userStr ? JSON.parse(userStr) : null;
+            const userId = parsedUser?._id || parsedUser?.id || localStorage.getItem('guest_id');
+
+            if (userId) {
+                socket.emit('get_my_rooms', { userId }, (res: any) => {
+                    if (res.success) {
+                        setMyRooms(res.rooms);
+                    }
+                });
+            }
         };
 
         fetchRooms();
 
         socket.on('connect', fetchRooms);
-        socket.on('rooms_updated', (data: Room[]) => setRooms(data));
+        socket.on('rooms_updated', (data: Room[]) => {
+            setRooms(data);
+            // Re-fetch my rooms on update too
+            const parsedUser = userStr ? JSON.parse(userStr) : null;
+            const userId = parsedUser?._id || parsedUser?.id || localStorage.getItem('guest_id');
+            if (userId) {
+                socket.emit('get_my_rooms', { userId }, (res: any) => {
+                    if (res.success) {
+                        setMyRooms(res.rooms);
+                    }
+                });
+            }
+        });
 
         return () => {
             socket.off('connect', fetchRooms);
@@ -122,6 +147,36 @@ export default function Lobby() {
                         </button>
                     </div>
                 </header>
+
+                {myRooms.length > 0 && (
+                    <div className="mb-8 p-6 bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-2xl border border-blue-500/30">
+                        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                            <span>🔄</span> Ваши активные игры
+                        </h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {myRooms.map((room) => (
+                                <div key={room.id} className="bg-slate-800/80 p-4 rounded-xl border border-blue-500/50 shadow-lg hover:bg-slate-800 transition-colors flex justify-between items-center group">
+                                    <div>
+                                        <div className="font-bold text-lg text-blue-100 group-hover:text-white transition-colors">
+                                            {room.name}
+                                        </div>
+                                        <div className="text-xs text-blue-300 font-mono mt-1">
+                                            {room.status === 'playing' ? '🟢 Идет игра' : '🟡 Ожидание'}
+                                            <span className="mx-2">•</span>
+                                            {room.players.length}/{room.maxPlayers} игроков
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => joinRoom(room.id)}
+                                        className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition-transform hover:scale-105 active:scale-95"
+                                    >
+                                        Войти ➡
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="flex justify-between items-center mb-6">
                     <h2 className="text-2xl font-bold text-slate-300">Список комнат</h2>
