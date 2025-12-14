@@ -329,7 +329,9 @@ export class BotService {
             // ChatId might be same as User ID
             const code = await authService.createAuthCode(chatId);
 
-            const link = `${process.env.WEB_APP_URL || 'https://moneo.app'}/?auth=${code}`;
+            // Hardcoded fit to ensure working domain on Railway (Env var might be stale)
+            const webAppUrl = 'https://moneo-production-22c8.up.railway.app';
+            const link = `${webAppUrl}/?auth=${code}`;
 
             this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас!`, {
                 reply_markup: {
@@ -342,7 +344,7 @@ export class BotService {
             // Fallback
             this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас!`, {
                 reply_markup: {
-                    inline_keyboard: [[{ text: '🚀 ЗАПУСТИТЬ', url: process.env.WEB_APP_URL || 'https://google.com' }]]
+                    inline_keyboard: [[{ text: '🚀 ЗАПУСТИТЬ', url: 'https://moneo-production-22c8.up.railway.app' }]]
                 }
             });
         }
