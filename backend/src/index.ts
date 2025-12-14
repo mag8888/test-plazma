@@ -20,12 +20,14 @@ app.set('trust proxy', 1); // Enable Trust Proxy for Railway LB
 
 // Health Check Endpoint (Critical for Debugging)
 app.get('/api/health', (req, res) => {
-    res.status(200).json({
+    const health = {
         status: 'ok',
         uptime: process.uptime(),
-        db: dbStatus,
-        bot: botStatus
-    });
+        db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
+        bot: global.bot ? 'active' : 'inactive',
+        version: '1.1.0-strict-rooms' // Tracer
+    };
+    res.status(200).json(health);
 });
 
 const httpServer = createServer(app);
