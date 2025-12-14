@@ -245,8 +245,8 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                             const angleOffset = 90;
                             const angleDeg = (posIndex * (360 / totalSteps)) + angleOffset;
                             const angleRad = angleDeg * (Math.PI / 180);
-                            const radius = 42; // Match Board Radius
-                            const offsetRadius = 42; // Match Board Radius exactly so tokens sit ON squares
+                            const radius = 31.92; // 42 * 0.76 (Inner Track is inset 12%, so 76% size)
+                            const offsetRadius = 31.92; // Match aligned radius
 
                             const x = 50 + offsetRadius * Math.cos(angleRad);
                             const y = 50 + offsetRadius * Math.sin(angleRad);
