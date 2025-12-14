@@ -67,6 +67,14 @@ export class BotService {
 
             if (!text) return;
 
+            if (text === '/admin') {
+                const adminId = process.env.TELEGRAM_ADMIN_ID;
+                if (adminId && chatId.toString() === adminId) {
+                    this.bot?.sendMessage(chatId, "👑 Admin Panel (Coming Soon)\n- Stats\n- Broadcast");
+                }
+                return;
+            }
+
             if (text === '💸 Заработать') {
                 await this.handleEarn(chatId, msg.from?.id);
             } else if (text === '🎲 Играть') {
@@ -89,7 +97,7 @@ export class BotService {
             if (data === 'apply_earn') {
                 this.bot?.sendMessage(chatId, 'Отлично! Напишите менеджеру: @Arctur_888');
             } else if (data === 'become_master') {
-                this.bot?.sendMessage(chatId, 'Чтобы стать мастером, напишите: @Arctur_888');
+                this.bot?.sendMessage(chatId, 'Чтобы стать мастером, напишите: @Aurelia_8888');
             }
         });
         // Handle Photos for Cloudinary Upload
