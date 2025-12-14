@@ -48,4 +48,4 @@ const RoomSchema: Schema = new Schema({
 RoomSchema.index({ creatorId: 1 }, { unique: true, partialFilterExpression: { status: 'waiting' } });
 
 // Virtual to populate ID properly if needed, but _id is standard
-export const RoomModel = mongoose.model<IRoom>('Room', RoomSchema);
+export const RoomModel = mongoose.models.Room || mongoose.model<IRoom>('Room', RoomSchema);

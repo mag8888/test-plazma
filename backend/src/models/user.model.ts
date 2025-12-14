@@ -29,4 +29,4 @@ const UserSchema: Schema = new Schema({
     authCodeExpires: { type: Date }
 }, { timestamps: true });
 
-export const UserModel = mongoose.model<IUser>('User', UserSchema);
+export const UserModel = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
