@@ -205,11 +205,11 @@ export class RoomService {
         const roomCheck = await RoomModel.findById(roomId).lean();
         if (!roomCheck) throw new Error("Room not found");
 
-        let player = roomCheck.players.find((p: IPlayer) => p.id === playerId);
+        let player = (roomCheck as any).players.find((p: IPlayer) => p.id === playerId);
 
         // JIT Reconnect: If not found by socket ID, try User ID
         if (!player && userId) {
-            player = roomCheck.players.find((p: IPlayer) => p.userId === userId);
+            player = (roomCheck as any).players.find((p: IPlayer) => p.userId === userId);
             // If found by User ID, we must update the Socket ID atomically first or during the main update
             // We can handle it in the main update query query filter.
         }
@@ -223,7 +223,7 @@ export class RoomService {
 
         // Validate Token Uniqueness
         if (token) {
-            const tokenTaken = roomCheck.players.some((p: IPlayer) => p.token === token && p.userId !== player!.userId);
+            const tokenTaken = (roomCheck as any).players.some((p: IPlayer) => p.token === token && p.userId !== player!.userId);
             if (tokenTaken) {
                 console.error(`Token ${token} taken by another player in room ${roomId}`);
                 throw new Error("Эта фишка уже занята другим игроком");
@@ -266,7 +266,7 @@ export class RoomService {
                 new: true,
                 arrayFilters: arrayFilters
             }
-        ).lean();
+        ).lean() as any;
 
         if (!updatedRoom) {
             console.error('RoomService.setPlayerReady FAILED to find document or update.');
