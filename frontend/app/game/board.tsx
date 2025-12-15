@@ -134,6 +134,9 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     };
 
     const handleBuy = () => {
+        if (state.currentCard?.outcomeDescription) {
+            alert(state.currentCard.outcomeDescription);
+        }
         socket.emit('buy_asset', { roomId });
     };
 

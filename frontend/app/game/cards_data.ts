@@ -20,6 +20,7 @@ export interface Card {
     subtype?: 'MLM_ROLL' | 'CHARITY_ROLL';
     assetType?: 'REAL_ESTATE' | 'BUSINESS' | 'STOCK' | 'OTHER';
     maxQuantity?: number;
+    outcomeDescription?: string; // Revealed after purchase
 }
 
 // Helper to expand counts
@@ -101,9 +102,12 @@ export const SMALL_DEALS: Card[] = [
     ...expand(3, { title: 'Сетевой бизнес', cost: 500, cashflow: 100, description: 'Старт в MLM компании.', businessType: 'NETWORK' }, 'DEAL_SMALL'),
     ...expand(3, { title: 'Сетевой бизнес: Plazma Water', cost: 200, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' }, 'DEAL_SMALL'),
     ...expand(3, { title: 'Сетевой бизнес: MONEO', cost: 100, cashflow: 0, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($50/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' }, 'DEAL_SMALL'),
-    { id: 'sd_friend_loss', title: 'Друг просит в займ (Неудачно)', cost: 5000, cashflow: 0, description: 'Слезы и обещания. Деньги пропали.', mandatory: true, type: 'DEAL_SMALL' },
-    { id: 'sd_friend_biz', title: 'Друг просит в займ (Бизнес)', cost: 5000, cashflow: 500, description: 'Друг раскрутился! Возвращает долей в бизнесе.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
-    { id: 'sd_friend_luck', title: 'Друг просит в займ (Удача)', cost: 5000, cashflow: 0, description: 'В благодарность друг научил вас мудрости. 2 кубика на 3 хода.', mandatory: true, type: 'DEAL_SMALL', subtype: 'CHARITY_ROLL' },
+
+    // FRIEND CARDS (Hidden Outcomes)
+    { id: 'sd_friend_loss', title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Увы, друг прогорел. Деньги потеряны!', mandatory: true, type: 'DEAL_SMALL' },
+    { id: 'sd_friend_biz', title: 'Друг просит в займ', cost: 5000, cashflow: 500, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Ура! Друг раскрутился! Вы получаете долю в бизнесе.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { id: 'sd_friend_luck', title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Друг вернул долг уроком мудрости! +2 кубика на 3 хода.', mandatory: true, type: 'DEAL_SMALL', subtype: 'CHARITY_ROLL' },
+
     ...expand(2, { title: 'Крыша протекла', cost: 5000, cashflow: 0, description: 'Обновить крышу. Платите $5000 ЕСЛИ есть недвижимость.', mandatory: true }, 'DEAL_SMALL'),
     ...expand(3, { title: 'Прорыв канализации', cost: 2000, cashflow: 0, description: 'Починить канализацию. Платите $2000 ЕСЛИ есть недвижимость.', mandatory: true }, 'DEAL_SMALL'),
 ];
