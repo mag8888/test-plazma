@@ -360,7 +360,17 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 showMobileMenu && (
                     <div className="lg:hidden absolute inset-0 z-[60] bg-[#0f172a]/95 backdrop-blur-xl p-4 flex flex-col gap-4 overflow-y-auto animate-in slide-in-from-left duration-300">
                         {/* Profile Section */}
-                        <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
+                        <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg relative">
+                            {/* CLOSE BUTTON */}
+                            <button
+                                onClick={() => setShowMobileMenu(false)}
+                                className="absolute top-4 right-4 p-2 -mr-2 -mt-2 text-slate-500 hover:text-white transition-colors disabled:opacity-50"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+
                             <div className="flex items-center gap-4 mb-4">
                                 <span className="text-4xl">👷</span>
                                 <div>
