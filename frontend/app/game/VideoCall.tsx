@@ -129,7 +129,13 @@ export const VideoCall = ({
 
     const createPeer = (targetId: string, initiator: boolean) => {
         const peer = new RTCPeerConnection({
-            iceServers: [{ urls: 'stun:stun.l.google.com:19302' }]
+            iceServers: [
+                { urls: 'stun:stun.l.google.com:19302' },
+                { urls: 'stun:stun1.l.google.com:19302' },
+                { urls: 'stun:stun2.l.google.com:19302' },
+                { urls: 'stun:stun3.l.google.com:19302' },
+                { urls: 'stun:stun4.l.google.com:19302' },
+            ]
         });
 
         if (stream) {
@@ -143,7 +149,20 @@ export const VideoCall = ({
         };
 
         peer.ontrack = (event) => {
+            console.log("Received remote stream from", targetId);
             setRemoteStreams(prev => new Map(prev).set(targetId, event.streams[0]));
+        };
+
+        peer.oniceconnectionstatechange = () => {
+            console.log(`ICE State (${targetId}):`, peer.iceConnectionState);
+            if (peer.iceConnectionState === 'disconnected' || peer.iceConnectionState === 'failed') {
+                setRemoteStreams(prev => {
+                    const newMap = new Map(prev);
+                    newMap.delete(targetId);
+                    return newMap;
+                });
+                peersRef.current.delete(targetId);
+            }
         };
 
         if (initiator) {
@@ -173,21 +192,24 @@ export const VideoCall = ({
     }, [stream, isVideoOff]);
 
 
-    const remoteStream = remoteStreams.values().next().value;
-    const hasRemote = !!remoteStream;
+    const hasRemote = remoteStreams.size > 0;
 
     return (
         <div className={`flex flex-col bg-black border border-slate-700 rounded-xl overflow-hidden backdrop-blur-md relative ${className}`}>
             {/* MAIN AREA */}
-            <div className="absolute inset-0 z-0 bg-slate-900">
+            <div className="absolute inset-0 z-0 bg-slate-900 flex flex-wrap content-center justify-center">
                 {hasRemote ? (
-                    // Remote Video
-                    <video
-                        autoPlay
-                        playsInline
-                        ref={el => { if (el) el.srcObject = remoteStream; }}
-                        className="w-full h-full object-cover"
-                    />
+                    Array.from(remoteStreams.entries()).map(([pid, s], i) => (
+                        <div key={pid} className={`relative overflow-hidden ${remoteStreams.size === 1 ? 'w-full h-full' : 'w-1/2 h-1/2'} border border-slate-800`}>
+                            <video
+                                autoPlay
+                                playsInline
+                                ref={el => { if (el) el.srcObject = s; }}
+                                className="w-full h-full object-cover"
+                            />
+                            {/* Optional: Label for Remote User? We'd need to map PID to Name */}
+                        </div>
+                    ))
                 ) : (
                     // Local Video Main View (if no remote)
                     !isVideoOff ? (
@@ -207,6 +229,11 @@ export const VideoCall = ({
                             <div className="mt-4 text-xs font-bold text-slate-500 uppercase tracking-widest">
                                 {isMuted ? 'Микрофон выключен' : 'Вас слышно'}
                             </div>
+                            {players && players.length > 1 && (
+                                <div className="mt-8 text-[10px] text-slate-600 animate-pulse">
+                                    Ожидание видео...
+                                </div>
+                            )}
                         </div>
                     )
                 )}
@@ -247,8 +274,8 @@ export const VideoCall = ({
                 <button
                     onClick={toggleAudio}
                     className={`p-3 rounded-full backdrop-blur-md border shadow-lg active:scale-95 transition-all ${isMuted
-                            ? 'bg-red-500/90 border-red-400 text-white hover:bg-red-600'
-                            : 'bg-slate-900/60 border-slate-600 text-slate-200 hover:bg-slate-800 hover:text-white'
+                        ? 'bg-red-500/90 border-red-400 text-white hover:bg-red-600'
+                        : 'bg-slate-900/60 border-slate-600 text-slate-200 hover:bg-slate-800 hover:text-white'
                         }`}
                 >
                     {isMuted ? '🔇' : '🎤'}
@@ -258,8 +285,8 @@ export const VideoCall = ({
                 <button
                     onClick={toggleVideo}
                     className={`p-3 rounded-full backdrop-blur-md border shadow-lg active:scale-95 transition-all ${isVideoOff
-                            ? 'bg-red-500/90 border-red-400 text-white hover:bg-red-600'
-                            : 'bg-slate-900/60 border-slate-600 text-slate-200 hover:bg-slate-800 hover:text-white'
+                        ? 'bg-red-500/90 border-red-400 text-white hover:bg-red-600'
+                        : 'bg-slate-900/60 border-slate-600 text-slate-200 hover:bg-slate-800 hover:text-white'
                         }`}
                 >
                     {isVideoOff ? '🚫' : '📹'}
