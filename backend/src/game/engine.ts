@@ -820,6 +820,11 @@ export class GameEngine {
             return;
         }
 
+        if (player.isFastTrack) {
+            this.state.log.push(`${player.name} cannot take loans on Fast Track!`);
+            return;
+        }
+
         // Interest 10%
         const interest = amount * 0.1;
 

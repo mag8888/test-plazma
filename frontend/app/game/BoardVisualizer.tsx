@@ -30,13 +30,14 @@ const getSticker = (type: string, name: string) => {
 
 const getGradient = (type: string, isFT: boolean) => {
     if (isFT) {
-        if (type === 'CASHFLOW' || type === 'PAYDAY') return 'bg-gradient-to-br from-emerald-900 to-emerald-950 border-emerald-600/50 shadow-[0_0_15px_rgba(16,185,129,0.3)]';
-        if (type === 'BUSINESS') return 'bg-gradient-to-br from-blue-900 to-blue-950 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]';
-        if (type === 'DREAM') return 'bg-gradient-to-br from-fuchsia-900 to-purple-950 border-fuchsia-500/50 shadow-[0_0_15px_rgba(217,70,239,0.3)]';
-        if (type === 'LOSS') return 'bg-gradient-to-br from-red-900 to-red-950 border-red-500/50 shadow-[0_0_15px_rgba(239,68,68,0.3)]';
-        if (type === 'STOCK_EXCHANGE') return 'bg-gradient-to-br from-indigo-900 to-indigo-950 border-indigo-500/50 shadow-[0_0_15px_rgba(99,102,241,0.3)]';
-        if (type === 'LOTTERY') return 'bg-gradient-to-br from-yellow-700 to-amber-900 border-yellow-500/50 shadow-[0_0_15px_rgba(234,179,8,0.3)]';
-        return 'bg-gradient-to-br from-slate-900 to-slate-950 border-amber-900/30';
+        // FAST TRACK THEME: GOLD / PLATINUM / VIBRANT
+        if (type === 'CASHFLOW' || type === 'PAYDAY') return 'bg-gradient-to-br from-yellow-800 to-amber-950 border-yellow-500/60 shadow-[0_0_20px_rgba(234,179,8,0.4)]';
+        if (type === 'BUSINESS') return 'bg-gradient-to-br from-emerald-800 to-green-950 border-emerald-500/60 shadow-[0_0_20px_rgba(16,185,129,0.4)]';
+        if (type === 'DREAM') return 'bg-gradient-to-br from-fuchsia-800 to-purple-950 border-fuchsia-500/60 shadow-[0_0_20px_rgba(217,70,239,0.4)]';
+        if (type === 'LOSS') return 'bg-gradient-to-br from-red-800 to-rose-950 border-red-500/60 shadow-[0_0_20px_rgba(244,63,94,0.4)]';
+        if (type === 'STOCK_EXCHANGE') return 'bg-gradient-to-br from-indigo-800 to-blue-950 border-indigo-500/60 shadow-[0_0_20px_rgba(99,102,241,0.4)]';
+        if (type === 'LOTTERY') return 'bg-gradient-to-br from-orange-700 to-amber-900 border-orange-500/60 shadow-[0_0_20px_rgba(245,158,11,0.4)]';
+        return 'bg-gradient-to-br from-slate-900 to-slate-950 border-amber-500/30';
     }
     // RAT RACE COLORS
     if (type === 'PAYDAY') return 'bg-gradient-to-br from-yellow-600/20 to-yellow-900/80 border-yellow-500/50'; // Yellow

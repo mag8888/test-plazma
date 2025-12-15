@@ -169,12 +169,20 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                             <button onClick={handleRepayLoan} className="bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-900/20 active:scale-95 flex items-center justify-center gap-2">
                                 Погасить
                             </button>
-                            <button onClick={handleTakeLoan} className="bg-red-600 hover:bg-red-500 text-white py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-red-900/20">
-                                Взять
-                            </button>
+                            {/* Disabled for Fast Track */}
+                            {player.isFastTrack ? (
+                                <button disabled className="bg-slate-700/50 text-slate-500 py-2 rounded-lg font-bold text-sm transition-colors cursor-not-allowed border border-slate-700">
+                                    Кредит недоступен
+                                </button>
+                            ) : (
+                                <button onClick={handleTakeLoan} className="bg-red-600 hover:bg-red-500 text-white py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-red-900/20">
+                                    Взять
+                                </button>
+                            )}
                         </div>
                         {amount > 0 && amount % 1000 !== 0 && <div className="text-red-500 text-xs mt-2 text-center">Сумма должна быть кратна $1,000</div>}
-                        {amount > availableLoan && <div className="text-red-500 text-xs mt-2 text-center">Превышен лимит по денежному потоку</div>}
+                        {amount > availableLoan && !player.isFastTrack && <div className="text-red-500 text-xs mt-2 text-center">Превышен лимит по денежному потоку</div>}
+                        {player.isFastTrack && <div className="text-yellow-500/80 text-[10px] mt-2 text-center bg-yellow-500/10 p-2 rounded border border-yellow-500/20">Банковские кредиты недоступны на Скоростной Дорожке</div>}
                     </div>
                 </div>
 
