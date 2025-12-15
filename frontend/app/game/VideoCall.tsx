@@ -234,118 +234,110 @@ export const VideoCall = ({
         return peer;
     };
 
+    // Determine Main and Pip Streams
+    const remoteStream = remoteStreams.values().next().value;
+    const hasRemote = !!remoteStream;
+
     return (
-        <div className={`flex flex-col bg-slate-900/80 border border-slate-700 rounded-xl overflow-hidden backdrop-blur-md ${className}`}>
-            {/* Video Area */}
-            <div className="flex-1 min-h-[120px] bg-slate-950 relative flex items-center justify-center group overflow-hidden">
-                {/* SELF VIDEO */}
-                {!isVideoOff ? (
-                    <div className="w-full h-full relative">
+        <div className={`flex flex-col bg-black border border-slate-700 rounded-xl overflow-hidden backdrop-blur-md relative ${className}`}>
+            {/* MAIN VIDEO AREA (Fills container) */}
+            <div className="absolute inset-0 z-0">
+                {hasRemote ? (
+                    <video
+                        autoPlay
+                        playsInline
+                        ref={el => { if (el) el.srcObject = remoteStream; }}
+                        className="w-full h-full object-cover"
+                    />
+                ) : (
+                    !isVideoOff ? (
                         <video
                             ref={videoRef}
                             autoPlay
                             muted
                             playsInline
-                            className="w-full h-full object-cover transform scale-x-[-1]"
+                            className="w-full h-full object-cover transform scale-x-[-1] opacity-50 grayscale hover:grayscale-0 transition-all duration-1000"
                         />
-                        {/* REMOTE VIDEOS OVERLAY (Small PIPs) */}
-                        <div className="absolute bottom-20 right-2 flex flex-col gap-2 z-30">
-                            {Array.from(remoteStreams.entries()).map(([id, stream]) => (
-                                <div key={id} className="w-20 h-20 bg-black rounded-lg border border-slate-600 overflow-hidden shadow-lg relative">
-                                    <video
-                                        autoPlay
-                                        playsInline
-                                        ref={el => { if (el) el.srcObject = stream; }}
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <div className="absolute bottom-0 right-0 bg-black/60 text-[8px] text-white px-1">
-                                        {players?.find(p => p.id === id)?.name || 'User'}
-                                    </div>
-                                </div>
-                            ))}
+                    ) : (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900/80">
+                            <button
+                                onClick={toggleVideo}
+                                className="flex flex-col items-center gap-2 text-slate-500 hover:text-white transition-colors p-4 rounded-xl hover:bg-white/5 animate-pulse"
+                            >
+                                <span className="text-4xl shadow-lg shadow-white/10 rounded-full p-4 bg-white/5">📹</span>
+                                <span className="text-xs font-bold uppercase tracking-wider mt-2">Включить камеру</span>
+                            </button>
                         </div>
-                    </div>
-                ) : (
-                    <button
-                        onClick={toggleVideo}
-                        className="flex flex-col items-center gap-2 text-slate-500 hover:text-white transition-colors p-4 rounded-xl hover:bg-white/5"
-                    >
-                        <span className="text-3xl">📹</span>
-                        <span className="text-xs font-bold uppercase tracking-wider">Включить камеру</span>
-                    </button>
+                    )
                 )}
-
-                {/* OVERLAY STATS (Mobile) */}
-                {(balance !== undefined || credit !== undefined) && (
-                    <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-20 pointer-events-none">
-                        {balance !== undefined && (
-                            <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-green-500/20 flex items-center gap-1">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase">Cash</span>
-                                <span className="text-xs font-mono font-bold text-green-400">${balance.toLocaleString()}</span>
-                            </div>
-                        )}
-                        {credit !== undefined && credit > 0 && (
-                            <div className="bg-black/40 backdrop-blur-md px-2 py-1 rounded-lg border border-red-500/20 flex items-center gap-1">
-                                <span className="text-[10px] text-slate-400 font-bold uppercase">Debt</span>
-                                <span className="text-xs font-mono font-bold text-red-400">${credit.toLocaleString()}</span>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {turnPlayerName && (
-                    <div className="absolute top-2 right-2 flex items-center gap-2 z-20 pointer-events-none">
-                        <div className="bg-blue-900/60 backdrop-blur-md px-3 py-1.5 rounded-xl border border-blue-500/30 shadow-lg">
-                            <span className="text-[10px] text-blue-200 uppercase font-bold mr-1">Turn</span>
-                            <span className="text-xs font-bold text-white max-w-[100px] truncate">{turnPlayerName}</span>
-                        </div>
-                    </div>
-                )}
-
-                {/* Rec Indicator (Moved to Bottom Left) */}
-                <div className="absolute bottom-2 left-2 flex items-center space-x-1.5 px-2 py-1 bg-red-900/40 rounded-full border border-red-500/20 backdrop-blur-sm z-10 scale-90 origin-bottom-left">
-                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
-                    <span className="text-[8px] text-red-200 font-mono tracking-wider font-bold">REC</span>
-                </div>
-
-                {/* Hover Controls */}
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20 translate-y-2 group-hover:translate-y-0">
-                    <button
-                        onClick={() => setIsMuted(!isMuted)}
-                        className={`p-2.5 rounded-full backdrop-blur-md border ${isMuted ? 'bg-red-500/80 border-red-400 text-white' : 'bg-slate-800/80 border-slate-600 text-slate-200 hover:bg-slate-700'} transition-all`}
-                        title={isMuted ? "Unmute" : "Mute"}
-                    >
-                        {isMuted ? '🔇' : '🎤'}
-                    </button>
-                    <button
-                        onClick={toggleVideo}
-                        className={`p-2.5 rounded-full backdrop-blur-md border ${isVideoOff ? 'bg-red-500/80 border-red-400 text-white' : 'bg-slate-800/80 border-slate-600 text-slate-200 hover:bg-slate-700'} transition-all`}
-                        title={isVideoOff ? "Turn Camera On" : "Turn Camera Off"}
-                    >
-                        {isVideoOff ? '🚫' : '📹'}
-                    </button>
-                </div>
             </div>
 
-            <div className="h-[80px] border-t border-slate-800 bg-slate-900/50 p-2 overflow-y-auto custom-scrollbar">
-                <div className="flex items-center justify-between mb-1">
-                    <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Live Transcript</span>
-                    <span className={`text-[8px] px-1.5 py-0.5 rounded border transition-colors ${isListening
-                        ? 'text-emerald-400 bg-emerald-900/20 border-emerald-500/20 animate-pulse'
-                        : 'text-slate-500 bg-slate-800/20 border-slate-700/50'
-                        }`}>
-                        {isListening ? '⬤ Listening' : '○ Paused'}
-                    </span>
+            {/* PIP (Local Video) - Only if we have a remote stream and local camera is on */}
+            {hasRemote && !isVideoOff && (
+                <div className="absolute bottom-4 right-4 w-24 h-32 bg-black rounded-lg border border-slate-600 shadow-2xl overflow-hidden z-30 group/pip">
+                    <video
+                        ref={videoRef}
+                        autoPlay
+                        muted
+                        playsInline
+                        className="w-full h-full object-cover transform scale-x-[-1]"
+                    />
+                    <div className="absolute bottom-0 right-0 bg-black/60 text-[8px] text-white px-1">You</div>
                 </div>
-                <div className="space-y-1">
-                    {transcript.map((line, i) => (
-                        <p key={i} className="text-[10px] text-slate-300 leading-tight font-mono">
-                            <span className="opacity-50 mr-1">{new Date().toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</span>
-                            {line}
-                        </p>
-                    ))}
-                </div>
+            )}
+
+
+            {/* OVERLAYS (Z-INDEX 20) */}
+
+            {/* 1. Rec Indicator */}
+            <div className="absolute bottom-4 left-4 flex items-center space-x-1.5 px-2 py-1 bg-red-900/40 rounded-full border border-red-500/20 backdrop-blur-sm z-20 scale-90">
+                <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse"></div>
+                <span className="text-[8px] text-red-200 font-mono tracking-wider font-bold">REC</span>
             </div>
+
+            {/* 2. Controls (Hover/Always visible?) */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex space-x-3 z-30">
+                <button
+                    onClick={() => setIsMuted(!isMuted)}
+                    className={`p-3 rounded-full backdrop-blur-md border shadow-lg active:scale-95 transition-all ${isMuted ? 'bg-red-500/90 border-red-400 text-white' : 'bg-slate-900/60 border-slate-600 text-slate-200 hover:bg-slate-800'}`}
+                >
+                    {isMuted ? '🔇' : '🎤'}
+                </button>
+                <button
+                    onClick={toggleVideo}
+                    className={`p-3 rounded-full backdrop-blur-md border shadow-lg active:scale-95 transition-all ${isVideoOff ? 'bg-red-500/90 border-red-400 text-white' : 'bg-slate-900/60 border-slate-600 text-slate-200 hover:bg-slate-800'}`}
+                >
+                    {isVideoOff ? '🚫' : '📹'}
+                </button>
+            </div>
+
+            {/* 3. Game Stats (Top Left) */}
+            {(balance !== undefined || credit !== undefined) && (
+                <div className="absolute top-2 left-2 flex flex-col items-start gap-1 z-20 pointer-events-none">
+                    {balance !== undefined && (
+                        <div className="bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg border border-green-500/30 flex items-center gap-1 shadow-lg">
+                            <span className="text-[10px] text-slate-300 font-bold uppercase">Cash</span>
+                            <span className="text-xs font-mono font-bold text-green-400">${balance.toLocaleString()}</span>
+                        </div>
+                    )}
+                    {credit !== undefined && credit > 0 && (
+                        <div className="bg-black/60 backdrop-blur-md px-2 py-1 rounded-lg border border-red-500/30 flex items-center gap-1 shadow-lg">
+                            <span className="text-[10px] text-slate-300 font-bold uppercase">Debt</span>
+                            <span className="text-xs font-mono font-bold text-red-400">${credit.toLocaleString()}</span>
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* 4. Turn Indicator (Top Right) */}
+            {turnPlayerName && (
+                <div className="absolute top-2 right-2 flex items-center gap-2 z-20 pointer-events-none">
+                    <div className="bg-blue-900/80 backdrop-blur-md px-3 py-1.5 rounded-xl border border-blue-500/50 shadow-xl">
+                        <span className="text-[10px] text-blue-200 uppercase font-bold mr-1">Turn</span>
+                        <span className="text-xs font-bold text-white max-w-[100px] truncate">{turnPlayerName}</span>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
