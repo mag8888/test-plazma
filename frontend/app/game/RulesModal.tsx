@@ -79,7 +79,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
                             <ul className="list-disc pl-5 space-y-1">
                                 <li><strong className="text-green-400">Сделка (Deal):</strong> Возможность купить актив (Бизнес, Недвижимость, Акции). Малые сделки дешевле, Крупные — дороже, но доходнее.</li>
                                 <li><strong className="text-blue-400">Рынок (Market):</strong> Возможность продать активы.</li>
-                                <li><strong className="text-red-400">Всячина (Doodad):</strong> Обязательные траты.</li>
+                                <li><strong className="text-red-400">Расходы (Doodad):</strong> Обязательные траты.</li>
                                 <li><strong className="text-pink-400">Ребенок:</strong> Увеличивает ваши расходы на содержание семьи.</li>
                             </ul>
                         </section>
@@ -173,7 +173,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
                             onClick={() => setActiveTab('EXPENSE')}
                             className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'EXPENSE' ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                         >
-                            <span>Всячина</span>
+                            <span>Расходы</span>
                             {counts && <span className="text-[9px] opacity-70">{counts.expense.remaining}/{counts.expense.total}</span>}
                         </button>
                     </div>
