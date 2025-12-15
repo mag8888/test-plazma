@@ -105,6 +105,7 @@ export class GameGateway {
                         data.dream
                     );
                     socket.join(room.id);
+                    if (userId) socket.join(userId);
                     const rooms = await this.roomService.getRooms();
                     this.io.emit('rooms_updated', rooms); // Broadcast update
                     callback({ success: true, room });
@@ -130,6 +131,7 @@ export class GameGateway {
                         data.dream
                     );
                     socket.join(room.id);
+                    if (userId) socket.join(userId);
                     // Broadcast update to Lobby so player counts update in real-time
                     this.io.emit('rooms_updated', await this.roomService.getRooms());
 
