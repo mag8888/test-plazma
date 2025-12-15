@@ -20,9 +20,8 @@ export const VideoCall = ({
     const [isVideoOff, setIsVideoOff] = useState(true); // Default Video Off (No Auto-Start)
     const [stream, setStream] = useState<MediaStream | null>(null);
     const videoRef = React.useRef<HTMLVideoElement>(null);
-    const [transcript, setTranscript] = useState<string[]>([
-        "System: Waiting for camera access...",
-    ]);
+    // Transcript state removed since feature is disabled
+    // const [transcript, setTranscript] = useState<string[]>([]);
 
     // Request Camera Access on Mount
     useEffect(() => {
@@ -61,83 +60,17 @@ export const VideoCall = ({
         };
     }, [isVideoOff]);
 
-    // Speech Recognition
+    // Speech Recognition REMOVED to prevent conflicts
+    /*
     const [isListening, setIsListening] = useState(false);
+    useEffect(() => { ... });
+    */
 
+    /*
     useEffect(() => {
-        let recognition: any = null;
-
-        if ('webkitSpeechRecognition' in window) {
-            recognition = new (window as any).webkitSpeechRecognition();
-            recognition.continuous = true;
-            recognition.interimResults = true;
-            recognition.lang = 'ru-RU';
-
-            recognition.onstart = () => {
-                setIsListening(true);
-            };
-
-            recognition.onend = () => {
-                setIsListening(false);
-                // Auto-restart if not muted (and simplistic keep-alive)
-                if (!isMuted) {
-                    setTimeout(() => {
-                        try {
-                            recognition.start();
-                        } catch (e) {
-                            // ignore already started
-                        }
-                    }, 1000);
-                }
-            };
-
-            recognition.onresult = (event: any) => {
-                let finalTranscript = '';
-
-                for (let i = event.resultIndex; i < event.results.length; ++i) {
-                    if (event.results[i].isFinal) {
-                        finalTranscript += event.results[i][0].transcript;
-                    }
-                }
-
-                if (finalTranscript) {
-                    setTranscript(prev => [...prev.slice(-4), `You: ${finalTranscript}`]);
-                }
-            };
-
-            recognition.onerror = (event: any) => {
-                if (event.error === 'no-speech' || event.error === 'aborted') {
-                    // Ignore benign errors
-                    return;
-                }
-                console.warn("Speech recognition warning:", event.error);
-            };
-
-            if (!isMuted) {
-                try {
-                    recognition.start();
-                } catch (e) {
-                    // Algorithm: handle if already started
-                }
-            }
-        }
-
-        return () => {
-            if (recognition) recognition.stop();
-        };
-    }, [isMuted]);
-
-    // Mock transcript generation (keep for demo if detecting nothing?)
-    // Removing Mock or keeping it as "System" updates only?
-    // Let's keep System updates but remove Fake Player Text to avoid confusion if real transcription works.
-    useEffect(() => {
-        const interval = setInterval(() => {
-            if (Math.random() > 0.8) {
-                setTranscript(prev => [...prev.slice(-4), "System: AI analyzing context..."]);
-            }
-        }, 10000);
-        return () => clearInterval(interval);
+        // Mock transcript removed
     }, []);
+    */
 
     const toggleVideo = () => {
         setIsVideoOff(prev => !prev);
