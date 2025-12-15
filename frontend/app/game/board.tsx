@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { socket } from '../socket';
 import confetti from 'canvas-confetti';
 import { BoardVisualizer } from './BoardVisualizer';
-import { VideoCall } from './VideoCall';
+import { AudioChat } from './AudioChat';
 
 interface BoardProps {
     roomId: string;
@@ -664,13 +664,11 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                 {/* MOBILE VIDEO CALL (MOVED TO TOP) */}
                 <div className="lg:hidden w-full px-0 py-0 flex-1 z-0 min-h-0 order-first relative">
-                    <VideoCall
+                    <AudioChat
                         className="w-full h-full shadow-lg rounded-none object-cover"
-                        balance={me.cash}
-                        credit={me.loanDebt}
-                        turnPlayerName={currentPlayer?.name}
                         players={state.players}
-                        currentUserId={me.id}
+                        currentUserId={me?.id}
+                        currentPlayerName={me?.name}
                     />
 
                     {/* MOBILE TIMER OVERLAY */}
@@ -1042,13 +1040,11 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 {/* RIGHT SIDEBAR (Desktop) */}
                 <div className="hidden lg:flex flex-col flex-1 h-full border-l border-slate-800/0 p-0 relative overflow-y-auto custom-scrollbar gap-4 min-w-0">
                     {/* DESKTOP VIDEO CALL */}
-                    <VideoCall
-                        className="w-full h-[200px] flex-shrink-0 shadow-lg"
-                        balance={me.cash}
-                        credit={me.loanDebt}
-                        turnPlayerName={currentPlayer?.name}
+                    <AudioChat
+                        className="w-full h-[320px] flex-shrink-0 shadow-lg"
                         players={state.players}
-                        currentUserId={me.id}
+                        currentUserId={me?.id}
+                        currentPlayerName={me?.name}
                     />
 
                     {/* TIMER COMPONENT */}

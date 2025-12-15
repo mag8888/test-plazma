@@ -175,6 +175,15 @@ export class GameGateway {
                 }
             });
 
+            // WebSocket Transcription Event
+            socket.on('transcript', (data) => {
+                const { roomId, text, userId, name } = data;
+                // Broadcast to room (including sender? usually sender sees their own local preview, but for sync logs, broadcast to others).
+                // Let's broadcast to Room excluding sender, OR everyone if we want unified server timestamp.
+                // Simpler: Broadcast to everyone BUT sender, sender handles local display immediately for latency.
+                socket.to(roomId).emit('transcript_received', { userId, text, name, timestamp: Date.now() });
+            });
+
             // Leave Room
             socket.on('leave_room', async (data) => {
                 const { roomId } = data;
