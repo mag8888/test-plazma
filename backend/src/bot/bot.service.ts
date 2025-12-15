@@ -352,7 +352,7 @@ export class BotService {
             const webAppUrl = 'https://moneo-production-22c8.up.railway.app';
             const link = `${webAppUrl}/?auth=${code}`;
 
-            this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас!`, {
+            this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас!\n\n🔗 Твоя ссылка для входа:\n${link}`, {
                 reply_markup: {
                     inline_keyboard: [[{ text: '🚀 ЗАПУСТИТЬ', url: link }]]
                 }
@@ -361,7 +361,7 @@ export class BotService {
         } catch (e) {
             console.error("Error generating play link:", e);
             // Fallback
-            this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас!`, {
+            this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас!\n\n🔗 Ссылка:\nhttps://moneo-production-22c8.up.railway.app`, {
                 reply_markup: {
                     inline_keyboard: [[{ text: '🚀 ЗАПУСТИТЬ', url: 'https://moneo-production-22c8.up.railway.app' }]]
                 }
