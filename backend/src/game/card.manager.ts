@@ -20,22 +20,40 @@ export interface Card {
     subtype?: 'MLM_ROLL' | 'CHARITY_ROLL';
     assetType?: 'REAL_ESTATE' | 'BUSINESS' | 'STOCK' | 'OTHER';
     maxQuantity?: number;
+    outcomeDescription?: string; // Revealed after purchase
 }
 
 // Expense Cards
 export const EXPENSE_CARDS: Card[] = [
-    { id: 'e1', type: 'EXPENSE', title: 'Новый телефон', description: 'Купили последнюю модель.', cost: 800, mandatory: true },
-    { id: 'e2', type: 'EXPENSE', title: 'Ремонт машины', description: 'Сломался двигатель.', cost: 1200, mandatory: true },
-    { id: 'e3', type: 'EXPENSE', title: 'Налоговый аудит', description: 'Уплата налогов.', cost: 500, mandatory: true },
-    { id: 'e4', type: 'EXPENSE', title: 'Шопинг', description: 'Одежда и обувь.', cost: 1000, mandatory: true },
-    { id: 'e5', type: 'EXPENSE', title: 'Отпуск', description: 'Поездка с семьей.', cost: 2000, mandatory: true },
-    { id: 'e6', type: 'EXPENSE', title: 'Медицинский счет', description: 'Неожиданное лечение.', cost: 1500, mandatory: true },
-    { id: 'e7', type: 'EXPENSE', title: 'Ремонт дома', description: 'Починка крыши.', cost: 800, mandatory: true },
-    { id: 'e8', type: 'EXPENSE', title: 'Новый ТВ', description: 'OLED 4K Телевизор.', cost: 2000, mandatory: true },
-    { id: 'e9', type: 'EXPENSE', title: 'Концерт', description: 'VIP места.', cost: 300, mandatory: true },
-    { id: 'e10', type: 'EXPENSE', title: 'Благотворительность', description: 'Пожертвование.', cost: 500, mandatory: true },
-    { id: 'e11', type: 'EXPENSE', title: 'Обслуживание лодки', description: 'Если есть лодка.', cost: 1000, mandatory: true },
-    { id: 'e12', type: 'EXPENSE', title: 'Новые шины', description: 'Для автомобиля.', cost: 400, mandatory: true },
+    // Low ($50 - $400)
+    { id: 'e1', type: 'EXPENSE', title: 'Обед в ресторане', description: 'С друзьями.', cost: 50, mandatory: true },
+    { id: 'e2', type: 'EXPENSE', title: 'Ремонт кофемашины', description: 'Поломка.', cost: 100, mandatory: true },
+    { id: 'e3', type: 'EXPENSE', title: 'Новые кроссовки', description: 'Спорт.', cost: 150, mandatory: true },
+    { id: 'e4', type: 'EXPENSE', title: 'Штраф ПДД', description: 'Превышение скорости.', cost: 200, mandatory: true },
+    { id: 'e5', type: 'EXPENSE', title: 'Ужин премиум', description: 'Гастрономический сет.', cost: 250, mandatory: true },
+    { id: 'e6', type: 'EXPENSE', title: 'Концерт', description: 'Обычные места.', cost: 300, mandatory: true },
+    { id: 'e7', type: 'EXPENSE', title: 'Подписки на сервисы', description: 'Годовая подписка.', cost: 350, mandatory: true },
+    { id: 'e8', type: 'EXPENSE', title: 'Абонемент в фитнес', description: 'Квартальный.', cost: 400, mandatory: true },
+
+    // Mid ($500 - $1500)
+    { id: 'e9', type: 'EXPENSE', title: 'Благотворительность', description: 'Пожертвование.', cost: 500, mandatory: true },
+    { id: 'e10', type: 'EXPENSE', title: 'Ветеринар', description: 'Лечение питомца.', cost: 600, mandatory: true },
+    { id: 'e11', type: 'EXPENSE', title: 'Новый смартфон', description: 'Бюджетная модель.', cost: 800, mandatory: true },
+    { id: 'e12', type: 'EXPENSE', title: 'ТО Автомобиля', description: 'Замена масла и фильтров.', cost: 900, mandatory: true },
+    { id: 'e13', type: 'EXPENSE', title: 'Шопинг', description: 'Одежда (сезонная).', cost: 1000, mandatory: true },
+    { id: 'e14', type: 'EXPENSE', title: 'Бытовая техника', description: 'Посудомоечная машина.', cost: 1100, mandatory: true },
+    { id: 'e15', type: 'EXPENSE', title: 'Ремонт машины', description: 'Замена деталей.', cost: 1200, mandatory: true },
+    { id: 'e16', type: 'EXPENSE', title: 'Стоматолог', description: 'Лечение зубов.', cost: 1300, mandatory: true },
+    { id: 'e17', type: 'EXPENSE', title: 'Страховка', description: 'Страхование жизни.', cost: 1400, mandatory: true },
+    { id: 'e18', type: 'EXPENSE', title: 'Новый ноутбук', description: 'Рабочий инструмент.', cost: 1500, mandatory: true },
+
+    // High ($2000 - $5000)
+    { id: 'e19', type: 'EXPENSE', title: 'Отпуск', description: 'Тур на море.', cost: 2000, mandatory: true },
+    { id: 'e20', type: 'EXPENSE', title: 'Брендовая сумка', description: 'Подарок.', cost: 2500, mandatory: true },
+    { id: 'e21', type: 'EXPENSE', title: 'Ремонт дома', description: 'Косметический ремонт.', cost: 3000, mandatory: true },
+    { id: 'e22', type: 'EXPENSE', title: 'Обслуживание катера', description: 'Сезонное обслуживание.', cost: 3500, mandatory: true },
+    { id: 'e23', type: 'EXPENSE', title: 'Подарок на свадьбу', description: 'Щедрый подарок.', cost: 4000, mandatory: true },
+    { id: 'e24', type: 'EXPENSE', title: 'Аренда виллы', description: 'Вечеринка для друзей.', cost: 5000, mandatory: true },
 ];
 
 // Generator for Small Deals
@@ -60,7 +78,6 @@ const generateSmallDeals = (): Card[] => {
         }
     };
 
-    // --- STOCKS (Kept based on assumption this is default) ---
     // --- STOCKS ---
     // User Request: 1@5, 2@10, 2@20, 2@30, 1@40
     const stockPrices = [5, 10, 10, 20, 20, 30, 30, 40];
@@ -97,11 +114,6 @@ const generateSmallDeals = (): Card[] => {
         description: 'Привилегированные акции P&G. Дивиденды $10/акцию. Макс 1000 шт.',
         assetType: 'STOCK'
     });
-    // Or should I replace ALL with user list? User list didn't include stocks but "Deals" section had Market effects.
-    // User list:
-    // 5x Room in suburbs, 2x Manicure, 2x Coffee, 2x Partner, 2x Land, 1x Drone, 5x Flipping Studio.
-    // 1x Friend Loan, 1x Cat Shelter, 1x Feed Homeless.
-    // 2x Roof leak, 3x Sewer break.
 
     // --- USER DEFINED ASSETS ---
     add(5, { title: 'Комната в пригороде', cost: 3000, cashflow: 250, description: 'Сдача в аренду. ROI ~100%.', assetType: 'REAL_ESTATE' });
@@ -113,18 +125,19 @@ const generateSmallDeals = (): Card[] => {
     add(5, { title: 'Флипинг студии', cost: 5000, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).', assetType: 'REAL_ESTATE' });
 
     // --- NETWORK MARKETING ---
+    add(3, { title: 'Сетевой бизнес', cost: 500, cashflow: 100, description: 'Старт в MLM компании.', businessType: 'NETWORK' });
     add(3, { title: 'Сетевой бизнес: Plazma Water', cost: 200, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' });
     add(3, { title: 'Сетевой бизнес: MONEO', cost: 100, cashflow: 0, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($50/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' });
 
     // --- USER DEFINED "DEALS" (Expenses/Donations) ---
-    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Слезы и обещания. Деньги пропали.', mandatory: true, type: 'DEAL_SMALL' });
-    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 500, description: 'Друг раскрутился! Возвращает долей в бизнесе.', assetType: 'BUSINESS', type: 'DEAL_SMALL' });
-    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'В благодарность друг научил вас мудрости. 2 кубика на 3 хода.', mandatory: true, type: 'DEAL_SMALL', subtype: 'CHARITY_ROLL' });
+    // Friend Cards (Hidden Outcomes)
+    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Увы, друг прогорел. Деньги потеряны!', mandatory: true, type: 'DEAL_SMALL' });
+    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 500, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Ура! Друг раскрутился! Вы получаете долю в бизнесе.', assetType: 'BUSINESS', type: 'DEAL_SMALL' });
+    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Друг вернул долг уроком мудрости! +2 кубика на 3 хода.', mandatory: true, type: 'DEAL_SMALL', subtype: 'CHARITY_ROLL' });
 
     // --- USER DEFINED DAMAGES ---
     add(2, { title: 'Крыша протекла', cost: 5000, cashflow: 0, description: 'Обновить крышу. Платите $5000 ЕСЛИ есть недвижимость.', mandatory: true });
     add(3, { title: 'Прорыв канализации', cost: 2000, cashflow: 0, description: 'Починить канализацию. Платите $2000 ЕСЛИ есть недвижимость.', mandatory: true });
-
 
     return cards;
 };
@@ -149,23 +162,52 @@ const generateMarketCards = (): Card[] => {
         }
     };
 
-    // User provided Market Mappings
-    // Room in suburbs -> Buyer 25k
-    add(4, { title: 'Покупатель жилья', targetTitle: 'Комната в пригороде', offerPrice: 25000, description: 'Старое жилье идет под снос. Предлагают $25,000 за комнату.' });
-    // Manicure -> Network buyout 100k
-    add(2, { title: 'Слияние сетей', targetTitle: 'Студия маникюра', offerPrice: 100000, description: 'Большая сеть выкупает все маникюрные салоны. Предлагают $100,000.' });
-    // Coffee -> Buyer 25k
-    add(2, { title: 'Инвестор кофейни', targetTitle: 'Кофейня', offerPrice: 25000, description: 'Покупатель кофейни предлагает $25,000.' });
-    // Auto Partner -> Buyer 50k
-    add(2, { title: 'Выкуп доли', targetTitle: 'Партнёрство в автомастерской', offerPrice: 50000, description: 'Есть покупатель на партнерство за $50,000.' });
-    // Land 20ha -> Buyer 100k
-    add(2, { title: 'Застройщик', targetTitle: 'Участок земли 20га', offerPrice: 100000, description: 'Застройщик ищет землю. Предлагает $100,000.' });
-    // Flipping Studio -> Buyer 7k
-    add(4, { title: 'Покупатель студии', targetTitle: 'Флипинг студии', offerPrice: 7000, description: 'Покупатель квартиры студии (субаренда) за $7,000.' });
+    // --- STOCK MARKET EVENTS ---
+    add(1, { title: 'Акции TSLA: $40', targetTitle: 'Акции: Tesla', offerPrice: 40, description: 'Рост на новостях о новой батарее. Рынок покупает по $40.' });
+    add(1, { title: 'Акции TSLA: $5', targetTitle: 'Акции: Tesla', offerPrice: 5, description: 'Проблемы с автопилотом. Рынок падает до $5.' });
+    add(1, { title: 'Акции MSFT: $40', targetTitle: 'Акции: Microsoft', offerPrice: 40, description: 'Рекордная прибыль облачного сегмента. Рынок $40.' });
+    add(1, { title: 'Акции MSFT: $5', targetTitle: 'Акции: Microsoft', offerPrice: 5, description: 'Антимонопольный иск. Рынок падает до $5.' });
+    add(1, { title: 'Сплит Акций TSLA', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза. Цена делится пополам.', action: 'OFFER' });
+    add(1, { title: 'Сплит Акций MSFT', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза. Цена делится пополам.', action: 'OFFER' });
 
-    // General "Inflation" or generic market events could be added here if deck is too small, but user list is specific.
+    // --- REAL ESTATE & BUSINESS BUYERS (MULTIPLIERS 1.5x - 5x) ---
+    // 3Br/2Ba House (Cost $8,500)
+    add(1, { title: 'Покупатель дома', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 13000, description: 'Семья ищет дом. Предлагают $13,000 (1.5x).' });
+    add(1, { title: 'Инвестор в недвижимость', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 25500, description: 'Инвестор скупает районы. $25,500 (3x).' });
+
+    // Mini-Hotel (Cost $80,000)
+    add(1, { title: 'Отельная сеть (M)', targetTitle: 'Мини-отель', offerPrice: 120000, description: 'Сеть расширяется. Предлагают $120,000 (1.5x).' });
+    add(1, { title: 'Крупный игрок', targetTitle: 'Мини-отель', offerPrice: 240000, description: 'Фонд хочет ваш отель. $240,000 (3x).' });
+    add(1, { title: 'Монополист', targetTitle: 'Мини-отель', offerPrice: 400000, description: 'Предложение, от которого нельзя отказаться. $400,000 (5x)!' });
+
+    // Fast Food (Cost $200,000)
+    add(1, { title: 'Конкурент (FastFood)', targetTitle: 'Сеть кафе быстрого питания', offerPrice: 300000, description: 'Конкурент выкупает точки. $300,000 (1.5x).' });
+    add(1, { title: 'Мировой бренд', targetTitle: 'Сеть кафе быстрого питания', offerPrice: 1000000, description: 'Глобальная корпорация поглощает вас. $1,000,000 (5x)!' });
+
+    // Organic Farm (Cost $120,000)
+    add(1, { title: 'Эко-ритейлер', targetTitle: 'Ферма органических овощей', offerPrice: 240000, description: 'Сеть супермаркетов покупает производство. $240,000 (2x).' });
+    add(1, { title: 'Агрохолдинг', targetTitle: 'Ферма органических овощей', offerPrice: 600000, description: 'Крупный агрохолдинг. $600,000 (5x)!' });
+
+    // Car Wash (Cost $150,000)
+    add(1, { title: 'Франчайзинг', targetTitle: 'Сеть автомоек', offerPrice: 450000, description: 'Вас хотят сделать частью франшизы. $450,000 (3x).' });
+    add(1, { title: 'Девелопер', targetTitle: 'Сеть автомоек', offerPrice: 600000, description: 'Земля под мойками нужна под застройку. $600,000 (4x).' });
+
+    // Coworking (Cost $250,000)
+    add(1, { title: 'IT-Стартап', targetTitle: 'Коворкинг-центр', offerPrice: 500000, description: 'Единорог покупает офис. $500,000 (2x).' });
+    add(1, { title: 'Google', targetTitle: 'Коворкинг-центр', offerPrice: 1250000, description: 'Техногигант открывает штаб-квартиру. $1,250,000 (5x)!' });
+
+    // Plazma Water (Cost $5,000)
+    add(1, { title: 'Выкуп франшизы', targetTitle: 'Франшиза: Plazma Water', offerPrice: 25000, description: 'Головная компания выкупает точку. $25,000 (5x).' });
+
+    // Generic / Other
+    add(1, { title: 'Покупатель 4-плекс', description: 'Инвестор ищет многоквартирный дом. Предлагает $100,000 за 4-plex.' });
+    add(1, { title: 'Слияние сетей', targetTitle: 'Студия маникюра', offerPrice: 25000, description: 'Выкуп сети. $25,000 ($5k -> $25k, 5x).' });
+    add(1, { title: 'Покупатель бизнеса', targetTitle: 'Кофейня', offerPrice: 15000, description: 'Инвестор. $15,000 ($5k -> $15k, 3x).' });
+    add(1, { title: 'Застройщик', targetTitle: 'Участок земли 20га', offerPrice: 150000, description: 'Цена земли взлетела до $150,000.' });
+    add(1, { title: 'Коллекционер', targetTitle: 'Картина', offerPrice: 6000, description: 'Шедевр! $6,000 (5x).' });
+
     return cards;
-}
+};
 
 
 // Generator for Big Deals
@@ -230,6 +272,7 @@ export class CardManager {
     private marketDeckDiscard: Card[] = [];
 
     expenseDeck: Card[] = [...EXPENSE_CARDS];
+    private expenseDeckDiscard: Card[] = [];
 
     constructor() {
         this.smallDeals = this.shuffle(generateSmallDeals());
@@ -273,7 +316,7 @@ export class CardManager {
         } else if (card.type === 'DEAL_BIG') {
             this.bigDealsDiscard.push(card);
         } else if (card.type === 'EXPENSE') {
-            this.expenseDeck.push(card);
+            this.expenseDeckDiscard.push(card);
         } else if (card.type === 'MARKET') {
             this.marketDeckDiscard.push(card);
         }
@@ -288,7 +331,15 @@ export class CardManager {
     }
 
     drawExpense(): Card {
-        if (this.expenseDeck.length === 0) this.expenseDeck = this.shuffle([...EXPENSE_CARDS]);
+        if (this.expenseDeck.length === 0) {
+            if (this.expenseDeckDiscard.length === 0) {
+                // Fallback if somehow both empty (shouldn't happen with proper flow, but safety)
+                this.expenseDeck = this.shuffle([...EXPENSE_CARDS]);
+            } else {
+                this.expenseDeck = this.shuffle([...this.expenseDeckDiscard]);
+                this.expenseDeckDiscard = [];
+            }
+        }
         const card = this.expenseDeck.shift();
         return card!;
     }
@@ -298,10 +349,7 @@ export class CardManager {
             small: { remaining: this.smallDeals.length, total: this.smallDeals.length + this.smallDealsDiscard.length },
             big: { remaining: this.bigDeals.length, total: this.bigDeals.length + this.bigDealsDiscard.length },
             market: { remaining: this.marketDeck.length, total: this.marketDeck.length + this.marketDeckDiscard.length },
-            expense: { remaining: this.expenseDeck.length, total: this.expenseDeck.length } // Expenses don't have explicit discard array usage in this class yet, but logic suggests simple cycle?
-            // Actually users asked for "Discard Shuffled". Current drawExpense reshuffles default EXPENSE_CARDS if empty.
-            // This implies "Cards in hand" event logic is instant? (You pay and it's done).
-            // So Total is constant 12.
+            expense: { remaining: this.expenseDeck.length, total: this.expenseDeck.length + this.expenseDeckDiscard.length }
         };
     }
 }
