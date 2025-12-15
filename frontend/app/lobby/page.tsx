@@ -30,6 +30,8 @@ export default function Lobby() {
     const [user, setUser] = useState<any>(null);
     const [mounted, setMounted] = useState(false);
 
+    const [leaderboard, setLeaderboard] = useState<any[]>([]);
+
     useEffect(() => {
         setMounted(true);
         const userStr = localStorage.getItem('user');
@@ -44,6 +46,11 @@ export default function Lobby() {
             socket.emit('get_rooms', (data: Room[]) => {
                 console.log("Rooms received:", data);
                 setRooms(data);
+            });
+
+            // Fetch Leaderboard
+            socket.emit('get_leaderboard', (data: any[]) => {
+                setLeaderboard(data);
             });
 
             // Fetch My Rooms using either Logged In ID or Guest ID
@@ -64,7 +71,8 @@ export default function Lobby() {
         socket.on('connect', fetchRooms);
         socket.on('rooms_updated', (data: Room[]) => {
             setRooms(data);
-            // Re-fetch my rooms on update too
+
+            // Refresh logic if needed
             const parsedUser = userStr ? JSON.parse(userStr) : null;
             const userId = parsedUser?._id || parsedUser?.id || localStorage.getItem('guest_id');
             if (userId) {
@@ -163,9 +171,9 @@ export default function Lobby() {
                                 leaderboard.map((player, idx) => (
                                     <div key={idx} className="flex items-center gap-4 group">
                                         <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black shadow-lg transform group-hover:scale-110 transition-transform ${idx === 0 ? 'bg-gradient-to-br from-yellow-300 to-yellow-600 text-black ring-2 ring-yellow-500/30' :
-                                                idx === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-500 text-black' :
-                                                    idx === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-700 text-white' :
-                                                        'bg-slate-800 text-slate-500'
+                                            idx === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-500 text-black' :
+                                                idx === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-700 text-white' :
+                                                    'bg-slate-800 text-slate-500'
                                             }`}>
                                             {idx + 1}
                                         </div>
@@ -268,8 +276,8 @@ export default function Lobby() {
                                                     key={count}
                                                     onClick={() => setMaxPlayers(count)}
                                                     className={`flex-1 py-3 rounded-xl font-bold transition-all border-2 ${maxPlayers === count
-                                                            ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30'
-                                                            : 'bg-slate-800 border-transparent text-slate-400 hover:bg-slate-700'
+                                                        ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30'
+                                                        : 'bg-slate-800 border-transparent text-slate-400 hover:bg-slate-700'
                                                         }`}
                                                 >
                                                     {count}
@@ -323,14 +331,21 @@ export default function Lobby() {
                                             onClick={() => joinRoom(room.id)}
                                             disabled={room.status === 'playing' || room.players.length >= room.maxPlayers}
                                             className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${room.status === 'playing' || room.players.length >= room.maxPlayers
-                                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                                                    : 'bg-slate-700 hover:bg-blue-600 text-white shadow-lg'
+                                                ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                                                : 'bg-slate-700 hover:bg-blue-600 text-white shadow-lg'
                                                 }`}
-    </button>
-</div>
+                                        >
+                                            {room.status === 'playing' ? 'Игра идет' : room.players.length >= room.maxPlayers ? 'Мест нет' : 'Присоединиться'}
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
-{/* Spacer for bottom bar */}
-                        <div className="h-24"></div>
-                    </div >
-                    );
+                </div>
+            </div>
+            {showRules && <RulesModal onClose={() => setShowRules(false)} />}
+        </div>
+    );
 }
