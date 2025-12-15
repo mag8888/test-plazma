@@ -40,6 +40,18 @@ export const EXPENSE_CARDS: Card[] = [
     { id: 'e10', type: 'EXPENSE', title: 'Благотворительность', description: 'Пожертвование.', cost: 500, mandatory: true },
     { id: 'e11', type: 'EXPENSE', title: 'Обслуживание лодки', description: 'Если есть лодка.', cost: 1000, mandatory: true },
     { id: 'e12', type: 'EXPENSE', title: 'Новые шины', description: 'Для автомобиля.', cost: 400, mandatory: true },
+    { id: 'e13', type: 'EXPENSE', title: 'Новый ноутбук', description: 'Мощный игровой ноутбук.', cost: 1500, mandatory: true },
+    { id: 'e14', type: 'EXPENSE', title: 'Абонемент в фитнес', description: 'Годовой абонемент.', cost: 400, mandatory: true },
+    { id: 'e15', type: 'EXPENSE', title: 'Годовщина', description: 'Подарок и ресторан.', cost: 500, mandatory: true },
+    { id: 'e16', type: 'EXPENSE', title: 'Штраф ПДД', description: 'Превышение скорости.', cost: 200, mandatory: true },
+    { id: 'e17', type: 'EXPENSE', title: 'Клюшки для гольфа', description: 'Спорт элиты.', cost: 800, mandatory: true },
+    { id: 'e18', type: 'EXPENSE', title: 'Картина', description: 'Искусство для дома.', cost: 1200, mandatory: true },
+    { id: 'e19', type: 'EXPENSE', title: 'Дизайнерский костюм', description: 'Для деловых встреч.', cost: 1000, mandatory: true },
+    { id: 'e20', type: 'EXPENSE', title: 'Поездка за город', description: 'Выходные в отеле.', cost: 1000, mandatory: true },
+    { id: 'e21', type: 'EXPENSE', title: 'Кофемашина', description: 'Профессиональная.', cost: 300, mandatory: true },
+    { id: 'e22', type: 'EXPENSE', title: 'Ювелирное украшение', description: 'Кольцо с бриллиантом.', cost: 2000, mandatory: true },
+    { id: 'e23', type: 'EXPENSE', title: 'Ветеринар', description: 'Лечение питомца.', cost: 600, mandatory: true },
+    { id: 'e24', type: 'EXPENSE', title: 'Курсы повышения', description: 'Образование.', cost: 500, mandatory: true },
 ];
 
 export const SMALL_DEALS: Card[] = [
@@ -114,4 +126,24 @@ export const MARKET_CARDS: Card[] = [
     { title: 'Выкуп доли', targetTitle: 'Партнёрство в автомастерской', offerPrice: 50000, description: 'Есть покупатель на партнерство за $50,000.', type: 'MARKET', id: 'mkt_4' },
     { title: 'Застройщик', targetTitle: 'Участок земли 20га', offerPrice: 100000, description: 'Застройщик ищет землю. Предлагает $100,000.', type: 'MARKET', id: 'mkt_5' },
     { title: 'Покупатель студии', targetTitle: 'Флипинг студии', offerPrice: 7000, description: 'Покупатель квартиры студии (субаренда) за $7,000.', type: 'MARKET', id: 'mkt_6' },
+    // NEW MARKET CARDS (+18)
+    { title: 'Акции TSLA: $40', targetTitle: 'Акции: Tesla', offerPrice: 40, description: 'Рост на новостях о новой батарее. Рынок покупает по $40.', type: 'MARKET', id: 'mkt_7' },
+    { title: 'Акции TSLA: $5', targetTitle: 'Акции: Tesla', offerPrice: 5, description: 'Проблемы с автопилотом. Рынок падает до $5.', type: 'MARKET', id: 'mkt_8' },
+    { title: 'Акции MSFT: $40', targetTitle: 'Акции: Microsoft', offerPrice: 40, description: 'Рекордная прибыль облачного сегмента. Рынок $40.', type: 'MARKET', id: 'mkt_9' },
+    { title: 'Акции MSFT: $5', targetTitle: 'Акции: Microsoft', offerPrice: 5, description: 'Антимонопольный иск. Рынок падает до $5.', type: 'MARKET', id: 'mkt_10' },
+    { title: 'Покупатель дома', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 135000, description: 'Молодая семья ищет дом. Предлагают $135,000.', type: 'MARKET', id: 'mkt_11' },
+    { title: 'Спрос на органику', targetTitle: 'Ферма органических овощей', offerPrice: 200000, description: 'Бум здорового питания. Сеть супермаркетов дает $200,000.', type: 'MARKET', id: 'mkt_12' },
+    { title: 'Инвестор в отели', targetTitle: 'Мини-отель', offerPrice: 120000, description: 'Туристический сезон. Инвестор предлагает $120,000.', type: 'MARKET', id: 'mkt_13' },
+    { title: 'Покупатель автомойки', targetTitle: 'Сеть автомоек', offerPrice: 220000, description: 'Конкурент хочет выкупить ваш бизнес за $220,000.', type: 'MARKET', id: 'mkt_14' },
+    { title: 'IT-Гигант', targetTitle: 'Коворкинг-центр', offerPrice: 350000, description: 'IT компания хочет выкупить здание за $350,000.', type: 'MARKET', id: 'mkt_15' },
+    { title: 'Покупатель дрона', targetTitle: 'Покупка дрона', offerPrice: 2000, description: 'Фотограф хочет купить ваш дрон за $2000.', type: 'MARKET', id: 'mkt_16' },
+    { title: 'Сплит Акций TSLA', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза. Цена делится пополам.', type: 'MARKET', id: 'mkt_17', action: 'OFFER' }, // Generic Logic needed for splits
+    { title: 'Сплит Акций MSFT', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза. Цена делится пополам.', type: 'MARKET', id: 'mkt_18', action: 'OFFER' },
+    { title: 'Покупатель франшизы', targetTitle: 'Франшиза: Plazma Water', offerPrice: 8000, description: 'Партнер хочет выкупить вашу точку за $8,000.', type: 'MARKET', id: 'mkt_19' },
+    { title: 'Покупатель франшизы', targetTitle: 'Франшиза: MONEO', offerPrice: 8000, description: 'Партнер хочет выкупить вашу точку за $8,000.', type: 'MARKET', id: 'mkt_20' },
+    { title: 'Рост земли', targetTitle: 'Участок земли 20га', offerPrice: 150000, description: 'Город расширяется. Цена земли выросла до $150,000.', type: 'MARKET', id: 'mkt_21' },
+    { title: 'Покупатель 4-плекс', description: 'Инвестор ищет многоквартирный дом. Предлагает $100,000 за 4-plex.', type: 'MARKET', id: 'mkt_22' },
+    { title: 'Коллекционер', targetTitle: 'Картина', offerPrice: 5000, description: 'Ваша картина оказалась шедевром. Предлагают $5,000.', type: 'MARKET', id: 'mkt_23' },
+    { title: 'Покупатель бизнеса', targetTitle: 'Студия маникюра', offerPrice: 15000, description: 'Мастер хочет выкупить студию за $15,000.', type: 'MARKET', id: 'mkt_24' },
 ];
+
