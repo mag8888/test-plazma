@@ -180,6 +180,17 @@ export class RoomService {
         await this.leaveRoom(roomId, playerIdToKick);
     }
 
+    async deleteRoom(roomId: string, requesterUserId: string): Promise<void> {
+        const room = await RoomModel.findById(roomId);
+        if (!room) throw new Error("Room not found");
+
+        if (room.creatorId !== requesterUserId) {
+            throw new Error("Only the host can delete the room");
+        }
+
+        await RoomModel.findByIdAndDelete(roomId);
+    }
+
     async getRooms(): Promise<any[]> {
         const rooms = await RoomModel.find({ status: 'waiting' }).sort({ createdAt: -1 }).lean();
         return rooms.map(r => this.sanitizeRoom(r));

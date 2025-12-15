@@ -208,6 +208,29 @@ export class GameGateway {
                 }
             });
 
+            // Delete Room (Host)
+            socket.on('delete_room', async (data, callback) => {
+                try {
+                    const { roomId, userId } = data;
+                    await this.roomService.deleteRoom(roomId, userId);
+
+                    // If game was active, remove it from memory
+                    this.games.delete(roomId);
+
+                    // Notify everyone (Room removed)
+                    const rooms = await this.roomService.getRooms();
+                    this.io.emit('rooms_updated', rooms);
+
+                    // Force redirect for anyone inside?
+                    // Client needs to listen for room deletion or handle "Room not found" gracefully.
+                    this.io.to(roomId).emit('room_deleted');
+
+                    callback({ success: true });
+                } catch (e: any) {
+                    callback({ success: false, error: e.message });
+                }
+            });
+
             // Player Ready
             socket.on('player_ready', async (data, callback) => {
                 try {

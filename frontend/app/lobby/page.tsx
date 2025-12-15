@@ -13,6 +13,7 @@ interface Room {
     maxPlayers: number;
     status: string;
     timer: number;
+    creatorId: string; // Added for Delete Permission
 }
 
 export default function Lobby() {
@@ -130,6 +131,35 @@ export default function Lobby() {
         router.push(`/game?id=${roomId}`);
     };
 
+    const handleDeleteRoom = (roomId: string) => {
+        if (!user) return;
+        socket.emit('delete_room', { roomId, userId: user._id || user.id }, (res: any) => {
+            if (!res.success) {
+                alert('Не удалось удалить комнату: ' + res.error);
+            } else {
+                // Update handled via socket event
+            }
+        });
+    };
+
+    const handleLeaveRoom = (roomId: string) => {
+        if (!user) return;
+        // Use kick_player logic or dedicated leave?
+        // Use existing 'leave_room' but check if it supports full cleanup
+        // The backend 'leave_room' calls 'roomService.leaveRoom' which removes player. 
+        // Good for waiting rooms. For active games, it might be tricky if not handled.
+        // But for "Fully Exit" from lobby, it just removes player from list.
+
+        socket.emit('leave_room', { roomId, userId: user._id || user.id });
+        // Ideally we want a callback to know it succeeded
+        // But existing 'leave_room' doesn't have callback in gateway (Line 177). 
+        // It just emits updates.
+        // We can assume success or just wait for room update.
+
+        // Manually update local state to feel responsive?
+        setMyRooms(prev => prev.filter(r => r.id !== roomId));
+    };
+
     if (!mounted || !user) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-500">Загрузка...</div>;
 
     return (
@@ -222,32 +252,52 @@ export default function Lobby() {
                                 <span className="animate-spin-slow">🔄</span> Ваши активные игры
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
-                                {myRooms.map((room) => (
-                                    <div key={room.id} className="bg-slate-900/80 p-5 rounded-2xl border border-indigo-500/30 hover:border-indigo-400 transition-all group shadow-xl">
-                                        <div className="flex justify-between items-start mb-4">
-                                            <div>
-                                                <div className="font-bold text-lg text-white group-hover:text-indigo-300 transition-colors">
-                                                    {room.name}
+                                {myRooms.map((room) => {
+                                    const isHost = room.creatorId === (user._id || user.id);
+
+                                    return (
+                                        <div key={room.id} className="bg-slate-900/80 p-5 rounded-2xl border border-indigo-500/30 hover:border-indigo-400 transition-all group shadow-xl relative">
+                                            {/* DELETE / LEAVE BUTTON (Top Right) */}
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    if (isHost) {
+                                                        if (confirm('Удалить комнату?')) handleDeleteRoom(room.id);
+                                                    } else {
+                                                        if (confirm('Покинуть игру?')) handleLeaveRoom(room.id);
+                                                    }
+                                                }}
+                                                className="absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-colors z-20"
+                                                title={isHost ? "Удалить комнату" : "Покинуть игру"}
+                                            >
+                                                {isHost ? '🗑' : '🚪'}
+                                            </button>
+
+                                            <div className="flex justify-between items-start mb-4 pr-8">
+                                                <div>
+                                                    <div className="font-bold text-lg text-white group-hover:text-indigo-300 transition-colors">
+                                                        {room.name}
+                                                    </div>
+                                                    <div className="flex items-center gap-2 mt-1">
+                                                        <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${room.status === 'playing' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+                                                            }`}>
+                                                            {room.status === 'playing' ? '🟢 Идет игра' : '🟡 Ожидание'}
+                                                        </span>
+                                                    </div>
                                                 </div>
-                                                <div className="flex items-center gap-2 mt-1">
-                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${room.status === 'playing' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
-                                                        }`}>
-                                                        {room.status === 'playing' ? '🟢 Идет игра' : '🟡 Ожидание'}
-                                                    </span>
+                                                <div className="text-xs font-mono text-slate-500 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
+                                                    {room.players.length}/{room.maxPlayers}
                                                 </div>
                                             </div>
-                                            <div className="text-xs font-mono text-slate-500 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
-                                                {room.players.length}/{room.maxPlayers}
-                                            </div>
+                                            <button
+                                                onClick={() => joinRoom(room.id)}
+                                                className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-indigo-900/20 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                                            >
+                                                Вернуться в игру ➡
+                                            </button>
                                         </div>
-                                        <button
-                                            onClick={() => joinRoom(room.id)}
-                                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-indigo-900/20 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-                                        >
-                                            Вернуться в игру ➡
-                                        </button>
-                                    </div>
-                                ))}
+                                    );
+                                })}
                             </div>
                         </div>
                     )}
