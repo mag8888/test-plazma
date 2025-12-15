@@ -129,30 +129,49 @@ export const BIG_DEALS: Card[] = [
 ];
 
 export const MARKET_CARDS: Card[] = [
-    { title: 'Покупатель жилья', targetTitle: 'Комната в пригороде', offerPrice: 25000, description: 'Старое жилье идет под снос. Предлагают $25,000 за комнату.', type: 'MARKET', id: 'mkt_1' },
-    { title: 'Слияние сетей', targetTitle: 'Студия маникюра', offerPrice: 100000, description: 'Большая сеть выкупает все маникюрные салоны. Предлагают $100,000.', type: 'MARKET', id: 'mkt_2' },
-    { title: 'Инвестор кофейни', targetTitle: 'Кофейня', offerPrice: 25000, description: 'Покупатель кофейни предлагает $25,000.', type: 'MARKET', id: 'mkt_3' },
-    { title: 'Выкуп доли', targetTitle: 'Партнёрство в автомастерской', offerPrice: 50000, description: 'Есть покупатель на партнерство за $50,000.', type: 'MARKET', id: 'mkt_4' },
-    { title: 'Застройщик', targetTitle: 'Участок земли 20га', offerPrice: 100000, description: 'Застройщик ищет землю. Предлагает $100,000.', type: 'MARKET', id: 'mkt_5' },
-    { title: 'Покупатель студии', targetTitle: 'Флипинг студии', offerPrice: 7000, description: 'Покупатель квартиры студии (субаренда) за $7,000.', type: 'MARKET', id: 'mkt_6' },
-    // NEW MARKET CARDS (+18)
-    { title: 'Акции TSLA: $40', targetTitle: 'Акции: Tesla', offerPrice: 40, description: 'Рост на новостях о новой батарее. Рынок покупает по $40.', type: 'MARKET', id: 'mkt_7' },
-    { title: 'Акции TSLA: $5', targetTitle: 'Акции: Tesla', offerPrice: 5, description: 'Проблемы с автопилотом. Рынок падает до $5.', type: 'MARKET', id: 'mkt_8' },
-    { title: 'Акции MSFT: $40', targetTitle: 'Акции: Microsoft', offerPrice: 40, description: 'Рекордная прибыль облачного сегмента. Рынок $40.', type: 'MARKET', id: 'mkt_9' },
-    { title: 'Акции MSFT: $5', targetTitle: 'Акции: Microsoft', offerPrice: 5, description: 'Антимонопольный иск. Рынок падает до $5.', type: 'MARKET', id: 'mkt_10' },
-    { title: 'Покупатель дома', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 135000, description: 'Молодая семья ищет дом. Предлагают $135,000.', type: 'MARKET', id: 'mkt_11' },
-    { title: 'Спрос на органику', targetTitle: 'Ферма органических овощей', offerPrice: 200000, description: 'Бум здорового питания. Сеть супермаркетов дает $200,000.', type: 'MARKET', id: 'mkt_12' },
-    { title: 'Инвестор в отели', targetTitle: 'Мини-отель', offerPrice: 120000, description: 'Туристический сезон. Инвестор предлагает $120,000.', type: 'MARKET', id: 'mkt_13' },
-    { title: 'Покупатель автомойки', targetTitle: 'Сеть автомоек', offerPrice: 220000, description: 'Конкурент хочет выкупить ваш бизнес за $220,000.', type: 'MARKET', id: 'mkt_14' },
-    { title: 'IT-Гигант', targetTitle: 'Коворкинг-центр', offerPrice: 350000, description: 'IT компания хочет выкупить здание за $350,000.', type: 'MARKET', id: 'mkt_15' },
-    { title: 'Покупатель дрона', targetTitle: 'Покупка дрона', offerPrice: 2000, description: 'Фотограф хочет купить ваш дрон за $2000.', type: 'MARKET', id: 'mkt_16' },
-    { title: 'Сплит Акций TSLA', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза. Цена делится пополам.', type: 'MARKET', id: 'mkt_17', action: 'OFFER' }, // Generic Logic needed for splits
-    { title: 'Сплит Акций MSFT', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза. Цена делится пополам.', type: 'MARKET', id: 'mkt_18', action: 'OFFER' },
-    { title: 'Покупатель франшизы', targetTitle: 'Франшиза: Plazma Water', offerPrice: 8000, description: 'Партнер хочет выкупить вашу точку за $8,000.', type: 'MARKET', id: 'mkt_19' },
-    { title: 'Покупатель франшизы', targetTitle: 'Франшиза: MONEO', offerPrice: 8000, description: 'Партнер хочет выкупить вашу точку за $8,000.', type: 'MARKET', id: 'mkt_20' },
-    { title: 'Рост земли', targetTitle: 'Участок земли 20га', offerPrice: 150000, description: 'Город расширяется. Цена земли выросла до $150,000.', type: 'MARKET', id: 'mkt_21' },
-    { title: 'Покупатель 4-плекс', description: 'Инвестор ищет многоквартирный дом. Предлагает $100,000 за 4-plex.', type: 'MARKET', id: 'mkt_22' },
-    { title: 'Коллекционер', targetTitle: 'Картина', offerPrice: 5000, description: 'Ваша картина оказалась шедевром. Предлагают $5,000.', type: 'MARKET', id: 'mkt_23' },
-    { title: 'Покупатель бизнеса', targetTitle: 'Студия маникюра', offerPrice: 15000, description: 'Мастер хочет выкупить студию за $15,000.', type: 'MARKET', id: 'mkt_24' },
+    // --- STOCK MARKET EVENTS ---
+    { title: 'Акции TSLA: $40', targetTitle: 'Акции: Tesla', offerPrice: 40, description: 'Рост на новостях о новой батарее. Рынок покупает по $40.', type: 'MARKET', id: 'mkt_tsla_high' },
+    { title: 'Акции TSLA: $5', targetTitle: 'Акции: Tesla', offerPrice: 5, description: 'Проблемы с автопилотом. Рынок падает до $5.', type: 'MARKET', id: 'mkt_tsla_low' },
+    { title: 'Акции MSFT: $40', targetTitle: 'Акции: Microsoft', offerPrice: 40, description: 'Рекордная прибыль облачного сегмента. Рынок $40.', type: 'MARKET', id: 'mkt_msft_high' },
+    { title: 'Акции MSFT: $5', targetTitle: 'Акции: Microsoft', offerPrice: 5, description: 'Антимонопольный иск. Рынок падает до $5.', type: 'MARKET', id: 'mkt_msft_low' },
+    { title: 'Сплит Акций TSLA', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза. Цена делится пополам.', type: 'MARKET', id: 'mkt_split_tsla', action: 'OFFER' },
+    { title: 'Сплит Акций MSFT', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза. Цена делится пополам.', type: 'MARKET', id: 'mkt_split_msft', action: 'OFFER' },
+
+    // --- REAL ESTATE & BUSINESS BUYERS (MULTIPLIERS 1.5x - 5x) ---
+
+    // 3Br/2Ba House (Cost $8,500)
+    { title: 'Покупатель дома', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 13000, description: 'Семья ищет дом. Предлагают $13,000 (1.5x).', type: 'MARKET', id: 'mkt_house_1.5' },
+    { title: 'Инвестор в недвижимость', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 25500, description: 'Инвестор скупает районы. $25,500 (3x).', type: 'MARKET', id: 'mkt_house_3' },
+
+    // Mini-Hotel (Cost $80,000)
+    { title: 'Отельная сеть (M)', targetTitle: 'Мини-отель', offerPrice: 120000, description: 'Сеть расширяется. Предлагают $120,000 (1.5x).', type: 'MARKET', id: 'mkt_hotel_1.5' },
+    { title: 'Крупный игрок', targetTitle: 'Мини-отель', offerPrice: 240000, description: 'Фонд хочет ваш отель. $240,000 (3x).', type: 'MARKET', id: 'mkt_hotel_3' },
+    { title: 'Монополист', targetTitle: 'Мини-отель', offerPrice: 400000, description: 'Предложение, от которого нельзя отказаться. $400,000 (5x)!', type: 'MARKET', id: 'mkt_hotel_5' },
+
+    // Fast Food (Cost $200,000)
+    { title: 'Конкурент (FastFood)', targetTitle: 'Сеть кафе быстрого питания', offerPrice: 300000, description: 'Конкурент выкупает точки. $300,000 (1.5x).', type: 'MARKET', id: 'mkt_ff_1.5' },
+    { title: 'Мировой бренд', targetTitle: 'Сеть кафе быстрого питания', offerPrice: 1000000, description: 'Глобальная корпорация поглощает вас. $1,000,000 (5x)!', type: 'MARKET', id: 'mkt_ff_5' },
+
+    // Organic Farm (Cost $120,000)
+    { title: 'Эко-ритейлер', targetTitle: 'Ферма органических овощей', offerPrice: 240000, description: 'Сеть супермаркетов покупает производство. $240,000 (2x).', type: 'MARKET', id: 'mkt_farm_2' },
+    { title: 'Агрохолдинг', targetTitle: 'Ферма органических овощей', offerPrice: 600000, description: 'Крупный агрохолдинг. $600,000 (5x)!', type: 'MARKET', id: 'mkt_farm_5' },
+
+    // Car Wash (Cost $150,000)
+    { title: 'Франчайзинг', targetTitle: 'Сеть автомоек', offerPrice: 450000, description: 'Вас хотят сделать частью франшизы. $450,000 (3x).', type: 'MARKET', id: 'mkt_wash_3' },
+    { title: 'Девелопер', targetTitle: 'Сеть автомоек', offerPrice: 600000, description: 'Земля под мойками нужна под застройку. $600,000 (4x).', type: 'MARKET', id: 'mkt_wash_4' },
+
+    // Coworking (Cost $250,000)
+    { title: 'IT-Стартап', targetTitle: 'Коворкинг-центр', offerPrice: 500000, description: 'Единорог покупает офис. $500,000 (2x).', type: 'MARKET', id: 'mkt_cowork_2' },
+    { title: 'Google', targetTitle: 'Коворкинг-центр', offerPrice: 1250000, description: 'Техногигант открывает штаб-квартиру. $1,250,000 (5x)!', type: 'MARKET', id: 'mkt_cowork_5' },
+
+    // Plazma Water (Cost $5,000)
+    { title: 'Выкуп франшизы', targetTitle: 'Франшиза: Plazma Water', offerPrice: 25000, description: 'Головная компания выкупает точку. $25,000 (5x).', type: 'MARKET', id: 'mkt_plazma_5' },
+
+    // Generic / Other
+    { title: 'Покупатель 4-плекс', description: 'Инвестор ищет многоквартирный дом. Предлагает $100,000 за 4-plex.', type: 'MARKET', id: 'mkt_plex' },
+    { title: 'Слияние сетей', targetTitle: 'Студия маникюра', offerPrice: 25000, description: 'Выкуп сети. $25,000 ($5k -> $25k, 5x).', type: 'MARKET', id: 'mkt_nail_5' },
+    { title: 'Покупатель бизнеса', targetTitle: 'Кофейня', offerPrice: 15000, description: 'Инвестор. $15,000 ($5k -> $15k, 3x).', type: 'MARKET', id: 'mkt_coffee_3' },
+    { title: 'Застройщик', targetTitle: 'Участок земли 20га', offerPrice: 150000, description: 'Цена земли взлетела до $150,000.', type: 'MARKET', id: 'mkt_land_high' },
+    { title: 'Коллекционер', targetTitle: 'Картина', offerPrice: 6000, description: 'Шедевр! $6,000 (5x).', type: 'MARKET', id: 'mkt_art_5' },
 ];
 
