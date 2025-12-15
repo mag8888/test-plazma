@@ -1283,6 +1283,26 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     </div>
                 )
             }
+            {
+                me.isBankrupted && !state.winner && (
+                    <div className="absolute inset-0 z-[110] bg-black/95 flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-md p-4">
+                        <div className="text-9xl mb-8 animate-pulse grayscale filter drop-shadow-[0_0_15px_rgba(255,0,0,0.3)]">💸</div>
+                        <h2 className="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-slate-500 to-slate-200 mb-8 tracking-tighter shadow-2xl uppercase text-center">
+                            БАНКРОТ!
+                        </h2>
+                        <div className="text-2xl text-slate-400 mb-12 font-light max-w-2xl text-center leading-relaxed">
+                            <span className="block text-red-500 font-bold mb-2">ИГРА ОКОНЧЕНА</span>
+                            К сожалению, ваши доходы не покрыли расходы.
+                        </div>
+                        <button
+                            onClick={() => router.push('/lobby')}
+                            className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-bold py-5 px-16 rounded-2xl text-xl shadow-2xl border border-slate-700 hover:border-red-500/30 transition-all transform hover:scale-105"
+                        >
+                            🚪 Вернуться в лобби
+                        </button>
+                    </div>
+                )
+            }
             {showRules && <RulesModal onClose={() => setShowRules(false)} counts={state.deckCounts} />}
         </div >
     );
