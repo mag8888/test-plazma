@@ -1,6 +1,7 @@
 import { Server, Socket } from 'socket.io';
 import { RoomService } from './room.service';
 import { GameEngine, FULL_BOARD } from './engine';
+import { UserModel } from '../models/user.model';
 
 export class GameGateway {
     private io: Server;
@@ -70,6 +71,22 @@ export class GameGateway {
             socket.on('get_rooms', async (callback) => {
                 const rooms = await this.roomService.getRooms();
                 callback(rooms);
+            });
+
+            // Get Leaderboard
+            socket.on('get_leaderboard', async (callback) => {
+                try {
+                    // Fetch top 10 players by wins
+                    const leaders = await UserModel.find({ wins: { $gt: 0 } })
+                        .sort({ wins: -1 })
+                        .limit(10)
+                        .select('username firstName lastName wins photo_url');
+
+                    callback({ success: true, leaders });
+                } catch (e) {
+                    console.error("Leaderboard Error:", e);
+                    callback({ success: false, error: "Failed to fetch leaderboard" });
+                }
             });
 
             // Create Room
@@ -221,7 +238,22 @@ export class GameGateway {
 
                     // Init Engine (need fresh room data)
                     const room = await this.roomService.getRoom(roomId);
-                    const engine = new GameEngine(roomId, room.players);
+
+                    // Shuffle Players Logic
+                    // 1. Create a shuffled copy of players
+                    const shuffledPlayers = [...room.players];
+                    for (let i = shuffledPlayers.length - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [shuffledPlayers[i], shuffledPlayers[j]] = [shuffledPlayers[j], shuffledPlayers[i]];
+                    }
+
+                    // 2. Init Engine with Shuffled Players
+                    const engine = new GameEngine(roomId, shuffledPlayers);
+
+                    // 3. Log the result
+                    const orderNames = shuffledPlayers.map(p => p.name).join(' -> ');
+                    engine.state.log.push(`🎲 Random Order: ${orderNames}`);
+
                     this.games.set(roomId, engine);
 
                     this.io.to(roomId).emit('game_started', { roomId, state: engine.getState() });
@@ -241,9 +273,22 @@ export class GameGateway {
             socket.on('roll_dice', ({ roomId, diceCount }) => {
                 const game = this.games.get(roomId);
                 if (game) {
-                    const roll = game.rollDice(diceCount);
+                    const result = game.rollDice(diceCount);
+                    // result is { total: number, values: number[] } or just number (0) if failed
+                    // To be safe, check type or assume object if not 0
+
+                    let roll = 0;
+                    let diceValues: number[] = [];
+
+                    if (typeof result === 'object') {
+                        roll = result.total;
+                        diceValues = result.values;
+                    } else {
+                        roll = result;
+                    }
+
                     const state = game.getState();
-                    this.io.to(roomId).emit('dice_rolled', { roll, state });
+                    this.io.to(roomId).emit('dice_rolled', { roll, diceValues, state });
                     saveState(roomId, game);
                 }
             });
@@ -428,6 +473,49 @@ export class GameGateway {
                     const state = game.getState();
                     this.io.to(roomId).emit('turn_ended', { state });
                     saveState(roomId, game);
+                }
+            });
+
+            // Fast Track Entry
+            socket.on('enter_fast_track', (data) => {
+                const { roomId, userId } = data; // userId needed
+                const game = this.games.get(roomId);
+                if (game) {
+                    game.enterFastTrack(userId || socket.id);
+                    this.io.to(roomId).emit('state_updated', game.getState());
+                    this.saveState(roomId, game);
+                }
+            });
+
+            // End Game (Host Only)
+            socket.on('end_game_host', async (data) => {
+                const { roomId, userId } = data;
+                const game = this.games.get(roomId);
+                const room = await this.roomService.getRoom(roomId);
+
+                if (game && room) {
+                    const rankings = game.calculateRankings();
+                    game.state.rankings = rankings;
+                    game.state.isGameEnded = true;
+                    game.state.phase = 'END'; // Force END phase now
+
+                    this.io.to(roomId).emit('game_over', { rankings, state: game.getState() });
+
+                    // Update Wins in DB
+                    const winnerName = rankings.find(r => r.place === 1)?.name;
+                    if (winnerName) {
+                        const winnerPlayer = game.state.players.find(p => p.name === winnerName);
+                        if (winnerPlayer && winnerPlayer.userId && !winnerPlayer.userId.startsWith('guest_')) {
+                            try {
+                                await UserModel.findByIdAndUpdate(winnerPlayer.userId, { $inc: { wins: 1 } });
+                                console.log(`🏆 Updated wins for user ${winnerPlayer.userId}`);
+                            } catch (err) {
+                                console.error("Failed to update wins:", err);
+                            }
+                        }
+                    }
+
+                    this.saveState(roomId, game);
                 }
             });
 

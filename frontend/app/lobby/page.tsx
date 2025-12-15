@@ -119,169 +119,218 @@ export default function Lobby() {
     if (!mounted || !user) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-500">Загрузка...</div>;
 
     return (
-        <div className="min-h-screen bg-slate-900 text-white p-8">
-            <div className="max-w-4xl mx-auto">
-                <header className="flex justify-between items-center mb-8 bg-slate-800 p-4 rounded-xl border border-slate-700 shadow-lg">
-                    <div className="flex items-center gap-4">
-                        <div className="w-12 h-12 bg-blue-600 rounded-full flex items-center justify-center text-xl font-bold shadow-lg">
-                            {user.username?.[0]?.toUpperCase() || 'U'}
-                        </div>
-                        <div>
-                            <div className="text-xs text-slate-400 uppercase tracking-wider font-bold">Игрок</div>
-                            <div className="font-bold text-lg leading-none">{user.username || 'Guest'}</div>
-                        </div>
-                    </div>
+        <div className="min-h-screen bg-[#0f172a] text-white p-4 lg:p-8 font-sans">
+            <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
 
-                    <div className="flex gap-2 sm:gap-3">
-                        <button
-                            onClick={() => setIsCreating(!isCreating)}
-                            className="bg-green-600 hover:bg-green-500 px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-all font-bold text-xs sm:text-sm whitespace-nowrap flex-1 text-center"
-                        >
-                            + Новая
-                        </button>
+                {/* 👈 LEFT COLUMN: Profile & Leaderboard */}
+                <div className="lg:col-span-1 space-y-6">
+                    {/* PROFILE CARD */}
+                    <div className="bg-[#1e293b] rounded-2xl border border-slate-700/50 p-6 shadow-xl relative overflow-hidden group">
+                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-full flex items-center justify-center text-2xl font-bold shadow-lg ring-4 ring-blue-500/20">
+                                {user.username?.[0]?.toUpperCase() || 'U'}
+                            </div>
+                            <div>
+                                <div className="text-xs text-slate-400 uppercase tracking-widest font-bold mb-1">Игрок</div>
+                                <div className="font-bold text-xl text-white tracking-wide">{user.username || 'Guest'}</div>
+                            </div>
+                        </div>
+
                         <button
                             onClick={handleLogout}
-                            className="bg-slate-700 hover:bg-red-500/80 px-3 py-2 sm:px-4 sm:py-2 rounded-lg transition-all text-xs sm:text-sm font-bold border border-slate-600 whitespace-nowrap"
+                            className="w-full bg-slate-800 hover:bg-red-500/10 text-slate-400 hover:text-red-400 border border-slate-700 hover:border-red-500/50 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
                         >
-                            Выход
+                            Выйти
                         </button>
                     </div>
-                </header>
 
-                {myRooms.length > 0 && (
-                    <div className="mb-8 p-6 bg-gradient-to-r from-blue-900/30 to-purple-900/30 rounded-2xl border border-blue-500/30">
-                        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
-                            <span>🔄</span> Ваши активные игры
-                        </h2>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {myRooms.map((room) => (
-                                <div key={room.id} className="bg-slate-800/80 p-4 rounded-xl border border-blue-500/50 shadow-lg hover:bg-slate-800 transition-colors flex justify-between items-center group">
-                                    <div>
-                                        <div className="font-bold text-lg text-blue-100 group-hover:text-white transition-colors">
-                                            {room.name}
+                    {/* 🏆 LEADERBOARD WIDGET */}
+                    <div className="bg-[#1e293b] rounded-2xl border border-slate-700/50 p-6 shadow-xl relative overflow-hidden">
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
+
+                        <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
+                            <span className="text-yellow-500 text-lg">🏆</span> Топ Игроков
+                        </h3>
+
+                        <div className="space-y-4">
+                            {leaderboard.length === 0 ? (
+                                <div className="text-slate-500 text-xs text-center py-8 italic border border-dashed border-slate-800 rounded-xl">
+                                    История побед пишется сейчас...
+                                </div>
+                            ) : (
+                                leaderboard.map((player, idx) => (
+                                    <div key={idx} className="flex items-center gap-4 group">
+                                        <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black shadow-lg transform group-hover:scale-110 transition-transform ${idx === 0 ? 'bg-gradient-to-br from-yellow-300 to-yellow-600 text-black ring-2 ring-yellow-500/30' :
+                                                idx === 1 ? 'bg-gradient-to-br from-slate-300 to-slate-500 text-black' :
+                                                    idx === 2 ? 'bg-gradient-to-br from-orange-400 to-orange-700 text-white' :
+                                                        'bg-slate-800 text-slate-500'
+                                            }`}>
+                                            {idx + 1}
                                         </div>
-                                        <div className="text-xs text-blue-300 font-mono mt-1">
-                                            {room.status === 'playing' ? '🟢 Идет игра' : '🟡 Ожидание'}
-                                            <span className="mx-2">•</span>
-                                            {room.players.length}/{room.maxPlayers} игроков
+                                        <div className="flex-1 min-w-0">
+                                            <div className={`text-sm font-bold truncate ${idx === 0 ? 'text-yellow-400' : 'text-slate-200'} group-hover:text-white transition-colors`}>
+                                                {player.username || player.firstName || 'Player'}
+                                            </div>
+                                            <div className="text-[10px] text-slate-500 font-mono">
+                                                Побед: <span className="text-slate-300">{player.wins}</span>
+                                            </div>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => joinRoom(room.id)}
-                                        className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg font-bold text-sm shadow-md transition-transform hover:scale-105 active:scale-95"
-                                    >
-                                        Войти ➡
-                                    </button>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
                     </div>
-                )}
-
-                <div className="flex justify-between items-center mb-6">
-                    <h2 className="text-2xl font-bold text-slate-300">Список комнат</h2>
                 </div>
 
-                {isCreating && (
-                    <div className="bg-slate-800 p-6 rounded-xl mb-8 border border-slate-700">
-                        <h2 className="text-xl mb-4">Новая комната</h2>
-                        <div className="flex flex-col gap-4">
-                            <input
-                                type="text"
-                                placeholder="Название комнаты"
-                                value={newRoomName}
-                                onChange={(e) => setNewRoomName(e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-blue-500 outline-none"
-                            />
+                {/* 👉 RIGHT COLUMN: Main Content */}
+                <div className="lg:col-span-3 space-y-8">
 
-                            <div className="flex flex-col gap-3">
-                                <label className="text-slate-400 text-sm">Количество игроков: <span className="text-white font-bold">{maxPlayers}</span></label>
-                                <div className="flex gap-2">
-                                    {[...Array(8)].map((_, i) => {
-                                        const count = i + 1;
-                                        // Start from 2 players, so hide/disable 1 player option? 
-                                        // Requirement: 2-8. So index 0 (1 player) should be disabled or effectively 2?
-                                        // Let's render 1-8 but only enable 2-8.
-                                        if (count < 2) return null;
-
-                                        const isActive = count <= maxPlayers;
-                                        return (
-                                            <button
-                                                key={count}
-                                                onClick={() => setMaxPlayers(count)}
-                                                className={`w-10 h-10 rounded-lg flex items-center justify-center transition-all ${isActive
-                                                    ? 'bg-blue-600 text-white shadow-[0_0_10px_rgba(37,99,235,0.5)] scale-110'
-                                                    : 'bg-slate-700 text-slate-500 hover:bg-slate-600'
-                                                    }`}
-                                                title={`${count} игроков`}
-                                            >
-                                                <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
-                                                </svg>
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            <button
-                                onClick={createRoom}
-                                disabled={isSubmitting}
-                                className={`bg-green-600 hover:bg-green-700 px-6 py-2 rounded-lg w-full sm:w-auto self-end transition-all ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
-                            >
-                                {isSubmitting ? 'Создание...' : 'Создать'}
-                            </button>
-                        </div>
+                    {/* NEW ROOM & ACTIONS */}
+                    <div className="flex justify-between items-center bg-[#1e293b]/50 p-4 rounded-2xl border border-slate-800/50 backdrop-blur-sm">
+                        <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
+                            <span className="text-3xl">🎲</span> Лобби
+                        </h1>
+                        <button
+                            onClick={() => setIsCreating(!isCreating)}
+                            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/30 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center gap-2"
+                        >
+                            <span>+</span> Создать комнату
+                        </button>
                     </div>
-                )}
 
-                <div className="grid md:grid-cols-2 gap-4">
-                    {rooms.map(room => (
-                        <div key={room.id} className="bg-slate-800 p-6 rounded-xl border border-slate-700 hover:border-slate-600 transition-all flex justify-between items-center">
-                            <div>
-                                <h3 className="text-xl font-bold mb-1">{room.name}</h3>
-                                <p className="text-slate-400 text-sm">
-                                    Игроки: {room.players.length}/{room.maxPlayers} • {room.timer}с
-                                </p>
-                                <div className="mt-2 text-xs">
-                                    ID: {room.id}
-                                    <div className="mt-1 text-slate-400">
-                                        Хост: <span className="text-slate-200 font-medium">{room.players[0]?.name || 'Неизвестно'}</span>
+                    {/* ACTIVE GAMES */}
+                    {myRooms.length > 0 && (
+                        <div className="bg-gradient-to-br from-indigo-900/20 to-purple-900/20 rounded-3xl p-6 border border-indigo-500/20 relative overflow-hidden">
+                            <div className="absolute inset-0 bg-grid-slate-800/[0.1] bg-[size:20px_20px]"></div>
+                            <h2 className="text-lg font-bold text-indigo-300 mb-4 flex items-center gap-2 relative z-10">
+                                <span className="animate-spin-slow">🔄</span> Ваши активные игры
+                            </h2>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
+                                {myRooms.map((room) => (
+                                    <div key={room.id} className="bg-slate-900/80 p-5 rounded-2xl border border-indigo-500/30 hover:border-indigo-400 transition-all group shadow-xl">
+                                        <div className="flex justify-between items-start mb-4">
+                                            <div>
+                                                <div className="font-bold text-lg text-white group-hover:text-indigo-300 transition-colors">
+                                                    {room.name}
+                                                </div>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${room.status === 'playing' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
+                                                        }`}>
+                                                        {room.status === 'playing' ? '🟢 Идет игра' : '🟡 Ожидание'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="text-xs font-mono text-slate-500 bg-slate-950 px-2 py-1 rounded-lg border border-slate-800">
+                                                {room.players.length}/{room.maxPlayers}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={() => joinRoom(room.id)}
+                                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-indigo-900/20 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
+                                        >
+                                            Вернуться в игру ➡
+                                        </button>
                                     </div>
-                                </div>
+                                ))}
                             </div>
-                            <button
-                                onClick={() => joinRoom(room.id)}
-                                className="bg-slate-700 hover:bg-slate-600 px-4 py-2 rounded-lg border border-slate-600"
-                            >
-                                Войти
-                            </button>
-                        </div>
-                    ))}
-
-                    {rooms.length === 0 && (
-                        <div className="col-span-2 text-center py-12 text-slate-500">
-                            Нет доступных комнат. Создайте первую!
                         </div>
                     )}
-                </div>
-            </div>
 
-            {/* Rules Modal */}
-            {showRules && <RulesModal onClose={() => setShowRules(false)} />}
+                    {/* CREATE ROOM FORM */}
+                    {isCreating && (
+                        <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-700 shadow-2xl animate-in slide-in-from-top-4 duration-300">
+                            <h2 className="text-xl font-bold text-white mb-6">Новая комната</h2>
+                            <div className="space-y-6">
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Название</label>
+                                    <input
+                                        type="text"
+                                        placeholder="Например: Битва Миллиардеров"
+                                        value={newRoomName}
+                                        onChange={(e) => setNewRoomName(e.target.value)}
+                                        className="w-full bg-slate-900 border border-slate-700 focus:border-blue-500 rounded-xl px-5 py-4 text-white placeholder:text-slate-600 outline-none transition-all font-bold"
+                                    />
+                                </div>
 
-            {/* Fixed Bottom Bar for Rules */}
-            <div className="fixed bottom-0 left-0 right-0 p-4 bg-slate-900/90 backdrop-blur-md border-t border-slate-800 flex justify-center z-50">
-                <button
-                    onClick={() => setShowRules(true)}
-                    className="w-full max-w-4xl py-4 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 font-bold uppercase tracking-widest text-sm hover:bg-violet-500/20 active:bg-violet-500/30 transition-all flex items-center justify-center gap-3 shadow-lg shadow-violet-900/10"
-                >
-                    <span>📜</span> Правила Игры
-                </button>
-            </div>
+                                <div>
+                                    <label className="flex justify-between text-xs font-bold text-slate-500 uppercase tracking-widest mb-4">
+                                        <span>Количество игроков</span>
+                                        <span className="text-white text-lg">{maxPlayers}</span>
+                                    </label>
+                                    <div className="flex gap-2">
+                                        {[...Array(8)].map((_, i) => {
+                                            const count = i + 1;
+                                            if (count < 2) return null;
+                                            return (
+                                                <button
+                                                    key={count}
+                                                    onClick={() => setMaxPlayers(count)}
+                                                    className={`flex-1 py-3 rounded-xl font-bold transition-all border-2 ${maxPlayers === count
+                                                            ? 'bg-blue-600 border-blue-600 text-white shadow-lg shadow-blue-500/30'
+                                                            : 'bg-slate-800 border-transparent text-slate-400 hover:bg-slate-700'
+                                                        }`}
+                                                >
+                                                    {count}
+                                                </button>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
 
-            {/* Spacer for bottom bar */}
-            <div className="h-24"></div>
-        </div>
-    );
+                                <button
+                                    onClick={createRoom}
+                                    disabled={isSubmitting || !newRoomName}
+                                    className="w-full bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-xl shadow-green-900/20 hover:-translate-y-1 active:scale-95 transition-all text-sm"
+                                >
+                                    {isSubmitting ? 'Создание...' : '🚀 Запустить Игру'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* ROOM LIST */}
+                    <div className="space-y-4">
+                        <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-1">Доступные комнаты</h2>
+
+                        {rooms.length === 0 ? (
+                            <div className="text-center py-20 bg-[#1e293b]/50 rounded-3xl border border-dashed border-slate-800">
+                                <div className="text-6xl mb-4 opacity-20">📭</div>
+                                <div className="text-slate-500 font-bold">Нет доступных комнат</div>
+                                <div className="text-slate-600 text-sm mt-2">Будьте первыми — создайте игру!</div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                                {rooms.map((room) => (
+                                    <div key={room.id} className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 hover:border-slate-600 hover:shadow-xl transition-all group flex flex-col justify-between h-[180px]">
+                                        <div>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <h3 className="font-bold text-lg text-white group-hover:text-blue-400 transition-colors line-clamp-1">{room.name}</h3>
+                                                {room.status === 'playing' && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-1 rounded font-bold uppercase">Идет игра</span>}
+                                            </div>
+                                            <div className="flex gap-2 mb-4">
+                                                <div className="text-xs bg-slate-900 px-2 py-1 rounded text-slate-400 font-mono border border-slate-800">
+                                                    ⏱ {Math.floor(room.timer / 60)} мин/ход
+                                                </div>
+                                                <div className="text-xs bg-slate-900 px-2 py-1 rounded text-slate-400 font-mono border border-slate-800">
+                                                    👥 {room.players.length}/{room.maxPlayers}
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <button
+                                            onClick={() => joinRoom(room.id)}
+                                            disabled={room.status === 'playing' || room.players.length >= room.maxPlayers}
+                                            className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${room.status === 'playing' || room.players.length >= room.maxPlayers
+                                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                                                    : 'bg-slate-700 hover:bg-blue-600 text-white shadow-lg'
+                                                }`}
+    </button>
+</div>
+
+{/* Spacer for bottom bar */}
+                        <div className="h-24"></div>
+                    </div >
+                    );
 }

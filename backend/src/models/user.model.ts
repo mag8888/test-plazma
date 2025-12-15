@@ -13,6 +13,7 @@ export interface IUser extends Document {
     authCode?: string;
     authCodeExpires?: Date;
     createdAt: Date;
+    wins: number;
 }
 
 const UserSchema: Schema = new Schema({
@@ -26,7 +27,8 @@ const UserSchema: Schema = new Schema({
     referralsCount: { type: Number, default: 0 },
     referredBy: { type: String }, // Store referrer's username or ID
     authCode: { type: String },
-    authCodeExpires: { type: Date }
+    authCodeExpires: { type: Date },
+    wins: { type: Number, default: 0 }
 }, { timestamps: true });
 
 export const UserModel = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

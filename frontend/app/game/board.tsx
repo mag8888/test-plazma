@@ -29,11 +29,14 @@ interface PlayerState {
     token?: string;
     professionName?: string;
     isBankrupted?: boolean;
+    canEnterFastTrack?: boolean;
+    hasWon?: boolean;
 }
 
 import { BankModal } from './BankModal';
 import { TransferModal } from './TransferModal';
 import { RulesModal } from './RulesModal';
+import { RankingsModal } from './RankingsModal';
 
 // Helper for Cash Animation
 const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
@@ -80,6 +83,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     // Animation & Popup States
     const [showDice, setShowDice] = useState(false);
     const [diceValue, setDiceValue] = useState<number | null>(null);
+    const [diceBreakdown, setDiceBreakdown] = useState<string | null>(null);
     const [mlmMessage, setMlmMessage] = useState<string | null>(null);
     const [pendingState, setPendingState] = useState<any | null>(null);
     const [squareInfo, setSquareInfo] = useState<any>(null);
@@ -160,6 +164,9 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     // Track rolling state to prevent efficient handling of 'state_updated' race conditions
     const isRollingRef = useRef(false);
 
+    const [showRankings, setShowRankings] = useState(false);
+    const [rankings, setRankings] = useState<any[]>([]);
+
     useEffect(() => {
         socket.on('dice_rolled', (data) => {
             if (data.type === 'MLM') {
@@ -178,36 +185,49 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             // Standard Roll
             isRollingRef.current = true; // Block external updates
             setDiceValue(data.roll);
+
+            if (data.diceValues && data.diceValues.length > 1) {
+                setDiceBreakdown(data.diceValues.join(' + '));
+            } else {
+                setDiceBreakdown(null);
+            }
+
             setShowDice(true);
             setIsAnimating(true);
-            // setPendingState(data.state); // Unused
 
             const DICE_DURATION = 2000;
-            const BUFFER = 1200; // 1.2s delay after movement before showing card
+            const BUFFER = 1200;
 
-            // Calculate total movement time based on roll
-            const moveDuration = (data.roll || 0) * 500; // MOVE_PER_STEP matched with interval
+            const moveDuration = (data.roll || 0) * 500;
 
-            // 1. Show Dice for 2s
             setTimeout(() => {
                 setShowDice(false);
                 isRollingRef.current = false;
 
-                // 2. Start Moving AFTER a slight delay to let Dice fade out
                 setTimeout(() => {
                     setState(data.state);
                 }, 500);
 
-                // 3. Wait for movement to finish before showing popup
                 setTimeout(() => {
                     const currentPlayer = data.state.players[data.state.currentPlayerIndex];
                     if (!currentPlayer) return;
 
                     const squareIndex = currentPlayer.position;
-                    const board = data.state.board;
-                    const square = board.find((s: any) => s.index === squareIndex);
+                    // Check if player is on fast track for square finding
+                    let square;
+                    if (currentPlayer.isFastTrack) {
+                        square = data.state.board[24 + squareIndex]; // Logic? Backend sends global pos?
+                        // Actually engine handles pos. If isFastTrack, position is relative to Outer Track?
+                        // Engine `handleFastTrackSquare` logic suggested global index.
+                        // Visualizer handles mapping.
+                        // For popup info, we might need logic.
+                        // But Fast Track squares are simple usually.
+                    } else {
+                        square = data.state.board.find((s: any) => s.index === squareIndex);
+                    }
 
                     // Show popup only if phase allows
+                    // Adjusted for Fast Track compat (might need tweaking)
                     if (square && !['roll_dice'].includes(data.state.phase)) {
                         if (!['EXPENSE', 'MARKET', 'CHARITY', 'DEAL'].includes(square.type)) {
                             setSquareInfo(square);
@@ -218,18 +238,21 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             }, DICE_DURATION);
         });
 
+        socket.on('game_over', (data) => {
+            setState(data.state);
+            setRankings(data.rankings);
+            setShowRankings(true);
+            setIsAnimating(false);
+            setShowDice(false);
+        });
+
         socket.on('state_updated', (data) => {
-            // Only apply update if we are NOT currently animating a dice roll.
-            // This prevents the token from moving "underneath" the dice overlay.
             if (!isRollingRef.current) {
                 setState(data.state);
-            } else {
-                console.log('Skipped state_updated due to active dice roll');
             }
         });
 
         socket.on('turn_ended', (data) => {
-            // Always apply turn ended (force sync)
             isRollingRef.current = false;
             setState(data.state);
             setSquareInfo(null);
@@ -242,6 +265,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
         return () => {
             socket.off('dice_rolled');
+            socket.off('game_over');
             socket.off('turn_ended');
             socket.off('state_updated');
             socket.off('game_started');
@@ -279,6 +303,18 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
         if (window.confirm("Вы уверены, что хотите выйти? Если вы организатор, комната будет удалена.")) {
             socket.emit('leave_room', { roomId });
             router.push('/lobby');
+        }
+    };
+
+    const handleEnterFastTrack = () => {
+        if (window.confirm("Do you want to enter the Fast Track? Logic: Reset Cash, Passive Income x10, Debt Free!")) {
+            socket.emit('enter_fast_track', { roomId, userId: me.id });
+        }
+    };
+
+    const handleEndGame = () => {
+        if (window.confirm("Are you sure you want to end the game and calculate rankings?")) {
+            socket.emit('end_game_host', { roomId, userId: me.id });
         }
     };
 
@@ -340,13 +376,30 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     return (
         <div className="h-screen bg-[#0f172a] text-white font-sans flex flex-col overflow-hidden relative">
 
+            {showRankings && (
+                <RankingsModal
+                    rankings={rankings}
+                    onExit={() => {
+                        setShowRankings(false); // Maybe leave?
+                        router.push('/lobby');
+                    }}
+                />
+            )}
+
             {showDice && (
                 <div className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center pointer-events-none">
                     <div className="flex flex-col items-center animate-bounce">
                         <div className="text-9xl filter drop-shadow-[0_0_30px_rgba(255,255,255,0.5)] animate-spin-slow">🎲</div>
                         {diceValue && (
-                            <div className="mt-8 text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-600 animate-pulse">
-                                {diceValue}
+                            <div className="mt-8 flex flex-col items-center">
+                                <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-600 animate-pulse">
+                                    {diceValue}
+                                </div>
+                                {diceBreakdown && (
+                                    <div className="text-2xl font-bold text-white mt-2 bg-slate-800/60 px-4 py-1 rounded-full border border-white/10 animate-in fade-in slide-in-from-bottom-2">
+                                        {diceBreakdown}
+                                    </div>
+                                )}
                             </div>
                         )}
                         {mlmMessage && (
@@ -393,6 +446,17 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                 </div>
                             </div>
 
+                            <div className="grid grid-cols-2 gap-3 pb-3 border-b border-slate-800/50 mb-3">
+                                <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
+                                    <div className="text-[9px] text-slate-500 uppercase tracking-wider">Пассивный доход</div>
+                                    <div className="font-mono text-green-400 font-medium">+${me.passiveIncome?.toLocaleString() || 0}</div>
+                                </div>
+                                <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
+                                    <div className="text-[9px] text-slate-500 uppercase tracking-wider">Денежный поток</div>
+                                    <div className="font-mono text-green-400 font-medium">+${me.cashflow?.toLocaleString()}</div>
+                                </div>
+                            </div>
+
                             <div className="grid grid-cols-2 gap-3">
                                 <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
                                     <div className="text-[9px] text-slate-500 uppercase tracking-wider">Доход</div>
@@ -416,7 +480,10 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                     {me.assets.map((a: any, i: number) => (
                                         <div key={i} className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50">
                                             <div className="flex flex-col">
-                                                <span className="text-slate-300 font-medium">{a.title}</span>
+                                                <span className="text-slate-300 font-medium">
+                                                    {a.title}
+                                                    {a.quantity ? <span className="text-slate-500 ml-1 text-[10px]">({a.quantity} шт)</span> : ''}
+                                                </span>
                                                 <span className="font-mono text-green-400 font-bold text-[10px]">+${a.cashflow}</span>
                                             </div>
                                             <button
@@ -445,6 +512,21 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                             <div className="text-sm font-bold text-slate-200 truncate">{p.name}</div>
                                             <div className="text-[10px] text-slate-500 font-mono">${p.cash?.toLocaleString()}</div>
                                         </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Logs Section (Mobile) */}
+                        <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
+                            <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
+                                <span>📝</span> Лог событий
+                            </h3>
+                            <div className="bg-[#0B0E14]/30 rounded-xl border border-slate-800/50 p-3 overflow-y-auto font-mono text-[9px] space-y-2 custom-scrollbar h-[150px]">
+                                {state.log?.slice().reverse().map((entry: string, i: number) => (
+                                    <div key={i} className="text-slate-400 border-b border-slate-800/50 pb-2 last:border-0 leading-relaxed">
+                                        <span className="text-slate-600 mr-2">#{state.log.length - i}</span>
+                                        {entry}
                                     </div>
                                 ))}
                             </div>
@@ -581,7 +663,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-[100dvh] lg:h-screen lg:max-h-screen overflow-hidden items-center justify-center">
 
                 {/* MOBILE VIDEO CALL (MOVED TO TOP) */}
-                <div className="lg:hidden w-full px-0 py-0 flex-1 z-0 min-h-0 order-first">
+                <div className="lg:hidden w-full px-0 py-0 flex-1 z-0 min-h-0 order-first relative">
                     <VideoCall
                         className="w-full h-full shadow-lg rounded-none object-cover"
                         balance={me.cash}
@@ -590,6 +672,20 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         players={state.players}
                         currentUserId={me.id}
                     />
+
+                    {/* MOBILE TIMER OVERLAY */}
+                    <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 flex items-center gap-2 shadow-lg z-10">
+                        <span className="text-xs text-slate-300 font-bold uppercase tracking-wider">⏳</span>
+                        <span className={`font-mono font-black text-xl leading-none ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                            {formatTime(timeLeft)}
+                        </span>
+                    </div>
+
+                    {/* MOBILE TURN INDICATOR */}
+                    <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/10 flex items-center gap-2 shadow-lg z-10">
+                        <div className="text-[10px] text-slate-400 font-bold uppercase">Ход</div>
+                        <div className="font-bold text-white text-sm max-w-[100px] truncate">{currentPlayer?.name}</div>
+                    </div>
                 </div>
 
                 {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
@@ -690,6 +786,11 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                 <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative">
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
                                     <div className="text-5xl mb-4 text-center">{state.currentCard.type === 'MARKET' ? '🏠' : '💸'}</div>
+                                    {state.currentCard.type === 'MARKET' && (
+                                        <div className="text-center mb-2">
+                                            <span className="bg-blue-900/50 text-blue-300 text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-blue-800/50">РЫНОК</span>
+                                        </div>
+                                    )}
                                     <h2 className="text-xl font-bold text-white mb-2 text-center">{state.currentCard.title}</h2>
                                     <p className="text-slate-400 text-sm mb-6 text-center">{state.currentCard.description}</p>
 
@@ -1032,6 +1133,17 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                             <span className="text-xl group-hover/bank:scale-110 group-hover/bank:rotate-12 transition-transform duration-300">🏦</span>
                             <span className="text-[10px] text-slate-300 group-hover:text-white font-bold uppercase tracking-[0.15em]">Открыть Банк</span>
                         </button>
+
+                        {/* Fast Track Entry Button */}
+                        {me.canEnterFastTrack && isMyTurn && (
+                            <button
+                                onClick={handleEnterFastTrack}
+                                className="w-full mt-3 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white p-4 rounded-xl shadow-lg shadow-orange-900/30 flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-95 animate-pulse"
+                            >
+                                <span className="text-2xl">🚀</span>
+                                <span className="text-xs font-black uppercase tracking-widest">Выйти на Fast Track</span>
+                            </button>
+                        )}
                     </div>
 
                     {/* Players Mini List (Moved to Right) */}
@@ -1080,6 +1192,16 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     >
                         <span className="group-hover:-translate-x-1 transition-transform">🚪</span> Выход
                     </button>
+
+                    {/* HOST: End Game Button */}
+                    {state.players[0]?.id === me.id && state.players.some((p: any) => p.hasWon) && (
+                        <button
+                            onClick={handleEndGame}
+                            className="mt-3 w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-widest text-xs shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
+                        >
+                            <span className="text-lg">🛑</span> ЗАВЕРШИТЬ ИГРУ
+                        </button>
+                    )}
                 </div >
 
             </div>

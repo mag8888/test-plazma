@@ -84,13 +84,16 @@ const generateSmallDeals = (): Card[] => {
 
     // TSLA
     stockPrices.forEach(price => {
-        add(1, { title: 'Акции: Tesla', symbol: 'TSLA', cost: price, description: `Цена $${price}. Колебания $10-$40.`, assetType: 'STOCK' });
+        add(1, { title: 'Акции: Tesla', symbol: 'TSLA', cost: price, description: `Цена $${price}. Колебания $5-$40.`, assetType: 'STOCK' });
     });
 
     // MSFT
     stockPrices.forEach(price => {
-        add(1, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: price, description: `Цена $${price}. Колебания $10-$40.`, assetType: 'STOCK' });
+        add(1, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: price, description: `Цена $${price}. Колебания $5-$40.`, assetType: 'STOCK' });
     });
+
+    // Bitcoin (Small Deal Entry Point)
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 4000, description: 'Криптовалюта на дне. Цена $4,000.', assetType: 'STOCK' });
 
     // ID: 6612 - NEW INCOME STOCKS
     // AT&T (T) - Preferred, Cost $5000, Cashflow $50, Max 1000
@@ -163,12 +166,13 @@ const generateMarketCards = (): Card[] => {
     };
 
     // --- STOCK MARKET EVENTS ---
-    add(1, { title: 'Акции TSLA: $40', targetTitle: 'Акции: Tesla', offerPrice: 40, description: 'Рост на новостях о новой батарее. Рынок покупает по $40.' });
-    add(1, { title: 'Акции TSLA: $5', targetTitle: 'Акции: Tesla', offerPrice: 5, description: 'Проблемы с автопилотом. Рынок падает до $5.' });
-    add(1, { title: 'Акции MSFT: $40', targetTitle: 'Акции: Microsoft', offerPrice: 40, description: 'Рекордная прибыль облачного сегмента. Рынок $40.' });
-    add(1, { title: 'Акции MSFT: $5', targetTitle: 'Акции: Microsoft', offerPrice: 5, description: 'Антимонопольный иск. Рынок падает до $5.' });
-    add(1, { title: 'Сплит Акций TSLA', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза. Цена делится пополам.', action: 'OFFER' });
-    add(1, { title: 'Сплит Акций MSFT', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза. Цена делится пополам.', action: 'OFFER' });
+    // STOCKS REMOVED FROM MARKET DECK AS PER USER REQUEST
+    // add(1, { title: 'Акции TSLA: $40', targetTitle: 'Акции: Tesla', offerPrice: 40, description: 'Рост на новостях о новой батарее. Рынок покупает по $40.' });
+    // add(1, { title: 'Акции TSLA: $5', targetTitle: 'Акции: Tesla', offerPrice: 5, description: 'Проблемы с автопилотом. Рынок падает до $5.' });
+    // add(1, { title: 'Акции MSFT: $40', targetTitle: 'Акции: Microsoft', offerPrice: 40, description: 'Рекордная прибыль облачного сегмента. Рынок $40.' });
+    // add(1, { title: 'Акции MSFT: $5', targetTitle: 'Акции: Microsoft', offerPrice: 5, description: 'Антимонопольный иск. Рынок падает до $5.' });
+    // add(1, { title: 'Сплит Акций TSLA', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза.', action: 'OFFER' });
+    // add(1, { title: 'Сплит Акций MSFT', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза.', action: 'OFFER' });
 
     // --- REAL ESTATE & BUSINESS BUYERS (MULTIPLIERS 1.5x - 5x) ---
     // 3Br/2Ba House (Cost $8,500)
@@ -200,11 +204,15 @@ const generateMarketCards = (): Card[] => {
     add(1, { title: 'Выкуп франшизы', targetTitle: 'Франшиза: Plazma Water', offerPrice: 25000, description: 'Головная компания выкупает точку. $25,000 (5x).' });
 
     // Generic / Other
-    add(1, { title: 'Покупатель 4-плекс', description: 'Инвестор ищет многоквартирный дом. Предлагает $100,000 за 4-plex.' });
-    add(1, { title: 'Слияние сетей', targetTitle: 'Студия маникюра', offerPrice: 25000, description: 'Выкуп сети. $25,000 ($5k -> $25k, 5x).' });
+    add(1, { title: 'Слияние сетей', targetTitle: 'Студия маникюра', offerPrice: 25000, description: 'Выкуп сети. $25,000.' });
     add(1, { title: 'Покупатель бизнеса', targetTitle: 'Кофейня', offerPrice: 15000, description: 'Инвестор. $15,000 ($5k -> $15k, 3x).' });
     add(1, { title: 'Застройщик', targetTitle: 'Участок земли 20га', offerPrice: 150000, description: 'Цена земли взлетела до $150,000.' });
-    add(1, { title: 'Коллекционер', targetTitle: 'Картина', offerPrice: 6000, description: 'Шедевр! $6,000 (5x).' });
+    add(4, { title: 'Покупатель студии', targetTitle: 'Флипинг студии', offerPrice: 7000, description: 'Покупатель квартиры студии (субаренда) за $7,000.' });
+    add(2, { title: 'Выкуп доли', targetTitle: 'Партнёрство в автомастерской', offerPrice: 50000, description: 'Есть покупатель на партнерство за $50,000.' });
+    add(4, { title: 'Покупатель жилья', targetTitle: 'Комната в пригороде', offerPrice: 25000, description: 'Старое жилье идет под снос. Предлагают $25,000 за комнату.' });
+
+    // BITCOIN SCAM
+    add(1, { title: 'Скам на криптобирже', targetTitle: 'Bitcoin', offerPrice: 0, description: 'Биржа рухнула. Все ваши BTC сгорают (Цена $0).' });
 
     return cards;
 };
@@ -256,7 +264,12 @@ const generateBigDeals = (): Card[] => {
     add(1, { title: 'Коворкинг-центр', cost: 250000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 50000, businessType: 'CLASSIC', assetType: 'BUSINESS' });
 
     add(3, { title: 'Франшиза: Plazma Water', cost: 5000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' });
-    add(3, { title: 'Франшиза: MONEO', cost: 1000, cashflow: 0, description: 'Франшиза MONEO. Кол-во партнеров = Бросок кубика. ($500/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' });
+    add(3, { title: 'Франшиза: MONEO', cost: 5000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', businessType: 'NETWORK' });
+
+    // Bitcoin Big Deals
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 10000, description: 'Крипто-зима. Цена $10,000.', assetType: 'STOCK' });
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 50000, description: 'Биткоин растет! Цена $50,000.', assetType: 'STOCK' });
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 100000, description: 'To The Moon! Цена $100,000.', assetType: 'STOCK' });
 
     return cards;
 };

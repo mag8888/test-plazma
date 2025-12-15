@@ -96,6 +96,11 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                             <span className="text-white font-mono text-lg">${player.income?.toLocaleString()}</span>
                         </div>
 
+                        <div className="flex justify-between items-center pb-2 border-b border-slate-700/50">
+                            <span className="text-slate-400 font-bold tracking-wide text-xs">ПАССИВНЫЙ</span>
+                            <span className="text-emerald-400 font-mono text-lg">+${(player.passiveIncome || 0).toLocaleString()}</span>
+                        </div>
+
                         {/* Expenses Toggle */}
                         <div
                             onClick={() => setShowExpenses(!showExpenses)}
