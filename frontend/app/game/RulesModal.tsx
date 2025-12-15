@@ -95,9 +95,8 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
                             </p>
                             <p className="mb-2">
                                 <strong className="text-white">Условия Победы:</strong>
-                                1. Увеличить Пассивный Доход на +$50,000 на Скоростной дорожке.
-                                <br />
-                                2. Купить свою Мечту.
+                                <br />1. Увеличить Пассивный Доход на +$50,000 на Скоростной дорожке.
+                                <br />2. Купить 2 бизнеса и свою Мечту.
                             </p>
                             <p className="text-sm text-yellow-400">
                                 <strong>Рейтинг:</strong> Игра продолжается даже после победы первого игрока!

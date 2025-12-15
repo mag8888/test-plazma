@@ -506,31 +506,30 @@ export class GameEngine {
 
         this.state.log.push(`${player.name} landed on ${square.type}: ${square.name}`);
 
-        // WIN CONDITION: Increase Passive Income by +$50,000 on Fast Track
-        // Or Buy Dream (Handled in DREAM logic usually, but we check here too if needed)
+        // WIN CONDITION:
+        // 1. Passive Income +$50k
+        // 2. Buy your Dream
+        // 3. Buy at least 2 Businesses (User Request: "Купить 2 бизнеса и свою Мечту")
 
         let won = false;
 
-        // 1. Income Goal
-        if (player.fastTrackStartIncome !== undefined) {
-            if (player.passiveIncome >= player.fastTrackStartIncome + 50000) {
-                won = true;
-            }
-        } else {
-            // Fallback for legacy/error: Use fixed 50k check or assume no goal set yet
-            if (player.passiveIncome >= 50000 && !player.fastTrackStartIncome) {
-                // If we didn't track start income, fallback to old rule?
-                // Or maybe they pre-dated the update. Let's start tracking now if missing.
-                player.fastTrackStartIncome = 0; // rough guess
-            }
+        const incomeGoalMet = player.fastTrackStartIncome !== undefined
+            ? (player.passiveIncome >= player.fastTrackStartIncome + 50000)
+            : (player.passiveIncome >= 50000);
+
+        const businessCount = player.assets.filter(a => a.type === 'BUSINESS').length;
+        const dreamBought = player.assets.some(a => a.type === 'DREAM' && a.title === player.dream);
+
+        if (incomeGoalMet && dreamBought && businessCount >= 2) {
+            won = true;
         }
 
         if (won && !player.hasWon) {
             player.hasWon = true;
-            this.state.log.push(`🏆 ${player.name} HAS WON THE GAME (+50k Income)!`);
+            this.state.log.push(`🏆 ${player.name} HAS WON THE GAME! (+50k Flow, Dream, 2 Businesses)`);
             this.state.log.push(`Game continues for others...`);
-            // Do NOT set Phase END globally. 
-            // Just mark winner.
+
+            // Broadcast End Game event if needed or handled by state change
         }
 
         switch (square.type) {
