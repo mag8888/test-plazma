@@ -49,8 +49,14 @@ export default function Lobby() {
             });
 
             // Fetch Leaderboard
-            socket.emit('get_leaderboard', (data: any[]) => {
-                setLeaderboard(data);
+            socket.emit('get_leaderboard', (response: any) => {
+                if (Array.isArray(response)) {
+                    setLeaderboard(response);
+                } else if (response && response.leaders && Array.isArray(response.leaders)) {
+                    setLeaderboard(response.leaders);
+                } else {
+                    setLeaderboard([]);
+                }
             });
 
             // Fetch My Rooms using either Logged In ID or Guest ID
