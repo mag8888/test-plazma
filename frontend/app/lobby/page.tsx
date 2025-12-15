@@ -401,6 +401,15 @@ export default function Lobby() {
 
                 </div>
             </div>
+
+            {/* RULES BUTTON (Fixed) */}
+            <button
+                onClick={() => setShowRules(true)}
+                className="fixed bottom-6 left-6 z-50 bg-slate-800/80 hover:bg-slate-700 backdrop-blur-md border border-slate-700 text-slate-400 hover:text-white px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all shadow-lg hover:shadow-xl"
+            >
+                📜 Правила
+            </button>
+
             {showRules && <RulesModal onClose={() => setShowRules(false)} />}
         </div>
     );

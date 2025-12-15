@@ -280,10 +280,10 @@ export class GameEngine {
             // So if loanDebt > 0, cannot enter? Or must repay immediately? 
             // "repayment of loan" implies State: No Debt.
 
-            if (player.loanDebt === 0) {
+            if (player.loanDebt === 0 && player.cash >= 200000) {
                 player.canEnterFastTrack = true;
                 if (!this.state.log.some(l => l.includes(`${player.name} can now enter Fast Track`))) {
-                    this.state.log.push(`🚀 ${player.name} can now enter Fast Track! (Passive > 2x Expenses, No Debt)`);
+                    this.state.log.push(`🚀 ${player.name} can now enter Fast Track! (Passive > 2x Expenses, No Debt, $200k Cash)`);
                 }
             }
         }
