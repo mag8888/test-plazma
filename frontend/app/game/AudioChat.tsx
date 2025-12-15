@@ -4,6 +4,7 @@ import { socket } from '../socket';
 // Types for Speech Recognition
 interface SpeechRecognitionEvent extends Event {
     results: SpeechRecognitionResultList;
+    resultIndex: number;
 }
 
 interface SpeechRecognitionResultList {
