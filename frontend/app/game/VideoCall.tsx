@@ -161,15 +161,31 @@ export const VideoCall = ({
 
         const handleSignal = async ({ from, signal }: { from: string, signal: any }) => {
             let peer = peersRef.current.get(from);
-            // If we receive an offer and don't have a peer, create one (responder)
+
+            // If we don't have a peer, ONLY create one if it's an OFFER.
+            // (We cannot accept an Answer or Candidate for a connection that doesn't exist yet)
             if (!peer) {
-                peer = createPeer(from, false);
+                if (signal.description && signal.description.type === 'offer') {
+                    peer = createPeer(from, false);
+                } else {
+                    console.warn(`Ignored orphan signal from ${from} (Type: ${signal.description?.type || 'candidate'})`);
+                    return;
+                }
             }
 
             try {
                 if (signal.description) {
-                    await peer.setRemoteDescription(new RTCSessionDescription(signal.description));
-                    if (signal.description.type === 'offer') {
+                    const desc = new RTCSessionDescription(signal.description);
+
+                    // Prevent "InvalidStateError: stable" when receiving duplicate/late answers
+                    if (desc.type === 'answer' && peer.signalingState === 'stable') {
+                        console.warn("Ignored answer in stable state");
+                        return;
+                    }
+
+                    await peer.setRemoteDescription(desc);
+
+                    if (desc.type === 'offer') {
                         const answer = await peer.createAnswer();
                         await peer.setLocalDescription(answer);
                         socket.emit('signal', { to: from, signal: { description: answer } });
