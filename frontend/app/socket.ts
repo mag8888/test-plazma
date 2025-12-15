@@ -32,6 +32,6 @@ export const socket = io(SOCKET_URL, {
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
-    transports: ['polling', 'websocket'], // Match Backend: Polling first for robustness, upgrade to WS
+    transports: ['websocket'], // Force WebSocket to bypass 400 Errors on Polling (Sticky Session/Proxy issues)
     timeout: 20000,
 });
