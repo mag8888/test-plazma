@@ -898,10 +898,15 @@ export class BotService {
                 const freeSpots = game.promoSpots - game.participants.filter((p: any) => p.type === 'PROMO').length;
                 const paidSpots = (game.maxPlayers - game.promoSpots) - game.participants.filter((p: any) => p.type === 'PAID').length;
 
-                // Format Text
+                // Create text
                 const dateStr = new Date(game.startTime).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
+                // Fetch Host
+                const host = await UserModel.findById(game.hostId);
+                const hostName = host ? (host.username ? `@${host.username}` : host.first_name) : 'Неизвестно';
+
                 let text = `🎲 **Игра: ${dateStr}**\n`;
+                text += `👑 Мастер: ${hostName}\n`;
                 text += `👥 Игроков: ${totalParticipants}/${game.maxPlayers}\n`;
                 text += `🎟 Промо (Free): ${freeSpots > 0 ? freeSpots : '❌ Нет мест'}\n`;
                 text += `💰 Платные ($20): ${paidSpots > 0 ? paidSpots : '❌ Нет мест'}\n`;
