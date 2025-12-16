@@ -54,6 +54,6 @@
   "homepage": "https://github.com/your-username/EM1#readme",
   "railway": {
     "buildCommand": "npm install",
-    "startCommand": "npm start"
+    "startCommand": "sh start.sh"
   }
 }
