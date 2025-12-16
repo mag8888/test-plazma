@@ -3,6 +3,7 @@ import AdminJS from 'adminjs';
 import AdminJSExpress from '@adminjs/express';
 import { Database, Resource } from '@adminjs/prisma';
 // Technical Fix: Import helper directly from internal path to bypass export issues
+// @ts-ignore
 import { getModelByName } from '@adminjs/prisma/lib/utils/get-model-by-name.js';
 import type { ActionRequest } from 'adminjs';
 import { env } from '../config/env.js';
