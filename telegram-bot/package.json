@@ -17,6 +17,7 @@
     "adminjs": "^7.4.1",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
+    "mongodb": "^7.0.0",
     "telegraf": "^4.16.3"
   },
   "devDependencies": {
