@@ -466,7 +466,9 @@ sendMainMenu(chatId: number, text: string) {
             resize_keyboard: true
         }
     });
-} async handleUserRegistration(telegramId: number, username: string, firstName: string, referralCode: string | null) {
+}
+
+    async handleUserRegistration(telegramId: number, username: string, firstName: string, referralCode: string | null) {
     try {
         const { UserModel } = await import('../models/user.model');
 
@@ -596,7 +598,9 @@ sendMainMenu(chatId: number, text: string) {
         console.error("Error generating play link:", e);
         this.bot?.sendMessage(chatId, "Ошибка запуска.");
     }
-} async handleClients(chatId: number) {
+}
+
+    async handleClients(chatId: number) {
     const { UserModel } = await import('../models/user.model');
     const user = await UserModel.findOne({ telegram_id: chatId });
     const isMaster = user && user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date();
