@@ -118,10 +118,18 @@ export const AudioChat = ({
                     console.error("Audio Context Error", e);
                 }
 
-            } catch (err) {
+            } catch (err: any) {
                 console.error("Mic Error:", err);
-                setError("Mic Access Denied");
-                setStatus("Mic Error");
+                if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+                    setError("Mic Permission Denied");
+                } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
+                    setError("No Microphone Found");
+                } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
+                    setError("Mic Not Readable");
+                } else {
+                    setError("Mic Error");
+                }
+                setStatus("Offline");
             }
         };
 
