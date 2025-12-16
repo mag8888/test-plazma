@@ -128,8 +128,8 @@ export const AudioChat = ({
                     const hasAudioInput = devices.some(d => d.kind === 'audioinput');
 
                     if (!hasAudioInput) {
-                        setError("Browser sees 0 Microphones. Check OS Settings.");
-                        setStatus("No Devices");
+                        setError("⚠️ macOS Privacy Block? Check System Settings -> Microphone");
+                        setStatus("No Mic");
                         return;
                     }
                 } catch (diagErr) {
