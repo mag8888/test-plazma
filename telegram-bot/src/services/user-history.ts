@@ -28,11 +28,19 @@ export async function ensureUser(ctx: Context) {
           }
         }
       );
-      return { id: existingUser._id.toString() };
+      // Return full object merged with updates
+      return {
+        id: existingUser._id.toString(),
+        telegramId: existingUser.telegramId,
+        firstName: from.first_name ?? null,
+        lastName: from.last_name ?? null,
+        username: from.username ?? null,
+        languageCode: from.language_code ?? null,
+      };
     }
 
     // 2. Create new
-    const result = await users.insertOne({
+    const newUser = {
       telegramId,
       firstName: from.first_name ?? null,
       lastName: from.last_name ?? null,
@@ -40,9 +48,14 @@ export async function ensureUser(ctx: Context) {
       languageCode: from.language_code ?? null,
       createdAt: new Date(),
       updatedAt: new Date()
-    });
+    };
 
-    return { id: result.insertedId.toString() };
+    const result = await users.insertOne(newUser);
+
+    return {
+      id: result.insertedId.toString(),
+      ...newUser
+    };
 
   } catch (error) {
     console.error('ERROR in ensureUser (Native):', error);
