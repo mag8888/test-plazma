@@ -11,7 +11,7 @@ if (!token) {
 export class BotService {
     bot: TelegramBot | null = null;
     adminStates: Map<number, { state: string, targetUser?: any }> = new Map();
-    masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_TIME' | 'WAITING_MAX' | 'WAITING_PROMO', gameData?: any }> = new Map();
+    masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_TIME' | 'WAITING_MAX' | 'WAITING_PROMO' | 'WAITING_ANNOUNCEMENT_TEXT', gameData?: any, gameId?: string }> = new Map();
     transferStates: Map<number, { state: 'WAITING_USER' | 'WAITING_AMOUNT', targetUser?: any }> = new Map();
     participantStates: Map<number, { state: 'WAITING_POST_LINK', gameId: string }> = new Map();
 
@@ -284,6 +284,35 @@ export class BotService {
                     this.masterStates.delete(chatId);
                     this.bot?.sendMessage(chatId, `✅ Игра создана! ${newGame.startTime.toLocaleString()}`);
                     return;
+                } else if (masterState.state === 'WAITING_ANNOUNCEMENT_TEXT') {
+                    const gameId = masterState.gameId;
+                    if (!gameId) {
+                        this.bot?.sendMessage(chatId, "Ошибка: ID игры не найден. Начните заново.");
+                        this.masterStates.delete(chatId);
+                        return;
+                    }
+                    const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                    const { UserModel } = await import('../models/user.model');
+
+                    const game = await ScheduledGameModel.findById(gameId);
+                    if (!game) {
+                        this.bot?.sendMessage(chatId, "Игра не найдена.");
+                        this.masterStates.delete(chatId);
+                        return;
+                    }
+
+                    let count = 0;
+                    for (const p of game.participants) {
+                        const user = await UserModel.findById(p.userId);
+                        if (user) {
+                            this.bot?.sendMessage(user.telegram_id, `📢 **Сообщение от организатора:**\n\n${text}`, { parse_mode: 'Markdown' });
+                            count++;
+                        }
+                    }
+
+                    this.bot?.sendMessage(chatId, `✅ Сообщение отправлено ${count} участникам.`);
+                    this.masterStates.delete(chatId);
+                    return;
                 }
             }
 
@@ -450,6 +479,10 @@ export class BotService {
                 await this.handleSchedule(chatId);
             } else if (data === 'start_transfer') {
                 this.handleTransferStart(chatId);
+            } else if (data.startsWith('announce_game_')) {
+                const gameId = data.replace('announce_game_', '');
+                this.masterStates.set(chatId, { state: 'WAITING_ANNOUNCEMENT_TEXT', gameId: gameId });
+                this.bot?.sendMessage(chatId, "📢 Введите текст сообщения, которое будет отправлено всем участникам этой игры (или /cancel):");
             }
         });
         // Handle Photos for Cloudinary Upload
@@ -860,9 +893,14 @@ export class BotService {
                 if (freeSpots > 0) keyboard.push({ text: 'Записаться (Free)', callback_data: `join_game_${game._id}` });
                 if (paidSpots > 0) keyboard.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
 
+                // Host Actions
+                if (isRequesterMaster && game.hostId && requester._id.toString() === game.hostId.toString()) {
+                    keyboard.push({ text: '📢 Отправить сообщение игрокам', callback_data: `announce_game_${game._id}` });
+                }
+
                 this.bot?.sendMessage(chatId, text, {
                     parse_mode: 'Markdown',
-                    reply_markup: { inline_keyboard: [keyboard] }
+                    reply_markup: { inline_keyboard: [keyboard] } // This puts all in 1 row? Better to split.
                 });
             }
 
