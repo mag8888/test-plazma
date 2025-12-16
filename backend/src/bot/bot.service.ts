@@ -1041,9 +1041,12 @@ export class BotService {
         // Create text
         const dateStr = new Date(game.startTime).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
 
+        // Helper to escape Markdown
+        const escapeMd = (s: string) => s.replace(/[_*[`]/g, '\\$&');
+
         // Fetch Host
         const host = await UserModel.findById(game.hostId);
-        const hostName = host ? (host.username ? `@${host.username}` : host.first_name) : 'Неизвестно';
+        const hostName = host ? (host.username ? `@${escapeMd(host.username)}` : escapeMd(host.first_name || '')) : 'Неизвестно';
 
         let text = `🎲 **Игра: ${dateStr}**\n`;
         text += `👑 Мастер: ${hostName}\n`;
@@ -1057,16 +1060,19 @@ export class BotService {
             game.participants.forEach((p: any, i: number) => {
                 const verifiedMark = p.isVerified ? '✅' : '';
                 // Privacy Logic
-                let line = `${i + 1}. ${p.firstName || 'Игрок'} ${verifiedMark}`;
+                let name = escapeMd(p.firstName || 'Игрок');
+                let line = `${i + 1}. ${name} ${verifiedMark}`;
                 if (isRequesterMaster) {
-                    line += ` (@${p.username || 'no_user'})`;
+                    const uname = p.username ? `@${escapeMd(p.username)}` : 'no\\_user';
+                    line += ` (${uname})`;
                 }
                 text += `${line}\n`;
             });
         }
 
         const keyboard: any[] = [];
-        const isParticipant = requester && game.participants.some((p: any) => p.userId.toString() === requester._id.toString());
+        // Safety check for p.userId
+        const isParticipant = requester && game.participants.some((p: any) => p.userId && requester._id && p.userId.toString() === requester._id.toString());
 
         if (isParticipant) {
             keyboard.push({ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` });
