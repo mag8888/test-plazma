@@ -8,7 +8,7 @@ import { prisma } from '../lib/prisma.js';
 
 // Robustly handle ESM/CommonJS import differences
 console.log('DEBUG: AdminJSPrisma import:', JSON.stringify(AdminJSPrisma, null, 2));
-const { Database, Resource } = (AdminJSPrisma as any).default || AdminJSPrisma;
+const { Database, Resource, getModelByName } = (AdminJSPrisma as any).default || AdminJSPrisma;
 console.log('DEBUG: Database type:', typeof Database, 'Resource type:', typeof Resource);
 AdminJS.registerAdapter({ Database, Resource });
 
@@ -29,7 +29,7 @@ export async function setupAdminPanel(app: Application) {
     },
     resources: [
       {
-        resource: { model: prisma.category, client: prisma },
+        resource: { model: getModelByName('Category'), client: prisma },
         options: {
           properties: {
             slug: {
@@ -76,7 +76,7 @@ export async function setupAdminPanel(app: Application) {
         },
       },
       {
-        resource: { model: prisma.product, client: prisma },
+        resource: { model: getModelByName('Product'), client: prisma },
         options: {
           properties: {
             description: {
@@ -90,37 +90,37 @@ export async function setupAdminPanel(app: Application) {
         },
       },
       {
-        resource: { model: prisma.review, client: prisma },
+        resource: { model: getModelByName('Review'), client: prisma },
         options: {
           listProperties: ['name', 'isActive', 'isPinned', 'createdAt'],
         },
       },
       {
-        resource: { model: prisma.partnerProfile, client: prisma },
+        resource: { model: getModelByName('PartnerProfile'), client: prisma },
         options: {
           listProperties: ['id', 'userId', 'programType', 'balance', 'bonus'],
         },
       },
       {
-        resource: { model: prisma.partnerTransaction, client: prisma },
+        resource: { model: getModelByName('PartnerTransaction'), client: prisma },
         options: {
           listProperties: ['profileId', 'amount', 'type', 'createdAt'],
         },
       },
       {
-        resource: { model: prisma.user, client: prisma },
+        resource: { model: getModelByName('User'), client: prisma },
         options: {
           listProperties: ['telegramId', 'firstName', 'username', 'createdAt'],
         },
       },
       {
-        resource: { model: prisma.userHistory, client: prisma },
+        resource: { model: getModelByName('UserHistory'), client: prisma },
         options: {
           listProperties: ['userId', 'action', 'createdAt'],
         },
       },
       {
-        resource: { model: prisma.orderRequest, client: prisma },
+        resource: { model: getModelByName('OrderRequest'), client: prisma },
         options: {
           listProperties: ['id', 'status', 'createdAt'],
         },
