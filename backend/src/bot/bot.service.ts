@@ -30,7 +30,6 @@ export class BotService {
             });
 
             this.initHandlers();
-            this.initHandlers();
 
             // Start Reminder Interval (Every 5 minutes)
             setInterval(() => this.checkReminders(), 5 * 60 * 1000);
@@ -493,8 +492,8 @@ export class BotService {
             reply_markup: {
                 keyboard: [
                     [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
-                    [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
-                    [{ text: 'ℹ️ О проекте' }]
+                    [{ text: '🤝 Получить клиентов' }],
+                    [{ text: '🌐 Сообщество' }, { text: 'ℹ️ О проекте' }]
                 ],
                 resize_keyboard: true
             }
