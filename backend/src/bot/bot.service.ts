@@ -320,7 +320,7 @@ export class BotService {
             } else if (text === '🎲 Играть') {
                 this.handlePlay(chatId);
             } else if (text === '🤝 Получить клиентов') {
-                this.handleClients(chatId);
+                await this.handleClients(chatId);
             } else if (text === '💸 Перевод') {
                 this.handleTransferStart(chatId);
             } else if (text === '🌐 Сообщество') {
@@ -379,6 +379,8 @@ export class BotService {
                 }
             } else if (data === 'admin_upload') {
                 this.bot?.sendMessage(chatId, "Send me a photo to upload it to Cloudinary.");
+            } else if (data === 'start_add_game') {
+                await this.handleAddGameStart(chatId, userId);
             }
         });
         // Handle Photos for Cloudinary Upload
@@ -588,16 +590,31 @@ export class BotService {
         }
     }
 
-    handleClients(chatId: number) {
-        this.bot?.sendMessage(chatId,
-            `Через игру ты можешь находить новых клиентов и партнёров.\n` +
-            `Это современный инструмент продвижения твоего бизнеса и укрепления связей.`,
-            {
-                reply_markup: {
-                    inline_keyboard: [[{ text: 'Стать мастером ($100)', callback_data: 'become_master' }]]
-                }
+    async handleClients(chatId: number) {
+        const { UserModel } = await import('../models/user.model');
+        const user = await UserModel.findOne({ telegram_id: chatId });
+        const isMaster = user && user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date();
+
+        const keyboard = [];
+        if (isMaster) {
+            keyboard.push([{ text: '➕ Добавить игру', callback_data: 'start_add_game' }]);
+        } else {
+            keyboard.push([{ text: 'Стать мастером ($100)', callback_data: 'become_master' }]);
+        }
+
+        let text = `Через игру ты можешь находить новых клиентов и партнёров.\n` +
+            `Это современный инструмент продвижения твоего бизнеса и укрепления связей.`;
+
+        if (isMaster) {
+            text += `\n\n✅ **Ваш статус Мастера активен до:** ${user.masterExpiresAt.toLocaleDateString('ru-RU')}`;
+        }
+
+        this.bot?.sendMessage(chatId, text, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: keyboard
             }
-        );
+        });
     }
 
     handleCommunity(chatId: number) {
