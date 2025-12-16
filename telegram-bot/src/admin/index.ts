@@ -1,15 +1,12 @@
 import { Router, Application } from 'express';
 import AdminJS from 'adminjs';
 import AdminJSExpress from '@adminjs/express';
-import * as AdminJSPrisma from '@adminjs/prisma';
+import { Database, Resource } from '@adminjs/prisma';
 import type { ActionRequest } from 'adminjs';
 import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
 
-AdminJS.registerAdapter({
-  Resource: AdminJSPrisma.Resource,
-  Database: AdminJSPrisma.Database,
-});
+AdminJS.registerAdapter({ Database, Resource });
 
 function slugify(value: string) {
   return value
