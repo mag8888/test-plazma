@@ -120,18 +120,43 @@ export const AudioChat = ({
 
             } catch (err: any) {
                 console.error("Mic Error:", err);
+
+                // DIAGNOSTIC: Check available devices
+                try {
+                    const devices = await navigator.mediaDevices.enumerateDevices();
+                    console.log("Available Devices:", devices.map(d => `${d.kind}: ${d.label} (${d.deviceId})`));
+                    const hasAudioInput = devices.some(d => d.kind === 'audioinput');
+
+                    if (!hasAudioInput) {
+                        setError("Browser sees 0 Microphones. Check OS Settings.");
+                        setStatus("No Devices");
+                        return;
+                    }
+                } catch (diagErr) {
+                    console.error("Device Enumeration Failed:", diagErr);
+                }
+
                 if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
-                    setError("Mic Permission Denied");
+                    setError("Mic Permission BLOCKED by Browser/OS");
                 } else if (err.name === 'NotFoundError' || err.name === 'DevicesNotFoundError') {
-                    setError("No Microphone Found");
+                    setError("Mic Not Found (Browser detects 0 devices)");
                 } else if (err.name === 'NotReadableError' || err.name === 'TrackStartError') {
-                    setError("Mic Not Readable");
+                    setError("Mic HW Error (In use by other app?)");
                 } else {
-                    setError("Mic Error");
+                    setError(`Mic Error: ${err.name}`);
                 }
                 setStatus("Offline");
             }
         };
+
+        const checkPermissions = async () => {
+            // Optional: Pre-check permissions query if available
+            try {
+                const perm = await navigator.permissions.query({ name: 'microphone' as any });
+                console.log("Mic Permission State:", perm.state);
+            } catch (e) { /* ignore */ }
+        };
+        checkPermissions();
 
         if (currentUserId) {
             initLocalAudio();
@@ -410,8 +435,9 @@ export const AudioChat = ({
 
             {/* Error Toast */}
             {error && (
-                <div className="absolute bottom-0 left-0 w-full bg-red-600 text-white text-[10px] p-1 text-center font-bold">
-                    {error}
+                <div className="absolute bottom-0 left-0 w-full bg-red-600 text-white text-[10px] p-1 text-center font-bold flex items-center justify-between px-2">
+                    <span className="flex-1">{error}</span>
+                    <button onClick={() => setError(null)} className="text-white hover:text-red-200 px-1 font-bold">✕</button>
                 </div>
             )}
         </div>
