@@ -5,6 +5,11 @@ function requireEnv(key: string): string {
   if (!value) {
     throw new Error(`Environment variable ${key} is required`);
   }
+  if (key === 'MONGO_URL') {
+    // Mask password to safe print the structure
+    const masked = value.replace(/:([^:@]+)@/, ':****@');
+    console.log(`🔍 DEBUG: MONGO_URL loaded as: "${masked}"`);
+  }
   return value;
 }
 
