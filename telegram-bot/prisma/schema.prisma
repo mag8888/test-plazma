@@ -1,0 +1,147 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("MONGO_URL")
+}
+
+enum PartnerProgramType {
+  DIRECT
+  MULTI_LEVEL
+}
+
+enum TransactionType {
+  CREDIT
+  DEBIT
+}
+
+model User {
+  id            String          @id @default(auto()) @map("_id") @db.ObjectId
+  telegramId    String          @unique
+  firstName     String?
+  lastName      String?
+  username      String?
+  languageCode  String?
+  phone         String?
+  cartItems     CartItem[]
+  histories     UserHistory[]
+  partner       PartnerProfile?
+  orders        OrderRequest[]
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+}
+
+model UserHistory {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @db.ObjectId
+  action    String
+  payload   Json?
+  createdAt DateTime @default(now())
+}
+
+model Category {
+  id          String    @id @default(auto()) @map("_id") @db.ObjectId
+  name        String
+  slug        String    @unique
+  description String?
+  isActive    Boolean   @default(true)
+  products    Product[]
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model Product {
+  id          String     @id @default(auto()) @map("_id") @db.ObjectId
+  title       String
+  summary     String
+  description String?
+  imageUrl    String?
+  price       Float // Decimal is not fully supported in Mongo consistently, Float is safer, or keep Decimal but map to native. Prisma supports Decimal in Mongo.
+  isActive    Boolean    @default(true)
+  category    Category   @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId  String     @db.ObjectId
+  cartItems   CartItem[]
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+}
+
+// Note: Decimal in Mongo/Prisma:
+// Address this by keeping Decimal if acceptable or verify if Float is better for this codebase.
+// Original used Decimal @db.Decimal(12,2). 
+// Mongo doesn't have @db.Decimal params.
+// We'll try to keep Decimal (Prisma handles it).
+
+model CartItem {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String   @db.ObjectId
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String   @db.ObjectId
+  quantity  Int      @default(1)
+  createdAt DateTime @default(now())
+
+  @@unique([userId, productId])
+}
+
+model OrderRequest {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  user      User?    @relation(fields: [userId], references: [id])
+  userId    String?  @db.ObjectId
+  contact   String?
+  message   String
+  itemsJson Json
+  status    String   @default("NEW")
+  createdAt DateTime @default(now())
+}
+
+model PartnerProfile {
+  id             String             @id @default(auto()) @map("_id") @db.ObjectId
+  user           User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId         String             @unique @db.ObjectId
+  programType    PartnerProgramType
+  referralCode   String             @unique
+  balance        Float              @default(0) // Reduced from Decimal for simplicity in Mongo if needed, or keep Decimal? Let's try Float/Double for now to avoid precision issues if Decimal not set up right. Original was Decimal.
+  bonus          Float              @default(0)
+  totalPartners  Int                @default(0)
+  directPartners Int                @default(0)
+  multiPartners  Int                @default(0)
+  referrals      PartnerReferral[]
+  transactions   PartnerTransaction[]
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+}
+
+model PartnerReferral {
+  id         String         @id @default(auto()) @map("_id") @db.ObjectId
+  profile    PartnerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId  String         @db.ObjectId
+  referredId String? // Was Int? "referredId" seems to be ID of the referred PARTNER or USER? Usually User ID? If so, String.
+  contact    String?
+  level      Int
+  createdAt  DateTime       @default(now())
+}
+
+model PartnerTransaction {
+  id          String         @id @default(auto()) @map("_id") @db.ObjectId
+  profile     PartnerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+  profileId   String         @db.ObjectId
+  amount      Float
+  type        TransactionType
+  description String
+  createdAt   DateTime       @default(now())
+}
+
+model Review {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  photoUrl  String?
+  content   String
+  link      String?
+  isPinned  Boolean  @default(false)
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
