@@ -19,6 +19,12 @@ async function bootstrap() {
   });
 
   bot.use(session<SessionData, Context>({ defaultSession: (): SessionData => ({}) }));
+
+  // DEBUG: Explicit error handler
+  bot.catch((err, ctx) => {
+    console.error(`OOPS for ${ctx.updateType}`, err);
+  });
+
   await applyBotModules(bot);
 
   const app = express();
