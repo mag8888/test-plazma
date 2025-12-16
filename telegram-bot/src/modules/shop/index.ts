@@ -13,18 +13,23 @@ const PRODUCT_CART_PREFIX = 'shop:prod:cart:';
 const PRODUCT_BUY_PREFIX = 'shop:prod:buy:';
 
 async function showCategories(ctx: Context) {
-  await logUserAction(ctx, 'shop:open');
-  const categories = await getActiveCategories();
-  if (categories.length === 0) {
-    await ctx.reply('Каталог пока пуст. Добавьте категории и товары в админке.');
-    return;
+  try {
+    await logUserAction(ctx, 'shop:open');
+    const categories = await getActiveCategories();
+    if (categories.length === 0) {
+      await ctx.reply('Каталог пока пуст. Добавьте категории и товары в админке.');
+      return;
+    }
+
+    const buttons = categories.map((category) => [
+      Markup.button.callback(category.name, `${CATEGORY_ACTION_PREFIX}${category.id}`),
+    ]);
+
+    await ctx.reply('Выберите категорию:', Markup.inlineKeyboard(buttons));
+  } catch (error) {
+    console.error('Error in showCategories:', error);
+    await ctx.reply(`Ошибка при открытии магазина: ${error instanceof Error ? error.message : String(error)}`);
   }
-
-  const buttons = categories.map((category) => [
-    Markup.button.callback(category.name, `${CATEGORY_ACTION_PREFIX}${category.id}`),
-  ]);
-
-  await ctx.reply('Выберите категорию:', Markup.inlineKeyboard(buttons));
 }
 
 function formatProductMessage(product: { title: string; summary: string; price: unknown }) {
