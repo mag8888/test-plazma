@@ -66,6 +66,7 @@ export const AudioChat = ({
     const [remoteVolumes, setRemoteVolumes] = useState<Map<string, number>>(new Map()); // Remote volumes
     const [status, setStatus] = useState<string>("Connecting...");
     const [error, setError] = useState<string | null>(null);
+    const [audioContextStarted, setAudioContextStarted] = useState(false);
 
     // 2. Transcription State
     const [transcripts, setTranscripts] = useState<Transcript[]>([]);
@@ -98,33 +99,48 @@ export const AudioChat = ({
                 setStatus("Voice Active");
 
                 // Setup Audio Analysis for Self
-                const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-                if (AudioContextClass) {
-                    const audioCtx = new AudioContextClass();
-                    audioContextRef.current = audioCtx;
-                    const analyser = audioCtx.createAnalyser();
-                    analyser.fftSize = 64; // Low res for simple volume check
-                    analyserRef.current = analyser;
+                try {
+                    const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+                    if (AudioContextClass) {
+                        const audioCtx = new AudioContextClass();
+                        audioContextRef.current = audioCtx;
 
-                    const source = audioCtx.createMediaStreamSource(localStream);
-                    source.connect(analyser);
-                    // Do NOT connect to destination (speakers) to avoid feedback loop
+                        // Handle Suspended State (Autoplay Policy)
+                        if (audioCtx.state === 'suspended') {
+                            setStatus("Click to Unmute"); // Prompt user
+                            setAudioContextStarted(false); // Mark as not fully started
+                        } else {
+                            setAudioContextStarted(true);
+                        }
 
-                    // Animation Loop
-                    const checkVolume = () => {
-                        if (!mounted) return;
-                        const dataArray = new Uint8Array(analyser.frequencyBinCount);
-                        analyser.getByteFrequencyData(dataArray);
+                        const analyser = audioCtx.createAnalyser();
+                        analyser.fftSize = 64; // Low res for simple volume check
+                        analyserRef.current = analyser;
 
-                        // Calculate RMS or Avg
-                        let sum = 0;
-                        for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-                        const avg = sum / dataArray.length;
-                        setVolume(avg); // 0-255
+                        const source = audioCtx.createMediaStreamSource(localStream);
+                        source.connect(analyser);
+                        // Do NOT connect to destination (speakers) to avoid feedback loop
 
-                        requestAnimationFrame(checkVolume);
-                    };
-                    checkVolume();
+                        // Animation Loop
+                        const checkVolume = () => {
+                            if (!mounted) return;
+                            const dataArray = new Uint8Array(analyser.frequencyBinCount);
+                            analyser.getByteFrequencyData(dataArray);
+
+                            // Calculate RMS or Avg
+                            let sum = 0;
+                            for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+                            const avg = sum / dataArray.length;
+                            setVolume(avg); // 0-255
+
+                            requestAnimationFrame(checkVolume);
+                        };
+                        checkVolume();
+                    }
+                } catch (e) {
+                    console.error("AudioContext Error:", e);
+                    // Do not fail the whole chat, just visualization
+                    setError("Audio processing unavailable.");
                 }
 
             } catch (err) {
@@ -219,6 +235,19 @@ export const AudioChat = ({
         }
     }, [isMuted, stream]);
 
+    // --- D. RESUME AUDIO CONTEXT ---
+    const resumeAudio = async () => {
+        if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
+            try {
+                await audioContextRef.current.resume();
+                setAudioContextStarted(true);
+                setStatus("Voice Active");
+            } catch (e) {
+                console.error("Audio Resume Error:", e);
+            }
+        }
+    };
+
     // --- Helper: Get Pulsation Scale ---
     const getScale = (vol: number) => {
         // Map 0-255 to 1.0 - 1.5
@@ -227,7 +256,10 @@ export const AudioChat = ({
 
     // --- RENDER ---
     return (
-        <div className={`bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl ${className}`}>
+        <div
+            className={`bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl ${className}`}
+            onClick={resumeAudio} // Try to resume on any click
+        >
 
             {/* 1. Header */}
             <div className="p-3 border-b border-slate-700/50 flex justify-between items-center bg-black/20">
@@ -235,9 +267,15 @@ export const AudioChat = ({
                     <div className={`w-2 h-2 rounded-full ${status === 'Voice Active' ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
                     <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Voice Chat</span>
                 </div>
-                <button onClick={() => setIsMuted(!isMuted)} className={`p-2 rounded-lg transition-colors ${isMuted ? 'bg-red-500/20 text-red-400' : 'bg-slate-700/50 text-slate-300'}`}>
-                    {isMuted ? '🔇 Muted' : '🎤 Live'}
-                </button>
+                {!audioContextStarted && error !== "Audio processing unavailable." ? (
+                    <button onClick={resumeAudio} className="p-2 rounded-lg bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500/30 text-[10px] font-bold animate-pulse">
+                        ⚠️ Click to Activate
+                    </button>
+                ) : (
+                    <button onClick={() => setIsMuted(!isMuted)} className={`p-2 rounded-lg transition-colors ${isMuted ? 'bg-red-500/20 text-red-400' : 'bg-slate-700/50 text-slate-300'}`}>
+                        {isMuted ? '🔇 Muted' : '🎤 Live'}
+                    </button>
+                )}
             </div>
 
             {/* 2. Visualizers Grid */}
