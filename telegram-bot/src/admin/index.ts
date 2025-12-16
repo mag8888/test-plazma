@@ -7,7 +7,9 @@ import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
 
 // Robustly handle ESM/CommonJS import differences
+console.log('DEBUG: AdminJSPrisma import:', JSON.stringify(AdminJSPrisma, null, 2));
 const { Database, Resource } = (AdminJSPrisma as any).default || AdminJSPrisma;
+console.log('DEBUG: Database type:', typeof Database, 'Resource type:', typeof Resource);
 AdminJS.registerAdapter({ Database, Resource });
 
 function slugify(value: string) {
