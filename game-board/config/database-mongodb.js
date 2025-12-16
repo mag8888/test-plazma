@@ -9,7 +9,7 @@ const connectToMongoDB = async () => {
         return;
     }
 
-    const uri = process.env.MONGODB_URI;
+    const uri = process.env.MONGODB_URI || process.env.MONGO_URL;
     if (!uri) {
         console.error('❌ MONGODB_URI is not defined in environment variables.');
         throw new Error('MONGODB_URI is not defined.');
