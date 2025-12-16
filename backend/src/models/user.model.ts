@@ -7,7 +7,8 @@ export interface IUser extends Document {
     last_name?: string;
     photo_url?: string;
     telegram_id?: number;
-    referralBalance: number;
+    referralBalance: number; // Green
+    balanceRed: number;      // Red
     referralsCount: number;
     referredBy?: string;
     authCode?: string;
@@ -25,7 +26,8 @@ const UserSchema: Schema = new Schema({
     last_name: { type: String },
     photo_url: { type: String },
     telegram_id: { type: Number, unique: true, sparse: true },
-    referralBalance: { type: Number, default: 0 },
+    referralBalance: { type: Number, default: 0 }, // GREEN Balance (Real Money)
+    balanceRed: { type: Number, default: 0 },      // RED Balance (Game Only)
     referralsCount: { type: Number, default: 0 },
     referredBy: { type: String }, // Store referrer's username or ID
     authCode: { type: String },

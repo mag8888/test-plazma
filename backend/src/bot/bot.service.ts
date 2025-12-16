@@ -12,6 +12,7 @@ export class BotService {
     bot: TelegramBot | null = null;
     adminStates: Map<number, { state: string, targetUser?: any }> = new Map();
     masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_MAX' | 'WAITING_PROMO', gameData?: any }> = new Map();
+    transferStates: Map<number, { state: 'WAITING_USER' | 'WAITING_AMOUNT', targetUser?: any }> = new Map();
 
     constructor() {
         if (token) {
@@ -119,6 +120,93 @@ export class BotService {
                         this.bot?.sendMessage(chatId, "Invalid amount. Enter a number.");
                     }
                     return;
+                } else if (adminState.state === 'WAITING_FOR_MASTER_USER') {
+                    // Try to find user
+                    const { UserModel } = await import('../models/user.model');
+                    let targetUser = await UserModel.findOne({ username: text.replace('@', '') });
+                    if (!targetUser && !isNaN(Number(text))) {
+                        targetUser = await UserModel.findOne({ telegram_id: Number(text) });
+                    }
+
+                    if (targetUser) {
+                        targetUser.isMaster = true;
+                        const nextYear = new Date();
+                        nextYear.setFullYear(nextYear.getFullYear() + 1);
+                        targetUser.masterExpiresAt = nextYear;
+                        await targetUser.save();
+
+                        this.bot?.sendMessage(chatId, `✅ User ${targetUser.username} is now a MASTER until ${nextYear.toLocaleDateString()}!`);
+                        this.bot?.sendMessage(targetUser.telegram_id, `🎉 Администратор назначил вас Мастером до ${nextYear.toLocaleDateString()}!`);
+                        this.adminStates.delete(chatId);
+                    } else {
+                        this.bot?.sendMessage(chatId, "User not found. Try again or /cancel.");
+                    }
+                    return;
+                }
+            }
+
+            // Transfer State Handling
+            const transferState = this.transferStates.get(chatId);
+            if (transferState) {
+                if (text === '/cancel') {
+                    this.transferStates.delete(chatId);
+                    this.bot?.sendMessage(chatId, "Отменено.");
+                    return;
+                }
+
+                if (transferState.state === 'WAITING_USER') {
+                    const { UserModel } = await import('../models/user.model');
+                    let targetUser = await UserModel.findOne({ username: text.replace('@', '') });
+                    if (!targetUser && !isNaN(Number(text))) {
+                        targetUser = await UserModel.findOne({ telegram_id: Number(text) });
+                    }
+
+                    if (targetUser) {
+                        // Check self
+                        if (targetUser.telegram_id === msg.from?.id) {
+                            this.bot?.sendMessage(chatId, "Нельзя переводить самому себе.");
+                            return;
+                        }
+
+                        transferState.targetUser = targetUser;
+                        transferState.state = 'WAITING_AMOUNT';
+                        this.bot?.sendMessage(chatId, `✅ Получатель: ${targetUser.username}\nВведите сумму, которую он должен получить (Комиссия 2% спишется сверх суммы):`);
+                    } else {
+                        this.bot?.sendMessage(chatId, "Пользователь не найден. Введите username или ID:");
+                    }
+                    return;
+
+                } else if (transferState.state === 'WAITING_AMOUNT') {
+                    const amount = Number(text);
+                    if (isNaN(amount) || amount <= 0) {
+                        this.bot?.sendMessage(chatId, "Неверная сумма.");
+                        return;
+                    }
+
+                    const commission = amount * 0.02;
+                    const total = amount + commission;
+
+                    const { UserModel } = await import('../models/user.model');
+                    const sender = await UserModel.findOne({ telegram_id: msg.from?.id });
+
+                    if (sender.referralBalance < total) {
+                        this.bot?.sendMessage(chatId, `❌ Недостаточно средств на Зеленом балансе.\nНужно: $${total} (с учетом комиссии).\nДоступно: $${sender.referralBalance}`);
+                        return;
+                    }
+
+                    // Execute
+                    sender.referralBalance -= total;
+                    await sender.save();
+
+                    const receiver = await UserModel.findById(transferState.targetUser._id); // Reload to be safe
+                    receiver.referralBalance += amount;
+                    await receiver.save();
+
+                    this.bot?.sendMessage(chatId, `✅ Перевод успешен!\n📤 Вы отправили: $${amount}\n💸 Комиссия: $${commission}\n💳 Списано: $${total}\n\nБаланс: $${sender.referralBalance}`);
+                    this.bot?.sendMessage(receiver.telegram_id, `📥 Вам поступил перевод: $${amount} от ${sender.username}`);
+
+                    this.transferStates.delete(chatId);
+                    return;
                 }
             }
 
@@ -218,6 +306,7 @@ export class BotService {
                             inline_keyboard: [
                                 [{ text: '👥 Users', callback_data: 'admin_users' }, { text: '🤝 Partners', callback_data: 'admin_partners' }],
                                 [{ text: '💰 Add Balance', callback_data: 'admin_balance' }],
+                                [{ text: '👑 Set Master', callback_data: 'admin_set_master' }],
                                 [{ text: '📤 Upload Photo', callback_data: 'admin_upload' }]
                             ]
                         }
@@ -232,6 +321,8 @@ export class BotService {
                 this.handlePlay(chatId);
             } else if (text === '🤝 Получить клиентов') {
                 this.handleClients(chatId);
+            } else if (text === '💸 Перевод') {
+                this.handleTransferStart(chatId);
             } else if (text === '🌐 Сообщество') {
                 this.handleCommunity(chatId);
             } else if (text === 'ℹ️ О проекте') {
@@ -280,6 +371,12 @@ export class BotService {
                     this.adminStates.set(chatId, { state: 'WAITING_FOR_BALANCE_USER' });
                     this.bot?.sendMessage(chatId, "Enter **Username** or **Telegram ID** to credit:", { parse_mode: 'Markdown' });
                 }
+            } else if (data === 'admin_set_master') {
+                const adminId = process.env.TELEGRAM_ADMIN_ID;
+                if (chatId.toString() === adminId) {
+                    this.adminStates.set(chatId, { state: 'WAITING_FOR_MASTER_USER' });
+                    this.bot?.sendMessage(chatId, "Enter **Username** or **Telegram ID** to set as Master:", { parse_mode: 'Markdown' });
+                }
             } else if (data === 'admin_upload') {
                 this.bot?.sendMessage(chatId, "Send me a photo to upload it to Cloudinary.");
             }
@@ -324,8 +421,9 @@ export class BotService {
             reply_markup: {
                 keyboard: [
                     [{ text: '📅 Ближайшие игры' }, { text: '🎲 Играть' }],
-                    [{ text: '💸 Заработать' }, { text: '🤝 Получить клиентов' }],
-                    [{ text: '🌐 Сообщество' }, { text: 'ℹ️ О проекте' }]
+                    [{ text: '💸 Заработать' }, { text: '💸 Перевод' }],
+                    [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
+                    [{ text: 'ℹ️ О проекте' }]
                 ],
                 resize_keyboard: true
             }
@@ -411,7 +509,8 @@ export class BotService {
             const text = `💰 **Партнёрская программа**\n\n` +
                 `Приглашай друзей и получай $10 на игровой баланс за каждого!\n\n` +
                 `🔗 **Твоя ссылка:**\n${refLink}\n\n` +
-                `💳 **Твой баланс:** $${user.referralBalance}\n` +
+                `🟢 **Зеленый баланс (Вывод/Перевод):** $${user.referralBalance}\n` +
+                `🔴 **Красный баланс (Игровой):** $${user.balanceRed || 0}\n` +
                 `👥 **Приглашено:** ${user.referralsCount}\n\n` +
                 `Хочешь зарабатывать больше как партнёр проекта?`;
 
@@ -497,14 +596,11 @@ export class BotService {
 
             if (user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date()) {
                 this.bot?.sendMessage(chatId, `✅ Вы уже Мастер! Статус активен до ${user.masterExpiresAt.toLocaleDateString()}`);
-                // Show Add Game button if Master? Check Menu.
-                // We need to refresh menu for Master to show "Add Game".
-                // Let's send a special message or refresh menu.
                 this.sendMasterMenu(chatId);
                 return;
             }
 
-            // Check Balance
+            // Check Balance (GREEN only for Status)
             if (user.referralBalance >= 100) {
                 user.referralBalance -= 100;
                 user.isMaster = true;
@@ -516,7 +612,7 @@ export class BotService {
                 this.bot?.sendMessage(chatId, `🎉 Поздравляем! Вы стали Мастером!\nСтатус активен до ${user.masterExpiresAt.toLocaleDateString()}\n\nТеперь вам доступна кнопка "Добавить игру".`);
                 this.sendMasterMenu(chatId);
             } else {
-                this.bot?.sendMessage(chatId, `❌ Недостаточно средств.\nВаш баланс: $${user.referralBalance}.\nСтоимость статуса: $100.\n\nПополните баланс через администратора или приглашая друзей.`);
+                this.bot?.sendMessage(chatId, `❌ Недостаточно средств на Зеленом балансе.\nВаш баланс: $${user.referralBalance}.\nСтоимость статуса: $100.`);
             }
 
         } catch (e) {
@@ -529,13 +625,18 @@ export class BotService {
             reply_markup: {
                 keyboard: [
                     [{ text: '➕ Добавить игру' }, { text: '📅 Ближайшие игры' }],
-                    [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
+                    [{ text: '🎲 Играть' }, { text: '💸 Заработать' }, { text: '💸 Перевод' }],
                     [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
                     [{ text: 'ℹ️ О проекте' }]
                 ],
                 resize_keyboard: true
             }
         });
+    }
+
+    handleTransferStart(chatId: number) {
+        this.transferStates.set(chatId, { state: 'WAITING_USER' });
+        this.bot?.sendMessage(chatId, "💸 **Перевод средств (Зеленый баланс)**\n\nВведите Username или ID получателя:");
     }
 
     async handleAddGameStart(chatId: number, telegramId?: number) {
@@ -664,13 +765,27 @@ export class BotService {
                     return;
                 }
 
-                // Deduct Balance
-                if (user.referralBalance < 20) {
-                    this.bot?.sendMessage(chatId, `❌ Недостаточно средств ($20). Ваш баланс: $${user.referralBalance}`);
+                // Deduct Balance (Priority: Red, then Green)
+                let remainingCost = 20;
+
+                if (user.balanceRed >= remainingCost) {
+                    user.balanceRed -= remainingCost;
+                    remainingCost = 0;
+                } else {
+                    remainingCost -= (user.balanceRed || 0);
+                    user.balanceRed = 0;
+                    // Deduct rest from Green
+                    if (user.referralBalance >= remainingCost) {
+                        user.referralBalance -= remainingCost;
+                        remainingCost = 0;
+                    }
+                }
+
+                if (remainingCost > 0) {
+                    this.bot?.sendMessage(chatId, `❌ Недостаточно средств ($20). \n🔴 Red: $${user.balanceRed || 0}\n🟢 Green: $${user.referralBalance}`);
                     return;
                 }
 
-                user.referralBalance -= 20;
                 await user.save();
 
                 game.participants.push({
