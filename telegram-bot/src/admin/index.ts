@@ -1,14 +1,10 @@
 import { Router, Application } from 'express';
 import AdminJS from 'adminjs';
 import AdminJSExpress from '@adminjs/express';
-import { createRequire } from 'module';
+import { Database, Resource } from '@adminjs/prisma';
 import type { ActionRequest } from 'adminjs';
 import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
-
-// Nuclear option: Use require() to bypass ESM named export issues
-const require = createRequire(import.meta.url);
-const { Database, Resource, getModelByName } = require('@adminjs/prisma');
 
 AdminJS.registerAdapter({ Database, Resource });
 
@@ -22,6 +18,16 @@ function slugify(value: string) {
 }
 
 export async function setupAdminPanel(app: Application) {
+  const runtimeModel = (prisma as any)._runtimeDataModel;
+  const dmmfModels = runtimeModel ? runtimeModel.models : {};
+
+  // DEBUG: Print available models to ensure keys are correct
+  console.log('DEBUG: Available DMMF Models:', Object.keys(dmmfModels));
+
+  if (Object.keys(dmmfModels).length === 0) {
+    console.warn('⚠️ WARNING: No DMMF models found in prisma._runtimeDataModel. AdminJS may fail.');
+  }
+
   const admin = new AdminJS({
     rootPath: '/admin',
     branding: {
@@ -29,7 +35,7 @@ export async function setupAdminPanel(app: Application) {
     },
     resources: [
       {
-        resource: { model: getModelByName('Category'), client: prisma },
+        resource: { model: dmmfModels.Category, client: prisma },
         options: {
           properties: {
             slug: {
@@ -76,7 +82,7 @@ export async function setupAdminPanel(app: Application) {
         },
       },
       {
-        resource: { model: getModelByName('Product'), client: prisma },
+        resource: { model: dmmfModels.Product, client: prisma },
         options: {
           properties: {
             description: {
@@ -90,37 +96,37 @@ export async function setupAdminPanel(app: Application) {
         },
       },
       {
-        resource: { model: getModelByName('Review'), client: prisma },
+        resource: { model: dmmfModels.Review, client: prisma },
         options: {
           listProperties: ['name', 'isActive', 'isPinned', 'createdAt'],
         },
       },
       {
-        resource: { model: getModelByName('PartnerProfile'), client: prisma },
+        resource: { model: dmmfModels.PartnerProfile, client: prisma },
         options: {
           listProperties: ['id', 'userId', 'programType', 'balance', 'bonus'],
         },
       },
       {
-        resource: { model: getModelByName('PartnerTransaction'), client: prisma },
+        resource: { model: dmmfModels.PartnerTransaction, client: prisma },
         options: {
           listProperties: ['profileId', 'amount', 'type', 'createdAt'],
         },
       },
       {
-        resource: { model: getModelByName('User'), client: prisma },
+        resource: { model: dmmfModels.User, client: prisma },
         options: {
           listProperties: ['telegramId', 'firstName', 'username', 'createdAt'],
         },
       },
       {
-        resource: { model: getModelByName('UserHistory'), client: prisma },
+        resource: { model: dmmfModels.UserHistory, client: prisma },
         options: {
           listProperties: ['userId', 'action', 'createdAt'],
         },
       },
       {
-        resource: { model: getModelByName('OrderRequest'), client: prisma },
+        resource: { model: dmmfModels.OrderRequest, client: prisma },
         options: {
           listProperties: ['id', 'status', 'createdAt'],
         },
