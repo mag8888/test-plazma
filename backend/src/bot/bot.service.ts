@@ -11,7 +11,7 @@ if (!token) {
 export class BotService {
     bot: TelegramBot | null = null;
     adminStates: Map<number, { state: string, targetUser?: any }> = new Map();
-    masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_MAX' | 'WAITING_PROMO', gameData?: any }> = new Map();
+    masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_TIME' | 'WAITING_MAX' | 'WAITING_PROMO', gameData?: any }> = new Map();
     transferStates: Map<number, { state: 'WAITING_USER' | 'WAITING_AMOUNT', targetUser?: any }> = new Map();
 
     constructor() {
@@ -230,6 +230,22 @@ export class BotService {
             if (masterState) {
                 if (masterState.state === 'WAITING_DATE') {
                     this.bot?.sendMessage(chatId, "⚠️ Используйте кнопки для даты.");
+                    return;
+                } else if (masterState.state === 'WAITING_TIME') {
+                    // Manual Time Input
+                    const timeStr = text.trim();
+                    const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+                    if (match) {
+                        const h = Number(match[1]);
+                        const m = Number(match[2]);
+                        if (h >= 0 && h < 24 && m >= 0 && m < 60) {
+                            // Zero pad
+                            const formattedTime = `${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}`;
+                            await this.handleTimeSelection(chatId, formattedTime);
+                            return;
+                        }
+                    }
+                    this.bot?.sendMessage(chatId, "⚠️ Неверный формат времени. Введите в формате ЧЧ:ММ (например 13:00) или используйте кнопки.");
                     return;
                 } else if (masterState.state === 'WAITING_MAX') {
                     const max = Number(text);
@@ -674,8 +690,7 @@ export class BotService {
         if (!state) return;
 
         state.gameData = { dateIso: dateIso };
-        // state.state remains WAITING_DATE until time is picked? Or intermediate?
-        // Let's allow picking time now.
+        state.state = 'WAITING_TIME'; // Update state to allow manual input
 
         // Time Slots
         const times = ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '21:00', '22:00'];
