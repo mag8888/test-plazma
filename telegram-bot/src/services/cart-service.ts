@@ -12,17 +12,23 @@ export async function getCartItems(userId: string) {
 }
 
 export async function addProductToCart(userId: string, productId: string) {
-  return prisma.cartItem.upsert({
+  // Manual upsert replacement for Mongo standalone
+  const existingItem = await prisma.cartItem.findFirst({
     where: {
-      userId_productId: {
-        userId,
-        productId,
-      },
+      userId,
+      productId,
     },
-    update: {
-      quantity: { increment: 1 },
-    },
-    create: {
+  });
+
+  if (existingItem) {
+    return prisma.cartItem.update({
+      where: { id: existingItem.id },
+      data: { quantity: { increment: 1 } },
+    });
+  }
+
+  return prisma.cartItem.create({
+    data: {
       userId,
       productId,
       quantity: 1,

@@ -15,18 +15,25 @@ export async function ensureUser(ctx: Context) {
       languageCode: from.language_code ?? null,
     } as const;
 
-    const user = await prisma.user.upsert({
+    const existingUser = await prisma.user.findUnique({
       where: { telegramId: data.telegramId },
-      update: {
-        firstName: data.firstName,
-        lastName: data.lastName,
-        username: data.username,
-        languageCode: data.languageCode,
-      },
-      create: data,
     });
 
-    return user;
+    if (existingUser) {
+      return await prisma.user.update({
+        where: { id: existingUser.id },
+        data: {
+          firstName: data.firstName,
+          lastName: data.lastName,
+          username: data.username,
+          languageCode: data.languageCode,
+        },
+      });
+    }
+
+    return await prisma.user.create({
+      data,
+    });
   } catch (error) {
     console.error('ERROR in ensureUser:', error);
     return null;
