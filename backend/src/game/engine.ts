@@ -1494,12 +1494,29 @@ export class GameEngine {
 
         // Handle skipped turns for next player immediately?
         // Simple recursion check
+        // Check for active players first to avoid infinite recursion
+        const activeDefaults = this.state.players.filter(p => !p.isBankrupted && !p.hasWon && p.skippedTurns <= 0);
+        if (this.state.players.length > 0 && activeDefaults.length === 0 && this.state.players.some(p => p.skippedTurns > 0)) {
+            // Everyone is skipped/out. We must process skips until someone can play?
+            // Or just proceed to decrement.
+        }
+
         const nextPlayer = this.state.players[this.state.currentPlayerIndex];
-        if (nextPlayer.skippedTurns > 0) {
+
+        // 1. Bankrupted or Won -> SKIP PERMANENTLY without decrementing anything (they are ghosts)
+        if (nextPlayer.isBankrupted || nextPlayer.hasWon) {
+            this.state.log.push(`⏩ Skipping ${nextPlayer.name} (${nextPlayer.isBankrupted ? 'Bankrupted' : 'Finished'})`);
+            this.endTurn(); // Recurse
+            return;
+        }
+
+        // 2. Skipped Turns -> Decrement and Skip
+        if ((nextPlayer.skippedTurns || 0) > 0) {
             nextPlayer.skippedTurns--;
             this.state.log.push(`🚫 ${nextPlayer.name} skips turn (Remaining: ${nextPlayer.skippedTurns})`);
             this.state.lastEvent = { type: 'TURN_SKIPPED', payload: { player: nextPlayer.name, remaining: nextPlayer.skippedTurns } };
-            this.endTurn(); // Recursively skip
+            this.endTurn(); // Recurse
+            return;
         }
     }
 
