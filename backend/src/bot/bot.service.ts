@@ -354,16 +354,10 @@ export class BotService {
             this.handlePlay(chatId);
         } else if (text === '🤝 Получить клиентов') {
             await this.handleClients(chatId);
-        } else if (text === '💸 Перевод') {
-            this.handleTransferStart(chatId);
         } else if (text === '🌐 Сообщество') {
             this.handleCommunity(chatId);
         } else if (text === 'ℹ️ О проекте') {
             this.handleAbout(chatId);
-        } else if (text === '📅 Ближайшие игры') {
-            this.handleSchedule(chatId);
-        } else if (text === '➕ Добавить игру') {
-            this.handleAddGameStart(chatId, msg.from?.id);
         }
     });
 
@@ -420,6 +414,10 @@ export class BotService {
         } else if (data.startsWith('time_select_')) {
             const timeStr = data.replace('time_select_', '');
             await this.handleTimeSelection(chatId, timeStr);
+        } else if (data === 'view_schedule') {
+            await this.handleSchedule(chatId);
+        } else if (data === 'start_transfer') {
+            this.handleTransferStart(chatId);
         }
     });
 // Handle Photos for Cloudinary Upload
@@ -457,48 +455,18 @@ this.bot.on('photo', async (msg) => {
 });
     }
 
-    async sendMainMenu(chatId: number, text: string) {
-    try {
-        const { UserModel } = await import('../models/user.model');
-        const user = await UserModel.findOne({ telegram_id: chatId });
-        const isMaster = user && user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date();
-
-        const keyboard = [
-            [{ text: '📅 Ближайшие игры' }, { text: '🎲 Играть' }],
-            [{ text: '💸 Заработать' }, { text: '💸 Перевод' }],
-            [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
-            [{ text: 'ℹ️ О проекте' }]
-        ];
-
-        if (isMaster) {
-            // Add "Add Game" button at the top or appropriate place
-            keyboard.unshift([{ text: '➕ Добавить игру' }]);
+sendMainMenu(chatId: number, text: string) {
+    this.bot?.sendMessage(chatId, text, {
+        reply_markup: {
+            keyboard: [
+                [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
+                [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
+                [{ text: 'ℹ️ О проекте' }]
+            ],
+            resize_keyboard: true
         }
-
-        this.bot?.sendMessage(chatId, text, {
-            reply_markup: {
-                keyboard: keyboard,
-                resize_keyboard: true
-            }
-        });
-    } catch (e) {
-        console.error("Error sending main menu:", e);
-        // Fallback (Regular menu)
-        this.bot?.sendMessage(chatId, text, {
-            reply_markup: {
-                keyboard: [
-                    [{ text: '📅 Ближайшие игры' }, { text: '🎲 Играть' }],
-                    [{ text: '💸 Заработать' }, { text: '💸 Перевод' }],
-                    [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
-                    [{ text: 'ℹ️ О проекте' }]
-                ],
-                resize_keyboard: true
-            }
-        });
-    }
-}
-
-    async handleUserRegistration(telegramId: number, username: string, firstName: string, referralCode: string | null) {
+    });
+} async handleUserRegistration(telegramId: number, username: string, firstName: string, referralCode: string | null) {
     try {
         const { UserModel } = await import('../models/user.model');
 
@@ -584,7 +552,10 @@ this.bot.on('photo', async (msg) => {
 
         this.bot?.sendMessage(chatId, text, {
             reply_markup: {
-                inline_keyboard: [[{ text: 'Оставить заявку', callback_data: 'apply_earn' }]]
+                inline_keyboard: [
+                    [{ text: 'Оставить заявку', callback_data: 'apply_earn' }],
+                    [{ text: '💸 Перевод', callback_data: 'start_transfer' }]
+                ]
             }
         });
 
@@ -594,42 +565,38 @@ this.bot.on('photo', async (msg) => {
 }
 
     async handlePlay(chatId: number) {
-    // Find user by chatId (assuming chatId = telegramId for private chats, which is true usually)
-    // Or pass telegramId
-    // Ideally we should pass telegramId to handlePlay
-
-    // Quick fetch to get code
     try {
-        // We need to initialize AuthService here or dependency inject it.
-        // Or simpler: Just import it dynamically like we did for UserModel
+        const { UserModel } = await import('../models/user.model');
         const { AuthService } = await import('../auth/auth.service');
         const authService = new AuthService();
+        const user = await UserModel.findOne({ telegram_id: chatId });
 
-        // ChatId might be same as User ID
         const code = await authService.createAuthCode(chatId);
-
-        // Hardcoded fit to ensure working domain on Railway (Env var might be stale)
         const webAppUrl = 'https://moneo-production-22c8.up.railway.app';
         const link = `${webAppUrl}/?auth=${code}`;
 
-        this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас!\n\n🔗 Твоя ссылка для входа:\n${link}`, {
+        const isMaster = user && user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date();
+
+        const keyboard = [
+            [{ text: '🚀 ЗАПУСТИТЬ', url: link }],
+            [{ text: '📅 Расписание игр', callback_data: 'view_schedule' }]
+        ];
+
+        if (isMaster) {
+            keyboard.push([{ text: '➕ Добавить игру', callback_data: 'start_add_game' }]);
+        }
+
+        this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас или посмотри расписание!`, {
             reply_markup: {
-                inline_keyboard: [[{ text: '🚀 ЗАПУСТИТЬ', url: link }]]
+                inline_keyboard: keyboard
             }
         });
 
     } catch (e) {
         console.error("Error generating play link:", e);
-        // Fallback
-        this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас!\n\n🔗 Ссылка:\nhttps://moneo-production-22c8.up.railway.app`, {
-            reply_markup: {
-                inline_keyboard: [[{ text: '🚀 ЗАПУСТИТЬ', url: 'https://moneo-production-22c8.up.railway.app' }]]
-            }
-        });
+        this.bot?.sendMessage(chatId, "Ошибка запуска.");
     }
-}
-
-    async handleClients(chatId: number) {
+} async handleClients(chatId: number) {
     const { UserModel } = await import('../models/user.model');
     const user = await UserModel.findOne({ telegram_id: chatId });
     const isMaster = user && user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date();
