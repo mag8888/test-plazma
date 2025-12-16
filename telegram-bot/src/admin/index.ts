@@ -1,11 +1,13 @@
 import { Router, Application } from 'express';
 import AdminJS from 'adminjs';
 import AdminJSExpress from '@adminjs/express';
-import { Database, Resource } from '@adminjs/prisma';
+import * as AdminJSPrisma from '@adminjs/prisma';
 import type { ActionRequest } from 'adminjs';
 import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
 
+// Robustly handle ESM/CommonJS import differences
+const { Database, Resource } = (AdminJSPrisma as any).default || AdminJSPrisma;
 AdminJS.registerAdapter({ Database, Resource });
 
 function slugify(value: string) {
