@@ -79,7 +79,7 @@ export class BotService {
                 `🎲 Играть и развиваться\n\n` +
                 `🎯 Выбирай, что интересно прямо сейчас 👇`;
 
-            this.sendMainMenu(chatId, welcomeText);
+            await this.sendMainMenu(chatId, welcomeText);
         });
 
         // Handle text messages (Menu Buttons)
@@ -416,18 +416,45 @@ export class BotService {
         });
     }
 
-    sendMainMenu(chatId: number, text: string) {
-        this.bot?.sendMessage(chatId, text, {
-            reply_markup: {
-                keyboard: [
-                    [{ text: '📅 Ближайшие игры' }, { text: '🎲 Играть' }],
-                    [{ text: '💸 Заработать' }, { text: '💸 Перевод' }],
-                    [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
-                    [{ text: 'ℹ️ О проекте' }]
-                ],
-                resize_keyboard: true
+    async sendMainMenu(chatId: number, text: string) {
+        try {
+            const { UserModel } = await import('../models/user.model');
+            const user = await UserModel.findOne({ telegram_id: chatId });
+            const isMaster = user && user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date();
+
+            const keyboard = [
+                [{ text: '📅 Ближайшие игры' }, { text: '🎲 Играть' }],
+                [{ text: '💸 Заработать' }, { text: '💸 Перевод' }],
+                [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
+                [{ text: 'ℹ️ О проекте' }]
+            ];
+
+            if (isMaster) {
+                // Add "Add Game" button at the top or appropriate place
+                keyboard.unshift([{ text: '➕ Добавить игру' }]);
             }
-        });
+
+            this.bot?.sendMessage(chatId, text, {
+                reply_markup: {
+                    keyboard: keyboard,
+                    resize_keyboard: true
+                }
+            });
+        } catch (e) {
+            console.error("Error sending main menu:", e);
+            // Fallback (Regular menu)
+            this.bot?.sendMessage(chatId, text, {
+                reply_markup: {
+                    keyboard: [
+                        [{ text: '📅 Ближайшие игры' }, { text: '🎲 Играть' }],
+                        [{ text: '💸 Заработать' }, { text: '💸 Перевод' }],
+                        [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
+                        [{ text: 'ℹ️ О проекте' }]
+                    ],
+                    resize_keyboard: true
+                }
+            });
+        }
     }
 
     async handleUserRegistration(telegramId: number, username: string, firstName: string, referralCode: string | null) {
