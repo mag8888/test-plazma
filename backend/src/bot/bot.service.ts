@@ -483,6 +483,37 @@ export class BotService {
                 const gameId = data.replace('announce_game_', '');
                 this.masterStates.set(chatId, { state: 'WAITING_ANNOUNCEMENT_TEXT', gameId: gameId });
                 this.bot?.sendMessage(chatId, "📢 Введите текст сообщения, которое будет отправлено всем участникам этой игры (или /cancel):");
+            } else if (data.startsWith('leave_game_')) {
+                const gameId = data.replace('leave_game_', '');
+                const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                const { UserModel } = await import('../models/user.model');
+
+                const game = await ScheduledGameModel.findById(gameId);
+                const user = await UserModel.findOne({ telegram_id: userId });
+
+                if (game && user) {
+                    const pIndex = game.participants.findIndex((p: any) => p.userId.toString() === user._id.toString());
+                    if (pIndex > -1) {
+                        const participant = game.participants[pIndex];
+                        // Remove participant
+                        game.participants.splice(pIndex, 1);
+                        await game.save();
+
+                        // Notify User
+                        this.bot?.editMessageText("❌ Вы отменили запись на игру.", {
+                            chat_id: chatId,
+                            message_id: query.message?.message_id
+                        });
+
+                        // Notify Host
+                        const host = await UserModel.findById(game.hostId);
+                        if (host) {
+                            this.bot?.sendMessage(host.telegram_id, `ℹ️ Игрок ${user.first_name} (@${user.username}) отменил запись на игру ${new Date(game.startTime).toLocaleString('ru-RU')}.`);
+                        }
+                    } else {
+                        this.bot?.sendMessage(chatId, "Вы не записаны на эту игру.");
+                    }
+                }
             }
         });
         // Handle Photos for Cloudinary Upload
@@ -890,8 +921,14 @@ export class BotService {
                 }
 
                 const keyboard: any[] = [];
-                if (freeSpots > 0) keyboard.push({ text: 'Записаться (Free)', callback_data: `join_game_${game._id}` });
-                if (paidSpots > 0) keyboard.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
+                const isParticipant = requester && game.participants.some((p: any) => p.userId.toString() === requester._id.toString());
+
+                if (isParticipant) {
+                    keyboard.push({ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` });
+                } else {
+                    if (freeSpots > 0) keyboard.push({ text: 'Записаться (Free)', callback_data: `join_game_${game._id}` });
+                    if (paidSpots > 0) keyboard.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
+                }
 
                 // Host Actions
                 if (isRequesterMaster && game.hostId && requester._id.toString() === game.hostId.toString()) {
@@ -1012,8 +1049,11 @@ export class BotService {
                 // Already sent message above
             }
 
-            // Notify Master?
-            // this.bot.sendMessage(game.hostId... -> need to fetch host telegramId)
+            // Notify Master
+            const host = await UserModel.findById(game.hostId);
+            if (host) {
+                this.bot?.sendMessage(host.telegram_id, `🆕 Игрок ${user.first_name} (@${user.username}) записался на игру (тип: ${isPaid ? 'PAID' : 'PROMO'}).`);
+            }
 
         } catch (e) {
             console.error("Join error:", e);
