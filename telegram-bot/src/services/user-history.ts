@@ -1,4 +1,6 @@
+```javascript
 import { getMongoDb } from '../lib/mongo-write.js';
+import { ObjectId } from 'mongodb';
 import { Context } from '../bot/context.js';
 
 export async function ensureUser(ctx: Context) {
@@ -16,7 +18,7 @@ export async function ensureUser(ctx: Context) {
     if (existingUser) {
       // Update
       await users.updateOne(
-        { _id: existingUser._id },
+        { _id: new ObjectId(existingUser._id) },
         {
           $set: {
             firstName: from.first_name ?? null,
@@ -56,7 +58,8 @@ export async function logUserAction(ctx: Context, action: string, payload?: any)
 
     const db = await getMongoDb();
     await db.collection('UserHistory').insertOne({
-      userId: user.id, // Stored as String/ObjectId depending on schema, but raw driver might need explicit ObjectId wrapping if schema defined it as such? 
+      userId: new ObjectId(user.id), // Ensure stored as ObjectId for Prisma compatibility
+      // Stored as String/ObjectId depending on schema, but raw driver might need explicit ObjectId wrapping if schema defined it as such? 
       // Prisma schema says @db.ObjectId, so in Mongo it is stored as ObjectId.
       // However, result.insertedId IS an ObjectId. `user.id` from ensuresUser is .toString().
       // We should probably store as string OR explicit ObjectId.
