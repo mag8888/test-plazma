@@ -499,11 +499,17 @@ export class BotService {
                         game.participants.splice(pIndex, 1);
                         await game.save();
 
-                        // Notify User
-                        this.bot?.editMessageText("❌ Вы отменили запись на игру.", {
+                        // Re-render card
+                        const cardData = await this.renderGameCard(game, userId);
+                        this.bot?.editMessageText(cardData.text, {
                             chat_id: chatId,
-                            message_id: query.message?.message_id
+                            message_id: query.message?.message_id,
+                            parse_mode: 'Markdown',
+                            reply_markup: cardData.reply_markup
                         });
+
+                        // Optional: Show pop-up notification
+                        this.bot?.answerCallbackQuery(query.id, { text: "❌ Вы отменили запись на игру." });
 
                         // Notify Host
                         const host = await UserModel.findById(game.hostId);
@@ -894,55 +900,10 @@ export class BotService {
             const isRequesterMaster = requester?.isMaster || false;
 
             for (const game of games) {
-                const totalParticipants = game.participants.length;
-                const freeSpots = game.promoSpots - game.participants.filter((p: any) => p.type === 'PROMO').length;
-                const paidSpots = (game.maxPlayers - game.promoSpots) - game.participants.filter((p: any) => p.type === 'PAID').length;
-
-                // Create text
-                const dateStr = new Date(game.startTime).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
-
-                // Fetch Host
-                const host = await UserModel.findById(game.hostId);
-                const hostName = host ? (host.username ? `@${host.username}` : host.first_name) : 'Неизвестно';
-
-                let text = `🎲 **Игра: ${dateStr}**\n`;
-                text += `👑 Мастер: ${hostName}\n`;
-                text += `👥 Игроков: ${totalParticipants}/${game.maxPlayers}\n`;
-                text += `🎟 Промо (Free): ${freeSpots > 0 ? freeSpots : '❌ Нет мест'}\n`;
-                text += `💰 Платные ($20): ${paidSpots > 0 ? paidSpots : '❌ Нет мест'}\n`;
-
-                // Participants List
-                if (totalParticipants > 0) {
-                    text += `\nУчастники:\n`;
-                    game.participants.forEach((p: any, i: number) => {
-                        const verifiedMark = p.isVerified ? '✅' : '';
-                        // Privacy Logic
-                        let line = `${i + 1}. ${p.firstName || 'Игрок'} ${verifiedMark}`;
-                        if (isRequesterMaster) {
-                            line += ` (@${p.username || 'no_user'})`;
-                        }
-                        text += `${line}\n`;
-                    });
-                }
-
-                const keyboard: any[] = [];
-                const isParticipant = requester && game.participants.some((p: any) => p.userId.toString() === requester._id.toString());
-
-                if (isParticipant) {
-                    keyboard.push({ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` });
-                } else {
-                    if (freeSpots > 0) keyboard.push({ text: 'Записаться (Free)', callback_data: `join_game_${game._id}` });
-                    if (paidSpots > 0) keyboard.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
-                }
-
-                // Host Actions
-                if (isRequesterMaster && game.hostId && requester._id.toString() === game.hostId.toString()) {
-                    keyboard.push({ text: '📢 Отправить сообщение игрокам', callback_data: `announce_game_${game._id}` });
-                }
-
-                this.bot?.sendMessage(chatId, text, {
+                const cardData = await this.renderGameCard(game, chatId);
+                this.bot?.sendMessage(chatId, cardData.text, {
                     parse_mode: 'Markdown',
-                    reply_markup: { inline_keyboard: [keyboard] } // This puts all in 1 row? Better to split.
+                    reply_markup: cardData.reply_markup
                 });
             }
 
@@ -1066,6 +1027,61 @@ export class BotService {
         }
     }
 
+
+    async renderGameCard(game: any, requesterId: number) {
+        // Dynamic import if needed, or assume models loaded
+        const { UserModel } = await import('../models/user.model');
+        const requester = await UserModel.findOne({ telegram_id: requesterId });
+        const isRequesterMaster = requester?.isMaster || false;
+
+        const totalParticipants = game.participants.length;
+        const freeSpots = game.promoSpots - game.participants.filter((p: any) => p.type === 'PROMO').length;
+        const paidSpots = (game.maxPlayers - game.promoSpots) - game.participants.filter((p: any) => p.type === 'PAID').length;
+
+        // Create text
+        const dateStr = new Date(game.startTime).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+
+        // Fetch Host
+        const host = await UserModel.findById(game.hostId);
+        const hostName = host ? (host.username ? `@${host.username}` : host.first_name) : 'Неизвестно';
+
+        let text = `🎲 **Игра: ${dateStr}**\n`;
+        text += `👑 Мастер: ${hostName}\n`;
+        text += `👥 Игроков: ${totalParticipants}/${game.maxPlayers}\n`;
+        text += `🎟 Промо (Free): ${freeSpots > 0 ? freeSpots : '❌ Нет мест'}\n`;
+        text += `💰 Платные ($20): ${paidSpots > 0 ? paidSpots : '❌ Нет мест'}\n`;
+
+        // Participants List
+        if (totalParticipants > 0) {
+            text += `\nУчастники:\n`;
+            game.participants.forEach((p: any, i: number) => {
+                const verifiedMark = p.isVerified ? '✅' : '';
+                // Privacy Logic
+                let line = `${i + 1}. ${p.firstName || 'Игрок'} ${verifiedMark}`;
+                if (isRequesterMaster) {
+                    line += ` (@${p.username || 'no_user'})`;
+                }
+                text += `${line}\n`;
+            });
+        }
+
+        const keyboard: any[] = [];
+        const isParticipant = requester && game.participants.some((p: any) => p.userId.toString() === requester._id.toString());
+
+        if (isParticipant) {
+            keyboard.push({ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` });
+        } else {
+            if (freeSpots > 0) keyboard.push({ text: 'Записаться (Free)', callback_data: `join_game_${game._id}` });
+            if (paidSpots > 0) keyboard.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
+        }
+
+        // Host Actions
+        if (isRequesterMaster && game.hostId && requester._id.toString() === game.hostId.toString()) {
+            keyboard.push({ text: '📢 Отправить сообщение игрокам', callback_data: `announce_game_${game._id}` });
+        }
+
+        return { text, reply_markup: { inline_keyboard: [keyboard] } };
+    }
 
     async checkReminders() {
         const now = new Date();
