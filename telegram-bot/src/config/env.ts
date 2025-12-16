@@ -5,12 +5,20 @@ function requireEnv(key: string): string {
   if (!value) {
     throw new Error(`Environment variable ${key} is required`);
   }
+  let finalValue = value;
+
   if (key === 'MONGO_URL') {
+    // Check if the URL ends with a port number (missing database name)
+    if (/:\d+$/.test(value)) {
+      console.log('⚠️ DEBUG: MONGO_URL missing database name. Auto-appending /plazma...');
+      finalValue = `${value}/plazma?authSource=admin`;
+    }
+
     // Mask password to safe print the structure
-    const masked = value.replace(/:([^:@]+)@/, ':****@');
+    const masked = finalValue.replace(/:([^:@]+)@/, ':****@');
     console.log(`🔍 DEBUG: MONGO_URL loaded as: "${masked}"`);
   }
-  return value;
+  return finalValue;
 }
 
 export const env = {
