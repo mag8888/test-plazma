@@ -24,9 +24,13 @@ const ScheduledGameSchema: Schema = new Schema({
     promoSpots: { type: Number, required: true, default: 6 },
     participants: [{
         userId: { type: Schema.Types.ObjectId, ref: 'User' },
-        username: { type: String },
+        firstName: { type: String }, // For public display
+        username: { type: String },  // For master display
         type: { type: String, enum: ['PROMO', 'PAID'] },
-        joinedAt: { type: Date, default: Date.now }
+        joinedAt: { type: Date, default: Date.now },
+        postLink: { type: String },        // New
+        isVerified: { type: Boolean, default: false }, // New
+        lastReminderSentAt: { type: Date } // New
     }],
     status: { type: String, enum: ['SCHEDULED', 'COMPLETED', 'CANCELLED'], default: 'SCHEDULED' }
 }, { timestamps: true });

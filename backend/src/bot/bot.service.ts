@@ -13,6 +13,7 @@ export class BotService {
     adminStates: Map<number, { state: string, targetUser?: any }> = new Map();
     masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_TIME' | 'WAITING_MAX' | 'WAITING_PROMO', gameData?: any }> = new Map();
     transferStates: Map<number, { state: 'WAITING_USER' | 'WAITING_AMOUNT', targetUser?: any }> = new Map();
+    participantStates: Map<number, { state: 'WAITING_POST_LINK', gameId: string }> = new Map();
 
     constructor() {
         if (token) {
@@ -29,7 +30,11 @@ export class BotService {
             });
 
             this.initHandlers();
-            this.setBotCommands();
+            this.initHandlers();
+
+            // Start Reminder Interval (Every hour)
+            setInterval(() => this.checkReminders(), 60 * 60 * 1000);
+
             console.log("Telegram Bot started.");
         }
     }
@@ -283,6 +288,56 @@ export class BotService {
                 }
             }
 
+            // Participant State
+            const participantState = this.participantStates.get(chatId);
+            if (participantState) {
+                if (participantState.state === 'WAITING_POST_LINK') {
+                    // Expecting link
+                    // Simple URL validation
+                    const urlRegex = /(https?:\/\/[^\s]+)/g;
+                    if (!urlRegex.test(text)) {
+                        this.bot?.sendMessage(chatId, "⚠️ Пожалуйста, отправьте корректную ссылку на пост.");
+                        return;
+                    }
+
+                    // Save Link
+                    const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                    const game = await ScheduledGameModel.findById(participantState.gameId);
+                    if (game) {
+                        const userIdx = game.participants.findIndex((p: any) => p.userId.toString() === msg.from?.id.toString());
+                        // Wait, we need to find user by telegram ID first to get _id
+                        const { UserModel } = await import('../models/user.model');
+                        const user = await UserModel.findOne({ telegram_id: msg.from?.id });
+
+                        // Re-find index with user._id
+                        const pRealIndex = game.participants.findIndex((p: any) => p.userId.toString() === user._id.toString());
+
+                        if (pRealIndex > -1 && user) {
+                            game.participants[pRealIndex].postLink = text;
+                            game.participants[pRealIndex].isVerified = false;
+                            await game.save();
+
+                            this.bot?.sendMessage(chatId, "✅ Ссылка принята! Ожидайте подтверждения организатора.");
+                            this.participantStates.delete(chatId);
+
+                            // Notify Host
+                            const host = await UserModel.findById(game.hostId);
+                            if (host) {
+                                this.bot?.sendMessage(host.telegram_id, `🔔 Игрок ${user.username || user.first_name} прикрепил ссылку на пост:\n${text}`, {
+                                    reply_markup: {
+                                        inline_keyboard: [[
+                                            { text: '✅ Одобрить', callback_data: `approve_link_${game._id}_${user._id}` },
+                                            { text: 'Написать', url: `tg://user?id=${user.telegram_id}` }
+                                        ]]
+                                    }
+                                });
+                            }
+                        }
+                    }
+                    return;
+                }
+            }
+
             if (text === '/admin') {
                 const adminId = process.env.TELEGRAM_ADMIN_ID;
                 if (adminId && chatId.toString() === adminId) {
@@ -328,6 +383,34 @@ export class BotService {
             } else if (data.startsWith('join_paid_')) {
                 const gameId = data.replace('join_paid_', '');
                 await this.handleJoinGame(chatId, userId, gameId, true);
+            } else if (data.startsWith('approve_link_')) {
+                // Format: approve_link_GAMEID_USERID
+                const parts = data.split('_');
+                const gameId = parts[2];
+                const targetUserId = parts[3];
+
+                const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                const { UserModel } = await import('../models/user.model');
+                const game = await ScheduledGameModel.findById(gameId);
+
+                if (game) {
+                    const pIndex = game.participants.findIndex((p: any) => p.userId.toString() === targetUserId);
+                    if (pIndex > -1) {
+                        game.participants[pIndex].isVerified = true;
+                        await game.save();
+
+                        this.bot?.editMessageText(`✅ Ссылка одобрена для игрока.`, {
+                            chat_id: chatId,
+                            message_id: query.message?.message_id
+                        });
+
+                        // Notify Player
+                        const targetUser = await UserModel.findById(targetUserId);
+                        if (targetUser) {
+                            this.bot?.sendMessage(targetUser.telegram_id, "🎉 Ваша ссылка подтверждена! Вы официально в списке участников.");
+                        }
+                    }
+                }
             } else if (data === 'admin_users') {
                 // Fetch last 10 users
                 import('../models/user.model').then(async ({ UserModel }) => {
@@ -742,6 +825,11 @@ export class BotService {
                 return;
             }
 
+            // Determine requester status
+            const { UserModel } = await import('../models/user.model');
+            const requester = await UserModel.findOne({ telegram_id: chatId });
+            const isRequesterMaster = requester?.isMaster || false;
+
             for (const game of games) {
                 const totalParticipants = game.participants.length;
                 const freeSpots = game.promoSpots - game.participants.filter((p: any) => p.type === 'PROMO').length;
@@ -755,11 +843,17 @@ export class BotService {
                 text += `🎟 Промо (Free): ${freeSpots > 0 ? freeSpots : '❌ Нет мест'}\n`;
                 text += `💰 Платные ($20): ${paidSpots > 0 ? paidSpots : '❌ Нет мест'}\n`;
 
-                // Participants List (Simplified)
+                // Participants List
                 if (totalParticipants > 0) {
                     text += `\nУчастники:\n`;
                     game.participants.forEach((p: any, i: number) => {
-                        text += `${i + 1}. ${p.username || 'Игрок'}\n`;
+                        const verifiedMark = p.isVerified ? '✅' : '';
+                        // Privacy Logic
+                        let line = `${i + 1}. ${p.firstName || 'Игрок'} ${verifiedMark}`;
+                        if (isRequesterMaster) {
+                            line += ` (@${p.username || 'no_user'})`;
+                        }
+                        text += `${line}\n`;
                     });
                 }
 
@@ -812,19 +906,20 @@ export class BotService {
                     });
                     return;
                 }
-                // Check eligibility? User said "Invite friends".
-                // Allow simplistic check: Just > 0 referrals? Or just allow everyone as MVP. 
-                // "get (promo) for inviting friends"
-                // Let's enforce: Must have invited at least 1 friend to use Promo?
-                // Or just warning?
-                // Let's proceed with OPEN promo for now, as user didn't specify strict rule like "1 invite = 1 game".
-                // Just register.
 
                 game.participants.push({
                     userId: user._id,
-                    username: user.first_name || user.username,
-                    type: 'PROMO'
+                    username: user.username,
+                    firstName: user.first_name || 'Игрок',
+                    type: 'PROMO',
+                    joinedAt: new Date(),
+                    isVerified: false
                 });
+
+                // Request Link
+                this.participantStates.set(chatId, { state: 'WAITING_POST_LINK', gameId: game._id });
+                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PROMO)!\n\n📝 Для подтверждения участия, пожалуйста, отправьте ссылку на репост о нашей игре в течение 3 часов.`);
+
 
             } else {
                 // Joining PAID
@@ -864,13 +959,21 @@ export class BotService {
 
                 game.participants.push({
                     userId: user._id,
-                    username: user.first_name || user.username,
-                    type: 'PAID'
+                    username: user.username,
+                    firstName: user.first_name || 'Игрок',
+                    type: 'PAID',
+                    joinedAt: new Date(),
+                    isVerified: true // Paid users auto-verified? Or assume no post needed.
                 });
             }
 
             await game.save();
-            this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру!\n📅 ${new Date(game.startTime).toLocaleString('ru-RU')}`);
+
+            if (isPaid) {
+                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PAID)!\n📅 ${new Date(game.startTime).toLocaleString('ru-RU')}`);
+            } else {
+                // Already sent message above
+            }
 
             // Notify Master?
             // this.bot.sendMessage(game.hostId... -> need to fetch host telegramId)
@@ -878,6 +981,51 @@ export class BotService {
         } catch (e) {
             console.error("Join error:", e);
             this.bot?.sendMessage(chatId, "Ошибка записи на игру.");
+        }
+    }
+
+
+    async checkReminders() {
+        const now = new Date();
+        const hour = now.getHours(); // Local server time. 
+        // 9:00 - 21:00 Check
+        if (hour < 9 || hour >= 21) return;
+
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const { UserModel } = await import('../models/user.model');
+
+            // Find upcoming games
+            const games = await ScheduledGameModel.find({
+                startTime: { $gt: now },
+                status: 'SCHEDULED'
+            });
+
+            for (const game of games) {
+                // Check participants
+                let gameModified = false;
+                for (const p of game.participants) {
+                    if (p.type === 'PROMO' && !p.isVerified) {
+                        // Check if time passed > 3 hours since Joined OR since Last Reminder
+                        const lastTime = p.lastReminderSentAt || p.joinedAt;
+                        const diffMs = now.getTime() - new Date(lastTime).getTime();
+                        const diffHours = diffMs / (1000 * 60 * 60);
+
+                        if (diffHours >= 3) {
+                            // Send Reminder
+                            const user = await UserModel.findById(p.userId);
+                            if (user) {
+                                this.bot?.sendMessage(user.telegram_id, "⏰ Напоминание! \nВы записались на игру (PROMO), но не прикрепили ссылку на пост.\nПожалуйста, отправьте ссылку на репост, чтобы подтвердить участие.");
+                                p.lastReminderSentAt = now;
+                                gameModified = true;
+                            }
+                        }
+                    }
+                }
+                if (gameModified) await game.save();
+            }
+        } catch (e) {
+            console.error("Reminder Error:", e);
         }
     }
 }
