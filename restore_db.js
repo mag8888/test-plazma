@@ -55,14 +55,14 @@ async function restore() {
 
     try {
         // 1. Find latest backup
-        console.log('🔍 Searching for latest backup on Cloudinary...');
+        console.log('🔍 Searching for latest backup on Cloudinary (folder: plazma-bot/backups/)...');
         const result = await cloudinary.api.resources({
             resource_type: 'raw',
             type: 'upload',
+            prefix: 'plazma-bot/backups/', // Target specific folder
             max_results: 10,
             direction: 'desc',
-            sort_by: 'created_at' // Note: Cloudinary API might not support sort_by in all plans, but basic listing defaults to desc often.
-            // If sort_by isn't supported, we fetch and sort manually.
+            sort_by: 'created_at'
         });
 
         // Manual sort to be safe
