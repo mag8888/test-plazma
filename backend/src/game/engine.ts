@@ -451,6 +451,7 @@ export class GameEngine {
                         description: 'Payday (Passed)',
                         type: 'PAYDAY'
                     });
+                    this.state.lastEvent = { type: 'PAYDAY', payload: { player: player.name, amount: player.cashflow } };
                 }
 
             } else {
@@ -466,6 +467,7 @@ export class GameEngine {
                         description: 'Payday (Passed)',
                         type: 'PAYDAY'
                     });
+                    this.state.lastEvent = { type: 'PAYDAY', payload: { player: player.name, amount: player.cashflow } };
                 }
             }
         }
@@ -722,6 +724,7 @@ export class GameEngine {
                     description: 'Payday (Landed)',
                     type: 'PAYDAY'
                 });
+                this.state.lastEvent = { type: 'PAYDAY', payload: { player: player.name, amount: player.cashflow } };
             } else {
                 this.state.log.push(`Entered Payday (Start)!`);
             }
@@ -771,6 +774,7 @@ export class GameEngine {
             const expenses = player.expenses;
             this.state.log.push(`📉 ${player.name} Downsized! Due: $${expenses}.`);
             this.forcePayment(player, expenses, 'Downsized Expenses');
+            this.state.lastEvent = { type: 'DOWNSIZED', payload: { player: player.name } };
             // Do NOT end turn automatically. Let user see the popup.
         } else if (square.type === 'CHARITY') {
             this.state.phase = 'CHARITY_CHOICE';

@@ -6,6 +6,7 @@ import { socket } from '../socket';
 import confetti from 'canvas-confetti';
 import { BoardVisualizer } from './BoardVisualizer';
 import { AudioChat } from './AudioChat';
+import { sfx } from './SoundManager';
 
 interface BoardProps {
     roomId: string;
@@ -80,6 +81,26 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [mobileView, setMobileView] = useState<'stats' | 'players'>('stats');
 
+    // Sound Settings
+    const [volume, setVolume] = useState(0.5);
+    const [isMuted, setIsMuted] = useState(false);
+
+    useEffect(() => {
+        setVolume(sfx.getVolume());
+        setIsMuted(sfx.getMute());
+    }, []);
+
+    const handleVolumeChange = (val: number) => {
+        setVolume(val);
+        sfx.setVolume(val);
+    };
+
+    const toggleMute = () => {
+        const newVal = !isMuted;
+        setIsMuted(newVal);
+        sfx.setMute(newVal);
+    };
+
     // Animation & Popup States
     const [showDice, setShowDice] = useState(false);
     const [diceValue, setDiceValue] = useState<number | null>(null);
@@ -103,6 +124,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
     useEffect(() => {
         if (state.lastEvent?.type === 'BABY_BORN') {
+            sfx.play('baby');
             confetti({
                 particleCount: 150,
                 spread: 70,
@@ -112,6 +134,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             setBabyNotification(`👶 Поздравляем! В семье ${state.lastEvent.payload?.player} пополнение!`);
             setTimeout(() => setBabyNotification(null), 5000);
         } else if (state.lastEvent?.type === 'LOTTERY_WIN') {
+            sfx.play('victory');
             confetti({
                 particleCount: 200,
                 spread: 100,
@@ -133,6 +156,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     }, [state.lastEvent]);
 
     const handleRoll = (diceCount?: number) => {
+        sfx.play('roll');
         socket.emit('roll_dice', { roomId, diceCount });
         setHasRolled(true);
     };
@@ -244,16 +268,48 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             setShowRankings(true);
             setIsAnimating(false);
             setShowDice(false);
+            sfx.play('victory');
         });
 
         socket.on('state_updated', (data) => {
             if (!isRollingRef.current) {
+                // Check for Payday or specific events in log?
+                // Hard to detect EXACT events without delta, but we can check if cashflow increased significantly?
+                // Better: rely on 'lastEvent' if available.
+                // Assuming `state.lastEvent` is reliable.
+
+                // My Turn Check
+                const oldIdx = state?.currentPlayerIndex;
+                const newIdx = data.state.currentPlayerIndex;
+                const meInList = data.state.players.findIndex((p: any) => p.id === socket.id);
+
+                // If turn passed TO me
+                if (oldIdx !== newIdx && newIdx === meInList) {
+                    sfx.play('turn');
+                }
+
+                if (data.state.lastEvent?.type === 'PAYDAY') {
+                    sfx.play('payday');
+                }
+                if (data.state.lastEvent?.type === 'DOWNSIZED') {
+                    sfx.play('fired');
+                }
+                if (data.state.lastEvent?.type === 'FAST_TRACK') sfx.play('fasttrack');
+                if (data.state.lastEvent?.type === 'STOCK') sfx.play('stock');
+
                 setState(data.state);
             }
         });
 
         socket.on('turn_ended', (data) => {
             isRollingRef.current = false;
+
+            // My Turn Check
+            const meInList = data.state.players.findIndex((p: any) => p.id === socket.id);
+            if (data.state.currentPlayerIndex === meInList) {
+                sfx.play('turn');
+            }
+
             setState(data.state);
             setSquareInfo(null);
         });
@@ -261,6 +317,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
         socket.on('game_started', (data) => {
             isRollingRef.current = false;
             setState(data.state);
+            sfx.play('start');
         });
 
         return () => {
@@ -285,6 +342,15 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
         setStockQty(1);
     };
 
+    const handleResolveOpportunity = (choice: string) => {
+        if (choice === 'buy') sfx.play('stock');
+        socket.emit('resolve_opportunity', { roomId: state.roomId, choice });
+    };
+
+    const handleTransferFunds = (toId: string, amount: number) => {
+        sfx.play('transfer');
+        socket.emit('transfer_funds', { roomId: state.roomId, toId, amount });
+    };
     const handleLoan = (amount: number) => socket.emit('take_loan', { roomId, amount });
     const handleRepay = (amount: number) => socket.emit('repay_loan', { roomId, amount });
     const handleEndTurn = () => socket.emit('end_turn', { roomId });
@@ -540,6 +606,27 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                             <span>📜</span> Правила
                         </button>
 
+                        {/* Sound Settings in Mobile Menu */}
+                        <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg mb-4">
+                            <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
+                                <span>🔊</span> Звук
+                            </h3>
+                            <div className="flex items-center gap-4">
+                                <button onClick={toggleMute} className="p-2 bg-slate-800 rounded-lg text-white">
+                                    {isMuted ? '🔇' : '🔊'}
+                                </button>
+                                <input
+                                    type="range"
+                                    min="0"
+                                    max="1"
+                                    step="0.1"
+                                    value={volume}
+                                    onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                                    className="w-full accent-blue-500 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                                />
+                            </div>
+                        </div>
+
                         {/* Exit Button in Menu */}
                         <button
                             onClick={handleExit}
@@ -666,6 +753,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 <div className="lg:hidden w-full px-0 py-0 flex-1 z-0 min-h-0 order-first relative">
                     <AudioChat
                         className="w-full h-full shadow-lg rounded-none object-cover"
+                        roomId={roomId}
                         players={state.players}
                         currentUserId={me?.id}
                         currentPlayerName={me?.name}

@@ -1,326 +1,411 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '../socket';
 
-// Types for Speech Recognition
-interface SpeechRecognitionEvent extends Event {
-    results: SpeechRecognitionResultList;
-    resultIndex: number;
-}
+// WebRTC Configuration - Expanded STUN List
+const RTC_CONFIG = {
+    iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' },
+        { urls: 'stun:stun2.l.google.com:19302' },
+        { urls: 'stun:stun3.l.google.com:19302' },
+        { urls: 'stun:stun4.l.google.com:19302' },
+    ]
+};
 
-interface SpeechRecognitionResultList {
-    [index: number]: SpeechRecognitionResult;
-    length: number;
-}
-
-interface SpeechRecognitionResult {
-    [index: number]: SpeechRecognitionAlternative;
-    isFinal: boolean;
-}
-
-interface SpeechRecognitionAlternative {
-    transcript: string;
-    confidence: number;
-}
-
-interface SpeechRecognition extends EventTarget {
-    continuous: boolean;
-    interimResults: boolean;
-    lang: string;
-    start(): void;
-    stop(): void;
-    abort(): void;
-    onresult: (event: SpeechRecognitionEvent) => void;
-    onerror: (event: any) => void;
-    onend: () => void;
-}
-
-declare global {
-    interface Window {
-        webkitSpeechRecognition: any;
-        SpeechRecognition: any;
-    }
-}
-
-interface Transcript {
-    userId: string;
-    text: string;
-    name: string;
-    timestamp: number;
+interface AudioChatProps {
+    className?: string;
+    roomId?: string;
+    players?: any[];
+    currentUserId?: string;
+    currentPlayerName?: string;
 }
 
 export const AudioChat = ({
     className = "",
+    roomId,
     players,
     currentUserId,
     currentPlayerName
-}: {
-    className?: string;
-    players?: any[];
-    currentUserId?: string;
-    currentPlayerName?: string;
-}) => {
+}: AudioChatProps) => {
     // 1. Audio State
-    const [stream, setStream] = useState<MediaStream | null>(null);
+    const [localStream, setLocalStream] = useState<MediaStream | null>(null);
     const [isMuted, setIsMuted] = useState(false);
-    const [volume, setVolume] = useState<number>(0); // Local volume for self-pulse
-    const [remoteVolumes, setRemoteVolumes] = useState<Map<string, number>>(new Map()); // Remote volumes
-    const [status, setStatus] = useState<string>("Connecting...");
+    const [status, setStatus] = useState<string>("Initializing...");
     const [error, setError] = useState<string | null>(null);
-    const [audioContextStarted, setAudioContextStarted] = useState(false);
+    const [needsInteraction, setNeedsInteraction] = useState(false);
 
-    // 2. Transcription State
-    const [transcripts, setTranscripts] = useState<Transcript[]>([]);
-    const recognitionRef = useRef<SpeechRecognition | null>(null);
+    // Volume States
+    const [myVolume, setMyVolume] = useState(0);
+    const [remoteVolumes, setRemoteVolumes] = useState<Record<string, number>>({});
 
-    // 3. WebRTC Refs
+    // 2. WebRTC Refs
     const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map());
+    const localStreamRef = useRef<MediaStream | null>(null);
     const audioContextRef = useRef<AudioContext | null>(null);
     const analyserRef = useRef<AnalyserNode | null>(null);
     const remoteAnalysersRef = useRef<Map<string, AnalyserNode>>(new Map());
 
-    // --- A. INITIALIZE AUDIO & PULSATION ---
+    // Debug Log
+    const log = (msg: string) => {
+        console.log(`[AudioChat] ${msg}`);
+        // Optional: setStatus(msg);
+    };
+
+    // --- A. INITIALIZE LOCAL AUDIO ---
     useEffect(() => {
         let mounted = true;
 
-        const initAudio = async () => {
+        const initLocalAudio = async () => {
             try {
                 setStatus("Requesting Mic...");
-                const localStream = await navigator.mediaDevices.getUserMedia({
-                    video: false,
-                    audio: true
-                });
+                const stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
 
                 if (!mounted) {
-                    localStream.getTracks().forEach(t => t.stop());
+                    stream.getTracks().forEach(t => t.stop());
                     return;
                 }
 
-                setStream(localStream);
+                setLocalStream(stream);
+                localStreamRef.current = stream;
                 setStatus("Voice Active");
 
-                // Setup Audio Analysis for Self
+                // Setup Audio Context
                 try {
                     const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
                     if (AudioContextClass) {
                         const audioCtx = new AudioContextClass();
                         audioContextRef.current = audioCtx;
 
-                        // Handle Suspended State (Autoplay Policy)
+                        // Check if suspended
                         if (audioCtx.state === 'suspended') {
-                            setStatus("Click to Unmute"); // Prompt user
-                            setAudioContextStarted(false); // Mark as not fully started
-                        } else {
-                            setAudioContextStarted(true);
+                            setNeedsInteraction(true);
                         }
 
                         const analyser = audioCtx.createAnalyser();
-                        analyser.fftSize = 64; // Low res for simple volume check
+                        analyser.fftSize = 64;
                         analyserRef.current = analyser;
 
-                        const source = audioCtx.createMediaStreamSource(localStream);
+                        const source = audioCtx.createMediaStreamSource(stream);
                         source.connect(analyser);
-                        // Do NOT connect to destination (speakers) to avoid feedback loop
+                        // Do NOT connect to destination to avoid feedback
 
-                        // Animation Loop
-                        const checkVolume = () => {
+                        const updateVolume = () => {
                             if (!mounted) return;
-                            const dataArray = new Uint8Array(analyser.frequencyBinCount);
-                            analyser.getByteFrequencyData(dataArray);
 
-                            // Calculate RMS or Avg
-                            let sum = 0;
-                            for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
-                            const avg = sum / dataArray.length;
-                            setVolume(avg); // 0-255
+                            // Local Volume
+                            if (analyserRef.current) {
+                                const data = new Uint8Array(analyserRef.current.frequencyBinCount);
+                                analyserRef.current.getByteFrequencyData(data);
+                                const avg = data.reduce((a, b) => a + b, 0) / data.length;
+                                setMyVolume(avg);
+                            }
 
-                            requestAnimationFrame(checkVolume);
+                            // Remote Volumes
+                            const newRemoteVols: Record<string, number> = {};
+                            remoteAnalysersRef.current.forEach((an, uid) => {
+                                const data = new Uint8Array(an.frequencyBinCount);
+                                an.getByteFrequencyData(data);
+                                const avg = data.reduce((a, b) => a + b, 0) / data.length;
+                                newRemoteVols[uid] = avg;
+                            });
+                            setRemoteVolumes(newRemoteVols);
+
+                            requestAnimationFrame(updateVolume);
                         };
-                        checkVolume();
+                        updateVolume();
                     }
                 } catch (e) {
-                    console.error("AudioContext Error:", e);
-                    // Do not fail the whole chat, just visualization
-                    setError("Audio processing unavailable.");
+                    console.error("Audio Context Error", e);
                 }
 
             } catch (err) {
-                console.error("Audio Init Error", err);
-                if (mounted) setError("Mic Access Denied");
+                console.error("Mic Error:", err);
+                setError("Mic Access Denied");
+                setStatus("Mic Error");
             }
         };
 
-        const initSpeech = () => {
-            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-            if (SpeechRecognition) {
-                const recognition = new SpeechRecognition();
-                recognition.continuous = true;
-                recognition.interimResults = true; // Use interim for faster feedback? OR only final.
-                recognition.lang = 'ru-RU'; // Default Russian
-
-                recognition.onresult = (event: SpeechRecognitionEvent) => {
-                    let finalTranscript = '';
-
-                    for (let i = event.resultIndex; i < event.results.length; ++i) {
-                        if (event.results[i].isFinal) {
-                            finalTranscript += event.results[i][0].transcript;
-                        }
-                    }
-
-                    if (finalTranscript && socket && currentUserId) {
-                        // Broadcast
-                        socket.emit('transcript', {
-                            roomId: (socket as any).roomId, // Hack: Need roomId passed or attached to socket context? Ideally prop.
-                            // Actually socket.ts singleton doesn't hold room. Assuming we pass props or parent handles.
-                            // We need roomId! We don't have it in props yet.
-                            // We'll rely on parent OR current RoomService context.
-                            // Wait, socket.io rooms logic needs explicit 'roomId' in event?
-                            // Checked gateway: socket.on('transcript', ({roomId...}))
-                            // So WE NEED ROOM ID.
-                            // FIX: Adding roomId prop to AudioChat.
-                            text: finalTranscript,
-                            userId: currentUserId,
-                            name: currentPlayerName
-                        });
-
-                        // Add to local state immediately
-                        setTranscripts(prev => [...prev, { userId: currentUserId, name: currentPlayerName || 'Me', text: finalTranscript, timestamp: Date.now() }].slice(-20)); // Keep last 20
-                    }
-                };
-
-                recognition.onend = () => {
-                    // Auto restart
-                    if (mounted && !isMuted) {
-                        try { recognition.start(); } catch (e) { }
-                    }
-                };
-
-                recognitionRef.current = recognition;
-                try { recognition.start(); } catch (e) { }
-            }
-        };
-
-        initAudio();
-        // Delay speech slightly
-        setTimeout(initSpeech, 1000);
+        if (currentUserId) {
+            initLocalAudio();
+        }
 
         return () => {
             mounted = false;
-            if (recognitionRef.current) recognitionRef.current.stop();
-            if (analyserRef.current) analyserRef.current.disconnect();
-            if (audioContextRef.current) audioContextRef.current.close();
-            if (stream) stream.getTracks().forEach(t => t.stop());
-        };
-    }, []);
-
-    // --- B. TRANSCRIPTS LISTENER ---
-    useEffect(() => {
-        const handleTranscript = (data: Transcript) => {
-            setTranscripts(prev => [...prev, data].slice(-50)); // Keep history
-        };
-        socket.on('transcript_received', handleTranscript);
-        return () => { socket.off('transcript_received', handleTranscript); };
-    }, []);
-
-    // --- C. MUTE & TOGGLE ---
-    useEffect(() => {
-        if (stream) {
-            stream.getAudioTracks().forEach(t => t.enabled = !isMuted);
-            // Also stop/start recognition?
-            if (recognitionRef.current) {
-                if (isMuted) recognitionRef.current.stop();
-                else {
-                    try { recognitionRef.current.start(); } catch (e) { }
-                }
+            // Cleanup
+            if (localStreamRef.current) {
+                localStreamRef.current.getTracks().forEach(t => t.stop());
             }
-        }
-    }, [isMuted, stream]);
+            if (audioContextRef.current) {
+                audioContextRef.current.close();
+            }
+            peersRef.current.forEach(pc => pc.close());
+            peersRef.current.clear();
+        };
+    }, [currentUserId]);
 
-    // --- D. RESUME AUDIO CONTEXT ---
-    const resumeAudio = async () => {
+    const handleEnableAudio = async () => {
         if (audioContextRef.current && audioContextRef.current.state === 'suspended') {
-            try {
-                await audioContextRef.current.resume();
-                setAudioContextStarted(true);
-                setStatus("Voice Active");
-            } catch (e) {
-                console.error("Audio Resume Error:", e);
-            }
+            await audioContextRef.current.resume();
+            setNeedsInteraction(false);
+            setStatus("Voice Active");
         }
     };
 
-    // --- Helper: Get Pulsation Scale ---
-    const getScale = (vol: number) => {
-        // Map 0-255 to 1.0 - 1.5
-        return 1 + (vol / 255) * 0.5;
+    // --- B. PEER CONNECTION MANAGEMENT ---
+    const createPeer = (targetUserId: string, initiator: boolean) => {
+        if (peersRef.current.has(targetUserId)) return peersRef.current.get(targetUserId);
+
+        log(`Creating Peer for ${targetUserId} (Init: ${initiator})`);
+        const pc = new RTCPeerConnection(RTC_CONFIG);
+
+        // Add Local Tracks
+        if (localStreamRef.current) {
+            localStreamRef.current.getTracks().forEach(track => {
+                pc.addTrack(track, localStreamRef.current!);
+            });
+        }
+
+        // Handle ICE Candidates
+        pc.onicecandidate = (event) => {
+            if (event.candidate) {
+                socket.emit('signal', {
+                    to: targetUserId, // Directly use Socket ID
+                    signal: { type: 'candidate', candidate: event.candidate }
+                });
+            }
+        };
+
+        pc.onconnectionstatechange = () => {
+            log(`Connection with ${targetUserId}: ${pc.connectionState}`);
+        };
+
+        // Handle Remote Stream
+        pc.ontrack = (event) => {
+            log(`Received Remote Stream from ${targetUserId}`);
+            const remoteStream = event.streams[0];
+
+            // Audio Context Approach
+            if (audioContextRef.current) {
+                const source = audioContextRef.current.createMediaStreamSource(remoteStream);
+                const analyser = audioContextRef.current.createAnalyser();
+                analyser.fftSize = 64;
+                source.connect(analyser);
+                analyser.connect(audioContextRef.current.destination); // Connect to speakers!
+
+                remoteAnalysersRef.current.set(targetUserId, analyser);
+            }
+
+            // Fallback Audio Element (Hidden) ensures fetching continues even if context odd
+            // If we connect to destination in Context, we don't need audio element playing.
+            // BUT sometimes Context doesn't start properly.
+            // Let's use Audio Element as backup or primary if context fails.
+            // Safest: Use Audio Element for output, Context ONLY for analyze.
+
+            // Revised Strategy:
+            // 1. Audio Element plays sound.
+            // 2. Context analyzes sound (using clone?).
+            // Actually, `createMediaStreamSource` might steal from element?
+
+            // Let's stick to Context for Output if available.
+            if (!audioContextRef.current) {
+                const audio = new Audio();
+                audio.srcObject = remoteStream;
+                audio.autoplay = true;
+                audio.play().catch(e => console.error("Autoplay failed", e));
+            }
+        };
+
+        peersRef.current.set(targetUserId, pc);
+        return pc;
+    };
+
+    // --- C. SIGNALING HANDLERS ---
+    useEffect(() => {
+        const handleSignal = async (data: any) => {
+            // data: { from: socketId, signal: { type, sdp, candidate } }
+            const { from, signal } = data;
+            if (!from) return;
+
+            let pc = peersRef.current.get(from);
+
+            if (!pc) {
+                // Determine if we should accept
+                // If we receive an Offer, we MUST create a peer
+                if (signal.type === 'offer') {
+                    pc = createPeer(from, false);
+                } else {
+                    return; // Ignore answers/candidates for unknown peers
+                }
+            }
+
+            if (!pc) return;
+
+            try {
+                if (signal.type === 'offer') {
+                    if (pc.signalingState !== 'stable') {
+                        // Rollback logic? Or just replace?
+                        await Promise.all([
+                            pc.setLocalDescription({ type: "rollback" }),
+                            pc.setRemoteDescription(new RTCSessionDescription(signal))
+                        ]);
+                    } else {
+                        await pc.setRemoteDescription(new RTCSessionDescription(signal));
+                    }
+
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    socket.emit('signal', {
+                        to: from,
+                        signal: answer // Browser handles toJSON
+                    });
+                } else if (signal.type === 'answer') {
+                    await pc.setRemoteDescription(new RTCSessionDescription(signal));
+                } else if (signal.candidate) {
+                    await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+                }
+            } catch (e) {
+                console.error(`Signal Error from ${from}:`, e);
+            }
+        };
+
+        socket.on('signal', handleSignal);
+        return () => { socket.off('signal', handleSignal); };
+    }, [localStream]); // Re-bind if stream changes? No, refs handle it.
+
+    // --- D. CONNECTION LOGIC (Mesh) ---
+    useEffect(() => {
+        if (!roomId || !players || !currentUserId || !localStream) return;
+
+        // Cleanup dropped players
+        const activeIds = new Set(players.map(p => p.id));
+        peersRef.current.forEach((_, id) => {
+            if (!activeIds.has(id)) {
+                log(`Removing peer ${id}`);
+                peersRef.current.get(id)?.close();
+                peersRef.current.delete(id);
+                remoteAnalysersRef.current.delete(id);
+            }
+        });
+
+        players.forEach(p => {
+            // Player.id is the Socket ID. 
+            // currentUserId passed from props might be Persistent ID (MongoID).
+            // BUT for connection, we need to compare Socket IDs to establish Initiator role consistently.
+            // Wait, AudioChat props: `currentUserId={me?.id}`.
+            // In board.tsx: `me = state.players.find(p => p.id === socket.id)`.
+            // So `currentUserId` passed IS Socket ID.
+
+            if (p.id === currentUserId) return; // Self
+
+            // Connect if not connected
+            if (!peersRef.current.has(p.id)) {
+                // Initiator Logic: Lexical comparison of Socket IDs to avoid dual-offers.
+                // Or just: Existing players initiate to New players?
+                // Easier: "I am A, you are B. If A < B, A initiates."
+                // This ensures only one side creates Offer.
+
+                if (currentUserId < p.id) {
+                    const pc = createPeer(p.id, true);
+                    if (pc) {
+                        pc.onnegotiationneeded = async () => {
+                            try {
+                                const offer = await pc.createOffer();
+                                await pc.setLocalDescription(offer);
+                                socket.emit('signal', {
+                                    to: p.id,
+                                    signal: offer
+                                });
+                            } catch (e) { console.error("Negotiation Error", e); }
+                        };
+                    }
+                }
+            }
+        });
+    }, [roomId, players, currentUserId, localStream]); // Re-run when player list changes
+
+
+    // --- E. MUTE TOGGLE ---
+    const toggleMute = () => {
+        if (localStreamRef.current) {
+            // Wait, logic inversion:
+            // if enabled=true, we want to mute (enabled=false).
+            // Current `isMuted` means (enabled=false).
+            // So if `isMuted` is true, we want to Unmute (enabled=true).
+            const newMuted = !isMuted;
+            localStreamRef.current.getAudioTracks().forEach(t => t.enabled = !newMuted);
+            setIsMuted(newMuted);
+        }
     };
 
     // --- RENDER ---
-    return (
-        <div
-            className={`bg-slate-900/90 backdrop-blur-md rounded-2xl border border-slate-700 overflow-hidden flex flex-col shadow-2xl ${className}`}
-            onClick={resumeAudio} // Try to resume on any click
-        >
+    const getScale = (vol: number) => 1 + (vol / 255) * 0.5;
 
-            {/* 1. Header */}
-            <div className="p-3 border-b border-slate-700/50 flex justify-between items-center bg-black/20">
-                <div className="flex items-center gap-2">
-                    <div className={`w-2 h-2 rounded-full ${status === 'Voice Active' ? 'bg-green-500 animate-pulse' : 'bg-yellow-500'}`}></div>
-                    <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Voice Chat</span>
+    return (
+        <div className={`bg-slate-900/90 backdrop-blur-md border-t border-slate-700 overflow-hidden flex flex-col shadow-2xl relative ${className}`}>
+
+            {needsInteraction && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80">
+                    <button
+                        onClick={handleEnableAudio}
+                        className="bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-full font-bold shadow-xl animate-pulse"
+                    >
+                        📞 CLICK TO JOIN AUDIO
+                    </button>
                 </div>
-                {!audioContextStarted && error !== "Audio processing unavailable." ? (
-                    <button onClick={resumeAudio} className="p-2 rounded-lg bg-yellow-500/20 text-yellow-500 hover:bg-yellow-500/30 text-[10px] font-bold animate-pulse">
-                        ⚠️ Click to Activate
-                    </button>
-                ) : (
-                    <button onClick={() => setIsMuted(!isMuted)} className={`p-2 rounded-lg transition-colors ${isMuted ? 'bg-red-500/20 text-red-400' : 'bg-slate-700/50 text-slate-300'}`}>
-                        {isMuted ? '🔇 Muted' : '🎤 Live'}
-                    </button>
-                )}
+            )}
+
+            {/* Main Big Button for Mute/Unmute if Mobile-like view or just overlay */}
+            <div className="absolute top-2 right-2 z-20">
+                <button
+                    onClick={toggleMute}
+                    className={`p-3 rounded-full shadow-lg border border-white/10 transition-transform active:scale-95 ${isMuted ? 'bg-red-500 text-white' : 'bg-slate-700/50 text-white'}`}
+                >
+                    {isMuted ? '🔇' : '🎤'}
+                </button>
             </div>
 
-            {/* 2. Visualizers Grid */}
-            <div className="flex-1 p-4 grid grid-cols-4 gap-4 overflow-y-auto">
+            {/* Visualization Grid */}
+            <div className="flex-1 grid grid-cols-3 sm:grid-cols-4 place-items-center p-4 gap-4">
+
                 {/* ME */}
                 <div className="flex flex-col items-center gap-2">
                     <div className="relative">
                         <div
-                            className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-xl shadow-lg transition-transform duration-75"
-                            style={{ transform: `scale(${getScale(volume)})`, boxShadow: `0 0 ${volume / 5}px rgba(59,130,246,0.6)` }}
+                            className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-2xl shadow-lg transition-transform duration-75"
+                            style={{ transform: `scale(${getScale(myVolume)})`, boxShadow: `0 0 ${myVolume / 2}px rgba(59,130,246,0.5)` }}
                         >
                             🦊
                         </div>
-                        {isMuted && <div className="absolute -top-1 -right-1 bg-red-500 text-[8px] px-1 rounded-full border border-slate-900 text-white">OFF</div>}
+                        {isMuted && <div className="absolute -bottom-1 -right-1 bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full border border-slate-900 text-white font-bold">OFF</div>}
                     </div>
-                    <span className="text-[10px] font-bold text-slate-300">You</span>
+                    <span className="text-[10px] font-bold text-slate-300">Вы</span>
                 </div>
 
-                {/* OTHERS (Using Remote Volumes mock or WebRTC anal) */}
-                {players?.filter(p => p.id !== currentUserId).map(p => (
-                    <div key={p.id} className="flex flex-col items-center gap-2 opacity-50">
-                        {/* Placeholder for remote audio viz - Hard to do without attaching proper WebRTC streams here */}
-                        <div className="w-12 h-12 rounded-full bg-slate-700 flex items-center justify-center text-xl grayscale">
-                            👤
+                {/* OTHERS */}
+                {players?.filter(p => p.id !== currentUserId).map(p => {
+                    const vol = remoteVolumes[p.id] || 0;
+                    return (
+                        <div key={p.id} className="flex flex-col items-center gap-2">
+                            <div className="relative">
+                                <div
+                                    className="w-14 h-14 rounded-full bg-slate-700 flex items-center justify-center text-2xl shadow-lg transition-transform duration-75 border border-slate-600"
+                                    style={{ transform: `scale(${getScale(vol)})`, boxShadow: vol > 10 ? `0 0 ${vol / 2}px rgba(34,197,94,0.5)` : 'none', borderColor: vol > 10 ? '#22c55e' : '#475569' }}
+                                >
+                                    {p.token || '👤'}
+                                </div>
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-400 truncate max-w-[60px]">{p.name}</span>
                         </div>
-                        <span className="text-[10px] text-slate-500">{p.name}</span>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
-            {/* 3. Transcription Log */}
-            <div className="h-32 bg-black/40 p-3 overflow-y-auto border-t border-slate-700/50 flex flex-col gap-2 custom-scrollbar">
-                {transcripts.length === 0 && <div className="text-center text-[10px] text-slate-600 italic mt-4">Speak to see text...</div>}
-                {transcripts.map((t, i) => (
-                    <div key={i} className={`flex flex-col ${t.userId === currentUserId ? 'items-end' : 'items-start'}`}>
-                        <div className="flex items-center gap-1 mb-0.5">
-                            <span className="text-[9px] font-bold text-slate-400">{t.name}</span>
-                            <span className="text-[8px] text-slate-600">{new Date(t.timestamp).toLocaleTimeString([], { minute: '2-digit', second: '2-digit' })}</span>
-                        </div>
-                        <div className={`px-2 py-1 rounded-lg text-xs max-w-[90%] ${t.userId === currentUserId ? 'bg-blue-600/20 text-blue-100 border border-blue-500/30' : 'bg-slate-700/50 text-slate-200 border border-slate-600/30'}`}>
-                            {t.text}
-                        </div>
-                    </div>
-                ))}
-            </div>
+            {/* Error Toast */}
+            {error && (
+                <div className="absolute bottom-0 left-0 w-full bg-red-600 text-white text-[10px] p-1 text-center font-bold">
+                    {error}
+                </div>
+            )}
         </div>
     );
 };
