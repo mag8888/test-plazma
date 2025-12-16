@@ -2,12 +2,21 @@ import { Router, Application } from 'express';
 import AdminJS from 'adminjs';
 import AdminJSExpress from '@adminjs/express';
 import { Database, Resource } from '@adminjs/prisma';
-// Technical Fix: Import helper directly from internal path to bypass export issues
-// @ts-ignore
-import { getModelByName } from '@adminjs/prisma/lib/utils/get-model-by-name.js';
+import { Prisma } from '@prisma/client';
 import type { ActionRequest } from 'adminjs';
 import { env } from '../config/env.js';
 import { prisma } from '../lib/prisma.js';
+
+// Replicated helper to avoid import/export/ESM issues
+const getModelByName = (name: string) => {
+  const dmmf = Prisma.dmmf.datamodel;
+  const model = dmmf.models.find((m) => m.name === name);
+  if (!model) {
+    console.error(`ERROR: Model ${name} not found in Prisma DMMF`);
+    return null;
+  }
+  return model;
+};
 
 AdminJS.registerAdapter({ Database, Resource });
 
