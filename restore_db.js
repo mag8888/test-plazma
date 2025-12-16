@@ -4,8 +4,21 @@ const { MongoClient } = require('mongodb');
 const https = require('https');
 
 // Configuration
-const MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URL;
-const DB_NAME = process.env.MONGODB_DB_NAME || 'em2_game';
+// Configuration
+let MONGO_URI = process.env.MONGODB_URI || process.env.MONGO_URL;
+const DB_NAME = 'plazma'; // Force correct DB name for Bot
+
+if (MONGO_URI) {
+    // Auto-fix connection string if it's raw (standard Railway behavior)
+    if (!MONGO_URI.includes('/plazma')) {
+        // Strip trailing slash if present
+        MONGO_URI = MONGO_URI.replace(/\/$/, '');
+        // Append explicit DB name and params
+        if (MONGO_URI.endsWith('27017')) {
+            MONGO_URI = `${MONGO_URI}/${DB_NAME}?authSource=admin&directConnection=true`;
+        }
+    }
+}
 
 cloudinary.config({
     cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -82,6 +95,14 @@ async function restore() {
         const db = client.db(DB_NAME);
         console.log(`✅ Connected to database: ${DB_NAME}`);
 
+        // SAFETY CHECK: Only restore if DB is effectively empty
+        const userCount = await db.collection('User').countDocuments();
+        if (userCount > 0) {
+            console.log(`⚠️ SAFETY SKIP: Database ${DB_NAME} already has ${userCount} users. Skipping restore to prevent data loss.`);
+            await client.close();
+            process.exit(0);
+        }
+
         // 4. Restore Data
         // Assuming structure { "collectionName": [documents], ... }
         // OR { "users": [...], "rooms": [...] } logic based on file names? 
@@ -101,19 +122,12 @@ async function restore() {
 
             console.log(`♻️ Restoring collection: ${colName} (${docs.length} documents)...`);
 
-            // Convert ISO date strings back to Date objects if needed (simple heuristic)
-            // Or rely on Mongo driver to handle standard JSON types. 
-            // Better: parse specific fields if known, or just insert.
-            // Note: _id might be strings or objects ($oid). strict JSON dump from mongoexport usually has type wrappers.
-            // If it's just a raw JS object dump, it might need date conversion.
-
-            // Clearing existing data?
-            // User said "restore", usually implies state recovery. Safe to drop and replace?
-            // "project falls and not correctly works after base blocked" implies current state is broken/empty.
-            // I'll choose to deleteMany allows for clean slate.
-
             const collection = db.collection(colName);
-            await collection.deleteMany({}); // Safety: clear old broken data
+            try {
+                await collection.deleteMany({}); // Safety: clear old broken data (valid because we checked userCount == 0 or explicit override)
+            } catch (e) {
+                console.warn(`Could not clear collection ${colName}, proceeding to insert...`);
+            }
 
             // Pre-process docs to fix _id and Dates
             const processedDocs = docs.map(doc => {

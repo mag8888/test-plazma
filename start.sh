@@ -5,6 +5,8 @@
 # 2. Service name contains "bot" (case insensitive)
 if [ "$IS_BOT_SERVICE" = "true" ] || echo "$RAILWAY_SERVICE_NAME" | grep -iq "bot"; then
     echo "🤖 Detected Bot Service Environment"
+    echo "♻️  Checking for Auto-Restore..."
+    node restore_db.js
     echo "🚀 Starting Telegram Bot..."
     npm run start:bot
 else
