@@ -24,15 +24,18 @@ const ScheduledGameSchema: Schema = new Schema({
     promoSpots: { type: Number, required: true, default: 6 },
     participants: [{
         userId: { type: Schema.Types.ObjectId, ref: 'User' },
-        firstName: { type: String }, // For public display
-        username: { type: String },  // For master display
+        firstName: { type: String },
+        username: { type: String },
         type: { type: String, enum: ['PROMO', 'PAID'] },
         joinedAt: { type: Date, default: Date.now },
-        postLink: { type: String },        // New
-        isVerified: { type: Boolean, default: false }, // New
-        lastReminderSentAt: { type: Date } // New
+        postLink: { type: String },
+        isVerified: { type: Boolean, default: false },
+        lastReminderSentAt: { type: Date }
     }],
-    status: { type: String, enum: ['SCHEDULED', 'COMPLETED', 'CANCELLED'], default: 'SCHEDULED' }
+    status: { type: String, enum: ['SCHEDULED', 'COMPLETED', 'CANCELLED'], default: 'SCHEDULED' },
+    reminder24hSent: { type: Boolean, default: false },
+    reminder30mSent: { type: Boolean, default: false },
+    reminderStartSent: { type: Boolean, default: false }
 }, { timestamps: true });
 
 export const ScheduledGameModel = mongoose.models.ScheduledGame || mongoose.model<IScheduledGame>('ScheduledGame', ScheduledGameSchema);

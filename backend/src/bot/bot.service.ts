@@ -32,8 +32,8 @@ export class BotService {
             this.initHandlers();
             this.initHandlers();
 
-            // Start Reminder Interval (Every hour)
-            setInterval(() => this.checkReminders(), 60 * 60 * 1000);
+            // Start Reminder Interval (Every 5 minutes)
+            setInterval(() => this.checkReminders(), 5 * 60 * 1000);
 
             console.log("Telegram Bot started.");
         }
@@ -988,8 +988,9 @@ export class BotService {
     async checkReminders() {
         const now = new Date();
         const hour = now.getHours(); // Local server time. 
-        // 9:00 - 21:00 Check
-        if (hour < 9 || hour >= 21) return;
+        // 9:00 - 21:00 Check (Only for PROMO link reminders, global reminders should run always?)
+        // User request: "send notification every 3 hours in working time 9.00 -21.00" -> this was for POST LINK.
+        // For game reminders (24h, 30m), maybe acceptable anytime? Assuming yes.
 
         try {
             const { ScheduledGameModel } = await import('../models/scheduled-game.model');
@@ -997,31 +998,66 @@ export class BotService {
 
             // Find upcoming games
             const games = await ScheduledGameModel.find({
-                startTime: { $gt: now },
                 status: 'SCHEDULED'
             });
 
             for (const game of games) {
-                // Check participants
+                const diffMs = new Date(game.startTime).getTime() - now.getTime();
+                const diffHours = diffMs / (1000 * 60 * 60);
+                const diffMinutes = diffMs / (1000 * 60);
                 let gameModified = false;
-                for (const p of game.participants) {
-                    if (p.type === 'PROMO' && !p.isVerified) {
-                        // Check if time passed > 3 hours since Joined OR since Last Reminder
-                        const lastTime = p.lastReminderSentAt || p.joinedAt;
-                        const diffMs = now.getTime() - new Date(lastTime).getTime();
-                        const diffHours = diffMs / (1000 * 60 * 60);
 
-                        if (diffHours >= 3) {
-                            // Send Reminder
-                            const user = await UserModel.findById(p.userId);
-                            if (user) {
-                                this.bot?.sendMessage(user.telegram_id, "⏰ Напоминание! \nВы записались на игру (PROMO), но не прикрепили ссылку на пост.\nПожалуйста, отправьте ссылку на репост, чтобы подтвердить участие.");
-                                p.lastReminderSentAt = now;
-                                gameModified = true;
+                // 1. 24 Hour Reminder (23-25h window to be safe)
+                if (!game.reminder24hSent && diffHours <= 24 && diffHours > 23) {
+                    // Send to all
+                    for (const p of game.participants) {
+                        const user = await UserModel.findById(p.userId);
+                        if (user) this.bot?.sendMessage(user.telegram_id, `⏰ Напоминание: Игра через 24 часа! (${new Date(game.startTime).toLocaleString('ru-RU')})`);
+                    }
+                    game.reminder24hSent = true;
+                    gameModified = true;
+                }
+
+                // 2. 30 Minute Reminder (25-35m window)
+                if (!game.reminder30mSent && diffMinutes <= 30 && diffMinutes > 0) {
+                    for (const p of game.participants) {
+                        const user = await UserModel.findById(p.userId);
+                        if (user) this.bot?.sendMessage(user.telegram_id, `⏰ Напоминание: Игра начинается через 30 минут!`);
+                    }
+                    game.reminder30mSent = true;
+                    gameModified = true;
+                }
+
+                // 3. Start Reminder (0-5m window or slightly past?)
+                if (!game.reminderStartSent && diffMinutes <= 0 && diffMinutes > -10) {
+                    for (const p of game.participants) {
+                        const user = await UserModel.findById(p.userId);
+                        if (user) this.bot?.sendMessage(user.telegram_id, `🚀 Игра начинается! Ссылка на подключение: [Здесь будет ссылка] (Свяжитесь с мастером)`);
+                    }
+                    game.reminderStartSent = true;
+                    gameModified = true;
+                }
+
+                // 4. Promo Link Verification Reminder (Only 9-21)
+                if (hour >= 9 && hour < 21) {
+                    for (const p of game.participants) {
+                        if (p.type === 'PROMO' && !p.isVerified) {
+                            const lastTime = p.lastReminderSentAt || p.joinedAt;
+                            const verifyDiffMs = now.getTime() - new Date(lastTime).getTime();
+                            const verifyDiffHours = verifyDiffMs / (1000 * 60 * 60);
+
+                            if (verifyDiffHours >= 3) {
+                                const user = await UserModel.findById(p.userId);
+                                if (user) {
+                                    this.bot?.sendMessage(user.telegram_id, "⏰ Напоминание! \nВы записались на игру (PROMO), но не прикрепили ссылку на пост.\nПожалуйста, отправьте ссылку на репост, чтобы подтвердить участие.");
+                                    p.lastReminderSentAt = now;
+                                    gameModified = true;
+                                }
                             }
                         }
                     }
                 }
+
                 if (gameModified) await game.save();
             }
         } catch (e) {
