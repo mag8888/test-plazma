@@ -4,7 +4,8 @@
   "description": "Игра 'Энергия денег' - развивающая финансовая грамотность с обновленной игровой логикой",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
+    "start": "sh start.sh",
+    "start:game": "node server.js",
     "dev": "nodemon server.js",
     "build": "cd telegram-bot && npm install && npx prisma generate && npm run build",
     "start:bot": "cd telegram-bot && npm start",

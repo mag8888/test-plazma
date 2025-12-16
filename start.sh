@@ -10,5 +10,5 @@ if [ "$IS_BOT_SERVICE" = "true" ] || echo "$RAILWAY_SERVICE_NAME" | grep -iq "bo
 else
     echo "🎮 Detected Game Server Environment (Default)"
     echo "🚀 Starting Game Server..."
-    npm start
+    npm run start:game
 fi
