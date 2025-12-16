@@ -12,6 +12,7 @@ function requireEnv(key: string): string {
     if (/:\d+$/.test(value)) {
       console.log('⚠️ DEBUG: MONGO_URL missing database name. Auto-appending /plazma...');
       finalValue = `${value}/plazma?authSource=admin`;
+      process.env[key] = finalValue; // CRITICAL: Update env property so PrismaClient (native) sees the fix
     }
 
     // Mask password to safe print the structure
