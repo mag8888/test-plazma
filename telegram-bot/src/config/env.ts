@@ -11,7 +11,7 @@ function requireEnv(key: string): string {
     // Check if the URL ends with a port number (missing database name)
     if (/:\d+$/.test(value)) {
       console.log('⚠️ DEBUG: MONGO_URL missing database name. Auto-appending /plazma...');
-      finalValue = `${value}/plazma?authSource=admin`;
+      finalValue = `${value}/plazma?authSource=admin&directConnection=true`;
       process.env[key] = finalValue; // CRITICAL: Update env property so PrismaClient (native) sees the fix
     }
 
