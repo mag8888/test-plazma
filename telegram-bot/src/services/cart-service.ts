@@ -1,5 +1,7 @@
 import { prisma } from '../lib/prisma.js';
 import { Prisma } from '@prisma/client';
+import { getMongoDb } from '../lib/mongo-write.js';
+import { ObjectId } from 'mongodb';
 
 export async function getCartItems(userId: string) {
   return prisma.cartItem.findMany({
@@ -12,28 +14,21 @@ export async function getCartItems(userId: string) {
 }
 
 export async function addProductToCart(userId: string, productId: string) {
-  // Manual upsert replacement for Mongo standalone
-  const existingItem = await prisma.cartItem.findFirst({
-    where: {
-      userId,
-      productId,
+  // Use native driver to bypass Prisma transaction reqs (P2031)
+  const db = await getMongoDb();
+  await db.collection('CartItem').updateOne(
+    {
+      userId: new ObjectId(userId),
+      productId: new ObjectId(productId)
     },
-  });
-
-  if (existingItem) {
-    return prisma.cartItem.update({
-      where: { id: existingItem.id },
-      data: { quantity: { increment: 1 } },
-    });
-  }
-
-  return prisma.cartItem.create({
-    data: {
-      userId,
-      productId,
-      quantity: 1,
+    {
+      $inc: { quantity: 1 },
+      $setOnInsert: {
+        createdAt: new Date()
+      }
     },
-  });
+    { upsert: true }
+  );
 }
 
 export async function clearCart(userId: string) {

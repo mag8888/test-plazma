@@ -1,4 +1,3 @@
-```javascript
 import { getMongoDb } from '../lib/mongo-write.js';
 import { ObjectId } from 'mongodb';
 import { Context } from '../bot/context.js';
@@ -59,14 +58,6 @@ export async function logUserAction(ctx: Context, action: string, payload?: any)
     const db = await getMongoDb();
     await db.collection('UserHistory').insertOne({
       userId: new ObjectId(user.id), // Ensure stored as ObjectId for Prisma compatibility
-      // Stored as String/ObjectId depending on schema, but raw driver might need explicit ObjectId wrapping if schema defined it as such? 
-      // Prisma schema says @db.ObjectId, so in Mongo it is stored as ObjectId.
-      // However, result.insertedId IS an ObjectId. `user.id` from ensuresUser is .toString().
-      // We should probably store as string OR explicit ObjectId.
-      // Looking at Prisma schema: id String @db.ObjectId.
-      // In Mongo this is stored as ObjectId. 
-      // For safety, let's keep it simple. Prisma handles mapping string <-> ObjectId.
-      // Here we might need to be careful. But 'userId' in UserHistory is String @db.ObjectId.
       action,
       payload: payload ?? undefined,
       createdAt: new Date()
