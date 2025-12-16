@@ -11,6 +11,7 @@ if (!token) {
 export class BotService {
     bot: TelegramBot | null = null;
     adminStates: Map<number, { state: string, targetUser?: any }> = new Map();
+    masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_MAX' | 'WAITING_PROMO', gameData?: any }> = new Map();
 
     constructor() {
         if (token) {
@@ -121,6 +122,87 @@ export class BotService {
                 }
             }
 
+            // Master State Handling
+            const masterState = this.masterStates.get(chatId);
+            if (masterState) {
+                if (masterState.state === 'WAITING_DATE') {
+                    // Start parsing date
+                    // Support quick formats? "DD.MM HH:mm" or "YYYY-MM-DD HH:mm"
+                    // Assume DD.MM HH:mm for simplicity or try Parse
+                    const dateStr = text.trim();
+                    // Simple Regex for DD.MM HH:mm
+                    const match = dateStr.match(/^(\d{1,2})\.(\d{1,2})\s+(\d{1,2}):(\d{2})$/);
+                    let targetDate: Date;
+
+                    if (match) {
+                        const day = Number(match[1]);
+                        const month = Number(match[2]) - 1;
+                        const hour = Number(match[3]);
+                        const minute = Number(match[4]);
+                        const now = new Date();
+                        targetDate = new Date(now.getFullYear(), month, day, hour, minute);
+                        if (targetDate < now) {
+                            // Assuming next year if passed? Or just error. 
+                            // Let's assume if month is < current month, it's next year.
+                            if (month < now.getMonth()) {
+                                targetDate.setFullYear(now.getFullYear() + 1);
+                            }
+                        }
+                    } else {
+                        // Try new Date?
+                        targetDate = new Date(dateStr);
+                    }
+
+                    if (isNaN(targetDate.getTime())) {
+                        this.bot?.sendMessage(chatId, "⚠️ Неверный формат даты. Используйте: ДД.ММ ЧЧ:ММ (например: 25.12 18:00)");
+                        return;
+                    }
+
+                    masterState.gameData = { startTime: targetDate };
+                    masterState.state = 'WAITING_MAX';
+                    this.bot?.sendMessage(chatId, `📅 Дата: ${targetDate.toLocaleString('ru-RU')}\n\n👥 Введите макс. кол-во игроков (по умолчанию 8):`);
+                    return;
+
+                } else if (masterState.state === 'WAITING_MAX') {
+                    const max = Number(text);
+                    if (isNaN(max) || max < 2) {
+                        this.bot?.sendMessage(chatId, "⚠️ Введите число больше 1.");
+                        return;
+                    }
+                    masterState.gameData.maxPlayers = max;
+                    masterState.state = 'WAITING_PROMO';
+                    this.bot?.sendMessage(chatId, `👥 Всего мест: ${max}\n\n🎟 Сколько из них ПРОМО (бесплатно)?\n(По умолчанию 6, остальные платные):`);
+                    return;
+
+                } else if (masterState.state === 'WAITING_PROMO') {
+                    const promo = Number(text);
+                    if (isNaN(promo) || promo < 0) {
+                        this.bot?.sendMessage(chatId, "⚠️ Введите корректное число.");
+                        return;
+                    }
+
+                    // FINALIZE
+                    const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                    const { UserModel } = await import('../models/user.model');
+                    const user = await UserModel.findOne({ telegram_id: msg.from?.id });
+
+                    const newGame = new ScheduledGameModel({
+                        hostId: user._id,
+                        startTime: masterState.gameData.startTime,
+                        maxPlayers: masterState.gameData.maxPlayers,
+                        promoSpots: promo,
+                        price: 20, // Default price $20
+                        participants: []
+                    });
+
+                    await newGame.save();
+
+                    this.masterStates.delete(chatId);
+                    this.bot?.sendMessage(chatId, `✅ Игра успешно создана!\n\n📅 ${newGame.startTime.toLocaleString('ru-RU')}\n👥 Мест: ${newGame.maxPlayers} (Промо: ${newGame.promoSpots})`);
+                    return;
+                }
+            }
+
             if (text === '/cancel') {
                 this.adminStates.delete(chatId);
                 this.bot?.sendMessage(chatId, "Action canceled.");
@@ -154,19 +236,30 @@ export class BotService {
                 this.handleCommunity(chatId);
             } else if (text === 'ℹ️ О проекте') {
                 this.handleAbout(chatId);
+            } else if (text === '📅 Ближайшие игры') {
+                this.handleSchedule(chatId);
+            } else if (text === '➕ Добавить игру') {
+                this.handleAddGameStart(chatId, msg.from?.id);
             }
         });
 
         // Keep callback query handler for inline buttons (like in 'Earn' or deep links)
-        this.bot.on('callback_query', (query) => {
+        this.bot.on('callback_query', async (query) => {
             const chatId = query.message?.chat.id;
             const data = query.data;
+            const userId = query.from.id;
             if (!chatId || !data) return;
 
             if (data === 'apply_earn') {
                 this.bot?.sendMessage(chatId, 'Отлично! Напишите менеджеру: @Arctur_888');
             } else if (data === 'become_master') {
-                this.bot?.sendMessage(chatId, 'Чтобы стать мастером, напишите: @Aurelia_8888');
+                await this.handleBecomeMaster(chatId, userId);
+            } else if (data.startsWith('join_game_')) {
+                const gameId = data.replace('join_game_', '');
+                await this.handleJoinGame(chatId, userId, gameId);
+            } else if (data.startsWith('join_paid_')) {
+                const gameId = data.replace('join_paid_', '');
+                await this.handleJoinGame(chatId, userId, gameId, true);
             } else if (data === 'admin_users') {
                 // Fetch last 10 users
                 import('../models/user.model').then(async ({ UserModel }) => {
@@ -230,8 +323,8 @@ export class BotService {
         this.bot?.sendMessage(chatId, text, {
             reply_markup: {
                 keyboard: [
-                    [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
-                    [{ text: '🤝 Получить клиентов' }],
+                    [{ text: '📅 Ближайшие игры' }, { text: '🎲 Играть' }],
+                    [{ text: '💸 Заработать' }, { text: '🤝 Получить клиентов' }],
                     [{ text: '🌐 Сообщество' }, { text: 'ℹ️ О проекте' }]
                 ],
                 resize_keyboard: true
@@ -375,7 +468,7 @@ export class BotService {
             `Это современный инструмент продвижения твоего бизнеса и укрепления связей.`,
             {
                 reply_markup: {
-                    inline_keyboard: [[{ text: 'Стать мастером', callback_data: 'become_master' }]]
+                    inline_keyboard: [[{ text: 'Стать мастером ($100)', callback_data: 'become_master' }]]
                 }
             }
         );
@@ -390,5 +483,212 @@ export class BotService {
             `«Энергия Денег» — это новая образовательная игра, созданная на основе принципов CashFlow.\n` +
             `Она помогает менять мышление, прокачивать навыки и открывать новые финансовые возможности.`
         );
+    }
+
+    async handleBecomeMaster(chatId: number, telegramId: number) {
+        try {
+            const { UserModel } = await import('../models/user.model');
+            const user = await UserModel.findOne({ telegram_id: telegramId });
+
+            if (!user) {
+                this.bot?.sendMessage(chatId, "Ошибка профиля.");
+                return;
+            }
+
+            if (user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date()) {
+                this.bot?.sendMessage(chatId, `✅ Вы уже Мастер! Статус активен до ${user.masterExpiresAt.toLocaleDateString()}`);
+                // Show Add Game button if Master? Check Menu.
+                // We need to refresh menu for Master to show "Add Game".
+                // Let's send a special message or refresh menu.
+                this.sendMasterMenu(chatId);
+                return;
+            }
+
+            // Check Balance
+            if (user.referralBalance >= 100) {
+                user.referralBalance -= 100;
+                user.isMaster = true;
+                const nextYear = new Date();
+                nextYear.setFullYear(nextYear.getFullYear() + 1);
+                user.masterExpiresAt = nextYear;
+                await user.save();
+
+                this.bot?.sendMessage(chatId, `🎉 Поздравляем! Вы стали Мастером!\nСтатус активен до ${user.masterExpiresAt.toLocaleDateString()}\n\nТеперь вам доступна кнопка "Добавить игру".`);
+                this.sendMasterMenu(chatId);
+            } else {
+                this.bot?.sendMessage(chatId, `❌ Недостаточно средств.\nВаш баланс: $${user.referralBalance}.\nСтоимость статуса: $100.\n\nПополните баланс через администратора или приглашая друзей.`);
+            }
+
+        } catch (e) {
+            console.error("Error in become master:", e);
+        }
+    }
+
+    sendMasterMenu(chatId: number) {
+        this.bot?.sendMessage(chatId, "Меню Мастера активировано.", {
+            reply_markup: {
+                keyboard: [
+                    [{ text: '➕ Добавить игру' }, { text: '📅 Ближайшие игры' }],
+                    [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
+                    [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
+                    [{ text: 'ℹ️ О проекте' }]
+                ],
+                resize_keyboard: true
+            }
+        });
+    }
+
+    async handleAddGameStart(chatId: number, telegramId?: number) {
+        if (!telegramId) return;
+        const { UserModel } = await import('../models/user.model');
+        const user = await UserModel.findOne({ telegram_id: telegramId });
+
+        if (!user || !user.isMaster) {
+            this.bot?.sendMessage(chatId, "⛔️ Доступно только для Мастеров.");
+            return;
+        }
+
+        // Init State
+        this.masterStates.set(chatId, { state: 'WAITING_DATE' });
+        this.bot?.sendMessage(chatId, "📅 Введите дату и время игры (формат: ДД.ММ ЧЧ:ММ)\nПример: 25.12 18:00");
+    }
+
+    async handleSchedule(chatId: number) {
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const now = new Date();
+            const games = await ScheduledGameModel.find({
+                startTime: { $gt: now },
+                status: 'SCHEDULED'
+            }).sort({ startTime: 1 }).limit(10); // Show next 10 games
+
+            if (games.length === 0) {
+                this.bot?.sendMessage(chatId, "😔 Пока нет запланированных игр.\nЗагляните позже!");
+                return;
+            }
+
+            for (const game of games) {
+                const totalParticipants = game.participants.length;
+                const freeSpots = game.promoSpots - game.participants.filter((p: any) => p.type === 'PROMO').length;
+                const paidSpots = (game.maxPlayers - game.promoSpots) - game.participants.filter((p: any) => p.type === 'PAID').length;
+
+                // Format Text
+                const dateStr = new Date(game.startTime).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+
+                let text = `🎲 **Игра: ${dateStr}**\n`;
+                text += `👥 Игроков: ${totalParticipants}/${game.maxPlayers}\n`;
+                text += `🎟 Промо (Free): ${freeSpots > 0 ? freeSpots : '❌ Нет мест'}\n`;
+                text += `💰 Платные ($20): ${paidSpots > 0 ? paidSpots : '❌ Нет мест'}\n`;
+
+                // Participants List (Simplified)
+                if (totalParticipants > 0) {
+                    text += `\nУчастники:\n`;
+                    game.participants.forEach((p: any, i: number) => {
+                        text += `${i + 1}. ${p.username || 'Игрок'}\n`;
+                    });
+                }
+
+                const keyboard: any[] = [];
+                if (freeSpots > 0) keyboard.push({ text: 'Записаться (Free)', callback_data: `join_game_${game._id}` });
+                if (paidSpots > 0) keyboard.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
+
+                this.bot?.sendMessage(chatId, text, {
+                    parse_mode: 'Markdown',
+                    reply_markup: { inline_keyboard: [keyboard] }
+                });
+            }
+
+        } catch (e) {
+            console.error(e);
+            this.bot?.sendMessage(chatId, "Ошибка загрузки расписания.");
+        }
+    }
+
+    async handleJoinGame(chatId: number, telegramId: number, gameId: string, isPaid: boolean = false) {
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const { UserModel } = await import('../models/user.model');
+
+            const game = await ScheduledGameModel.findById(gameId);
+            const user = await UserModel.findOne({ telegram_id: telegramId });
+
+            if (!game || !user) {
+                this.bot?.sendMessage(chatId, "Игра или пользователь не найдены.");
+                return;
+            }
+
+            // Check if already registered
+            if (game.participants.some((p: any) => p.userId.toString() === user._id.toString())) {
+                this.bot?.sendMessage(chatId, "⚠️ Вы уже записаны на эту игру!");
+                return;
+            }
+
+            // Check Limits
+            const promoCount = game.participants.filter((p: any) => p.type === 'PROMO').length;
+            const paidCount = game.participants.filter((p: any) => p.type === 'PAID').length;
+
+            if (!isPaid) {
+                // Trying to join PROMO
+                if (promoCount >= game.promoSpots) {
+                    this.bot?.sendMessage(chatId, "😔 Промо-места закончились. Вы можете записаться платно ($20).", {
+                        reply_markup: {
+                            inline_keyboard: [[{ text: 'Записаться платно ($20)', callback_data: `join_paid_${game._id}` }]]
+                        }
+                    });
+                    return;
+                }
+                // Check eligibility? User said "Invite friends".
+                // Allow simplistic check: Just > 0 referrals? Or just allow everyone as MVP. 
+                // "get (promo) for inviting friends"
+                // Let's enforce: Must have invited at least 1 friend to use Promo?
+                // Or just warning?
+                // Let's proceed with OPEN promo for now, as user didn't specify strict rule like "1 invite = 1 game".
+                // Just register.
+
+                game.participants.push({
+                    userId: user._id,
+                    username: user.first_name || user.username,
+                    type: 'PROMO'
+                });
+
+            } else {
+                // Joining PAID
+                if (paidCount >= (game.maxPlayers - game.promoSpots)) {
+                    // Check total cap strictly?
+                    // (Max - Promo) = Paid Spots.
+                    // Actually: Total < Max.
+                    // If Promo used 6/6. Paid used 2/2. Total 8. Full.
+                    // If Promo used 2/6. Paid used 2/2 ??
+                    // Usually Promo spots are RESERVED. So Paid spots are (Max - Promo).
+                    this.bot?.sendMessage(chatId, "😔 Платные места тоже закончились!");
+                    return;
+                }
+
+                // Deduct Balance
+                if (user.referralBalance < 20) {
+                    this.bot?.sendMessage(chatId, `❌ Недостаточно средств ($20). Ваш баланс: $${user.referralBalance}`);
+                    return;
+                }
+
+                user.referralBalance -= 20;
+                await user.save();
+
+                game.participants.push({
+                    userId: user._id,
+                    username: user.first_name || user.username,
+                    type: 'PAID'
+                });
+            }
+
+            await game.save();
+            this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру!\n📅 ${new Date(game.startTime).toLocaleString('ru-RU')}`);
+
+            // Notify Master?
+            // this.bot.sendMessage(game.hostId... -> need to fetch host telegramId)
+
+        } catch (e) {
+            console.error("Join error:", e);
+            this.bot?.sendMessage(chatId, "Ошибка записи на игру.");
+        }
     }
 }

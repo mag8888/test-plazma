@@ -14,6 +14,8 @@ export interface IUser extends Document {
     authCodeExpires?: Date;
     createdAt: Date;
     wins: number;
+    isMaster?: boolean;
+    masterExpiresAt?: Date;
 }
 
 const UserSchema: Schema = new Schema({
@@ -28,7 +30,9 @@ const UserSchema: Schema = new Schema({
     referredBy: { type: String }, // Store referrer's username or ID
     authCode: { type: String },
     authCodeExpires: { type: Date },
-    wins: { type: Number, default: 0 }
+    wins: { type: Number, default: 0 },
+    isMaster: { type: Boolean, default: false },
+    masterExpiresAt: { type: Date }
 }, { timestamps: true });
 
 export const UserModel = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
