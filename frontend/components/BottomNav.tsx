@@ -12,7 +12,8 @@ export const BottomNav = () => {
 
     // If we are in the GAME BOARD, we typically HIDE the nav, or keep it?
     // Usually hide in active game to prevent accidental exit.
-    if (pathname.includes('/game/board')) return null;
+    // Hide on Game Board to save space
+    if (pathname.startsWith('/game')) return null;
 
     const tabs = [
         { name: 'Главная', path: '/home', icon: Home },
