@@ -136,3 +136,35 @@ body {
 .animate-in.slide-in-from-top {
   animation: slideInFromTop 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* Shine Effect */
+@keyframes shine {
+  from {
+    mask-position: 150%;
+  }
+
+  to {
+    mask-position: -50%;
+  }
+}
+
+.animate-shine {
+  mask-image: linear-gradient(-75deg, rgba(0, 0, 0, 0.6) 30%, #000 50%, rgba(0, 0, 0, 0.6) 70%);
+  mask-size: 200%;
+  animation: shine 3s infinite;
+}
+
+/* Glass Utilities */
+.glass-panel {
+  background: rgba(30, 41, 59, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.glass-button {
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+}

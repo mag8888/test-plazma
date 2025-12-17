@@ -3,66 +3,120 @@
 import { useTelegram } from '../../components/TelegramProvider';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Zap, DollarSign, BookOpen } from 'lucide-react';
+import { Zap, DollarSign, BookOpen, Presentation, ChevronRight } from 'lucide-react';
 import { RulesModal } from '../game/RulesModal';
+import PresentationModal from './PresentationModal';
 
 export default function HomePage() {
-    const { webApp } = useTelegram();
+    const { webApp, user } = useTelegram();
     const [showRules, setShowRules] = useState(false);
+    const [showPresentation, setShowPresentation] = useState(false);
 
     const handleHaptic = (style: 'light' | 'medium' | 'heavy' = 'light') => {
-        if (webApp?.HapticFeedback) {
-            webApp.HapticFeedback.impactOccurred(style);
-        }
+        webApp?.HapticFeedback.impactOccurred(style);
     };
 
     return (
-        <div className="min-h-screen bg-slate-900 text-white p-6 pt-10 flex flex-col justify-center space-y-4 pb-24">
+        <div className="min-h-screen bg-[#0f172a] text-white font-sans relative overflow-hidden">
 
-            {/* Play Button - Main Action */}
-            <Link
-                href="/lobby"
-                onClick={() => handleHaptic('medium')}
-                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 p-6 rounded-3xl flex flex-col items-center justify-center gap-3 transition-all active:scale-95 shadow-xl shadow-blue-900/20 group"
-            >
-                <div className="bg-white/20 p-4 rounded-full group-hover:scale-110 transition-transform">
-                    <Zap size={40} className="text-white fill-white" />
+            {/* Background Ambience */}
+            <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
+                <div className="absolute top-[-10%] right-[-10%] w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[100px] animate-pulse-slow"></div>
+                <div className="absolute bottom-[-10%] left-[-10%] w-[400px] h-[400px] bg-purple-600/10 rounded-full blur-[100px]"></div>
+            </div>
+
+            <div className="relative z-10 p-6 flex flex-col min-h-screen pb-24">
+
+                {/* Greeting */}
+                <div className="mt-8 mb-8 animate-in slide-in-from-top-4 duration-700">
+                    <h1 className="text-3xl font-black tracking-tight text-white mb-1">
+                        Привет, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">{user?.first_name || 'Гость'}</span>!
+                    </h1>
+                    <p className="text-slate-400 text-sm font-medium">Готов приумножить капитал?</p>
                 </div>
-                <div className="text-center">
-                    <h2 className="text-2xl font-black uppercase tracking-wider">Играть</h2>
-                    <p className="text-blue-100 text-sm font-medium opacity-80">Перейти в лобби</p>
+
+                <div className="flex-1 flex flex-col justify-center space-y-6">
+
+                    {/* MAIN CTA: PLAY */}
+                    <Link
+                        href="/lobby"
+                        onClick={() => handleHaptic('heavy')}
+                        className="group relative w-full bg-gradient-to-br from-blue-700 via-indigo-600 to-purple-700 p-1 rounded-[2rem] shadow-[0_0_40px_-10px_rgba(79,70,229,0.5)] hover:shadow-[0_0_60px_-10px_rgba(79,70,229,0.7)] transition-all duration-300 active:scale-[0.98]"
+                    >
+                        <div className="absolute inset-0 bg-white/20 rounded-[2rem] blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+
+                        <div className="relative bg-[#0f172a]/40 backdrop-blur-sm rounded-[1.8rem] p-6 h-40 flex flex-col items-center justify-center border border-white/10 overflow-hidden">
+                            {/* Shine Effect */}
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 translate-x-[-200%] group-hover:animate-shine"></div>
+
+                            <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
+                                <Zap size={32} className="text-white fill-white" />
+                            </div>
+                            <h2 className="text-2xl font-black uppercase tracking-wider text-white group-hover:text-blue-200 transition-colors">Играть</h2>
+                            <div className="flex items-center gap-1 text-[10px] bg-black/30 px-3 py-1 rounded-full mt-2 text-blue-200/80 font-mono uppercase tracking-widest border border-white/5">
+                                Вход в лобби <ChevronRight size={10} />
+                            </div>
+                        </div>
+                    </Link>
+
+                    {/* PRESENTATION BUTTON (New) */}
+                    <button
+                        onClick={() => {
+                            handleHaptic('medium');
+                            setShowPresentation(true);
+                        }}
+                        className="w-full bg-gradient-to-r from-amber-900/40 to-orange-900/40 p-[1px] rounded-2xl group active:scale-[0.98] transition-transform"
+                    >
+                        <div className="bg-[#1e1b15]/60 backdrop-blur-md rounded-2xl p-4 flex items-center gap-4 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-orange-500/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+
+                            <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-orange-600 rounded-xl flex items-center justify-center shadow-lg shadow-orange-500/20 text-white group-hover:scale-110 transition-transform">
+                                <Presentation size={24} />
+                            </div>
+                            <div className="text-left">
+                                <h3 className="text-lg font-bold text-amber-100 group-hover:text-white transition-colors">Презентация</h3>
+                                <p className="text-xs text-amber-200/50 uppercase tracking-wider font-bold">Узнать об игре</p>
+                            </div>
+                            <div className="ml-auto text-amber-500/50 group-hover:translate-x-1 transition-transform">
+                                <ChevronRight />
+                            </div>
+                        </div>
+                    </button>
+
+                    {/* Secondary Grid */}
+                    <div className="grid grid-cols-2 gap-4">
+                        {/* EARN */}
+                        <Link
+                            href="/earn"
+                            onClick={() => handleHaptic('light')}
+                            className="bg-slate-800/40 hover:bg-slate-700/50 backdrop-blur-md border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center gap-3 active:scale-95 transition-all group"
+                        >
+                            <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
+                                <DollarSign size={20} />
+                            </div>
+                            <span className="font-bold text-sm text-slate-300 group-hover:text-white transition-colors">Доход</span>
+                        </Link>
+
+                        {/* RULES */}
+                        <button
+                            onClick={() => {
+                                handleHaptic('light');
+                                setShowRules(true);
+                            }}
+                            className="bg-slate-800/40 hover:bg-slate-700/50 backdrop-blur-md border border-white/5 p-4 rounded-2xl flex flex-col items-center justify-center gap-3 active:scale-95 transition-all group"
+                        >
+                            <div className="w-10 h-10 bg-slate-700/50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:text-black transition-colors">
+                                <BookOpen size={20} />
+                            </div>
+                            <span className="font-bold text-sm text-slate-300 group-hover:text-white transition-colors">Правила</span>
+                        </button>
+                    </div>
+
                 </div>
-            </Link>
-
-            <div className="grid grid-cols-2 gap-4">
-                {/* Earn Button */}
-                <Link
-                    href="/earn"
-                    onClick={() => handleHaptic('light')}
-                    className="bg-slate-800 hover:bg-slate-700 p-5 rounded-2xl flex flex-col items-center justify-center gap-2 border border-slate-700 transition-all active:scale-95"
-                >
-                    <div className="bg-green-500/10 p-3 rounded-xl text-green-400 mb-1">
-                        <DollarSign size={28} />
-                    </div>
-                    <span className="font-bold text-lg">Доход</span>
-                </Link>
-
-                {/* Rules Button */}
-                <button
-                    onClick={() => {
-                        handleHaptic('light');
-                        setShowRules(true);
-                    }}
-                    className="bg-slate-800 hover:bg-slate-700 p-5 rounded-2xl flex flex-col items-center justify-center gap-2 border border-slate-700 transition-all active:scale-95"
-                >
-                    <div className="bg-yellow-500/10 p-3 rounded-xl text-yellow-400 mb-1">
-                        <BookOpen size={28} />
-                    </div>
-                    <span className="font-bold text-lg">Правила</span>
-                </button>
             </div>
 
             {showRules && <RulesModal onClose={() => setShowRules(false)} />}
+            {showPresentation && <PresentationModal onClose={() => setShowPresentation(false)} />}
         </div>
     );
 }
