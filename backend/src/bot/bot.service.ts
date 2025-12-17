@@ -30,6 +30,7 @@ export class BotService {
             });
 
             this.initHandlers();
+            this.setBotCommands();
 
             // Start Reminder Interval (Every 5 minutes)
             setInterval(() => this.checkReminders(), 5 * 60 * 1000);
