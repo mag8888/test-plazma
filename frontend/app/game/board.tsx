@@ -737,8 +737,18 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                 </p>
                             )}
 
-                            <button onClick={() => setSquareInfo(null)} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 active:scale-95">
-                                Закрыть
+                            <button
+                                onClick={() => {
+                                    // For immediate events that don't require user choice (like Downsized, Baby, Payday),
+                                    // closing the modal should end the turn to prevent hanging.
+                                    if (['DOWNSIZED', 'BABY', 'PAYDAY', 'LOSS', 'DOODAD', 'TAX'].includes(squareInfo.type)) {
+                                        handleEndTurn();
+                                    }
+                                    setSquareInfo(null);
+                                }}
+                                className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 active:scale-95"
+                            >
+                                {['DOWNSIZED', 'BABY', 'LOSS', 'DOODAD', 'TAX'].includes(squareInfo.type) ? 'Завершить ход' : 'Закрыть'}
                             </button>
                         </div>
                     </div>
