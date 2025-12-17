@@ -88,6 +88,37 @@ export class BotService {
     initHandlers() {
         if (!this.bot) return;
 
+        // Admin: Recalculate Balances (Migration Green -> Red)
+        this.bot.onText(/\/admin_recalc/, async (msg) => {
+            const chatId = msg.chat.id;
+            const adminId = process.env.TELEGRAM_ADMIN_ID;
+            if (String(chatId) !== String(adminId)) return;
+
+            this.bot?.sendMessage(chatId, "⏳ Starting balance recalculation (Green -> Red)...");
+            try {
+                const { UserModel } = await import('../models/user.model');
+                const users = await UserModel.find({ referralBalance: { $gt: 0 } });
+
+                let count = 0;
+                let totalAmount = 0;
+
+                for (const user of users) {
+                    const amount = user.referralBalance;
+                    user.balanceRed = (user.balanceRed || 0) + amount;
+                    user.referralBalance = 0; // Reset Green
+                    await user.save();
+
+                    count++;
+                    totalAmount += amount;
+                }
+
+                this.bot?.sendMessage(chatId, `✅ Recalculation Complete!\nProcessed Users: ${count}\nTotal Moved: $${totalAmount}`);
+            } catch (e) {
+                console.error("Recalc Result:", e);
+                this.bot?.sendMessage(chatId, `❌ Error: ${e}`);
+            }
+        });
+
         // /start command (supports ?start=referrerId)
         this.bot.onText(/\/start(.*)/, async (msg, match) => {
             const chatId = msg.chat.id;
@@ -722,12 +753,12 @@ export class BotService {
                     if (referrer && referrer._id.toString() !== user._id.toString()) {
                         user.referredBy = referrer.username;
 
-                        // Award Referrer
-                        referrer.referralBalance += 10;
+                        // Award Referrer (To Red Balance per request)
+                        referrer.balanceRed += 10;
                         referrer.referralsCount += 1;
                         await referrer.save();
 
-                        this.bot?.sendMessage(referrer.telegram_id!, `🎉 У вас новый реферал: ${firstName}! Баланс +$10.`);
+                        this.bot?.sendMessage(referrer.telegram_id!, `🎉 У вас новый реферал: ${firstName}! Баланс +$10 (🔴 Red Balance).`);
                     }
                 }
 
