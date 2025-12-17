@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { User, Shield, Zap, TrendingUp, DollarSign } from 'lucide-react';
 
 export default function HomePage() {
-    const { user, isReady } = useTelegram();
+    const { user, isReady, webApp } = useTelegram();
     const router = useRouter();
 
     // Use Context Data (or defaults/mocks while loading)
