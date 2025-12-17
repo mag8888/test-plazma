@@ -375,6 +375,56 @@ export class BotService {
                     this.bot?.sendMessage(chatId, `✅ Сообщение отправлено ${count} участникам.`);
                     this.masterStates.delete(chatId);
                     return;
+                } else if (masterState.state === 'WAITING_EDIT_TIME') {
+                    const gameId = masterState.gameId;
+                    const timeStr = text.trim();
+                    const match = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+                    if (match && gameId) {
+                        const h = Number(match[1]);
+                        const m = Number(match[2]);
+                        if (h >= 0 && h < 24 && m >= 0 && m < 60) {
+                            // Update Game Time
+                            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                            const game = await ScheduledGameModel.findById(gameId);
+                            if (game) {
+                                const original = new Date(game.startTime);
+                                // Keep date, change time. Input is MSK. 
+                                // Need to construct UTC.
+                                // 1. Get Date parts from original (already UTC).
+                                const dateStr = original.toISOString().split('T')[0]; // YYYY-MM-DD
+                                const [year, month, day] = dateStr.split('-').map(Number);
+
+                                const newDate = new Date(Date.UTC(year, month - 1, day, h, m));
+                                newDate.setHours(newDate.getHours() - 3);
+
+                                game.startTime = newDate;
+                                await game.save();
+                                this.bot?.sendMessage(chatId, `✅ Время изменено на ${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')} (МСК)`);
+                            }
+                            this.masterStates.delete(chatId);
+                        } else {
+                            this.bot?.sendMessage(chatId, "Неверное время.");
+                        }
+                    } else {
+                        this.bot?.sendMessage(chatId, "Ошибка формата ЧЧ:ММ");
+                    }
+                    return;
+                } else if (masterState.state === 'WAITING_EDIT_MAX') {
+                    const gameId = masterState.gameId;
+                    const max = Number(text);
+                    if (!isNaN(max) && max > 1 && gameId) {
+                        const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                        const game = await ScheduledGameModel.findById(gameId);
+                        if (game) {
+                            game.maxPlayers = max;
+                            await game.save();
+                            this.bot?.sendMessage(chatId, `✅ Количество мест изменено на ${max}.`);
+                        }
+                        this.masterStates.delete(chatId);
+                    } else {
+                        this.bot?.sendMessage(chatId, "Введите число > 1.");
+                    }
+                    return;
                 }
             }
 
