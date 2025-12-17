@@ -56,7 +56,7 @@ export default function HomePage() {
                 <h3 className="font-bold text-lg">Быстрые действия</h3>
                 <div className="grid grid-cols-2 gap-3">
                     <Link
-                        href="/schedule"
+                        href="/lobby"
                         onClick={() => webApp?.HapticFeedback.impactOccurred('medium')}
                         className="bg-blue-600 hover:bg-blue-500 p-4 rounded-xl flex flex-col items-center gap-2 transition-all active:scale-95"
                     >
