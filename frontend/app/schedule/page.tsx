@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Calendar, Users, ArrowRight, Clock } from 'lucide-react';
 
 export default function SchedulePage() {
-    const { webApp } = useTelegram();
+    const { webApp, user } = useTelegram();
     const [games, setGames] = useState<any[]>([]);
 
     // Mock Data loading
@@ -37,70 +37,81 @@ export default function SchedulePage() {
                             master: g.hostId?.username || g.hostId?.first_name || 'Master',
                             players: g.participants?.length || 0,
                             max: g.maxPlayers,
-                            price: g.price
+                            price: g.price,
+                            hostId: g.hostId?._id || g.hostId // Ensure we have the ID to compare
                         };
-                    });
-                    setGames(formatted);
-                }
+                    };
+                });
+    setGames(formatted);
+}
             } catch (e) {
-                console.error("Failed to fetch schedule", e);
-            }
+    console.error("Failed to fetch schedule", e);
+}
         };
 
-        fetchGames();
+fetchGames();
     }, []);
 
-    const joinGame = (id: number) => {
-        if (webApp) {
-            webApp.HapticFeedback.impactOccurred('medium');
-            webApp.showAlert(`Запрос на игру #${id} отправлен!`);
-        }
-    };
+const joinGame = (id: number) => {
+    if (webApp) {
+        webApp.HapticFeedback.impactOccurred('medium');
+        webApp.showAlert(`Запрос на игру #${id} отправлен!`);
+    }
+};
 
-    return (
-        <div className="min-h-screen bg-slate-900 text-white p-4 space-y-4 pt-6">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-                <Calendar className="text-blue-500" />
-                Расписание
-            </h1>
+return (
+    <div className="min-h-screen bg-slate-900 text-white p-4 space-y-4 pt-6">
+        <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Calendar className="text-blue-500" />
+            Расписание
+        </h1>
 
-            <div className="space-y-3">
-                {games.map(game => (
-                    <div key={game.id} className="bg-slate-800 rounded-xl p-4 border border-slate-700 relative overflow-hidden">
-                        <div className="flex justify-between items-start mb-3">
-                            <div>
-                                <div className="flex flex-col">
-                                    <div className="flex items-center gap-2 text-blue-400 font-bold mb-1">
-                                        <Clock size={16} />
-                                        {game.time} <span className="text-xs font-normal opacity-70">(МСК)</span>
-                                    </div>
-                                    {game.localTime && (
-                                        <div className="text-xs text-slate-500 mb-1">
-                                            {game.localTime} (Ваше время)
-                                        </div>
-                                    )}
-                                    <div className="text-lg font-bold">{game.date}</div>
+        <div className="space-y-3">
+            {games.map(game => (
+                <div key={game.id} className="bg-slate-800 rounded-xl p-4 border border-slate-700 relative overflow-hidden">
+                    <div className="flex justify-between items-start mb-3">
+                        <div>
+                            <div className="flex flex-col">
+                                <div className="flex items-center gap-2 text-blue-400 font-bold mb-1">
+                                    <Clock size={16} />
+                                    {game.time} <span className="text-xs font-normal opacity-70">(МСК)</span>
                                 </div>
-                            </div>
-                            <div className="bg-slate-900 px-3 py-1 rounded-lg text-sm font-mono border border-slate-700 h-fit">
-                                ${game.price}
+                                {game.localTime && (
+                                    <div className="text-xs text-slate-500 mb-1">
+                                        {game.localTime} (Ваше время)
+                                    </div>
+                                )}
+                                <div className="text-lg font-bold">{game.date}</div>
                             </div>
                         </div>
-
-                        <div className="flex items-center justify-between text-sm text-slate-400 mb-4">
-                            <span>👑 {game.master}</span>
-                            <span className="flex items-center gap-1"><Users size={14} /> {game.players}/{game.max}</span>
+                        <div className="bg-slate-900 px-3 py-1 rounded-lg text-sm font-mono border border-slate-700 h-fit">
+                            ${game.price}
                         </div>
+                    </div>
 
+                    <div className="flex items-center justify-between text-sm text-slate-400 mb-4">
+                        <span>👑 {game.master}</span>
+                        <span className="flex items-center gap-1"><Users size={14} /> {game.players}/{game.max}</span>
+                    </div>
+
+                    {game.hostId === user?.id ? (
+                        <button
+                            onClick={() => webApp?.openTelegramLink('https://t.me/MONEO_game_bot')}
+                            className="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 border border-slate-600"
+                        >
+                            ⚙️ Управление (в боте)
+                        </button>
+                    ) : (
                         <button
                             onClick={() => joinGame(game.id)}
                             className="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95"
                         >
                             Записаться <ArrowRight size={18} />
                         </button>
-                    </div>
-                ))}
-            </div>
+                    )}
+                </div>
+            ))}
         </div>
-    );
+    </div>
+);
 }
