@@ -1,6 +1,7 @@
 'use client';
 
 import { useTelegram } from '../../components/TelegramProvider';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { User, Shield, Zap, TrendingUp, DollarSign } from 'lucide-react';
@@ -54,14 +55,22 @@ export default function HomePage() {
             <div className="space-y-4">
                 <h3 className="font-bold text-lg">Быстрые действия</h3>
                 <div className="grid grid-cols-2 gap-3">
-                    <button onClick={() => router.push('/schedule')} className="bg-blue-600 hover:bg-blue-500 p-4 rounded-xl flex flex-col items-center gap-2 transition-all active:scale-95">
+                    <Link
+                        href="/schedule"
+                        onClick={() => webApp?.HapticFeedback.impactOccurred('medium')}
+                        className="bg-blue-600 hover:bg-blue-500 p-4 rounded-xl flex flex-col items-center gap-2 transition-all active:scale-95"
+                    >
                         <Zap size={24} className="text-white" />
                         <span className="font-bold">Играть</span>
-                    </button>
-                    <button onClick={() => router.push('/earn')} className="bg-slate-800 hover:bg-slate-700 p-4 rounded-xl flex flex-col items-center gap-2 border border-slate-700 transition-all active:scale-95">
+                    </Link>
+                    <Link
+                        href="/earn"
+                        onClick={() => webApp?.HapticFeedback.impactOccurred('light')}
+                        className="bg-slate-800 hover:bg-slate-700 p-4 rounded-xl flex flex-col items-center gap-2 border border-slate-700 transition-all active:scale-95"
+                    >
                         <DollarSign size={24} className="text-green-400" />
                         <span className="font-bold">Пополнить</span>
-                    </button>
+                    </Link>
                 </div>
             </div>
 
