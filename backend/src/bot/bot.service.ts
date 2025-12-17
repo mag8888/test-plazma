@@ -1528,26 +1528,35 @@ export class BotService {
             });
         }
 
-        const keyboard: any[] = [];
-        // Safety check for p.userId
-        const isParticipant = requester && game.participants.some((p: any) => p.userId && requester._id && p.userId.toString() === requester._id.toString());
+        // Build rows
+        const rows: any[] = [];
 
         if (isParticipant) {
-            keyboard.push({ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` });
+            rows.push([{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]);
         } else {
-            if (freeSpots > 0) keyboard.push({ text: 'Записаться (Free)', callback_data: `join_game_${game._id}` });
-            if (paidSpots > 0) keyboard.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
+            const joinRow = [];
+            if (freeSpots > 0) joinRow.push({ text: 'Записаться (Free)', callback_data: `join_game_${game._id}` });
+            if (paidSpots > 0) joinRow.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
+            if (joinRow.length > 0) rows.push(joinRow);
+            // If both are present, they might still be too wide. Let's put them on separate rows if both strictly needed, 
+            // but user image shows they fit 2 per row roughly, or maybe not.
+            // "Записаться (Free)" is ~16 chars. "Записаться ($20)" is ~16 chars. Total 32. 
+            // Mobile width is tricky. Let's separate them to be safe.
+            // Actually, let's keep logic: if both, try 2 per row? No, user complained. Vertical is safest.
+            // Wait, user image shows 4 buttons: Free, Paid, Time, Announce? No. 
+            // Image shows: "Za...ee)", "Za...0)", "Clock", "Mega...".
+            // So they were all in one row.
         }
 
-        // Smart Time Button (Visible to everyone)
-        keyboard.push({ text: '🕒 Когда начало?', callback_data: `check_time_${game._id}` });
+        // Time button
+        rows.push([{ text: '🕒 Когда начало?', callback_data: `check_time_${game._id}` }]);
 
         // Host Actions
         if (isRequesterMaster && game.hostId && requester._id.toString() === game.hostId.toString()) {
-            keyboard.push({ text: '📢 Отправить сообщение игрокам', callback_data: `announce_game_${game._id}` });
+            rows.push([{ text: '📢 Отправить сообщение', callback_data: `announce_game_${game._id}` }]);
         }
 
-        return { text, reply_markup: { inline_keyboard: [keyboard] } };
+        return { text, reply_markup: { inline_keyboard: rows } };
     }
 
     async checkReminders() {
