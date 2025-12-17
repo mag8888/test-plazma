@@ -439,6 +439,66 @@ export class BotService {
                         }
                     }
                 }
+            } else if (data.startsWith('confirm_player_')) {
+                // Confirm just acknowledges the notification visually for now (or marks verified)
+                const parts = data.split('_');
+                const gameId = parts[2];
+                const targetUserId = parts[3];
+                const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                const { UserModel } = await import('../models/user.model');
+
+                const game = await ScheduledGameModel.findById(gameId);
+                if (game) {
+                    const pIndex = game.participants.findIndex((p: any) => p.userId.toString() === targetUserId);
+                    if (pIndex > -1) {
+                        // Ensure verified
+                        game.participants[pIndex].isVerified = true;
+                        await game.save();
+
+                        const targetUser = await UserModel.findById(targetUserId);
+                        this.bot?.editMessageText(`✅ Игрок ${targetUser?.first_name} (@${targetUser?.username}) подтвержден.`, {
+                            chat_id: chatId,
+                            message_id: query.message?.message_id
+                        });
+                        // Optional: Notify player they are confirmed
+                        if (targetUser) {
+                            this.bot?.sendMessage(targetUser.telegram_id, "✅ Мастер подтвердил ваше участие в игре!");
+                        }
+                    } else {
+                        this.bot?.sendMessage(chatId, "Игрок уже не в списке.");
+                    }
+                }
+            } else if (data.startsWith('reject_player_')) {
+                const parts = data.split('_');
+                const gameId = parts[2];
+                const targetUserId = parts[3];
+                const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                const { UserModel } = await import('../models/user.model');
+
+                const game = await ScheduledGameModel.findById(gameId);
+                if (game) {
+                    const pIndex = game.participants.findIndex((p: any) => p.userId.toString() === targetUserId);
+                    if (pIndex > -1) {
+                        // Remove
+                        game.participants.splice(pIndex, 1);
+                        await game.save();
+
+                        const targetUser = await UserModel.findById(targetUserId);
+                        this.bot?.editMessageText(`❌ Игрок ${targetUser?.first_name} (@${targetUser?.username}) отклонен/удален.`, {
+                            chat_id: chatId,
+                            message_id: query.message?.message_id
+                        });
+
+                        if (targetUser) {
+                            this.bot?.sendMessage(targetUser.telegram_id, "❌ Мастер отменил вашу запись на игру. Свяжитесь с организатором, если это ошибка.");
+                            // Refund logic if needed? Assuming manual for now or simple removal.
+                            // Should probably refund if PAID. But implementing full refund logic is complex (Green vs Red balance). 
+                            // For now, keep it simple: Removal.
+                        }
+                    } else {
+                        this.bot?.sendMessage(chatId, "Игрок уже удален.");
+                    }
+                }
             } else if (data === 'admin_users') {
                 // Fetch last 10 users
                 import('../models/user.model').then(async ({ UserModel }) => {
@@ -519,6 +579,44 @@ export class BotService {
                     } else {
                         this.bot?.sendMessage(chatId, "Вы не записаны на эту игру.");
                     }
+                }
+            } else if (data.startsWith('check_time_')) {
+                const gameId = data.replace('check_time_', '');
+                const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                const game = await ScheduledGameModel.findById(gameId);
+
+                if (game) {
+                    const now = new Date();
+                    const start = new Date(game.startTime);
+                    const diffMs = start.getTime() - now.getTime();
+
+                    if (diffMs > 0) {
+                        const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                        const hours = Math.floor((diffMs % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+
+                        let timeStr = "";
+                        if (days > 0) timeStr += `${days} дн. `;
+                        if (hours > 0) timeStr += `${hours} ч. `;
+                        timeStr += `${minutes} мин.`;
+
+                        const moscowTime = start.toLocaleString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
+
+                        this.bot?.answerCallbackQuery(query.id, {
+                            text: `⏳ До начала игры: ${timeStr}\n✅ По Москве: ${moscowTime} (МСК)\n\n(Ваше устройство само переведет время, если зайти в календарь)`,
+                            show_alert: true
+                        });
+                    } else {
+                        this.bot?.answerCallbackQuery(query.id, {
+                            text: `⚠️ Игра уже началась (или прошла)!`,
+                            show_alert: true
+                        });
+                    }
+                } else {
+                    this.bot?.answerCallbackQuery(query.id, {
+                        text: `❌ Игра не найдена.`,
+                        show_alert: false
+                    });
                 }
             }
         });
@@ -958,7 +1056,11 @@ export class BotService {
 
                 // Request Link
                 this.participantStates.set(chatId, { state: 'WAITING_POST_LINK', gameId: game._id });
-                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PROMO)!\n\n📝 Для подтверждения участия, пожалуйста, отправьте ссылку на репост о нашей игре в течение 3 часов.`);
+                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PROMO)!\n\n📝 Для подтверждения участия, пожалуйста, отправьте ссылку на репост о нашей игре в течение 3 часов.`, {
+                    reply_markup: {
+                        inline_keyboard: [[{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]]
+                    }
+                });
 
 
             } else {
@@ -1010,7 +1112,11 @@ export class BotService {
             await game.save();
 
             if (isPaid) {
-                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PAID)!\n📅 ${new Date(game.startTime).toLocaleString('ru-RU')}`);
+                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PAID)!\n📅 ${new Date(game.startTime).toLocaleString('ru-RU')}`, {
+                    reply_markup: {
+                        inline_keyboard: [[{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]]
+                    }
+                });
             } else {
                 // Already sent message above
             }
@@ -1018,7 +1124,17 @@ export class BotService {
             // Notify Master
             const host = await UserModel.findById(game.hostId);
             if (host) {
-                this.bot?.sendMessage(host.telegram_id, `🆕 Игрок ${user.first_name} (@${user.username}) записался на игру (тип: ${isPaid ? 'PAID' : 'PROMO'}).`);
+                this.bot?.sendMessage(host.telegram_id,
+                    `🆕 Игрок ${user.first_name} (@${user.username}) записался на игру (тип: ${isPaid ? 'PAID' : 'PROMO'}).`,
+                    {
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: '✅ Подтвердить', callback_data: `confirm_player_${game._id}_${user._id}` },
+                                { text: '❌ Отменить', callback_data: `reject_player_${game._id}_${user._id}` }
+                            ]]
+                        }
+                    }
+                );
             }
 
         } catch (e) {
@@ -1039,7 +1155,13 @@ export class BotService {
         const paidSpots = (game.maxPlayers - game.promoSpots) - game.participants.filter((p: any) => p.type === 'PAID').length;
 
         // Create text
-        const dateStr = new Date(game.startTime).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' });
+        const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Europe/Moscow'
+        });
 
         // Helper to escape Markdown
         const escapeMd = (s: string) => s.replace(/[_*[`]/g, '\\$&');
@@ -1048,7 +1170,7 @@ export class BotService {
         const host = await UserModel.findById(game.hostId);
         const hostName = host ? (host.username ? `@${escapeMd(host.username)}` : escapeMd(host.first_name || '')) : 'Неизвестно';
 
-        let text = `🎲 **Игра: ${dateStr}**\n`;
+        let text = `🎲 **Игра: ${dateStr} (МСК)**\n`;
         text += `👑 Мастер: ${hostName}\n`;
         text += `👥 Игроков: ${totalParticipants}/${game.maxPlayers}\n`;
         text += `🎟 Промо (Free): ${freeSpots > 0 ? freeSpots : '❌ Нет мест'}\n`;
@@ -1080,6 +1202,9 @@ export class BotService {
             if (freeSpots > 0) keyboard.push({ text: 'Записаться (Free)', callback_data: `join_game_${game._id}` });
             if (paidSpots > 0) keyboard.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
         }
+
+        // Smart Time Button (Visible to everyone)
+        keyboard.push({ text: '🕒 Когда начало?', callback_data: `check_time_${game._id}` });
 
         // Host Actions
         if (isRequesterMaster && game.hostId && requester._id.toString() === game.hostId.toString()) {
