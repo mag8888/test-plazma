@@ -1491,37 +1491,41 @@ export class GameEngine {
         // Clear events
         this.state.lastEvent = undefined;
 
-        this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % this.state.players.length;
+        let attempts = 0;
+        const totalPlayers = this.state.players.length;
+
+        // Safely iterate to find next valid player
+        while (attempts < totalPlayers * 2) { // Cap at 2 loops to prevent infinite freezes
+            this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % totalPlayers;
+            const nextPlayer = this.state.players[this.state.currentPlayerIndex];
+
+            // 1. Bankrupted or Won -> SKIP PERMANENTLY
+            if (nextPlayer.isBankrupted || nextPlayer.hasWon) {
+                // Log only once per full cycle to avoid spam? Or just log.
+                // this.state.log.push(`⏩ Skipping ${nextPlayer.name} (${nextPlayer.isBankrupted ? 'Bankrupted' : 'Finished'})`);
+                attempts++;
+                continue;
+            }
+
+            // 2. Skipped Turns -> Decrement and Skip
+            if ((nextPlayer.skippedTurns || 0) > 0) {
+                nextPlayer.skippedTurns--;
+                this.state.log.push(`🚫 ${nextPlayer.name} skips turn (Remaining: ${nextPlayer.skippedTurns})`);
+                this.state.lastEvent = { type: 'TURN_SKIPPED', payload: { player: nextPlayer.name, remaining: nextPlayer.skippedTurns } };
+                attempts++;
+                continue;
+            }
+
+            // Valid player found
+            break;
+        }
+
         this.state.phase = 'ROLL';
         this.state.currentTurnTime = 120;
         this.state.turnExpiresAt = Date.now() + 120000; // Reset timer 120s
 
-        // Handle skipped turns for next player immediately?
-        // Simple recursion check
-        // Check for active players first to avoid infinite recursion
-        const activeDefaults = this.state.players.filter(p => !p.isBankrupted && !p.hasWon && p.skippedTurns <= 0);
-        if (this.state.players.length > 0 && activeDefaults.length === 0 && this.state.players.some(p => p.skippedTurns > 0)) {
-            // Everyone is skipped/out. We must process skips until someone can play?
-            // Or just proceed to decrement.
-        }
-
-        const nextPlayer = this.state.players[this.state.currentPlayerIndex];
-
-        // 1. Bankrupted or Won -> SKIP PERMANENTLY without decrementing anything (they are ghosts)
-        if (nextPlayer.isBankrupted || nextPlayer.hasWon) {
-            this.state.log.push(`⏩ Skipping ${nextPlayer.name} (${nextPlayer.isBankrupted ? 'Bankrupted' : 'Finished'})`);
-            this.endTurn(); // Recurse
-            return;
-        }
-
-        // 2. Skipped Turns -> Decrement and Skip
-        if ((nextPlayer.skippedTurns || 0) > 0) {
-            nextPlayer.skippedTurns--;
-            this.state.log.push(`🚫 ${nextPlayer.name} skips turn (Remaining: ${nextPlayer.skippedTurns})`);
-            this.state.lastEvent = { type: 'TURN_SKIPPED', payload: { player: nextPlayer.name, remaining: nextPlayer.skippedTurns } };
-            this.endTurn(); // Recurse
-            return;
-        }
+        const activePlayer = this.state.players[this.state.currentPlayerIndex];
+        // this.state.log.push(`Now it is ${activePlayer.name}'s turn.`);
     }
 
     private forcePayment(player: PlayerState, amount: number, description: string) {

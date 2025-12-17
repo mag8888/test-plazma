@@ -44,6 +44,8 @@ export class BotService {
         // Global Commands
         await this.bot.setMyCommands([
             { command: 'start', description: '🏠 Главное меню' },
+            { command: 'start', description: '🏠 Главное меню' },
+            { command: 'app', description: '📱 Приложение MONEO' },
             { command: 'about', description: 'ℹ️ О проекте' }
         ]);
 
@@ -391,6 +393,14 @@ export class BotService {
                 this.handleCommunity(chatId);
             } else if (text === 'ℹ️ О проекте') {
                 this.handleAbout(chatId);
+            } else if (text === '/app') {
+                this.bot?.sendMessage(chatId, "🚀 Открыть приложение MONEO:", {
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: "📱 Открыть Mini App", web_app: { url: 'https://moneo.up.railway.app' } }
+                        ]]
+                    }
+                });
             }
         });
 
