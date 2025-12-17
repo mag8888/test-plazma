@@ -44,7 +44,6 @@ export class BotService {
         // Global Commands
         await this.bot.setMyCommands([
             { command: 'start', description: '🏠 Главное меню' },
-            { command: 'start', description: '🏠 Главное меню' },
             { command: 'app', description: '📱 Приложение MONEO' },
             { command: 'about', description: 'ℹ️ О проекте' }
         ]);
@@ -56,6 +55,7 @@ export class BotService {
                 await this.bot.setMyCommands([
                     { command: 'start', description: '🏠 Главное меню' },
                     { command: 'admin', description: '👑 Админ панель' },
+                    { command: 'app', description: '📱 Приложение MONEO' },
                     { command: 'about', description: 'ℹ️ О проекте' }
                 ], { scope: { type: 'chat', chat_id: adminId } });
                 console.log(`Admin commands set for ${adminId}`);
