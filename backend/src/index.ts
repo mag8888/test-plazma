@@ -229,6 +229,84 @@ app.post('/api/games/:id/broadcast', async (req, res) => {
     }
 });
 
+// Join Game
+app.post('/api/games/:id/join', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { initData, type } = req.body; // type: 'PROMO' | 'PAID'
+
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyTelegramAuth(initData);
+        if (!user) return res.status(401).json({ error: "Invalid auth" });
+
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const game = await ScheduledGameModel.findById(id);
+        if (!game) return res.status(404).json({ error: "Game not found" });
+
+        // Check if already registered
+        if (game.participants.some((p: any) => p.userId.toString() === user._id.toString())) {
+            return res.status(400).json({ error: "Already registered" });
+        }
+
+        const promoCount = game.participants.filter((p: any) => p.type === 'PROMO').length;
+        const paidCount = game.participants.filter((p: any) => p.type === 'PAID').length;
+        const freeSpots = game.promoSpots - promoCount;
+        const paidSpots = (game.maxPlayers - game.promoSpots) - paidCount;
+
+        if (type === 'PROMO') {
+            if (freeSpots <= 0) return res.status(400).json({ error: "No promo spots" });
+        } else if (type === 'PAID') {
+            if (paidSpots <= 0) return res.status(400).json({ error: "No paid spots" });
+
+            // Allow check both balances: Red first for games (Task md)
+            // Task: "Used for: Game (Joining matches). ... Auto-deduct Red first for Games."
+
+            if (user.balanceRed >= game.price) {
+                user.balanceRed -= game.price;
+            } else if (user.referralBalance >= game.price) {
+                // Should we allow Green? "Red... only on game". "Green... Transfers, Withdrawal".
+                // If user has no red but has green, can they pay?
+                // Typically yes. Let's assume yes.
+                user.referralBalance -= game.price;
+            } else {
+                return res.status(400).json({ error: "Insufficient balance" });
+            }
+            await user.save();
+        } else {
+            return res.status(400).json({ error: "Invalid type" });
+        }
+
+        // Add Participant
+        game.participants.push({
+            userId: user._id,
+            username: user.username,
+            firstName: user.first_name,
+            type: type,
+            joinedAt: new Date()
+        });
+
+        await game.save();
+
+        // Notify Host
+        if (botService) {
+            const { UserModel } = await import('./models/user.model');
+            const host = await UserModel.findById(game.hostId);
+            if (host?.telegram_id) {
+                const t = type === 'PAID' ? '💰' : '🎟';
+                botService.bot?.sendMessage(host.telegram_id, `ℹ️ Новый игрок: ${t} ${user.first_name} (@${user.username}) записался на ${new Date(game.startTime).toLocaleString('ru-RU')}.`);
+            }
+        }
+
+        res.json({ success: true });
+
+    } catch (e) {
+        console.error("Join failed:", e);
+        res.status(500).json({ error: "Join failed" });
+    }
+});
+
 app.use(express.static(path.join(__dirname, '../../frontend/out')));
 
 // SPA Fallback

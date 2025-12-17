@@ -50,15 +50,14 @@ export default function SchedulePage() {
         fetchGames();
     }, [refreshKey]); // Refresh when key changes
 
-    const joinGame = (id: number) => {
-        if (webApp) {
-            webApp.HapticFeedback.impactOccurred('medium');
-            webApp.showAlert(`Запрос на игру #${id} отправлен!`);
-        }
-    };
+    // Replace imports
+    import ManageGameModal from './ManageGameModal';
+    import JoinGameModal from './JoinGameModal';
 
+    // ...
     // Edit Logic
     const [editingGame, setEditingGame] = useState<any>(null);
+    const [joiningGame, setJoiningGame] = useState<any>(null);
 
     return (
         <div className="min-h-screen bg-slate-900 text-white p-4 space-y-4 pt-6 pb-24">
@@ -69,9 +68,17 @@ export default function SchedulePage() {
 
             {editingGame && (
                 <ManageGameModal
-                    gameId={editingGame.id} // Pass only ID, it fetches full details
+                    gameId={editingGame.id}
                     onClose={() => setEditingGame(null)}
                     onUpdate={() => setRefreshKey(k => k + 1)}
+                />
+            )}
+
+            {joiningGame && (
+                <JoinGameModal
+                    game={joiningGame}
+                    onClose={() => setJoiningGame(null)}
+                    onSuccess={() => setRefreshKey(k => k + 1)}
                 />
             )}
 
@@ -112,7 +119,7 @@ export default function SchedulePage() {
                             </button>
                         ) : (
                             <button
-                                onClick={() => joinGame(game.id)}
+                                onClick={() => setJoiningGame(game)}
                                 className="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95"
                             >
                                 Записаться <ArrowRight size={18} />
@@ -125,19 +132,4 @@ export default function SchedulePage() {
     );
 }
 
-// Lazy load modal to avoid hydration issues? No, generic import is fine.
-// But we need to import it.
-// Replace imports and component usage
-import ManageGameModal from './ManageGameModal';
-
-// ... Inside SchedulePage component ...
-{
-    editingGame && (
-        <ManageGameModal
-            gameId={editingGame.id} // Pass only ID, it fetches full details
-            onClose={() => setEditingGame(null)}
-            onUpdate={() => setRefreshKey(k => k + 1)}
-        />
-    )
-}
 
