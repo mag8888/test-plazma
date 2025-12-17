@@ -20,14 +20,20 @@ export default function SchedulePage() {
                     // Backend: { startTime (ISO), price, maxPlayers, participants: [], hostId: { username... } }
                     const formatted = data.map((g: any) => {
                         const dateObj = new Date(g.startTime);
-                        // Force MSK display
-                        const time = dateObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
-                        const date = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' });
+                        // MSK Time
+                        const mskTime = dateObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
+                        const mskDate = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' });
+
+                        // User Local Time
+                        const localTime = dateObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                        // Check if different (ignoring seconds/format differences, just compare hours/minutes)
+                        const isDifferent = mskTime !== localTime;
 
                         return {
                             id: g._id,
-                            time,
-                            date, // e.g. "25 ноября"
+                            time: mskTime,
+                            date: mskDate,
+                            localTime: isDifferent ? localTime : null,
                             master: g.hostId?.username || g.hostId?.first_name || 'Master',
                             players: g.participants?.length || 0,
                             max: g.maxPlayers,
@@ -63,13 +69,20 @@ export default function SchedulePage() {
                     <div key={game.id} className="bg-slate-800 rounded-xl p-4 border border-slate-700 relative overflow-hidden">
                         <div className="flex justify-between items-start mb-3">
                             <div>
-                                <div className="flex items-center gap-2 text-blue-400 font-bold mb-1">
-                                    <Clock size={16} />
-                                    {game.time} <span className="text-xs font-normal opacity-70">(МСК)</span>
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-2 text-blue-400 font-bold mb-1">
+                                        <Clock size={16} />
+                                        {game.time} <span className="text-xs font-normal opacity-70">(МСК)</span>
+                                    </div>
+                                    {game.localTime && (
+                                        <div className="text-xs text-slate-500 mb-1">
+                                            {game.localTime} (Ваше время)
+                                        </div>
+                                    )}
+                                    <div className="text-lg font-bold">{game.date}</div>
                                 </div>
-                                <div className="text-lg font-bold">{game.date}</div>
                             </div>
-                            <div className="bg-slate-900 px-3 py-1 rounded-lg text-sm font-mono border border-slate-700">
+                            <div className="bg-slate-900 px-3 py-1 rounded-lg text-sm font-mono border border-slate-700 h-fit">
                                 ${game.price}
                             </div>
                         </div>
