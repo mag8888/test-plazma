@@ -1,6 +1,6 @@
 'use client';
 
-import { useTelegram } from '../components/TelegramProvider';
+import { useTelegram } from '../../components/TelegramProvider';
 import { useEffect, useState } from 'react';
 import { Calendar, Users, ArrowRight, Clock } from 'lucide-react';
 

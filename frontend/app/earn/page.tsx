@@ -1,6 +1,6 @@
 'use client';
 
-import { useTelegram } from '../components/TelegramProvider';
+import { useTelegram } from '../../components/TelegramProvider';
 import { Copy, Gift, TrendingUp, Users } from 'lucide-react';
 
 export default function EarnPage() {

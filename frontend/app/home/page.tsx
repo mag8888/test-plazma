@@ -1,6 +1,6 @@
 'use client';
 
-import { useTelegram } from '../components/TelegramProvider';
+import { useTelegram } from '../../components/TelegramProvider';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { User, Shield, Zap, TrendingUp, DollarSign } from 'lucide-react';
