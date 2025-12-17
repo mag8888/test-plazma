@@ -68,8 +68,8 @@ export default function SchedulePage() {
             </h1>
 
             {editingGame && (
-                <EditGameModal
-                    game={editingGame}
+                <ManageGameModal
+                    gameId={editingGame.id} // Pass only ID, it fetches full details
                     onClose={() => setEditingGame(null)}
                     onUpdate={() => setRefreshKey(k => k + 1)}
                 />
@@ -127,5 +127,17 @@ export default function SchedulePage() {
 
 // Lazy load modal to avoid hydration issues? No, generic import is fine.
 // But we need to import it.
-import EditGameModal from './EditGameModal';
+// Replace imports and component usage
+import ManageGameModal from './ManageGameModal';
+
+// ... Inside SchedulePage component ...
+{
+    editingGame && (
+        <ManageGameModal
+            gameId={editingGame.id} // Pass only ID, it fetches full details
+            onClose={() => setEditingGame(null)}
+            onUpdate={() => setRefreshKey(k => k + 1)}
+        />
+    )
+}
 

@@ -12,6 +12,7 @@ export interface IScheduledGame extends Document {
         type: 'PROMO' | 'PAID';
         joinedAt: Date;
     }[];
+    description?: string;
     status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
     createdAt: Date;
 }
@@ -20,6 +21,7 @@ const ScheduledGameSchema: Schema = new Schema({
     hostId: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     startTime: { type: Date, required: true },
     price: { type: Number, default: 20 },
+    description: { type: String, maxlength: 500 },
     maxPlayers: { type: Number, required: true, default: 8 },
     promoSpots: { type: Number, required: true, default: 6 },
     participants: [{

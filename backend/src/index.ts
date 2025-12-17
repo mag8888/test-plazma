@@ -105,11 +105,10 @@ app.get('/api/games', async (req, res) => {
 app.put('/api/games/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { initData, startTime, maxPlayers } = req.body;
+        const { initData, startTime, maxPlayers, description } = req.body;
 
         if (!initData) return res.status(401).json({ error: "No auth data" });
 
-        // Verify User using AuthService
         const { AuthService } = await import('./auth/auth.service');
         const auth = new AuthService();
         const user = await auth.verifyTelegramAuth(initData);
@@ -121,29 +120,112 @@ app.put('/api/games/:id', async (req, res) => {
 
         if (!game) return res.status(404).json({ error: "Game not found" });
 
-        // Check ownership
         if (game.hostId.toString() !== user.id.toString()) {
             return res.status(403).json({ error: "Not authorized" });
         }
 
-        // Apply updates
-        if (startTime) {
-            // Expecting ISO string or MSK time? 
-            // Frontend will send ISO string (correct UTC).
-            game.startTime = new Date(startTime);
-        }
-        if (maxPlayers) {
-            game.maxPlayers = Number(maxPlayers);
-        }
+        if (startTime) game.startTime = new Date(startTime);
+        if (maxPlayers) game.maxPlayers = Number(maxPlayers);
+        if (description !== undefined) game.description = description;
 
         await game.save();
         res.json({ success: true, game });
 
-        // Notify? Optional.
-
     } catch (e) {
         console.error("Update game failed:", e);
         res.status(500).json({ error: "Update failed" });
+    }
+});
+
+// GET Single Game (Detailed)
+app.get('/api/games/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const game = await ScheduledGameModel.findById(id).populate('participants.userId', 'username first_name photo_url telegram_id');
+        if (!game) return res.status(404).json({ error: "Game not found" });
+        res.json(game);
+    } catch (e) {
+        res.status(500).json({ error: "Error fetching game" });
+    }
+});
+
+// Kick Player
+app.delete('/api/games/:id/players/:userId', async (req, res) => {
+    try {
+        const { id, userId } = req.params;
+        const initData = req.headers.authorization?.split(' ')[1]; // Expecting 'Bearer initData'
+
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyTelegramAuth(initData);
+        if (!user) return res.status(401).json({ error: "Invalid auth" });
+
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const game = await ScheduledGameModel.findById(id);
+        if (!game) return res.status(404).json({ error: "Game not found" });
+
+        if (game.hostId.toString() !== user.id.toString()) return res.status(403).json({ error: "Not master" });
+
+        const initialLen = game.participants.length;
+        game.participants = game.participants.filter((p: any) => p.userId.toString() !== userId);
+
+        if (game.participants.length !== initialLen) {
+            await game.save();
+            // Notify User via Bot
+            if (botService) {
+                const { UserModel } = await import('./models/user.model');
+                const kickedUser = await UserModel.findById(userId);
+                if (kickedUser?.telegram_id) {
+                    botService.bot?.sendMessage(kickedUser.telegram_id, `❌ Вы были исключены из игры ${new Date(game.startTime).toLocaleString('ru-RU')}.`);
+                }
+            }
+            res.json({ success: true });
+        } else {
+            res.status(404).json({ error: "Player not found in game" });
+        }
+
+    } catch (e) {
+        console.error("Kick failed:", e);
+        res.status(500).json({ error: "Kick failed" });
+    }
+});
+
+// Broadcast Message
+app.post('/api/games/:id/broadcast', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { message, initData } = req.body;
+
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyTelegramAuth(initData);
+        if (!user) return res.status(401).json({ error: "Invalid auth" });
+
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const game = await ScheduledGameModel.findById(id).populate('participants.userId');
+        if (!game) return res.status(404).json({ error: "Game not found" });
+
+        if (game.hostId.toString() !== user.id.toString()) return res.status(403).json({ error: "Not master" });
+
+        if (!botService) return res.status(503).json({ error: "Bot not active" });
+
+        let count = 0;
+        for (const p of game.participants) {
+            if (p.userId?.telegram_id) {
+                botService.bot?.sendMessage(p.userId.telegram_id, `📢 <b>Сообщение от Мастера:</b>\n\n${message}`, { parse_mode: 'HTML' }).catch(() => { });
+                count++;
+            }
+        }
+
+        res.json({ success: true, sent: count });
+
+    } catch (e) {
+        console.error("Broadcast failed:", e);
+        res.status(500).json({ error: "Broadcast failed" });
     }
 });
 
