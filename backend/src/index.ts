@@ -99,6 +99,59 @@ app.get('/api/games', async (req, res) => {
         console.error("Failed to fetch games:", e);
         res.status(500).json({ error: "Internal Error" });
     }
+} catch (e) {
+    console.error("Failed to fetch games:", e);
+    res.status(500).json({ error: "Internal Error" });
+}
+});
+
+// Update Game (Protected via initData)
+app.put('/api/games/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { initData, startTime, maxPlayers } = req.body;
+
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+
+        // Verify User using AuthService
+        const authService = new AuthController.stack[0].handle; // Hacky way to get service? No.
+        // Better: Re-instantiate or make AuthService static/exported.
+        // Let's use the AuthService class directly.
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyTelegramAuth(initData);
+
+        if (!user) return res.status(401).json({ error: "Invalid auth" });
+
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const game = await ScheduledGameModel.findById(id);
+
+        if (!game) return res.status(404).json({ error: "Game not found" });
+
+        // Check ownership
+        if (game.hostId.toString() !== user.id.toString()) {
+            return res.status(403).json({ error: "Not authorized" });
+        }
+
+        // Apply updates
+        if (startTime) {
+            // Expecting ISO string or MSK time? 
+            // Frontend will send ISO string (correct UTC).
+            game.startTime = new Date(startTime);
+        }
+        if (maxPlayers) {
+            game.maxPlayers = Number(maxPlayers);
+        }
+
+        await game.save();
+        res.json({ success: true, game });
+
+        // Notify? Optional.
+
+    } catch (e) {
+        console.error("Update game failed:", e);
+        res.status(500).json({ error: "Update failed" });
+    }
 });
 
 app.use(express.static(path.join(__dirname, '../../frontend/out')));

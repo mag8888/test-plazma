@@ -7,6 +7,7 @@ import { Calendar, Users, ArrowRight, Clock } from 'lucide-react';
 export default function SchedulePage() {
     const { webApp, user } = useTelegram();
     const [games, setGames] = useState<any[]>([]);
+    const [refreshKey, setRefreshKey] = useState(0);
 
     // Mock Data loading
     useEffect(() => {
@@ -35,7 +36,8 @@ export default function SchedulePage() {
                             players: g.participants?.length || 0,
                             max: g.maxPlayers,
                             price: g.price,
-                            hostId: g.hostId?._id || g.hostId
+                            hostId: g.hostId?._id || g.hostId,
+                            rawIso: g.startTime
                         };
                     });
                     setGames(formatted);
@@ -46,7 +48,7 @@ export default function SchedulePage() {
         };
 
         fetchGames();
-    }, []);
+    }, [refreshKey]); // Refresh when key changes
 
     const joinGame = (id: number) => {
         if (webApp) {
@@ -55,12 +57,23 @@ export default function SchedulePage() {
         }
     };
 
+    // Edit Logic
+    const [editingGame, setEditingGame] = useState<any>(null);
+
     return (
-        <div className="min-h-screen bg-slate-900 text-white p-4 space-y-4 pt-6">
+        <div className="min-h-screen bg-slate-900 text-white p-4 space-y-4 pt-6 pb-24">
             <h1 className="text-2xl font-bold flex items-center gap-2">
                 <Calendar className="text-blue-500" />
                 Расписание
             </h1>
+
+            {editingGame && (
+                <EditGameModal
+                    game={editingGame}
+                    onClose={() => setEditingGame(null)}
+                    onUpdate={() => setRefreshKey(k => k + 1)}
+                />
+            )}
 
             <div className="space-y-3">
                 {games.map(game => (
@@ -92,10 +105,10 @@ export default function SchedulePage() {
 
                         {game.hostId === user?.id ? (
                             <button
-                                onClick={() => webApp?.openTelegramLink('https://t.me/MONEO_game_bot')}
+                                onClick={() => setEditingGame(game)}
                                 className="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 border border-slate-600"
                             >
-                                ⚙️ Управление (в боте)
+                                ⚙️ Редактировать
                             </button>
                         ) : (
                             <button
@@ -111,3 +124,8 @@ export default function SchedulePage() {
         </div>
     );
 }
+
+// Lazy load modal to avoid hydration issues? No, generic import is fine.
+// But we need to import it.
+import EditGameModal from './EditGameModal';
+

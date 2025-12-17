@@ -1556,6 +1556,7 @@ export class BotService {
         // Host Actions
         if (isRequesterMaster && game.hostId && requester._id.toString() === game.hostId.toString()) {
             rows.push([{ text: '📢 Отправить сообщение', callback_data: `announce_game_${game._id}` }]);
+            rows.push([{ text: '⚙️ Управление', callback_data: `manage_game_${game._id}` }]);
         }
 
         return { text, reply_markup: { inline_keyboard: rows } };
