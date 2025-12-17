@@ -16,8 +16,21 @@ interface Room {
     creatorId: string; // Added for Delete Permission
 }
 
+import { useTelegram } from '../../components/TelegramProvider';
+
 export default function Lobby() {
     const router = useRouter();
+    const { user: tgUser, isReady } = useTelegram(); // Use context
+
+    // Internal user state for Socket usage. 
+    // Ideally we should sync tgUser to this, or just use tgUser directly.
+    // The legacy code expects 'user' object with ._id or .id
+
+    // Let's alias tgUser to user or sync it.
+    // tgUser comes from backend /api/auth/login/telegram, so it should be the full user object.
+
+    const user = tgUser;
+
     const [rooms, setRooms] = useState<Room[]>([]);
     const [myRooms, setMyRooms] = useState<Room[]>([]);
     const [isCreating, setIsCreating] = useState(false);
@@ -27,49 +40,55 @@ export default function Lobby() {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [showRules, setShowRules] = useState(false);
 
-    // Lazy init to avoid hydration mismatch while reading from LS immediately on client
-    const [user, setUser] = useState<any>(null);
+    // const [user, setUser] = useState<any>(null); // Removed local state
     const [mounted, setMounted] = useState(false);
 
     const [leaderboard, setLeaderboard] = useState<any[]>([]);
 
     useEffect(() => {
         setMounted(true);
-        const userStr = localStorage.getItem('user');
-        if (userStr) {
-            setUser(JSON.parse(userStr));
-        } else {
-            router.push('/');
+        // Wait for isReady?
+        // If !user and isReady, maybe redirect?
+        // But for now, let's just let it load.
+
+        if (isReady && !user) {
+            // Maybe user is not logged in? 
+            // In Mini App we are always logged in via initData.
         }
 
         const fetchRooms = () => {
-            console.log("Fetching rooms...");
-            socket.emit('get_rooms', (data: Room[]) => {
-                console.log("Rooms received:", data);
-                setRooms(data);
-            });
+            // ... existing logic ...
 
-            // Fetch Leaderboard
-            socket.emit('get_leaderboard', (response: any) => {
-                if (Array.isArray(response)) {
-                    setLeaderboard(response);
-                } else if (response && response.leaders && Array.isArray(response.leaders)) {
-                    setLeaderboard(response.leaders);
-                } else {
-                    setLeaderboard([]);
-                }
-            });
+            const fetchRooms = () => {
+                console.log("Fetching rooms...");
+                socket.emit('get_rooms', (data: Room[]) => {
+                    console.log("Rooms received:", data);
+                    setRooms(data);
+                });
 
-            // Fetch My Rooms using either Logged In ID or Guest ID
-            const parsedUser = userStr ? JSON.parse(userStr) : null;
-            const userId = parsedUser?._id || parsedUser?.id || localStorage.getItem('guest_id');
-
-            if (userId) {
-                socket.emit('get_my_rooms', { userId }, (res: any) => {
-                    if (res.success) {
-                        setMyRooms(res.rooms);
+                // Fetch Leaderboard
+                socket.emit('get_leaderboard', (response: any) => {
+                    if (Array.isArray(response)) {
+                        setLeaderboard(response);
+                    } else if (response && response.leaders && Array.isArray(response.leaders)) {
+                        setLeaderboard(response.leaders);
+                    } else {
+                        setLeaderboard([]);
                     }
                 });
+
+                // Fetch My Rooms using either Logged In ID or Guest ID
+                // const parsedUser = userStr ? JSON.parse(userStr) : null;
+                // const userId = parsedUser?._id || parsedUser?.id || localStorage.getItem('guest_id');
+                const userId = user?._id || user?.id; // Use context user
+
+                if (userId) {
+                    socket.emit('get_my_rooms', { userId }, (res: any) => {
+                        if (res.success) {
+                            setMyRooms(res.rooms);
+                        }
+                    });
+                }
             }
         };
 
@@ -80,8 +99,10 @@ export default function Lobby() {
             setRooms(data);
 
             // Refresh logic if needed
-            const parsedUser = userStr ? JSON.parse(userStr) : null;
-            const userId = parsedUser?._id || parsedUser?.id || localStorage.getItem('guest_id');
+            // const parsedUser = userStr ? JSON.parse(userStr) : null;
+            // const userId = parsedUser?._id || parsedUser?.id || localStorage.getItem('guest_id');
+            const userId = user?._id || user?.id;
+
             if (userId) {
                 socket.emit('get_my_rooms', { userId }, (res: any) => {
                     if (res.success) {
@@ -95,7 +116,7 @@ export default function Lobby() {
             socket.off('connect', fetchRooms);
             socket.off('rooms_updated');
         };
-    }, []);
+    }, [user]); // Re-run when user loads
 
     const handleLogout = () => {
         localStorage.removeItem('token');
