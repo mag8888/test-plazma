@@ -1530,6 +1530,8 @@ export class BotService {
 
         // Build rows
         const rows: any[] = [];
+        // Safety check for p.userId
+        const isParticipant = requester && game.participants.some((p: any) => p.userId && requester._id && p.userId.toString() === requester._id.toString());
 
         if (isParticipant) {
             rows.push([{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]);
