@@ -10,11 +10,37 @@ export default function SchedulePage() {
 
     // Mock Data loading
     useEffect(() => {
-        // In real app, fetch from /api/schedule
-        setGames([
-            { id: 1, time: '13:00', date: 'Сегодня', master: 'Arctur', players: 4, max: 6, price: 20 },
-            { id: 2, time: '18:00', date: 'Завтра', master: 'Elena', players: 2, max: 6, price: 20 },
-        ]);
+        const fetchGames = async () => {
+            try {
+                const res = await fetch('/api/games');
+                if (res.ok) {
+                    const data = await res.json();
+
+                    // Transform backend model to UI model if needed
+                    // Backend: { startTime (ISO), price, maxPlayers, participants: [], hostId: { username... } }
+                    const formatted = data.map((g: any) => {
+                        const dateObj = new Date(g.startTime);
+                        const time = dateObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                        const date = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+
+                        return {
+                            id: g._id,
+                            time,
+                            date, // e.g. "25 ноября"
+                            master: g.hostId?.username || g.hostId?.first_name || 'Master',
+                            players: g.participants?.length || 0,
+                            max: g.maxPlayers,
+                            price: g.price
+                        };
+                    });
+                    setGames(formatted);
+                }
+            } catch (e) {
+                console.error("Failed to fetch schedule", e);
+            }
+        };
+
+        fetchGames();
     }, []);
 
     const joinGame = (id: number) => {

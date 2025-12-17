@@ -59,7 +59,11 @@ router.post('/login/telegram', async (req: Request, res: Response) => {
                 username: user.username,
                 firstName: user.first_name,
                 lastName: user.last_name,
-                photoUrl: user.photo_url
+                photoUrl: user.photo_url,
+                referralBalance: user.referralBalance || 0,
+                balanceRed: user.balanceRed || 0,
+                referralsCount: user.referralsCount || 0,
+                isMaster: user.isMaster || false
             }
         });
 

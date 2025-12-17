@@ -81,6 +81,26 @@ app.get('/game/:id', (req, res) => {
     res.redirect(`/game?id=${id}`);
 });
 
+// Game Schedule API
+app.get('/api/games', async (req, res) => {
+    try {
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        // Fetch upcoming games, populated with host info if needed (hostId is Ref)
+        const games = await ScheduledGameModel.find({
+            status: 'SCHEDULED',
+            startTime: { $gt: new Date() }
+        })
+            .sort({ startTime: 1 })
+            .populate('hostId', 'username first_name photo_url') // Get host details
+            .limit(20);
+
+        res.json(games);
+    } catch (e) {
+        console.error("Failed to fetch games:", e);
+        res.status(500).json({ error: "Internal Error" });
+    }
+});
+
 app.use(express.static(path.join(__dirname, '../../frontend/out')));
 
 // SPA Fallback

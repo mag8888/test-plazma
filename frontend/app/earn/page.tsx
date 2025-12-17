@@ -46,12 +46,12 @@ export default function EarnPage() {
             <div className="grid grid-cols-2 gap-4">
                 <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
                     <Users className="text-purple-400 mb-2" />
-                    <div className="text-xl font-bold">12</div>
+                    <div className="text-xl font-bold">{user?.referralsCount || 0}</div>
                     <div className="text-xs text-slate-400">Друзей</div>
                 </div>
                 <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
                     <TrendingUp className="text-green-400 mb-2" />
-                    <div className="text-xl font-bold">$40</div>
+                    <div className="text-xl font-bold">${user?.referralBalance || 0}</div>
                     <div className="text-xs text-slate-400">Доход</div>
                 </div>
             </div>

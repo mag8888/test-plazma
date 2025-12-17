@@ -37,12 +37,45 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
             app.ready();
             app.expand();
             setWebApp(app);
-            setIsReady(true);
-            setUser(app.initDataUnsafe?.user);
+            setIsReady(false); // Wait for auth
 
-            // Set Theme
+            // 1. Initial UI Setup
             document.documentElement.style.setProperty('--tg-theme-bg-color', app.backgroundColor);
             document.documentElement.style.setProperty('--tg-theme-text-color', app.textColor);
+
+            // 2. Authenticate & Fetch User Data
+            const login = async () => {
+                try {
+                    const initData = app.initData;
+                    if (!initData) {
+                        console.warn("No initData available (Dev mode?)");
+                        // Fallback for dev: usage mock
+                        setUser(app.initDataUnsafe?.user || { first_name: 'Dev Guest', balanceRed: 1000, referralBalance: 50 });
+                        setIsReady(true);
+                        return;
+                    }
+
+                    const res = await fetch('/api/auth/login/telegram', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ initData })
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        setUser(data.user);
+                    } else {
+                        console.error("Auth failed");
+                        setUser(app.initDataUnsafe?.user);
+                    }
+                } catch (e) {
+                    console.error("Login failed", e);
+                } finally {
+                    setIsReady(true);
+                }
+            };
+
+            login();
         }
     }, []);
 
