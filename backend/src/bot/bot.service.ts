@@ -461,6 +461,9 @@ export class BotService {
                         ]]
                     }
                 });
+            } else if (text === '📋 Мои игры') {
+                const userId = msg.from?.id;
+                if (userId) await this.handleMyGames(chatId, userId);
             }
         });
 
@@ -607,6 +610,39 @@ export class BotService {
                 await this.handleTimeSelection(chatId, timeStr);
             } else if (data === 'view_schedule') {
                 await this.handleSchedule(chatId);
+            } else if (data.startsWith('manage_game_')) {
+                const gameId = data.replace('manage_game_', '');
+                await this.handleManageGame(chatId, gameId);
+            } else if (data.startsWith('edit_time_')) {
+                const gameId = data.replace('edit_time_', '');
+                this.masterStates.set(chatId, { state: 'WAITING_EDIT_TIME', gameId });
+                this.bot?.sendMessage(chatId, "⏰ Введите новое время (МСК) в формате ЧЧ:ММ (например 19:00):");
+            } else if (data.startsWith('edit_max_')) {
+                const gameId = data.replace('edit_max_', '');
+                this.masterStates.set(chatId, { state: 'WAITING_EDIT_MAX', gameId });
+                this.bot?.sendMessage(chatId, "👥 Введите новое кол-во мест (число):");
+            } else if (data.startsWith('view_participants_')) {
+                const gameId = data.replace('view_participants_', '');
+                await this.handleViewParticipants(chatId, gameId);
+            } else if (data.startsWith('broadcast_game_')) {
+                const gameId = data.replace('broadcast_game_', '');
+                this.masterStates.set(chatId, { state: 'WAITING_ANNOUNCEMENT_TEXT', gameId });
+                this.bot?.sendMessage(chatId, "📢 Введите текст сообщения для рассылки всем участникам:");
+            } else if (data.startsWith('cancel_game_')) {
+                const gameId = data.replace('cancel_game_', '');
+                await this.handleCancelGame(chatId, gameId);
+            } else if (data.startsWith('manage_player_')) {
+                // Format: manage_player_GAMEID_USERID
+                const parts = data.split('_');
+                const gameId = parts[2];
+                const targetUserId = parts[3];
+                await this.handleManagePlayer(chatId, gameId, targetUserId);
+            } else if (data.startsWith('kick_player_')) {
+                // Format: kick_player_GAMEID_USERID
+                const parts = data.split('_');
+                const gameId = parts[2];
+                const targetUserId = parts[3];
+                await this.handleKickPlayer(chatId, gameId, targetUserId);
             } else if (data === 'start_transfer') {
                 this.handleTransferStart(chatId);
             } else if (data.startsWith('announce_game_')) {
@@ -1085,6 +1121,180 @@ export class BotService {
             console.error(e);
             this.bot?.sendMessage(chatId, "Ошибка загрузки расписания.");
         }
+    }
+
+    async handleMyGames(chatId: number, telegramId: number) {
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const { UserModel } = await import('../models/user.model');
+            const user = await UserModel.findOne({ telegram_id: telegramId });
+            if (!user) return;
+
+            const games = await ScheduledGameModel.find({
+                hostId: user._id,
+                status: 'SCHEDULED'
+            }).sort({ startTime: 1 });
+
+            if (games.length === 0) {
+                this.bot?.sendMessage(chatId, "У вас пока нет запланированных игр.");
+                return;
+            }
+
+            this.bot?.sendMessage(chatId, "📋 **Ваши игры:**", { parse_mode: 'Markdown' });
+
+            for (const game of games) {
+                const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
+                    day: 'numeric',
+                    month: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Moscow'
+                });
+                const participantsCount = game.participants.length;
+
+                this.bot?.sendMessage(chatId, `🗓 ${dateStr} (МСК)\n👥 ${participantsCount}/${game.maxPlayers}`, {
+                    reply_markup: {
+                        inline_keyboard: [[{ text: '⚙️ Управление', callback_data: `manage_game_${game._id}` }]]
+                    }
+                });
+            }
+
+        } catch (e) {
+            console.error(e);
+            this.bot?.sendMessage(chatId, "Ошибка загрузки списка игр.");
+        }
+    }
+
+    async handleManageGame(chatId: number, gameId: string) {
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const game = await ScheduledGameModel.findById(gameId);
+            if (!game) {
+                this.bot?.sendMessage(chatId, "Игра не найдена.");
+                return;
+            }
+
+            const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
+                day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow'
+            });
+
+            const text = `⚙️ **Управление игрой**\n\n🗓 ${dateStr} (МСК)\n👥 Мест: ${game.participants.length}/${game.maxPlayers}\n🎟 Промо: ${game.participants.filter((p: any) => p.type === 'PROMO').length}/${game.promoSpots}`;
+
+            this.bot?.sendMessage(chatId, text, {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '✏️ Ред. Время', callback_data: `edit_time_${game._id}` }, { text: '✏️ Ред. Места', callback_data: `edit_max_${game._id}` }],
+                        [{ text: '👥 Участники', callback_data: `view_participants_${game._id}` }],
+                        [{ text: '📢 Рассылка', callback_data: `broadcast_game_${game._id}` }],
+                        [{ text: '❌ Отменить игру', callback_data: `cancel_game_${game._id}` }]
+                    ]
+                }
+            });
+
+        } catch (e) {
+            console.error(e);
+            this.bot?.sendMessage(chatId, "Ошибка.");
+        }
+    }
+
+    async handleViewParticipants(chatId: number, gameId: string) {
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const { UserModel } = await import('../models/user.model');
+            const game = await ScheduledGameModel.findById(gameId);
+            if (!game) return;
+
+            if (game.participants.length === 0) {
+                this.bot?.sendMessage(chatId, "Нет участников.");
+                return;
+            }
+
+            for (const p of game.participants) {
+                // For privacy, maybe just show name and verify status
+                const user = await UserModel.findById(p.userId);
+                const name = user ? (user.username ? `@${user.username}` : user.first_name) : 'Unknown';
+                const status = p.isVerified ? '✅' : '⏳';
+                const type = p.type === 'PAID' ? '💰' : '🎟';
+
+                this.bot?.sendMessage(chatId, `${status} ${type} ${name}`, {
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '⚙️ Управление', callback_data: `manage_player_${game._id}_${p.userId}` }
+                        ]]
+                    }
+                });
+            }
+
+        } catch (e) {
+            console.error(e);
+            this.bot?.sendMessage(chatId, "Ошибка.");
+        }
+    }
+
+    async handleManagePlayer(chatId: number, gameId: string, userId: string) {
+        // Show actions for specific player
+        try {
+            const { UserModel } = await import('../models/user.model');
+            const user = await UserModel.findById(userId);
+            if (!user) return;
+
+            this.bot?.sendMessage(chatId, `👤 Игрок: ${user.first_name} (@${user.username})`, {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '✍️ Написать', url: `tg://user?id=${user.telegram_id}` }],
+                        [{ text: '❌ Исключить', callback_data: `kick_player_${gameId}_${userId}` }]
+                    ]
+                }
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    async handleKickPlayer(chatId: number, gameId: string, userId: string) {
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const { UserModel } = await import('../models/user.model');
+            const game = await ScheduledGameModel.findById(gameId);
+
+            if (game) {
+                const pIndex = game.participants.findIndex((p: any) => p.userId.toString() === userId);
+                if (pIndex > -1) {
+                    game.participants.splice(pIndex, 1);
+                    await game.save();
+                    this.bot?.sendMessage(chatId, "✅ Игрок исключен.");
+
+                    // Notify user
+                    const user = await UserModel.findById(userId);
+                    if (user) {
+                        this.bot?.sendMessage(user.telegram_id, `❌ Вы были исключены из игры ${new Date(game.startTime).toLocaleString('ru-RU')}.`);
+                    }
+                } else {
+                    this.bot?.sendMessage(chatId, "Игрок не найден в списке.");
+                }
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async handleCancelGame(chatId: number, gameId: string) {
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const { UserModel } = await import('../models/user.model');
+            const game = await ScheduledGameModel.findById(gameId);
+            if (!game) return;
+
+            // Notify all and delete
+            game.status = 'CANCELLED'; // Or delete? Let's just set status CANCELLED and hide
+            await game.save();
+
+            for (const p of game.participants) {
+                const user = await UserModel.findById(p.userId);
+                if (user) {
+                    this.bot?.sendMessage(user.telegram_id, `⚠️ Игра ${new Date(game.startTime).toLocaleString('ru-RU')} была отменена организатором.`);
+                    // Refund logic if needed
+                }
+            }
+            this.bot?.sendMessage(chatId, "✅ Игра отменена.");
+        } catch (e) { console.error(e); }
     }
 
     async handleJoinGame(chatId: number, telegramId: number, gameId: string, isPaid?: boolean) {
