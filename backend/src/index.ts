@@ -99,10 +99,6 @@ app.get('/api/games', async (req, res) => {
         console.error("Failed to fetch games:", e);
         res.status(500).json({ error: "Internal Error" });
     }
-} catch (e) {
-    console.error("Failed to fetch games:", e);
-    res.status(500).json({ error: "Internal Error" });
-}
 });
 
 // Update Game (Protected via initData)
