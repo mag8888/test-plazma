@@ -5,7 +5,8 @@ import { Copy, Gift, TrendingUp, Users } from 'lucide-react';
 
 export default function EarnPage() {
     const { webApp, user } = useTelegram();
-    const referralLink = `https://t.me/moneo_bot?start=${user?.id || '123'}`;
+    // Use username if available, else ID. Bot handle corrected to MONEO_game_bot
+    const referralLink = `https://t.me/MONEO_game_bot?start=${user?.username || user?.id || 'unknown'}`;
 
     const handleCopy = () => {
         navigator.clipboard.writeText(referralLink);
