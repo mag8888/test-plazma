@@ -11,7 +11,7 @@ if (!token) {
 export class BotService {
     bot: TelegramBot | null = null;
     adminStates: Map<number, { state: string, targetUser?: any }> = new Map();
-    masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_TIME' | 'WAITING_MAX' | 'WAITING_PROMO' | 'WAITING_ANNOUNCEMENT_TEXT', gameData?: any, gameId?: string }> = new Map();
+    masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_TIME' | 'WAITING_MAX' | 'WAITING_PROMO' | 'WAITING_ANNOUNCEMENT_TEXT' | 'WAITING_EDIT_TIME' | 'WAITING_EDIT_MAX', gameData?: any, gameId?: string }> = new Map();
     transferStates: Map<number, { state: 'WAITING_USER' | 'WAITING_AMOUNT', targetUser?: any }> = new Map();
     participantStates: Map<number, { state: 'WAITING_POST_LINK', gameId: string }> = new Map();
 
@@ -949,6 +949,7 @@ export class BotService {
             reply_markup: {
                 keyboard: [
                     [{ text: '➕ Добавить игру' }, { text: '📅 Ближайшие игры' }],
+                    [{ text: '📋 Мои игры' }],
                     [{ text: '🎲 Играть' }, { text: '💸 Заработать' }, { text: '💸 Перевод' }],
                     [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
                     [{ text: 'ℹ️ О проекте' }]
