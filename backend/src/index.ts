@@ -110,9 +110,6 @@ app.put('/api/games/:id', async (req, res) => {
         if (!initData) return res.status(401).json({ error: "No auth data" });
 
         // Verify User using AuthService
-        const authService = new AuthController.stack[0].handle; // Hacky way to get service? No.
-        // Better: Re-instantiate or make AuthService static/exported.
-        // Let's use the AuthService class directly.
         const { AuthService } = await import('./auth/auth.service');
         const auth = new AuthService();
         const user = await auth.verifyTelegramAuth(initData);
