@@ -20,8 +20,9 @@ export default function SchedulePage() {
                     // Backend: { startTime (ISO), price, maxPlayers, participants: [], hostId: { username... } }
                     const formatted = data.map((g: any) => {
                         const dateObj = new Date(g.startTime);
-                        const time = dateObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                        const date = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' });
+                        // Force MSK display
+                        const time = dateObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
+                        const date = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' });
 
                         return {
                             id: g._id,

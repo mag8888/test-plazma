@@ -1010,14 +1010,19 @@ export class BotService {
         const [hours, minutes] = timeStr.split(':').map(Number);
         const dateParts = state.gameData.dateIso.split('-').map(Number); // YYYY, MM, DD
 
-        // Create Date object (assuming Server Time is mostly aligned or we treat it as local)
-        // Note: new Date(Y, M-1, D, H, m)
-        const finalDate = new Date(dateParts[0], dateParts[1] - 1, dateParts[2], hours, minutes);
+        // Create Date object assuming input is MSK (UTC+3)
+        // We want to store 13:00 MSK as 10:00 UTC.
+        // If we use new Date(...hours...), server (UTC) creates 13:00 UTC.
+        // So we need to subtract 3 hours from the input hours.
+
+        // Easier: Create as UTC then subtract 3 hours
+        const finalDate = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2], hours, minutes));
+        finalDate.setHours(finalDate.getHours() - 3);
 
         state.gameData.startTime = finalDate;
         state.state = 'WAITING_MAX';
 
-        this.bot?.sendMessage(chatId, `✅ Дата и время: ${finalDate.toLocaleString('ru-RU')}\n\n👥 Введите макс. кол-во игроков (по умолчанию 8):`);
+        this.bot?.sendMessage(chatId, `✅ Дата и время: ${finalDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК)\n\n👥 Введите макс. кол-во игроков (по умолчанию 8):`);
     }
 
     async handleSchedule(chatId: number) {
