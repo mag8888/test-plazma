@@ -3,6 +3,8 @@
 import { useTelegram } from '../../components/TelegramProvider';
 import { useEffect, useState } from 'react';
 import { Calendar, Users, ArrowRight, Clock } from 'lucide-react';
+import ManageGameModal from './ManageGameModal';
+import JoinGameModal from './JoinGameModal';
 
 export default function SchedulePage() {
     const { webApp, user } = useTelegram();
@@ -50,11 +52,6 @@ export default function SchedulePage() {
         fetchGames();
     }, [refreshKey]); // Refresh when key changes
 
-    // Replace imports
-    import ManageGameModal from './ManageGameModal';
-    import JoinGameModal from './JoinGameModal';
-
-    // ...
     // Edit Logic
     const [editingGame, setEditingGame] = useState<any>(null);
     const [joiningGame, setJoiningGame] = useState<any>(null);
