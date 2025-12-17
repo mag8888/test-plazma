@@ -800,7 +800,7 @@ sendMainMenu(chatId: number, text: string) {
     }
 }
 
-    async handleEarn(chatId: number, telegramId ?: number) {
+    async handleEarn(chatId: number, telegramId?: number) {
     if (!telegramId) return;
 
     try {
@@ -965,7 +965,7 @@ handleTransferStart(chatId: number) {
     this.bot?.sendMessage(chatId, "💸 **Перевод средств (Зеленый баланс)**\n\nВведите Username или ID получателя:");
 }
 
-    async handleAddGameStart(chatId: number, telegramId ?: number) {
+    async handleAddGameStart(chatId: number, telegramId?: number) {
     if (!telegramId) return;
     const { UserModel } = await import('../models/user.model');
     const user = await UserModel.findOne({ telegram_id: telegramId });
@@ -1088,7 +1088,7 @@ handleTransferStart(chatId: number) {
     }
 }
 
-    async handleJoinGame(chatId: number, telegramId: number, gameId: string, isPaid ?: boolean) {
+    async handleJoinGame(chatId: number, telegramId: number, gameId: string, isPaid?: boolean) {
     try {
         const { ScheduledGameModel } = await import('../models/scheduled-game.model');
         const { UserModel } = await import('../models/user.model');
