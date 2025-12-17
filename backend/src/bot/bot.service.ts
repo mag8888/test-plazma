@@ -1088,7 +1088,7 @@ handleTransferStart(chatId: number) {
     }
 }
 
-    async handleJoinGame(chatId: number, telegramId: number, gameId: string, isPaid: boolean = false) {
+    async handleJoinGame(chatId: number, telegramId: number, gameId: string, isPaid ?: boolean) {
     try {
         const { ScheduledGameModel } = await import('../models/scheduled-game.model');
         const { UserModel } = await import('../models/user.model');
