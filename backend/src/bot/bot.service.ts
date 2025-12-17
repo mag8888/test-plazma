@@ -784,7 +784,7 @@ export class BotService {
             const user = await UserModel.findOne({ telegram_id: chatId });
 
             const code = await authService.createAuthCode(chatId);
-            const webAppUrl = 'https://moneo-production-22c8.up.railway.app';
+            const webAppUrl = 'https://moneo.up.railway.app';
             const link = `${webAppUrl}/?auth=${code}`;
 
             const isMaster = user && user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date();
