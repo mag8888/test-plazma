@@ -1,5 +1,6 @@
 import { v4 as uuidv4 } from 'uuid';
 import { RoomModel, IRoom, IPlayer } from '../models/room.model';
+import { UserModel } from '../models/user.model';
 
 export class RoomService {
 
@@ -38,7 +39,8 @@ export class RoomService {
                 name: playerName,
                 isReady: false,
                 token: '🦊', // Default fallback
-                dream: 'Дом мечты ($100 000)' // Default fallback
+                dream: 'Дом мечты ($100 000)', // Default fallback
+                photo_url: (await UserModel.findById(userId))?.photo_url
             }],
             status: 'waiting',
             createdAt: Date.now()
@@ -65,7 +67,8 @@ export class RoomService {
                     "players.$.id": playerId,
                     "players.$.name": playerName,
                     "players.$.token": token || '🦊',
-                    "players.$.dream": dream || 'Дом мечты ($100 000)'
+                    "players.$.dream": dream || 'Дом мечты ($100 000)',
+                    "players.$.photo_url": (await UserModel.findById(userId))?.photo_url
                 }
             },
             { new: true }
@@ -118,7 +121,8 @@ export class RoomService {
                         name: playerName,
                         isReady: false,
                         token: finalToken,
-                        dream: dream || 'Дом мечты ($100 000)'
+                        dream: dream || 'Дом мечты ($100 000)',
+                        photo_url: (await UserModel.findById(userId))?.photo_url
                     }
                 }
             },

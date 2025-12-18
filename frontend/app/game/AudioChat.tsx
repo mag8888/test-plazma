@@ -20,6 +20,35 @@ interface AudioChatProps {
     currentPlayerName?: string;
 }
 
+const getAvatarColor = (id: string) => {
+    const colors = [
+        'from-red-500 to-orange-500',
+        'from-orange-500 to-amber-500',
+        'from-amber-500 to-yellow-500',
+        'from-yellow-500 to-lime-500',
+        'from-lime-500 to-green-500',
+        'from-green-500 to-emerald-500',
+        'from-emerald-500 to-teal-500',
+        'from-teal-500 to-cyan-500',
+        'from-cyan-500 to-sky-500',
+        'from-sky-500 to-blue-500',
+        'from-blue-500 to-indigo-500',
+        'from-indigo-500 to-violet-500',
+        'from-violet-500 to-purple-500',
+        'from-purple-500 to-fuchsia-500',
+        'from-fuchsia-500 to-pink-500',
+        'from-pink-500 to-rose-500',
+    ];
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+};
+
+const getInitials = (name: string) => {
+    if (!name) return '?';
+    return name.slice(0, 2).toUpperCase();
+};
+
 export const AudioChat = ({
     className = "",
     roomId,
@@ -410,12 +439,16 @@ export const AudioChat = ({
                 <div className="flex flex-col items-center gap-2">
                     <div className="relative">
                         <div
-                            className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-2xl shadow-lg transition-transform duration-75"
-                            style={{ transform: `scale(${getScale(myVolume)})`, boxShadow: `0 0 ${myVolume / 2}px rgba(59,130,246,0.5)` }}
+                            className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold shadow-lg transition-transform duration-75 text-white overflow-hidden border-2 border-white/20 bg-gradient-to-br ${getAvatarColor(currentUserId || 'me')}`}
+                            style={{ transform: `scale(${getScale(myVolume)})`, boxShadow: `0 0 ${myVolume / 2}px rgba(255,255,255,0.3)` }}
                         >
-                            🦊
+                            {players?.find(p => p.id === currentUserId)?.photo_url ? (
+                                <img src={players.find(p => p.id === currentUserId)?.photo_url} alt="Me" className="w-full h-full object-cover" />
+                            ) : (
+                                getInitials(currentPlayerName || 'Me')
+                            )}
                         </div>
-                        {isMuted && <div className="absolute -bottom-1 -right-1 bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full border border-slate-900 text-white font-bold">OFF</div>}
+                        {isMuted && <div className="absolute -bottom-1 -right-1 bg-red-500 text-[8px] px-1.5 py-0.5 rounded-full border border-slate-900 text-white font-bold">OFF</div>}
                     </div>
                     <span className="text-[10px] font-bold text-slate-300">Вы</span>
                 </div>
@@ -434,10 +467,14 @@ export const AudioChat = ({
                         <div key={p.id} className="flex flex-col items-center gap-2">
                             <div className="relative">
                                 <div
-                                    className="w-14 h-14 rounded-full bg-slate-700 flex items-center justify-center text-2xl shadow-lg transition-transform duration-75 border border-slate-600 relative"
-                                    style={{ transform: `scale(${getScale(vol)})`, boxShadow: vol > 10 ? `0 0 ${vol / 2}px rgba(34,197,94,0.5)` : 'none', borderColor: vol > 10 ? '#22c55e' : '#475569' }}
+                                    className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold shadow-lg transition-transform duration-75 text-white overflow-hidden border-2 border-white/20 bg-gradient-to-br ${getAvatarColor(p.id)} relative`}
+                                    style={{ transform: `scale(${getScale(vol)})`, boxShadow: vol > 10 ? `0 0 ${vol / 2}px rgba(34,197,94,0.5)` : 'none', borderColor: vol > 10 ? '#22c55e' : 'rgba(255,255,255,0.2)' }}
                                 >
-                                    {p.token || '👤'}
+                                    {p.photo_url ? (
+                                        <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        getInitials(p.name)
+                                    )}
 
                                     {/* Connection Status Dot */}
                                     <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-900 ${statusColor} shadow-sm z-10`} title={`Status: ${connState}`} />

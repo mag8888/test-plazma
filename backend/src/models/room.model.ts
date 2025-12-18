@@ -9,6 +9,7 @@ export interface IPlayer {
     userId?: string; // Link to registered user
     professionName?: string; // Assigned at game start
     isBankrupted?: boolean;
+    photo_url?: string;
 }
 
 export interface IRoom extends Document {
@@ -39,7 +40,8 @@ const RoomSchema: Schema = new Schema({
         dream: String,
         token: String,
         userId: String,
-        isBankrupted: { type: Boolean, default: false }
+        isBankrupted: { type: Boolean, default: false },
+        photo_url: String
     }],
     createdAt: { type: Date, expires: '12h', default: Date.now }
 }, { timestamps: true });
