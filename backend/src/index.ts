@@ -101,6 +101,18 @@ app.get('/api/games', async (req, res) => {
     }
 });
 
+// App Stats API
+app.get('/api/stats', async (req, res) => {
+    try {
+        const { UserModel } = await import('./models/user.model');
+        const userCount = await UserModel.countDocuments();
+        res.json({ users: userCount });
+    } catch (e) {
+        console.error("Failed to fetch stats:", e);
+        res.status(500).json({ error: "Stats Error" });
+    }
+});
+
 // Update Game (Protected via initData)
 app.put('/api/games/:id', async (req, res) => {
     try {
