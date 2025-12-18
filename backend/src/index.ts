@@ -317,10 +317,20 @@ app.post('/api/games/:id/join', async (req, res) => {
             if (host?.telegram_id) {
                 const t = type === 'PAID' ? '💰' : '🎟';
                 const status = isPromo ? '(Ожидает подтверждения)' : '';
-                const link = isPromo ? `\n🔗 Ссылка: ${repostLink}` : '';
+                const link = (isPromo && repostLink) ? `\n🔗 Ссылка: ${repostLink}` : (isPromo ? '\n🔗 Ссылка: Не указана' : '');
 
                 botService.bot?.sendMessage(host.telegram_id,
-                    `ℹ️ Новый игрок: ${t} ${user.first_name} (@${user.username}) записался на ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК). ${status}${link}`
+                    `ℹ️ Новый игрок: ${t} ${user.first_name} (@${user.username}) записался на ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК). ${status}${link}`,
+                    {
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: '✅ Подтвердить', callback_data: `confirm_player_${game._id}_${user._id}` },
+                                { text: '❌ Отклонить', callback_data: `reject_player_${game._id}_${user._id}` }
+                            ], [
+                                { text: '💬 Написать', url: `tg://user?id=${user.telegram_id}` }
+                            ]]
+                        }
+                    }
                 );
             }
 
@@ -351,6 +361,50 @@ app.post('/api/games/:id/join', async (req, res) => {
 });
 
 
+
+// Cancel Game Participation
+app.post('/api/games/:id/cancel', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { initData } = req.body;
+
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyTelegramAuth(initData);
+        if (!user) return res.status(401).json({ error: "Invalid auth" });
+
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const game = await ScheduledGameModel.findById(id);
+        if (!game) return res.status(404).json({ error: "Game not found" });
+
+        const pIndex = game.participants.findIndex((p: any) => p.userId.toString() === user._id.toString());
+        if (pIndex === -1) return res.status(400).json({ error: "Not registered" });
+
+        const participant = game.participants[pIndex];
+
+        // Remove participant
+        game.participants.splice(pIndex, 1);
+        await game.save();
+
+        // Notify Host
+        if (botService) {
+            const { UserModel } = await import('./models/user.model');
+            const host = await UserModel.findById(game.hostId);
+            if (host?.telegram_id) {
+                botService.bot?.sendMessage(host.telegram_id,
+                    `🗑 Игрок ${user.first_name} (@${user.username}) отменил запись на ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК).`
+                );
+            }
+        }
+
+        res.json({ success: true });
+
+    } catch (e) {
+        console.error("Cancel failed:", e);
+        res.status(500).json({ error: "Cancel failed" });
+    }
+});
 
 app.use(express.static(path.join(__dirname, '../../frontend/out')));
 
