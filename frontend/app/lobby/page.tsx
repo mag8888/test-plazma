@@ -57,38 +57,32 @@ export default function Lobby() {
         }
 
         const fetchRooms = () => {
-            // ... existing logic ...
+            console.log("Fetching rooms...");
+            socket.emit('get_rooms', (data: Room[]) => {
+                console.log("Rooms received:", data);
+                setRooms(data);
+            });
 
-            const fetchRooms = () => {
-                console.log("Fetching rooms...");
-                socket.emit('get_rooms', (data: Room[]) => {
-                    console.log("Rooms received:", data);
-                    setRooms(data);
-                });
+            // Fetch Leaderboard
+            socket.emit('get_leaderboard', (response: any) => {
+                if (Array.isArray(response)) {
+                    setLeaderboard(response);
+                } else if (response && response.leaders && Array.isArray(response.leaders)) {
+                    setLeaderboard(response.leaders);
+                } else {
+                    setLeaderboard([]);
+                }
+            });
 
-                // Fetch Leaderboard
-                socket.emit('get_leaderboard', (response: any) => {
-                    if (Array.isArray(response)) {
-                        setLeaderboard(response);
-                    } else if (response && response.leaders && Array.isArray(response.leaders)) {
-                        setLeaderboard(response.leaders);
-                    } else {
-                        setLeaderboard([]);
+            // Fetch My Rooms using either Logged In ID or Guest ID
+            const userId = user?._id || user?.id; // Use context user
+
+            if (userId) {
+                socket.emit('get_my_rooms', { userId }, (res: any) => {
+                    if (res.success) {
+                        setMyRooms(res.rooms);
                     }
                 });
-
-                // Fetch My Rooms using either Logged In ID or Guest ID
-                // const parsedUser = userStr ? JSON.parse(userStr) : null;
-                // const userId = parsedUser?._id || parsedUser?.id || localStorage.getItem('guest_id');
-                const userId = user?._id || user?.id; // Use context user
-
-                if (userId) {
-                    socket.emit('get_my_rooms', { userId }, (res: any) => {
-                        if (res.success) {
-                            setMyRooms(res.rooms);
-                        }
-                    });
-                }
             }
         };
 
