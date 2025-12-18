@@ -330,6 +330,11 @@ export class GameEngine {
     rollDice(diceCount: number = 1): number | { total: number, values: number[] } {
         const player = this.state.players[this.state.currentPlayerIndex];
 
+        // Baby Roll Logic
+        if (this.state.phase === 'BABY_ROLL') {
+            return this.resolveBabyRoll();
+        }
+
         if (player.skippedTurns > 0) {
             player.skippedTurns--;
             this.state.log.push(`${player.name} skips turn (Remaining: ${player.skippedTurns})`);
@@ -752,23 +757,12 @@ export class GameEngine {
         } else if (square.type === 'BABY') {
             if (player.childrenCount >= 3) {
                 this.state.log.push(`${player.name} already has max children.`);
+                this.state.phase = 'ACTION';
             } else {
-                // Roll for baby: 1-4 = Born, 5-6 = Not
-                const roll = Math.floor(Math.random() * 6) + 1;
-                if (roll <= 4) {
-                    player.childrenCount++;
-                    const childExpense = 400; // Fixed per user rule
-                    player.expenses += childExpense;
-                    player.cashflow = player.income - player.expenses;
-                    // "3 разово выплачивается 5000$"
-                    player.cash += 5000;
-
-                    this.state.log.push(`👶 Baby Born! (Roll: ${roll}). +$5000 Gift. Expenses +$${childExpense}/mo`);
-                    this.state.lastEvent = { type: 'BABY_BORN', payload: { player: player.name } };
-                } else {
-                    this.state.log.push(`No Baby (Roll: ${roll}).`);
-                }
+                this.state.log.push(`👶 ${player.name} landed on Baby! Roll to see if it's born (1-4).`);
+                this.state.phase = 'BABY_ROLL';
             }
+            return;
         } else if (square.type === 'DOWNSIZED') {
             player.skippedTurns = 2; // Fixed 2 turns
             const expenses = player.expenses;
@@ -776,6 +770,7 @@ export class GameEngine {
             this.forcePayment(player, expenses, 'Downsized Expenses');
             this.state.lastEvent = { type: 'DOWNSIZED', payload: { player: player.name } };
             // Do NOT end turn automatically. Let user see the popup.
+            this.state.phase = 'ACTION'; // Fix: Allow End Turn (Next button)
         } else if (square.type === 'CHARITY') {
             this.state.phase = 'CHARITY_CHOICE';
             this.state.log.push(`❤️ Charity: Donate 10% of total income to roll extra dice?`);
@@ -1610,6 +1605,30 @@ export class GameEngine {
         player.childrenCount = 0;
         player.charityTurns = 0;
         player.skippedTurns = 0;
+    }
+
+    resolveBabyRoll(): number | { total: number, values: number[] } {
+        const player = this.state.players[this.state.currentPlayerIndex];
+        const roll = Math.floor(Math.random() * 6) + 1;
+        const rollResult = { total: roll, values: [roll] };
+
+        if (roll <= 4) {
+            player.childrenCount++;
+            const childExpense = 400; // Fixed per user rule
+            player.expenses += childExpense;
+            player.cashflow = player.income - player.expenses;
+            // "3 разово выплачивается 5000$"
+            player.cash += 5000;
+
+            this.state.log.push(`👶 Baby Born! (Roll: ${roll}). +$5000 Gift. Expenses +$${childExpense}/mo`);
+            this.state.lastEvent = { type: 'BABY_BORN', payload: { player: player.name } };
+        } else {
+            this.state.log.push(`No Baby (Roll: ${roll}). Better luck next time!`);
+            this.state.lastEvent = { type: 'BABY_MISSED', payload: { player: player.name } };
+        }
+
+        this.state.phase = 'ACTION'; // Enable Next
+        return rollResult;
     }
 
     getState(): GameState {

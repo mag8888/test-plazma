@@ -784,6 +784,25 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     </div>
                 </div>
 
+                {/* 📱 MOBILE STATS HUD */}
+                <div className="lg:hidden w-full bg-[#1e293b]/80 backdrop-blur-md border-b border-white/5 p-2 grid grid-cols-3 gap-2 shrink-0 z-20">
+                    <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
+                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс</span>
+                        <div className="flex items-center gap-1">
+                            <span className="text-sm font-black text-green-400 font-mono tracking-tight">${me.cash?.toLocaleString()}</span>
+                            {/* Simple indicator if cash changed recently could go here */}
+                        </div>
+                    </div>
+                    <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
+                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Выплата</span>
+                        <span className="text-sm font-black text-green-400 font-mono tracking-tight">+${me.cashflow?.toLocaleString()}</span>
+                    </div>
+                    <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
+                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Кредит</span>
+                        <span className="text-sm font-black text-red-400 font-mono tracking-tight">-${me.loanDebt?.toLocaleString()}</span>
+                    </div>
+                </div>
+
                 {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
                 <div className="hidden lg:flex flex-col gap-4 h-full overflow-hidden flex-1 min-w-0">
                     <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden group">
@@ -1188,9 +1207,9 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                             ) : (
                                 <button
                                     onClick={() => handleRoll()}
-                                    disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard || hasRolled}
+                                    disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
                                     className={`h-24 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
-                                    ${isMyTurn && state.phase === 'ROLL' && !state.currentCard && !hasRolled
+                                    ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
                                             ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 border-emerald-400/50 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
                                             : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
                                         } `}
@@ -1203,17 +1222,17 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                         </div>
                                     ) : (
                                         <>
-                                            <span className={`text-3xl filter drop-shadow-xl transition-transform duration-500 ${!hasRolled && isMyTurn ? 'group-hover:rotate-[360deg]' : ''}`}>🎲</span>
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">Бросок</span>
+                                            <span className={`text-3xl filter drop-shadow-xl transition-transform duration-500 ${!hasRolled && isMyTurn ? 'group-hover:rotate-[360deg]' : ''}`}>{state.phase === 'BABY_ROLL' ? '👶' : '🎲'}</span>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">{state.phase === 'BABY_ROLL' ? 'Ребенок' : 'Бросок'}</span>
                                         </>
                                     )}
                                 </button>
                             )}
                             <button
                                 onClick={handleEndTurn}
-                                disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard && !hasRolled) || isAnimating}
+                                disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating}
                                 className={`h-24 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
-                                ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard || hasRolled) && !isAnimating
+                                ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating
                                         ? 'bg-gradient-to-br from-blue-500 to-blue-700 border-blue-400/50 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
                                         : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
                                     } `}
