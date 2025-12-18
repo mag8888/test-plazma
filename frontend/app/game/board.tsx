@@ -619,6 +619,10 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                             ) : (
                                                 getInitials(p.name)
                                             )}
+                                            {/* Token Badge */}
+                                            <div className="absolute -bottom-1 -right-1 z-20 bg-slate-800 rounded-full w-4 h-4 flex items-center justify-center text-[10px] border border-white/20 shadow-md">
+                                                {p.token || '👤'}
+                                            </div>
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-center mb-1">
@@ -1346,6 +1350,10 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                         ) : (
                                             getInitials(p.name)
                                         )}
+                                        {/* Token Badge */}
+                                        <div className="absolute -bottom-1 -right-1 z-20 bg-slate-800 rounded-full w-4 h-4 flex items-center justify-center text-[10px] border border-white/20 shadow-md">
+                                            {p.token || '👤'}
+                                        </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-bold text-slate-200 truncate">{p.name}</div>

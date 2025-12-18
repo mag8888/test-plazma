@@ -449,6 +449,11 @@ export const AudioChat = ({
                             )}
                         </div>
                         {isMuted && <div className="absolute -bottom-1 -right-1 bg-red-500 text-[8px] px-1.5 py-0.5 rounded-full border border-slate-900 text-white font-bold">OFF</div>}
+
+                        {/* Token Badge */}
+                        <div className="absolute -bottom-1 -right-1 z-20 bg-slate-800 rounded-full w-5 h-5 flex items-center justify-center text-[10px] border border-white/20 shadow-md">
+                            {players?.find(p => p.id === currentUserId)?.token || '👤'}
+                        </div>
                     </div>
                     <span className="text-[10px] font-bold text-slate-300">Вы</span>
                 </div>
@@ -478,6 +483,9 @@ export const AudioChat = ({
 
                                     {/* Connection Status Dot */}
                                     <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-900 ${statusColor} shadow-sm z-10`} title={`Status: ${connState}`} />
+                                </div>
+                                <div className="absolute -bottom-1 -right-1 z-20 bg-slate-800 rounded-full w-5 h-5 flex items-center justify-center text-[10px] border border-white/20 shadow-md">
+                                    {p.token || '👤'}
                                 </div>
                             </div>
                             <span className="text-[10px] font-bold text-slate-400 truncate max-w-[60px]">{p.name}</span>
