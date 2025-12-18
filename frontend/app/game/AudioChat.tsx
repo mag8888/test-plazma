@@ -221,7 +221,7 @@ export const AudioChat = ({
             const audio = new Audio();
             audio.srcObject = remoteStream;
             audio.autoplay = true;
-            audio.playsInline = true;
+            (audio as any).playsInline = true;
             audio.volume = 1.0;
             audio.play().catch(e => console.error("Audio Play Error:", e));
 
