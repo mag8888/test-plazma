@@ -217,34 +217,35 @@ export const AudioChat = ({
             log(`Received Remote Stream from ${targetUserId}`);
             const remoteStream = event.streams[0];
 
-            // Audio Context Approach
+            // 1. Audio Playback (Robust Method: Audio Element)
+            const audio = new Audio();
+            audio.srcObject = remoteStream;
+            audio.autoplay = true;
+            audio.playsInline = true;
+            audio.volume = 1.0;
+            audio.play().catch(e => console.error("Audio Play Error:", e));
+
+            // Keep reference to prevent GC?
+            // Ideally we track it. But for now, let's attach to the stream tracks ending.
+            // Or just store in a ref if we added one (not yet). 
+            // In React functional components, this `audio` object might get GC'd if not referenced...
+            // Let's attach it to `window` momentarily or just trust the browser keeps it alive while playing.
+            // Better: We'll add a `remoteAudiosRef` in next step.
+
+            // 2. Audio Visualization (Audio Context)
             if (audioContextRef.current) {
-                const source = audioContextRef.current.createMediaStreamSource(remoteStream);
-                const analyser = audioContextRef.current.createAnalyser();
-                analyser.fftSize = 64;
-                source.connect(analyser);
-                analyser.connect(audioContextRef.current.destination); // Connect to speakers!
-
-                remoteAnalysersRef.current.set(targetUserId, analyser);
-            }
-
-            // Fallback Audio Element (Hidden) ensures fetching continues even if context odd
-            // If we connect to destination in Context, we don't need audio element playing.
-            // BUT sometimes Context doesn't start properly.
-            // Let's use Audio Element as backup or primary if context fails.
-            // Safest: Use Audio Element for output, Context ONLY for analyze.
-
-            // Revised Strategy:
-            // 1. Audio Element plays sound.
-            // 2. Context analyzes sound (using clone?).
-            // Actually, `createMediaStreamSource` might steal from element?
-
-            // Let's stick to Context for Output if available.
-            if (!audioContextRef.current) {
-                const audio = new Audio();
-                audio.srcObject = remoteStream;
-                audio.autoplay = true;
-                audio.play().catch(e => console.error("Autoplay failed", e));
+                try {
+                    // Determine if context is running. If suspended, visualization won't work, but Audio Element should still play.
+                    const source = audioContextRef.current.createMediaStreamSource(remoteStream);
+                    const analyser = audioContextRef.current.createAnalyser();
+                    analyser.fftSize = 64;
+                    source.connect(analyser);
+                    // DO NOT connect to destination (audioContextRef.current.destination) to avoid echo / double audio.
+                    // Just use analyser for data.
+                    remoteAnalysersRef.current.set(targetUserId, analyser);
+                } catch (e) {
+                    console.error("Audio Context Visualization Error:", e);
+                }
             }
         };
 
