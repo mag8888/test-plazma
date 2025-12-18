@@ -24,6 +24,12 @@ export interface Card {
 }
 
 // Expense Cards
+// Helper to expand counts
+const expand = (count: number, template: Partial<Card>, type: Card['type']): Card[] => {
+    return Array(count).fill(null).map((_, i) => ({ ...template, id: `${type}_${template.title}_${i}`, type } as Card));
+};
+
+// Expense Cards
 export const EXPENSE_CARDS: Card[] = [
     // Low ($50 - $400)
     { id: 'e1', type: 'EXPENSE', title: 'Обед в ресторане', description: 'С друзьями.', cost: 50, mandatory: true },
@@ -58,249 +64,104 @@ export const EXPENSE_CARDS: Card[] = [
 
 // Generator for Small Deals
 const generateSmallDeals = (): Card[] => {
-    let idCounter = 1;
-    const cards: Card[] = [];
+    return [
+        // Stocks (5, 10, 20, 30, 40)
+        { id: 'sd_tsla_5', title: 'Акции: Tesla', symbol: 'TSLA', cost: 5, description: 'Цена $5. Колебания $5-$40.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+        ...expand(2, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 10, description: 'Цена $10. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
+        ...expand(2, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 20, description: 'Цена $20. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
+        ...expand(2, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 30, description: 'Цена $30. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
+        { id: 'sd_tsla_40', title: 'Акции: Tesla', symbol: 'TSLA', cost: 40, description: 'Цена $40. Колебания $5-$40.', assetType: 'STOCK', type: 'DEAL_SMALL' },
 
-    const add = (count: number, template: Partial<Card>) => {
-        for (let i = 0; i < count; i++) {
-            cards.push({
-                id: `sd_${idCounter++}`,
-                type: 'DEAL_SMALL',
-                title: template.title!,
-                description: template.description || '',
-                cost: template.cost || 0,
-                cashflow: template.cashflow || 0,
-                price: template.price,
-                symbol: template.symbol,
-                mandatory: template.mandatory,
-                ...template
-            } as Card);
-        }
-    };
+        // Microsoft
+        { id: 'sd_msft_5', title: 'Акции: Microsoft', symbol: 'MSFT', cost: 5, description: 'Цена $5. Колебания $5-$40.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+        ...expand(2, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 10, description: 'Цена $10. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
+        ...expand(2, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 20, description: 'Цена $20. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
+        ...expand(2, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 30, description: 'Цена $30. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
+        { id: 'sd_msft_40', title: 'Акции: Microsoft', symbol: 'MSFT', cost: 40, description: 'Цена $40. Колебания $5-$40.', assetType: 'STOCK', type: 'DEAL_SMALL' },
 
-    // --- STOCKS ---
-    // User Request: 1@5, 2@10, 2@20, 2@30, 1@40
-    const stockPrices = [5, 10, 10, 20, 20, 30, 30, 40];
+        // Bitcoin
+        { id: 'sd_btc_4k', title: 'Bitcoin', symbol: 'BTC', cost: 4000, description: 'Криптовалюта на дне. Цена $4,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+        { id: 'sd_btc_10k', title: 'Bitcoin', symbol: 'BTC', cost: 10000, description: 'Крипто-зима. Цена $10,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+        { id: 'sd_btc_20k', title: 'Bitcoin', symbol: 'BTC', cost: 20000, description: 'Биткоин на хайпе. Цена $20,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+        { id: 'sd_btc_30k', title: 'Bitcoin', symbol: 'BTC', cost: 30000, description: 'Биткоин штурмует максимумы. Цена $30,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+        { id: 'sd_btc_50k', title: 'Bitcoin', symbol: 'BTC', cost: 50000, description: 'Биткоин растет! Цена $50,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+        { id: 'sd_btc_100k', title: 'Bitcoin', symbol: 'BTC', cost: 100000, description: 'To The Moon! Цена $100,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
 
-    // TSLA
-    stockPrices.forEach(price => {
-        add(1, { title: 'Акции: Tesla', symbol: 'TSLA', cost: price, description: `Цена $${price}. Колебания $5-$40.`, assetType: 'STOCK' });
-    });
+        // AT&T
+        ...expand(2, { title: 'Акции: AT&T (Pref)', symbol: 'T', cost: 5000, cashflow: 50, maxQuantity: 1000, description: 'Привилегированные акции AT&T. Дивиденды $50/акцию. Макс 1000 шт.', assetType: 'STOCK' }, 'DEAL_SMALL'),
+        // P&G
+        ...expand(2, { title: 'Акции: P&G (Pref)', symbol: 'PG', cost: 2000, cashflow: 10, maxQuantity: 1000, description: 'Привилегированные акции P&G. Дивиденды $10/акцию. Макс 1000 шт.', assetType: 'STOCK' }, 'DEAL_SMALL'),
 
-    // MSFT
-    stockPrices.forEach(price => {
-        add(1, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: price, description: `Цена $${price}. Колебания $5-$40.`, assetType: 'STOCK' });
-    });
+        ...expand(5, { title: 'Комната в пригороде', cost: 3000, cashflow: 250, description: 'Сдача в аренду. ROI ~100%.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
+        ...expand(2, { title: 'Студия маникюра', cost: 4900, cashflow: 200, description: 'Студия маникюра на 1 место.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
+        ...expand(2, { title: 'Кофейня', cost: 4900, cashflow: 100, description: 'Небольшая кофейня.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
+        ...expand(2, { title: 'Партнёрство в автомастерской', cost: 4500, cashflow: 350, description: 'Доля в бизнесе.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
+        ...expand(2, { title: 'Участок земли 20га', cost: 5000, cashflow: 0, description: 'Земля без дохода.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
+        ...expand(1, { title: 'Покупка дрона', cost: 3000, cashflow: 50, description: 'Дрон для съёмок.', assetType: 'OTHER' }, 'DEAL_SMALL'),
+        ...expand(5, { title: 'Флипинг студии', cost: 5000, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
+        ...expand(3, { title: 'Сетевой бизнес', cost: 500, cashflow: 100, description: 'Старт в MLM компании.', businessType: 'NETWORK' }, 'DEAL_SMALL'),
+        ...expand(3, { title: 'Сетевой бизнес: Plazma Water', cost: 200, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' }, 'DEAL_SMALL'),
+        ...expand(3, { title: 'Сетевой бизнес: MONEO', cost: 100, cashflow: 0, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($50/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' }, 'DEAL_SMALL'),
 
-    // Bitcoin (Small Deal Entry Point)
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 4000, description: 'Криптовалюта на дне. Цена $4,000.', assetType: 'STOCK' });
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 10000, description: 'Криптовалюта растет. Цена $10,000.', assetType: 'STOCK' });
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 20000, description: 'Биткоин на хайпе. Цена $20,000.', assetType: 'STOCK' });
-    // Note: High cost BTC ($50k+) might be too expensive for Small Deals, but including per request
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 30000, description: 'Биткоин штурмует максимумы. Цена $30,000.', assetType: 'STOCK' });
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 50000, description: 'Биткоин растет! Цена $50,000.', assetType: 'STOCK' });
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 100000, description: 'To The Moon! Цена $100,000.', assetType: 'STOCK' });
+        // FRIEND CARDS
+        { id: 'sd_friend_loss', title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Увы, друг прогорел. Деньги потеряны!', mandatory: true, type: 'DEAL_SMALL' },
+        { id: 'sd_friend_biz', title: 'Друг просит в займ', cost: 5000, cashflow: 500, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Ура! Друг раскрутился! Вы получаете долю в бизнесе.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+        { id: 'sd_friend_luck', title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Друг вернул долг уроком мудрости! +2 кубика на 3 хода.', mandatory: true, type: 'DEAL_SMALL', subtype: 'CHARITY_ROLL' },
 
-    // ID: 6612 - NEW INCOME STOCKS
-    // AT&T (T) - Preferred, Cost $5000, Cashflow $50, Max 1000
-    add(2, {
-        title: 'Акции: AT&T (Pref)',
-        symbol: 'T',
-        cost: 5000,
-        cashflow: 50,
-        maxQuantity: 1000,
-        description: 'Привилегированные акции AT&T. Дивиденды $50/акцию. Макс 1000 шт.',
-        assetType: 'STOCK'
-    });
-
-    // P&G (PG) - Preferred, Cost $2000, Cashflow $10, Max 1000
-    add(2, {
-        title: 'Акции: P&G (Pref)',
-        symbol: 'PG',
-        cost: 2000,
-        cashflow: 10,
-        maxQuantity: 1000,
-        description: 'Привилегированные акции P&G. Дивиденды $10/акцию. Макс 1000 шт.',
-        assetType: 'STOCK'
-    });
-
-    // --- USER DEFINED ASSETS ---
-    add(5, { title: 'Комната в пригороде', cost: 3000, cashflow: 250, description: 'Сдача в аренду. ROI ~100%.', assetType: 'REAL_ESTATE' });
-    add(2, { title: 'Студия маникюра', cost: 4900, cashflow: 200, description: 'Студия маникюра на 1 место.', assetType: 'BUSINESS' });
-    add(2, { title: 'Кофейня', cost: 4900, cashflow: 100, description: 'Небольшая кофейня.', assetType: 'BUSINESS' });
-    add(2, { title: 'Партнёрство в автомастерской', cost: 4500, cashflow: 350, description: 'Доля в бизнесе.', assetType: 'BUSINESS' });
-    add(2, { title: 'Участок земли 20га', cost: 5000, cashflow: 0, description: 'Земля без дохода.', assetType: 'REAL_ESTATE' });
-    add(1, { title: 'Покупка дрона', cost: 3000, cashflow: 50, description: 'Дрон для съёмок.', assetType: 'OTHER' });
-    add(5, { title: 'Флипинг студии', cost: 5000, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).', assetType: 'REAL_ESTATE' });
-
-    // --- NETWORK MARKETING ---
-    add(3, { title: 'Сетевой бизнес', cost: 500, cashflow: 100, description: 'Старт в MLM компании.', businessType: 'NETWORK' });
-    add(3, { title: 'Сетевой бизнес: Plazma Water', cost: 200, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' });
-    add(3, { title: 'Сетевой бизнес: MONEO', cost: 100, cashflow: 0, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($50/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' });
-
-    // --- USER DEFINED "DEALS" (Expenses/Donations) ---
-    // Friend Cards (Hidden Outcomes)
-    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Увы, друг прогорел. Деньги потеряны!', mandatory: true, type: 'DEAL_SMALL' });
-    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 500, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Ура! Друг раскрутился! Вы получаете долю в бизнесе.', assetType: 'BUSINESS', type: 'DEAL_SMALL' });
-    add(1, { title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Друг вернул долг уроком мудрости! +2 кубика на 3 хода.', mandatory: true, type: 'DEAL_SMALL', subtype: 'CHARITY_ROLL' });
-
-    // --- USER DEFINED DAMAGES ---
-    add(2, { title: 'Крыша протекла', cost: 5000, cashflow: 0, description: 'Обновить крышу. Платите $5000 ЕСЛИ есть недвижимость.', mandatory: true });
-    add(3, { title: 'Прорыв канализации', cost: 2000, cashflow: 0, description: 'Починить канализацию. Платите $2000 ЕСЛИ есть недвижимость.', mandatory: true });
-
-    return cards;
+        // DAMAGES
+        ...expand(2, { title: 'Крыша протекла', cost: 5000, cashflow: 0, description: 'Обновить крышу. Платите $5000 ЕСЛИ есть недвижимость.', mandatory: true }, 'DEAL_SMALL'),
+        ...expand(3, { title: 'Прорыв канализации', cost: 2000, cashflow: 0, description: 'Починить канализацию. Платите $2000 ЕСЛИ есть недвижимость.', mandatory: true }, 'DEAL_SMALL'),
+    ];
 };
 
 // Generator for Market Cards (Selling Opportunities)
 const generateMarketCards = (): Card[] => {
-    let idCounter = 1;
-    const cards: Card[] = [];
+    return [
+        { title: 'Покупатель дома', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 13000, description: 'Семья ищет дом. Предлагают $13,000.', type: 'MARKET', id: 'mkt_house_1.5' },
+        { title: 'Инвестор в недвижимость', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 25500, description: 'Инвестор скупает районы. $25,500.', type: 'MARKET', id: 'mkt_house_3' },
 
-    const add = (count: number, template: Partial<Card>) => {
-        for (let i = 0; i < count; i++) {
-            cards.push({
-                id: `mkt_${idCounter++}`,
-                type: 'MARKET',
-                title: template.title!,
-                description: template.description || '',
-                action: 'OFFER',
-                targetTitle: template.targetTitle,
-                offerPrice: template.offerPrice,
-                ...template
-            } as Card);
-        }
-    };
+        { title: 'Отельная сеть (M)', targetTitle: 'Мини-отель', offerPrice: 120000, description: 'Сеть расширяется. Предлагают $120,000.', type: 'MARKET', id: 'mkt_hotel_1.5' },
+        { title: 'Крупный игрок', targetTitle: 'Мини-отель', offerPrice: 240000, description: 'Фонд хочет ваш отель. $240,000.', type: 'MARKET', id: 'mkt_hotel_3' },
+        { title: 'Монополист', targetTitle: 'Мини-отель', offerPrice: 400000, description: 'Предложение, от которого нельзя отказаться. $400,000!', type: 'MARKET', id: 'mkt_hotel_5' },
 
-    // --- STOCK MARKET EVENTS ---
-    // STOCKS REMOVED FROM MARKET DECK AS PER USER REQUEST
-    // add(1, { title: 'Акции TSLA: $40', targetTitle: 'Акции: Tesla', offerPrice: 40, description: 'Рост на новостях о новой батарее. Рынок покупает по $40.' });
-    // add(1, { title: 'Акции TSLA: $5', targetTitle: 'Акции: Tesla', offerPrice: 5, description: 'Проблемы с автопилотом. Рынок падает до $5.' });
-    // add(1, { title: 'Акции MSFT: $40', targetTitle: 'Акции: Microsoft', offerPrice: 40, description: 'Рекордная прибыль облачного сегмента. Рынок $40.' });
-    // add(1, { title: 'Акции MSFT: $5', targetTitle: 'Акции: Microsoft', offerPrice: 5, description: 'Антимонопольный иск. Рынок падает до $5.' });
-    // add(1, { title: 'Сплит Акций TSLA', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза.', action: 'OFFER' });
-    // add(1, { title: 'Сплит Акций MSFT', description: 'Сплит 2 к 1. Увеличьте кол-во акций в 2 раза.', action: 'OFFER' });
+        { title: 'Конкурент (FastFood)', targetTitle: 'Сеть кафе быстрого питания', offerPrice: 300000, description: 'Конкурент выкупает точки. $300,000.', type: 'MARKET', id: 'mkt_ff_1.5' },
+        { title: 'Мировой бренд', targetTitle: 'Сеть кафе быстрого питания', offerPrice: 1000000, description: 'Глобальная корпорация поглощает вас. $1,000,000!', type: 'MARKET', id: 'mkt_ff_5' },
 
-    // --- REAL ESTATE & BUSINESS BUYERS (MULTIPLIERS 1.5x - 5x) ---
-    // 3Br/2Ba House (Cost $8,500)
-    add(1, { title: 'Покупатель дома', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 13000, description: 'Семья ищет дом. Предлагают $13,000 (1.5x).' });
-    add(1, { title: 'Инвестор в недвижимость', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 25500, description: 'Инвестор скупает районы. $25,500 (3x).' });
+        { title: 'Эко-ритейлер', targetTitle: 'Ферма органических овощей', offerPrice: 240000, description: 'Сеть супермаркетов покупает производство. $240,000.', type: 'MARKET', id: 'mkt_farm_2' },
+        { title: 'Агрохолдинг', targetTitle: 'Ферма органических овощей', offerPrice: 600000, description: 'Крупный агрохолдинг. $600,000!', type: 'MARKET', id: 'mkt_farm_5' },
 
-    // Mini-Hotel (Cost $80,000)
-    add(1, { title: 'Отельная сеть (M)', targetTitle: 'Мини-отель', offerPrice: 120000, description: 'Сеть расширяется. Предлагают $120,000 (1.5x).' });
-    add(1, { title: 'Крупный игрок', targetTitle: 'Мини-отель', offerPrice: 240000, description: 'Фонд хочет ваш отель. $240,000 (3x).' });
-    add(1, { title: 'Монополист', targetTitle: 'Мини-отель', offerPrice: 400000, description: 'Предложение, от которого нельзя отказаться. $400,000 (5x)!' });
+        { title: 'Франчайзинг', targetTitle: 'Сеть автомоек', offerPrice: 450000, description: 'Вас хотят сделать частью франшизы. $450,000.', type: 'MARKET', id: 'mkt_wash_3' },
+        { title: 'Девелопер', targetTitle: 'Сеть автомоек', offerPrice: 600000, description: 'Земля под мойками нужна под застройку. $600,000.', type: 'MARKET', id: 'mkt_wash_4' },
 
-    // Fast Food (Cost $200,000)
-    add(1, { title: 'Конкурент (FastFood)', targetTitle: 'Сеть кафе быстрого питания', offerPrice: 300000, description: 'Конкурент выкупает точки. $300,000 (1.5x).' });
-    add(1, { title: 'Мировой бренд', targetTitle: 'Сеть кафе быстрого питания', offerPrice: 1000000, description: 'Глобальная корпорация поглощает вас. $1,000,000 (5x)!' });
+        { title: 'IT-Стартап', targetTitle: 'Коворкинг-центр', offerPrice: 500000, description: 'Единорог покупает офис. $500,000.', type: 'MARKET', id: 'mkt_cowork_2' },
+        { title: 'Google', targetTitle: 'Коворкинг-центр', offerPrice: 1250000, description: 'Техногигант открывает штаб-квартиру. $1,250,000!', type: 'MARKET', id: 'mkt_cowork_5' },
 
-    // Organic Farm (Cost $120,000)
-    add(1, { title: 'Эко-ритейлер', targetTitle: 'Ферма органических овощей', offerPrice: 240000, description: 'Сеть супермаркетов покупает производство. $240,000 (2x).' });
-    add(1, { title: 'Агрохолдинг', targetTitle: 'Ферма органических овощей', offerPrice: 600000, description: 'Крупный агрохолдинг. $600,000 (5x)!' });
+        { title: 'Выкуп франшизы', targetTitle: 'Франшиза: Plazma Water', offerPrice: 25000, description: 'Головная компания выкупает точку. $25,000.', type: 'MARKET', id: 'mkt_plazma_5' },
 
-    // Car Wash (Cost $150,000)
-    add(1, { title: 'Франчайзинг', targetTitle: 'Сеть автомоек', offerPrice: 450000, description: 'Вас хотят сделать частью франшизы. $450,000 (3x).' });
-    add(1, { title: 'Девелопер', targetTitle: 'Сеть автомоек', offerPrice: 600000, description: 'Земля под мойками нужна под застройку. $600,000 (4x).' });
+        { title: 'Слияние сетей', targetTitle: 'Студия маникюра', offerPrice: 25000, description: 'Выкуп сети. $25,000.', type: 'MARKET', id: 'mkt_nail_5' },
+        { title: 'Покупатель бизнеса', targetTitle: 'Кофейня', offerPrice: 15000, description: 'Инвестор. $15,000.', type: 'MARKET', id: 'mkt_coffee_3' },
+        { title: 'Застройщик', targetTitle: 'Участок земли 20га', offerPrice: 150000, description: 'Цена земли взлетела до $150,000.', type: 'MARKET', id: 'mkt_land_high' },
+        { title: 'Покупатель студии', targetTitle: 'Флипинг студии', offerPrice: 7000, description: 'Покупатель квартиры студии (субаренда) за $7,000.', type: 'MARKET', id: 'mkt_6' },
+        { title: 'Выкуп доли', targetTitle: 'Партнёрство в автомастерской', offerPrice: 50000, description: 'Есть покупатель на партнерство за $50,000.', type: 'MARKET', id: 'mkt_4' },
+        { title: 'Покупатель жилья', targetTitle: 'Комната в пригороде', offerPrice: 25000, description: 'Старое жилье идет под снос. Предлагают $25,000 за комнату.', type: 'MARKET', id: 'mkt_1' },
 
-    // Coworking (Cost $250,000)
-    add(1, { title: 'IT-Стартап', targetTitle: 'Коворкинг-центр', offerPrice: 500000, description: 'Единорог покупает офис. $500,000 (2x).' });
-    add(1, { title: 'Google', targetTitle: 'Коворкинг-центр', offerPrice: 1250000, description: 'Техногигант открывает штаб-квартиру. $1,250,000 (5x)!' });
-
-    // Plazma Water (Cost $5,000)
-    add(1, { title: 'Выкуп франшизы', targetTitle: 'Франшиза: Plazma Water', offerPrice: 25000, description: 'Головная компания выкупает точку. $25,000 (5x).' });
-
-    // Generic / Other
-    add(1, { title: 'Слияние сетей', targetTitle: 'Студия маникюра', offerPrice: 25000, description: 'Выкуп сети. $25,000.' });
-    add(1, { title: 'Покупатель бизнеса', targetTitle: 'Кофейня', offerPrice: 15000, description: 'Инвестор. $15,000 ($5k -> $15k, 3x).' });
-    add(1, { title: 'Застройщик', targetTitle: 'Участок земли 20га', offerPrice: 150000, description: 'Цена земли взлетела до $150,000.' });
-    add(4, { title: 'Покупатель студии', targetTitle: 'Флипинг студии', offerPrice: 7000, description: 'Покупатель квартиры студии (субаренда) за $7,000.' });
-    add(2, { title: 'Выкуп доли', targetTitle: 'Партнёрство в автомастерской', offerPrice: 50000, description: 'Есть покупатель на партнерство за $50,000.' });
-    add(4, { title: 'Покупатель жилья', targetTitle: 'Комната в пригороде', offerPrice: 25000, description: 'Старое жилье идет под снос. Предлагают $25,000 за комнату.' });
-
-    // BITCOIN SCAM
-    add(1, { title: 'Скам на криптобирже', targetTitle: 'Bitcoin', offerPrice: 0, description: 'Биржа рухнула. Все ваши BTC сгорают (Цена $0).' });
-
-    return cards;
+        { title: 'Скам на криптобирже', targetTitle: 'Bitcoin', offerPrice: 0, description: 'Биржа рухнула. Все ваши BTC сгорают (Цена $0).', type: 'MARKET', id: 'mkt_btc_scam' },
+    ];
 };
 
 
 // Generator for Big Deals
 const generateBigDeals = (): Card[] => {
-    let idCounter = 1;
-    const cards: Card[] = [];
-
-    const add = (count: number, template: Partial<Card>) => {
-        for (let i = 0; i < count; i++) {
-            cards.push({
-                id: `bd_${idCounter++}`,
-                type: 'DEAL_BIG',
-                title: template.title!,
-                description: template.description || '',
-                cost: template.cost || 0,
-                cashflow: template.cashflow || 0,
-                downPayment: template.downPayment, // Optional, can be calc'd
-                roi: template.roi,
-                ...template
-            } as Card);
-        }
-    };
-
-    // 1. 24 House Cards (Randomized Cost 7-10k, Flow 100-300)
-    for (let i = 0; i < 24; i++) {
-        // Cost 7000-10000 (step 500)
-        const cost = 7000 + Math.floor(Math.random() * 7) * 500;
-        // Flow 100-300 (step 50)
-        const cashflow = 100 + Math.floor(Math.random() * 5) * 50;
-
-        cards.push({
-            id: `bd_house_${i}`,
-            type: 'DEAL_BIG',
-            title: `Дом (3Br/2Ba)`,
-            description: `Дом под сдачу. Цена $${cost}. Доход $${cashflow}.`,
-            cost: cost,
-            cashflow: cashflow,
-        });
-    }
-
-    // 1.5. Affordable Real Estate (Cost 10k-20k, Flow 300-500) - User Request
-    for (let i = 0; i < 12; i++) {
-        // Cost 10000-20000 (step 1000)
-        const cost = 10000 + Math.floor(Math.random() * 11) * 1000;
-        // Flow 300-500 (step 50)
-        const cashflow = 300 + Math.floor(Math.random() * 5) * 50;
-
-        cards.push({
-            id: `bd_niceface_${i}`,
-            type: 'DEAL_BIG',
-            title: `Дом (3Br/2Ba)`,
-            description: `Выгодная сделка! Цена $${cost}. Доход $${cashflow}.`,
-            cost: cost,
-            cashflow: cashflow,
-            downPayment: 0, // Assuming 0 down or low? Standard Big Deal usually has Down Payment = Cost if no mortgage? 
-            // Or usually Mortgage = Cost - Down.
-            // If Cost is small (10k), Down might be 2k?
-            // Let's set Down Payment to 20% of cost roughly?
-            // But code above (Lines 242-257) didn't set downPayment, meaning it implies "Cash Buy" or "Calculated elsewhere"?
-            // Frontend/Engine might handle defaults. Card interface says `downPayment?`.
-            // If I look at line 260 "Mini-Hotel", it has `downPayment`.
-            // Lines 242-257 (Houses 7-10k) do NOT have downPayment.
-            // So these new ones checking in similar logic.
-        });
-    }
-
-    // 2. Specific Business Cards
-    add(2, { title: 'Мини-отель', cost: 80000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 20000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' });
-    add(2, { title: 'Сеть кафе быстрого питания', cost: 200000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 40000, businessType: 'CLASSIC', assetType: 'BUSINESS' });
-    add(1, { title: 'Ферма органических овощей', cost: 120000, cashflow: 4500, description: 'Экологичное хозяйство с контрактами на поставку.', downPayment: 30000, businessType: 'CLASSIC', assetType: 'BUSINESS' });
-    add(1, { title: 'Сеть автомоек', cost: 150000, cashflow: 5000, description: 'Хорошее расположение, стабильный трафик клиентов.', downPayment: 35000, businessType: 'CLASSIC', assetType: 'BUSINESS' });
-    add(1, { title: 'Коворкинг-центр', cost: 250000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 50000, businessType: 'CLASSIC', assetType: 'BUSINESS' });
-
-    add(3, { title: 'Франшиза: Plazma Water', cost: 5000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' });
-    add(3, { title: 'Франшиза: MONEO', cost: 5000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', businessType: 'NETWORK' });
-
-
-
-    return cards;
+    return [
+        { id: 'bd_house_ex', title: 'Дом (3Br/2Ba)', description: 'Дом под сдачу. Цена $7000-10000. Доход $100-300.', cost: 8500, cashflow: 200, type: 'DEAL_BIG' },
+        ...expand(2, { title: 'Мини-отель', cost: 80000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 20000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+        ...expand(2, { title: 'Сеть кафе быстрого питания', cost: 200000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 40000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
+        { title: 'Ферма органических овощей', cost: 120000, cashflow: 4500, description: 'Экологичное хозяйство с контрактами на поставку.', downPayment: 30000, businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG', id: 'bd_farm' },
+        { title: 'Сеть автомоек', cost: 150000, cashflow: 5000, description: 'Хорошее расположение, стабильный трафик клиентов.', downPayment: 35000, businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG', id: 'bd_wash' },
+        { title: 'Коворкинг-центр', cost: 250000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 50000, businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG', id: 'bd_co' },
+        ...expand(3, { title: 'Франшиза: Plazma Water', cost: 5000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG'),
+        ...expand(3, { title: 'Франшиза: MONEO', cost: 5000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG'),
+    ];
 };
 
 export class CardManager {

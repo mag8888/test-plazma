@@ -305,7 +305,7 @@ export class GameGateway {
                 const game = this.games.get(roomId);
                 if (!game) return;
 
-                const player = game.state.players.find(p => p.socketId === socket.id);
+                const player = game.state.players.find(p => p.id === socket.id);
                 if (!player) return;
 
                 if (!message || message.trim().length === 0) return;
