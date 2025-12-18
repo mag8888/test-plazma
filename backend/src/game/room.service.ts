@@ -122,12 +122,20 @@ export class RoomService {
         if (roomCheck.status !== 'waiting' && !isAlreadyInRoom) throw new Error("Game already started");
 
         // Determine unique token for new player
-        const ALL_TOKENS = ['🦊', '🐱', '🐭', '🐹', '🐰', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷'];
+        const ALL_TOKENS = ['🦁', '🦅', '🦊', '🐻', '🐅', '🐺', '🐘', '🦈', '🦉', '🐬']; // Synced with Frontend Visual Order
         const existingTokens = roomCheck.players.map((p: any) => p.token);
         let finalToken = token || '🦊';
 
         if (existingTokens.includes(finalToken)) {
-            const free = ALL_TOKENS.find(t => !existingTokens.includes(t));
+            // Pick the next available token in the visual sequence (Cyclic)
+            // Example: If Fox (3rd) is taken, we prefer Bear (4th), etc.
+            const startIdx = ALL_TOKENS.indexOf(finalToken);
+            // Create a rotated list starting from current token's index
+            const ordered = startIdx >= 0
+                ? [...ALL_TOKENS.slice(startIdx), ...ALL_TOKENS.slice(0, startIdx)]
+                : ALL_TOKENS;
+
+            const free = ordered.find(t => !existingTokens.includes(t));
             if (free) finalToken = free;
         }
 
