@@ -70,20 +70,20 @@ export const TextChat: React.FC<TextChatProps> = ({ roomId, socket, messages = [
                                 {msg.avatar ? (
                                     <img src={msg.avatar} alt={msg.senderName} className="w-full h-full object-cover" />
                                 ) : (
-                                    msg.senderName.substring(0, 2)
+                                    (msg.senderName || '?').substring(0, 2).toUpperCase()
                                 )}
                             </div>
 
                             {/* Message Bubble */}
                             <div className={`flex flex-col max-w-[80%] ${isMe ? 'items-end' : 'items-start'}`}>
                                 <div className={`px-4 py-2 rounded-2xl text-sm leading-relaxed shadow-sm ${isMe
-                                        ? 'bg-blue-600 text-white rounded-br-none'
-                                        : 'bg-slate-700/80 text-slate-200 rounded-bl-none'
+                                    ? 'bg-blue-600 text-white rounded-br-none'
+                                    : 'bg-slate-700/80 text-slate-200 rounded-bl-none'
                                     }`}>
                                     {msg.text}
                                 </div>
                                 <div className="text-[9px] text-slate-500 mt-1 px-1 flex gap-2">
-                                    <span className="font-bold">{!isMe && msg.senderName}</span>
+                                    <span className="font-bold">{!isMe && (msg.senderName || 'Unknown')}</span>
                                     <span>{new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                 </div>
                             </div>
