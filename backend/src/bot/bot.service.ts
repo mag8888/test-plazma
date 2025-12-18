@@ -591,6 +591,9 @@ export class BotService {
                         this.bot?.sendMessage(chatId, "Игрок уже не в списке.");
                     }
                 }
+            } else if (data.startsWith('skip_post_link_')) {
+                this.participantStates.delete(chatId);
+                this.bot?.sendMessage(chatId, "⚠️ Ок. Напоминаем: без подтверждения репоста Мастер может исключить вас из списка. Вы можете отправить ссылку позже, просто написав ее сюда.");
             } else if (data.startsWith('reject_player_')) {
                 const parts = data.split('_');
                 const gameId = parts[2];
@@ -1413,7 +1416,10 @@ export class BotService {
                 this.participantStates.set(chatId, { state: 'WAITING_POST_LINK', gameId: game._id });
                 this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PROMO)!\n\n📝 Для подтверждения участия, пожалуйста, отправьте ссылку на репост о нашей игре в течение 3 часов.`, {
                     reply_markup: {
-                        inline_keyboard: [[{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]]
+                        inline_keyboard: [
+                            [{ text: '⏭ Пропустить', callback_data: `skip_post_link_${game._id}` }],
+                            [{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]
+                        ]
                     }
                 });
 
