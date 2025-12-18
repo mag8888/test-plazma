@@ -113,7 +113,11 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     // Sound Settings
     const [showDesktopMenu, setShowDesktopMenu] = useState(false);
     const [volume, setVolume] = useState(0.5);
+    const [volume, setVolume] = useState(0.5);
     const [isMuted, setIsMuted] = useState(false);
+
+    // Chat State
+    const [chatMessage, setChatMessage] = useState('');
 
     useEffect(() => {
         setVolume(sfx.getVolume());
@@ -384,6 +388,13 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const handleRepay = (amount: number) => socket.emit('repay_loan', { roomId, amount });
     const handleEndTurn = () => socket.emit('end_turn', { roomId });
 
+    const handleSendChat = (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (!chatMessage.trim()) return;
+        socket.emit('chat_message', { roomId, message: chatMessage });
+        setChatMessage('');
+    };
+
     const handleTransferAsset = (toId: string, quantity?: number) => {
         if (!transferAssetItem) return;
         socket.emit('transfer_asset', { roomId, toPlayerId: toId, assetIndex: transferAssetItem.index, quantity });
@@ -637,6 +648,24 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                     </div>
                                 ))}
                             </div>
+
+                            {/* Chat Input */}
+                            <form onSubmit={handleSendChat} className="mt-2 flex gap-2">
+                                <input
+                                    type="text"
+                                    value={chatMessage}
+                                    onChange={(e) => setChatMessage(e.target.value)}
+                                    placeholder="Сообщение..."
+                                    className="flex-1 bg-slate-900/50 border border-slate-700/50 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                                />
+                                <button
+                                    type="submit"
+                                    disabled={!chatMessage.trim()}
+                                    className="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-xl px-3 py-2 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    ➤
+                                </button>
+                            </form>
                         </div>
 
                         {/* Rules Button in Menu */}

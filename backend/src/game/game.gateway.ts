@@ -299,6 +299,22 @@ export class GameGateway {
                 }
             });
 
+            // Chat Message
+            socket.on('chat_message', (payload: { roomId: string, message: string }) => {
+                const { roomId, message } = payload;
+                const game = this.games.get(roomId);
+                if (!game) return;
+
+                const player = game.state.players.find(p => p.socketId === socket.id);
+                if (!player) return;
+
+                if (!message || message.trim().length === 0) return;
+
+                // Add to log
+                game.state.log.push(`💬 ${player.name}: ${message.trim().slice(0, 100)}`); // Limit length
+                this.io.to(roomId).emit('game_state_update', game.state);
+            });
+
             // Game Actions - Helper to save state
             const saveState = (roomId: string, game: GameEngine) => {
                 this.roomService.saveGameState(roomId, game.getState()).catch(err => console.error("Persist Error:", err));
