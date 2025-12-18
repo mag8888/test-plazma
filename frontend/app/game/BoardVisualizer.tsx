@@ -109,7 +109,7 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
         <div className="w-full h-full relative p-2 flex items-center justify-center">
 
             {/* STICT SQUARE CONTAINER */}
-            <div className="relative aspect-square h-full max-h-full max-w-full">
+            <div className="relative aspect-square h-full max-h-full max-w-full" style={{ containerType: 'size' }}>
 
                 {/* 1. OUTER TRACK (GRID) */}
                 <div className="absolute inset-0 grid grid-cols-[repeat(13,minmax(0,1fr))] grid-rows-[repeat(13,minmax(0,1fr))] pointer-events-none">
@@ -130,17 +130,17 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                 title={sq.name}
                             >
                                 <div className="flex flex-col items-center justify-between h-full py-1 w-full overflow-hidden">
-                                    <span className="text-[6px] xs:text-[7px] leading-tight text-center px-0.5 text-slate-200 font-medium line-clamp-2 h-6 flex items-center">{sq.name}</span>
-                                    <span className="text-lg leading-none filter drop-shadow-md my-0.5">{getSticker(sq.type, sq.name)}</span>
+                                    <span className="text-[0.6cqw] leading-tight text-center px-0.5 text-slate-200 font-medium line-clamp-2 h-[2.5cqw] flex items-center">{sq.name}</span>
+                                    <span className="text-[3cqw] leading-none filter drop-shadow-md my-[0.2cqw]">{getSticker(sq.type, sq.name)}</span>
 
-                                    <div className="flex flex-col items-center leading-none space-y-0.5">
-                                        {sq.cost && <span className="text-[6px] text-red-300 font-mono">-${(sq.cost / 1000).toFixed(0)}k</span>}
-                                        {sq.cashflow && <span className="text-[6px] text-green-300 font-bold font-mono">+${(sq.cashflow / 1000).toFixed(0)}k</span>}
-                                        {sq.type === 'CASHFLOW' && <span className="text-emerald-400 font-bold tracking-tighter text-[6px]">Day</span>}
+                                    <div className="flex flex-col items-center leading-none space-y-[0.2cqw]">
+                                        {sq.cost && <span className="text-[0.6cqw] text-red-300 font-mono">-${(sq.cost / 1000).toFixed(0)}k</span>}
+                                        {sq.cashflow && <span className="text-[0.6cqw] text-green-300 font-bold font-mono">+${(sq.cashflow / 1000).toFixed(0)}k</span>}
+                                        {sq.type === 'CASHFLOW' && <span className="text-emerald-400 font-bold tracking-tighter text-[0.6cqw]">Day</span>}
                                     </div>
                                 </div>
 
-                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-slate-900 border border-slate-700 rounded-full flex items-center justify-center text-[8px] text-slate-500 z-10">{sq.index}</span>
+                                <span className="absolute -top-[0.2cqw] -right-[0.2cqw] w-[1.8cqw] h-[1.8cqw] bg-slate-900 border border-slate-700 rounded-full flex items-center justify-center text-[0.8cqw] text-slate-500 z-10">{sq.index}</span>
                                 {
                                     dreamers.length > 0 && (
                                         <div className="absolute -top-2 -left-2 flex -space-x-2 z-30">
@@ -160,8 +160,8 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                     {/* CENTER HUB (Inside Grid Layer) */}
                     <div className="col-start-4 col-end-11 row-start-4 row-end-11 relative rounded-full bg-slate-950 border-4 border-slate-800/80 shadow-2xl flex flex-col items-center justify-center z-10 overflow-hidden pointer-events-auto">
                         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900 via-slate-900 to-black animate-pulse"></div>
-                        <h1 className="text-3xl lg:text-5xl font-black bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent transform -skew-x-6 drop-shadow-2xl">MONEO</h1>
-                        <span className="text-[10px] text-slate-500 tracking-[0.4em] uppercase font-bold mt-1">Energy of Money</span>
+                        <h1 className="text-[4cqw] lg:text-[6cqw] font-black bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent transform -skew-x-6 drop-shadow-2xl">MONEO</h1>
+                        <span className="text-[1cqw] text-slate-500 tracking-[0.4em] uppercase font-bold mt-1">Energy of Money</span>
                     </div>
 
                 </div>
@@ -186,12 +186,12 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                 title={sq.name}
                             >
                                 <div className="flex flex-col items-center justify-center transform hover:rotate-0 transition-transform">
-                                    <span className="text-xl lg:text-3xl filter drop-shadow-lg">{getSticker(sq.type, sq.name)}</span>
-                                    <span className="text-[8px] font-bold text-slate-400 uppercase tracking-tight mt-[-2px] bg-black/40 px-1.5 rounded-full backdrop-blur-sm hidden lg:block scale-75">
+                                    <span className="text-[3cqw] lg:text-[4cqw] filter drop-shadow-lg">{getSticker(sq.type, sq.name)}</span>
+                                    <span className="text-[0.8cqw] font-bold text-slate-400 uppercase tracking-tight mt-[-0.2cqw] bg-black/40 px-[0.5cqw] rounded-full backdrop-blur-sm hidden lg:block scale-75">
                                         {sq.type === 'OPPORTUNITY' ? (sq.name.includes('Big') ? 'Big' : 'Small') : sq.type}
                                     </span>
                                 </div>
-                                <span className="absolute -top-1 -right-1 w-4 h-4 bg-slate-900 border border-slate-700 rounded-full flex items-center justify-center text-[8px] text-slate-500">{sq.index}</span>
+                                <span className="absolute -top-[0.2cqw] -right-[0.2cqw] w-[1.8cqw] h-[1.8cqw] bg-slate-900 border border-slate-700 rounded-full flex items-center justify-center text-[0.8cqw] text-slate-500">{sq.index}</span>
                             </div>
                         );
                     })}
@@ -266,11 +266,11 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                 style={style}
                             >
                                 <div className={`
-                                    w-8 h-8 rounded-full bg-slate-900 border-2 ${p.id === currentPlayerId ? 'border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-110' : 'border-slate-600 shadow-md'}
-                                    flex items-center justify-center text-lg relative
+                                    w-[2.5cqw] h-[2.5cqw] rounded-full bg-slate-900 border-2 ${p.id === currentPlayerId ? 'border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-110' : 'border-slate-600 shadow-md'}
+                                    flex items-center justify-center text-[1.5cqw] relative
                                 `}>
                                     {p.token}
-                                    <div className="absolute -top-4 bg-slate-900/80 text-white text-[8px] px-2 py-0.5 rounded-full whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">
+                                    <div className="absolute -top-[1.5cqw] bg-slate-900/80 text-white text-[0.6cqw] px-[0.5cqw] py-[0.1cqw] rounded-full whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">
                                         {p.name}
                                     </div>
                                 </div>
