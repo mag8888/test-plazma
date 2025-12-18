@@ -944,14 +944,14 @@ export class BotService {
             const authService = new AuthService();
             const user = await UserModel.findOne({ telegram_id: chatId });
 
-            const code = await authService.createAuthCode(chatId);
             const webAppUrl = 'https://moneo.up.railway.app';
-            const link = `${webAppUrl}/?auth=${code}`;
+            // We use web_app button to ensure initData is passed for Auth.
+            // Auth code is legacy/external only, but here we are in TG.
 
             const isMaster = user && user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date();
 
             const keyboard = [
-                [{ text: '🚀 ЗАПУСТИТЬ', url: link }],
+                [{ text: '🚀 ЗАПУСТИТЬ', web_app: { url: webAppUrl } }],
                 [{ text: '📅 Расписание игр', callback_data: 'view_schedule' }]
             ];
 
