@@ -1,4 +1,5 @@
 import { Server, Socket } from 'socket.io';
+import { v4 as uuidv4 } from 'uuid';
 import { RoomService } from './room.service';
 import { GameEngine, FULL_BOARD } from './engine';
 import { UserModel } from '../models/user.model';
