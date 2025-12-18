@@ -191,7 +191,7 @@ app.delete('/api/games/:id/players/:userId', async (req, res) => {
                 const { UserModel } = await import('./models/user.model');
                 const kickedUser = await UserModel.findById(userId);
                 if (kickedUser?.telegram_id) {
-                    botService.bot?.sendMessage(kickedUser.telegram_id, `❌ Вы были исключены из игры ${new Date(game.startTime).toLocaleString('ru-RU')}.`);
+                    botService.bot?.sendMessage(kickedUser.telegram_id, `❌ Вы были исключены из игры ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК).`);
                 }
             }
             res.json({ success: true });
