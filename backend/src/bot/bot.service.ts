@@ -953,7 +953,7 @@ export class BotService {
             const isMaster = user && user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date();
 
             const keyboard = [
-                [{ text: '🚀 ЗАПУСТИТЬ', web_app: { url: webAppUrl } }],
+                [{ text: '🚀 ЗАПУСТИТЬ В APP', web_app: { url: webAppUrl } }],
                 [{ text: '🌐 В браузере (Ссылка)', url: link }],
                 [{ text: '📅 Расписание игр', callback_data: 'view_schedule' }]
             ];
