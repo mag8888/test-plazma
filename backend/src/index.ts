@@ -406,6 +406,117 @@ app.post('/api/games/:id/cancel', async (req, res) => {
     }
 });
 
+// Confirm Player (Master only)
+app.post('/api/games/:id/players/:userId/confirm', async (req, res) => {
+    try {
+        const { id, userId: targetUserId } = req.params;
+        const { initData } = req.body;
+
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyTelegramAuth(initData);
+        if (!user) return res.status(401).json({ error: "Invalid auth" });
+
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const game = await ScheduledGameModel.findById(id);
+        if (!game) return res.status(404).json({ error: "Game not found" });
+
+        if (game.hostId.toString() !== user._id.toString()) return res.status(403).json({ error: "Not master" });
+
+        const pIndex = game.participants.findIndex((p: any) => p.userId.toString() === targetUserId);
+        if (pIndex === -1) return res.status(404).json({ error: "Participant not found" });
+
+        game.participants[pIndex].isVerified = true;
+        await game.save();
+
+        // Notify Player
+        const { UserModel } = await import('./models/user.model');
+        const targetUser = await UserModel.findById(targetUserId);
+        if (targetUser?.telegram_id && botService) {
+            botService.bot?.sendMessage(targetUser.telegram_id, `✅ Ваше участие в игре ${new Date(game.startTime).toLocaleDateString()} подтверждено мастером!`);
+        }
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error("Confirm failed:", e);
+        res.status(500).json({ error: "Confirm failed" });
+    }
+});
+
+// Kick Player (Master only)
+app.delete('/api/games/:id/players/:userId', async (req, res) => {
+    try {
+        const { id, userId: targetUserId } = req.params;
+        const authHeader = req.headers.authorization;
+        const initData = authHeader?.split(' ')[1]; // Bearer <initData> OR just initData depending on client. 
+        // ManageGameModal sends initData in header as Bearer? L98: `Bearer ${webApp?.initData}`. Yes.
+
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyTelegramAuth(initData);
+        if (!user) return res.status(401).json({ error: "Invalid auth" });
+
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const game = await ScheduledGameModel.findById(id);
+        if (!game) return res.status(404).json({ error: "Game not found" });
+
+        if (game.hostId.toString() !== user._id.toString()) return res.status(403).json({ error: "Not master" });
+
+        const pIndex = game.participants.findIndex((p: any) => p.userId.toString() === targetUserId);
+        if (pIndex === -1) return res.status(404).json({ error: "Participant not found" });
+
+        // Remove
+        game.participants.splice(pIndex, 1);
+        await game.save();
+
+        // Notify Player
+        const { UserModel } = await import('./models/user.model');
+        const targetUser = await UserModel.findById(targetUserId);
+        if (targetUser?.telegram_id && botService) {
+            botService.bot?.sendMessage(targetUser.telegram_id, `❌ Вы были исключены из игры ${new Date(game.startTime).toLocaleDateString()}.`);
+        }
+
+        res.json({ success: true });
+    } catch (e) {
+        console.error("Kick failed:", e);
+        res.status(500).json({ error: "Kick failed" });
+    }
+});
+
+// Get User Stats (Public Profile)
+app.get('/api/users/:id/stats', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { UserModel } = await import('./models/user.model');
+
+        // Allow querying by MongoID or TelegramID or Username?
+        // ID is likely MongoID from frontend.
+        let targetUser = await UserModel.findById(id);
+        if (!targetUser) return res.status(404).json({ error: "User not found" });
+
+        // Check if user is MASTER (stats mainly relevant)
+        // Return public stats
+        res.json({
+            id: targetUser._id,
+            username: targetUser.username,
+            firstName: targetUser.first_name,
+            photoUrl: targetUser.photo_url,
+            wins: targetUser.wins || 0,
+            gamesPlayed: 0, // Need to count 'COMPLETED' games? Or store in user model. 
+            // For now return 0 or implement count.
+            // Let's count from ScheduledGameModel where status=COMPLETED and participant.userId = id
+            isMaster: targetUser.isMaster,
+            createdAt: targetUser.createdAt
+        });
+
+    } catch (e) {
+        console.error("Stats failed:", e);
+        res.status(500).json({ error: "Stats failed" });
+    }
+});
+
 app.use(express.static(path.join(__dirname, '../../frontend/out')));
 
 // SPA Fallback
