@@ -233,7 +233,7 @@ app.post('/api/games/:id/broadcast', async (req, res) => {
 app.post('/api/games/:id/join', async (req, res) => {
     try {
         const { id } = req.params;
-        const { initData, type } = req.body; // type: 'PROMO' | 'PAID'
+        const { initData, type, repostLink } = req.body; // type: 'PROMO' | 'PAID'
 
         if (!initData) return res.status(401).json({ error: "No auth data" });
         const { AuthService } = await import('./auth/auth.service');
@@ -257,18 +257,13 @@ app.post('/api/games/:id/join', async (req, res) => {
 
         if (type === 'PROMO') {
             if (freeSpots <= 0) return res.status(400).json({ error: "No promo spots" });
+            if (!repostLink) return res.status(400).json({ error: "Repost link required for PROMO" });
         } else if (type === 'PAID') {
             if (paidSpots <= 0) return res.status(400).json({ error: "No paid spots" });
-
-            // Allow check both balances: Red first for games (Task md)
-            // Task: "Used for: Game (Joining matches). ... Auto-deduct Red first for Games."
 
             if (user.balanceRed >= game.price) {
                 user.balanceRed -= game.price;
             } else if (user.referralBalance >= game.price) {
-                // Should we allow Green? "Red... only on game". "Green... Transfers, Withdrawal".
-                // If user has no red but has green, can they pay?
-                // Typically yes. Let's assume yes.
                 user.referralBalance -= game.price;
             } else {
                 return res.status(400).json({ error: "Insufficient balance" });
@@ -279,12 +274,15 @@ app.post('/api/games/:id/join', async (req, res) => {
         }
 
         // Add Participant
+        const isPromo = type === 'PROMO';
         game.participants.push({
             userId: user._id,
             username: user.username,
             firstName: user.first_name,
             type: type,
-            joinedAt: new Date()
+            joinedAt: new Date(),
+            postLink: repostLink,
+            isVerified: !isPromo // Paid are auto-verified, Promo needs confirmation
         });
 
         await game.save();
@@ -295,16 +293,45 @@ app.post('/api/games/:id/join', async (req, res) => {
             const host = await UserModel.findById(game.hostId);
             if (host?.telegram_id) {
                 const t = type === 'PAID' ? '💰' : '🎟';
-                botService.bot?.sendMessage(host.telegram_id, `ℹ️ Новый игрок: ${t} ${user.first_name} (@${user.username}) записался на ${new Date(game.startTime).toLocaleString('ru-RU')}.`);
+                const status = isPromo ? '(Ожидает подтверждения)' : '';
+                const link = isPromo ? `\n🔗 Ссылка: ${repostLink}` : '';
+
+                botService.bot?.sendMessage(host.telegram_id,
+                    `ℹ️ Новый игрок: ${t} ${user.first_name} (@${user.username}) записался на ${new Date(game.startTime).toLocaleString('ru-RU')}. ${status}${link}`
+                );
+            }
+
+            // Notify User (Welcome Message)
+            if (user.telegram_id) {
+                const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
+                    day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+                });
+
+                let msg = `✅ Вы записались на игру: ${dateStr}\n\n`;
+                if (isPromo) {
+                    msg += `Ваша заявка (Промо) принята и ожидает подтверждения мастера. Мы уведомим вас, когда мастер проверит репост.`;
+                } else {
+                    msg += `Будем рады видеть вас на игре!`;
+                }
+
+                botService.bot?.sendMessage(user.telegram_id, msg);
             }
         }
 
-        res.json({ success: true });
+        res.json({ success: true, game });
 
     } catch (e) {
         console.error("Join failed:", e);
         res.status(500).json({ error: "Join failed" });
     }
+});
+
+res.json({ success: true });
+
+    } catch (e) {
+    console.error("Join failed:", e);
+    res.status(500).json({ error: "Join failed" });
+}
 });
 
 app.use(express.static(path.join(__dirname, '../../frontend/out')));
