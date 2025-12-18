@@ -2,7 +2,8 @@
 
 import { useTelegram } from '../../components/TelegramProvider';
 import { useEffect, useState } from 'react';
-import { Calendar, Users, ArrowRight, Clock } from 'lucide-react';
+import { Calendar, Users, ArrowRight, Clock, X } from 'lucide-react';
+import clsx from 'clsx';
 import ManageGameModal from './ManageGameModal';
 import JoinGameModal from './JoinGameModal';
 
@@ -39,7 +40,8 @@ export default function SchedulePage() {
                             max: g.maxPlayers,
                             price: g.price,
                             hostId: g.hostId?._id || g.hostId,
-                            rawIso: g.startTime
+                            rawIso: g.startTime,
+                            isJoined: g.participants?.some((p: any) => (p.userId?._id || p.userId) === user?.id)
                         };
                     });
                     setGames(formatted);
@@ -49,12 +51,31 @@ export default function SchedulePage() {
             }
         };
 
-        fetchGames();
-    }, [refreshKey]); // Refresh when key changes
+        if (user) fetchGames();
+    }, [refreshKey, user]); // Refresh when key changes
 
     // Edit Logic
     const [editingGame, setEditingGame] = useState<any>(null);
     const [joiningGame, setJoiningGame] = useState<any>(null);
+
+    const handleCancel = async (gameId: string) => {
+        if (!confirm("Вы уверены, что хотите отменить запись?")) return;
+        try {
+            const res = await fetch(`/api/games/${gameId}/cancel`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ initData: webApp?.initData })
+            });
+            if (res.ok) {
+                webApp?.showAlert("Запись отменена");
+                setRefreshKey(k => k + 1);
+            } else {
+                webApp?.showAlert("Ошибка отмены");
+            }
+        } catch (e) {
+            console.error(e);
+        }
+    };
 
     return (
         <div className="min-h-screen bg-slate-900 text-white p-4 space-y-4 pt-6 pb-24">
@@ -114,12 +135,23 @@ export default function SchedulePage() {
                             >
                                 ⚙️ Редактировать
                             </button>
+                        ) : game.isJoined ? (
+                            <button
+                                onClick={() => handleCancel(game.id)}
+                                className="w-full bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-900/50 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95"
+                            >
+                                <X size={18} /> Отменить запись
+                            </button>
                         ) : (
                             <button
                                 onClick={() => setJoiningGame(game)}
-                                className="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95"
+                                className={clsx(
+                                    "w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95",
+                                    game.players >= game.max ? "bg-slate-700 text-slate-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-500"
+                                )}
+                                disabled={game.players >= game.max}
                             >
-                                Записаться <ArrowRight size={18} />
+                                {game.players >= game.max ? "Мест нет" : <>Записаться <ArrowRight size={18} /></>}
                             </button>
                         )}
                     </div>
