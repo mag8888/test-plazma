@@ -39,6 +39,7 @@ import { BankModal } from './BankModal';
 import { TransferModal } from './TransferModal';
 import { RulesModal } from './RulesModal';
 import { RankingsModal } from './RankingsModal';
+import { MenuModal } from './MenuModal';
 
 // Helper for Cash Animation
 const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
@@ -112,10 +113,8 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const [mobileView, setMobileView] = useState<'stats' | 'players'>('stats');
 
     // Sound Settings
-    const [showDesktopMenu, setShowDesktopMenu] = useState(false);
-    const [activeTab, setActiveTab] = useState<'GAME' | 'CHAT' | 'MENU'>('GAME');
     const [volume, setVolume] = useState(0.5);
-
+    const [showMenuModal, setShowMenuModal] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
 
     // Chat State
@@ -483,6 +482,30 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
     return (
         <div className="h-[100dvh] max-h-[100dvh] bg-[#0f172a] text-white font-sans flex flex-col overflow-hidden relative">
+
+            {/* 🔝 TOP PLAYER BAR (New Layout) */}
+            <div className="hidden lg:flex h-20 bg-[#1e293b] border-b border-slate-800/80 items-center px-6 gap-6 relative z-50 shadow-md flex-shrink-0">
+                <div className="flex items-center gap-2 font-black text-2xl tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mr-4">
+                    <span className="text-3xl">M</span> MONEO
+                </div>
+
+                <div className="flex-1 flex items-center gap-4 overflow-x-auto custom-scrollbar pb-1">
+                    {state.players.map((p: any) => {
+                        const isActive = p.id === currentPlayer.id;
+                        return (
+                            <div key={p.id} className={`flex items-center gap-3 px-1 py-1 pr-4 rounded-full border transition-all duration-300 ${isActive ? 'bg-slate-800 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)] scale-105' : 'bg-slate-900/40 border-slate-700/30 opacity-70 hover:opacity-100'}`}>
+                                <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-lg relative ${isActive ? 'border-green-400 shadow-inner' : 'border-slate-600 grayscale'} ${getAvatarColor(p.id)} bg-gradient-to-br`}>
+                                    {p.photo_url ? <img src={p.photo_url} className="w-full h-full object-cover rounded-full" /> : p.token}
+                                </div>
+                                <div>
+                                    <div className={`text-xs font-bold leading-tight ${isActive ? 'text-white' : 'text-slate-400'}`}>{p.name}</div>
+                                    <div className="text-[10px] font-mono text-slate-500">$ {p.cash?.toLocaleString()}</div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
 
             {showRankings && (
                 <RankingsModal
@@ -1252,236 +1275,115 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
 
 
-                {/* RIGHT SIDEBAR (Desktop) */}
-                {/* RIGHT SIDEBAR (Desktop) */}
-                <div className="hidden lg:flex flex-col flex-1 h-full border-l border-slate-800/0 p-0 relative overflow-hidden gap-4 min-w-0">
-                    {/* CHAT & LOGS (Always Visible at Top) */}
-                    <div className="h-[40%] flex-shrink-0 flex flex-col px-4 pt-4 min-h-[250px]">
+                {/* RIGHT SIDEBAR (Redesigned) */}
+                <div className="hidden lg:flex flex-col w-[380px] h-full border-l border-slate-800/50 bg-[#0f172a]/50 relative z-40 overflow-hidden shadow-xl shrink-0">
+
+                    {/* 1. STATUS CARD (Player + Timer) */}
+                    <div className="p-4 pb-0 shrink-0">
+                        <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none group-hover:bg-blue-500/20 transition-all duration-500"></div>
+                            <div>
+                                <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-1 flex items-center gap-2">
+                                    <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
+                                    Ход игрока
+                                </div>
+                                <div className="text-lg font-bold text-white tracking-wide truncate max-w-[180px]">{currentPlayer.name}</div>
+                            </div>
+                            <div className={`text-4xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
+                                {formatTime(timeLeft)}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 2. ACTIONS PANEL */}
+                    <div className="p-4 shrink-0">
+                        <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-2xl relative">
+                            <h3 className="text-slate-400 text-[10px] uppercase tracking-[0.25em] font-black mb-4 flex items-center gap-2">
+                                <span className="text-yellow-400">⚡</span> ДЕЙСТВИЯ
+                            </h3>
+
+                            <div className="grid grid-cols-2 gap-3 mb-3">
+                                {/* Roll Logic */}
+                                {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+                                    <div className="col-span-2 flex gap-2">
+                                        <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs shadow-lg">🎲 1</button>
+                                        <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs shadow-lg">🎲 2</button>
+                                        {me.isFastTrack && <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs shadow-lg">🎲 3</button>}
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => handleRoll()}
+                                        disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
+                                        className={`h-28 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all relative overflow-hidden group
+                                        ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
+                                                ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400/50 text-white shadow-lg shadow-emerald-900/30'
+                                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                                    >
+                                        {hasRolled ? (
+                                            <div className="flex flex-col items-center animate-in zoom-in">
+                                                <span className="text-4xl font-black">{diceValue}</span>
+                                                <span className="text-[9px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <span className="text-4xl group-hover:rotate-12 transition-transform">🎲</span>
+                                                <span className="text-[10px] font-black uppercase tracking-widest">БРОСОК</span>
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+
+                                <button
+                                    onClick={handleEndTurn}
+                                    disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
+                                    className={`h-28 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all relative overflow-hidden group
+                                    ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
+                                            ? 'bg-blue-600 hover:bg-blue-500 border-blue-400/50 text-white shadow-lg shadow-blue-900/30'
+                                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                                >
+                                    <span className="text-4xl group-hover:translate-x-1 transition-transform">➡</span>
+                                    <span className="text-[10px] font-black uppercase tracking-widest">ДАЛЕЕ</span>
+                                </button>
+                            </div>
+
+                            <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-wider transition-colors">
+                                <span>🏦</span> Открыть Банк
+                            </button>
+
+                            {me.canEnterFastTrack && isMyTurn && (
+                                <button
+                                    onClick={handleEnterFastTrack}
+                                    className="w-full mt-2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white p-3 rounded-xl shadow-lg flex items-center justify-center gap-2 font-bold text-xs uppercase animate-pulse"
+                                >
+                                    🚀 Выйти на Fast Track
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* 3. CHAT (Fills Space) */}
+                    <div className="flex-1 min-h-0 px-4 pb-2 flex flex-col">
+                        <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 ml-1">Чат и События</div>
                         <TextChat
                             roomId={roomId}
                             socket={socket}
                             messages={state.chat || []}
                             currentUser={me}
-                            className="w-full h-full shadow-lg rounded-3xl"
+                            className="w-full h-full shadow-inner rounded-2xl border border-slate-800/50"
                         />
                     </div>
 
-                    {/* TABS HEADER */}
-                    <div className="flex items-center gap-1 mx-4 bg-[#0f172a]/60 backdrop-blur-md p-1 rounded-2xl border border-slate-800/50 shrink-0">
+                    {/* 4. MENU BUTTON */}
+                    <div className="p-4 pt-2 shrink-0">
                         <button
-                            onClick={() => setActiveTab('GAME')}
-                            className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'GAME' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'}`}
+                            onClick={() => setShowMenuModal(true)}
+                            className="w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white font-bold uppercase tracking-[0.2em] text-xs transition-colors shadow-lg flex items-center justify-center gap-3"
                         >
-                            <span className="text-sm">🎮</span> Game
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('MENU')}
-                            className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'MENU' ? 'bg-slate-700 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'}`}
-                        >
-                            <span className="text-sm">⚙️</span> Menu
+                            <span>⚙️</span> МЕНЮ
                         </button>
                     </div>
 
-                    {/* TAB CONTENT CONTAINER */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-4 flex flex-col gap-4 min-h-0">
-
-                        {/* --- GAME TAB --- */}
-                        {activeTab === 'GAME' && (
-                            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                                {/* TIMER COMPONENT */}
-                                <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden shrink-0">
-                                    <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/5 rounded-full blur-xl -mr-10 -mt-10 pointer-events-none"></div>
-                                    <div>
-                                        <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-1">Ход игрока</div>
-                                        <div className="text-lg font-bold text-white tracking-wide">{currentPlayer.name}</div>
-                                    </div>
-                                    <div className={`text-4xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
-                                        {formatTime(timeLeft)}
-                                    </div>
-                                </div>
-
-                                {/* Actions Panel */}
-                                <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-2xl relative group shrink-0">
-                                    <h3 className="text-slate-400 text-[10px] uppercase tracking-[0.25em] font-black mb-5 flex items-center gap-2 relative z-10">
-                                        <span className="text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]">⚡</span> ДЕЙСТВИЯ
-                                    </h3>
-
-                                    <div className="grid grid-cols-2 gap-4 mb-4 relative z-10">
-                                        {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
-                                            <div className="h-[100px] rounded-2xl border border-slate-700/50 bg-slate-800/40 p-2 flex flex-col gap-1 shadow-inner">
-                                                <div className="flex-1 flex gap-1">
-                                                    <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
-                                                        <span className="text-xl">🎲</span>
-                                                        <span className="text-[8px] font-bold">1</span>
-                                                    </button>
-                                                    <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
-                                                        <span className="text-xl">🎲🎲</span>
-                                                        <span className="text-[8px] font-bold">2</span>
-                                                    </button>
-                                                    {me.isFastTrack && (
-                                                        <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
-                                                            <span className="text-xl">🎲 x3</span>
-                                                            <span className="text-[8px] font-bold">3</span>
-                                                        </button>
-                                                    )}
-                                                </div>
-                                                <div className="text-[8px] text-center text-pink-400 font-bold uppercase tracking-wider">Charity Bonus ({me.charityTurns})</div>
-                                            </div>
-                                        ) : (
-                                            <button
-                                                onClick={() => handleRoll()}
-                                                disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
-                                                className={`h-24 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
-                                                ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
-                                                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 border-emerald-400/50 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
-                                                        : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
-                                                    } `}
-                                            >
-                                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-                                                {hasRolled ? (
-                                                    <div className="flex flex-col items-center animate-in zoom-in duration-300">
-                                                        <span className="text-4xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">{diceValue}</span>
-                                                        <span className="text-[8px] text-emerald-200 uppercase tracking-wider font-bold">Выпало</span>
-                                                    </div>
-                                                ) : (
-                                                    <>
-                                                        <span className={`text-3xl filter drop-shadow-xl transition-transform duration-500 ${!hasRolled && isMyTurn ? 'group-hover:rotate-[360deg]' : ''}`}>{state.phase === 'BABY_ROLL' ? '👶' : '🎲'}</span>
-                                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">{state.phase === 'BABY_ROLL' ? 'Ребенок' : 'Бросок'}</span>
-                                                    </>
-                                                )}
-                                            </button>
-                                        )}
-                                        <button
-                                            onClick={handleEndTurn}
-                                            disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
-                                            className={`h-24 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
-                                            ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
-                                                    ? 'bg-gradient-to-br from-blue-500 to-blue-700 border-blue-400/50 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
-                                                    : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
-                                                } `}
-                                        >
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-                                            <span className="text-3xl filter drop-shadow-xl group-hover:translate-x-1 transition-transform duration-300">➡</span>
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">Далее</span>
-                                        </button>
-                                    </div>
-                                    <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-700/80 hover:border-slate-500 hover:shadow-lg hover:shadow-blue-900/20 flex items-center justify-center gap-3 transition-all duration-300 group/bank active:scale-95 text-white">
-                                        <span className="text-xl group-hover/bank:scale-110 group-hover/bank:rotate-12 transition-transform duration-300">🏦</span>
-                                        <span className="text-[10px] text-slate-300 group-hover:text-white font-bold uppercase tracking-[0.15em]">Открыть Банк</span>
-                                    </button>
-
-                                    {/* Fast Track Entry Button */}
-                                    {me.canEnterFastTrack && isMyTurn && (
-                                        <button
-                                            onClick={handleEnterFastTrack}
-                                            className="w-full mt-3 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white p-4 rounded-xl shadow-lg shadow-orange-900/30 flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-95 animate-pulse"
-                                        >
-                                            <span className="text-2xl">🚀</span>
-                                            <span className="text-xs font-black uppercase tracking-widest">Выйти на Fast Track</span>
-                                        </button>
-                                    )}
-                                </div>
-
-                                {/* Players Mini List */}
-                                <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-lg flex-1 overflow-y-auto custom-scrollbar relative shrink-0">
-                                    <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2 sticky top-0 bg-[#1e293b]/95 backdrop-blur-md py-2 z-10 w-full">
-                                        <span>👥</span> Игроки
-                                    </h3>
-                                    <div className="space-y-3 pb-2">
-                                        {state.players.map((p: any) => (
-                                            <div key={p.id} className={`flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300 group ${p.id === currentPlayer.id ? 'bg-slate-800/90 border-blue-500/50 shadow-[0_4px_20px_rgba(59,130,246,0.15)] scale-[1.02]' : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60'} `}>
-                                                <div className={`w-12 h-12 flex-shrink-0 rounded-full border-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] flex items-center justify-center text-xl relative bg-slate-900 ${p.id === currentPlayer.id ? 'border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-105' : 'border-slate-600'}`}>
-                                                    {/* Chip Content */}
-                                                    {p.token}
-                                                    {/* Optional: Avatar Image Overlay if requested, but user said "make chips like board" which are tokens */}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className="text-sm font-bold text-slate-200 truncate flex items-center gap-2">
-                                                        {p.name}
-                                                        {(p.skippedTurns || 0) > 0 && <span className="text-[10px] bg-red-900/50 text-red-200 px-1.5 py-0.5 rounded border border-red-500/30" title="Пропуск хода">⛔ {p.skippedTurns}</span>}
-                                                    </div>
-                                                    <div className="text-[10px] text-slate-500 font-mono">${p.cash?.toLocaleString()}</div>
-                                                </div>
-                                                {p.id === currentPlayer.id && <div className="text-[8px] text-blue-400 bg-blue-900/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">Ходит</div>}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-
-                            </div>
-                        )}
-
-
-
-                        {/* --- MENU TAB --- */}
-                        {activeTab === 'MENU' && (
-                            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
-                                <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-6 border border-slate-700/50 shadow-2xl">
-                                    <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                                        <span>⚙️</span> Настройки
-                                    </h2>
-
-                                    {/* Sound Settings */}
-
-                                    {/* Sound Settings */}
-                                    <div className="space-y-4 mb-8">
-                                        <div className="flex justify-between items-center text-sm font-bold text-slate-400 uppercase tracking-wider">
-                                            <span>Звук эффектов</span>
-                                            <button onClick={toggleMute} className={`text-xs px-2 py-1 rounded ${isMuted ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
-                                                {isMuted ? 'Выключен' : 'Включен'}
-                                            </button>
-                                        </div>
-                                        <input
-                                            type="range"
-                                            min="0"
-                                            max="1"
-                                            step="0.05"
-                                            value={volume}
-                                            onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                                            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                                        />
-                                    </div>
-
-                                    {/* Links */}
-                                    <div className="space-y-3">
-                                        <button
-                                            onClick={() => setShowRules(true)}
-                                            className="w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center gap-3 transition-colors border border-slate-700/50"
-                                        >
-                                            <span className="text-xl">📜</span> Правила Игры
-                                        </button>
-
-                                        {/* Placeholder for Stats/Profile if needed */}
-                                        <button className="w-full py-4 rounded-xl bg-slate-800/50 text-slate-500 font-bold flex items-center justify-center gap-3 border border-slate-800 cursor-not-allowed">
-                                            <span className="text-xl">👤</span> Профиль (Скоро)
-                                        </button>
-                                    </div>
-                                </div>
-
-                                {/* Danger Zone */}
-                                <div className="mt-auto">
-                                    <button
-                                        onClick={handleExit}
-                                        className="w-full py-4 rounded-xl bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/30 font-bold flex items-center justify-center gap-2 transition-colors uppercase tracking-widest text-sm"
-                                    >
-                                        <span className="text-lg">🚪</span> Покинуть Комнату
-                                    </button>
-
-                                    {/* HOST: End Game Button */}
-                                    {state.players[0]?.id === me.id && state.players.some((p: any) => p.hasWon) && (
-                                        <button
-                                            onClick={handleEndGame}
-                                            className="mt-3 w-full py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-widest text-xs shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
-                                        >
-                                            <span className="text-lg">🛑</span> ЗАВЕРШИТЬ ИГРУ
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                    </div>
-                </div >
+                </div>
 
             </div>
             {/* End Main Grid */}
@@ -1583,6 +1485,21 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 )
             }
             {showRules && <RulesModal onClose={() => setShowRules(false)} counts={state.deckCounts} />}
+
+            {showMenuModal && (
+                <MenuModal
+                    onClose={() => setShowMenuModal(false)}
+                    onExit={handleExit}
+                    onEndGame={handleEndGame}
+                    onShowRules={() => setShowRules(true)}
+                    isMuted={isMuted}
+                    toggleMute={toggleMute}
+                    volume={volume}
+                    setVolume={handleVolumeChange}
+                    isHost={state.players[0]?.id === me.id}
+                    hasWinner={state.players.some((p: any) => p.hasWon)}
+                />
+            )}
         </div >
     );
 }
