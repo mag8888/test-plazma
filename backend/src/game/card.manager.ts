@@ -98,6 +98,8 @@ const generateSmallDeals = (): Card[] => {
     add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 20000, description: 'Биткоин на хайпе. Цена $20,000.', assetType: 'STOCK' });
     // Note: High cost BTC ($50k+) might be too expensive for Small Deals, but including per request
     add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 30000, description: 'Биткоин штурмует максимумы. Цена $30,000.', assetType: 'STOCK' });
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 50000, description: 'Биткоин растет! Цена $50,000.', assetType: 'STOCK' });
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 100000, description: 'To The Moon! Цена $100,000.', assetType: 'STOCK' });
 
     // ID: 6612 - NEW INCOME STOCKS
     // AT&T (T) - Preferred, Cost $5000, Cashflow $50, Max 1000
