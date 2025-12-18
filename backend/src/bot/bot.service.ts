@@ -11,7 +11,7 @@ if (!token) {
 export class BotService {
     bot: TelegramBot | null = null;
     adminStates: Map<number, { state: string, targetUser?: any }> = new Map();
-    masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_TIME' | 'WAITING_MAX' | 'WAITING_PROMO' | 'WAITING_ANNOUNCEMENT_TEXT' | 'WAITING_EDIT_TIME' | 'WAITING_EDIT_MAX', gameData?: any, gameId?: string }> = new Map();
+    masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_TIME' | 'WAITING_MAX' | 'WAITING_PROMO' | 'WAITING_ANNOUNCEMENT_TEXT' | 'WAITING_EDIT_TIME' | 'WAITING_EDIT_MAX' | 'WAITING_EDIT_PROMO' | 'WAITING_ADD_PLAYER', gameData?: any, gameId?: string }> = new Map();
     transferStates: Map<number, { state: 'WAITING_USER' | 'WAITING_AMOUNT', targetUser?: any }> = new Map();
     participantStates: Map<number, { state: 'WAITING_POST_LINK', gameId: string }> = new Map();
 
@@ -425,6 +425,69 @@ export class BotService {
                         this.bot?.sendMessage(chatId, "Введите число > 1.");
                     }
                     return;
+                } else if (masterState.state === 'WAITING_EDIT_PROMO') {
+                    const gameId = masterState.gameId;
+                    const promo = Number(text);
+                    if (!isNaN(promo) && promo >= 0 && gameId) {
+                        const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                        const game = await ScheduledGameModel.findById(gameId);
+                        if (game) {
+                            game.promoSpots = promo;
+                            await game.save();
+                            this.bot?.sendMessage(chatId, `✅ Количество промо-мест изменено на ${promo}.`);
+                        }
+                        this.masterStates.delete(chatId);
+                    } else {
+                        this.bot?.sendMessage(chatId, "Введите число >= 0.");
+                    }
+                    return;
+                } else if (masterState.state === 'WAITING_ADD_PLAYER') {
+                    const gameId = masterState.gameId;
+                    const input = text.trim().replace('@', '');
+
+                    if (gameId) {
+                        const { UserModel } = await import('../models/user.model');
+                        const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+
+                        let targetUser = await UserModel.findOne({ username: input });
+                        if (!targetUser && !isNaN(Number(input))) {
+                            targetUser = await UserModel.findOne({ telegram_id: Number(input) });
+                        }
+
+                        if (!targetUser) {
+                            this.bot?.sendMessage(chatId, "❌ Пользователь не найден. Проверьте Username/ID.");
+                            return;
+                        }
+
+                        const game = await ScheduledGameModel.findById(gameId);
+                        if (!game) {
+                            this.bot?.sendMessage(chatId, "Игра не найдена.");
+                            return;
+                        }
+
+                        // Check if already in
+                        if (game.participants.some((p: any) => p.userId.toString() === targetUser._id.toString())) {
+                            this.bot?.sendMessage(chatId, "⚠️ Этот пользователь уже в игре.");
+                            return;
+                        }
+
+                        // Add
+                        game.participants.push({
+                            userId: targetUser._id,
+                            firstName: targetUser.first_name,
+                            username: targetUser.username,
+                            type: 'PAID', // Manual add = VIP/Paid usually
+                            joinedAt: new Date(),
+                            isVerified: true // Master added manually
+                        });
+                        await game.save();
+
+                        this.bot?.sendMessage(chatId, `✅ Игрок ${targetUser.first_name} (@${targetUser.username}) добавлен!`);
+                        this.bot?.sendMessage(targetUser.telegram_id, `🎉 Вы были добавлены в игру ${new Date(game.startTime).toLocaleString('ru-RU')} организатором!`);
+
+                        this.masterStates.delete(chatId);
+                    }
+                    return;
                 }
             }
 
@@ -674,6 +737,14 @@ export class BotService {
                 const gameId = data.replace('edit_max_', '');
                 this.masterStates.set(chatId, { state: 'WAITING_EDIT_MAX', gameId });
                 this.bot?.sendMessage(chatId, "👥 Введите новое кол-во мест (число):");
+            } else if (data.startsWith('edit_promo_')) {
+                const gameId = data.replace('edit_promo_', '');
+                this.masterStates.set(chatId, { state: 'WAITING_EDIT_PROMO', gameId });
+                this.bot?.sendMessage(chatId, "🎟 Введите новое кол-во промо-мест (число):");
+            } else if (data.startsWith('add_player_')) {
+                const gameId = data.replace('add_player_', '');
+                this.masterStates.set(chatId, { state: 'WAITING_ADD_PLAYER', gameId });
+                this.bot?.sendMessage(chatId, "➕ Введите **Username** (например @durov) или **Telegram ID** игрока:", { parse_mode: 'Markdown' });
             } else if (data.startsWith('view_participants_')) {
                 const gameId = data.replace('view_participants_', '');
                 await this.handleViewParticipants(chatId, gameId);
@@ -1204,7 +1275,8 @@ export class BotService {
 
             const games = await ScheduledGameModel.find({
                 hostId: user._id,
-                status: 'SCHEDULED'
+                status: 'SCHEDULED',
+                startTime: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
             }).sort({ startTime: 1 });
 
             if (games.length === 0) {
@@ -1256,8 +1328,15 @@ export class BotService {
                 parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: '✏️ Ред. Время', callback_data: `edit_time_${game._id}` }, { text: '✏️ Ред. Места', callback_data: `edit_max_${game._id}` }],
-                        [{ text: '👥 Участники', callback_data: `view_participants_${game._id}` }],
+                        [
+                            { text: '✏️ Время', callback_data: `edit_time_${game._id}` },
+                            { text: '👥 Места', callback_data: `edit_max_${game._id}` },
+                            { text: '🎟 Промо', callback_data: `edit_promo_${game._id}` }
+                        ],
+                        [
+                            { text: '👥 Участники', callback_data: `view_participants_${game._id}` },
+                            { text: '➕ Игрок', callback_data: `add_player_${game._id}` }
+                        ],
                         [{ text: '📢 Рассылка', callback_data: `broadcast_game_${game._id}` }],
                         [{ text: '❌ Отменить игру', callback_data: `cancel_game_${game._id}` }]
                     ]
@@ -1311,7 +1390,7 @@ export class BotService {
             const user = await UserModel.findById(userId);
             if (!user) return;
 
-            this.bot?.sendMessage(chatId, `👤 Игрок: ${user.first_name} (@${user.username})`, {
+            this.bot?.sendMessage(chatId, `👤 Игрок: ${user.first_name}(@${user.username})`, {
                 reply_markup: {
                     inline_keyboard: [
                         [{ text: '✍️ Написать', url: `tg://user?id=${user.telegram_id}` }],

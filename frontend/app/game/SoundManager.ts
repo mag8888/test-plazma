@@ -55,12 +55,22 @@ class SoundManager {
         if (audio) {
             audio.volume = this.volume;
             audio.currentTime = 0; // Reset to start
-            audio.play().catch(e => {
-                // Ignore autoplay errors (usually due to no user interaction yet)
-                console.warn(`Sound '${key}' blocked:`, e);
-            });
+            const playPromise = audio.play();
+
+            if (playPromise !== undefined) {
+                playPromise.catch(e => {
+                    // Start Autoplay Policy error or format error
+                    if (e.name === 'NotSupportedError') {
+                        console.warn(`[SoundManager] Format not supported for '${key}' (${audio.src})`);
+                    } else if (e.name === 'NotAllowedError') {
+                        // Expected if no user interaction yet
+                    } else {
+                        console.warn(`[SoundManager] Play failed for '${key}':`, e);
+                    }
+                });
+            }
         } else {
-            console.warn(`Sound '${key}' not found.`);
+            // console.warn(`Sound '${key}' not found.`);
         }
     }
 

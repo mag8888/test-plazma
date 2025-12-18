@@ -92,7 +92,6 @@ export const AudioChat = ({
                         const audioCtx = new AudioContextClass();
                         audioContextRef.current = audioCtx;
 
-                        // Check if suspended
                         if (audioCtx.state === 'suspended') {
                             setNeedsInteraction(true);
                         }
@@ -142,7 +141,6 @@ export const AudioChat = ({
                 }
                 setStatus("Offline");
 
-                // Diagnostic log
                 try {
                     const devices = await navigator.mediaDevices.enumerateDevices();
                     console.log("Devices:", devices.map(d => `${d.kind}: ${d.label}`));
@@ -198,11 +196,22 @@ export const AudioChat = ({
 
         pc.onicecandidate = (event) => {
             if (event.candidate) {
+                log(`[ICE] Local Candidate generated: ${event.candidate.candidate}`);
                 socket.emit('signal', {
                     to: targetUserId,
                     signal: { type: 'candidate', candidate: event.candidate }
                 });
+            } else {
+                log(`[ICE] Local Gathering Complete`);
             }
+        };
+
+        pc.oniceconnectionstatechange = () => {
+            log(`[ICE] ICE Connection State: ${pc.iceConnectionState}`);
+        };
+
+        pc.onicegatheringstatechange = () => {
+            log(`[ICE] ICE Gathering State: ${pc.iceGatheringState}`);
         };
 
         pc.onconnectionstatechange = () => {
@@ -214,7 +223,6 @@ export const AudioChat = ({
             log(`Received Remote Stream from ${targetUserId}`);
             const remoteStream = event.streams[0];
 
-            // Playback
             const audio = new Audio();
             audio.srcObject = remoteStream;
             audio.autoplay = true;
@@ -222,7 +230,6 @@ export const AudioChat = ({
             audio.volume = 1.0;
             audio.play().catch(e => console.error("Audio Play Error:", e));
 
-            // Visualization
             if (audioContextRef.current) {
                 try {
                     const source = audioContextRef.current.createMediaStreamSource(remoteStream);
@@ -260,7 +267,6 @@ export const AudioChat = ({
 
             try {
                 if (signal.type === 'offer') {
-                    // Always set remote first if stable or rollback needed
                     if (pc.signalingState !== 'stable') {
                         await Promise.all([
                             pc.setLocalDescription({ type: "rollback" }),
@@ -268,85 +274,171 @@ export const AudioChat = ({
                         ]);
                     } else {
                         await pc.setRemoteDescription(new RTCSessionDescription(signal));
+                    }
 
-                        {
-                            needsInteraction && (
-                                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80">
-                                    <button
-                                        onClick={handleEnableAudio}
-                                        className="bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-full font-bold shadow-xl animate-pulse"
-                                    >
-                                        📞 CLICK TO JOIN AUDIO
-                                    </button>
-                                </div>
-                            )
-                        }
+                    await processCandidateQueue(from, pc);
 
-                        {/* Main Big Button for Mute/Unmute if Mobile-like view or just overlay */ }
-                        <div className="absolute top-2 right-2 z-20">
-                            <button
-                                onClick={toggleMute}
-                                className={`p-3 rounded-full shadow-lg border border-white/10 transition-transform active:scale-95 ${isMuted ? 'bg-red-500 text-white' : 'bg-slate-700/50 text-white'}`}
-                            >
-                                {isMuted ? '🔇' : '🎤'}
-                            </button>
-                        </div>
+                    const answer = await pc.createAnswer();
+                    await pc.setLocalDescription(answer);
+                    socket.emit('signal', {
+                        to: from,
+                        signal: answer
+                    });
+                } else if (signal.type === 'answer') {
+                    if (pc.signalingState !== 'have-local-offer') {
+                        console.warn(`[AudioChat] Received Answer in invalid state (${pc.signalingState}) from ${from}. Ignoring.`);
+                        return;
+                    }
+                    await pc.setRemoteDescription(new RTCSessionDescription(signal));
+                    await processCandidateQueue(from, pc);
+                } else if (signal.candidate) {
+                    log(`[ICE] Received Remote Candidate from ${from}: ${JSON.stringify(signal.candidate)}`);
+                    if (pc.remoteDescription && pc.remoteDescription.type) {
+                        await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
+                        log(`[ICE] Successfully added Remote Candidate from ${from}`);
+                    } else {
+                        log(`Queueing candidate for ${from} (RemoteDesc not ready)`);
+                        const q = candidatesQueueRef.current.get(from) || [];
+                        q.push(signal.candidate);
+                        candidatesQueueRef.current.set(from, q);
+                    }
+                }
+            } catch (e) {
+                console.error(`Signal Error from ${from}:`, e);
+            }
+        };
 
-                        {/* Visualization Grid */ }
-                        <div className="flex-1 grid grid-cols-3 sm:grid-cols-4 place-items-center p-4 gap-4">
+        socket.on('signal', handleSignal);
+        return () => { socket.off('signal', handleSignal); };
+    }, []);
 
-                            {/* ME */}
-                            <div className="flex flex-col items-center gap-2">
-                                <div className="relative">
-                                    <div
-                                        className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-2xl shadow-lg transition-transform duration-75"
-                                        style={{ transform: `scale(${getScale(myVolume)})`, boxShadow: `0 0 ${myVolume / 2}px rgba(59,130,246,0.5)` }}
-                                    >
-                                        🦊
-                                    </div>
-                                    {isMuted && <div className="absolute -bottom-1 -right-1 bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full border border-slate-900 text-white font-bold">OFF</div>}
-                                </div>
-                                <span className="text-[10px] font-bold text-slate-300">Вы</span>
-                            </div>
+    // --- D. CONNECTION LOGIC (Mesh) ---
+    useEffect(() => {
+        if (!roomId || !players || !currentUserId || !localStream) return;
 
-                            {/* OTHERS */}
-                            {players?.filter(p => p.id !== currentUserId).map(p => {
-                                const vol = remoteVolumes[p.id] || 0;
-                                const connState = connectionStates[p.id] || 'new';
+        const activeIds = new Set(players.map(p => p.id));
+        peersRef.current.forEach((_, id) => {
+            if (!activeIds.has(id)) {
+                log(`Removing peer ${id}`);
+                peersRef.current.get(id)?.close();
+                peersRef.current.delete(id);
+                remoteAnalysersRef.current.delete(id);
+                candidatesQueueRef.current.delete(id);
+            }
+        });
 
-                                let statusColor = 'bg-slate-500';
-                                if (connState === 'connected') statusColor = 'bg-green-500';
-                                else if (connState === 'connecting' || connState === 'checking') statusColor = 'bg-yellow-500';
-                                else if (connState === 'failed' || connState === 'disconnected') statusColor = 'bg-red-500';
+        players.forEach(p => {
+            if (p.id === currentUserId) return;
 
-                                return (
-                                    <div key={p.id} className="flex flex-col items-center gap-2">
-                                        <div className="relative">
-                                            <div
-                                                className="w-14 h-14 rounded-full bg-slate-700 flex items-center justify-center text-2xl shadow-lg transition-transform duration-75 border border-slate-600 relative"
-                                                style={{ transform: `scale(${getScale(vol)})`, boxShadow: vol > 10 ? `0 0 ${vol / 2}px rgba(34,197,94,0.5)` : 'none', borderColor: vol > 10 ? '#22c55e' : '#475569' }}
-                                            >
-                                                {p.token || '👤'}
+            if (!peersRef.current.has(p.id)) {
+                if (currentUserId < p.id) {
+                    const pc = createPeer(p.id, true);
+                    if (pc) {
+                        pc.onnegotiationneeded = async () => {
+                            try {
+                                const offer = await pc.createOffer();
+                                await pc.setLocalDescription(offer);
+                                socket.emit('signal', {
+                                    to: p.id,
+                                    signal: offer
+                                });
+                            } catch (e) { console.error("Negotiation Error", e); }
+                        };
+                    }
+                }
+            }
+        });
+    }, [roomId, players, currentUserId, localStream]);
 
-                                                {/* Connection Status Dot */}
-                                                <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-900 ${statusColor} shadow-sm z-10`} title={`Status: ${connState}`} />
-                                            </div>
-                                        </div>
-                                        <span className="text-[10px] font-bold text-slate-400 truncate max-w-[60px]">{p.name}</span>
-                                    </div>
-                                );
-                            })}
-                        </div>
-
-                        {/* Error Toast */ }
-                        {
-                            error && (
-                                <div className="absolute bottom-0 left-0 w-full bg-red-600 text-white text-[10px] p-1 text-center font-bold flex items-center justify-between px-2">
-                                    <span className="flex-1">{error}</span>
-                                    <button onClick={() => setError(null)} className="text-white hover:text-red-200 px-1 font-bold">✕</button>
-                                </div>
-                            )
-                        }
-            </div >
-        );
+    // --- E. MUTE TOGGLE ---
+    const toggleMute = () => {
+        if (localStreamRef.current) {
+            const newMuted = !isMuted;
+            localStreamRef.current.getAudioTracks().forEach(t => t.enabled = !newMuted);
+            setIsMuted(newMuted);
+        }
     };
+
+    // --- RENDER ---
+    const getScale = (vol: number) => 1 + (vol / 255) * 0.5;
+
+    return (
+        <div className={`bg-slate-900/90 backdrop-blur-md border-t border-slate-700 overflow-hidden flex flex-col shadow-2xl relative ${className}`}>
+
+            {needsInteraction && (
+                <div className="absolute inset-0 z-50 flex items-center justify-center bg-black/80">
+                    <button
+                        onClick={handleEnableAudio}
+                        className="bg-green-600 hover:bg-green-500 text-white px-6 py-3 rounded-full font-bold shadow-xl animate-pulse"
+                    >
+                        📞 CLICK TO JOIN AUDIO
+                    </button>
+                </div>
+            )}
+
+            {/* Main Big Button for Mute/Unmute */}
+            <div className="absolute top-2 right-2 z-20">
+                <button
+                    onClick={toggleMute}
+                    className={`p-3 rounded-full shadow-lg border border-white/10 transition-transform active:scale-95 ${isMuted ? 'bg-red-500 text-white' : 'bg-slate-700/50 text-white'}`}
+                >
+                    {isMuted ? '🔇' : '🎤'}
+                </button>
+            </div>
+
+            {/* Visualization Grid */}
+            <div className="flex-1 grid grid-cols-3 sm:grid-cols-4 place-items-center p-4 gap-4">
+
+                {/* ME */}
+                <div className="flex flex-col items-center gap-2">
+                    <div className="relative">
+                        <div
+                            className="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-2xl shadow-lg transition-transform duration-75"
+                            style={{ transform: `scale(${getScale(myVolume)})`, boxShadow: `0 0 ${myVolume / 2}px rgba(59,130,246,0.5)` }}
+                        >
+                            🦊
+                        </div>
+                        {isMuted && <div className="absolute -bottom-1 -right-1 bg-red-500 text-[10px] px-1.5 py-0.5 rounded-full border border-slate-900 text-white font-bold">OFF</div>}
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-300">Вы</span>
+                </div>
+
+                {/* OTHERS */}
+                {players?.filter(p => p.id !== currentUserId).map(p => {
+                    const vol = remoteVolumes[p.id] || 0;
+                    const connState = connectionStates[p.id] || 'new';
+
+                    let statusColor = 'bg-slate-500';
+                    if (connState === 'connected') statusColor = 'bg-green-500';
+                    else if (connState === 'connecting' || connState === 'checking') statusColor = 'bg-yellow-500';
+                    else if (connState === 'failed' || connState === 'disconnected') statusColor = 'bg-red-500';
+
+                    return (
+                        <div key={p.id} className="flex flex-col items-center gap-2">
+                            <div className="relative">
+                                <div
+                                    className="w-14 h-14 rounded-full bg-slate-700 flex items-center justify-center text-2xl shadow-lg transition-transform duration-75 border border-slate-600 relative"
+                                    style={{ transform: `scale(${getScale(vol)})`, boxShadow: vol > 10 ? `0 0 ${vol / 2}px rgba(34,197,94,0.5)` : 'none', borderColor: vol > 10 ? '#22c55e' : '#475569' }}
+                                >
+                                    {p.token || '👤'}
+
+                                    {/* Connection Status Dot */}
+                                    <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-900 ${statusColor} shadow-sm z-10`} title={`Status: ${connState}`} />
+                                </div>
+                            </div>
+                            <span className="text-[10px] font-bold text-slate-400 truncate max-w-[60px]">{p.name}</span>
+                        </div>
+                    );
+                })}
+            </div>
+
+            {/* Error Toast */}
+            {error && (
+                <div className="absolute bottom-0 left-0 w-full bg-red-600 text-white text-[10px] p-1 text-center font-bold flex items-center justify-between px-2">
+                    <span className="flex-1">{error}</span>
+                    <button onClick={() => setError(null)} className="text-white hover:text-red-200 px-1 font-bold">✕</button>
+                </div>
+            )}
+        </div>
+    );
+};
