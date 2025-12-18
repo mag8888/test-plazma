@@ -325,6 +325,24 @@ export class GameEngine {
         // Interpret: When entering, you get the first Cashflow Day payment immediately.
         player.cash += player.cashflow;
 
+        // Return Rat Race Assets to Deck (Rule: "When moving to Big Track, all cards return to discard")
+        for (const asset of player.assets) {
+            // Use stored sourceType or fallback heuristic
+            const discardType = (asset as any).sourceType || ((asset.cost || 0) > 5000 ? 'DEAL_BIG' : 'DEAL_SMALL');
+
+            this.cardManager.discard({
+                id: `returned_ft_${Date.now()}_${Math.random()}`,
+                type: discardType,
+                title: asset.title,
+                cost: asset.cost,
+                cashflow: asset.cashflow
+            } as any);
+        }
+
+        // Clear Lists
+        player.assets = [];
+        player.liabilities = [];
+
         this.state.log.push(`🚀 ${player.name} ENTERED FAST TRACK! (Goal: +$50k Passive)`);
         this.state.log.push(`💰 Start Bonus: +$${player.cashflow}`);
 
@@ -1084,8 +1102,10 @@ export class GameEngine {
     }
 
     dismissCard() {
-        // Just clear the card and return to ACTION phase
-        // This allows the player to manually click End Turn later
+        // Discard the card before clearing it
+        if (this.state.currentCard) {
+            this.cardManager.discard(this.state.currentCard);
+        }
         this.state.currentCard = undefined;
         this.state.phase = 'ACTION';
     }
@@ -1135,21 +1155,8 @@ export class GameEngine {
         }
 
         // Return card to deck logic
-        // We need to reconstruct a Card object compatible with CardManager.discard
-        // Heuristic: Cost > 5000 -> Big Deal, else Small Deal?
-        // Actually Small Deals usually max at $5k or so?
-        // Checking CardManager: Small Deals generated have 'DEAL_SMALL' type.
-        // Big Deals have 'DEAL_BIG'.
-        // If cost > 5000 it is LIKELY Big Deal (Small deals usually < $5000 cost, though some exceptions).
-        // Safest: Check assetType? Stocks are Small Deals usually. Real Estate can be both.
-        // Let's assume Cost threshold $6000? 
-        // Small Deals generator has some stocks @ $40 but those are exceptions.
-        // Real Estate in Small Deals:
-        // "Room in suburbs" Cost $3000.
-        // "Flipping Studio" Cost $5000.
-        // Big Deal "House" Cost $7000+.
-        // So Cost >= 6000 is Big Deal. Cost <= 5000 is Small Deal.
-        const inferredType = (asset.cost || 0) > 5000 ? 'DEAL_BIG' : 'DEAL_SMALL';
+        // Use stored sourceType if available, else fallback to heuristic
+        const inferredType = (asset as any).sourceType || ((asset.cost || 0) > 5000 ? 'DEAL_BIG' : 'DEAL_SMALL');
 
         const returnedCard: any = {
             id: `returned_${Date.now()}`, // Temporary ID
@@ -1158,7 +1165,6 @@ export class GameEngine {
             description: 'Returned Asset', // Less important
             cost: asset.cost,
             cashflow: asset.cashflow,
-            // Add other fields if needed for full compliance, but discard mainly checks 'type'
         };
 
         this.cardManager.discard(returnedCard);
@@ -1348,6 +1354,12 @@ export class GameEngine {
             // Line 1123 log.
 
             this.state.log.push(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
+
+            // Discard the paid expense card
+            if (this.state.currentCard) {
+                this.cardManager.discard(this.state.currentCard);
+            }
+
             this.state.currentCard = undefined;
             this.endTurn();
             return;
@@ -1361,7 +1373,8 @@ export class GameEngine {
             symbol: card.symbol,
             type: card.assetType || (card.symbol ? 'STOCK' : 'REAL_ESTATE'), // Use explicit type or fallback
             quantity: 1,
-            businessType: card.businessType // Store business type
+            businessType: card.businessType, // Store business type
+            sourceType: card.type // Store original card type (DEAL_SMALL, DEAL_BIG) for Discard Return logic
         });
 
         // Update Stats

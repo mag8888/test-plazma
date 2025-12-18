@@ -613,16 +613,12 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                             <div className="space-y-2">
                                 {state.players.map((p: any) => (
                                     <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${p.id === currentPlayer.id ? 'bg-slate-800/80 border-blue-500/50 shadow-lg shadow-blue-900/10' : 'bg-slate-900/30 border-slate-800/50'} `}>
-                                        <div className={`text-lg w-10 h-10 flex items-center justify-center rounded-xl border shadow-inner text-white font-bold bg-gradient-to-br overflow-hidden relative ${getAvatarColor(p.id)} border-white/10`}>
+                                        <div className={`text-lg w-10 h-10 flex items-center justify-center rounded-full border-2 border-amber-500/20 shadow-[0_0_15px_rgba(251,191,36,0.1)] text-white font-bold bg-gradient-to-br overflow-hidden relative ${getAvatarColor(p.id)}`}>
                                             {p.photo_url ? (
                                                 <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
                                             ) : (
                                                 getInitials(p.name)
                                             )}
-                                            {/* Token Badge */}
-                                            <div className="absolute -bottom-1 -right-1 z-20 bg-slate-800 rounded-full w-4 h-4 flex items-center justify-center text-[10px] border border-white/20 shadow-md">
-                                                {p.token || '👤'}
-                                            </div>
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-center mb-1">
