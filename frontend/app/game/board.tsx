@@ -834,7 +834,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
             {/* MAIN GRID */}
             {/* MAIN LAYOUT CONTAINER - FLEXBOX for Aspect Ratio Control */}
-            <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-[100dvh] lg:h-screen lg:max-h-screen overflow-hidden items-center justify-center">
+            <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-full overflow-hidden items-center justify-center">
 
                 {/* MOBILE VIDEO CALL (MOVED TO TOP) */}
                 <div className="lg:hidden w-full px-0 py-0 flex-1 z-0 min-h-0 order-first relative">
