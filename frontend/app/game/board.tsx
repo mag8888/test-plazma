@@ -1424,7 +1424,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                             max="1"
                                             step="0.05"
                                             value={volume}
-                                            onChange={handleVolumeChange}
+                                            onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
                                             className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
                                         />
                                     </div>

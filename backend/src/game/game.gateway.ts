@@ -323,6 +323,22 @@ export class GameGateway {
             socket.on('roll_dice', ({ roomId, diceCount }) => {
                 const game = this.games.get(roomId);
                 if (game) {
+                    // Check for BABY_ROLL phase
+                    if (game.getState().phase === 'BABY_ROLL') {
+                        const result: any = game.resolveBabyRoll();
+                        const state = game.getState();
+
+                        // Emit result
+                        this.io.to(roomId).emit('dice_rolled', {
+                            roll: result.total || result,
+                            diceValues: result.values || [result],
+                            state,
+                            message: result.total <= 4 ? "Baby Born! +$5000" : "No Baby."
+                        });
+                        saveState(roomId, game);
+                        return;
+                    }
+
                     const result = game.rollDice(diceCount);
                     // result is { total: number, values: number[] } or just number (0) if failed
                     // To be safe, check type or assume object if not 0
