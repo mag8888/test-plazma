@@ -223,7 +223,13 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
 
                         if (isFT) {
                             // Fast Track (Grid) - Needs to be relative to WHOLE BOARD (inset-0)
-                            const ftIndex = posIndex >= 24 ? posIndex - 24 : posIndex;
+                            // BUG FIX: engine.ts sends Local Index (0-47) for Fast Track position.
+                            // Previously logic assumed Global Index (24-71) and subtracted 24.
+                            // If we receive local index < 24, subtracting 24 made it negative? No, logic was `posIndex >= 24 ? posIndex - 24 : posIndex`.
+                            // If we receive Local 24 (Global 48), logic was `24 - 24 = 0`. This caused the "Fly to Start" bug.
+                            // Correction: Use posIndex directly as it is mapped 0-47 locally.
+                            const ftIndex = posIndex;
+
                             let r = 0, c = 0;
                             if (ftIndex <= 12) { r = 13; c = 13 - ftIndex; }
                             else if (ftIndex <= 23) { r = 13 - (ftIndex - 12); c = 1; }
@@ -262,12 +268,12 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                         return (
                             <div
                                 key={p.id}
-                                className={`absolute w-10 h-10 z-50 flex items-center justify-center transition-all duration-300 ease-in-out`}
+                                className={`absolute w-12 h-12 z-50 flex items-center justify-center transition-all duration-300 ease-in-out`}
                                 style={style}
                             >
                                 <div className={`
-                                    w-[2.5cqw] h-[2.5cqw] rounded-full bg-slate-900 border-2 ${p.id === currentPlayerId ? 'border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-110' : 'border-slate-600 shadow-md'}
-                                    flex items-center justify-center text-[1.5cqw] relative
+                                    w-[3.5cqw] h-[3.5cqw] rounded-full bg-slate-900 border-2 ${p.id === currentPlayerId ? 'border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-110' : 'border-slate-600 shadow-md'}
+                                    flex items-center justify-center text-[2.2cqw] relative
                                 `}>
                                     {p.token}
                                     <div className="absolute -top-[1.5cqw] bg-slate-900/80 text-white text-[0.6cqw] px-[0.5cqw] py-[0.1cqw] rounded-full whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">

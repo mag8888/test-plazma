@@ -1347,16 +1347,8 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         <div className="space-y-3 pb-2">
                             {state.players.map((p: any) => (
                                 <div key={p.id} className={`flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300 group ${p.id === currentPlayer.id ? 'bg-slate-800/90 border-blue-500/50 shadow-[0_4px_20px_rgba(59,130,246,0.15)] scale-[1.02]' : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60'} `}>
-                                    <div className={`text-lg w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl border shadow-inner text-white font-bold bg-gradient-to-br overflow-hidden relative ${getAvatarColor(p.id)} border-white/10`}>
-                                        {p.photo_url ? (
-                                            <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            getInitials(p.name)
-                                        )}
-                                        {/* Token Badge */}
-                                        <div className="absolute -bottom-1 -right-1 z-20 bg-slate-800 rounded-full w-4 h-4 flex items-center justify-center text-[10px] border border-white/20 shadow-md">
-                                            {p.token || '👤'}
-                                        </div>
+                                    <div className={`text-2xl w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl border shadow-inner text-white font-bold bg-gradient-to-br overflow-hidden relative ${getAvatarColor(p.id)} border-white/10`}>
+                                        {p.token || '👤'}
                                     </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-bold text-slate-200 truncate flex items-center gap-2">

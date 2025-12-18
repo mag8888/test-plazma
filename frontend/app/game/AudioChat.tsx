@@ -439,23 +439,19 @@ export const AudioChat = ({
                 <div className="flex flex-col items-center gap-2">
                     <div className="relative">
                         <div
-                            className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold shadow-lg transition-transform duration-75 text-white overflow-hidden border-2 border-white/20 bg-gradient-to-br ${getAvatarColor(currentUserId || 'me')}`}
+                            className={`w-20 h-20 rounded-full flex items-center justify-center text-5xl font-bold shadow-lg transition-transform duration-75 text-white overflow-hidden border-2 border-white/20 bg-gradient-to-br ${getAvatarColor(currentUserId || 'me')}`}
                             style={{ transform: `scale(${getScale(myVolume)})`, boxShadow: `0 0 ${myVolume / 2}px rgba(255,255,255,0.3)` }}
                         >
-                            {players?.find(p => p.id === currentUserId)?.photo_url ? (
-                                <img src={players.find(p => p.id === currentUserId)?.photo_url} alt="Me" className="w-full h-full object-cover" />
-                            ) : (
-                                getInitials(currentPlayerName || 'Me')
-                            )}
+                            {players?.find(p => p.id === currentUserId)?.token || '👤'}
                         </div>
-                        {isMuted && <div className="absolute -bottom-1 -right-1 bg-red-500 text-[8px] px-1.5 py-0.5 rounded-full border border-slate-900 text-white font-bold">OFF</div>}
+                        {isMuted && <div className="absolute -bottom-1 -right-1 bg-red-500 text-[10px] px-2 py-0.5 rounded-full border border-slate-900 text-white font-bold">OFF</div>}
 
                         {/* Token Badge */}
-                        <div className="absolute -bottom-1 -right-1 z-20 bg-slate-800 rounded-full w-5 h-5 flex items-center justify-center text-[10px] border border-white/20 shadow-md">
+                        <div className="absolute -bottom-2 -right-2 z-20 bg-slate-800 rounded-full w-7 h-7 flex items-center justify-center text-sm border border-white/20 shadow-md">
                             {players?.find(p => p.id === currentUserId)?.token || '👤'}
                         </div>
                     </div>
-                    <span className="text-[10px] font-bold text-slate-300">Вы</span>
+                    <span className="text-xs font-bold text-slate-300">Вы</span>
                 </div>
 
                 {/* OTHERS */}
@@ -472,23 +468,19 @@ export const AudioChat = ({
                         <div key={p.id} className="flex flex-col items-center gap-2">
                             <div className="relative">
                                 <div
-                                    className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold shadow-lg transition-transform duration-75 text-white overflow-hidden border-2 border-white/20 bg-gradient-to-br ${getAvatarColor(p.id)} relative`}
+                                    className={`w-20 h-20 rounded-full flex items-center justify-center text-5xl font-bold shadow-lg transition-transform duration-75 text-white overflow-hidden border-2 border-white/20 bg-gradient-to-br ${getAvatarColor(p.id)} relative`}
                                     style={{ transform: `scale(${getScale(vol)})`, boxShadow: vol > 10 ? `0 0 ${vol / 2}px rgba(34,197,94,0.5)` : 'none', borderColor: vol > 10 ? '#22c55e' : 'rgba(255,255,255,0.2)' }}
                                 >
-                                    {p.photo_url ? (
-                                        <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        getInitials(p.name)
-                                    )}
+                                    {p.token || '👤'}
 
                                     {/* Connection Status Dot */}
-                                    <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-900 ${statusColor} shadow-sm z-10`} title={`Status: ${connState}`} />
+                                    <div className={`absolute top-0 right-0 w-5 h-5 rounded-full border-2 border-slate-900 ${statusColor} shadow-sm z-10`} title={`Status: ${connState}`} />
                                 </div>
-                                <div className="absolute -bottom-1 -right-1 z-20 bg-slate-800 rounded-full w-5 h-5 flex items-center justify-center text-[10px] border border-white/20 shadow-md">
+                                <div className="absolute -bottom-2 -right-2 z-20 bg-slate-800 rounded-full w-7 h-7 flex items-center justify-center text-sm border border-white/20 shadow-md">
                                     {p.token || '👤'}
                                 </div>
                             </div>
-                            <span className="text-[10px] font-bold text-slate-400 truncate max-w-[60px]">{p.name}</span>
+                            <span className="text-xs font-bold text-slate-400 truncate max-w-[80px]">{p.name}</span>
                         </div>
                     );
                 })}

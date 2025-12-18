@@ -58,7 +58,7 @@ export default function EarnPage() {
 
                     <div>
                         <h2 className="text-2xl font-bold mb-1">Пригласи друга</h2>
-                        <div className="text-indigo-200 text-sm font-medium">Получай бонусы от их оплат навсегда!</div>
+                        <div className="text-indigo-200 text-sm font-medium">Получай 50% бонус от их оплат навсегда!</div>
                     </div>
 
                     <div className="pt-2">
