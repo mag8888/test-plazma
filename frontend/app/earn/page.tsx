@@ -63,7 +63,10 @@ export default function EarnPage() {
 
                     <div className="pt-2">
                         <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
-                            <span>Цель</span>
+                            <div className="flex items-center gap-1">
+                                <Users size={14} className="text-slate-500" />
+                                <span>Цель</span>
+                            </div>
                             <span className="text-white">{GOAL.toLocaleString()}</span>
                         </div>
                         <div className="h-4 bg-slate-800 rounded-full overflow-hidden border border-slate-700">
@@ -122,8 +125,10 @@ export default function EarnPage() {
                     onClick={handleCopy}
                     className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center cursor-pointer active:bg-slate-700 transition group hover:border-blue-500/50"
                 >
-                    <span className="text-blue-400 font-mono truncate mr-2 opacity-80 group-hover:opacity-100 transition-opacity">{referralLink}</span>
-                    <Copy size={20} className="text-slate-500 group-hover:text-blue-400 transition-colors" />
+                    <span className="text-blue-400 font-mono text-sm break-all mr-2 opacity-80 group-hover:opacity-100 transition-opacity leading-tight">
+                        {referralLink}
+                    </span>
+                    <Copy size={20} className="text-slate-500 group-hover:text-blue-400 transition-colors shrink-0" />
                 </div>
             </div>
 

@@ -41,7 +41,8 @@ export default function SchedulePage() {
                             price: g.price,
                             hostId: g.hostId?._id || g.hostId,
                             rawIso: g.startTime,
-                            isJoined: g.participants?.some((p: any) => (p.userId?._id || p.userId) === user?.id)
+                            isJoined: g.participants?.some((p: any) => (p.userId?._id || p.userId) === user?.id),
+                            rawParticipants: g.participants // Pass full list for Modal
                         };
                     });
                     setGames(formatted);
@@ -57,6 +58,7 @@ export default function SchedulePage() {
     // Edit Logic
     const [editingGame, setEditingGame] = useState<any>(null);
     const [joiningGame, setJoiningGame] = useState<any>(null);
+    const [showingParticipants, setShowingParticipants] = useState<any>(null);
 
     const handleCancel = async (gameId: string) => {
         if (!confirm("Вы уверены, что хотите отменить запись?")) return;
@@ -100,9 +102,20 @@ export default function SchedulePage() {
                 />
             )}
 
+            {showingParticipants && (
+                <ParticipantsModal
+                    game={showingParticipants}
+                    onClose={() => setShowingParticipants(null)}
+                />
+            )}
+
             <div className="space-y-3">
                 {games.map(game => (
-                    <div key={game.id} className="bg-slate-800 rounded-xl p-4 border border-slate-700 relative overflow-hidden">
+                    <div
+                        key={game.id}
+                        onClick={() => setShowingParticipants(game)}
+                        className="bg-slate-800 rounded-xl p-4 border border-slate-700 relative overflow-hidden active:bg-slate-700 transition-colors cursor-pointer"
+                    >
                         <div className="flex justify-between items-start mb-3">
                             <div>
                                 <div className="flex flex-col">
@@ -128,37 +141,42 @@ export default function SchedulePage() {
                             <span className="flex items-center gap-1"><Users size={14} /> {game.players}/{game.max}</span>
                         </div>
 
-                        {game.hostId === user?.id ? (
-                            <button
-                                onClick={() => setEditingGame(game)}
-                                className="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 border border-slate-600"
-                            >
-                                ⚙️ Редактировать
-                            </button>
-                        ) : game.isJoined ? (
-                            <button
-                                onClick={() => handleCancel(game.id)}
-                                className="w-full bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-900/50 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95"
-                            >
-                                <X size={18} /> Отменить запись
-                            </button>
-                        ) : (
-                            <button
-                                onClick={() => setJoiningGame(game)}
-                                className={clsx(
-                                    "w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95",
-                                    game.players >= game.max ? "bg-slate-700 text-slate-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-500"
-                                )}
-                                disabled={game.players >= game.max}
-                            >
-                                {game.players >= game.max ? "Мест нет" : <>Записаться <ArrowRight size={18} /></>}
-                            </button>
-                        )}
+                        <div onClick={(e) => e.stopPropagation()}>
+                            {/* Stop Propagation to prevent opening modal when clicking action buttons */}
+                            {game.hostId === user?.id ? (
+                                <button
+                                    onClick={() => setEditingGame(game)}
+                                    className="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 border border-slate-600"
+                                >
+                                    ⚙️ Редактировать
+                                </button>
+                            ) : game.isJoined ? (
+                                <button
+                                    onClick={() => handleCancel(game.id)}
+                                    className="w-full bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-900/50 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95"
+                                >
+                                    <X size={18} /> Отменить запись
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={() => setJoiningGame(game)}
+                                    className={clsx(
+                                        "w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95",
+                                        game.players >= game.max ? "bg-slate-700 text-slate-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-500"
+                                    )}
+                                    disabled={game.players >= game.max}
+                                >
+                                    {game.players >= game.max ? "Мест нет" : <>Записаться <ArrowRight size={18} /></>}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 ))}
             </div>
         </div>
     );
 }
+
+import ParticipantsModal from './ParticipantsModal';
 
 

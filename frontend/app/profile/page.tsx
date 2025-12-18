@@ -5,11 +5,34 @@ import { User, Shield, TrendingUp, DollarSign } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 export default function ProfilePage() {
-    const { user } = useTelegram();
+    const { webApp, user } = useTelegram();
+    const [transactions, setTransactions] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
     // Default values if user is loading or null
     const balanceRed = user?.balanceRed || 0;
     const balanceGreen = user?.referralBalance || 0;
+
+    useEffect(() => {
+        const fetchHistory = async () => {
+            if (!user || !webApp) return;
+            try {
+                const res = await fetch('/api/transactions', {
+                    headers: { 'Authorization': `Bearer ${webApp.initData}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setTransactions(data);
+                }
+            } catch (e) {
+                console.error("History fetch error", e);
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchHistory();
+    }, [user]);
 
     return (
         <div className="min-h-screen bg-slate-900 text-white p-4 space-y-6 pt-6 pb-24">
@@ -52,10 +75,29 @@ export default function ProfilePage() {
             {/* History Section */}
             <div className="space-y-3">
                 <h3 className="font-bold text-lg">История операций</h3>
-                <div className="bg-slate-800/50 rounded-xl p-8 text-center text-slate-500 text-sm border border-slate-800">
-                    <div className="mb-2 text-2xl opacity-30">🧾</div>
-                    История пока пуста...
-                </div>
+
+                {transactions.length > 0 ? (
+                    <div className="space-y-2">
+                        {transactions.map((tx) => (
+                            <div key={tx._id} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 flex justify-between items-center">
+                                <div>
+                                    <div className="font-bold text-sm">{tx.description}</div>
+                                    <div className="text-xs text-slate-500">
+                                        {new Date(tx.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                                    </div>
+                                </div>
+                                <div className={`font-bold ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                    {tx.amount > 0 ? '+' : ''}{tx.amount}$
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                ) : (
+                    <div className="bg-slate-800/50 rounded-xl p-8 text-center text-slate-500 text-sm border border-slate-800">
+                        <div className="mb-2 text-2xl opacity-30">🧾</div>
+                        {loading ? 'Загрузка...' : 'История пока пуста...'}
+                    </div>
+                )}
             </div>
         </div>
     );
