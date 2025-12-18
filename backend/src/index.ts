@@ -269,7 +269,7 @@ app.post('/api/games/:id/join', async (req, res) => {
 
         if (type === 'PROMO') {
             if (freeSpots <= 0) return res.status(400).json({ error: "No promo spots" });
-            if (!repostLink) return res.status(400).json({ error: "Repost link required for PROMO" });
+            // Repost link optional now
         } else if (type === 'PAID') {
             if (paidSpots <= 0) return res.status(400).json({ error: "No paid spots" });
 
