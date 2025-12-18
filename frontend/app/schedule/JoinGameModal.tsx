@@ -16,8 +16,8 @@ export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModa
     const [step, setStep] = useState<'SELECT' | 'PROMO_LINK'>('SELECT');
     const [repostLink, setRepostLink] = useState('');
 
-    const handleJoin = async (type: 'PROMO' | 'PAID', link?: string) => {
-        if (type === 'PROMO' && !link) {
+    const handleJoin = async (type: 'PROMO' | 'PAID', link?: string, fromInputStep = false) => {
+        if (type === 'PROMO' && !link && !fromInputStep) {
             setStep('PROMO_LINK');
             return;
         }
@@ -131,7 +131,7 @@ export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModa
                                 Назад
                             </button>
                             <button
-                                onClick={() => handleJoin('PROMO', repostLink)}
+                                onClick={() => handleJoin('PROMO', repostLink, true)}
                                 disabled={loading}
                                 className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:bg-slate-700 rounded-xl font-bold text-white shadow-lg shadow-blue-500/20"
                             >
