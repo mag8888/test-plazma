@@ -47,29 +47,51 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
             const login = async () => {
                 try {
                     const initData = app.initData;
-                    if (!initData) {
-                        console.warn("No initData available (Dev mode?)");
+                    // Check for Auth Code (Direct Link)
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const authCode = urlParams.get('auth');
+
+                    if (initData) {
+                        // Priority 1: Telegram Web App Init Data
+                        const res = await fetch('/api/auth/login/telegram', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ initData })
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            setUser(data.user);
+                        } else {
+                            console.error("Telegram Auth failed");
+                            setUser(app.initDataUnsafe?.user || { id: 123456789, first_name: 'Guest (Auth Failed)', username: 'guest_fallback', balanceRed: 1000, referralBalance: 50 });
+                        }
+                    } else if (authCode) {
+                        // Priority 2: Magic Link Auth Code
+                        console.log("Attempting Magic Login with code:", authCode);
+                        const res = await fetch('/api/auth/magic-login', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code: authCode })
+                        });
+
+                        if (res.ok) {
+                            const data = await res.json();
+                            setUser(data.user);
+                            // Optional: Clear URL param
+                        } else {
+                            console.error("Magic Login failed");
+                            setUser({ id: 123456789, first_name: 'Guest (Bad Link)', username: 'guest_link', balanceRed: 1000, referralBalance: 50 });
+                        }
+                    } else {
+                        console.warn("No initData or Auth Code (Dev mode?)");
                         // Fallback for dev: usage mock
                         setUser(app.initDataUnsafe?.user || { id: 123456789, first_name: 'Dev Guest', username: 'dev_guest', balanceRed: 1000, referralBalance: 50 });
-                        setIsReady(true);
-                        return;
                     }
 
-                    const res = await fetch('/api/auth/login/telegram', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ initData })
-                    });
-
-                    if (res.ok) {
-                        const data = await res.json();
-                        setUser(data.user);
-                    } else {
-                        console.error("Auth failed");
-                        setUser(app.initDataUnsafe?.user || { id: 123456789, first_name: 'Guest (Auth Failed)', username: 'guest_fallback', balanceRed: 1000, referralBalance: 50 });
-                    }
                 } catch (e) {
                     console.error("Login failed", e);
+                    setUser({ id: 999999, first_name: 'Guest (Error)', username: 'guest_err', balanceRed: 1000, referralBalance: 50 });
                 } finally {
                     setIsReady(true);
                 }
