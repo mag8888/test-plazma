@@ -321,7 +321,12 @@ export class GameEngine {
         // So target Passive is `(oldPassive * 10) + 50000`.
         player.fastTrackStartIncome = player.passiveIncome;
 
+        // User Request: "1 старт должен быть с первой суммой"
+        // Interpret: When entering, you get the first Cashflow Day payment immediately.
+        player.cash += player.cashflow;
+
         this.state.log.push(`🚀 ${player.name} ENTERED FAST TRACK! (Goal: +$50k Passive)`);
+        this.state.log.push(`💰 Start Bonus: +$${player.cashflow}`);
 
         // Ensure Log Update
         // this.emitState(); // Handled by Gateway
