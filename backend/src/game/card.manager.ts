@@ -189,25 +189,18 @@ export class CardManager {
     private expenseDeckDiscard: Card[] = [];
 
     constructor() {
-        // Generate and Assign Global IDs
+        // Generate and Assign Global IDs sequentially (Stable IDs)
         let globalCounter = 1;
-        const assign = (cards: Card[]) => cards.forEach(c => c.displayId = globalCounter++);
+        // Helper: Assign then Shuffle
+        const prepareDeck = (deck: Card[]) => {
+            deck.forEach(c => c.displayId = globalCounter++);
+            return this.shuffle(deck);
+        };
 
-        const sm = this.shuffle(generateSmallDeals());
-        assign(sm);
-        this.smallDeals = sm;
-
-        const bd = this.shuffle(generateBigDeals());
-        assign(bd);
-        this.bigDeals = bd;
-
-        const mkt = this.shuffle(generateMarketCards());
-        assign(mkt);
-        this.marketDeck = mkt;
-
-        const exp = this.shuffle([...EXPENSE_CARDS]);
-        assign(exp);
-        this.expenseDeck = exp;
+        this.smallDeals = prepareDeck(generateSmallDeals());
+        this.bigDeals = prepareDeck(generateBigDeals());
+        this.marketDeck = prepareDeck(generateMarketCards());
+        this.expenseDeck = prepareDeck([...EXPENSE_CARDS]);
     }
 
     drawSmallDeal(): Card | undefined {

@@ -982,10 +982,10 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                             <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
                                 <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative">
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
-                                    {/* Card ID Display */}
+                                    {/* Card ID Display (Integrated Style) */}
                                     {state.currentCard.displayId && (
-                                        <div className="absolute top-4 right-5 text-red-600 font-black text-3xl opacity-90 rotate-[-5deg] pointer-events-none z-10 filter drop-shadow-md">
-                                            №{state.currentCard.displayId}
+                                        <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-md text-slate-400 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-slate-700/50 shadow-sm z-10 flex items-center gap-1">
+                                            <span className="opacity-50">#</span>{state.currentCard.displayId}
                                         </div>
                                     )}
                                     <div className="text-5xl mb-4 text-center">{state.currentCard.type === 'MARKET' ? '🏠' : '💸'}</div>
@@ -1218,12 +1218,22 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                         <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })} className="flex-1 bg-gradient-to-br from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-bold py-4 rounded-2xl text-sm shadow-xl shadow-green-900/40 relative overflow-hidden group transform hover:-translate-y-1 transition-all">
                                             <div className="relative z-10">Малая</div>
                                             <div className="text-[10px] opacity-70 relative z-10">До $5,000</div>
+                                            {(state.deckCounts?.small) && (
+                                                <div className="text-[10px] bg-black/20 text-white/90 font-mono mt-1 mx-auto w-fit px-2 py-0.5 rounded relative z-10">
+                                                    {state.deckCounts.small.remaining}/{state.deckCounts.small.total}
+                                                </div>
+                                            )}
                                             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                                         </button>
 
                                         <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })} className="flex-1 bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-bold py-4 rounded-2xl text-sm shadow-xl shadow-purple-900/40 relative overflow-hidden group transform hover:-translate-y-1 transition-all">
                                             <div className="relative z-10">Крупная</div>
                                             <div className="text-[10px] opacity-70 relative z-10">$6,000+</div>
+                                            {(state.deckCounts?.big) && (
+                                                <div className="text-[10px] bg-black/20 text-white/90 font-mono mt-1 mx-auto w-fit px-2 py-0.5 rounded relative z-10">
+                                                    {state.deckCounts.big.remaining}/{state.deckCounts.big.total}
+                                                </div>
+                                            )}
                                             <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                                         </button>
                                     </div>
