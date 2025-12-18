@@ -5,7 +5,23 @@ import { useState, useEffect } from 'react';
 
 // Image provided by user
 const SLIDES = [
-    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029880/7_Franshiza-MONEO_wgkwmn.png'
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029872/1_Igra-Moneo-Revolyuciya-v-Finansovom-Obrazovanii_xs4rhf.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029855/2_Finansovaya-gramotnost-cherez-igru_erwrlw.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029860/3_Bolshe-chem-prosto-igra_zmyqnl.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029873/4_Preimushestva-veb-versii-MONEO_eaufgq.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029853/5_Kak-rabotaet-Moneo_t5b5ko.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029855/6_Poigrajte-uzhe-sejchas_kod9ll.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029880/7_Franshiza-MONEO_wgkwmn.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029876/8_Usloviya_rg2jl7.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029878/9_Franshiza-dlya-vashej-strany_rixsxl.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029873/10_Bystraya-okupaemost-investicij_gkwzpf.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029873/11_Bolshe-chem-prosto-dohod_kfnlv4.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029866/12_Komu-podojdet-franshiza-Moneo_icpix8.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029863/13_Kak-nachat-sotrudnichestvo_omxbeu.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029873/14_Prisoedinyajtes-k-revolyucii-v-finansovom-obrazovanii_qt0vwu.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029855/15_Zarabatyvajte-Igraya-i-Obuchaya_etkwex.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029878/16_Ceny-i-Usloviya_r69eca.png',
+    'https://res.cloudinary.com/drqtmkfka/image/upload/v1766029874/17_Passivnaya-strategiya_xkdew6.png'
 ];
 
 interface PresentationModalProps {
