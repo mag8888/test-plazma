@@ -70,28 +70,28 @@ export default function PresentationModal({ onClose }: PresentationModalProps) {
                     />
                 </div>
 
-                {/* Navigation Arrows */}
+                {/* Navigation Arrows - Moved to bottom to avoid covering text */}
                 {SLIDES.length > 1 && (
                     <>
                         <button
                             onClick={prevSlide}
-                            className="absolute left-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 rounded-full text-white backdrop-blur-sm transition-all active:scale-95"
+                            className="absolute left-4 bottom-4 p-3 bg-black/50 hover:bg-black/70 rounded-full text-white backdrop-blur-sm transition-all active:scale-95 z-20"
                         >
                             <ChevronLeft size={24} />
                         </button>
                         <button
                             onClick={nextSlide}
-                            className="absolute right-4 top-1/2 -translate-y-1/2 p-3 bg-black/50 hover:bg-black/70 rounded-full text-white backdrop-blur-sm transition-all active:scale-95"
+                            className="absolute right-4 bottom-4 p-3 bg-black/50 hover:bg-black/70 rounded-full text-white backdrop-blur-sm transition-all active:scale-95 z-20"
                         >
                             <ChevronRight size={24} />
                         </button>
 
                         {/* Dots Indicator */}
-                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
+                        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex gap-2 z-10">
                             {SLIDES.map((_, idx) => (
                                 <div
                                     key={idx}
-                                    className={`w-2 h-2 rounded-full transition-all ${currentSlide === idx ? 'bg-white w-4' : 'bg-white/30'}`}
+                                    className={`w-2 h-2 rounded-full transition-all border border-black/20 ${currentSlide === idx ? 'bg-white w-4' : 'bg-white/30'}`}
                                 />
                             ))}
                         </div>
