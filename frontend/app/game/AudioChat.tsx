@@ -214,9 +214,25 @@ export const AudioChat = ({
             log(`[ICE] ICE Gathering State: ${pc.iceGatheringState}`);
         };
 
-        pc.onconnectionstatechange = () => {
+        pc.onconnectionstatechange = async () => {
             log(`Connection with ${targetUserId}: ${pc.connectionState}`);
             setConnectionStates(prev => ({ ...prev, [targetUserId]: pc.connectionState }));
+
+            if (pc.connectionState === 'failed') {
+                if (initiator) {
+                    log("⚠️ Connection failed. Attempting ICE Restart...");
+                    try {
+                        const offer = await pc.createOffer({ iceRestart: true });
+                        await pc.setLocalDescription(offer);
+                        socket.emit('signal', {
+                            to: targetUserId,
+                            signal: offer
+                        });
+                    } catch (e) {
+                        console.error("ICE Restart Error:", e);
+                    }
+                }
+            }
         };
 
         pc.ontrack = (event) => {
@@ -236,6 +252,7 @@ export const AudioChat = ({
                     const analyser = audioContextRef.current.createAnalyser();
                     analyser.fftSize = 64;
                     source.connect(analyser);
+                    analyser.connect(audioContextRef.current.destination); // Required to hear audio!
                     remoteAnalysersRef.current.set(targetUserId, analyser);
                 } catch (e) {
                     console.error("Audio Context Visualization Error:", e);
