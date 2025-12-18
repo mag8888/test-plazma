@@ -196,6 +196,15 @@ export class BotService {
                 return;
             }
 
+            // 0. GLOBAL COMMAND OVERRIDE
+            // If user clicks a Menu Button while in a "Waiting" state, we must prioritize the Menu Button
+            const GLOBAL_COMMANDS = ['💸 Заработать', '🎲 Играть', '🤝 Получить клиентов', '🌐 Сообщество', 'ℹ️ О проекте', '📋 Мои игры', '/app'];
+            if (GLOBAL_COMMANDS.includes(text)) {
+                this.adminStates.delete(chatId);
+                this.transferStates.delete(chatId);
+                this.masterStates.delete(chatId);
+            }
+
             // Admin State Handling
             const adminState = this.adminStates.get(chatId);
             if (adminState) {
