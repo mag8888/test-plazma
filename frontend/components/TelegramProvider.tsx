@@ -50,7 +50,7 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                     if (!initData) {
                         console.warn("No initData available (Dev mode?)");
                         // Fallback for dev: usage mock
-                        setUser(app.initDataUnsafe?.user || { first_name: 'Dev Guest', balanceRed: 1000, referralBalance: 50 });
+                        setUser(app.initDataUnsafe?.user || { id: 123456789, first_name: 'Dev Guest', username: 'dev_guest', balanceRed: 1000, referralBalance: 50 });
                         setIsReady(true);
                         return;
                     }
