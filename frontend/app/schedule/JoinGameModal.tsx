@@ -13,15 +13,11 @@ interface JoinGameModalProps {
 export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModalProps) {
     const { webApp, user } = useTelegram();
     const [loading, setLoading] = useState(false);
-    const [step, setStep] = useState<'SELECT' | 'PROMO_LINK'>('SELECT');
+    const [step, setStep] = useState<'SELECT' | 'SUCCESS_PROMO'>('SELECT');
     const [repostLink, setRepostLink] = useState('');
 
-    const handleJoin = async (type: 'PROMO' | 'PAID', link?: string, fromInputStep = false) => {
-        if (type === 'PROMO' && !link && !fromInputStep) {
-            setStep('PROMO_LINK');
-            return;
-        }
-
+    // Step 1: Join Game (Immediate)
+    const handleJoin = async (type: 'PROMO' | 'PAID') => {
         setLoading(true);
         try {
             const res = await fetch(`/api/games/${game.id}/join`, {
@@ -29,17 +25,21 @@ export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModa
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     initData: webApp?.initData,
-                    type: type,
-                    repostLink: link
+                    type: type
                 })
             });
             const data = await res.json();
 
             if (res.ok) {
                 webApp?.HapticFeedback.notificationOccurred('success');
-                webApp?.showAlert(`Вы успешно записаны! (${type === 'PROMO' ? 'Заявка отправлена' : 'Оплачено'})`);
-                onSuccess();
-                onClose();
+                if (type === 'PROMO') {
+                    // Go to Step 2
+                    setStep('SUCCESS_PROMO');
+                } else {
+                    webApp?.showAlert('Оплата прошла успешно! Вы записаны.');
+                    onSuccess();
+                    onClose();
+                }
             } else {
                 webApp?.HapticFeedback.notificationOccurred('error');
                 webApp?.showAlert(data.error || "Ошибка записи");
@@ -49,6 +49,34 @@ export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModa
             webApp?.showAlert("Ошибка сети");
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Step 2: Send Link (Optional)
+    const sendPromoLink = async () => {
+        if (!repostLink.trim()) {
+            onSuccess();
+            onClose();
+            return;
+        }
+
+        setLoading(true);
+        try {
+            await fetch(`/api/games/${game.id}/promo-link`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    initData: webApp?.initData,
+                    repostLink: repostLink
+                })
+            });
+            webApp?.HapticFeedback.notificationOccurred('success');
+            onSuccess();
+            onClose();
+        } catch (e) {
+            console.error(e);
+            // Even if link fails, user is already joined
+            onClose();
         }
     };
 
@@ -103,13 +131,19 @@ export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModa
                     </>
                 ) : (
                     <div className="space-y-4 animate-in slide-in-from-right duration-200">
-                        <div className="bg-blue-500/10 p-4 rounded-xl text-sm text-blue-200 border border-blue-500/20">
-                            Для бесплатного участия необходимо сделать репост анонса игры. <br />
-                            <span className="text-xs opacity-70">Вы можете прикрепить ссылку сейчас или отправить её мастеру лично.</span>
+                        <div className="bg-green-500/10 p-4 rounded-xl text-center border border-green-500/20">
+                            <div className="flex justify-center mb-2">
+                                <CheckCircle className="text-green-400" size={32} />
+                            </div>
+                            <div className="font-bold text-green-400 text-lg">Вы записаны!</div>
+                            <div className="text-xs text-green-200/70 mt-1">Мастер получил уведомление.</div>
+                        </div>
+
+                        <div className="text-sm text-slate-300">
+                            Вы можете добавить ссылку на репост сейчас, чтобы мастер быстрее одобрил заявку.
                         </div>
 
                         <div>
-                            <label className="block text-sm text-slate-400 mb-2">Ссылка на репост (необязательно)</label>
                             <div className="flex items-center gap-2 bg-slate-900 rounded-xl p-3 border border-slate-700 focus-within:border-blue-500 transition-colors">
                                 <LinkIcon size={18} className="text-slate-500" />
                                 <input
@@ -123,21 +157,13 @@ export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModa
                             </div>
                         </div>
 
-                        <div className="flex gap-3">
-                            <button
-                                onClick={() => setStep('SELECT')}
-                                className="flex-1 py-3 bg-slate-700 rounded-xl font-bold text-slate-300"
-                            >
-                                Назад
-                            </button>
-                            <button
-                                onClick={() => handleJoin('PROMO', repostLink, true)}
-                                disabled={loading}
-                                className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:bg-slate-700 rounded-xl font-bold text-white shadow-lg shadow-blue-500/20"
-                            >
-                                {repostLink.trim() ? 'Отправить' : 'Пропустить'}
-                            </button>
-                        </div>
+                        <button
+                            onClick={sendPromoLink}
+                            disabled={loading}
+                            className="w-full py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-xl font-bold text-white shadow-lg shadow-blue-500/20"
+                        >
+                            {repostLink.trim() ? 'Отправить ссылку' : 'Пропустить и закрыть'}
+                        </button>
                     </div>
                 )}
             </div>
