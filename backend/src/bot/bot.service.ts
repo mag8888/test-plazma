@@ -1,5 +1,6 @@
 import TelegramBot from 'node-telegram-bot-api';
 import dotenv from 'dotenv';
+import { CloudinaryService } from '../services/cloudinary.service';
 
 dotenv.config();
 
@@ -14,8 +15,10 @@ export class BotService {
     masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_TIME' | 'WAITING_MAX' | 'WAITING_PROMO' | 'WAITING_ANNOUNCEMENT_TEXT' | 'WAITING_EDIT_TIME' | 'WAITING_EDIT_MAX' | 'WAITING_EDIT_PROMO' | 'WAITING_ADD_PLAYER', gameData?: any, gameId?: string }> = new Map();
     transferStates: Map<number, { state: 'WAITING_USER' | 'WAITING_AMOUNT', targetUser?: any }> = new Map();
     participantStates: Map<number, { state: 'WAITING_POST_LINK', gameId: string }> = new Map();
+    cloudinaryService: CloudinaryService;
 
     constructor() {
+        this.cloudinaryService = new CloudinaryService();
         if (token) {
             this.bot = new TelegramBot(token, { polling: true });
 
@@ -917,12 +920,15 @@ export class BotService {
                 try {
                     const photos = await this.bot?.getUserProfilePhotos(telegramId, { limit: 1 });
                     if (photos && photos.total_count > 0 && photos.photos[0].length > 0) {
-                        const fileId = photos.photos[0][0].file_id; // Smallest or largest? [0] is smallest usually. Let's pick largest [photos.photos[0].length-1]
                         const largest = photos.photos[0][photos.photos[0].length - 1];
-                        photoUrl = await this.bot?.getFileLink(largest.file_id) || '';
+                        const tempUrl = await this.bot?.getFileLink(largest.file_id);
+                        if (tempUrl) {
+                            // Upload to Cloudinary for persistence
+                            photoUrl = await this.cloudinaryService.uploadImage(tempUrl, 'avatars');
+                        }
                     }
                 } catch (e) {
-                    console.error("Failed to fetch user photo:", e);
+                    console.error("Failed to fetch/upload user photo:", e);
                 }
 
                 user = new UserModel({
@@ -987,10 +993,26 @@ export class BotService {
                     const photos = await this.bot?.getUserProfilePhotos(telegramId, { limit: 1 });
                     if (photos && photos.total_count > 0) {
                         const largest = photos.photos[0][photos.photos[0].length - 1];
-                        const url = await this.bot?.getFileLink(largest.file_id);
-                        if (url && user.photo_url !== url) {
-                            user.photo_url = url;
-                            await user.save();
+                        const tempUrl = await this.bot?.getFileLink(largest.file_id);
+
+                        // Check if we need update (Generic check: if current URL is NOT cloudinary or if empty)
+                        // Or just update always?
+                        // Better: If current URL is empty OR contains 'api.telegram.org' (expired) OR just do it periodically.
+                        // Let's check if it exists.
+
+                        if (tempUrl) {
+                            // Optimization: Don't re-upload if we already have a Cloudinary URL and user didn't change photo?
+                            // Hard to know if user changed photo without comparing content.
+                            // Simple heuristic: If it's a new session, update it. Cloudinary isn't that expensive for small usage.
+                            // But to save bandwidth, maybe store file_id in DB?
+                            // For now, let's just upload if not present or if it looks like a temp URL.
+
+                            const isCloudinary = user.photo_url?.includes('cloudinary.com');
+                            if (!user.photo_url || !isCloudinary) {
+                                const secureUrl = await this.cloudinaryService.uploadImage(tempUrl, 'avatars');
+                                user.photo_url = secureUrl;
+                                await user.save();
+                            }
                         }
                     }
                 } catch (e) { }
