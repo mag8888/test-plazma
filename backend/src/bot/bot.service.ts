@@ -944,14 +944,17 @@ export class BotService {
             const authService = new AuthService();
             const user = await UserModel.findOne({ telegram_id: chatId });
 
+            const code = await authService.createAuthCode(chatId);
             const webAppUrl = 'https://moneo.up.railway.app';
-            // We use web_app button to ensure initData is passed for Auth.
-            // Auth code is legacy/external only, but here we are in TG.
+            // WebApp Button (Internal)
+            // Link (External Browser with Auth)
+            const link = `${webAppUrl}/?auth=${code}`;
 
             const isMaster = user && user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date();
 
             const keyboard = [
                 [{ text: '🚀 ЗАПУСТИТЬ', web_app: { url: webAppUrl } }],
+                [{ text: '🌐 В браузере (Ссылка)', url: link }],
                 [{ text: '📅 Расписание игр', callback_data: 'view_schedule' }]
             ];
 
@@ -959,7 +962,8 @@ export class BotService {
                 keyboard.push([{ text: '➕ Добавить игру', callback_data: 'start_add_game' }]);
             }
 
-            this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\nЗапускай игру прямо сейчас или посмотри расписание!`, {
+            this.bot?.sendMessage(chatId, `Готов попробовать? 🎲\n\n📱 Жми **ЗАПУСТИТЬ** для игры в Telegram.\n🌐 Или по ссылке в браузере:\n${link}\n\nПосмотри расписание!`, {
+                parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: keyboard
                 }

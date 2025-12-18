@@ -66,7 +66,7 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                         setUser(data.user);
                     } else {
                         console.error("Auth failed");
-                        setUser(app.initDataUnsafe?.user);
+                        setUser(app.initDataUnsafe?.user || { id: 123456789, first_name: 'Guest (Auth Failed)', username: 'guest_fallback', balanceRed: 1000, referralBalance: 50 });
                     }
                 } catch (e) {
                     console.error("Login failed", e);
