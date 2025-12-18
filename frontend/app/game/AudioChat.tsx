@@ -37,6 +37,7 @@ export const AudioChat = ({
     // Volume States
     const [myVolume, setMyVolume] = useState(0);
     const [remoteVolumes, setRemoteVolumes] = useState<Record<string, number>>({});
+    const [connectionStates, setConnectionStates] = useState<Record<string, string>>({});
 
     // 2. WebRTC Refs
     const peersRef = useRef<Map<string, RTCPeerConnection>>(new Map());
@@ -210,6 +211,7 @@ export const AudioChat = ({
 
         pc.onconnectionstatechange = () => {
             log(`Connection with ${targetUserId}: ${pc.connectionState}`);
+            setConnectionStates(prev => ({ ...prev, [targetUserId]: pc.connectionState }));
         };
 
         // Handle Remote Stream
@@ -422,14 +424,24 @@ export const AudioChat = ({
                 {/* OTHERS */}
                 {players?.filter(p => p.id !== currentUserId).map(p => {
                     const vol = remoteVolumes[p.id] || 0;
+                    const connState = connectionStates[p.id] || 'new';
+
+                    let statusColor = 'bg-slate-500';
+                    if (connState === 'connected') statusColor = 'bg-green-500';
+                    else if (connState === 'connecting' || connState === 'checking') statusColor = 'bg-yellow-500';
+                    else if (connState === 'failed' || connState === 'disconnected') statusColor = 'bg-red-500';
+
                     return (
                         <div key={p.id} className="flex flex-col items-center gap-2">
                             <div className="relative">
                                 <div
-                                    className="w-14 h-14 rounded-full bg-slate-700 flex items-center justify-center text-2xl shadow-lg transition-transform duration-75 border border-slate-600"
+                                    className="w-14 h-14 rounded-full bg-slate-700 flex items-center justify-center text-2xl shadow-lg transition-transform duration-75 border border-slate-600 relative"
                                     style={{ transform: `scale(${getScale(vol)})`, boxShadow: vol > 10 ? `0 0 ${vol / 2}px rgba(34,197,94,0.5)` : 'none', borderColor: vol > 10 ? '#22c55e' : '#475569' }}
                                 >
                                     {p.token || '👤'}
+
+                                    {/* Connection Status Dot */}
+                                    <div className={`absolute -top-1 -right-1 w-4 h-4 rounded-full border-2 border-slate-900 ${statusColor} shadow-sm z-10`} title={`Status: ${connState}`} />
                                 </div>
                             </div>
                             <span className="text-[10px] font-bold text-slate-400 truncate max-w-[60px]">{p.name}</span>
