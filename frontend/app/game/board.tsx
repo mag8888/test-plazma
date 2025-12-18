@@ -5,7 +5,9 @@ import { useRouter } from 'next/navigation';
 import { socket } from '../socket';
 import confetti from 'canvas-confetti';
 import { BoardVisualizer } from './BoardVisualizer';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { AudioChat } from './AudioChat';
+import { TextChat } from './TextChat';
 import { sfx } from './SoundManager';
 
 interface BoardProps {
@@ -112,6 +114,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
     // Sound Settings
     const [showDesktopMenu, setShowDesktopMenu] = useState(false);
+    const [activeTab, setActiveTab] = useState<'GAME' | 'CHAT' | 'MENU'>('GAME');
     const [volume, setVolume] = useState(0.5);
 
     const [isMuted, setIsMuted] = useState(false);
@@ -834,13 +837,17 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                 {/* MOBILE VIDEO CALL (MOVED TO TOP) */}
                 <div className="lg:hidden w-full px-0 py-0 flex-1 z-0 min-h-0 order-first relative">
-                    <AudioChat
+                    {/* <AudioChat
                         className="w-full h-full shadow-lg rounded-none object-cover"
                         roomId={roomId}
                         players={state.players}
                         currentUserId={me?.id}
                         currentPlayerName={me?.name}
-                    />
+                    /> */}
+                    {/* Placeholder for Video Chat */}
+                    <div className="w-full h-full bg-slate-900 border-b border-white/5 flex items-center justify-center text-slate-500 text-xs uppercase tracking-widest font-bold">
+                        Video Disabled
+                    </div>
 
                     {/* MOBILE TIMER OVERLAY */}
                     <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 flex items-center gap-2 shadow-lg z-10">
@@ -976,6 +983,12 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                             <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
                                 <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative">
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                                    {/* Card ID Display */}
+                                    {state.currentCard.displayId && (
+                                        <div className="absolute top-4 right-5 text-red-600 font-black text-3xl opacity-90 rotate-[-5deg] pointer-events-none z-10 filter drop-shadow-md">
+                                            №{state.currentCard.displayId}
+                                        </div>
+                                    )}
                                     <div className="text-5xl mb-4 text-center">{state.currentCard.type === 'MARKET' ? '🏠' : '💸'}</div>
                                     {state.currentCard.type === 'MARKET' && (
                                         <div className="text-center mb-2">
@@ -1231,177 +1244,206 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
 
                 {/* RIGHT SIDEBAR (Desktop) */}
-                <div className="hidden lg:flex flex-col flex-1 h-full border-l border-slate-800/0 p-0 relative overflow-y-auto custom-scrollbar gap-4 min-w-0">
+                <div className="hidden lg:flex flex-col flex-1 h-full border-l border-slate-800/0 p-0 relative overflow-hidden gap-4 min-w-0">
                     {/* DESKTOP VIDEO CALL */}
                     <AudioChat
-                        className="w-full h-[320px] flex-shrink-0 shadow-lg"
+                        className="w-full h-[240px] flex-shrink-0 shadow-lg rounded-b-3xl"
                         players={state.players}
                         currentUserId={me?.id}
                         currentPlayerName={me?.name}
                     />
 
-                    {/* TIMER COMPONENT */}
-                    <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden">
-                        <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/5 rounded-full blur-xl -mr-10 -mt-10 pointer-events-none"></div>
-                        <div>
-                            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-1">Ход игрока</div>
-                            <div className="text-lg font-bold text-white tracking-wide">{currentPlayer.name}</div>
-                        </div>
-                        <div className={`text - 4xl font - mono font - black tracking - tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
-                            {formatTime(timeLeft)}
-                        </div>
+                    {/* TABS HEADER */}
+                    <div className="flex items-center gap-1 mx-4 bg-[#0f172a]/60 backdrop-blur-md p-1 rounded-2xl border border-slate-800/50 shrink-0">
+                        <button
+                            onClick={() => setActiveTab('GAME')}
+                            className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'GAME' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'}`}
+                        >
+                            <span className="text-sm">🎮</span> Game
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('CHAT')}
+                            className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'CHAT' ? 'bg-violet-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'}`}
+                        >
+                            <span className="text-sm">💬</span> Chat
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('MENU')}
+                            className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'MENU' ? 'bg-slate-700 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'}`}
+                        >
+                            <span className="text-sm">⚙️</span> Menu
+                        </button>
                     </div>
 
-                    {/* Actions Panel */}
-                    <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-2xl relative group">
-                        <div className="absolute inset-0 bg-gradient-to-br from-blue-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none"></div>
-                        <h3 className="text-slate-400 text-[10px] uppercase tracking-[0.25em] font-black mb-5 flex items-center gap-2 relative z-10">
-                            <span className="text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]">⚡</span> ДЕЙСТВИЯ
-                        </h3>
+                    {/* TAB CONTENT CONTAINER */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar px-4 pb-4 flex flex-col gap-4 min-h-0">
 
-                        <div className="grid grid-cols-2 gap-4 mb-4 relative z-10">
-                            {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
-                                <div className="h-[100px] rounded-2xl border border-slate-700/50 bg-slate-800/40 p-2 flex flex-col gap-1 shadow-inner">
-                                    <div className="flex-1 flex gap-1">
-                                        <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
-                                            <span className="text-xl">🎲</span>
-                                            <span className="text-[8px] font-bold">1</span>
-                                        </button>
-                                        <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
-                                            <span className="text-xl">🎲🎲</span>
-                                            <span className="text-[8px] font-bold">2</span>
-                                        </button>
-                                        {me.isFastTrack && (
-                                            <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
-                                                <span className="text-xl">🎲 x3</span>
-                                                <span className="text-[8px] font-bold">3</span>
+                        {/* --- GAME TAB --- */}
+                        {activeTab === 'GAME' && (
+                            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                                {/* TIMER COMPONENT */}
+                                <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden shrink-0">
+                                    <div className="absolute top-0 right-0 w-20 h-20 bg-blue-500/5 rounded-full blur-xl -mr-10 -mt-10 pointer-events-none"></div>
+                                    <div>
+                                        <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-1">Ход игрока</div>
+                                        <div className="text-lg font-bold text-white tracking-wide">{currentPlayer.name}</div>
+                                    </div>
+                                    <div className={`text-4xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
+                                        {formatTime(timeLeft)}
+                                    </div>
+                                </div>
+
+                                {/* Actions Panel */}
+                                <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-2xl relative group shrink-0">
+                                    <h3 className="text-slate-400 text-[10px] uppercase tracking-[0.25em] font-black mb-5 flex items-center gap-2 relative z-10">
+                                        <span className="text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]">⚡</span> ДЕЙСТВИЯ
+                                    </h3>
+
+                                    <div className="grid grid-cols-2 gap-4 mb-4 relative z-10">
+                                        {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+                                            <div className="h-[100px] rounded-2xl border border-slate-700/50 bg-slate-800/40 p-2 flex flex-col gap-1 shadow-inner">
+                                                <div className="flex-1 flex gap-1">
+                                                    <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
+                                                        <span className="text-xl">🎲</span>
+                                                        <span className="text-[8px] font-bold">1</span>
+                                                    </button>
+                                                    <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
+                                                        <span className="text-xl">🎲🎲</span>
+                                                        <span className="text-[8px] font-bold">2</span>
+                                                    </button>
+                                                    {me.isFastTrack && (
+                                                        <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex flex-col items-center justify-center shadow-lg transition-all active:scale-95">
+                                                            <span className="text-xl">🎲 x3</span>
+                                                            <span className="text-[8px] font-bold">3</span>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="text-[8px] text-center text-pink-400 font-bold uppercase tracking-wider">Charity Bonus ({me.charityTurns})</div>
+                                            </div>
+                                        ) : (
+                                            <button
+                                                onClick={() => handleRoll()}
+                                                disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
+                                                className={`h-24 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
+                                                ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
+                                                        ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 border-emerald-400/50 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
+                                                        : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
+                                                    } `}
+                                            >
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+                                                {hasRolled ? (
+                                                    <div className="flex flex-col items-center animate-in zoom-in duration-300">
+                                                        <span className="text-4xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">{diceValue}</span>
+                                                        <span className="text-[8px] text-emerald-200 uppercase tracking-wider font-bold">Выпало</span>
+                                                    </div>
+                                                ) : (
+                                                    <>
+                                                        <span className={`text-3xl filter drop-shadow-xl transition-transform duration-500 ${!hasRolled && isMyTurn ? 'group-hover:rotate-[360deg]' : ''}`}>{state.phase === 'BABY_ROLL' ? '👶' : '🎲'}</span>
+                                                        <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">{state.phase === 'BABY_ROLL' ? 'Ребенок' : 'Бросок'}</span>
+                                                    </>
+                                                )}
                                             </button>
                                         )}
+                                        <button
+                                            onClick={handleEndTurn}
+                                            disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
+                                            className={`h-24 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
+                                            ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
+                                                    ? 'bg-gradient-to-br from-blue-500 to-blue-700 border-blue-400/50 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
+                                                    : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
+                                                } `}
+                                        >
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
+                                            <span className="text-3xl filter drop-shadow-xl group-hover:translate-x-1 transition-transform duration-300">➡</span>
+                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">Далее</span>
+                                        </button>
                                     </div>
-                                    <div className="text-[8px] text-center text-pink-400 font-bold uppercase tracking-wider">Charity Bonus ({me.charityTurns})</div>
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={() => handleRoll()}
-                                    disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
-                                    className={`h-24 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
-                                    ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
-                                            ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 border-emerald-400/50 text-white shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
-                                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
-                                        } `}
-                                >
-                                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-                                    {hasRolled ? (
-                                        <div className="flex flex-col items-center animate-in zoom-in duration-300">
-                                            <span className="text-4xl font-black text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]">{diceValue}</span>
-                                            <span className="text-[8px] text-emerald-200 uppercase tracking-wider font-bold">Выпало</span>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <span className={`text-3xl filter drop-shadow-xl transition-transform duration-500 ${!hasRolled && isMyTurn ? 'group-hover:rotate-[360deg]' : ''}`}>{state.phase === 'BABY_ROLL' ? '👶' : '🎲'}</span>
-                                            <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">{state.phase === 'BABY_ROLL' ? 'Ребенок' : 'Бросок'}</span>
-                                        </>
+                                    <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-700/80 hover:border-slate-500 hover:shadow-lg hover:shadow-blue-900/20 flex items-center justify-center gap-3 transition-all duration-300 group/bank active:scale-95 text-white">
+                                        <span className="text-xl group-hover/bank:scale-110 group-hover/bank:rotate-12 transition-transform duration-300">🏦</span>
+                                        <span className="text-[10px] text-slate-300 group-hover:text-white font-bold uppercase tracking-[0.15em]">Открыть Банк</span>
+                                    </button>
+
+                                    {/* Fast Track Entry Button */}
+                                    {me.canEnterFastTrack && isMyTurn && (
+                                        <button
+                                            onClick={handleEnterFastTrack}
+                                            className="w-full mt-3 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white p-4 rounded-xl shadow-lg shadow-orange-900/30 flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-95 animate-pulse"
+                                        >
+                                            <span className="text-2xl">🚀</span>
+                                            <span className="text-xs font-black uppercase tracking-widest">Выйти на Fast Track</span>
+                                        </button>
                                     )}
-                                </button>
-                            )}
-                            <button
-                                onClick={handleEndTurn}
-                                disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
-                                className={`h-24 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all duration-300 relative overflow-hidden
-                                ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
-                                        ? 'bg-gradient-to-br from-blue-500 to-blue-700 border-blue-400/50 text-white shadow-[0_0_20px_rgba(59,130,246,0.4)] hover:shadow-[0_0_30px_rgba(59,130,246,0.6)] hover:-translate-y-1 active:scale-95 active:translate-y-0 cursor-pointer'
-                                        : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed contrast-50 grayscale'
-                                    } `}
-                            >
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent pointer-events-none"></div>
-                                <span className="text-3xl filter drop-shadow-xl group-hover:translate-x-1 transition-transform duration-300">➡</span>
-                                <span className="text-[10px] font-black uppercase tracking-[0.2em] relative z-10">Далее</span>
-                            </button>
-                        </div>
-                        <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 hover:bg-slate-700/80 hover:border-slate-500 hover:shadow-lg hover:shadow-blue-900/20 flex items-center justify-center gap-3 transition-all duration-300 group/bank active:scale-95">
-                            <span className="text-xl group-hover/bank:scale-110 group-hover/bank:rotate-12 transition-transform duration-300">🏦</span>
-                            <span className="text-[10px] text-slate-300 group-hover:text-white font-bold uppercase tracking-[0.15em]">Открыть Банк</span>
-                        </button>
-
-                        {/* Fast Track Entry Button */}
-                        {me.canEnterFastTrack && isMyTurn && (
-                            <button
-                                onClick={handleEnterFastTrack}
-                                className="w-full mt-3 bg-gradient-to-r from-yellow-600 to-orange-600 hover:from-yellow-500 hover:to-orange-500 text-white p-4 rounded-xl shadow-lg shadow-orange-900/30 flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02] active:scale-95 animate-pulse"
-                            >
-                                <span className="text-2xl">🚀</span>
-                                <span className="text-xs font-black uppercase tracking-widest">Выйти на Fast Track</span>
-                            </button>
-                        )}
-                    </div>
-
-                    {/* Players Mini List (Moved to Right) */}
-                    <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-lg flex-1 min-h-[200px] overflow-y-auto custom-scrollbar relative">
-                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2 sticky top-0 bg-[#1e293b]/95 backdrop-blur-md py-2 z-10 w-full">
-                            <span>👥</span> Игроки
-                        </h3>
-                        <div className="space-y-3 pb-2">
-                            {state.players.map((p: any) => (
-                                <div key={p.id} className={`flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300 group ${p.id === currentPlayer.id ? 'bg-slate-800/90 border-blue-500/50 shadow-[0_4px_20px_rgba(59,130,246,0.15)] scale-[1.02]' : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60'} `}>
-                                    <div className={`text-2xl w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl border shadow-inner text-white font-bold bg-gradient-to-br overflow-hidden relative ${getAvatarColor(p.id)} border-white/10`}>
-                                        {p.token || '👤'}
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-bold text-slate-200 truncate flex items-center gap-2">
-                                            {p.name}
-                                            {(p.skippedTurns || 0) > 0 && <span className="text-[10px] bg-red-900/50 text-red-200 px-1.5 py-0.5 rounded border border-red-500/30" title="Пропуск хода">⛔ {p.skippedTurns}</span>}
-                                        </div>
-                                        <div className="text-[10px] text-slate-500 font-mono">${p.cash?.toLocaleString()}</div>
-                                    </div>
-                                    {p.id === currentPlayer.id && <div className="text-[8px] text-blue-400 bg-blue-900/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">Ходит</div>}
                                 </div>
-                            ))}
-                        </div>
-                    </div>
 
-                    <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-3 flex items-center gap-2">
-                        <span>📝</span> Лог событий
-                    </h3>
-                    <div className="flex-1 bg-[#0f172a]/50 rounded-xl border border-slate-800/50 p-3 overflow-y-auto font-mono text-[9px] space-y-2 custom-scrollbar min-h-[150px]">
-                        {state.log?.slice().reverse().map((entry: string, i: number) => (
-                            <div key={i} className="text-slate-400 border-b border-slate-800/50 pb-2 last:border-0 leading-relaxed">
-                                <span className="text-slate-600 mr-2">#{state.log.length - i}</span>
-                                {entry}
+                                {/* Players Mini List */}
+                                <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-lg flex-1 overflow-y-auto custom-scrollbar relative shrink-0">
+                                    <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2 sticky top-0 bg-[#1e293b]/95 backdrop-blur-md py-2 z-10 w-full">
+                                        <span>👥</span> Игроки
+                                    </h3>
+                                    <div className="space-y-3 pb-2">
+                                        {state.players.map((p: any) => (
+                                            <div key={p.id} className={`flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300 group ${p.id === currentPlayer.id ? 'bg-slate-800/90 border-blue-500/50 shadow-[0_4px_20px_rgba(59,130,246,0.15)] scale-[1.02]' : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60'} `}>
+                                                <div className={`text-2xl w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl border shadow-inner text-white font-bold bg-gradient-to-br overflow-hidden relative ${getAvatarColor(p.id)} border-white/10`}>
+                                                    {p.photo_url ? (
+                                                        <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        getInitials(p.name)
+                                                    )}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="text-sm font-bold text-slate-200 truncate flex items-center gap-2">
+                                                        {p.name}
+                                                        {(p.skippedTurns || 0) > 0 && <span className="text-[10px] bg-red-900/50 text-red-200 px-1.5 py-0.5 rounded border border-red-500/30" title="Пропуск хода">⛔ {p.skippedTurns}</span>}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-500 font-mono">${p.cash?.toLocaleString()}</div>
+                                                </div>
+                                                {p.id === currentPlayer.id && <div className="text-[8px] text-blue-400 bg-blue-900/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">Ходит</div>}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="shrink-0">
+                                    <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-3 flex items-center gap-2">
+                                        <span>📝</span> Лог событий
+                                    </h3>
+                                    <div className="flex-1 bg-[#0f172a]/50 rounded-xl border border-slate-800/50 p-3 overflow-y-auto font-mono text-[9px] space-y-2 custom-scrollbar h-[150px]">
+                                        {state.log?.slice().reverse().map((entry: string, i: number) => (
+                                            <div key={i} className="text-slate-400 border-b border-slate-800/50 pb-2 last:border-0 leading-relaxed">
+                                                <span className="text-slate-600 mr-2">#{state.log.length - i}</span>
+                                                {entry}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             </div>
-                        ))}
-                    </div>
+                        )}
 
-                    {/* Desktop System Menu Button (Absolute Top Right) */}
-                    <button
-                        onClick={() => setShowDesktopMenu(!showDesktopMenu)}
-                        className="lg:hidden absolute top-4 right-4 z-50 bg-[#1e293b] p-3 rounded-full shadow-lg border border-slate-700 hover:bg-slate-700 transition-colors"
-                        style={{ display: 'none' }} // Hide on mobile (logic handled by lg:hidden above? wait, checking structure... Ah this div is RIGHT SIDEBAR (Desktop) so it IS visible on desktop. But we want a button on the main canvas?
-                    >
-                        ⚙️
-                    </button>
+                        {/* --- CHAT TAB --- */}
+                        {activeTab === 'CHAT' && (
+                            <div className="flex-1 min-h-0 animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col">
+                                <TextChat
+                                    roomId={roomId}
+                                    socket={socket}
+                                    messages={state.chat || []}
+                                    currentUser={me}
+                                    className="flex-1"
+                                />
+                            </div>
+                        )}
 
-                    {/* Desktop Settings & Menu (Top Right Floating) */}
-                    <div className="absolute top-4 right-6 z-50">
-                        <button
-                            onClick={() => setShowDesktopMenu(true)}
-                            className="w-10 h-10 bg-[#1e293b]/80 backdrop-blur-md rounded-full flex items-center justify-center text-slate-400 hover:text-white border border-slate-700/50 shadow-lg transition-all hover:scale-110"
-                        >
-                            ⚙️
-                        </button>
-                    </div>
+                        {/* --- MENU TAB --- */}
+                        {activeTab === 'MENU' && (
+                            <div className="flex flex-col gap-4 animate-in fade-in slide-in-from-right-4 duration-300">
+                                <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-6 border border-slate-700/50 shadow-2xl">
+                                    <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                                        <span>⚙️</span> Настройки
+                                    </h2>
 
-                    {showDesktopMenu && (
-                        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowDesktopMenu(false)}>
-                            <div className="bg-[#1e293b] w-80 p-6 rounded-3xl border border-slate-700 shadow-2xl relative" onClick={e => e.stopPropagation()}>
-                                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
-                                    <span>⚙️</span> Настройки
-                                </h2>
-
-                                <div className="space-y-6">
                                     {/* Sound Settings */}
-                                    <div className="space-y-2">
+                                    <div className="space-y-4 mb-8">
                                         <div className="flex justify-between items-center text-sm font-bold text-slate-400 uppercase tracking-wider">
-                                            <span>Звук</span>
+                                            <span>Звук эффектов</span>
                                             <button onClick={toggleMute} className={`text-xs px-2 py-1 rounded ${isMuted ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
                                                 {isMuted ? 'Выключен' : 'Включен'}
                                             </button>
@@ -1417,76 +1459,45 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                         />
                                     </div>
 
-                                    {/* Menu Actions */}
-                                    <div className="space-y-3 pt-4 border-t border-slate-700/50">
+                                    {/* Links */}
+                                    <div className="space-y-3">
                                         <button
-                                            onClick={() => { setShowRules(true); setShowDesktopMenu(false); }}
-                                            className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center gap-2 transition-colors"
+                                            onClick={() => setShowRules(true)}
+                                            className="w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center gap-3 transition-colors border border-slate-700/50"
                                         >
-                                            📜 Правила
+                                            <span className="text-xl">📜</span> Правила Игры
                                         </button>
-                                        <button
-                                            onClick={handleExit}
-                                            className="w-full py-3 rounded-xl bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/30 font-bold flex items-center justify-center gap-2 transition-colors"
-                                        >
-                                            🚪 Выход
+
+                                        {/* Placeholder for Stats/Profile if needed */}
+                                        <button className="w-full py-4 rounded-xl bg-slate-800/50 text-slate-500 font-bold flex items-center justify-center gap-3 border border-slate-800 cursor-not-allowed">
+                                            <span className="text-xl">👤</span> Профиль (Скоро)
                                         </button>
                                     </div>
                                 </div>
 
-                                <button onClick={() => setShowDesktopMenu(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
-                            </div>
-                        </div>
-                    )}
+                                {/* Danger Zone */}
+                                <div className="mt-auto">
+                                    <button
+                                        onClick={handleExit}
+                                        className="w-full py-4 rounded-xl bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/30 font-bold flex items-center justify-center gap-2 transition-colors uppercase tracking-widest text-sm"
+                                    >
+                                        <span className="text-lg">🚪</span> Покинуть Комнату
+                                    </button>
 
-                    {/* Existing Rules Button */}
-                    <button
-                        onClick={() => setShowRules(true)}
-                        className="mt-auto w-full py-3 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 font-bold uppercase tracking-widest text-xs hover:bg-violet-500/20 transition-all flex items-center justify-center gap-2 group"
-                    >
-                        <span className="group-hover:scale-110 transition-transform">📜</span> Правила
-                    </button>
-
-                    {/* DOWNSIZED MODAL */}
-                    {state.lastEvent?.type === 'DOWNSIZED' && state.lastEvent.payload?.player === me?.name && (
-                        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in zoom-in duration-300">
-                            <div className="bg-[#1e293b] w-full max-w-md p-8 rounded-3xl border-2 border-red-500/50 shadow-2xl relative text-center">
-                                <div className="text-6xl mb-4 animate-bounce">📉</div>
-                                <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-wide">ВЫ УВОЛЕНЫ!</h2>
-                                <h3 className="text-xl text-red-400 font-bold mb-6">YOU ARE FIRED</h3>
-
-                                <div className="bg-slate-900/50 rounded-xl p-4 mb-6 border border-slate-700/50">
-                                    <p className="text-slate-300 text-sm mb-2">Вы потеряли работу и пропускаете <span className="text-white font-bold">2 хода</span>.</p>
-                                    <p className="text-slate-400 text-xs">Все ваши активы сохранены, но вам пришлось оплатить свои расходы.</p>
+                                    {/* HOST: End Game Button */}
+                                    {state.players[0]?.id === me.id && state.players.some((p: any) => p.hasWon) && (
+                                        <button
+                                            onClick={handleEndGame}
+                                            className="mt-3 w-full py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-widest text-xs shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
+                                        >
+                                            <span className="text-lg">🛑</span> ЗАВЕРШИТЬ ИГРУ
+                                        </button>
+                                    )}
                                 </div>
-
-                                <button
-                                    onClick={handleEndTurn}
-                                    className="w-full py-4 rounded-xl bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold shadow-lg shadow-red-900/40 transition-all transform hover:scale-[1.02] active:scale-95"
-                                >
-                                    ОК, Понятно
-                                </button>
                             </div>
-                        </div>
-                    )}
+                        )}
 
-                    {/* Exit Button */}
-                    <button
-                        onClick={handleExit}
-                        className="mt-3 w-full py-3 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 font-bold uppercase tracking-widest text-xs hover:bg-red-500/20 transition-all flex items-center justify-center gap-2 group"
-                    >
-                        <span className="group-hover:-translate-x-1 transition-transform">🚪</span> Выход
-                    </button>
-
-                    {/* HOST: End Game Button */}
-                    {state.players[0]?.id === me.id && state.players.some((p: any) => p.hasWon) && (
-                        <button
-                            onClick={handleEndGame}
-                            className="mt-3 w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-widest text-xs shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
-                        >
-                            <span className="text-lg">🛑</span> ЗАВЕРШИТЬ ИГРУ
-                        </button>
-                    )}
+                    </div>
                 </div >
 
             </div>

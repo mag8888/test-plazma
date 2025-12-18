@@ -561,6 +561,32 @@ export class GameGateway {
                 }
             });
 
+            // Chat Message
+            socket.on('chat_message', (data) => {
+                const { roomId, text, senderId, senderName, avatar } = data;
+                const game = this.games.get(roomId);
+                if (game) {
+                    const message = {
+                        id: uuidv4(),
+                        senderId,
+                        senderName,
+                        text,
+                        timestamp: Date.now(),
+                        avatar
+                    };
+                    game.state.chat.push(message);
+
+                    // Keep chat history limited (e.g., last 100 messages)
+                    if (game.state.chat.length > 100) {
+                        game.state.chat.shift();
+                    }
+
+                    this.io.to(roomId).emit('state_updated', game.getState());
+                    // Optional: Specific 'chat_update' if state is too big, but for now state_updated is fine
+                    this.saveState(roomId, game);
+                }
+            });
+
             // End Game (Host Only)
             socket.on('end_game_host', async (data) => {
                 const { roomId, userId } = data;

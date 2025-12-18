@@ -211,7 +211,7 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                         if (group.length > 1) {
                             const idx = group.indexOf(p.id);
                             // Spread tokens in a small circle
-                            const spread = 2.5; // 2.5% offset
+                            const spread = 3.0; // Increased spread for larger tokens
                             // Rotation offset to ensure they don't block center sticker too much
                             const angleOffset = -Math.PI / 2;
                             const angle = (idx / group.length) * 2 * Math.PI + angleOffset;
@@ -272,8 +272,8 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                 style={style}
                             >
                                 <div className={`
-                                    w-[3.5cqw] h-[3.5cqw] rounded-full bg-slate-900 border-2 ${p.id === currentPlayerId ? 'border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-110' : 'border-slate-600 shadow-md'}
-                                    flex items-center justify-center text-[2.2cqw] relative
+                                    w-[5cqw] h-[5cqw] rounded-full bg-slate-900 border-2 ${p.id === currentPlayerId ? 'border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-110' : 'border-slate-600 shadow-md'}
+                                    flex items-center justify-center text-[3.0cqw] relative
                                 `}>
                                     {p.token}
                                     <div className="absolute -top-[1.5cqw] bg-slate-900/80 text-white text-[0.6cqw] px-[0.5cqw] py-[0.1cqw] rounded-full whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">

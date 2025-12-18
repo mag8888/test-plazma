@@ -21,6 +21,7 @@ export interface Card {
     assetType?: 'REAL_ESTATE' | 'BUSINESS' | 'STOCK' | 'OTHER';
     maxQuantity?: number;
     outcomeDescription?: string; // Revealed after purchase
+    displayId?: number; // Visual ID (e.g. No 1)
 }
 
 // Expense Cards
@@ -150,17 +151,27 @@ const generateMarketCards = (): Card[] => {
 };
 
 
-// Generator for Big Deals
+// Generator for Big Deals (Target: ~40 cards)
 const generateBigDeals = (): Card[] => {
     return [
+        // Real Estate - Houses/Apts
         { id: 'bd_house_ex', title: 'Дом (3Br/2Ba)', description: 'Дом под сдачу. Цена $7000-10000. Доход $100-300.', cost: 8500, cashflow: 200, type: 'DEAL_BIG' },
-        ...expand(2, { title: 'Мини-отель', cost: 80000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 20000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
-        ...expand(2, { title: 'Сеть кафе быстрого питания', cost: 200000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 40000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
-        { title: 'Ферма органических овощей', cost: 120000, cashflow: 4500, description: 'Экологичное хозяйство с контрактами на поставку.', downPayment: 30000, businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG', id: 'bd_farm' },
-        { title: 'Сеть автомоек', cost: 150000, cashflow: 5000, description: 'Хорошее расположение, стабильный трафик клиентов.', downPayment: 35000, businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG', id: 'bd_wash' },
-        { title: 'Коворкинг-центр', cost: 250000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 50000, businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG', id: 'bd_co' },
-        ...expand(3, { title: 'Франшиза: Plazma Water', cost: 5000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG'),
-        ...expand(3, { title: 'Франшиза: MONEO', cost: 5000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG'),
+        ...expand(3, { title: 'Дом 3Br/2Ba (Дуплекс)', cost: 12000, cashflow: 400, description: 'Дуплекс в хорошем районе.', downPayment: 4000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+        ...expand(4, { title: '4-квартирный дом', cost: 35000, cashflow: 1200, description: 'Многоквартирный дом. Стабильные жильцы.', downPayment: 8000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+        ...expand(4, { title: '8-квартирный комплекс', cost: 100000, cashflow: 2800, description: 'Жилой комплекс с управляющим.', downPayment: 25000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+
+        // Hospitality
+        ...expand(4, { title: 'Мини-отель', cost: 80000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 20000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+
+        // Classic Business
+        ...expand(4, { title: 'Сеть кафе быстрого питания', cost: 200000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 40000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
+        ...expand(3, { title: 'Ферма органических овощей', cost: 120000, cashflow: 4500, description: 'Экологичное хозяйство с контрактами на поставку.', downPayment: 30000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
+        ...expand(3, { title: 'Сеть автомоек', cost: 150000, cashflow: 5000, description: 'Хорошее расположение, стабильный трафик клиентов.', downPayment: 35000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
+        ...expand(3, { title: 'Коворкинг-центр', cost: 250000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 50000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
+
+        // Network
+        ...expand(6, { title: 'Франшиза: Plazma Water', cost: 5000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG'),
+        ...expand(5, { title: 'Франшиза: MONEO', cost: 5000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG'),
     ];
 };
 
@@ -178,10 +189,25 @@ export class CardManager {
     private expenseDeckDiscard: Card[] = [];
 
     constructor() {
-        this.smallDeals = this.shuffle(generateSmallDeals());
-        this.bigDeals = this.shuffle(generateBigDeals());
-        this.marketDeck = this.shuffle(generateMarketCards());
-        this.expenseDeck = this.shuffle([...EXPENSE_CARDS]);
+        // Generate and Assign Global IDs
+        let globalCounter = 1;
+        const assign = (cards: Card[]) => cards.forEach(c => c.displayId = globalCounter++);
+
+        const sm = this.shuffle(generateSmallDeals());
+        assign(sm);
+        this.smallDeals = sm;
+
+        const bd = this.shuffle(generateBigDeals());
+        assign(bd);
+        this.bigDeals = bd;
+
+        const mkt = this.shuffle(generateMarketCards());
+        assign(mkt);
+        this.marketDeck = mkt;
+
+        const exp = this.shuffle([...EXPENSE_CARDS]);
+        assign(exp);
+        this.expenseDeck = exp;
     }
 
     drawSmallDeal(): Card | undefined {

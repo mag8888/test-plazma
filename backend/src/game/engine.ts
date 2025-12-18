@@ -23,6 +23,16 @@ export interface GameState {
     };
     rankings?: { name: string; reason: string; place: number }[];
     isGameEnded?: boolean;
+    chat: ChatMessage[];
+}
+
+export interface ChatMessage {
+    id: string;
+    senderId: string;
+    senderName: string;
+    text: string;
+    timestamp: number;
+    avatar?: string;
 }
 
 export interface Transaction {
@@ -211,6 +221,7 @@ export class GameEngine {
             phase: 'ROLL',
             board: FULL_BOARD,
             log: ['Game Started'],
+            chat: [],
             transactions: [],
             turnExpiresAt: Date.now() + 120000 // Init first turn timer
         };
