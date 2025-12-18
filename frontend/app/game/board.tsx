@@ -69,6 +69,35 @@ const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
 
 // ... (existing interfaces)
 
+const getAvatarColor = (id: string) => {
+    const colors = [
+        'from-red-500 to-orange-500',
+        'from-orange-500 to-amber-500',
+        'from-amber-500 to-yellow-500',
+        'from-yellow-500 to-lime-500',
+        'from-lime-500 to-green-500',
+        'from-green-500 to-emerald-500',
+        'from-emerald-500 to-teal-500',
+        'from-teal-500 to-cyan-500',
+        'from-cyan-500 to-sky-500',
+        'from-sky-500 to-blue-500',
+        'from-blue-500 to-indigo-500',
+        'from-indigo-500 to-violet-500',
+        'from-violet-500 to-purple-500',
+        'from-purple-500 to-fuchsia-500',
+        'from-fuchsia-500 to-pink-500',
+        'from-pink-500 to-rose-500',
+    ];
+    let hash = 0;
+    for (let i = 0; i < id.length; i++) hash = id.charCodeAt(i) + ((hash << 5) - hash);
+    return colors[Math.abs(hash) % colors.length];
+};
+
+const getInitials = (name: string) => {
+    if (!name) return '?';
+    return name.slice(0, 2).toUpperCase();
+};
+
 export default function GameBoard({ roomId, initialState }: BoardProps) {
     const router = useRouter();
     const [state, setState] = useState(initialState);
@@ -82,6 +111,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const [mobileView, setMobileView] = useState<'stats' | 'players'>('stats');
 
     // Sound Settings
+    const [showDesktopMenu, setShowDesktopMenu] = useState(false);
     const [volume, setVolume] = useState(0.5);
     const [isMuted, setIsMuted] = useState(false);
 
@@ -242,7 +272,6 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     if (currentPlayer.isFastTrack) {
                         square = data.state.board[24 + squareIndex]; // Logic? Backend sends global pos?
                         // Actually engine handles pos. If isFastTrack, position is relative to Outer Track?
-                        // Engine `handleFastTrackSquare` logic suggested global index.
                         // Visualizer handles mapping.
                         // For popup info, we might need logic.
                         // But Fast Track squares are simple usually.
@@ -550,7 +579,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                                     {a.title}
                                                     {a.quantity ? <span className="text-slate-500 ml-1 text-[10px]">({a.quantity} шт)</span> : ''}
                                                 </span>
-                                                <span className="font-mono text-green-400 font-bold text-[10px]">+${a.cashflow}</span>
+                                                <span className="font-mono text-green-400 font-bold text-[10px]">+$ {a.cashflow}</span>
                                             </div>
                                             <button
                                                 onClick={() => setTransferAssetItem({ item: a, index: i })}
@@ -572,11 +601,23 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                             </h3>
                             <div className="space-y-2">
                                 {state.players.map((p: any) => (
-                                    <div key={p.id} className={`flex items - center gap - 3 p - 3 rounded - xl border transition - all ${p.id === currentPlayer.id ? 'bg-slate-800/80 border-blue-500/50 shadow-lg shadow-blue-900/10' : 'bg-slate-900/30 border-slate-800/50'} `}>
-                                        <div className="text-lg bg-slate-950 w-8 h-8 flex items-center justify-center rounded-xl border border-slate-800 shadow-inner">{p.token}</div>
+                                    <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${p.id === currentPlayer.id ? 'bg-slate-800/80 border-blue-500/50 shadow-lg shadow-blue-900/10' : 'bg-slate-900/30 border-slate-800/50'} `}>
+                                        <div className={`text-lg w-10 h-10 flex items-center justify-center rounded-xl border shadow-inner text-white font-bold bg-gradient-to-br overflow-hidden relative ${getAvatarColor(p.id)} border-white/10`}>
+                                            {p.photo_url ? (
+                                                <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                getInitials(p.name)
+                                            )}
+                                        </div>
                                         <div className="flex-1 min-w-0">
-                                            <div className="text-sm font-bold text-slate-200 truncate">{p.name}</div>
-                                            <div className="text-[10px] text-slate-500 font-mono">${p.cash?.toLocaleString()}</div>
+                                            <div className="flex justify-between items-center mb-1">
+                                                <span className={`text-sm font-bold truncate ${p.id === currentPlayer.id ? 'text-white' : 'text-slate-400'}`}>{p.name}</span>
+                                                {p.id === currentPlayer.id && <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Ходит</span>}
+                                            </div>
+                                            <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
+                                                <span>${p.cash?.toLocaleString()}</span>
+                                                {p.loanDebt > 0 && <span className="text-red-400">-${p.loanDebt?.toLocaleString()}</span>}
+                                            </div>
                                         </div>
                                     </div>
                                 ))}
@@ -1266,8 +1307,14 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         </h3>
                         <div className="space-y-3 pb-2">
                             {state.players.map((p: any) => (
-                                <div key={p.id} className={`flex items - center gap - 3 p - 3 rounded - 2xl border transition - all duration - 300 group ${p.id === currentPlayer.id ? 'bg-slate-800/90 border-blue-500/50 shadow-[0_4px_20px_rgba(59,130,246,0.15)] scale-[1.02]' : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60'} `}>
-                                    <div className="text-lg bg-slate-950 w-8 h-8 flex items-center justify-center rounded-xl border border-slate-800 shadow-inner">{p.token}</div>
+                                <div key={p.id} className={`flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300 group ${p.id === currentPlayer.id ? 'bg-slate-800/90 border-blue-500/50 shadow-[0_4px_20px_rgba(59,130,246,0.15)] scale-[1.02]' : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60'} `}>
+                                    <div className={`text-lg w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl border shadow-inner text-white font-bold bg-gradient-to-br overflow-hidden relative ${getAvatarColor(p.id)} border-white/10`}>
+                                        {p.photo_url ? (
+                                            <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            getInitials(p.name)
+                                        )}
+                                    </div>
                                     <div className="flex-1 min-w-0">
                                         <div className="text-sm font-bold text-slate-200 truncate">{p.name}</div>
                                         <div className="text-[10px] text-slate-500 font-mono">${p.cash?.toLocaleString()}</div>
@@ -1290,7 +1337,75 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         ))}
                     </div>
 
-                    {/* Rules Button */}
+                    {/* Desktop System Menu Button (Absolute Top Right) */}
+                    <button
+                        onClick={() => setShowDesktopMenu(!showDesktopMenu)}
+                        className="lg:hidden absolute top-4 right-4 z-50 bg-[#1e293b] p-3 rounded-full shadow-lg border border-slate-700 hover:bg-slate-700 transition-colors"
+                        style={{ display: 'none' }} // Hide on mobile (logic handled by lg:hidden above? wait, checking structure... Ah this div is RIGHT SIDEBAR (Desktop) so it IS visible on desktop. But we want a button on the main canvas?
+                    >
+                        ⚙️
+                    </button>
+
+                    {/* Desktop Settings & Menu (Top Right Floating) */}
+                    <div className="absolute top-4 right-6 z-50">
+                        <button
+                            onClick={() => setShowDesktopMenu(true)}
+                            className="w-10 h-10 bg-[#1e293b]/80 backdrop-blur-md rounded-full flex items-center justify-center text-slate-400 hover:text-white border border-slate-700/50 shadow-lg transition-all hover:scale-110"
+                        >
+                            ⚙️
+                        </button>
+                    </div>
+
+                    {showDesktopMenu && (
+                        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setShowDesktopMenu(false)}>
+                            <div className="bg-[#1e293b] w-80 p-6 rounded-3xl border border-slate-700 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                                <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                                    <span>⚙️</span> Настройки
+                                </h2>
+
+                                <div className="space-y-6">
+                                    {/* Sound Settings */}
+                                    <div className="space-y-2">
+                                        <div className="flex justify-between items-center text-sm font-bold text-slate-400 uppercase tracking-wider">
+                                            <span>Звук</span>
+                                            <button onClick={toggleMute} className={`text-xs px-2 py-1 rounded ${isMuted ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
+                                                {isMuted ? 'Выключен' : 'Включен'}
+                                            </button>
+                                        </div>
+                                        <input
+                                            type="range"
+                                            min="0"
+                                            max="1"
+                                            step="0.05"
+                                            value={volume}
+                                            onChange={handleVolumeChange}
+                                            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                        />
+                                    </div>
+
+                                    {/* Menu Actions */}
+                                    <div className="space-y-3 pt-4 border-t border-slate-700/50">
+                                        <button
+                                            onClick={() => { setShowRules(true); setShowDesktopMenu(false); }}
+                                            className="w-full py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center gap-2 transition-colors"
+                                        >
+                                            📜 Правила
+                                        </button>
+                                        <button
+                                            onClick={handleExit}
+                                            className="w-full py-3 rounded-xl bg-red-900/20 hover:bg-red-900/40 text-red-400 border border-red-900/30 font-bold flex items-center justify-center gap-2 transition-colors"
+                                        >
+                                            🚪 Выход
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <button onClick={() => setShowDesktopMenu(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white">✕</button>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Existing Rules Button (Keep or Remove? User asked for menu, maybe remove generic button from bottom if moving to menu? Left it for now as visible shortcut) */}
                     <button
                         onClick={() => setShowRules(true)}
                         className="mt-auto w-full py-3 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 font-bold uppercase tracking-widest text-xs hover:bg-violet-500/20 transition-all flex items-center justify-center gap-2 group"
