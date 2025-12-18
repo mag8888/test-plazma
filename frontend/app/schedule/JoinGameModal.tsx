@@ -104,11 +104,12 @@ export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModa
                 ) : (
                     <div className="space-y-4 animate-in slide-in-from-right duration-200">
                         <div className="bg-blue-500/10 p-4 rounded-xl text-sm text-blue-200 border border-blue-500/20">
-                            Для бесплатного участия необходимо сделать репост анонса игры в свой канал или сторис.
+                            Для бесплатного участия необходимо сделать репост анонса игры. <br />
+                            <span className="text-xs opacity-70">Вы можете прикрепить ссылку сейчас или отправить её мастеру лично.</span>
                         </div>
 
                         <div>
-                            <label className="block text-sm text-slate-400 mb-2">Ссылка на репост</label>
+                            <label className="block text-sm text-slate-400 mb-2">Ссылка на репост (необязательно)</label>
                             <div className="flex items-center gap-2 bg-slate-900 rounded-xl p-3 border border-slate-700 focus-within:border-blue-500 transition-colors">
                                 <LinkIcon size={18} className="text-slate-500" />
                                 <input
@@ -131,10 +132,10 @@ export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModa
                             </button>
                             <button
                                 onClick={() => handleJoin('PROMO', repostLink)}
-                                disabled={!repostLink.trim() || loading}
+                                disabled={loading}
                                 className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 disabled:bg-slate-700 rounded-xl font-bold text-white shadow-lg shadow-blue-500/20"
                             >
-                                Отправить
+                                {repostLink.trim() ? 'Отправить' : 'Пропустить'}
                             </button>
                         </div>
                     </div>
