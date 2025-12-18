@@ -292,8 +292,8 @@ export const AudioChat = ({
                         signal: answer // Browser handles toJSON
                     });
                 } else if (signal.type === 'answer') {
-                    if (pc.signalingState === 'stable') {
-                        console.warn(`[AudioChat] Received Answer in 'stable' state from ${from}. Ignoring duplicate.`);
+                    if (pc.signalingState !== 'have-local-offer') {
+                        console.warn(`[AudioChat] Received Answer in invalid state (${pc.signalingState}) from ${from}. Ignoring.`);
                         return;
                     }
                     await pc.setRemoteDescription(new RTCSessionDescription(signal));
@@ -307,7 +307,7 @@ export const AudioChat = ({
 
         socket.on('signal', handleSignal);
         return () => { socket.off('signal', handleSignal); };
-    }, [localStream]); // Re-bind if stream changes? No, refs handle it.
+    }, []); // Removed localStream dependency to prevent re-binding loops
 
     // --- D. CONNECTION LOGIC (Mesh) ---
     useEffect(() => {
