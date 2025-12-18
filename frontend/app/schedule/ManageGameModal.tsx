@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from 'react';
 import { useTelegram } from '../../components/TelegramProvider';
-import { X, Save, Clock, Users, Trash2, Send, MessageSquare, AlertCircle } from 'lucide-react';
+import { X, Save, Clock, Users, Trash2, Send, MessageSquare, AlertCircle, Check, Trophy, Calendar } from 'lucide-react';
 import clsx from 'clsx';
 
 interface ManageGameModalProps {
@@ -23,6 +23,9 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
 
     // Broadcast State
     const [message, setMessage] = useState('');
+
+    const [selectedUser, setSelectedUser] = useState<any>(null);
+    const [userStats, setUserStats] = useState<any>(null);
 
     useEffect(() => {
         fetchGameDetails();
@@ -106,6 +109,42 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
                 webApp?.showAlert('Ошибка удаления');
             }
         } catch (e) { console.error(e); }
+    };
+
+    const handleConfirmPlayer = async (userId: string, name: string) => {
+        if (!confirm(`Подтвердить участие ${name}?`)) return;
+
+        try {
+            const res = await fetch(`/api/games/${gameId}/players/${userId}/confirm`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ initData: webApp?.initData })
+            });
+            if (res.ok) {
+                webApp?.showAlert(`✅ ${name} подтвержден`);
+                fetchGameDetails();
+                onUpdate();
+            } else {
+                webApp?.showAlert('Ошибка подтверждения');
+            }
+        } catch (e) { console.error(e); }
+    };
+
+    const handleShowProfile = async (user: any) => {
+        setSelectedUser(user);
+        setUserStats(null);
+        try {
+            // Fetch stats
+            const res = await fetch(`/api/users/${user._id}/stats`);
+            if (res.ok) {
+                const data = await res.json();
+                setUserStats(data);
+            }
+        } catch (e) {
+            console.error("Failed to fetch stats");
+        }
     };
 
     // Open DM
@@ -233,22 +272,40 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
                         ) : (
                             game?.participants?.map((p: any) => (
                                 <div key={p.userId._id} className="bg-slate-800 rounded-xl p-3 flex justify-between items-center border border-slate-700">
-                                    <div className="flex items-center gap-3">
-                                        {/* Avatar placeholder if needed */}
-                                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-400">
-                                            {p.userId.first_name?.[0]}
+                                    <div
+                                        className="flex items-center gap-3 cursor-pointer active:scale-95 transition-transform"
+                                        onClick={() => handleShowProfile(p.userId)}
+                                    >
+                                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-400 overflow-hidden">
+                                            {p.userId.photo_url ? (
+                                                <img src={p.userId.photo_url} className="w-full h-full object-cover" />
+                                            ) : (
+                                                p.userId.first_name?.[0]
+                                            )}
                                         </div>
                                         <div>
-                                            <div className="font-bold text-sm">
+                                            <div className="font-bold text-sm text-blue-400 hover:underline">
                                                 {p.userId.first_name} {p.userId.username && <span className="text-slate-500 font-normal">@{p.userId.username}</span>}
                                             </div>
                                             <div className="text-xs text-slate-500 flex gap-2">
                                                 <span>{p.type === 'PAID' ? '💰 Paid' : '🎟 Free'}</span>
                                                 {p.isVerified && <span className="text-green-500">✅ Verif</span>}
+                                                {p.postLink && <span className="text-blue-500">🔗 Link</span>}
                                             </div>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-1">
+                                        {/* Show Confirm button if Promo & Not Verified */}
+                                        {p.type === 'PROMO' && !p.isVerified && (
+                                            <button
+                                                onClick={() => handleConfirmPlayer(p.userId._id, p.userId.first_name)}
+                                                className="p-2 hover:bg-green-900/50 rounded-lg text-green-500 bg-green-900/20 border border-green-900/50"
+                                                title="Подтвердить"
+                                            >
+                                                <Check size={18} />
+                                            </button>
+                                        )}
+
                                         <button
                                             onClick={() => handleDM(p.userId.username)}
                                             className="p-2 hover:bg-slate-700 rounded-lg text-blue-400"
@@ -295,6 +352,65 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
                 )}
 
             </div>
+
+            {/* Profile Modal Overlay */}
+            {selectedUser && (
+                <div className="absolute inset-0 bg-black/90 p-4 z-50 animate-in fade-in duration-200">
+                    <div className="h-full flex flex-col">
+                        <div className="flex justify-between items-start mb-6">
+                            <h2 className="text-xl font-bold">Профиль игрока</h2>
+                            <button onClick={() => setSelectedUser(null)} className="p-2 bg-slate-800 rounded-full"><X size={20} /></button>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-4 mb-8">
+                            <div className="w-24 h-24 rounded-full bg-slate-800 border-2 border-blue-500 flex items-center justify-center overflow-hidden">
+                                {selectedUser.photo_url ? (
+                                    <img src={selectedUser.photo_url} className="w-full h-full object-cover" />
+                                ) : (
+                                    <span className="text-4xl text-slate-500">{selectedUser.first_name?.[0]}</span>
+                                )}
+                            </div>
+                            <div className="text-center">
+                                <h3 className="text-2xl font-bold text-white">{selectedUser.first_name}</h3>
+                                {selectedUser.username && <p className="text-blue-400">@{selectedUser.username}</p>}
+                                {userStats?.isMaster && <span className="bg-amber-500/20 text-amber-500 px-3 py-1 rounded-full text-xs font-bold mt-2 inline-block">👑 Master</span>}
+                            </div>
+                        </div>
+
+                        {userStats ? (
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col items-center">
+                                    <Trophy className="text-yellow-500 mb-2" size={24} />
+                                    <div className="text-2xl font-bold text-white">{userStats.wins}</div>
+                                    <div className="text-xs text-slate-400 uppercase tracking-wider">Побед</div>
+                                </div>
+                                <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex flex-col items-center">
+                                    <Calendar className="text-blue-500 mb-2" size={24} />
+                                    <div className="text-2xl font-bold text-white">{userStats.gamesPlayed}</div>
+                                    <div className="text-xs text-slate-400 uppercase tracking-wider">Игр</div>
+                                </div>
+                                <div className="col-span-2 bg-slate-800 p-4 rounded-xl border border-slate-700 flex justify-between items-center">
+                                    <span className="text-slate-400">В игре с:</span>
+                                    <span className="font-bold">{new Date(userStats.createdAt).toLocaleDateString()}</span>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="flex justify-center py-10">
+                                <Clock className="animate-spin text-blue-500" />
+                            </div>
+                        )}
+
+                        <div className="mt-auto">
+                            <button
+                                onClick={() => handleDM(selectedUser.username)}
+                                className="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold flex items-center justify-center gap-2"
+                            >
+                                <MessageSquare size={18} /> Написать сообщение
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
