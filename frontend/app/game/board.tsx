@@ -588,7 +588,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                             <div className="flex flex-col">
                                                 <span className="text-slate-300 font-medium">
                                                     {a.title}
-                                                    {a.quantity ? <span className="text-slate-500 ml-1 text-[10px]">({a.quantity} шт)</span> : ''}
+                                                    {a.quantity > 0 && <span className="text-slate-500 ml-1 text-[10px]">({a.quantity} шт)</span>}
                                                 </span>
                                                 <span className="font-mono text-green-400 font-bold text-[10px]">+$ {a.cashflow}</span>
                                             </div>
@@ -933,7 +933,10 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                 {me.assets.map((a: any, i: number) => (
                                     <div key={i} className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-700 transition-colors group">
                                         <div className="flex items-center gap-2">
-                                            <span className="text-slate-300 font-medium">{a.title}</span>
+                                            <span className="text-slate-300 font-medium">
+                                                {a.title}
+                                                {a.quantity > 0 && <span className="text-slate-500 ml-1 text-[10px]">({a.quantity} шт)</span>}
+                                            </span>
                                             <span className="font-mono text-green-400 font-bold bg-green-900/10 px-1.5 py-0.5 rounded">+${a.cashflow}</span>
                                         </div>
                                         <button
