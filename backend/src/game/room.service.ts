@@ -6,6 +6,12 @@ export class RoomService {
     constructor() { }
 
     async createRoom(creatorId: string, userId: string, playerName: string, name: string, maxPlayers: number = 6, timer: number = 120, password?: string, token?: string, dream?: string): Promise<any> {
+        // 0. Strict Isolation: Check if user is already in a PLAYING room
+        const playing = await RoomModel.findOne({ status: 'playing', 'players.userId': userId });
+        if (playing) {
+            throw new Error("Вы уже находитесь в активной игре. Завершите её или признайте поражение, чтобы создать новую.");
+        }
+
         // 1. Cleanup: Remove user from ALL waiting rooms (Auto-Leave)
         await this.removeUserFromAllWaitingRooms(userId);
 
@@ -42,6 +48,15 @@ export class RoomService {
     }
 
     async joinRoom(roomId: string, playerId: string, userId: string, playerName: string, password?: string, token?: string, dream?: string): Promise<any> {
+        // 0. Strict Isolation: Check if user is already in a PLAYING room (unless re-joining THIS room)
+        const playing = await RoomModel.findOne({ status: 'playing', 'players.userId': userId });
+        if (playing) {
+            // Allow re-joining the SAME room if connection lost
+            if (playing._id.toString() !== roomId) {
+                throw new Error("Вы уже находитесь в другой активной игре!");
+            }
+        }
+
         // 1. Try to update EXISTING player (Atomic)
         let room = await RoomModel.findOneAndUpdate(
             { _id: roomId, "players.userId": userId },
