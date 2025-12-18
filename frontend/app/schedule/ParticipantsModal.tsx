@@ -55,8 +55,8 @@ export default function ParticipantsModal({ game, onClose }: ParticipantsModalPr
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {participants.map((p: any, i: number) => (
                         <div key={i} className="flex items-center gap-3 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                            {p.userId?.photoUrl ? (
-                                <img src={p.userId.photoUrl} className="w-10 h-10 rounded-full" />
+                            {(p.userId?.photo_url || p.photo_url) ? (
+                                <img src={p.userId?.photo_url || p.photo_url} className="w-10 h-10 rounded-full" />
                             ) : (
                                 <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
                                     <User size={20} className="text-slate-400" />
@@ -64,7 +64,7 @@ export default function ParticipantsModal({ game, onClose }: ParticipantsModalPr
                             )}
                             <div>
                                 <div className="font-bold text-sm">
-                                    {p.userId?.username || p.userId?.first_name || 'User'}
+                                    {(p.userId?.username || p.username) ? `@${p.userId?.username || p.username}` : (p.userId?.first_name || p.firstName || 'User')}
                                 </div>
                                 <div className="text-xs text-slate-400">
                                     {p.type === 'PROMO' ? '🎫 Promo' : '💰 Paid'}

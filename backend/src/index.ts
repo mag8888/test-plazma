@@ -303,9 +303,9 @@ app.post('/api/games/:id/join', async (req, res) => {
             username: user.username,
             firstName: user.first_name,
             type: type,
-            joinedAt: new Date(),
-            postLink: repostLink,
-            isVerified: !isPromo // Paid are auto-verified, Promo needs confirmation
+            repostLink: isPromo ? repostLink : undefined, // Might be empty initially
+            isVerified: !isPromo, // Paid is auto-verified
+            joinedAt: new Date()
         });
 
         await game.save();
