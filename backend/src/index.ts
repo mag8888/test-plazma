@@ -338,13 +338,7 @@ app.post('/api/games/:id/join', async (req, res) => {
     }
 });
 
-res.json({ success: true });
 
-    } catch (e) {
-    console.error("Join failed:", e);
-    res.status(500).json({ error: "Join failed" });
-}
-});
 
 app.use(express.static(path.join(__dirname, '../../frontend/out')));
 
