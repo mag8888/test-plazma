@@ -139,9 +139,9 @@ export default function EarnPage() {
                     <div className="text-xs text-slate-400">Друзей</div>
                 </div>
                 <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                    <TrendingUp className="text-green-400 mb-2" />
-                    <div className="text-xl font-bold">${user?.referralBalance || 0}</div>
-                    <div className="text-xs text-slate-400">Доход</div>
+                    <TrendingUp className="text-red-500 mb-2" />
+                    <div className="text-xl font-bold text-red-400">{(user?.referralsCount || 0) * 10} RED</div>
+                    <div className="text-xs text-slate-400">Доход (RED)</div>
                 </div>
             </div>
         </div>
