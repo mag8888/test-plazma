@@ -113,7 +113,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     // Sound Settings
     const [showDesktopMenu, setShowDesktopMenu] = useState(false);
     const [volume, setVolume] = useState(0.5);
-    const [volume, setVolume] = useState(0.5);
+
     const [isMuted, setIsMuted] = useState(false);
 
     // Chat State
