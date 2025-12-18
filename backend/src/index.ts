@@ -320,14 +320,15 @@ app.post('/api/games/:id/join', async (req, res) => {
                 const link = isPromo ? `\n🔗 Ссылка: ${repostLink}` : '';
 
                 botService.bot?.sendMessage(host.telegram_id,
-                    `ℹ️ Новый игрок: ${t} ${user.first_name} (@${user.username}) записался на ${new Date(game.startTime).toLocaleString('ru-RU')}. ${status}${link}`
+                    `ℹ️ Новый игрок: ${t} ${user.first_name} (@${user.username}) записался на ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК). ${status}${link}`
                 );
             }
 
             // Notify User (Welcome Message)
             if (user.telegram_id) {
                 const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
-                    day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit'
+                    day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
+                    timeZone: 'Europe/Moscow'
                 });
 
                 let msg = `✅ Вы записались на игру: ${dateStr}\n\n`;
