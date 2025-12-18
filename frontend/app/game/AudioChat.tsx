@@ -292,6 +292,10 @@ export const AudioChat = ({
                         signal: answer // Browser handles toJSON
                     });
                 } else if (signal.type === 'answer') {
+                    if (pc.signalingState === 'stable') {
+                        console.warn(`[AudioChat] Received Answer in 'stable' state from ${from}. Ignoring duplicate.`);
+                        return;
+                    }
                     await pc.setRemoteDescription(new RTCSessionDescription(signal));
                 } else if (signal.candidate) {
                     await pc.addIceCandidate(new RTCIceCandidate(signal.candidate));
