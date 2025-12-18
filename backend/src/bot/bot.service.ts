@@ -912,12 +912,26 @@ export class BotService {
                     username = `${username}_${Math.floor(Math.random() * 1000)}`;
                 }
 
+                // Fetch Photo
+                let photoUrl = '';
+                try {
+                    const photos = await this.bot?.getUserProfilePhotos(telegramId, { limit: 1 });
+                    if (photos && photos.total_count > 0 && photos.photos[0].length > 0) {
+                        const fileId = photos.photos[0][0].file_id; // Smallest or largest? [0] is smallest usually. Let's pick largest [photos.photos[0].length-1]
+                        const largest = photos.photos[0][photos.photos[0].length - 1];
+                        photoUrl = await this.bot?.getFileLink(largest.file_id) || '';
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch user photo:", e);
+                }
+
                 user = new UserModel({
                     username,
                     first_name: firstName,
                     telegram_id: telegramId,
                     referralBalance: 0,
-                    referralsCount: 0
+                    referralsCount: 0,
+                    photo_url: photoUrl
                 });
 
                 // Process Referral
@@ -967,6 +981,19 @@ export class BotService {
 
                 await user.save();
                 console.log(`New user registered via bot: ${username}`);
+            } else {
+                // Update existing user photo if missing or changed (On every /start? Maybe expensive? Let's just do it.)
+                try {
+                    const photos = await this.bot?.getUserProfilePhotos(telegramId, { limit: 1 });
+                    if (photos && photos.total_count > 0) {
+                        const largest = photos.photos[0][photos.photos[0].length - 1];
+                        const url = await this.bot?.getFileLink(largest.file_id);
+                        if (url && user.photo_url !== url) {
+                            user.photo_url = url;
+                            await user.save();
+                        }
+                    }
+                } catch (e) { }
             }
         } catch (e) {
             console.error("Error registering user:", e);
