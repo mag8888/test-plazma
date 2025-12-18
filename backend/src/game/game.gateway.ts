@@ -500,8 +500,16 @@ export class GameGateway {
                 const game = this.games.get(roomId);
                 if (game) {
                     // Prevent Ending Turn if Phase is ROLL (Must roll first)
-                    if (game.getState().phase === 'ROLL') {
+                    // EXCEPTION: If player was Downsized (lastEvent.type === 'DOWNSIZED'), they can end turn even if phase stuck in ROLL (legacy/restored games)
+                    if (game.getState().phase === 'BABY_ROLL') {
                         return;
+                    }
+
+                    if (game.getState().phase === 'ROLL') {
+                        const lastEvent = game.getState().lastEvent;
+                        if (lastEvent?.type !== 'DOWNSIZED') {
+                            return;
+                        }
                     }
                     game.endTurn();
                     const state = game.getState();
