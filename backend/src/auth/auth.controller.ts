@@ -57,16 +57,15 @@ router.post('/login/telegram', async (req: Request, res: Response) => {
             user: {
                 id: user.id,
                 username: user.username,
-                firstName: user.first_name,
-                lastName: user.last_name,
-                photoUrl: user.photo_url,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                photo_url: user.photo_url,
                 referralBalance: user.referralBalance || 0,
                 balanceRed: user.balanceRed || 0,
                 referralsCount: user.referralsCount || 0,
                 isMaster: user.isMaster || false
             }
         });
-
     } catch (error) {
         console.error("Auth error:", error);
         return res.status(500).json({ error: "Internal Server Error" });
@@ -88,9 +87,9 @@ router.post('/magic-login', async (req: Request, res: Response) => {
             user: {
                 id: user.id,
                 username: user.username,
-                firstName: user.first_name,
-                lastName: user.last_name,
-                photoUrl: user.photo_url
+                first_name: user.first_name,
+                last_name: user.last_name,
+                photo_url: user.photo_url
             }
         });
 
