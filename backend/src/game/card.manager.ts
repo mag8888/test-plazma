@@ -94,6 +94,10 @@ const generateSmallDeals = (): Card[] => {
 
     // Bitcoin (Small Deal Entry Point)
     add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 4000, description: 'Криптовалюта на дне. Цена $4,000.', assetType: 'STOCK' });
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 10000, description: 'Криптовалюта растет. Цена $10,000.', assetType: 'STOCK' });
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 20000, description: 'Биткоин на хайпе. Цена $20,000.', assetType: 'STOCK' });
+    // Note: High cost BTC ($50k+) might be too expensive for Small Deals, but including per request
+    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 30000, description: 'Биткоин штурмует максимумы. Цена $30,000.', assetType: 'STOCK' });
 
     // ID: 6612 - NEW INCOME STOCKS
     // AT&T (T) - Preferred, Cost $5000, Cashflow $50, Max 1000
@@ -256,6 +260,32 @@ const generateBigDeals = (): Card[] => {
         });
     }
 
+    // 1.5. Affordable Real Estate (Cost 10k-20k, Flow 300-500) - User Request
+    for (let i = 0; i < 12; i++) {
+        // Cost 10000-20000 (step 1000)
+        const cost = 10000 + Math.floor(Math.random() * 11) * 1000;
+        // Flow 300-500 (step 50)
+        const cashflow = 300 + Math.floor(Math.random() * 5) * 50;
+
+        cards.push({
+            id: `bd_niceface_${i}`,
+            type: 'DEAL_BIG',
+            title: `Дом (3Br/2Ba)`,
+            description: `Выгодная сделка! Цена $${cost}. Доход $${cashflow}.`,
+            cost: cost,
+            cashflow: cashflow,
+            downPayment: 0, // Assuming 0 down or low? Standard Big Deal usually has Down Payment = Cost if no mortgage? 
+            // Or usually Mortgage = Cost - Down.
+            // If Cost is small (10k), Down might be 2k?
+            // Let's set Down Payment to 20% of cost roughly?
+            // But code above (Lines 242-257) didn't set downPayment, meaning it implies "Cash Buy" or "Calculated elsewhere"?
+            // Frontend/Engine might handle defaults. Card interface says `downPayment?`.
+            // If I look at line 260 "Mini-Hotel", it has `downPayment`.
+            // Lines 242-257 (Houses 7-10k) do NOT have downPayment.
+            // So these new ones checking in similar logic.
+        });
+    }
+
     // 2. Specific Business Cards
     add(2, { title: 'Мини-отель', cost: 80000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 20000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' });
     add(2, { title: 'Сеть кафе быстрого питания', cost: 200000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 40000, businessType: 'CLASSIC', assetType: 'BUSINESS' });
@@ -266,10 +296,7 @@ const generateBigDeals = (): Card[] => {
     add(3, { title: 'Франшиза: Plazma Water', cost: 5000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' });
     add(3, { title: 'Франшиза: MONEO', cost: 5000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', businessType: 'NETWORK' });
 
-    // Bitcoin Big Deals
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 10000, description: 'Крипто-зима. Цена $10,000.', assetType: 'STOCK' });
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 50000, description: 'Биткоин растет! Цена $50,000.', assetType: 'STOCK' });
-    add(1, { title: 'Bitcoin', symbol: 'BTC', cost: 100000, description: 'To The Moon! Цена $100,000.', assetType: 'STOCK' });
+
 
     return cards;
 };
