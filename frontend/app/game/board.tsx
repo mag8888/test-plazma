@@ -6,7 +6,6 @@ import { socket } from '../socket';
 import confetti from 'canvas-confetti';
 import { BoardVisualizer } from './BoardVisualizer';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-import { AudioChat } from './AudioChat';
 import { TextChat } from './TextChat';
 import { sfx } from './SoundManager';
 
@@ -111,9 +110,6 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     // Mobile Drawer State
     const [showMobileMenu, setShowMobileMenu] = useState(false);
     const [mobileView, setMobileView] = useState<'stats' | 'players'>('stats');
-
-    // Audio Chat Toggle
-    const [isAudioChatEnabled, setIsAudioChatEnabled] = useState(false);
 
     // Sound Settings
     const [showDesktopMenu, setShowDesktopMenu] = useState(false);
@@ -486,7 +482,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     };
 
     return (
-        <div className="h-screen bg-[#0f172a] text-white font-sans flex flex-col overflow-hidden relative">
+        <div className="h-[100dvh] max-h-[100dvh] bg-[#0f172a] text-white font-sans flex flex-col overflow-hidden relative">
 
             {showRankings && (
                 <RankingsModal
@@ -1247,27 +1243,18 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
 
                 {/* RIGHT SIDEBAR (Desktop) */}
+                {/* RIGHT SIDEBAR (Desktop) */}
                 <div className="hidden lg:flex flex-col flex-1 h-full border-l border-slate-800/0 p-0 relative overflow-hidden gap-4 min-w-0">
-                    {/* DESKTOP VIDEO CALL */}
-                    {/* DESKTOP VIDEO CALL */}
-                    {isAudioChatEnabled ? (
-                        <AudioChat
-                            className="w-full h-[240px] flex-shrink-0 shadow-lg rounded-b-3xl"
-                            players={state.players}
-                            currentUserId={me?.id}
-                            currentPlayerName={me?.name}
+                    {/* CHAT & LOGS (Always Visible at Top) */}
+                    <div className="h-[40%] flex-shrink-0 flex flex-col px-4 pt-4 min-h-[250px]">
+                        <TextChat
+                            roomId={roomId}
+                            socket={socket}
+                            messages={state.chat || []}
+                            currentUser={me}
+                            className="w-full h-full shadow-lg rounded-3xl"
                         />
-                    ) : (
-                        <div className="w-full h-[60px] flex-shrink-0 shadow-lg rounded-b-3xl bg-slate-900/50 border-b border-x border-slate-800 flex items-center justify-center gap-3">
-                            <span className="text-slate-500 text-xs font-bold uppercase tracking-wider">Видеочат выключен</span>
-                            <button
-                                onClick={() => setIsAudioChatEnabled(true)}
-                                className="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-blue-600/30 transition-all"
-                            >
-                                Включить
-                            </button>
-                        </div>
-                    )}
+                    </div>
 
                     {/* TABS HEADER */}
                     <div className="flex items-center gap-1 mx-4 bg-[#0f172a]/60 backdrop-blur-md p-1 rounded-2xl border border-slate-800/50 shrink-0">
@@ -1276,12 +1263,6 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                             className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'GAME' ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'}`}
                         >
                             <span className="text-sm">🎮</span> Game
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('CHAT')}
-                            className={`flex-1 py-3 rounded-xl flex items-center justify-center gap-2 text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'CHAT' ? 'bg-violet-600 text-white shadow-lg' : 'text-slate-500 hover:text-slate-300 hover:bg-slate-800/50'}`}
-                        >
-                            <span className="text-sm">💬</span> Chat
                         </button>
                         <button
                             onClick={() => setActiveTab('MENU')}
@@ -1417,34 +1398,10 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                     </div>
                                 </div>
 
-                                <div className="shrink-0">
-                                    <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-3 flex items-center gap-2">
-                                        <span>📝</span> Лог событий
-                                    </h3>
-                                    <div className="flex-1 bg-[#0f172a]/50 rounded-xl border border-slate-800/50 p-3 overflow-y-auto font-mono text-[9px] space-y-2 custom-scrollbar h-[150px]">
-                                        {state.log?.slice().reverse().map((entry: string, i: number) => (
-                                            <div key={i} className="text-slate-400 border-b border-slate-800/50 pb-2 last:border-0 leading-relaxed">
-                                                <span className="text-slate-600 mr-2">#{state.log.length - i}</span>
-                                                {entry}
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
                             </div>
                         )}
 
-                        {/* --- CHAT TAB --- */}
-                        {activeTab === 'CHAT' && (
-                            <div className="flex-1 min-h-0 animate-in fade-in slide-in-from-right-4 duration-300 flex flex-col">
-                                <TextChat
-                                    roomId={roomId}
-                                    socket={socket}
-                                    messages={state.chat || []}
-                                    currentUser={me}
-                                    className="flex-1"
-                                />
-                            </div>
-                        )}
+
 
                         {/* --- MENU TAB --- */}
                         {activeTab === 'MENU' && (
@@ -1454,27 +1411,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                         <span>⚙️</span> Настройки
                                     </h2>
 
-                                    {/* Video/Audio Chat Settings */}
-                                    <div className="bg-[#0B0E14]/40 p-4 rounded-xl border border-slate-700/50 mb-6">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <div className="flex items-center gap-3">
-                                                <span className="text-2xl">📹</span>
-                                                <div>
-                                                    <div className="text-sm font-bold text-white">Видеочат</div>
-                                                    <div className="text-[10px] text-slate-400">Камера и микрофон</div>
-                                                </div>
-                                            </div>
-                                            <button
-                                                onClick={() => setIsAudioChatEnabled(!isAudioChatEnabled)}
-                                                className={`relative w-12 h-6 rounded-full transition-colors duration-300 ${isAudioChatEnabled ? 'bg-green-500' : 'bg-slate-700'}`}
-                                            >
-                                                <div className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform duration-300 ${isAudioChatEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
-                                            </button>
-                                        </div>
-                                        <div className="text-[10px] text-slate-500 leading-relaxed">
-                                            Включает видеосвязь с другими игроками. Требуется доступ к камере.
-                                        </div>
-                                    </div>
+                                    {/* Sound Settings */}
 
                                     {/* Sound Settings */}
                                     <div className="space-y-4 mb-8">

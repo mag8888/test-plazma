@@ -1,4 +1,5 @@
 import { IPlayer } from '../models/room.model';
+import { v4 as uuidv4 } from 'uuid';
 import { CardManager, Card } from './card.manager';
 import { PROFESSIONS } from './professions';
 
@@ -294,7 +295,7 @@ export class GameEngine {
             if (player.loanDebt === 0 && player.cash >= 200000) {
                 player.canEnterFastTrack = true;
                 if (!this.state.log.some(l => l.includes(`${player.name} can now enter Fast Track`))) {
-                    this.state.log.push(`🚀 ${player.name} can now enter Fast Track! (Passive > 2x Expenses, No Debt, $200k Cash)`);
+                    this.addLog(`🚀 ${player.name} can now enter Fast Track! (Passive > 2x Expenses, No Debt, $200k Cash)`);
                 }
             }
         }
@@ -304,7 +305,7 @@ export class GameEngine {
         const player = this.state.players.find(p => p.userId === userId || p.id === userId); // robust check
         if (!player) return;
         if (!player.canEnterFastTrack) {
-            this.state.log.push(`⚠️ ${player.name} cannot enter Fast Track yet.`);
+            this.addLog(`⚠️ ${player.name} cannot enter Fast Track yet.`);
             return;
         }
 
@@ -354,8 +355,8 @@ export class GameEngine {
         player.assets = [];
         player.liabilities = [];
 
-        this.state.log.push(`🚀 ${player.name} ENTERED FAST TRACK! (Goal: +$50k Passive)`);
-        this.state.log.push(`💰 Start Bonus: +$${player.cashflow}`);
+        this.addLog(`🚀 ${player.name} ENTERED FAST TRACK! (Goal: +$50k Passive)`);
+        this.addLog(`💰 Start Bonus: +$${player.cashflow}`);
 
         // Ensure Log Update
         // this.emitState(); // Handled by Gateway
@@ -371,7 +372,7 @@ export class GameEngine {
 
         if (player.skippedTurns > 0) {
             player.skippedTurns--;
-            this.state.log.push(`${player.name} skips turn (Remaining: ${player.skippedTurns})`);
+            this.addLog(`${player.name} skips turn (Remaining: ${player.skippedTurns})`);
             // Do NOT auto end turn. Let user click Next.
             this.state.phase = 'ACTION';
             return 0;
@@ -429,9 +430,9 @@ export class GameEngine {
 
         // Log the roll details
         if (values.length > 1) {
-            this.state.log.push(`${player.name} rolled ${values.join('+')} (= ${total})`);
+            this.addLog(`${player.name} rolled ${values.join('+')} (= ${total})`);
         } else {
-            this.state.log.push(`${player.name} rolled ${total}`);
+            this.addLog(`${player.name} rolled ${total}`);
         }
 
         return { total, values };
@@ -482,7 +483,7 @@ export class GameEngine {
                 const square = this.getSquare(globalIndex);
                 if (square && square.type === 'PAYDAY' && i !== steps) {
                     player.cash += player.cashflow;
-                    this.state.log.push(`💰 ${player.name} passed Payday! +$${player.cashflow}`);
+                    this.addLog(`💰 ${player.name} passed Payday! +$${player.cashflow}`);
                     this.recordTransaction({
                         from: 'Bank',
                         to: player.name,
@@ -498,7 +499,7 @@ export class GameEngine {
                 const square = this.getSquare(squareIndex);
                 if (square && square.type === 'PAYDAY' && i !== steps) {
                     player.cash += player.cashflow;
-                    this.state.log.push(`💰 ${player.name} passed Payday! +$${player.cashflow}`);
+                    this.addLog(`💰 ${player.name} passed Payday! +$${player.cashflow}`);
                     this.recordTransaction({
                         from: 'Bank',
                         to: player.name,
@@ -525,7 +526,7 @@ export class GameEngine {
             this.handleFastTrackSquare(player, 24 + finalPos);
         } else {
             const square = this.getSquare(finalPos);
-            this.state.log.push(`${player.name} moved to ${square.name}`);
+            this.addLog(`${player.name} moved to ${square.name}`);
             this.handleSquare(player, square);
         }
     }
@@ -545,7 +546,7 @@ export class GameEngine {
             square = position;
         }
 
-        this.state.log.push(`${player.name} landed on ${square.type}: ${square.name}`);
+        this.addLog(`${player.name} landed on ${square.type}: ${square.name}`);
 
         // WIN CONDITION:
         // 1. Passive Income +$50k
@@ -567,8 +568,8 @@ export class GameEngine {
 
         if (won && !player.hasWon) {
             player.hasWon = true;
-            this.state.log.push(`🏆 ${player.name} HAS WON THE GAME! (+50k Flow, Dream, 2 Businesses)`);
-            this.state.log.push(`Game continues for others...`);
+            this.addLog(`🏆 ${player.name} HAS WON THE GAME! (+50k Flow, Dream, 2 Businesses)`);
+            this.addLog(`Game continues for others...`);
 
             // Broadcast End Game event if needed or handled by state change
         }
@@ -576,7 +577,7 @@ export class GameEngine {
         switch (square.type) {
             case 'PAYDAY':
                 player.cash += player.cashflow;
-                this.state.log.push(`💰 Fast Track Payday! +$${player.cashflow}`);
+                this.addLog(`💰 Fast Track Payday! +$${player.cashflow}`);
                 break;
 
             case 'BUSINESS':
@@ -594,7 +595,7 @@ export class GameEngine {
                 } as Card;
 
                 this.state.phase = 'ACTION';
-                this.state.log.push(`Found ${square.type}: ${square.name}. Cost $${square.cost}`);
+                this.addLog(`Found ${square.type}: ${square.name}. Cost $${square.cost}`);
                 break;
 
             case 'LOSS':
@@ -605,7 +606,7 @@ export class GameEngine {
             case 'CHARITY':
                 // Prompt for Donation
                 this.state.phase = 'CHARITY_CHOICE';
-                this.state.log.push(`❤️ Charity Opportunity! Donate to gain dice bonus.`);
+                this.addLog(`❤️ Charity Opportunity! Donate to gain dice bonus.`);
                 break;
 
             case 'STOCK_EXCHANGE':
@@ -619,9 +620,9 @@ export class GameEngine {
                 const roll = Math.floor(Math.random() * 6) + 1;
                 if (roll >= 5) {
                     player.cash += 500000;
-                    this.state.log.push(`📈 Stock Exchange: Rolled ${roll}! You gain $500,000!`);
+                    this.addLog(`📈 Stock Exchange: Rolled ${roll}! You gain $500,000!`);
                 } else {
-                    this.state.log.push(`📉 Stock Exchange: Rolled ${roll}. No profit.`);
+                    this.addLog(`📉 Stock Exchange: Rolled ${roll}. No profit.`);
                 }
                 // End Turn immediately? Or allow other actions?
                 // Usually end turn.
@@ -638,7 +639,7 @@ export class GameEngine {
 
                 const randomSquare = eligibleSquares[Math.floor(Math.random() * eligibleSquares.length)];
 
-                this.state.log.push(`🎰 LOTTERY: Rolled... ${randomSquare.name}!`);
+                this.addLog(`🎰 LOTTERY: Rolled... ${randomSquare.name}!`);
 
                 // Recursively handle the new square
                 // Pass the square object directly
@@ -703,10 +704,10 @@ export class GameEngine {
 
         if (square.action === 'AUDIT' || square.action === 'DIVORCE') {
             player.cash = Math.floor(player.cash * 0.5);
-            this.state.log.push(`📉 ${square.name}: Lost 50% of cash!`);
+            this.addLog(`📉 ${square.name}: Lost 50% of cash!`);
         } else if (square.action === 'THEFT') {
             player.cash = 0;
-            this.state.log.push(`🕵️ ${square.name}: Lost ALL cash!`);
+            this.addLog(`🕵️ ${square.name}: Lost ALL cash!`);
         } else if (square.action === 'FIRE') {
             // Lose business with MIN income
             if (player.assets.length > 0) {
@@ -717,10 +718,10 @@ export class GameEngine {
                     player.passiveIncome -= lostAsset.cashflow;
                     player.income -= lostAsset.cashflow;
                     player.cashflow -= lostAsset.cashflow;
-                    this.state.log.push(`🔥 ${square.name}: Lost ${lostAsset.title} (Flow: $${lostAsset.cashflow})`);
+                    this.addLog(`🔥 ${square.name}: Lost ${lostAsset.title} (Flow: $${lostAsset.cashflow})`);
                 }
             } else {
-                this.state.log.push(`🔥 ${square.name}: No assets to lose.`);
+                this.addLog(`🔥 ${square.name}: No assets to lose.`);
             }
         } else if (square.action === 'RAID') {
             // Lose business with MAX income
@@ -732,10 +733,10 @@ export class GameEngine {
                     player.passiveIncome -= lostAsset.cashflow;
                     player.income -= lostAsset.cashflow;
                     player.cashflow -= lostAsset.cashflow;
-                    this.state.log.push(`👮 ${square.name}: Lost ${lostAsset.title} (Flow: $${lostAsset.cashflow})`);
+                    this.addLog(`👮 ${square.name}: Lost ${lostAsset.title} (Flow: $${lostAsset.cashflow})`);
                 }
             } else {
-                this.state.log.push(`👮 ${square.name}: No assets to lose.`);
+                this.addLog(`👮 ${square.name}: No assets to lose.`);
             }
         }
     }
@@ -745,7 +746,7 @@ export class GameEngine {
         // Payday, Baby, etc. will remain ACTION.
         this.state.phase = 'ACTION';
 
-        this.state.log.push(`${player.name} landed on ${square.type}`);
+        this.addLog(`${player.name} landed on ${square.type}`);
 
         if (square.type === 'PAYDAY') {
             // Payday on landing (Indices 6, 12, 18...). Index 0 is usually handled by lap logic (newPos >= 24).
@@ -755,7 +756,7 @@ export class GameEngine {
             // Simplest fix: Pay if square.index !== 0. Index 0 is paid by "Passing Payday" log.
             if (square.index !== 0) {
                 player.cash += player.cashflow;
-                this.state.log.push(`Checking Day! +$${player.cashflow}`);
+                this.addLog(`Checking Day! +$${player.cashflow}`);
                 this.recordTransaction({
                     from: 'Bank',
                     to: player.name,
@@ -765,7 +766,7 @@ export class GameEngine {
                 });
                 this.state.lastEvent = { type: 'PAYDAY', payload: { player: player.name, amount: player.cashflow } };
             } else {
-                this.state.log.push(`Entered Payday (Start)!`);
+                this.addLog(`Entered Payday (Start)!`);
             }
         } else if (square.type === 'DEAL') {
             // Prompt for Small/Big Deal.
@@ -775,39 +776,39 @@ export class GameEngine {
             const card = this.cardManager.drawMarket();
             if (card) {
                 this.state.currentCard = card;
-                this.state.log.push(`🏪 MARKET: ${card.title} - ${card.description}`);
+                this.addLog(`🏪 MARKET: ${card.title} - ${card.description}`);
                 // Check if player has the asset?
                 // Visuals will handle "Sell" button visibility.
                 this.state.phase = 'ACTION';
             } else {
-                this.state.log.push(`🏪 MARKET: No cards left.`);
+                this.addLog(`🏪 MARKET: No cards left.`);
             }
         } else if (square.type === 'EXPENSE') {
             const card = this.cardManager.drawExpense();
             this.state.currentCard = card;
             // Removed automatic deduction. Now handled via buyAsset (Mandatory Pay)
-            this.state.log.push(`💸 Expense: ${card.title} ($${card.cost})`);
+            this.addLog(`💸 Expense: ${card.title} ($${card.cost})`);
             this.state.phase = 'ACTION';
         } else if (square.type === 'BABY') {
             if (player.childrenCount >= 3) {
-                this.state.log.push(`${player.name} already has max children.`);
+                this.addLog(`${player.name} already has max children.`);
                 this.state.phase = 'ACTION';
             } else {
-                this.state.log.push(`👶 ${player.name} landed on Baby! Roll to see if it's born (1-4).`);
+                this.addLog(`👶 ${player.name} landed on Baby! Roll to see if it's born (1-4).`);
                 this.state.phase = 'BABY_ROLL';
             }
             return;
         } else if (square.type === 'DOWNSIZED') {
             player.skippedTurns = 2; // Fixed 2 turns
             const expenses = player.expenses;
-            this.state.log.push(`📉 ${player.name} Downsized! Due: $${expenses}.`);
+            this.addLog(`📉 ${player.name} Downsized! Due: $${expenses}.`);
             this.forcePayment(player, expenses, 'Downsized Expenses');
             this.state.lastEvent = { type: 'DOWNSIZED', payload: { player: player.name } };
             // Do NOT end turn automatically. Let user see the popup.
             this.state.phase = 'ACTION'; // Fix: Allow End Turn (Next button)
         } else if (square.type === 'CHARITY') {
             this.state.phase = 'CHARITY_CHOICE';
-            this.state.log.push(`❤️ Charity: Donate 10% of total income to roll extra dice?`);
+            this.addLog(`❤️ Charity: Donate 10% of total income to roll extra dice?`);
         }
     }
 
@@ -830,10 +831,10 @@ export class GameEngine {
 
         if (card) {
             this.state.currentCard = card;
-            this.state.log.push(`Selected ${type} deal: ${card.title}`);
+            this.addLog(`Selected ${type} deal: ${card.title}`);
             this.state.phase = 'ACTION';
         } else {
-            this.state.log.push(`No ${type} deals left!`);
+            this.addLog(`No ${type} deals left!`);
             this.state.phase = 'ACTION';
         }
     }
@@ -844,17 +845,17 @@ export class GameEngine {
         if (!player) return;
 
         if (amount <= 0 || amount % 1000 !== 0) {
-            this.state.log.push(`${player.name} failed to take loan: Amount must be a multiple of 1000.`);
+            this.addLog(`${player.name} failed to take loan: Amount must be a multiple of 1000.`);
             return;
         }
 
         if (player.isBankrupted) {
-            this.state.log.push(`${player.name} cannot take loans (Bankrupt).`);
+            this.addLog(`${player.name} cannot take loans (Bankrupt).`);
             return;
         }
 
         if (player.isFastTrack) {
-            this.state.log.push(`${player.name} cannot take loans on Fast Track!`);
+            this.addLog(`${player.name} cannot take loans on Fast Track!`);
             return;
         }
 
@@ -862,7 +863,7 @@ export class GameEngine {
         const interest = amount * 0.1;
 
         if (player.cashflow - interest < 0) {
-            this.state.log.push(`${player.name} failed to take loan: Insufficient Cashflow.`);
+            this.addLog(`${player.name} failed to take loan: Insufficient Cashflow.`);
             return;
         }
 
@@ -889,7 +890,7 @@ export class GameEngine {
             type: 'LOAN'
         });
 
-        this.state.log.push(`${player.name} took loan $${amount}. Expenses +$${interest}/mo`);
+        this.addLog(`${player.name} took loan $${amount}. Expenses +$${interest}/mo`);
     }
 
     resolveOpportunity(size: 'SMALL' | 'BIG') {
@@ -905,7 +906,7 @@ export class GameEngine {
         }
 
         if (!card) {
-            this.state.log.push(`${player.name} wanted ${size} deal, but deck is empty!`);
+            this.addLog(`${player.name} wanted ${size} deal, but deck is empty!`);
             this.state.phase = 'ACTION';
             return;
         }
@@ -924,7 +925,7 @@ export class GameEngine {
 
                 if (!hasProperty) {
                     cost = 0;
-                    this.state.log.push(`😅 ${card.title}: Нет недвижимости. Вы ничего не платите.`);
+                    this.addLog(`😅 ${card.title}: Нет недвижимости. Вы ничего не платите.`);
                 }
             } else if (card.title.includes('Sewer') || card.title.includes('Прорыв канализации')) {
                 // Also requires property ownership usually
@@ -932,7 +933,7 @@ export class GameEngine {
 
                 if (!hasProperty) {
                     cost = 0;
-                    this.state.log.push(`😅 ${card.title}: Нет недвижимости. Вы ничего не платите.`);
+                    this.addLog(`😅 ${card.title}: Нет недвижимости. Вы ничего не платите.`);
                 }
             }
 
@@ -946,14 +947,14 @@ export class GameEngine {
                 return;
             } else {
                 // Cost is 0 (e.g. no property for Roof Leak), so we auto-resolve.
-                this.state.log.push(`😅 ${card.title}: No payment required.`);
+                this.addLog(`😅 ${card.title}: No payment required.`);
                 this.state.currentCard = undefined;
                 this.state.phase = 'ACTION';
                 return;
             }
         }
 
-        this.state.log.push(`${player.name} chose ${size} DEAL: ${card.title}`);
+        this.addLog(`${player.name} chose ${size} DEAL: ${card.title}`);
         this.state.phase = 'ACTION'; // Back to action phase to buy/pass
     }
 
@@ -998,7 +999,7 @@ export class GameEngine {
             type: 'REPAY'
         });
 
-        this.state.log.push(`${player.name} repaid loan $${amount}. Expenses -$${interest}/mo`);
+        this.addLog(`${player.name} repaid loan $${amount}. Expenses -$${interest}/mo`);
 
         // Check Fast Track after repaying loan (might free up cashflow condition)
         this.checkFastTrackCondition(player);
@@ -1102,7 +1103,7 @@ export class GameEngine {
         this.checkFastTrackCondition(toPlayer);
 
         // 8. Log and Record
-        this.state.log.push(`🤝 ${fromPlayer.name} transferred ${quantity}x ${asset.title} to ${toPlayer.name}`);
+        this.addLog(`🤝 ${fromPlayer.name} transferred ${quantity}x ${asset.title} to ${toPlayer.name}`);
         this.recordTransaction({
             from: fromPlayer.name,
             to: toPlayer.name,
@@ -1131,7 +1132,7 @@ export class GameEngine {
         // Find Asset
         const assetIndex = player.assets.findIndex(a => a.title === card.targetTitle);
         if (assetIndex === -1) {
-            this.state.log.push(`${player.name} cannot sell: Don't own ${card.targetTitle}`);
+            this.addLog(`${player.name} cannot sell: Don't own ${card.targetTitle}`);
             return;
         }
 
@@ -1162,7 +1163,7 @@ export class GameEngine {
                 player.expenses -= mortgage.expense;
                 player.cashflow = player.income - player.expenses;
             }
-            this.state.log.push(`💳 Paid off mortgage for ${asset.title} (-$${mortgage.value})`);
+            this.addLog(`💳 Paid off mortgage for ${asset.title} (-$${mortgage.value})`);
         }
 
         // Return card to deck logic
@@ -1179,9 +1180,9 @@ export class GameEngine {
         };
 
         this.cardManager.discard(returnedCard);
-        this.state.log.push(`🔄 Returned ${asset.title} card to ${inferredType === 'DEAL_BIG' ? 'Big Deals' : 'Small Deals'} deck.`);
+        this.addLog(`🔄 Returned ${asset.title} card to ${inferredType === 'DEAL_BIG' ? 'Big Deals' : 'Small Deals'} deck.`);
 
-        this.state.log.push(`💰 ${player.name} sold ${asset.title} to Market for $${card.offerPrice}`);
+        this.addLog(`💰 ${player.name} sold ${asset.title} to Market for $${card.offerPrice}`);
 
         this.recordTransaction({
             from: 'Market',
@@ -1191,7 +1192,7 @@ export class GameEngine {
             type: 'PAYDAY' // Use Payday type or Generic Income? Maybe new type 'SALE'? Reusing PAYDAY for Green Color in UI usually. Or 'TRANSFER'.
         });
 
-        this.state.log.push(`🤝 ${player.name} SOLD ${asset.title} for $${card.offerPrice}. (Cash: ${oldCash} -> ${player.cash})`);
+        this.addLog(`🤝 ${player.name} SOLD ${asset.title} for $${card.offerPrice}. (Cash: ${oldCash} -> ${player.cash})`);
 
         // Clear card
         this.state.currentCard = undefined;
@@ -1210,13 +1211,13 @@ export class GameEngine {
         }
 
         if (player.cash < amount) {
-            this.state.log.push(`⚠️ Cannot afford Charity donation ($${amount}).`);
+            this.addLog(`⚠️ Cannot afford Charity donation ($${amount}).`);
             return;
         }
 
         player.cash -= amount;
         player.charityTurns = 3; // 3 turns of extra dice
-        this.state.log.push(`❤️ ${player.name} donated $${amount}. Can now roll extra dice for 3 turns!`);
+        this.addLog(`❤️ ${player.name} donated $${amount}. Can now roll extra dice for 3 turns!`);
 
         this.state.phase = 'ROLL'; // Re-enable roll? No, Charity replaces turn action usually?
         // Wait, rule: "Land on Charity -> Donate -> End Turn. Next turns you roll extra."
@@ -1226,7 +1227,7 @@ export class GameEngine {
     }
 
     skipCharity(playerId: string) {
-        this.state.log.push(`${this.state.players.find(p => p.id === playerId)?.name} declined Charity.`);
+        this.addLog(`${this.state.players.find(p => p.id === playerId)?.name} declined Charity.`);
         this.endTurn();
     }
 
@@ -1238,7 +1239,7 @@ export class GameEngine {
 
         // Restriction: Only current player can buy the deal on the table
         if (player.id !== currentPlayer.id) {
-            this.state.log.push(`⚠️ ${player.name} tried to buy out of turn!`);
+            this.addLog(`⚠️ ${player.name} tried to buy out of turn!`);
             return;
         }
 
@@ -1252,12 +1253,12 @@ export class GameEngine {
 
             // Check Max Quantity
             if (card.maxQuantity && quantity > card.maxQuantity) {
-                this.state.log.push(`${player.name} cannot buy ${quantity} shares. Limit is ${card.maxQuantity}.`);
+                this.addLog(`${player.name} cannot buy ${quantity} shares. Limit is ${card.maxQuantity}.`);
                 return;
             }
 
             if (player.cash < totalCost) {
-                this.state.log.push(`${player.name} cannot afford ${quantity} x ${card.title} ($${totalCost})`);
+                this.addLog(`${player.name} cannot afford ${quantity} x ${card.title} ($${totalCost})`);
                 return;
             }
 
@@ -1291,7 +1292,7 @@ export class GameEngine {
             player.income = player.salary + player.passiveIncome;
             player.cashflow = player.income - player.expenses;
 
-            this.state.log.push(`${player.name} bought ${quantity} ${card.symbol} @ $${card.cost}.`);
+            this.addLog(`${player.name} bought ${quantity} ${card.symbol} @ $${card.cost}.`);
 
             // For stocks, do we clear card? 
             // "Buy 1-100k". If I buy 50, can I buy another 50?
@@ -1305,7 +1306,7 @@ export class GameEngine {
         const costToPay = card.downPayment !== undefined ? card.downPayment : (card.cost || 0);
 
         if (player.cash < costToPay) {
-            this.state.log.push(`${player.name} cannot afford ${card.title} ($${costToPay})`);
+            this.addLog(`${player.name} cannot afford ${card.title} ($${costToPay})`);
             return;
         }
 
@@ -1323,19 +1324,19 @@ export class GameEngine {
             card.cashflow = totalCashflow;
             card.title = `${card.title} (${partners} Partners)`;
 
-            this.state.log.push(`🎲 Rolled ${partners}! Recruited ${partners} partners.`);
+            this.addLog(`🎲 Rolled ${partners}! Recruited ${partners} partners.`);
             mlmResult = { mlmRoll: partners, mlmCashflow: totalCashflow };
         } else if (card.subtype === 'CHARITY_ROLL') {
             // "Friend teaches wisdom": 2 dice for 3 turns.
             player.charityTurns = 3;
-            this.state.log.push(`🎲 ${player.name} gained wisdom! Can roll extra dice for 3 turns.`);
+            this.addLog(`🎲 ${player.name} gained wisdom! Can roll extra dice for 3 turns.`);
         }
 
         player.cash -= costToPay;
 
         // Handle Expense Payment (No Asset added)
         if (card.type === 'EXPENSE') {
-            // this.state.log.push(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
+            // this.addLog(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
             // Handled by forcePayment if mandatory? 
             // Wait, buyAsset is "Optional" for Expense? No, Expense is mandatory usually.
             // But buyAsset calls imply "User Clicked Pay".
@@ -1364,7 +1365,7 @@ export class GameEngine {
             // So buyAsset works for Expense IF checks pass.
             // Line 1123 log.
 
-            this.state.log.push(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
+            this.addLog(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
 
             // Discard the paid expense card
             if (this.state.currentCard) {
@@ -1401,7 +1402,7 @@ export class GameEngine {
             player.liabilities.push({ name: `Mortgage (${card.title})`, value: mortgage });
         }
 
-        this.state.log.push(`${player.name} bought ${card.title}. Passive Income +$${card.cashflow || 0}`);
+        this.addLog(`${player.name} bought ${card.title}. Passive Income +$${card.cashflow || 0}`);
 
         // Clear card so it isn't discarded in endTurn
         this.state.currentCard = undefined;
@@ -1426,7 +1427,7 @@ export class GameEngine {
         const stock = player.assets[stockIndex];
 
         if ((stock.quantity || 0) < quantity) {
-            this.state.log.push(`${player.name} cannot sell ${quantity} ${stock.symbol}: Only have ${stock.quantity}`);
+            this.addLog(`${player.name} cannot sell ${quantity} ${stock.symbol}: Only have ${stock.quantity}`);
             return;
         }
 
@@ -1453,7 +1454,7 @@ export class GameEngine {
             player.assets.splice(stockIndex, 1);
         }
 
-        this.state.log.push(`📈 ${player.name} sold ${quantity} ${card.symbol} @ $${price} for $${saleTotal}`);
+        this.addLog(`📈 ${player.name} sold ${quantity} ${card.symbol} @ $${price} for $${saleTotal}`);
 
         // Do NOT end turn. Selling stock is an open market action.
     }
@@ -1464,7 +1465,7 @@ export class GameEngine {
 
         if (!fromPlayer || !toPlayer) return;
         if (fromPlayer.cash < amount) {
-            this.state.log.push(`${fromPlayer.name} failed transfer: Insufficient funds.`);
+            this.addLog(`${fromPlayer.name} failed transfer: Insufficient funds.`);
             return;
         }
 
@@ -1479,7 +1480,7 @@ export class GameEngine {
             type: 'TRANSFER'
         });
 
-        this.state.log.push(`${fromPlayer.name} transferred $${amount} to ${toPlayer.name}`);
+        this.addLog(`${fromPlayer.name} transferred $${amount} to ${toPlayer.name}`);
     }
 
     private recordTransaction(t: Omit<Transaction, 'id' | 'timestamp'>) {
@@ -1497,7 +1498,7 @@ export class GameEngine {
         if (this.state.turnExpiresAt && Date.now() > this.state.turnExpiresAt) {
             const player = this.state.players[this.state.currentPlayerIndex];
             if (player) {
-                this.state.log.push(`⌛ Turn timeout for ${player.name}`);
+                this.addLog(`⌛ Turn timeout for ${player.name}`);
             }
             this.endTurn();
             return true;
@@ -1526,7 +1527,7 @@ export class GameEngine {
             // 1. Bankrupted or Won -> SKIP PERMANENTLY
             if (nextPlayer.isBankrupted || nextPlayer.hasWon) {
                 // Log only once per full cycle to avoid spam? Or just log.
-                // this.state.log.push(`⏩ Skipping ${nextPlayer.name} (${nextPlayer.isBankrupted ? 'Bankrupted' : 'Finished'})`);
+                // this.addLog(`⏩ Skipping ${nextPlayer.name} (${nextPlayer.isBankrupted ? 'Bankrupted' : 'Finished'})`);
                 attempts++;
                 continue;
             }
@@ -1534,7 +1535,7 @@ export class GameEngine {
             // 2. Skipped Turns -> Decrement and Skip
             if ((nextPlayer.skippedTurns || 0) > 0) {
                 nextPlayer.skippedTurns--;
-                this.state.log.push(`🚫 ${nextPlayer.name} skips turn (Remaining: ${nextPlayer.skippedTurns})`);
+                this.addLog(`🚫 ${nextPlayer.name} skips turn (Remaining: ${nextPlayer.skippedTurns})`);
                 this.state.lastEvent = { type: 'TURN_SKIPPED', payload: { player: nextPlayer.name, remaining: nextPlayer.skippedTurns } };
                 attempts++;
                 continue;
@@ -1549,7 +1550,7 @@ export class GameEngine {
         this.state.turnExpiresAt = Date.now() + 120000; // Reset timer 120s
 
         const activePlayer = this.state.players[this.state.currentPlayerIndex];
-        // this.state.log.push(`Now it is ${activePlayer.name}'s turn.`);
+        // this.addLog(`Now it is ${activePlayer.name}'s turn.`);
     }
 
     private forcePayment(player: PlayerState, amount: number, description: string) {
@@ -1557,7 +1558,7 @@ export class GameEngine {
 
         if (player.cash >= amount) {
             player.cash -= amount;
-            this.state.log.push(`💸 ${player.name} paid $${amount} for ${description}`);
+            this.addLog(`💸 ${player.name} paid $${amount} for ${description}`);
             return;
         }
 
@@ -1581,7 +1582,7 @@ export class GameEngine {
 
         if (player.cashflow - potentialInterest >= 0 && !player.isBankrupted) {
             // Auto Take Loan through public method to ensure strict logic
-            this.state.log.push(`⚠️ ${player.name} forcing loan $${neededLoan} for ${description}...`);
+            this.addLog(`⚠️ ${player.name} forcing loan $${neededLoan} for ${description}...`);
 
             // We need to bypass "turn check" if any? No, takeLoan is open.
             // But takeLoan uses `state.players.find...`. 
@@ -1591,7 +1592,7 @@ export class GameEngine {
             // Verify if loan was taken (cash increased)
             if (player.cash >= amount) {
                 player.cash -= amount;
-                this.state.log.push(`💸 Paid $${amount} after loan.`);
+                this.addLog(`💸 Paid $${amount} after loan.`);
             } else {
                 // Failed to take loan despite check? (Maybe block logic?)
                 this.bankruptPlayer(player);
@@ -1603,7 +1604,7 @@ export class GameEngine {
     }
 
     private bankruptPlayer(player: PlayerState) {
-        this.state.log.push(`☠️ ${player.name} IS BANKRUPT! Resetting...`);
+        this.addLog(`☠️ ${player.name} IS BANKRUPT! Resetting...`);
         this.state.lastEvent = { type: 'BANKRUPTCY', payload: { player: player.name } };
 
         // Reset Logic
@@ -1649,10 +1650,10 @@ export class GameEngine {
             // "3 разово выплачивается 5000$"
             player.cash += 5000;
 
-            this.state.log.push(`👶 Baby Born! (Roll: ${roll}). +$5000 Gift. Expenses +$${childExpense}/mo`);
+            this.addLog(`👶 Baby Born! (Roll: ${roll}). +$5000 Gift. Expenses +$${childExpense}/mo`);
             this.state.lastEvent = { type: 'BABY_BORN', payload: { player: player.name } };
         } else {
-            this.state.log.push(`No Baby (Roll: ${roll}). Better luck next time!`);
+            this.addLog(`No Baby (Roll: ${roll}). Better luck next time!`);
             this.state.lastEvent = { type: 'BABY_MISSED', payload: { player: player.name } };
         }
 
