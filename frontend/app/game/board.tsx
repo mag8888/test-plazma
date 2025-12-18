@@ -96,8 +96,8 @@ const getAvatarColor = (id: string) => {
 };
 
 const getInitials = (name: string) => {
-    if (!name) return '?';
-    return name.slice(0, 2).toUpperCase();
+    if (!name || typeof name !== 'string') return '?';
+    return name.substring(0, 2).toUpperCase();
 };
 
 export default function GameBoard({ roomId, initialState }: BoardProps) {
@@ -316,11 +316,11 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                 // My Turn Check
                 const oldIdx = state?.currentPlayerIndex;
-                const newIdx = data.state.currentPlayerIndex;
-                const meInList = data.state.players.findIndex((p: any) => p.id === socket.id);
+                const newIdx = data.state?.currentPlayerIndex;
+                const meInList = data.state?.players?.findIndex((p: any) => p.id === socket.id);
 
                 // If turn passed TO me
-                if (oldIdx !== newIdx && newIdx === meInList) {
+                if (typeof oldIdx === 'number' && typeof newIdx === 'number' && oldIdx !== newIdx && newIdx === meInList) {
                     sfx.play('turn');
                 }
 
@@ -341,8 +341,8 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             isRollingRef.current = false;
 
             // My Turn Check
-            const meInList = data.state.players.findIndex((p: any) => p.id === socket.id);
-            if (data.state.currentPlayerIndex === meInList) {
+            const meInList = data.state?.players?.findIndex((p: any) => p.id === socket.id);
+            if (data.state?.currentPlayerIndex === meInList) {
                 sfx.play('turn');
             }
 
@@ -1383,12 +1383,10 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                     <div className="space-y-3 pb-2">
                                         {state.players.map((p: any) => (
                                             <div key={p.id} className={`flex items-center gap-3 p-3 rounded-2xl border transition-all duration-300 group ${p.id === currentPlayer.id ? 'bg-slate-800/90 border-blue-500/50 shadow-[0_4px_20px_rgba(59,130,246,0.15)] scale-[1.02]' : 'bg-slate-900/40 border-slate-800/50 hover:bg-slate-800/60'} `}>
-                                                <div className={`text-2xl w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-xl border shadow-inner text-white font-bold bg-gradient-to-br overflow-hidden relative ${getAvatarColor(p.id)} border-white/10`}>
-                                                    {p.photo_url ? (
-                                                        <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        getInitials(p.name)
-                                                    )}
+                                                <div className={`w-12 h-12 flex-shrink-0 rounded-full border-2 shadow-[0_0_15px_rgba(0,0,0,0.5)] flex items-center justify-center text-xl relative bg-slate-900 ${p.id === currentPlayer.id ? 'border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-105' : 'border-slate-600'}`}>
+                                                    {/* Chip Content */}
+                                                    {p.token}
+                                                    {/* Optional: Avatar Image Overlay if requested, but user said "make chips like board" which are tokens */}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="text-sm font-bold text-slate-200 truncate flex items-center gap-2">
@@ -1521,7 +1519,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             }
 
             {/* BOTTOM NAV MOBILE */}
-            <div className="lg:hidden bg-[#0B0E14]/90 backdrop-blur-xl border-t border-slate-800/50 p-3 pb-8 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
+            <div className="lg:hidden bg-[#0B0E14]/90 backdrop-blur-xl border-t border-slate-800/50 p-3 pb-3 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
                 <div className="max-w-md mx-auto flex justify-between items-center gap-3">
                     <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="flex flex-col items-center gap-1 p-2 w-14 text-slate-400 hover:text-white transition-colors">
                         <span className="text-xl">☰</span>
