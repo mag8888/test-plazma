@@ -30,8 +30,12 @@ export class CloudinaryService {
             });
             return result.secure_url;
         } catch (error: any) {
-            console.error("Cloudinary Upload Error:", error);
-            throw new Error(`Upload failed: ${error.message}`);
+            if (error.message?.includes('Invalid cloud_name') || error.http_code === 401) {
+                console.warn(`Cloudinary Config Error: ${error.message} (Check .env)`);
+            } else {
+                console.warn("Cloudinary Upload Skipped:", error.message);
+            }
+            throw error; // Rethrow so caller knows it failed (and uses fallback)
         }
     }
 }

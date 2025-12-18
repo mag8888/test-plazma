@@ -1,6 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 import { RoomModel, IRoom, IPlayer } from '../models/room.model';
 import { UserModel } from '../models/user.model';
+import mongoose from 'mongoose';
 
 export class RoomService {
 
@@ -26,6 +27,18 @@ export class RoomService {
             throw new Error("Комната с таким именем уже существует");
         }
 
+        // Resolve User Photo safe lookup
+        let userPhoto = '';
+        try {
+            if (mongoose.Types.ObjectId.isValid(userId)) {
+                const u = await UserModel.findById(userId);
+                userPhoto = u?.photo_url || '';
+            } else if (!isNaN(Number(userId))) {
+                const u = await UserModel.findOne({ telegram_id: Number(userId) });
+                userPhoto = u?.photo_url || '';
+            }
+        } catch (e) { }
+
         // 4. Create proper new room
         const room = await RoomModel.create({
             name,
@@ -40,7 +53,7 @@ export class RoomService {
                 isReady: false,
                 token: '🦊', // Default fallback
                 dream: 'Дом мечты ($100 000)', // Default fallback
-                photo_url: (await UserModel.findById(userId))?.photo_url
+                photo_url: userPhoto
             }],
             status: 'waiting',
             createdAt: Date.now()
@@ -59,6 +72,18 @@ export class RoomService {
             }
         }
 
+        // Resolve User Photo safe lookup
+        let userPhoto = '';
+        try {
+            if (mongoose.Types.ObjectId.isValid(userId)) {
+                const u = await UserModel.findById(userId);
+                userPhoto = u?.photo_url || '';
+            } else if (!isNaN(Number(userId))) {
+                const u = await UserModel.findOne({ telegram_id: Number(userId) });
+                userPhoto = u?.photo_url || '';
+            }
+        } catch (e) { }
+
         // 1. Try to update EXISTING player (Atomic)
         let room = await RoomModel.findOneAndUpdate(
             { _id: roomId, "players.userId": userId },
@@ -68,7 +93,7 @@ export class RoomService {
                     "players.$.name": playerName,
                     "players.$.token": token || '🦊',
                     "players.$.dream": dream || 'Дом мечты ($100 000)',
-                    "players.$.photo_url": (await UserModel.findById(userId))?.photo_url
+                    "players.$.photo_url": userPhoto
                 }
             },
             { new: true }
@@ -122,7 +147,7 @@ export class RoomService {
                         isReady: false,
                         token: finalToken,
                         dream: dream || 'Дом мечты ($100 000)',
-                        photo_url: (await UserModel.findById(userId))?.photo_url
+                        photo_url: userPhoto
                     }
                 }
             },
