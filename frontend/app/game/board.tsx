@@ -626,7 +626,10 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <div className="flex justify-between items-center mb-1">
-                                                <span className={`text-sm font-bold truncate ${p.id === currentPlayer.id ? 'text-white' : 'text-slate-400'}`}>{p.name}</span>
+                                                <div className="text-sm font-bold text-slate-200 truncate flex items-center gap-2">
+                                                    {p.name}
+                                                    {(p.skippedTurns || 0) > 0 && <span className="text-[10px] bg-red-900/50 text-red-200 px-1.5 py-0.5 rounded border border-red-500/30" title="Пропуск хода">⛔ {p.skippedTurns}</span>}
+                                                </div>
                                                 {p.id === currentPlayer.id && <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Ходит</span>}
                                             </div>
                                             <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
@@ -1356,7 +1359,10 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                         </div>
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                        <div className="text-sm font-bold text-slate-200 truncate">{p.name}</div>
+                                        <div className="text-sm font-bold text-slate-200 truncate flex items-center gap-2">
+                                            {p.name}
+                                            {(p.skippedTurns || 0) > 0 && <span className="text-[10px] bg-red-900/50 text-red-200 px-1.5 py-0.5 rounded border border-red-500/30" title="Пропуск хода">⛔ {p.skippedTurns}</span>}
+                                        </div>
                                         <div className="text-[10px] text-slate-500 font-mono">${p.cash?.toLocaleString()}</div>
                                     </div>
                                     {p.id === currentPlayer.id && <div className="text-[8px] text-blue-400 bg-blue-900/20 px-2 py-0.5 rounded-full font-bold uppercase tracking-wider animate-pulse">Ходит</div>}
@@ -1445,13 +1451,36 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                         </div>
                     )}
 
-                    {/* Existing Rules Button (Keep or Remove? User asked for menu, maybe remove generic button from bottom if moving to menu? Left it for now as visible shortcut) */}
+                    {/* Existing Rules Button */}
                     <button
                         onClick={() => setShowRules(true)}
                         className="mt-auto w-full py-3 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 font-bold uppercase tracking-widest text-xs hover:bg-violet-500/20 transition-all flex items-center justify-center gap-2 group"
                     >
                         <span className="group-hover:scale-110 transition-transform">📜</span> Правила
                     </button>
+
+                    {/* DOWNSIZED MODAL */}
+                    {state.lastEvent?.type === 'DOWNSIZED' && state.lastEvent.payload?.player === me?.name && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in zoom-in duration-300">
+                            <div className="bg-[#1e293b] w-full max-w-md p-8 rounded-3xl border-2 border-red-500/50 shadow-2xl relative text-center">
+                                <div className="text-6xl mb-4 animate-bounce">📉</div>
+                                <h2 className="text-3xl font-black text-white mb-2 uppercase tracking-wide">ВЫ УВОЛЕНЫ!</h2>
+                                <h3 className="text-xl text-red-400 font-bold mb-6">YOU ARE FIRED</h3>
+
+                                <div className="bg-slate-900/50 rounded-xl p-4 mb-6 border border-slate-700/50">
+                                    <p className="text-slate-300 text-sm mb-2">Вы потеряли работу и пропускаете <span className="text-white font-bold">2 хода</span>.</p>
+                                    <p className="text-slate-400 text-xs">Все ваши активы сохранены, но вам пришлось оплатить свои расходы.</p>
+                                </div>
+
+                                <button
+                                    onClick={handleEndTurn}
+                                    className="w-full py-4 rounded-xl bg-gradient-to-r from-red-600 to-red-800 hover:from-red-500 hover:to-red-700 text-white font-bold shadow-lg shadow-red-900/40 transition-all transform hover:scale-[1.02] active:scale-95"
+                                >
+                                    ОК, Понятно
+                                </button>
+                            </div>
+                        </div>
+                    )}
 
                     {/* Exit Button */}
                     <button
