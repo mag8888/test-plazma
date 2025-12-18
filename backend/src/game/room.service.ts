@@ -78,6 +78,16 @@ export class RoomService {
         const isAlreadyInRoom = roomCheck.players.some((p: any) => p.userId === userId);
         if (roomCheck.status !== 'waiting' && !isAlreadyInRoom) throw new Error("Game already started");
 
+        // Determine unique token for new player
+        const ALL_TOKENS = ['🦊', '🐱', '🐭', '🐹', '🐰', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷'];
+        const existingTokens = roomCheck.players.map((p: any) => p.token);
+        let finalToken = token || '🦊';
+
+        if (existingTokens.includes(finalToken)) {
+            const free = ALL_TOKENS.find(t => !existingTokens.includes(t));
+            if (free) finalToken = free;
+        }
+
         // Atomic Push with Max Players check using query
         room = await RoomModel.findOneAndUpdate(
             {
@@ -92,7 +102,7 @@ export class RoomService {
                         userId: userId,
                         name: playerName,
                         isReady: false,
-                        token: token || '🦊',
+                        token: finalToken,
                         dream: dream || 'Дом мечты ($100 000)'
                     }
                 }
@@ -233,14 +243,28 @@ export class RoomService {
             throw new Error("Выберите мечту перед тем как нажать Готов");
         }
 
-        // Validate Token Uniqueness
-        if (token) {
-            const tokenTaken = (roomCheck as any).players.some((p: IPlayer) => p.token === token && p.userId !== player!.userId);
-            if (tokenTaken) {
-                console.error(`Token ${token} taken by another player in room ${roomId}`);
-                throw new Error("Эта фишка уже занята другим игроком");
+        // Validate Token Uniqueness and Auto-Assign if taken
+        const ALL_TOKENS = ['🦊', '🐱', '🐭', '🐹', '🐰', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷'];
+
+        let finalToken = token || '🦊';
+
+        // Check availability of the requested token
+        const isTokenTaken = (roomCheck as any).players.some((p: IPlayer) => p.token === finalToken && p.userId !== player!.userId);
+
+        if (isTokenTaken) {
+            console.log(`Token ${finalToken} is taken. Finding a free one...`);
+            // Find first free token
+            const usedTokens = (roomCheck as any).players.map((p: IPlayer) => p.token);
+            const freeToken = ALL_TOKENS.find(t => !usedTokens.includes(t));
+
+            if (freeToken) {
+                finalToken = freeToken;
+                console.log(`Assigned free token: ${finalToken}`);
+            } else {
+                throw new Error("Все фишки заняты! Невозможно выбрать уникальную.");
             }
         }
+
 
         // 2. Atomic Update using arrayFilters for robustness
         const filter = { _id: roomId };
@@ -252,7 +276,7 @@ export class RoomService {
         };
 
         if (dream) updateOp.$set["players.$[elem].dream"] = dream;
-        if (token) updateOp.$set["players.$[elem].token"] = token;
+        if (finalToken) updateOp.$set["players.$[elem].token"] = finalToken;
 
         // Match the player by userId preference, then socketId
         // We need to know WHICH one to match.
