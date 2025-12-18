@@ -91,9 +91,9 @@ function GameContent() {
         const onConnect = () => {
             joinGame();
         };
-    }
+    }, [roomId, user]);
 
-        const handleConnect = () => {
+    const handleConnect = () => {
         console.log("Reconnected. Re-joining...");
         joinGame();
     };
