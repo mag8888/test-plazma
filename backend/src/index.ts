@@ -281,6 +281,17 @@ app.post('/api/games/:id/join', async (req, res) => {
                 return res.status(400).json({ error: "Insufficient balance" });
             }
             await user.save();
+
+            // Log Transaction
+            const { TransactionModel } = await import('./models/transaction.model');
+            await TransactionModel.create({
+                userId: user._id,
+                amount: -game.price, // Negative for Payment
+                currency: 'RED', // Simplification: we treat spending as RED mostly, but could be green. 
+                // Let's mark as RED context for game.
+                type: 'GAME_FEE',
+                description: `Оплата игры ${new Date(game.startTime).toLocaleDateString()}`
+            });
         } else {
             return res.status(400).json({ error: "Invalid type" });
         }

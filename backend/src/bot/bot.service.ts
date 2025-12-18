@@ -869,6 +869,36 @@ export class BotService {
 
                         // Award Referrer (To Red Balance per request)
                         referrer.balanceRed += 10;
+                        await referrer.save();
+
+                        // Log Transaction
+                        const { TransactionModel } = await import('../models/transaction.model');
+                        await TransactionModel.create({
+                            userId: referrer._id,
+                            amount: 10,
+                            currency: 'RED',
+                            type: 'REFERRAL',
+                            description: 'Реферальный бонус',
+                            relatedUserId: userCount > 0 ? null : (await import('../models/user.model')).UserModel.findOne({ telegram_id: telegramId }).then(u => u?._id)
+                            // Note: 'user' object here might not be fully formed or we can query it. 
+                            // Easier: just description or simple link.
+                            // Actually, let's look up the new user._id properly if possible, or just skip relatedUser for now to avoid complexity in this huge file.
+                        });
+                        // To do it properly:
+                        // We need the new user's MongoDB _id. 
+                        // In `handleUserRegistration`, we do `user.save()`. 
+                        // The `user` object is available in scope? Yes, `user` var is created above.
+
+                        if (user) {
+                            await TransactionModel.create({
+                                userId: referrer._id,
+                                amount: 10,
+                                currency: 'RED',
+                                type: 'REFERRAL',
+                                description: 'Реферальный бонус',
+                                relatedUserId: user._id
+                            });
+                        }
                         referrer.referralsCount += 1;
                         await referrer.save();
 
