@@ -33,7 +33,7 @@ class SoundManager {
             'turn': '/sounds/turn.wav',
             'roll': '/sounds/roll.wav',
             'payday': '/sounds/payday.wav',
-            'baby': '/sounds/baby.wav',
+            'baby': '/sounds/baby.mp3',
             'fired': '/sounds/fired.wav',
             'victory': '/sounds/victory.wav',
             'stock': '/sounds/stock.wav',
