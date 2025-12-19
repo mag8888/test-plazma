@@ -131,19 +131,17 @@ export default function EditGameModal({ game, onClose, onUpdate }: EditGameModal
                         max={100}
                     />
                 </div>
-            </div>
-
-            <div className="pt-2">
-                <button
-                    onClick={handleSave}
-                    disabled={loading}
-                    className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
-                >
-                    {loading ? 'Сохранение...' : 'Сохранить'} <Save size={18} />
-                </button>
-                <p className="text-xs text-center text-slate-500 mt-3">Изменение времени автоматически уведомит участников (soon)</p>
+                <div className="pt-2">
+                    <button
+                        onClick={handleSave}
+                        disabled={loading}
+                        className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
+                    >
+                        {loading ? 'Сохранение...' : 'Сохранить'} <Save size={18} />
+                    </button>
+                    <p className="text-xs text-center text-slate-500 mt-3">Изменение времени автоматически уведомит участников (soon)</p>
+                </div>
             </div>
         </div>
-        </div >
     );
 }
