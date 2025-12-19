@@ -992,7 +992,7 @@ export class BotService {
                         referrer.referralsCount += 1;
                         await referrer.save();
 
-                        this.bot?.sendMessage(referrer.telegram_id!, `🎉 У вас новый реферал: ${firstName}! Баланс +$10 (🔴 Red Balance).`);
+                        this.bot?.sendMessage(referrer.telegram_id!, `🎉 У вас новый реферал: ${firstName} (@${username})! Баланс +$10 (🔴 Red Balance).`);
                     }
                 }
 
