@@ -1065,6 +1065,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                                             max="100000"
                                                             value={stockQty}
                                                             onChange={(e) => setStockQty(Math.max(1, parseInt(e.target.value) || 1))}
+                                                            onFocus={(e) => e.target.select()}
                                                             className="flex-1 bg-transparent text-white font-mono font-bold text-lg outline-none text-right"
                                                         />
                                                     </div>
