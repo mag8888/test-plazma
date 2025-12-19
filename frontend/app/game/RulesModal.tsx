@@ -29,7 +29,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
             <p className="text-xs text-slate-400 leading-snug">{card.description}</p>
             <div className="mt-auto pt-2 border-t border-slate-700/50 flex justify-between items-center text-xs">
                 {(card.cost || card.downPayment) ? (
-                    <span className="text-red-400 font-mono font-bold">-${(card.downPayment ?? card.cost).toLocaleString()}</span>
+                    <span className="text-red-400 font-mono font-bold">-${(card.downPayment ?? card.cost ?? 0).toLocaleString()}</span>
                 ) : card.offerPrice ? (
                     <span className="text-green-400 font-mono font-bold text-[10px] leading-tight">Предлагают: ${card.offerPrice.toLocaleString()}</span>
                 ) : <span></span>}
