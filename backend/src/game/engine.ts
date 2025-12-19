@@ -282,29 +282,22 @@ export class GameEngine {
     private checkFastTrackCondition(player: PlayerState) {
         if (player.isFastTrack) return;
 
-        // Condition: Passive Income > 2 * Expenses AND 2 Businesses (Classic or Network)
-        // User Requirement: "Current passive income exceeds expenses by 2 times"
-        const businessCount = player.assets.filter((a: any) =>
-            a.businessType === 'CLASSIC' || a.businessType === 'NETWORK'
-        ).length;
+        // Condition: Passive Income >= Expenses
+        // User Requirement: "mandatory condition for entering big track is loan repayment" -> loanDebt === 0
 
-        // Reset flag if conditions lost
+        // Reset flag
+        const wasCanEnter = player.canEnterFastTrack;
         player.canEnterFastTrack = false;
 
-        // Check conditions
-        if (player.passiveIncome >= (player.expenses * 2) && businessCount >= 2) {
-            // NO AUTO TRANSITION. Just enable manual entry.
-            // Crucially, Loan must be repaid? User said: "Mandatory condition ... is repayment of loan after entering big track"
-            // Wait, "Must repay loan AFTER entering big track" -> No, "mandatory condition for entering is repayment of loan"
-            // User text: "обязательным условиям выхода на бльшой трек является погашение кредита"
-            // So if loanDebt > 0, cannot enter? Or must repay immediately? 
-            // "repayment of loan" implies State: No Debt.
-
-            if (player.loanDebt === 0 && player.cash >= 200000) {
+        if (player.passiveIncome >= player.expenses) {
+            if (player.loanDebt === 0) {
                 player.canEnterFastTrack = true;
-                if (!this.state.log.some(l => l.includes(`${player.name} can now enter Fast Track`))) {
-                    this.addLog(`🚀 ${player.name} can now enter Fast Track! (Passive > 2x Expenses, No Debt, $200k Cash)`);
+                if (!wasCanEnter) {
+                    this.addLog(`🚀 ${player.name} is ready for Fast Track! (Passive Income > Expenses & No Debt)`);
                 }
+            } else {
+                // Info log if they have income but still claim debt?
+                // frequent logging might spam, relying on UI to show "Pay off debt"
             }
         }
     }
