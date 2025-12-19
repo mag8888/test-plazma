@@ -59,7 +59,10 @@ export const MenuModal = ({
                 {/* Links */}
                 <div className="space-y-3 mb-8">
                     <button
-                        onClick={onShowRules}
+                        onClick={() => {
+                            onClose();
+                            onShowRules();
+                        }}
                         className="w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold flex items-center justify-center gap-3 transition-colors border border-slate-700/50"
                     >
                         <span className="text-xl">📜</span> Правила Игры

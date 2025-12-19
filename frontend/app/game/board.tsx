@@ -144,6 +144,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     const [pendingState, setPendingState] = useState<any | null>(null);
     const [squareInfo, setSquareInfo] = useState<any>(null);
     const [babyNotification, setBabyNotification] = useState<string | null>(null);
+    const [turnNotification, setTurnNotification] = useState<string | null>(null);
     const [isAnimating, setIsAnimating] = useState(false);
 
     // Timer State
@@ -152,10 +153,16 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     // Local state to track if player has rolled this turn
     const [hasRolled, setHasRolled] = useState(false);
 
-    // Reset hasRolled when turn changes
+    // Reset hasRolled when turn changes or Phase resets to ROLL
     useEffect(() => {
         setHasRolled(false);
     }, [state.currentPlayerIndex]);
+
+    useEffect(() => {
+        if (state.phase === 'ROLL') {
+            setHasRolled(false);
+        }
+    }, [state.phase]);
 
     useEffect(() => {
         if (state.lastEvent?.type === 'BABY_BORN') {
@@ -211,6 +218,14 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 // If I set cashflow, it will show GREEN.
             });
             // No timeout to close, let user close it.
+        } else if (state.lastEvent?.type === 'TURN_SKIPPED') {
+            setTurnNotification(`🚫 ${state.lastEvent.payload?.player} пропускает ход! (Осталось: ${state.lastEvent.payload?.remaining})`);
+            setTimeout(() => setTurnNotification(null), 3000);
+
+            // Critical Fix: If opponent skipped and turn passed back to me, reset local rolled state
+            if (state.players[state.currentPlayerIndex].id === socket.id) {
+                setHasRolled(false);
+            }
         }
     }, [state.lastEvent]);
 
@@ -507,29 +522,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
     return (
         <div className="h-[100dvh] max-h-[100dvh] bg-[#0f172a] text-white font-sans flex flex-col overflow-hidden relative">
 
-            {/* 🔝 TOP PLAYER BAR (New Layout) */}
-            <div className="hidden lg:flex h-20 bg-[#1e293b] border-b border-slate-800/80 items-center px-6 gap-6 relative z-50 shadow-md flex-shrink-0">
-                <div className="flex items-center gap-2 font-black text-2xl tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-500 mr-4">
-                    <span className="text-3xl">M</span> MONEO
-                </div>
 
-                <div className="flex-1 flex items-center gap-4 overflow-x-auto custom-scrollbar pb-1">
-                    {state.players.map((p: any) => {
-                        const isActive = p.id === currentPlayer.id;
-                        return (
-                            <div key={p.id} className={`flex items-center gap-3 px-1 py-1 pr-4 rounded-full border transition-all duration-300 ${isActive ? 'bg-slate-800 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.2)] scale-105' : 'bg-slate-900/40 border-slate-700/30 opacity-70 hover:opacity-100'}`}>
-                                <div className={`w-10 h-10 rounded-full border-2 flex items-center justify-center text-lg relative ${isActive ? 'border-green-400 shadow-inner' : 'border-slate-600 grayscale'} ${getAvatarColor(p.id)} bg-gradient-to-br`}>
-                                    {p.photo_url ? <img src={p.photo_url} className="w-full h-full object-cover rounded-full" /> : p.token}
-                                </div>
-                                <div>
-                                    <div className={`text-xs font-bold leading-tight ${isActive ? 'text-white' : 'text-slate-400'}`}>{p.name}</div>
-                                    <div className="text-[10px] font-mono text-slate-500">$ {p.cash?.toLocaleString()}</div>
-                                </div>
-                            </div>
-                        );
-                    })}
-                </div>
-            </div>
 
             {showRankings && (
                 <RankingsModal
@@ -1429,6 +1422,36 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
 
                     {/* 2. ACTIONS PANEL */}
                     <div className="p-4 shrink-0">
+
+                        {/* 1.5. PLAYERS LIST (New for Desktop) */}
+                        <div className="p-4 pb-0 shrink-0">
+                            <div className="bg-[#1e293b]/50 rounded-2xl p-4 border border-slate-700/50 shadow-lg flex flex-col gap-2 relative overflow-hidden">
+                                <h3 className="text-slate-500 text-[10px] uppercase tracking-[0.25em] font-black mb-2 flex items-center gap-2">
+                                    <span className="text-blue-400">👥</span> ИГРОКИ ({state.players.length})
+                                </h3>
+                                <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
+                                    {state.players.map((p: any) => {
+                                        const isActive = p.id === currentPlayer.id;
+                                        return (
+                                            <div key={p.id} className={`flex items-center gap-3 px-3 py-2 rounded-xl border transition-all duration-300 ${isActive ? 'bg-slate-800 border-green-500/30' : 'bg-slate-900/30 border-transparent opacity-60'}`}>
+                                                <div className="relative">
+                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs border ${isActive ? 'border-green-400' : 'border-slate-600'} ${getAvatarColor(p.id)}`}>
+                                                        {p.photo_url ? <img src={p.photo_url} className="w-full h-full object-cover rounded-full" /> : p.token}
+                                                    </div>
+                                                    {isActive && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className={`text-xs font-bold truncate ${isActive ? 'text-white' : 'text-slate-400'}`}>{p.name}</div>
+                                                    <div className="text-[10px] font-mono text-slate-500">$ {p.cash?.toLocaleString()}</div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        </div>
+
+
                         <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-2xl relative">
                             <h3 className="text-slate-400 text-[10px] uppercase tracking-[0.25em] font-black mb-4 flex items-center gap-2">
                                 <span className="text-yellow-400">⚡</span> ДЕЙСТВИЯ
@@ -1632,6 +1655,22 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                     hasWinner={state.players.some((p: any) => p.hasWon)}
                 />
             )}
-        </div >
+            {/* Notifications Overlay */}
+            {(babyNotification || turnNotification) && (
+                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-slate-900 border-2 border-slate-700 p-8 rounded-3xl shadow-2xl max-w-md text-center transform scale-100 animate-in zoom-in-95 duration-200">
+                        <div className="text-6xl mb-4 animate-bounce">
+                            {babyNotification ? '👶' : '🚫'}
+                        </div>
+                        <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">
+                            {babyNotification ? 'Новая Жизнь!' : 'Пропуск Хода!'}
+                        </h2>
+                        <div className={`text-lg font-bold ${babyNotification ? 'text-pink-300' : 'text-red-400'}`}>
+                            {babyNotification || turnNotification}
+                        </div>
+                    </div>
+                </div>
+            )}
+        </div>
     );
 }

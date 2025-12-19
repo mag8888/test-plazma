@@ -28,8 +28,8 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
             <h4 className="font-bold text-white text-sm leading-tight">{card.title}</h4>
             <p className="text-xs text-slate-400 leading-snug">{card.description}</p>
             <div className="mt-auto pt-2 border-t border-slate-700/50 flex justify-between items-center text-xs">
-                {card.cost ? (
-                    <span className="text-red-400 font-mono font-bold">-${card.cost.toLocaleString()}</span>
+                {(card.cost || card.downPayment) ? (
+                    <span className="text-red-400 font-mono font-bold">-${(card.downPayment ?? card.cost).toLocaleString()}</span>
                 ) : card.offerPrice ? (
                     <span className="text-green-400 font-mono font-bold text-[10px] leading-tight">Предлагают: ${card.offerPrice.toLocaleString()}</span>
                 ) : <span></span>}
@@ -132,10 +132,10 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
                         {/* Show counts in header if not rules */}
                         {activeTab !== 'RULES' && counts && (
                             <span className="ml-3 text-red-500 text-lg font-mono">
-                                {activeTab === 'SMALL' && `${counts.small.remaining}/${counts.small.total}`}
-                                {activeTab === 'BIG' && `${counts.big.remaining}/${counts.big.total}`}
-                                {activeTab === 'MARKET' && `${counts.market.remaining}/${counts.market.total}`}
-                                {activeTab === 'EXPENSE' && `${counts.expense.remaining}/${counts.expense.total}`}
+                                {activeTab === 'SMALL' && `${counts.small.total}/${counts.small.remaining}`}
+                                {activeTab === 'BIG' && `${counts.big.total}/${counts.big.remaining}`}
+                                {activeTab === 'MARKET' && `${counts.market.total}/${counts.market.remaining}`}
+                                {activeTab === 'EXPENSE' && `${counts.expense.total}/${counts.expense.remaining}`}
                             </span>
                         )}
                     </h2>
@@ -162,28 +162,28 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
                             className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'SMALL' ? 'bg-green-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                         >
                             <span>Малые</span>
-                            {counts && <span className="text-[9px] opacity-70">{counts.small.remaining}/{counts.small.total}</span>}
+                            {counts && <span className="text-[9px] opacity-70">{counts.small.total}/{counts.small.remaining}</span>}
                         </button>
                         <button
                             onClick={() => setActiveTab('BIG')}
                             className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'BIG' ? 'bg-purple-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                         >
                             <span>Крупные</span>
-                            {counts && <span className="text-[9px] opacity-70">{counts.big.remaining}/{counts.big.total}</span>}
+                            {counts && <span className="text-[9px] opacity-70">{counts.big.total}/{counts.big.remaining}</span>}
                         </button>
                         <button
                             onClick={() => setActiveTab('MARKET')}
                             className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'MARKET' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                         >
                             <span>Рынок</span>
-                            {counts && <span className="text-[9px] opacity-70">{counts.market.remaining}/{counts.market.total}</span>}
+                            {counts && <span className="text-[9px] opacity-70">{counts.market.total}/{counts.market.remaining}</span>}
                         </button>
                         <button
                             onClick={() => setActiveTab('EXPENSE')}
                             className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'EXPENSE' ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                         >
                             <span>Расходы</span>
-                            {counts && <span className="text-[9px] opacity-70">{counts.expense.remaining}/{counts.expense.total}</span>}
+                            {counts && <span className="text-[9px] opacity-70">{counts.expense.total}/{counts.expense.remaining}</span>}
                         </button>
                     </div>
 
