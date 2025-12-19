@@ -4,6 +4,7 @@ import { useTelegram } from '../../components/TelegramProvider';
 import { Copy, Gift, TrendingUp, Users, Wallet, Check, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { partnershipApi } from '../../lib/partnershipApi';
+import { ProgramDescription } from './ProgramDescription';
 
 export default function EarnPage() {
     const { webApp, user } = useTelegram();
@@ -332,6 +333,9 @@ export default function EarnPage() {
                     </div>
                 </div>
             )}
+
+            {/* Program Description */}
+            <ProgramDescription />
 
         </div>
     );
