@@ -630,8 +630,13 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                             <div className="flex flex-col">
                                                 <span className="text-slate-300 font-medium">
                                                     {a.title}
-                                                    {a.quantity > 0 && <span className="text-slate-500 ml-1 text-[10px]">({a.quantity} шт)</span>}
                                                 </span>
+                                                {a.quantity > 0 && (
+                                                    <div className="flex gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
+                                                        <span className="bg-slate-800 px-1.5 rounded">{a.quantity} шт</span>
+                                                        {a.cost && <span className="text-slate-500">Позиция: ${(a.cost * a.quantity).toLocaleString()}</span>}
+                                                    </div>
+                                                )}
                                                 <span className="font-mono text-green-400 font-bold text-[10px]">+$ {a.cashflow}</span>
                                             </div>
                                             <button
