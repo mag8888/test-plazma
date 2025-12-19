@@ -29,16 +29,16 @@ class SoundManager {
     private preloadSounds() {
         // List of sound keys and their paths
         const soundMap: Record<string, string> = {
-            'start': '/sounds/start.mp3',
-            'turn': '/sounds/turn.mp3',
-            'roll': '/sounds/roll.mp3',
-            'payday': '/sounds/payday.mp3',
-            'baby': '/sounds/baby.mp3',
-            'fired': '/sounds/fired.mp3',
-            'victory': '/sounds/victory.mp3',
-            'stock': '/sounds/stock.mp3',
-            'transfer': '/sounds/transfer.mp3',
-            'fasttrack': '/sounds/fasttrack.mp3'
+            'start': '/sounds/start.wav',
+            'turn': '/sounds/turn.wav',
+            'roll': '/sounds/roll.wav',
+            'payday': '/sounds/payday.wav',
+            'baby': '/sounds/baby.wav',
+            'fired': '/sounds/fired.wav',
+            'victory': '/sounds/victory.wav',
+            'stock': '/sounds/stock.wav',
+            'transfer': '/sounds/transfer.wav',
+            'fasttrack': '/sounds/fasttrack.wav'
         };
 
         for (const [key, path] of Object.entries(soundMap)) {
