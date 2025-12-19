@@ -5,6 +5,7 @@ import { Copy, Gift, TrendingUp, Users, Wallet, Check, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { partnershipApi } from '../../lib/partnershipApi';
 import { ProgramDescription } from './ProgramDescription';
+import { BalanceModal } from './BalanceModal';
 
 export default function EarnPage() {
     const { webApp, user } = useTelegram();
@@ -14,7 +15,11 @@ export default function EarnPage() {
 
     // Modal State
     const [showRefillModal, setShowRefillModal] = useState(false);
+    const [showBalanceModal, setShowBalanceModal] = useState(false);
     const [missingAmount, setMissingAmount] = useState(0);
+
+    // Get current tariff
+    const currentTariff = partnershipUser?.avatars?.find((a: any) => a.active)?.tariff || 'GUEST';
 
     // Use username if available, else ID. Bot handle corrected to MONEO_game_bot
     const referralLink = `https://t.me/MONEO_game_bot?start=${user?.username || user?.id || 'unknown'}`;
@@ -202,15 +207,7 @@ export default function EarnPage() {
                     <div className="text-xl font-bold">{user?.referralsCount || 0}</div>
                     <div className="text-xs text-slate-400">Друзей</div>
                 </div>
-                import {BalanceModal} from './BalanceModal';
 
-                // ... inside component ...
-                const [showBalanceModal, setShowBalanceModal] = useState(false);
-
-    // Get current tariff
-    const currentTariff = partnershipUser?.avatars?.find((a: any) => a.active)?.tariff || 'GUEST';
-
-                // ... render ...
 
                 {/* Red Balance Card */}
                 <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 relative overflow-hidden">
