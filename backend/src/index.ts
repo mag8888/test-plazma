@@ -606,6 +606,15 @@ const bootstrap = async () => {
             console.error('Game Gateway Init Failed:', gwErr);
         }
 
+        // 3.1 Backup Service
+        try {
+            const { BackupService } = await import('./services/backup.service');
+            const backupService = new BackupService();
+            backupService.start();
+        } catch (backupErr) {
+            console.error('Backup Service Init Failed:', backupErr);
+        }
+
         // 4. DB Maintenance (Only if connected)
         if (dbStatus === 'connected') {
             try {

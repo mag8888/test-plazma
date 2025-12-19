@@ -38,4 +38,26 @@ export class CloudinaryService {
             throw error; // Rethrow so caller knows it failed (and uses fallback)
         }
     }
+
+    /**
+     * Uploads a raw file (JSON, TXT, etc) to Cloudinary
+     * @param filePath Local path to the file or content string
+     * @param folder Folder name
+     * @returns Secure URL of the uploaded file
+     */
+    async uploadFile(filePath: string, folder: string = 'moneo_backups'): Promise<string> {
+        try {
+            const result = await cloudinary.uploader.upload(filePath, {
+                folder: folder,
+                resource_type: 'raw',
+                // use original filename + timestamp to avoid overwrites if needed, or let cloudinary handle unique public_ids
+                use_filename: true,
+                unique_filename: true
+            });
+            return result.secure_url;
+        } catch (error: any) {
+            console.error("Cloudinary File Upload Error:", error);
+            throw error;
+        }
+    }
 }
