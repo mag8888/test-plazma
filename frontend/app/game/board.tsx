@@ -1205,7 +1205,7 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                                             </button>
                                                             <button
                                                                 onClick={() => setShowBank(true)}
-                                                                className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2"
+                                                                className={`bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 ${me.isFastTrack ? 'hidden' : ''}`}
                                                             >
                                                                 🤝 Попросить
                                                             </button>
