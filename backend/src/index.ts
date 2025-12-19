@@ -164,6 +164,7 @@ app.put('/api/games/:id', async (req, res) => {
 
         if (startTime) game.startTime = new Date(startTime);
         if (maxPlayers) game.maxPlayers = Number(maxPlayers);
+        if (req.body.promoSpots !== undefined) game.promoSpots = Number(req.body.promoSpots);
         if (description !== undefined) game.description = description;
 
         await game.save();

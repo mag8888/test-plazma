@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useTelegram } from '../../components/TelegramProvider';
-import { X, Save, Clock, Users } from 'lucide-react';
+import { X, Save, Clock, Users, Gift } from 'lucide-react';
 
 interface EditGameModalProps {
     game: any;
@@ -26,17 +26,12 @@ export default function EditGameModal({ game, onClose, onUpdate }: EditGameModal
     // Let's ask user to pick Time (MSK).
     const [timeVal, setTimeVal] = useState(game.time.split(' ')[0]); // Get 16:00 from "16:00"
     const [maxPlayers, setMaxPlayers] = useState(game.max);
+    const [promoSpots, setPromoSpots] = useState(game.promoSpots ?? 6); // Default 6 if undefined? Should be in game object
 
     const handleSave = async () => {
         setLoading(true);
         try {
-            // Construct new Date ISO
-            // We need the original date. `game.date` is "19 декабря". Hard to parse back to year.
-            // WORKAROUND: Pass the raw `startTime` ISO from parent component.
-            // For now, let's assume we can't change Date (Day), only Time.
-            // We need to fetch the game or have raw data. 
-            // I will update SchedulePage to pass raw iso.
-
+            // ... (keep date logic)
             // Assuming `game.rawIso` exists (will add it).
             const originalDate = new Date(game.rawIso);
             const [h, m] = timeVal.split(':').map(Number);
@@ -66,7 +61,8 @@ export default function EditGameModal({ game, onClose, onUpdate }: EditGameModal
                 body: JSON.stringify({
                     initData: webApp?.initData,
                     startTime: finalDate.toISOString(),
-                    maxPlayers: Number(maxPlayers)
+                    maxPlayers: Number(maxPlayers),
+                    promoSpots: Number(promoSpots)
                 })
             });
 
@@ -122,17 +118,32 @@ export default function EditGameModal({ game, onClose, onUpdate }: EditGameModal
                     </div>
                 </div>
 
-                <div className="pt-2">
-                    <button
-                        onClick={handleSave}
-                        disabled={loading}
-                        className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
-                    >
-                        {loading ? 'Сохранение...' : 'Сохранить'} <Save size={18} />
-                    </button>
-                    <p className="text-xs text-center text-slate-500 mt-3">Изменение времени автоматически уведомит участников (soon)</p>
+                <div>
+                    <label className="block text-sm text-slate-400 mb-1 flex items-center gap-2">
+                        <Gift size={14} /> Промо мест
+                    </label>
+                    <input
+                        type="number"
+                        className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-lg font-mono focus:border-blue-500 outline-none"
+                        value={promoSpots}
+                        onChange={(e) => setPromoSpots(Number(e.target.value))}
+                        min={0}
+                        max={100}
+                    />
                 </div>
             </div>
+
+            <div className="pt-2">
+                <button
+                    onClick={handleSave}
+                    disabled={loading}
+                    className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 py-3 rounded-xl font-bold flex items-center justify-center gap-2 transition-colors"
+                >
+                    {loading ? 'Сохранение...' : 'Сохранить'} <Save size={18} />
+                </button>
+                <p className="text-xs text-center text-slate-500 mt-3">Изменение времени автоматически уведомит участников (soon)</p>
+            </div>
         </div>
+        </div >
     );
 }
