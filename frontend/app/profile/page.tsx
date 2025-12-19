@@ -146,19 +146,46 @@ export default function ProfilePage() {
 
                             {transactions.length > 0 ? (
                                 <div className="space-y-2">
-                                    {transactions.map((tx) => (
-                                        <div key={tx._id} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 flex justify-between items-center hover:bg-slate-800 transition-colors">
-                                            <div>
-                                                <div className="font-bold text-sm text-slate-200">{tx.description}</div>
-                                                <div className="text-[10px] text-slate-500 font-medium mt-0.5">
-                                                    {new Date(tx.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                                    {transactions.map((tx) => {
+                                        // Handle related user (populated or just ID)
+                                        const sourceUser = tx.relatedUserId;
+                                        const sourceName = sourceUser ? (sourceUser.username || sourceUser.firstName || sourceUser.first_name || 'Unknown') : null;
+                                        const sourceLink = sourceUser?.username ? `https://t.me/${sourceUser.username}` : null;
+
+                                        return (
+                                            <div key={tx._id} className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50 flex justify-between items-center hover:bg-slate-800 transition-colors">
+                                                <div>
+                                                    <div className="font-bold text-sm text-slate-200">
+                                                        {tx.description}
+                                                        {sourceName && (
+                                                            <span className="ml-1 text-slate-400 font-normal">
+                                                                от{' '}
+                                                                {sourceLink ? (
+                                                                    <a
+                                                                        href={sourceLink}
+                                                                        target="_blank"
+                                                                        rel="noopener noreferrer"
+                                                                        className="text-blue-400 hover:underline hover:text-blue-300"
+                                                                        onClick={(e) => e.stopPropagation()}
+                                                                    >
+                                                                        @{sourceName}
+                                                                    </a>
+                                                                ) : (
+                                                                    <span className="text-slate-400">{sourceName}</span>
+                                                                )}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                    <div className="text-[10px] text-slate-500 font-medium mt-0.5">
+                                                        {new Date(tx.createdAt).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit' })}
+                                                    </div>
+                                                </div>
+                                                <div className={`font-mono font-bold ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                    {tx.amount > 0 ? '+' : ''}{tx.amount}$
                                                 </div>
                                             </div>
-                                            <div className={`font-mono font-bold ${tx.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                                {tx.amount > 0 ? '+' : ''}{tx.amount}$
-                                            </div>
-                                        </div>
-                                    ))}
+                                        );
+                                    })}
                                 </div>
                             ) : (
                                 <div className="bg-slate-800/30 rounded-xl p-8 text-center text-slate-500 text-sm border border-slate-800/50 border-dashed">

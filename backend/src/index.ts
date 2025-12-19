@@ -129,6 +129,7 @@ app.get('/api/transactions', async (req, res) => {
         // Fetch last 50 transactions, sorted by newest
         const transactions = await TransactionModel.find({ userId: user._id })
             .sort({ createdAt: -1 })
+            .populate('relatedUserId', 'username firstName first_name') // Populate source user info
             .limit(50);
 
         res.json(transactions);
