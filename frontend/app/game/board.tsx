@@ -711,15 +711,6 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                                                 {p.id === currentPlayer.id && (
                                                     <div className="flex items-center gap-2">
                                                         <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Ходит</span>
-                                                        {isHost && (
-                                                            <button
-                                                                onClick={handleForceSkip}
-                                                                title="Принудительно завершить ход"
-                                                                className="p-1 bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 rounded transition-colors"
-                                                            >
-                                                                ⏩
-                                                            </button>
-                                                        )}
                                                     </div>
                                                 )}
                                             </div>
@@ -729,16 +720,35 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                                             </div>
                                         </div>
 
-                                        {isHost && p.id !== socket.id && (
-                                            <button
-                                                onClick={() => handleKickPlayer(p.id)}
-                                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-red-500 hover:bg-red-500/20 rounded-lg ml-2"
-                                                title="Удалить игрока"
-                                            >
-                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
-                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                                </svg>
-                                            </button>
+                                        {/* Host Actions */}
+                                        {isHost && (
+                                            <div className="flex items-center gap-1">
+                                                {/* Skip Turn (Only for Current Player) */}
+                                                {p.id === currentPlayer.id && (
+                                                    <button
+                                                        onClick={handleForceSkip}
+                                                        className="p-2 bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-white rounded-lg transition-colors ml-2"
+                                                        title="ПРОПУСТИТЬ ХОД (Скипнуть)"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 5v14l8-7-8-7zm8 0v14l8-7-8-7zm8 0h2v14h-2V5z" />
+                                                        </svg>
+                                                    </button>
+                                                )}
+
+                                                {/* Kick Player (Not for self) */}
+                                                {p.id !== socket.id && (
+                                                    <button
+                                                        onClick={() => handleKickPlayer(p.id)}
+                                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-red-500 hover:bg-red-500/20 rounded-lg"
+                                                        title="Удалить игрока"
+                                                    >
+                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                        </svg>
+                                                    </button>
+                                                )}
+                                            </div>
                                         )}
                                     </div>
                                 ))}
