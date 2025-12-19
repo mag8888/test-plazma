@@ -225,7 +225,7 @@ export class BotService {
                 } else if (adminState.state === 'WAITING_FOR_BALANCE_AMOUNT') {
                     const amount = Number(text);
                     if (!isNaN(amount)) {
-                        const targetUser = adminState.targetUser;
+                        let targetUser = adminState.targetUser;
                         targetUser.referralBalance += amount;
                         await targetUser.save();
 
@@ -244,7 +244,7 @@ export class BotService {
                         }
 
                         // 2. Sync with Partnership Backend (if configured)
-                        const partnershipUrl = process.env.PARTNERSHIP_API_URL || 'http://localhost:8000'; // Fallback
+                        const partnershipUrl = process.env.PARTNERSHIP_API_URL || 'http://localhost:4000/api'; // Correct default port
                         const adminSecret = process.env.ADMIN_SECRET || 'supersecret';
 
                         try {
@@ -256,7 +256,7 @@ export class BotService {
                                     'x-admin-secret': adminSecret
                                 },
                                 body: JSON.stringify({
-                                    userId: targetUser._id.toString(), // Assuming same IDs
+                                    userId: targetUser.telegram_id || targetUser._id.toString(), // Prefer Telegram ID for sync consistency
                                     amount: amount,
                                     type: 'GREEN'
                                 })
@@ -269,7 +269,10 @@ export class BotService {
                             // If silent fail, it's okay-ish for now.
                         }
 
-                        this.bot?.sendMessage(chatId, `✅ Added $${amount} to ${targetUser.username}.\n synced with partnership service.`);
+                        const { UserModel } = await import('../models/user.model');
+                        // Refresh user
+                        targetUser = await UserModel.findById(targetUser._id);
+                        this.bot?.sendMessage(chatId, `✅ Added $${amount} to ${targetUser.username}.\n💰 Legacy Bal: $${targetUser.referralBalance}\n(Attempted Sync to Green Balance).`);
                         this.adminStates.delete(chatId);
                     } else {
                         this.bot?.sendMessage(chatId, "Invalid amount.");

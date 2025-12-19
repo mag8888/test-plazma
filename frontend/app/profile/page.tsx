@@ -152,7 +152,6 @@ export default function ProfilePage() {
                             <div className="bg-gradient-to-br from-blue-900/30 to-slate-900 p-4 rounded-2xl border border-blue-500/20 shadow-xl relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><TrendingUp size={40} /></div>
                                 <p className="text-blue-300/70 text-[10px] font-bold uppercase tracking-wider">Реальный счет</p>
-                                <p className="text-blue-300/70 text-[10px] font-bold uppercase tracking-wider">Реальный счет</p>
                                 <h2 className="text-2xl font-black text-green-400 mt-1">${partnershipBalance}</h2>
                             </div>
                         </div>

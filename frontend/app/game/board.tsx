@@ -30,6 +30,7 @@ interface PlayerState {
     salary: number;
     passiveIncome: number;
     token?: string;
+    photo_url?: string; // Avatar URL
     professionName?: string;
     isBankrupted?: boolean;
     canEnterFastTrack?: boolean;
@@ -147,6 +148,9 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
     const [babyNotification, setBabyNotification] = useState<string | null>(null);
     const [turnNotification, setTurnNotification] = useState<string | null>(null);
     const [isAnimating, setIsAnimating] = useState(false);
+
+    // Host Menu State
+    const [selectedPlayerForMenu, setSelectedPlayerForMenu] = useState<PlayerState | null>(null);
 
     // Timer State
     const [timeLeft, setTimeLeft] = useState(120);
@@ -694,7 +698,15 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                             </h3>
                             <div className="space-y-2">
                                 {state.players.map((p: any) => (
-                                    <div key={p.id} className={`flex items-center gap-3 p-3 rounded-xl border transition-all ${p.id === currentPlayer.id ? 'bg-slate-800/80 border-blue-500/50 shadow-lg shadow-blue-900/10' : 'bg-slate-900/30 border-slate-800/50'} `}>
+                                    <div
+                                        key={p.id}
+                                        onClick={() => setSelectedPlayerForMenu(p)}
+                                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer hover:border-slate-500 active:scale-[0.98]
+                                            ${p.id === currentPlayer.id ? 'bg-slate-800/80 border-blue-500/50 shadow-lg shadow-blue-900/10' : 'bg-slate-900/30 border-slate-800/50'} 
+                                            ${p.hasWon ? 'ring-2 ring-yellow-500' : ''}
+                                            ${p.isBankrupted ? 'opacity-50 grayscale' : ''}
+                                        `}
+                                    >
                                         <div className={`text-lg w-10 h-10 flex items-center justify-center rounded-full border-2 border-amber-500/20 shadow-[0_0_15px_rgba(251,191,36,0.1)] text-white font-bold bg-gradient-to-br overflow-hidden relative ${getAvatarColor(p.id)}`}>
                                             {p.photo_url ? (
                                                 <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
@@ -720,35 +732,9 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                                             </div>
                                         </div>
 
-                                        {/* Host Actions */}
+                                        {/* Host Hint */}
                                         {isHost && (
-                                            <div className="flex items-center gap-1">
-                                                {/* Skip Turn (Only for Current Player) */}
-                                                {p.id === currentPlayer.id && (
-                                                    <button
-                                                        onClick={handleForceSkip}
-                                                        className="p-2 bg-amber-500/20 hover:bg-amber-500 text-amber-400 hover:text-white rounded-lg transition-colors ml-2"
-                                                        title="ПРОПУСТИТЬ ХОД (Скипнуть)"
-                                                    >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M3 5v14l8-7-8-7zm8 0v14l8-7-8-7zm8 0h2v14h-2V5z" />
-                                                        </svg>
-                                                    </button>
-                                                )}
-
-                                                {/* Kick Player (Not for self) */}
-                                                {p.id !== socket.id && (
-                                                    <button
-                                                        onClick={() => handleKickPlayer(p.id)}
-                                                        className="opacity-0 group-hover:opacity-100 transition-opacity p-2 text-red-500 hover:bg-red-500/20 rounded-lg"
-                                                        title="Удалить игрока"
-                                                    >
-                                                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-5 h-5">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                                                        </svg>
-                                                    </button>
-                                                )}
-                                            </div>
+                                            <div className="text-slate-600">⋮</div>
                                         )}
                                     </div>
                                 ))}
@@ -1762,6 +1748,79 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                     </div>
                 )
             }
+
+            {/* 🛠️ PLAYER ACTION MENU (HOST) */}
+            {selectedPlayerForMenu && (
+                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedPlayerForMenu(null)}>
+                    <div className="bg-slate-900 border border-slate-700/50 rounded-3xl w-full max-w-xs overflow-hidden shadow-2xl relative" onClick={e => e.stopPropagation()}>
+
+                        {/* Header */}
+                        <div className="h-24 bg-gradient-to-br from-blue-900/50 to-slate-900 relative">
+                            <button className="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition" onClick={() => setSelectedPlayerForMenu(null)}>
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        <div className="px-6 pb-6 -mt-12 relative z-10">
+                            <div className="flex items-center gap-4 mb-6">
+                                <div className={`w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl bg-gradient-to-br border-4 border-slate-900 shadow-xl overflow-hidden ${getAvatarColor(selectedPlayerForMenu.id)}`}>
+                                    {selectedPlayerForMenu.photo_url ? (
+                                        <img src={selectedPlayerForMenu.photo_url} className="w-full h-full object-cover" />
+                                    ) : (
+                                        getInitials(selectedPlayerForMenu.name)
+                                    )}
+                                </div>
+                                <div className="mt-10">
+                                    <h3 className="font-bold text-xl text-white leading-tight">{selectedPlayerForMenu.name}</h3>
+                                    <div className="text-sm text-slate-400 font-mono">${selectedPlayerForMenu.cash?.toLocaleString()}</div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-2">
+                                {/* Host Actions */}
+                                {isHost ? (
+                                    <>
+                                        {selectedPlayerForMenu.id === state.players[state.currentPlayerIndex].id && (
+                                            <button
+                                                onClick={() => {
+                                                    handleForceSkip();
+                                                    setSelectedPlayerForMenu(null);
+                                                }}
+                                                className="w-full p-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-500 font-bold transition-all flex items-center gap-3 group"
+                                            >
+                                                <span className="bg-amber-500/20 p-2 rounded-lg group-hover:scale-110 transition-transform">⏭️</span> Пропустить ход
+                                            </button>
+                                        )}
+
+                                        {selectedPlayerForMenu.id !== socket.id ? (
+                                            <button
+                                                onClick={() => {
+                                                    handleKickPlayer(selectedPlayerForMenu.id);
+                                                    setSelectedPlayerForMenu(null);
+                                                }}
+                                                className="w-full p-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 font-bold transition-all flex items-center gap-3 group"
+                                            >
+                                                <span className="bg-red-500/20 p-2 rounded-lg group-hover:scale-110 transition-transform">👢</span> Исключить игрока
+                                            </button>
+                                        ) : (
+                                            <div className="p-3 text-center text-xs text-slate-500 italic">
+                                                Это вы (Хост)
+                                            </div>
+                                        )}
+                                    </>
+                                ) : (
+                                    // Non-Host View
+                                    <div className="p-4 text-center text-slate-500 text-sm border border-slate-800 rounded-xl bg-slate-950/50">
+                                        Действия доступны только хосту
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div >
     );
 }
