@@ -1,7 +1,7 @@
 'use client';
 
 import { useTelegram } from '../../components/TelegramProvider';
-import { Copy, Gift, TrendingUp, Users, Wallet } from 'lucide-react';
+import { Copy, Gift, TrendingUp, Users, Wallet, Check, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { partnershipApi } from '../../lib/partnershipApi';
 
@@ -10,6 +10,10 @@ export default function EarnPage() {
     const [totalUsers, setTotalUsers] = useState(0);
     const [partnershipUser, setPartnershipUser] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
+
+    // Modal State
+    const [showRefillModal, setShowRefillModal] = useState(false);
+    const [missingAmount, setMissingAmount] = useState(0);
 
     // Use username if available, else ID. Bot handle corrected to MONEO_game_bot
     const referralLink = `https://t.me/MONEO_game_bot?start=${user?.username || user?.id || 'unknown'}`;
@@ -35,15 +39,18 @@ export default function EarnPage() {
 
     const handleBuy = async (tariff: string, price: number) => {
         if (!partnershipUser) return;
+        if (isLoading) return;
 
         // 1. Check Green Balance
-        if ((partnershipUser.balanceGreen || 0) < price) {
-            if (webApp) {
-                webApp.showAlert(`Недостаточно средств на Зеленом балансе ($${partnershipUser.balanceGreen || 0}). Пополните счет через поддержку.`);
-            } else {
-                alert(`Insufficient Green Balance ($${partnershipUser.balanceGreen || 0}). Please top up.`);
-            }
+        const balance = partnershipUser.greenBalance || 0;
+        if (balance < price) {
+            setMissingAmount(price - balance);
+            setShowRefillModal(true);
             return;
+        }
+
+        if (webApp) {
+            webApp.HapticFeedback.impactOccurred('medium');
         }
 
         if (!confirm(`Купить тариф ${tariff} за $${price}?`)) return;
@@ -81,13 +88,14 @@ export default function EarnPage() {
 
     const handleSupportTopUp = () => {
         window.open('https://t.me/Aurelia_8888?text=хочу пополнить счет Moneo', '_blank');
+        setShowRefillModal(false);
     };
 
     const GOAL = 1000000;
     const progress = Math.min((totalUsers / GOAL) * 100, 100);
 
     return (
-        <div className="min-h-screen bg-slate-900 text-white p-4 pt-6 space-y-6 pb-24">
+        <div className="min-h-screen bg-slate-900 text-white p-4 pt-6 space-y-6 pb-24 relative">
 
             {/* Header with Stats */}
             <h1 className="text-2xl font-bold flex items-center gap-2">
@@ -120,7 +128,7 @@ export default function EarnPage() {
                         <div className="flex justify-between text-xs font-bold uppercase tracking-widest text-slate-400 mb-2">
                             <div className="flex items-center gap-1">
                                 <Users size={14} className="text-slate-500" />
-                                <span>Цель</span>
+                                <span className="mr-1">Цель</span>
                             </div>
                             <span className="text-white">{GOAL.toLocaleString()}</span>
                         </div>
@@ -201,7 +209,7 @@ export default function EarnPage() {
                 {/* Green Balance Card */}
                 <div
                     onClick={handleSupportTopUp}
-                    className="bg-gradient-to-br from-green-900/50 to-slate-800 p-4 rounded-xl border border-green-500/30 col-span-2 cursor-pointer hover:bg-slate-700/50 transition-colors relative group"
+                    className="bg-gradient-to-br from-green-900/50 to-slate-800 p-4 rounded-xl border border-green-500/30 col-span-2 cursor-pointer hover:bg-slate-700/50 transition-colors relative group active:scale-95"
                 >
                     <div className="absolute top-3 right-3 text-green-500 group-hover:scale-110 transition-transform">
                         ↗
@@ -220,45 +228,96 @@ export default function EarnPage() {
                 <h3 className="font-bold text-lg text-white">Аватары (Доходные модули)</h3>
                 <div className="grid grid-cols-3 gap-3">
                     {/* Small */}
-                    <div className="bg-slate-800 rounded-xl p-3 border border-slate-700 flex flex-col items-center relative overflow-hidden group">
+                    <div
+                        onClick={() => handleBuy('PLAYER', 20)}
+                        className="bg-slate-800 rounded-xl p-3 border border-slate-700 flex flex-col items-center relative overflow-hidden group cursor-pointer active:scale-95 transition-transform hover:bg-slate-700/80"
+                    >
                         <div className="absolute inset-0 bg-blue-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div className="w-12 h-12 rounded-full bg-blue-900/50 flex items-center justify-center mb-2 border border-blue-500/30">
                             <Users size={20} className="text-blue-400" />
                         </div>
                         <div className="text-xs font-bold text-slate-300">Игрок</div>
                         <div className="text-lg font-bold text-white">$20</div>
-                        <button disabled={isLoading} onClick={() => handleBuy('PLAYER', 20)} className="mt-2 w-full py-1 text-[10px] font-bold bg-blue-600 rounded hover:bg-blue-500 transition disabled:opacity-50">
+                        <button disabled={isLoading} className="mt-2 w-full py-1 text-[10px] font-bold bg-blue-600 rounded hover:bg-blue-500 transition disabled:opacity-50 pointer-events-none">
                             Купить
                         </button>
                     </div>
 
                     {/* Medium */}
-                    <div className="bg-slate-800 rounded-xl p-3 border border-purple-500/30 flex flex-col items-center relative overflow-hidden group">
+                    <div
+                        onClick={() => handleBuy('MASTER', 100)}
+                        className="bg-slate-800 rounded-xl p-3 border border-purple-500/30 flex flex-col items-center relative overflow-hidden group cursor-pointer active:scale-95 transition-transform hover:bg-slate-700/80"
+                    >
                         <div className="absolute inset-0 bg-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div className="w-12 h-12 rounded-full bg-purple-900/50 flex items-center justify-center mb-2 border border-purple-500/30">
                             <Gift size={20} className="text-purple-400" />
                         </div>
                         <div className="text-xs font-bold text-purple-300">Мастер</div>
                         <div className="text-lg font-bold text-white">$100</div>
-                        <button disabled={isLoading} onClick={() => handleBuy('MASTER', 100)} className="mt-2 w-full py-1 text-[10px] font-bold bg-purple-600 rounded hover:bg-purple-500 transition disabled:opacity-50">
+                        <button disabled={isLoading} className="mt-2 w-full py-1 text-[10px] font-bold bg-purple-600 rounded hover:bg-purple-500 transition disabled:opacity-50 pointer-events-none">
                             Купить
                         </button>
                     </div>
 
                     {/* Large */}
-                    <div className="bg-slate-800 rounded-xl p-3 border border-yellow-500/30 flex flex-col items-center relative overflow-hidden group">
+                    <div
+                        onClick={() => handleBuy('PARTNER', 1000)}
+                        className="bg-slate-800 rounded-xl p-3 border border-yellow-500/30 flex flex-col items-center relative overflow-hidden group cursor-pointer active:scale-95 transition-transform hover:bg-slate-700/80"
+                    >
                         <div className="absolute inset-0 bg-yellow-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                         <div className="w-12 h-12 rounded-full bg-yellow-900/50 flex items-center justify-center mb-2 border border-yellow-500/30">
                             <TrendingUp size={20} className="text-yellow-400" />
                         </div>
                         <div className="text-xs font-bold text-yellow-300">Партнер</div>
                         <div className="text-lg font-bold text-white">$1000</div>
-                        <button disabled={isLoading} onClick={() => handleBuy('PARTNER', 1000)} className="mt-2 w-full py-1 text-[10px] font-bold bg-yellow-600 rounded hover:bg-yellow-500 transition disabled:opacity-50">
+                        <button disabled={isLoading} className="mt-2 w-full py-1 text-[10px] font-bold bg-yellow-600 rounded hover:bg-yellow-500 transition disabled:opacity-50 pointer-events-none">
                             Купить
                         </button>
                     </div>
                 </div>
             </div>
+
+            {/* Insufficient Funds Modal */}
+            {showRefillModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                    <div className="bg-slate-800 rounded-2xl p-6 w-full max-w-sm border border-slate-700 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+                        <button
+                            onClick={() => setShowRefillModal(false)}
+                            className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors"
+                        >
+                            <X />
+                        </button>
+
+                        <div className="flex flex-col items-center text-center space-y-4">
+                            <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center ring-4 ring-red-500/10">
+                                <Wallet size={32} className="text-red-500" />
+                            </div>
+
+                            <div className="space-y-1">
+                                <h3 className="text-xl font-bold text-white">Недостаточно средств</h3>
+                                <p className="text-slate-400 text-sm">
+                                    Вам не хватает <span className="text-red-400 font-bold">${missingAmount}</span> для покупки этого аватара.
+                                </p>
+                            </div>
+
+                            <div className="bg-slate-900/50 rounded-lg p-3 w-full border border-slate-700/50 mt-2">
+                                <div className="flex justify-between text-sm">
+                                    <span className="text-slate-500">Ваш баланс:</span>
+                                    <span className="text-green-400 font-bold">${partnershipUser?.greenBalance || 0}</span>
+                                </div>
+                            </div>
+
+                            <button
+                                onClick={handleSupportTopUp}
+                                className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-900/20 flex items-center justify-center gap-2 transition-all mt-2"
+                            >
+                                Пополнить баланс
+                                <TrendingUp size={16} />
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
 
         </div>
     );
