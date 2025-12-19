@@ -202,14 +202,28 @@ export default function EarnPage() {
                     <div className="text-xl font-bold">{user?.referralsCount || 0}</div>
                     <div className="text-xs text-slate-400">Друзей</div>
                 </div>
-                <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                    <TrendingUp className="text-red-500 mb-2" />
-                    <div className="text-xl font-bold text-red-400">{user?.balanceRed || 0} RED</div>
-                    <div className="text-xs text-slate-400">Доход (RED)</div>
+                import {BalanceModal} from './BalanceModal';
+
+                // ... inside component ...
+                const [showBalanceModal, setShowBalanceModal] = useState(false);
+
+    // Get current tariff
+    const currentTariff = partnershipUser?.avatars?.find((a: any) => a.active)?.tariff || 'GUEST';
+
+                // ... render ...
+
+                {/* Red Balance Card */}
+                <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 relative overflow-hidden">
+                    <div className="relative z-10">
+                        <TrendingUp className="text-red-500 mb-2" />
+                        <div className="text-xl font-bold text-red-400">{user?.balanceRed || 0} RED</div>
+                        <div className="text-xs text-slate-400">Доход (Игровой)</div>
+                    </div>
                 </div>
+
                 {/* Green Balance Card */}
                 <div
-                    onClick={handleSupportTopUp}
+                    onClick={() => setShowBalanceModal(true)}
                     className="bg-gradient-to-br from-green-900/50 to-slate-800 p-4 rounded-xl border border-green-500/30 col-span-2 cursor-pointer hover:bg-slate-700/50 transition-colors relative group active:scale-95"
                 >
                     <div className="absolute top-3 right-3 text-green-500 group-hover:scale-110 transition-transform">
@@ -219,10 +233,18 @@ export default function EarnPage() {
                     <div className="text-xl font-bold text-green-400">${partnershipUser?.greenBalance || 0}</div>
                     <div className="text-xs text-slate-400 flex items-center gap-1">
                         Зеленый баланс
-                        <span className="text-[9px] bg-green-900/50 px-1.5 py-0.5 rounded text-green-300 border border-green-500/20">Пополнить</span>
+                        <span className="text-[9px] bg-green-900/50 px-1.5 py-0.5 rounded text-green-300 border border-green-500/20">Управление</span>
                     </div>
                 </div>
             </div>
+
+            <BalanceModal
+                isOpen={showBalanceModal}
+                onClose={() => setShowBalanceModal(false)}
+                balance={partnershipUser?.greenBalance || 0}
+                tariff={currentTariff}
+                onTopUp={handleSupportTopUp}
+            />
 
             {/* Avatar Profiles */}
             <div className="space-y-4">
