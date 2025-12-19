@@ -1,0 +1,111 @@
+import { Request, Response } from 'express';
+import { MatrixService } from '../services/MatrixService';
+import { FinanceService } from '../services/FinanceService';
+import { User } from '../models/User';
+import { Avatar, TariffType } from '../models/Avatar';
+import mongoose from 'mongoose';
+
+const TARIFF_PRICES = {
+    [TariffType.GUEST]: 0,
+    [TariffType.PLAYER]: 20,
+    [TariffType.MASTER]: 100,
+    [TariffType.PARTNER]: 1000
+};
+
+export class PartnershipController {
+
+    static async subscribe(req: Request, res: Response) {
+        try {
+            const { userId, tariff, referrerId } = req.body;
+
+            if (!userId || !tariff) {
+                return res.status(400).json({ error: 'userId and tariff are required' });
+            }
+
+            // check price
+            const price = TARIFF_PRICES[tariff as TariffType];
+            if (price === undefined) {
+                return res.status(400).json({ error: 'Invalid tariff' });
+            }
+
+            // Distribute payment first (simulate successful payment)
+            if (price > 0) {
+                await FinanceService.distributePayment(price, userId, referrerId);
+            }
+
+            // Place avatar
+            const avatar = await MatrixService.placeAvatar(userId, tariff, referrerId);
+
+            res.json({ success: true, avatar });
+        } catch (error: any) {
+            console.error(error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    static async getTree(req: Request, res: Response) {
+        try {
+            const { userId } = req.params;
+            // Get all avatars for user + their structure?
+            // For visualization, we might want the whole tree or just the user's view.
+            // Let's return the user's Avatars and their children (1 level deep? or full?).
+            // Full recursive tree might be big.
+            // Let's fetching avatars where owner is user, then populate down?
+
+            // Simple approach: Get all avatars of user.
+            const userAvatars = await Avatar.find({ owner: userId }).populate({
+                path: 'partners',
+                populate: { path: 'partners' } // 2 levels deep for now
+            });
+
+            res.json(userAvatars);
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    static async getStats(req: Request, res: Response) {
+        try {
+            const { userId } = req.params;
+            const user = await User.findById(userId);
+            if (!user) return res.status(404).json({ error: 'User not found' });
+
+            // Count avatars
+            const avatarCount = await Avatar.countDocuments({ owner: userId });
+
+            res.json({
+                greenBalance: user.greenBalance,
+                yellowBalance: user.yellowBalance,
+                avatarCount
+            });
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    static async withdraw(req: Request, res: Response) {
+        try {
+            const { userId, amount } = req.body;
+            if (!userId || !amount) return res.status(400).json({ error: 'Missing fields' });
+
+            const result = await FinanceService.processWithdrawal(userId, amount);
+            res.json({ success: true, ...result });
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
+        }
+    }
+
+    // Helper to create user if not exists (for testing)
+    static async createUser(req: Request, res: Response) {
+        try {
+            const { telegramId, username, referrerId } = req.body;
+            let user = await User.findOne({ telegramId });
+            if (!user) {
+                user = await User.create({ telegramId, username, referrer: referrerId });
+            }
+            res.json(user);
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+}
