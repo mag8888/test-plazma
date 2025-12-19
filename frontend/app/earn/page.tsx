@@ -1,17 +1,18 @@
 'use client';
 
 import { useTelegram } from '../../components/TelegramProvider';
-import { Copy, Gift, TrendingUp, Users } from 'lucide-react';
+import { Copy, Gift, TrendingUp, Users, Wallet } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { partnershipApi } from '../../lib/partnershipApi';
 
 export default function EarnPage() {
     const { webApp, user } = useTelegram();
     const [totalUsers, setTotalUsers] = useState(0);
+    const [partnershipUser, setPartnershipUser] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(false);
 
     // Use username if available, else ID. Bot handle corrected to MONEO_game_bot
     const referralLink = `https://t.me/MONEO_game_bot?start=${user?.username || user?.id || 'unknown'}`;
-
-    const [avatars, setAvatars] = useState<any[]>([]);
 
     useEffect(() => {
         fetch('/api/stats')
@@ -21,57 +22,52 @@ export default function EarnPage() {
             })
             .catch(err => console.error("Stats fetch error", err));
 
-        // Fetch User Avatars
-        // Assuming we have user.id (telegram ID) mapping to DB ID or using telegram ID directly
         if (user?.id) {
-            import('../../lib/partnershipApi').then(({ partnershipApi }) => {
-                // In real app, we need the internal DB ID, not telegram ID.
-                // But for now let's try to fetch using telegram ID if the backend supports it,
-                // or assuming the frontend auth context provides the internal ID.
-                // Given the context is 'user', let's assume we might need to look it up or the API handles telegram ID.
-                // The backend uses `userId` (internal ObjectId).
-                // We need a way to get the internal ID. `useTelegram` gives Telegram user.
-                // We might need an endpoint to lookup internal ID or simple passed prop.
-                // For now, let's wrap this in a TODO or Try/Catch and assume we can pass Telegram ID if backend is adjusted
-                // OR better: The backend `PartnershipController.subscribe` takes `userId`.
-                // Let's assume the user has been registered in our DB.
-                // We'll perform a lookup in useEffect?
-                // Or just modify the backend to accept TelegramID?
-                // Current backend: `User.findById(userId)`. Expects ObjectId.
-                // We need to fetch the internal ID first.
-
-                // Simulating fetch or assuming we have it. 
-                // Let's rely on a helper or just try-catch for now.
-                // Ideally: The app should have a full User Context with DB ID.
-
-                // TEMP: We will use a mockup or failing gracefully if ID not found.
-            });
+            // Login/Sync with Partnership Backend
+            // We use user.id (Telegram ID) to get the internal DB User
+            partnershipApi.login(user.id.toString(), user.username)
+                .then(dbUser => {
+                    setPartnershipUser(dbUser);
+                })
+                .catch(err => console.error("Partnership login error", err));
         }
     }, [user]);
 
     const handleBuy = async (tariff: string, price: number) => {
-        if (!user?.id) return;
+        if (!partnershipUser) return;
+
+        // 1. Check Green Balance
+        if ((partnershipUser.balanceGreen || 0) < price) {
+            if (webApp) {
+                webApp.showAlert(`Недостаточно средств на Зеленом балансе ($${partnershipUser.balanceGreen || 0}). Пополните счет через поддержку.`);
+            } else {
+                alert(`Insufficient Green Balance ($${partnershipUser.balanceGreen || 0}). Please top up.`);
+            }
+            return;
+        }
+
+        if (!confirm(`Купить тариф ${tariff} за $${price}?`)) return;
+
+        setIsLoading(true);
         try {
-            const { partnershipApi } = await import('../../lib/partnershipApi');
-            // We need the internal mongo ID. 
-            // In a real scenario, we'd have it in a context.
-            // For this task, I'll assume we can't easily get it without an endpoint.
-            // I'll add a 'creation' step or lookup if needed.
-            // But let's look at `frontend/app/lib/auth.ts` or similar? 
-            // `frontend/lib/partnershipApi.ts` calls localhost:4000.
+            // 2. Buy Avatar
+            const res = await partnershipApi.subscribe(partnershipUser._id, tariff, partnershipUser.referrer);
+            if (res.success) {
+                if (webApp) webApp.showAlert('Успешно! Аватар активирован.');
+                else alert('Success!');
 
-            // Hack for demo: Pass telegram ID as string, backend expects ObjectId.
-            // Backend will likely fail.
-            // I should update backend to accept telegramId lookup?
-            // Yes, user request implies "make it work".
-            // I will implement a visual "Purchase" that logs for now, or tries to call API.
-
-            // To make it functional, I'll need to update the backend to find user by Telegram ID.
-
-            // For UI:
-            alert(`Buy ${tariff} for $${price}? (Integration pending user ID lookup)`);
+                // Refresh User Data
+                const updatedUser = await partnershipApi.getStats(partnershipUser._id);
+                setPartnershipUser({ ...partnershipUser, ...updatedUser }); // Update balances
+            } else {
+                if (webApp) webApp.showAlert(res.error || 'Ошибка покупки');
+                else alert(res.error || 'Error');
+            }
         } catch (e) {
             console.error(e);
+            alert('Сбой сети');
+        } finally {
+            setIsLoading(false);
         }
     };
 
@@ -81,6 +77,10 @@ export default function EarnPage() {
             webApp.HapticFeedback.notificationOccurred('success');
             webApp.showAlert('Ссылка скопирована!');
         }
+    };
+
+    const handleSupportTopUp = () => {
+        window.open('https://t.me/Aurelia_8888?text=хочу пополнить счет Moneo', '_blank');
     };
 
     const GOAL = 1000000;
@@ -198,6 +198,21 @@ export default function EarnPage() {
                     <div className="text-xl font-bold text-red-400">{user?.balanceRed || 0} RED</div>
                     <div className="text-xs text-slate-400">Доход (RED)</div>
                 </div>
+                {/* Green Balance Card */}
+                <div
+                    onClick={handleSupportTopUp}
+                    className="bg-gradient-to-br from-green-900/50 to-slate-800 p-4 rounded-xl border border-green-500/30 col-span-2 cursor-pointer hover:bg-slate-700/50 transition-colors relative group"
+                >
+                    <div className="absolute top-3 right-3 text-green-500 group-hover:scale-110 transition-transform">
+                        ↗
+                    </div>
+                    <Wallet className="text-green-400 mb-2" />
+                    <div className="text-xl font-bold text-green-400">${partnershipUser?.greenBalance || 0}</div>
+                    <div className="text-xs text-slate-400 flex items-center gap-1">
+                        Зеленый баланс
+                        <span className="text-[9px] bg-green-900/50 px-1.5 py-0.5 rounded text-green-300 border border-green-500/20">Пополнить</span>
+                    </div>
+                </div>
             </div>
 
             {/* Avatar Profiles */}
@@ -212,7 +227,7 @@ export default function EarnPage() {
                         </div>
                         <div className="text-xs font-bold text-slate-300">Игрок</div>
                         <div className="text-lg font-bold text-white">$20</div>
-                        <button onClick={() => handleBuy('PLAYER', 20)} className="mt-2 w-full py-1 text-[10px] font-bold bg-blue-600 rounded hover:bg-blue-500 transition">
+                        <button disabled={isLoading} onClick={() => handleBuy('PLAYER', 20)} className="mt-2 w-full py-1 text-[10px] font-bold bg-blue-600 rounded hover:bg-blue-500 transition disabled:opacity-50">
                             Купить
                         </button>
                     </div>
@@ -225,7 +240,7 @@ export default function EarnPage() {
                         </div>
                         <div className="text-xs font-bold text-purple-300">Мастер</div>
                         <div className="text-lg font-bold text-white">$100</div>
-                        <button onClick={() => handleBuy('MASTER', 100)} className="mt-2 w-full py-1 text-[10px] font-bold bg-purple-600 rounded hover:bg-purple-500 transition">
+                        <button disabled={isLoading} onClick={() => handleBuy('MASTER', 100)} className="mt-2 w-full py-1 text-[10px] font-bold bg-purple-600 rounded hover:bg-purple-500 transition disabled:opacity-50">
                             Купить
                         </button>
                     </div>
@@ -238,7 +253,7 @@ export default function EarnPage() {
                         </div>
                         <div className="text-xs font-bold text-yellow-300">Партнер</div>
                         <div className="text-lg font-bold text-white">$1000</div>
-                        <button onClick={() => handleBuy('PARTNER', 1000)} className="mt-2 w-full py-1 text-[10px] font-bold bg-yellow-600 rounded hover:bg-yellow-500 transition">
+                        <button disabled={isLoading} onClick={() => handleBuy('PARTNER', 1000)} className="mt-2 w-full py-1 text-[10px] font-bold bg-yellow-600 rounded hover:bg-yellow-500 transition disabled:opacity-50">
                             Купить
                         </button>
                     </div>
