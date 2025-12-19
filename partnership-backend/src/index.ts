@@ -1,3 +1,8 @@
+import express from 'express';
+import cors from 'cors';
+import dotenv from 'dotenv';
+import { connectDB } from './db';
+import { PartnershipController } from './controllers/PartnershipController';
 import { AdminController } from './controllers/AdminController';
 
 dotenv.config();
