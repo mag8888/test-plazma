@@ -542,6 +542,29 @@ app.get('/api/users/:id/stats', async (req, res) => {
     }
 });
 
+// Rankings API
+app.get('/api/rankings', async (req, res) => {
+    try {
+        const { UserModel } = await import('./models/user.model');
+
+        // Fetch top 50 users sorted by wins (desc) then balanceRed (desc)
+        const rankings = await UserModel.find({
+            $or: [
+                { wins: { $gt: 0 } },
+                { balanceRed: { $gt: 0 } }
+            ]
+        })
+            .sort({ wins: -1, balanceRed: -1 })
+            .limit(50)
+            .select('username first_name photo_url wins balanceRed isMaster');
+
+        res.json(rankings);
+    } catch (e) {
+        console.error("Rankings fetch failed:", e);
+        res.status(500).json({ error: "Rankings failed" });
+    }
+});
+
 app.use(express.static(path.join(__dirname, '../../frontend/out')));
 
 // SPA Fallback
