@@ -153,6 +153,17 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                         </div>
                                     )
                                 }
+                                {
+                                    sq.ownerId && (() => {
+                                        const owner = players.find((p: any) => p.id === sq.ownerId);
+                                        if (!owner) return null;
+                                        return (
+                                            <div className="absolute -bottom-[0.4cqw] -right-[0.4cqw] w-[2cqw] h-[2cqw] bg-slate-900/90 rounded-full border border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)] flex items-center justify-center text-[1.2cqw] z-20" title={`Владелец: ${owner.name}`}>
+                                                {owner.token}
+                                            </div>
+                                        );
+                                    })()
+                                }
                             </div>
                         );
                     })}

@@ -76,6 +76,7 @@ export interface BoardSquare {
     cashflow?: number;
     description?: string;
     action?: 'AUDIT' | 'THEFT' | 'DIVORCE' | 'FIRE' | 'RAID' | 'LOSE_TURN';
+    ownerId?: string;
 }
 
 // Mock Board Configuration (Rat Race - 24 Squares)
@@ -627,20 +628,56 @@ export class GameEngine {
 
             case 'BUSINESS':
             case 'DREAM':
-                // Manual Buy Option (User Request)
+                // Check Ownership
+                const isOwnedByMe = square.ownerId === player.id;
+                const isOwnedByOther = square.ownerId && square.ownerId !== player.id;
+
+                if (isOwnedByMe) {
+                    // 1. User cannot rebuy own business
+                    this.addLog(`🏢 You own ${square.name}. (Cannot rebuy)`);
+                    this.state.phase = 'ACTION';
+                    // Don't set currentCard so no "Buy" button appears.
+                    // Maybe set phase to 'ACTION' or just let them end turn?
+                    // Usually fast track lands, if owned, nothing happens.
+                    return;
+                }
+
+                let cost = square.cost || 0;
+                let description = square.description || '';
+                let isBuyout = false;
+
+                if (isOwnedByOther) {
+                    // 2. Buyout Logic (2x Price)
+                    cost *= 2;
+                    const ownerName = this.state.players.find(p => p.id === square.ownerId)?.name || 'Unknown';
+                    description = `⭐ BUYOUT from ${ownerName} (2x Price)`;
+                    isBuyout = true;
+                    this.addLog(`⚔️ Hostile Takeover opportunity! Buy ${square.name} from ${ownerName} for $${cost}?`);
+                } else {
+                    this.addLog(`Found ${square.type}: ${square.name}. Cost $${square.cost}`);
+                }
+
                 // Construct a temporary card for the UI action
                 this.state.currentCard = {
                     id: `ft_${square.index}`,
                     type: square.type, // 'BUSINESS' or 'DREAM'
                     title: square.name,
-                    description: square.description || '',
-                    cost: square.cost,
+                    description: description,
+                    cost: cost,
                     cashflow: square.cashflow,
-                    mandatory: false
-                } as Card;
+                    mandatory: false,
+                    // Custom properties for buyAsset to know context
+                    targetSquareIndex: square.index,
+                    isBuyout: isBuyout,
+                    ownerId: square.ownerId
+                } as any; // Cast as any or extend Card interface if needed, but Card usually dynamic enough? 
+                // Card interface might not support custom props properties without modification.
+                // Let's rely on standard properties or extend logic in buyAsset.
+                // We'll trust 'ft_INDEX' ID parsing or add transient props if Card allows.
+                // TypeScript 'Card' definition check? Assuming Card is flexible or I need to update it.
+                // Let's assume Card needs updating if strict. For now casting as any for safety in this tool call.
 
                 this.state.phase = 'ACTION';
-                this.addLog(`Found ${square.type}: ${square.name}. Cost $${square.cost}`);
                 break;
 
             case 'LOSS':
@@ -1423,6 +1460,53 @@ export class GameEngine {
             businessType: card.businessType, // Store business type
             sourceType: card.type // Store original card type (DEAL_SMALL, DEAL_BIG) for Discard Return logic
         });
+
+        // Fast Track Board Ownership Logic
+        const cardAny = card as any;
+        if (cardAny.targetSquareIndex !== undefined) {
+            const sqIndex = cardAny.targetSquareIndex;
+            // Ensure global index is correct?
+            // Since handleFastTrackSquare set it from `square.index`, checking if it's correct.
+            // Usually yes.
+
+            // Check if it was a Buyout
+            if (cardAny.isBuyout && cardAny.ownerId) {
+                const prevOwner = this.state.players.find(p => p.id === cardAny.ownerId);
+                if (prevOwner) {
+                    // Pay Previous Owner
+                    prevOwner.cash += (card.cost || 0);
+                    this.addLog(`💸 ${player.name} paid $${card.cost} to ${prevOwner.name} for ${card.title}`);
+
+                    // Remove Asset from Previous Owner
+                    // Need to find asset by Title? Or by Square Index if tracked?
+                    // Currently Assets don't store Square Index explicitly.
+                    // But Title should be unique enough for FT businesses?
+                    // "Moneo Corp", "Yoga Center"...
+                    const assetIdx = prevOwner.assets.findIndex(a => a.title === card.title);
+                    if (assetIdx !== -1) {
+                        const removed = prevOwner.assets[assetIdx];
+                        prevOwner.assets.splice(assetIdx, 1);
+
+                        // Recalc Previous Owner Stats
+                        if (removed.cashflow) {
+                            prevOwner.passiveIncome -= removed.cashflow;
+                            prevOwner.income = prevOwner.salary + prevOwner.passiveIncome;
+                            prevOwner.cashflow = prevOwner.income - prevOwner.expenses;
+                        }
+                    }
+                }
+            }
+
+            // Set New Owner on Board
+            // We need to mutate the board in state
+            // We need to find the square in FULL_BOARD logic.
+            // If `this.state.board` is the source of truth, we update it there.
+            // `sqIndex` came from `square.index` on the board.
+            const boardSq = this.state.board.find(b => b.index === sqIndex);
+            if (boardSq) {
+                boardSq.ownerId = player.id;
+            }
+        }
 
         // Update Stats
         if (card.cashflow) {
