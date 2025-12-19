@@ -113,6 +113,31 @@ app.get('/api/stats', async (req, res) => {
     }
 });
 
+// Transaction History API
+app.get('/api/transactions', async (req, res) => {
+    try {
+        const initData = req.headers.authorization?.split(' ')[1]; // Expecting 'Bearer initData'
+
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyTelegramAuth(initData);
+        if (!user) return res.status(401).json({ error: "Invalid auth" });
+
+        const { TransactionModel } = await import('./models/transaction.model');
+        // Fetch last 50 transactions, sorted by newest
+        const transactions = await TransactionModel.find({ userId: user._id })
+            .sort({ createdAt: -1 })
+            .limit(50);
+
+        res.json(transactions);
+    } catch (e) {
+        console.error("Failed to fetch transactions:", e);
+        res.status(500).json({ error: "Transaction Fetch Error" });
+    }
+});
+
 // Update Game (Protected via initData)
 app.put('/api/games/:id', async (req, res) => {
     try {
