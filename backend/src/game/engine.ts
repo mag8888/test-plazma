@@ -8,7 +8,7 @@ export interface GameState {
     players: PlayerState[];
     currentPlayerIndex: number;
     currentTurnTime: number;
-    phase: 'ROLL' | 'ACTION' | 'END' | 'OPPORTUNITY_CHOICE' | 'CHARITY_CHOICE' | 'BABY_ROLL';
+    phase: 'ROLL' | 'ACTION' | 'END' | 'OPPORTUNITY_CHOICE' | 'CHARITY_CHOICE' | 'BABY_ROLL' | 'DOWNSIZED_DECISION';
     board: BoardSquare[];
     currentCard?: Card;
     log: string[];
@@ -65,6 +65,7 @@ export interface PlayerState extends IPlayer {
     canEnterFastTrack?: boolean;
     fastTrackStartIncome?: number;
     hasWon?: boolean;
+    loanLimitFactor?: number; // 0.5 if bankrupted previously
 }
 
 export interface BoardSquare {
@@ -258,16 +259,24 @@ export class GameEngine {
             cashflow: profession.salary - profession.expenses,
             skippedTurns: 0,
             charityTurns: 0,
-            isBankrupted: false
+            charityTurns: 0,
+            isBankrupted: false,
+            loanLimitFactor: 1
         };
     }
 
-    // Identify user by userId (stable) and update their socket ID
     updatePlayerId(userId: string, newSocketId: string) {
         const player = this.state.players.find(p => p.userId === userId);
         if (player) {
             console.log(`Updating socket ID for user ${userId} from ${player.id} to ${newSocketId}`);
             player.id = newSocketId;
+        }
+    }
+
+    addLog(message: string) {
+        this.state.log.push(message);
+        if (this.state.log.length > 200) {
+            this.state.log.shift();
         }
     }
 
@@ -436,6 +445,51 @@ export class GameEngine {
         }
 
         return { total, values };
+    }
+
+    handleDownsizedDecision(playerId: string, decision: 'PAY_2X' | 'PAY_4X' | 'BANKRUPT') {
+        const player = this.state.players.find(p => p.id === playerId);
+        if (!player || player.id !== this.state.players[this.state.currentPlayerIndex].id) return;
+        if (this.state.phase !== 'DOWNSIZED_DECISION') return;
+
+        const expenses = player.expenses;
+
+        if (decision === 'PAY_2X') {
+            const cost = expenses * 2; // "2 расхода" as per prompt (implied 2 months usually OR just 2x expense amount)
+            // Prompt says: "с него списываются 2 расхода и ход передается другому игроку, после хода другого игрока уволенный получает ход и через секунду его пропускает и второй игрок ходит, так два хода"
+            // So: Pay 2x expenses + Skip 2 turns.
+
+            if (player.cash >= cost) {
+                player.cash -= cost;
+                player.skippedTurns = 2;
+                this.addLog(`📉 ${player.name} Paid 2x Expenses ($${cost}) & Skips 2 Turns.`);
+                this.endTurn();
+            } else {
+                // Should force modal to only enable this if cash/loans sufficient.
+                // If they clicked this but checked failed (e.g. race condition), log error.
+                this.addLog(`⚠️ Cannot Pay 2x ($${cost}). Insufficient funds.`);
+            }
+
+        } else if (decision === 'PAY_4X') {
+            const cost = expenses * 4; // "оплатить 4 мес расходов и не пропускать ход"
+
+            if (player.cash >= cost) {
+                player.cash -= cost;
+                player.skippedTurns = 0; // "не пропускать ход"
+                this.addLog(`🛡️ ${player.name} Paid 4x Expenses ($${cost}) to avoid skipping turns!`);
+                this.state.phase = 'ACTION'; // Can user do anything else? Usually Downsized = Turn Over, but prompt says "not skip turn".
+                // In context of game, if you land on Downsized, your turn is done anyway (you moved). 
+                // "Skip turn" usually means NEXT turn.
+                // So "Not skip turn" means next turn is normal.
+                // So we just end turn now.
+                this.endTurn();
+            } else {
+                this.addLog(`⚠️ Cannot Pay 4x ($${cost}). Insufficient funds.`);
+            }
+        } else if (decision === 'BANKRUPT') {
+            this.bankruptPlayer(player);
+            this.endTurn();
+        }
     }
 
     movePlayer(steps: number) {
@@ -799,13 +853,15 @@ export class GameEngine {
             }
             return;
         } else if (square.type === 'DOWNSIZED') {
-            player.skippedTurns = 2; // Fixed 2 turns
-            const expenses = player.expenses;
-            this.addLog(`📉 ${player.name} Downsized! Due: $${expenses}.`);
-            this.forcePayment(player, expenses, 'Downsized Expenses');
-            this.state.lastEvent = { type: 'DOWNSIZED', payload: { player: player.name } };
-            // Do NOT end turn automatically. Let user see the popup.
-            this.state.phase = 'ACTION'; // Fix: Allow End Turn (Next button)
+            // Logic: 
+            // "1 игрок увольняется"
+            // Choices:
+            // A: Pay 2x Expenses -> Skip 2 Turns
+            // B: Pay 4x Expenses -> Skip 0 Turns
+            // If cannot pay -> Bankrupt (Restart with loanLimit 50%)
+
+            this.state.phase = 'DOWNSIZED_DECISION';
+            this.addLog(`📉 ${player.name} Downsized! Choose payment option.`);
         } else if (square.type === 'CHARITY') {
             this.state.phase = 'CHARITY_CHOICE';
             this.addLog(`❤️ Charity: Donate 10% of total income to roll extra dice?`);
@@ -862,8 +918,20 @@ export class GameEngine {
         // Interest 10%
         const interest = amount * 0.1;
 
-        if (player.cashflow - interest < 0) {
-            this.addLog(`${player.name} failed to take loan: Insufficient Cashflow.`);
+        // Check Loan Limit (with potential penalty)
+        const limitFactor = player.loanLimitFactor || 1;
+        // Available Cashflow for Loans = Cashflow * Factor.
+        // Wait, "Loan Limit" usually means Max Loan Amount.
+        // If normal max is (Cashflow / 0.1), then new max is (Cashflow / 0.1) * 0.5.
+        // This is equivalent to checking if Interest <= Cashflow * 0.5.
+        // However, we must consider EXISTING interest? 
+        // No, player.cashflow ALREADY deducts existing interest (it is Net Cashflow).
+        // So checking (Cashflow - NewInterest >= 0) handles incremental loans.
+        // If we want to restrict TOTAL debt power, we should scale the *remaining* borrowing power.
+        // Yes: Effective Borrowable Cashflow = Player.Cashflow * LimitFactor.
+
+        if ((player.cashflow * limitFactor) - interest < 0) {
+            this.addLog(`${player.name} failed to take loan: Insufficient Cashflow (Limit Factor: ${limitFactor * 100}%).`);
             return;
         }
 
@@ -1604,11 +1672,12 @@ export class GameEngine {
     }
 
     private bankruptPlayer(player: PlayerState) {
-        this.addLog(`☠️ ${player.name} IS BANKRUPT! Resetting...`);
+        this.addLog(`☠️ ${player.name} IS BANKRUPT! Restarting with penalty...`);
         this.state.lastEvent = { type: 'BANKRUPTCY', payload: { player: player.name } };
 
         // Reset Logic
-        player.isBankrupted = true;
+        // player.isBankrupted = true; // DO NOT set to true effectively removing them. Prompt says "начинает заново".
+        // "начинает заново но уже может брать кредит только 50% от суммы пай дай"
 
         // Reset finances
         const profession = PROFESSIONS.find(p => p.name === player.professionName) || PROFESSIONS[0];
@@ -1635,6 +1704,10 @@ export class GameEngine {
         player.childrenCount = 0;
         player.charityTurns = 0;
         player.skippedTurns = 0;
+
+        // Penalty
+        player.loanLimitFactor = 0.5;
+        this.addLog(`ℹ️ ${player.name} restarted. Loan Limit reduced to 50%.`);
     }
 
     resolveBabyRoll(): number | { total: number, values: number[] } {

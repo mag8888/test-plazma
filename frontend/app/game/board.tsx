@@ -167,7 +167,31 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                 colors: ['#FF69B4', '#87CEEB', '#FFD700', '#ffffff']
             });
             setBabyNotification(`👶 Поздравляем! В семье ${state.lastEvent.payload?.player} пополнение!`);
-            setTimeout(() => setBabyNotification(null), 5000);
+
+            // Auto End Turn Logic (3s delay)
+            const currentPlayer = state.players[state.currentPlayerIndex];
+            if (currentPlayer?.id === socket.id) {
+                setTimeout(() => {
+                    setBabyNotification(null);
+                    socket.emit('end_turn', { roomId });
+                }, 3000);
+            } else {
+                setTimeout(() => setBabyNotification(null), 3000);
+            }
+
+        } else if (state.lastEvent?.type === 'BABY_MISSED') {
+            setBabyNotification(`🎲 Семья ${state.lastEvent.payload?.player} пока не растет.`);
+
+            // Auto End Turn Logic (3s delay)
+            const currentPlayer = state.players[state.currentPlayerIndex];
+            if (currentPlayer?.id === socket.id) {
+                setTimeout(() => {
+                    setBabyNotification(null);
+                    socket.emit('end_turn', { roomId });
+                }, 3000);
+            } else {
+                setTimeout(() => setBabyNotification(null), 3000);
+            }
         } else if (state.lastEvent?.type === 'LOTTERY_WIN') {
             sfx.play('victory');
             confetti({
@@ -1265,6 +1289,114 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                 <div className="bg-[#1e293b] w-full max-w-xs p-6 rounded-3xl border border-slate-700 shadow-2xl text-center">
                                     <h2 className="text-xl font-bold text-white mb-2">⚡ Возможность</h2>
                                     <p className="text-slate-400 text-sm">Игрок выбирает сделку...</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* DOWNSIZED DECISION OVERLAY */}
+                    {state.phase === 'DOWNSIZED_DECISION' && !isAnimating && (
+                        <div className="absolute inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
+                            {isMyTurn ? (
+                                <div className="bg-[#1e293b] w-full max-w-md p-8 rounded-3xl border border-red-500/30 shadow-2xl relative text-center">
+                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-orange-600"></div>
+                                    <div className="text-6xl mb-6">📉</div>
+                                    <h2 className="text-2xl font-bold text-white mb-2">Увольнение!</h2>
+                                    <p className="text-slate-400 text-sm mb-6 px-4">
+                                        Вы потеряли работу. Что будете делать?
+                                    </p>
+
+                                    <div className="flex flex-col gap-3 w-full">
+                                        {/* Option 1: Pay 2x & Skip 2 */}
+                                        <button
+                                            onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_2X' })}
+                                            disabled={me.cash < me.expenses * 2}
+                                            className="w-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl border border-slate-700 flex items-center justify-between px-6 group transition-all"
+                                        >
+                                            <div className="flex flex-col items-start">
+                                                <span className="text-sm group-hover:text-blue-400 transition-colors">Оплатить 2x и Пропустить</span>
+                                                <span className="text-[10px] text-slate-500">Пропуск 2 ходов</span>
+                                            </div>
+                                            <div className="text-red-400 font-mono font-bold">-${(me.expenses * 2).toLocaleString()}</div>
+                                        </button>
+
+                                        {/* Option 2: Pay 4x & No Skip */}
+                                        <button
+                                            onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_4X' })}
+                                            disabled={me.cash < me.expenses * 4}
+                                            className="w-full bg-gradient-to-r from-blue-900/50 to-indigo-900/50 hover:from-blue-800/50 hover:to-indigo-800/50 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl border border-blue-500/30 flex items-center justify-between px-6 group transition-all"
+                                        >
+                                            <div className="flex flex-col items-start">
+                                                <span className="text-sm group-hover:text-cyan-400 transition-colors">Оплатить 4x и Играть</span>
+                                                <span className="text-[10px] text-slate-500">Без пропуска ходов</span>
+                                            </div>
+                                            <div className="text-red-400 font-mono font-bold">-${(me.expenses * 4).toLocaleString()}</div>
+                                        </button>
+
+                                        {/* Helper: Insufficient Funds Actions */}
+                                        {((me.cash < me.expenses * 2)) && (
+                                            <div className="grid grid-cols-2 gap-2 mt-2">
+                                                <button
+                                                    onClick={() => {
+                                                        const deficit = (me.expenses * 2) - me.cash;
+                                                        const loanAmount = Math.ceil(deficit / 1000) * 1000;
+                                                        handleLoan(loanAmount);
+                                                    }}
+                                                    className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold py-3 rounded-xl"
+                                                >
+                                                    🏦 Взять кредит
+                                                </button>
+                                                <button
+                                                    onClick={() => setShowBank(true)}
+                                                    className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl"
+                                                >
+                                                    Попросить
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        {/* Option 3: Bankruptcy */}
+                                        <button
+                                            onClick={() => {
+                                                if (confirm('ВЫ УВЕРЕНЫ? Вы начнете заново с штрафом на кредиты.')) {
+                                                    socket.emit('decision_downsized', { roomId, choice: 'BANKRUPT' });
+                                                }
+                                            }}
+                                            className="w-full mt-2 text-red-500/70 hover:text-red-400 text-xs font-bold py-2 uppercase tracking-widest transition-colors"
+                                        >
+                                            Объявить банкротство
+                                        </button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div className="bg-[#1e293b] w-full max-w-xs p-6 rounded-3xl border border-slate-700 shadow-2xl text-center">
+                                    <div className="text-4xl mb-4">📉</div>
+                                    <h2 className="text-xl font-bold text-white mb-2">Увольнение</h2>
+                                    <p className="text-slate-400 text-sm">Игрок принимает решение...</p>
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* BABY ROLL OVERLAY */}
+                    {state.phase === 'BABY_ROLL' && !isAnimating && (
+                        <div className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
+                            {isMyTurn ? (
+                                <div className="text-center">
+                                    <div className="text-6xl mb-6 animate-bounce">👶</div>
+                                    <h2 className="text-2xl font-bold text-white mb-8 drop-shadow-lg">Рождение ребенка?</h2>
+                                    <button
+                                        onClick={() => handleRoll()}
+                                        className="bg-gradient-to-br from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-bold py-6 px-12 rounded-full text-xl shadow-2xl shadow-pink-900/50 transform hover:scale-110 transition-all duration-300 ring-4 ring-pink-500/20"
+                                    >
+                                        Бросить кубик
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="bg-[#1e293b] w-full max-w-xs p-6 rounded-3xl border border-slate-700 shadow-2xl text-center">
+                                    <div className="text-4xl mb-4">👶</div>
+                                    <h2 className="text-xl font-bold text-white mb-2">Ребенок</h2>
+                                    <p className="text-slate-400 text-sm">Игрок бросает кубик...</p>
                                 </div>
                             )}
                         </div>
