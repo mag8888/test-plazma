@@ -1460,10 +1460,21 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                             <div className="grid grid-cols-2 gap-3 mb-3">
                                 {/* Roll Logic */}
                                 {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
-                                    <div className="col-span-2 flex gap-2">
-                                        <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs shadow-lg">🎲 1</button>
-                                        <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs shadow-lg">🎲 2</button>
-                                        {me.isFastTrack && <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs shadow-lg">🎲 3</button>}
+                                    <div className="flex gap-2 h-28">
+                                        <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                            <span className="text-2xl">🎲</span>
+                                            <span>1</span>
+                                        </button>
+                                        <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                            <span className="text-2xl">🎲🎲</span>
+                                            <span>2</span>
+                                        </button>
+                                        {me.isFastTrack && (
+                                            <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                                <span className="text-2xl">🎲×3</span>
+                                                <span>3</span>
+                                            </button>
+                                        )}
                                     </div>
                                 ) : (
                                     <button
