@@ -266,17 +266,30 @@ export default function EarnPage() {
                     {/* Medium */}
                     <div
                         onClick={() => handleBuy('MASTER', 100)}
-                        className="bg-slate-800 rounded-xl p-3 border border-purple-500/30 flex flex-col items-center relative overflow-hidden group cursor-pointer active:scale-95 transition-transform hover:bg-slate-700/80"
+                        className="relative rounded-xl border border-purple-500/50 overflow-hidden group cursor-pointer active:scale-95 transition-transform h-[220px] shadow-lg shadow-purple-900/20"
                     >
-                        <div className="absolute inset-0 bg-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                        <div className="w-12 h-12 rounded-full bg-purple-900/50 flex items-center justify-center mb-2 border border-purple-500/30">
-                            <Gift size={20} className="text-purple-400" />
+                        {/* Video Background */}
+                        <video
+                            autoPlay
+                            loop
+                            muted
+                            playsInline
+                            className="absolute inset-0 w-full h-full object-cover transform scale-110 group-hover:scale-125 transition-transform duration-[2000ms]"
+                        >
+                            <source src="https://res.cloudinary.com/drqtmkfka/video/upload/v1766124357/moneo_uploads/qgurgvxolnalqo6jh8b3.mp4" type="video/mp4" />
+                        </video>
+
+                        {/* Gradient Overlay */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent z-10"></div>
+
+                        {/* Content */}
+                        <div className="absolute bottom-0 left-0 right-0 p-3 flex flex-col items-center z-20 w-full">
+                            <div className="text-xs font-bold text-purple-300 uppercase tracking-widest mb-0.5 drop-shadow-md">Мастер</div>
+                            <div className="text-2xl font-black text-white mb-3 drop-shadow-md">$100</div>
+                            <button disabled={isLoading} className="w-full py-2 text-xs font-bold bg-purple-600 text-white rounded-lg hover:bg-purple-500 transition disabled:opacity-50 pointer-events-none shadow-lg shadow-purple-600/20">
+                                Купить
+                            </button>
                         </div>
-                        <div className="text-xs font-bold text-purple-300">Мастер</div>
-                        <div className="text-lg font-bold text-white">$100</div>
-                        <button disabled={isLoading} className="mt-2 w-full py-1 text-[10px] font-bold bg-purple-600 rounded hover:bg-purple-500 transition disabled:opacity-50 pointer-events-none">
-                            Купить
-                        </button>
                     </div>
 
                     {/* Large */}
@@ -293,7 +306,7 @@ export default function EarnPage() {
                             playsInline
                             className="absolute inset-0 w-full h-full object-cover transform scale-110 group-hover:scale-125 transition-transform duration-[2000ms]"
                         >
-                            <source src="https://res.cloudinary.com/drqtmkfka/video/upload/v1766124357/moneo_uploads/qgurgvxolnalqo6jh8b3.mp4" type="video/mp4" />
+                            <source src="https://res.cloudinary.com/drqtmkfka/video/upload/v1766132583/moneo_uploads/yqmkv8wqkqqvtagz64n8.mp4" type="video/mp4" />
                         </video>
 
                         {/* Gradient Overlay */}
