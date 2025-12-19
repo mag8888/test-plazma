@@ -189,7 +189,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
     );
 
     return (
-        <div className="fixed inset-0 bg-black/90 flex flex-col z-50 animate-in fade-in duration-200">
+        <div className="fixed inset-0 bg-black/90 flex flex-col z-[100] animate-in fade-in duration-200">
             {/* Header */}
             <div className="p-4 flex justify-between items-center bg-slate-800 border-b border-slate-700">
                 <h2 className="text-lg font-bold">Управление игрой</h2>
@@ -219,7 +219,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
             </div>
 
             {/* Content */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-6">
+            <div className="flex-1 overflow-y-auto p-4 space-y-6 pb-32">
 
                 {activeTab === 'settings' && (
                     <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
