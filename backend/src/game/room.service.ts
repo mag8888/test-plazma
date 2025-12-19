@@ -184,11 +184,23 @@ export class RoomService {
         return this.sanitizeRoom(room);
     }
 
-    async leaveRoom(roomId: string, playerId: string): Promise<void> {
-        // We use $pull to remove the player
-        await RoomModel.findByIdAndUpdate(roomId, {
-            $pull: { players: { id: playerId } }
-        });
+    async leaveRoom(roomId: string, playerId: string, userId?: string): Promise<void> {
+        // We use $pull to remove the player by socket ID or User ID (to handle refreshes)
+        const pullQuery: any = { id: playerId };
+        if (userId) {
+            // Need a complex logic or just rely on $or logic within $pull? 
+            // $pull accepts a query, so we can do $pull: { players: { $or: [{ id: playerId }, { userId: userId }] } }
+            // BUT userId might be undefined/null for guests.
+            // CAUTION: 'guest_' IDs might conflict if logic is loose.
+            // Let's use specific query.
+            await RoomModel.findByIdAndUpdate(roomId, {
+                $pull: { players: { $or: [{ id: playerId }, { userId: userId }] } }
+            });
+        } else {
+            await RoomModel.findByIdAndUpdate(roomId, {
+                $pull: { players: { id: playerId } }
+            });
+        }
 
         // Check if room is empty
         const room = await RoomModel.findById(roomId);

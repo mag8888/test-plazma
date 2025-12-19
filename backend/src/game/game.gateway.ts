@@ -187,8 +187,8 @@ export class GameGateway {
 
             // Leave Room
             socket.on('leave_room', async (data) => {
-                const { roomId } = data;
-                await this.roomService.leaveRoom(roomId, socket.id);
+                const { roomId, userId } = data;
+                await this.roomService.leaveRoom(roomId, socket.id, userId);
                 socket.leave(roomId);
                 const room = await this.roomService.getRoom(roomId);
                 if (room) {
