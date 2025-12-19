@@ -28,13 +28,24 @@ export const partnershipApi = {
         return res.json();
     },
 
-    getTree: async (userId: string) => {
+    async getTree(userId: string) {
         const res = await fetch(`${API_URL}/tree/${userId}`);
         return res.json();
     },
 
-    getStats: async (userId: string) => {
+    async getStats(userId: string) {
         const res = await fetch(`${API_URL}/stats/${userId}`);
         return res.json();
+    },
+
+    async getPublicProfile(telegramId: number) {
+        try {
+            const res = await fetch(`${API_URL}/public-profile/${telegramId}`);
+            if (!res.ok) return null;
+            return res.json();
+        } catch (e) {
+            console.error("Public Profile Fetch Error", e);
+            return null;
+        }
     }
 };
