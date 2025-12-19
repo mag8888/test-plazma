@@ -1402,37 +1402,8 @@ export class GameEngine {
         player.cash -= costToPay;
 
         // Handle Expense Payment (No Asset added)
-        if (card.type === 'EXPENSE') {
-            // this.addLog(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
-            // Handled by forcePayment if mandatory? 
-            // Wait, buyAsset is "Optional" for Expense? No, Expense is mandatory usually.
-            // But buyAsset calls imply "User Clicked Pay".
-            // If user clicked pay, we just deduce.
-            // But if costToPay > cash?
-            // We should use forcePayment behavior logic OR standard logic.
-            // User requested "Prevent negative balance".
-
-            // Revert deduction line 1119 (player.cash -= costToPay) for Expenses?
-            // No, Line 1119 is explicit.
-            // Let's modify logic to Check Balance first.
-
-            // Actually, Expense cards via `buyAsset` means user manually paid.
-            // If user manually paid, they must have cash or taken loan manually.
-            // We should just enforce "Cannot buy if insufficient". 
-            // Line 1096 ALREADY enforces `player.cash < costToPay` return.
-            // So if `buyAsset` is called, they CAN pay.
-            // For Mandatory items (Losses/Events), that flow is via `resolveOpportunity`.
-            // Expense cards drawn from square type 'EXPENSE' are auto-drawn but handled differently. 
-            // `handleSquare` line 611 -> sets currentCard -> `buyAsset` button appears.
-            // So user manually pays.
-            // If they can't pay? They must take loan.
-            // We need to allow them to take loan.
-            // This is already handled by UI "Take Loan" then "Pay".
-
-            // So buyAsset works for Expense IF checks pass.
-            // Line 1123 log.
-
-            this.addLog(`${player.name} paid expense: ${card.title} (-$${costToPay})`);
+        if (card.type === 'EXPENSE' || card.mandatory) {
+            this.addLog(`${player.name} paid: ${card.title} (-$${costToPay})`);
 
             // Discard the paid expense card
             if (this.state.currentCard) {
