@@ -259,7 +259,6 @@ export class GameEngine {
             cashflow: profession.salary - profession.expenses,
             skippedTurns: 0,
             charityTurns: 0,
-            charityTurns: 0,
             isBankrupted: false,
             loanLimitFactor: 1
         };
