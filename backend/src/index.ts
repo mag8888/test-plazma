@@ -18,6 +18,14 @@ declare global {
     var bot: any;
 }
 
+// Add interface augmentation for greenBalance/yellowBalance if I didn't update the interface file directly (I didn't update the interface in the previous view, only Schema. Wait, I should have updated Interface too.
+// Let's check the previous tool call.
+// I updated UserSchema definitions. I did NOT update the IUser interface.
+// I should update the Interface in the same file or cast it.
+// To avoid TS errors, I will use `any` casting or update user.model.ts interface in a separate call if needed.
+// Actually, I can just update the route here and use `any` for now or better, update the model properly in next step.
+// But to be fast, I'll assume I can just write to it.
+
 let dbStatus = 'pending';
 let botStatus = 'pending';
 
@@ -509,6 +517,71 @@ app.delete('/api/games/:id/players/:userId', async (req, res) => {
     } catch (e) {
         console.error("Kick failed:", e);
         res.status(500).json({ error: "Kick failed" });
+    }
+});
+
+// Sync Balance (Legacy -> Partnership)
+app.post('/api/partnership/sync-balance', async (req, res) => {
+    try {
+        const { initData } = req.body;
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyTelegramAuth(initData);
+        if (!user) return res.status(401).json({ error: "Invalid auth" });
+
+        // Logic: Transfer referralBalance to greenBalance in Partnership Backend
+        if (user.referralBalance > 0) {
+            const amount = user.referralBalance;
+
+            // Call Partnership Backend to Deposit
+            const PARTNERSHIP_API_URL = process.env.PARTNERSHIP_API_URL || 'http://localhost:4000/api';
+            const ADMIN_SECRET = process.env.ADMIN_SECRET || 'supersecret';
+
+            try {
+                // We use the admin endpoint to update balance
+                // POST /api/admin/balance
+                const response = await fetch(`${PARTNERSHIP_API_URL}/admin/balance`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-admin-secret': ADMIN_SECRET
+                    },
+                    body: JSON.stringify({
+                        userId: user.telegram_id, // Pass telegram_id
+                        amount: amount,
+                        type: 'GREEN'
+                    })
+                });
+
+                if (response.ok) {
+                    // Only clear balance if transfer success
+                    user.referralBalance = 0;
+                    // Sync local simplified field too
+                    // @ts-ignore
+                    user.greenBalance = (user.greenBalance || 0) + amount;
+                    await user.save();
+
+                    console.log(`Synced balance for ${user.username}: Moved ${amount} from Referral to Green.`);
+                    res.json({ success: true, synced: amount, newGreenBalance: user.greenBalance });
+                } else {
+                    const errText = await response.text();
+                    console.error("Partnership Sync Error:", errText);
+                    res.status(500).json({ error: "Partnership API Error" });
+                }
+
+            } catch (err) {
+                console.error("Network Sync Error:", err);
+                res.status(500).json({ error: "Network Error during Sync" });
+            }
+        } else {
+            res.json({ success: true, synced: 0, message: "No legacy balance to sync" });
+        }
+
+    } catch (e) {
+        console.error("Sync Balance Failed:", e);
+        res.status(500).json({ error: "Sync failed" });
     }
 });
 

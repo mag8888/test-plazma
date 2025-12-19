@@ -3,6 +3,7 @@
 import { useTelegram } from '../../components/TelegramProvider';
 import { User, Shield, TrendingUp, DollarSign, Trophy, Medal } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { partnershipApi } from '../../lib/partnershipApi';
 
 type Tab = 'stats' | 'rankings';
 
@@ -32,7 +33,8 @@ export default function ProfilePage() {
 
     // Consolidated user balances
     const balanceRed = user?.balanceRed || 0;
-    const balanceGreen = user?.referralBalance || 0;
+    // GREEN Balance is now fetched from Partnership API
+    const [partnershipBalance, setPartnershipBalance] = useState(0);
 
     // Fetch History Effect
     useEffect(() => {
@@ -54,6 +56,18 @@ export default function ProfilePage() {
         };
 
         fetchHistory();
+        fetchHistory();
+
+        if (user?.id) {
+            // Fetch partnership balance
+            partnershipApi.getStats(user.id.toString())
+                .then(data => {
+                    if (data && data.greenBalance !== undefined) {
+                        setPartnershipBalance(data.greenBalance);
+                    }
+                })
+                .catch(e => console.error("Profile partnership fetch error", e));
+        }
     }, [user]);
 
     // Fetch Rankings Effect (Lazy load on tab switch)
@@ -133,7 +147,8 @@ export default function ProfilePage() {
                             <div className="bg-gradient-to-br from-blue-900/30 to-slate-900 p-4 rounded-2xl border border-blue-500/20 shadow-xl relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 p-2 opacity-10 group-hover:opacity-20 transition-opacity"><TrendingUp size={40} /></div>
                                 <p className="text-blue-300/70 text-[10px] font-bold uppercase tracking-wider">Реальный счет</p>
-                                <h2 className="text-2xl font-black text-green-400 mt-1">${balanceGreen}</h2>
+                                <p className="text-blue-300/70 text-[10px] font-bold uppercase tracking-wider">Реальный счет</p>
+                                <h2 className="text-2xl font-black text-green-400 mt-1">${partnershipBalance}</h2>
                             </div>
                         </div>
 

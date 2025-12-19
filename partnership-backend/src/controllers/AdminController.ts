@@ -55,7 +55,18 @@ export class AdminController {
 
             if (!userId || !amount || !type) return res.status(400).json({ error: 'Missing fields' });
 
-            const user = await User.findById(userId);
+            let user;
+            // Check if userId is MongoID
+            if (userId.match(/^[0-9a-fA-F]{24}$/)) {
+                user = await User.findById(userId);
+            } else {
+                // Try finding by telegramId
+                user = await User.findOne({ telegramId: Number(userId) });
+                if (!user) {
+                    user = await User.findOne({ username: userId });
+                }
+            }
+
             if (!user) return res.status(404).json({ error: 'User not found' });
 
             const value = Number(amount);

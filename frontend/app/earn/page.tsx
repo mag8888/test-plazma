@@ -32,14 +32,23 @@ export default function EarnPage() {
             })
             .catch(err => console.error("Stats fetch error", err));
 
-        if (user?.id) {
-            // Login/Sync with Partnership Backend
-            // We use user.id (Telegram ID) to get the internal DB User
-            partnershipApi.login(user.id.toString(), user.username)
+        if (user?.id && webApp?.initData) {
+            // 1. Try to Sync Balance First
+            partnershipApi.syncLegacyBalance(webApp.initData)
+                .then(() => {
+                    // 2. Login to get fresh data (including synced balance)
+                    return partnershipApi.login(user.id.toString(), user.username);
+                })
                 .then(dbUser => {
                     setPartnershipUser(dbUser);
                 })
-                .catch(err => console.error("Partnership login error", err));
+                .catch(err => {
+                    console.error("Partnership login/sync error", err);
+                    // Fallback attempt to login even if sync fails
+                    partnershipApi.login(user.id.toString(), user.username)
+                        .then(dbUser => setPartnershipUser(dbUser))
+                        .catch(e => console.error("Fallback login failed", e));
+                });
         }
     }, [user]);
 

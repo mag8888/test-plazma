@@ -47,5 +47,20 @@ export const partnershipApi = {
             console.error("Public Profile Fetch Error", e);
             return null;
         }
+    },
+
+    // Sync from Main Backend Legacy Balance
+    async syncLegacyBalance(initData: string) {
+        try {
+            const res = await fetch('/api/partnership/sync-balance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ initData })
+            });
+            return res.json();
+        } catch (e) {
+            console.error("Sync Balance Error", e);
+            return { error: "Sync failed" };
+        }
     }
 };

@@ -28,6 +28,10 @@ const UserSchema: Schema = new Schema({
     telegram_id: { type: Number, unique: true, sparse: true },
     referralBalance: { type: Number, default: 0 }, // GREEN Balance (Real Money)
     balanceRed: { type: Number, default: 0 },      // RED Balance (Game Only)
+    // Partnership Balances (Shared with Partnership Backend)
+    greenBalance: { type: Number, default: 0 },
+    yellowBalance: { type: Number, default: 0 },
+
     referralsCount: { type: Number, default: 0 },
     referredBy: { type: String }, // Store referrer's username or ID
     authCode: { type: String },
