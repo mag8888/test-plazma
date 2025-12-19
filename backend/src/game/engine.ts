@@ -282,22 +282,21 @@ export class GameEngine {
     private checkFastTrackCondition(player: PlayerState) {
         if (player.isFastTrack) return;
 
-        // Condition: Passive Income >= Expenses
-        // User Requirement: "mandatory condition for entering big track is loan repayment" -> loanDebt === 0
+        // Condition: 
+        // 1. Credits 0
+        // 2. 200 000+ on balance
+        // 3. Passive income * 2 (Passive Income >= 2 * Expenses)
 
         // Reset flag
         const wasCanEnter = player.canEnterFastTrack;
         player.canEnterFastTrack = false;
 
-        if (player.passiveIncome >= player.expenses) {
-            if (player.loanDebt === 0) {
+        if (player.passiveIncome >= (player.expenses * 2)) {
+            if (player.loanDebt === 0 && player.cash >= 200000) {
                 player.canEnterFastTrack = true;
                 if (!wasCanEnter) {
-                    this.addLog(`🚀 ${player.name} is ready for Fast Track! (Passive Income > Expenses & No Debt)`);
+                    this.addLog(`🚀 ${player.name} is ready for Fast Track! (Passive > 2x Expenses, No Debt, $200k+)`);
                 }
-            } else {
-                // Info log if they have income but still claim debt?
-                // frequent logging might spam, relying on UI to show "Pay off debt"
             }
         }
     }
