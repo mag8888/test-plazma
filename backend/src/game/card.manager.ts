@@ -161,7 +161,11 @@ const generateBigDeals = (): Card[] => {
         ...expand(4, { title: '8-квартирный комплекс', cost: 100000, cashflow: 2800, description: 'Жилой комплекс с управляющим.', downPayment: 25000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
 
         // Hospitality
-        ...expand(4, { title: 'Мини-отель', cost: 80000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 20000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+        // Hospitality (Varied Prices: 80k-120k, Yield 3-5%)
+        { title: 'Мини-отель (Центр)', cost: 120000, cashflow: 3500, description: 'Бутик-отель в центре. Стабильный поток.', downPayment: 30000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE', type: 'DEAL_BIG', id: 'bh_1' },
+        { title: 'Мини-отель (У Реки)', cost: 100000, cashflow: 3000, description: 'Живописный отель на набережной.', downPayment: 25000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE', type: 'DEAL_BIG', id: 'bh_2' },
+        { title: 'Мини-отель (Пригород)', cost: 80000, cashflow: 2500, description: 'Уютный отель в тихом районе.', downPayment: 20000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE', type: 'DEAL_BIG', id: 'bh_3' },
+        { title: 'Мини-отель (Старый город)', cost: 90000, cashflow: 2800, description: 'Отель в историческом здании.', downPayment: 22000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE', type: 'DEAL_BIG', id: 'bh_4' },
 
         // Classic Business
         ...expand(4, { title: 'Сеть кафе быстрого питания', cost: 200000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 40000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
