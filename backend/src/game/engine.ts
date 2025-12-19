@@ -1196,8 +1196,13 @@ export class GameEngine {
         if (!player || !card) return;
         if (card.type !== 'MARKET' || !card.targetTitle || !card.offerPrice) return;
 
-        // Find Asset
-        const assetIndex = player.assets.findIndex(a => a.title === card.targetTitle);
+        // Find Asset (Exact or Partial Match)
+        let assetIndex = player.assets.findIndex(a => a.title === card.targetTitle);
+
+        if (assetIndex === -1) {
+            // Try partial match (e.g. "Mini-hotel" matches "Mini-hotel (Center)")
+            assetIndex = player.assets.findIndex(a => a.title.includes(card.targetTitle || ''));
+        }
         if (assetIndex === -1) {
             this.addLog(`${player.name} cannot sell: Don't own ${card.targetTitle}`);
             return;

@@ -93,13 +93,31 @@ const generateSmallDeals = (): Card[] => {
         // P&G
         ...expand(2, { title: 'Акции: P&G (Pref)', symbol: 'PG', cost: 2000, cashflow: 10, maxQuantity: 1000, description: 'Привилегированные акции P&G. Дивиденды $10/акцию. Макс 1000 шт.', assetType: 'STOCK' }, 'DEAL_SMALL'),
 
-        ...expand(5, { title: 'Комната в пригороде', cost: 3000, cashflow: 250, description: 'Сдача в аренду. ROI ~100%.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
-        ...expand(2, { title: 'Студия маникюра', cost: 4900, cashflow: 200, description: 'Студия маникюра на 1 место.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
-        ...expand(2, { title: 'Кофейня', cost: 4900, cashflow: 100, description: 'Небольшая кофейня.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
-        ...expand(2, { title: 'Партнёрство в автомастерской', cost: 4500, cashflow: 350, description: 'Доля в бизнесе.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
+        { title: 'Комната в пригороде (Север)', cost: 3000, cashflow: 250, description: 'Сдача в аренду. Стабильный доход.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL', id: 'sd_room_1' },
+        { title: 'Комната в пригороде (Юг)', cost: 2500, cashflow: 200, description: 'Небольшая комната. Требует ремонта.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL', id: 'sd_room_2' },
+        { title: 'Комната в пригороде (Центр)', cost: 3500, cashflow: 300, description: 'Отличное расположение.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL', id: 'sd_room_3' },
+        { title: 'Комната в общежитии', cost: 2000, cashflow: 180, description: 'Студенческое общежитие.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL', id: 'sd_room_4' },
+        { title: 'Комната (Лофт)', cost: 4000, cashflow: 350, description: 'Стильная комната.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL', id: 'sd_room_5' },
+
+        { title: 'Студия маникюра (ТЦ)', cost: 5000, cashflow: 300, description: 'Точка в торговом центре.', assetType: 'BUSINESS', type: 'DEAL_SMALL', id: 'sd_nail_1' },
+        { title: 'Студия маникюра (Дом)', cost: 3500, cashflow: 200, description: 'На дому.', assetType: 'BUSINESS', type: 'DEAL_SMALL', id: 'sd_nail_2' },
+
+        { title: 'Кофейня (Киоск)', cost: 4000, cashflow: 300, description: 'Кофе с собой. Высокий трафик.', assetType: 'BUSINESS', type: 'DEAL_SMALL', id: 'sd_coffee_1' },
+        { title: 'Кофейня (Островок)', cost: 5500, cashflow: 400, description: 'Островок в БЦ.', assetType: 'BUSINESS', type: 'DEAL_SMALL', id: 'sd_coffee_2' },
+
+        { title: 'Партнёрство в СТО', cost: 4500, cashflow: 350, description: 'Доля в сервисе.', assetType: 'BUSINESS', type: 'DEAL_SMALL', id: 'sd_sto_1' },
+        { title: 'Гаражный сервис', cost: 3000, cashflow: 250, description: 'Ремонт своими силами.', assetType: 'BUSINESS', type: 'DEAL_SMALL', id: 'sd_sto_2' },
+
         ...expand(2, { title: 'Участок земли 20га', cost: 5000, cashflow: 0, description: 'Земля без дохода.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
-        ...expand(1, { title: 'Покупка дрона', cost: 3000, cashflow: 50, description: 'Дрон для съёмок.', assetType: 'OTHER' }, 'DEAL_SMALL'),
-        ...expand(5, { title: 'Флипинг студии', cost: 5000, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
+        { title: 'Участок земли 10га', cost: 3000, cashflow: 0, description: 'Маленький участок.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL', id: 'sd_land_2' },
+
+        { title: 'Покупка дрона', cost: 2500, cashflow: 50, description: 'Б/у дрон для съёмок.', assetType: 'OTHER', type: 'DEAL_SMALL', id: 'sd_drone_1' },
+
+        { title: 'Флипинг студии (Ремонт)', cost: 5000, cashflow: 0, description: 'Под перепродажу. Дохода нет.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL', id: 'sd_flip_1' },
+        { title: 'Арендная студия', cost: 6000, cashflow: 400, description: 'Готовая к сдаче студия.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL', id: 'sd_flip_2' },
+        { title: 'Студия (Котлован)', cost: 4000, cashflow: 0, description: 'Стройка.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL', id: 'sd_flip_3' },
+        { title: 'Микро-студия', cost: 4500, cashflow: 300, description: 'Очень маленькая.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL', id: 'sd_flip_4' },
+        { title: 'Лофт-студия', cost: 7000, cashflow: 500, description: 'Элитный ремонт.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL', id: 'sd_flip_5' },
         ...expand(3, { title: 'Сетевой бизнес', cost: 500, cashflow: 100, description: 'Старт в MLM компании.', businessType: 'NETWORK' }, 'DEAL_SMALL'),
         ...expand(3, { title: 'Сетевой бизнес: Plazma Water', cost: 200, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' }, 'DEAL_SMALL'),
         ...expand(3, { title: 'Сетевой бизнес: MONEO', cost: 100, cashflow: 0, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($50/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' }, 'DEAL_SMALL'),
@@ -155,23 +173,36 @@ const generateMarketCards = (): Card[] => {
 const generateBigDeals = (): Card[] => {
     return [
         // Real Estate - Houses/Apts
-        { id: 'bd_house_ex', title: 'Дом (3Br/2Ba)', description: 'Дом под сдачу. Цена $7000-10000. Доход $100-300.', cost: 8500, cashflow: 200, type: 'DEAL_BIG' },
-        ...expand(3, { title: 'Дом 3Br/2Ba (Дуплекс)', cost: 12000, cashflow: 400, description: 'Дуплекс в хорошем районе.', downPayment: 4000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
-        ...expand(4, { title: '4-квартирный дом', cost: 35000, cashflow: 1200, description: 'Многоквартирный дом. Стабильные жильцы.', downPayment: 8000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
-        ...expand(4, { title: '8-квартирный комплекс', cost: 100000, cashflow: 2800, description: 'Жилой комплекс с управляющим.', downPayment: 25000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+        // Real Estate - Houses/Apts
+        { id: 'bd_house_1', title: 'Дом (3Br/2Ba) Старый', description: 'Требует вложений, но дешев.', cost: 8000, downPayment: 1000, cashflow: 300, type: 'DEAL_BIG', assetType: 'REAL_ESTATE' },
+        { id: 'bd_house_2', title: 'Дом (3Br/2Ba) Новый', description: 'Новый район.', cost: 12000, downPayment: 2000, cashflow: 400, type: 'DEAL_BIG', assetType: 'REAL_ESTATE' },
 
-        // Hospitality
-        // Hospitality (Varied Prices: 80k-120k, Yield 3-5%)
-        { title: 'Мини-отель (Центр)', cost: 120000, cashflow: 3500, description: 'Бутик-отель в центре. Стабильный поток.', downPayment: 30000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE', type: 'DEAL_BIG', id: 'bh_1' },
-        { title: 'Мини-отель (У Реки)', cost: 100000, cashflow: 3000, description: 'Живописный отель на набережной.', downPayment: 25000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE', type: 'DEAL_BIG', id: 'bh_2' },
-        { title: 'Мини-отель (Пригород)', cost: 80000, cashflow: 2500, description: 'Уютный отель в тихом районе.', downPayment: 20000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE', type: 'DEAL_BIG', id: 'bh_3' },
-        { title: 'Мини-отель (Старый город)', cost: 90000, cashflow: 2800, description: 'Отель в историческом здании.', downPayment: 22000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE', type: 'DEAL_BIG', id: 'bh_4' },
+        { id: 'bd_duplex_1', title: 'Дуплекс (Север)', cost: 15000, downPayment: 3000, cashflow: 500, description: 'Две квартиры.', assetType: 'REAL_ESTATE', type: 'DEAL_BIG' },
+        { id: 'bd_duplex_2', title: 'Дуплекс (Юг)', cost: 12000, downPayment: 2000, cashflow: 400, description: 'Бюджетный вариант.', assetType: 'REAL_ESTATE', type: 'DEAL_BIG' },
 
-        // Classic Business
-        ...expand(4, { title: 'Сеть кафе быстрого питания', cost: 200000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 40000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
-        ...expand(3, { title: 'Ферма органических овощей', cost: 120000, cashflow: 4500, description: 'Экологичное хозяйство с контрактами на поставку.', downPayment: 30000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
-        ...expand(3, { title: 'Сеть автомоек', cost: 150000, cashflow: 5000, description: 'Хорошее расположение, стабильный трафик клиентов.', downPayment: 35000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
-        ...expand(3, { title: 'Коворкинг-центр', cost: 250000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 50000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
+        { id: 'bd_4plex_1', title: '4-квартирный дом (А)', cost: 35000, downPayment: 8000, cashflow: 1400, description: 'Полная заселенность.', assetType: 'REAL_ESTATE', type: 'DEAL_BIG' },
+        { id: 'bd_4plex_2', title: '4-квартирный дом (Б)', cost: 40000, downPayment: 10000, cashflow: 1600, description: 'Хороший район.', assetType: 'REAL_ESTATE', type: 'DEAL_BIG' },
+        { id: 'bd_4plex_3', title: '4-квартирный дом (В)', cost: 30000, downPayment: 6000, cashflow: 1000, description: 'Требует управления.', assetType: 'REAL_ESTATE', type: 'DEAL_BIG' },
+
+        { id: 'bd_8plex_1', title: '8-квартирный комплекс', cost: 100000, downPayment: 25000, cashflow: 3500, description: 'Жилой комплекс.', assetType: 'REAL_ESTATE', type: 'DEAL_BIG' },
+        { id: 'bd_8plex_2', title: 'ЖК "Солнечный"', cost: 120000, downPayment: 30000, cashflow: 4200, description: 'Элитный комплекс на 8 квартир.', assetType: 'REAL_ESTATE', type: 'DEAL_BIG' },
+        { id: 'bd_8plex_3', title: 'ЖК "Заря"', cost: 90000, downPayment: 20000, cashflow: 3000, description: 'Эконом класс.', assetType: 'REAL_ESTATE', type: 'DEAL_BIG' },
+
+        // Hospitality (Already Updated Mini-hotels here, lines after this block)
+
+        // Classic Business (Varied)
+        { id: 'bd_fastfood_1', title: 'Сеть кафе (Центр)', cost: 200000, downPayment: 40000, cashflow: 7500, description: 'Точки в центре.', businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG' },
+        { id: 'bd_fastfood_2', title: 'Сеть кафе (ТЦ)', cost: 180000, downPayment: 35000, cashflow: 6500, description: 'Фудкорты.', businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG' },
+        { id: 'bd_fastfood_3', title: 'Сеть Бургерных', cost: 220000, downPayment: 45000, cashflow: 8500, description: 'Популярный бренд.', businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG' },
+
+        { id: 'bd_farm_1', title: 'Эко-Ферма', cost: 120000, downPayment: 30000, cashflow: 4500, description: 'Овощи.', businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG' },
+        { id: 'bd_farm_2', title: 'Молочная ферма', cost: 140000, downPayment: 35000, cashflow: 5000, description: 'Сыроварня.', businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG' },
+
+        { id: 'bd_wash_1', title: 'Сеть автомоек', cost: 150000, downPayment: 35000, cashflow: 5500, description: 'Самообслуживание.', businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG' },
+        { id: 'bd_wash_2', title: 'Детейлинг центр', cost: 170000, downPayment: 40000, cashflow: 6500, description: 'Премиум мойка.', businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG' },
+
+        { id: 'bd_cowork_1', title: 'Коворкинг (Лофт)', cost: 250000, downPayment: 50000, cashflow: 9000, description: 'Модное место.', businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG' },
+        { id: 'bd_cowork_2', title: 'Офисный центр', cost: 300000, downPayment: 60000, cashflow: 11000, description: 'Бизнес класс.', businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG' },
 
         // Network
         ...expand(6, { title: 'Франшиза: Plazma Water', cost: 5000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG'),
