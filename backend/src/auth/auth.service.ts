@@ -60,14 +60,47 @@ export class AuthService {
 
                 // Find or create in DB
                 let user = await UserModel.findOne({ telegram_id: tgUser.id });
+
+                // Cloudinary Avatar Logic
+                let photoUrl = tgUser.photo_url;
+                try {
+                    // Upload if photo exists and (user is new OR user has no photo OR photo is not from cloudinary)
+                    // Simple check: if tg provids photo, and current user photo is not cloudinary, upload it.
+                    const isCloudinary = user?.photo_url?.includes('cloudinary');
+                    if (photoUrl && !isCloudinary) {
+                        const { CloudinaryService } = await import('../services/cloudinary.service');
+                        const cloudinaryService = new CloudinaryService();
+                        photoUrl = await cloudinaryService.uploadImage(photoUrl, 'moneo_avatars');
+                    }
+                } catch (e) {
+                    console.error("Avatar upload failed", e);
+                    // Fallback to original URL
+                }
+
                 if (!user) {
                     user = await UserModel.create({
                         telegram_id: tgUser.id,
                         username: tgUser.username || `tg_${tgUser.id}`,
                         first_name: tgUser.first_name,
                         last_name: tgUser.last_name,
-                        photo_url: tgUser.photo_url
+                        photo_url: photoUrl
                     });
+                } else {
+                    // Update user info if changed
+                    let changed = false;
+                    if (photoUrl && user.photo_url !== photoUrl) {
+                        user.photo_url = photoUrl;
+                        changed = true;
+                    }
+                    if (tgUser.username && user.username !== tgUser.username) {
+                        user.username = tgUser.username;
+                        changed = true;
+                    }
+                    if (tgUser.first_name && user.first_name !== tgUser.first_name) {
+                        user.first_name = tgUser.first_name;
+                        changed = true;
+                    }
+                    if (changed) await user.save();
                 }
 
                 return user;

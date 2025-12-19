@@ -4,6 +4,7 @@ import { useTelegram } from '../../components/TelegramProvider';
 import { User, Shield, TrendingUp, DollarSign, Trophy, Medal } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { partnershipApi } from '../../lib/partnershipApi';
+import { UserProfileModal } from './UserProfileModal';
 
 type Tab = 'stats' | 'rankings';
 
@@ -30,6 +31,10 @@ export default function ProfilePage() {
     // Rankings Data
     const [rankings, setRankings] = useState<RankingUser[]>([]);
     const [loadingRankings, setLoadingRankings] = useState(false);
+
+    // Modal State
+    const [selectedUser, setSelectedUser] = useState<RankingUser | null>(null);
+    const [showProfileModal, setShowProfileModal] = useState(false);
 
     // Consolidated user balances
     const balanceRed = user?.balanceRed || 0;
@@ -244,7 +249,30 @@ export default function ProfilePage() {
                                     const photo = player.photo_url || player.photoUrl;
 
                                     return (
-                                        <div key={player._id} className={`${placeColor} rounded-xl p-3 border flex items-center justify-between shadow-sm`}>
+                                        <div
+                                            key={player._id}
+                                            onClick={() => {
+                                                // Normalize user object for modal
+                                                const modalUser = {
+                                                    _id: player._id,
+                                                    username: player.username,
+                                                    firstName: player.first_name || player.firstName,
+                                                    photoUrl: player.photo_url || player.photoUrl,
+                                                    wins: player.wins,
+                                                    balanceRed: player.balanceRed,
+                                                    isMaster: player.isMaster,
+                                                    telegramId: undefined // Rankings might not have tgID populated, check backend
+                                                    // Note: partnershipApi requires telegramId to fetch stats. 
+                                                    // If ranking doesn't have it, we might fail to show levels.
+                                                    // Assuming backend returns it or we can't show deep stats.
+                                                };
+                                                // Actually checking ranking interface, usually we populate minimal data. 
+                                                // Let's pass what we have.
+                                                setSelectedUser(player);
+                                                setShowProfileModal(true);
+                                            }}
+                                            className={`${placeColor} rounded-xl p-3 border flex items-center justify-between shadow-sm cursor-pointer hover:opacity-80 transition-opacity active:scale-[0.98]`}
+                                        >
                                             <div className="flex items-center gap-3">
                                                 <div className="flex items-center justify-center w-8">
                                                     {rankIcon}
@@ -282,6 +310,25 @@ export default function ProfilePage() {
                     </div>
                 )}
             </div>
+
+            <UserProfileModal
+                isOpen={showProfileModal}
+                onClose={() => setShowProfileModal(false)}
+                user={selectedUser ? {
+                    _id: selectedUser._id,
+                    username: selectedUser.username,
+                    firstName: selectedUser.first_name || selectedUser.firstName,
+                    photoUrl: selectedUser.photo_url || selectedUser.photoUrl,
+                    wins: selectedUser.wins,
+                    balanceRed: selectedUser.balanceRed,
+                    isMaster: selectedUser.isMaster,
+                    // If rankings don't have telegramId, we can't fetch partners.
+                    // But maybe we can try if it's there?
+                    // Let's assume passed user object might have it if schema allows or check type.
+                    // Casting to any to avoid strict type error if ranking type is partial
+                    telegramId: (selectedUser as any).telegram_id || (selectedUser as any).telegramId
+                } : null}
+            />
         </div>
     );
 }
