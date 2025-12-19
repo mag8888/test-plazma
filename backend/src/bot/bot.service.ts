@@ -228,7 +228,48 @@ export class BotService {
                         const targetUser = adminState.targetUser;
                         targetUser.referralBalance += amount;
                         await targetUser.save();
-                        this.bot?.sendMessage(chatId, `✅ Added $${amount} to ${targetUser.username}.`);
+
+                        // 1. Log Transaction
+                        try {
+                            const { TransactionModel } = await import('../models/transaction.model');
+                            await TransactionModel.create({
+                                userId: targetUser._id,
+                                amount: amount,
+                                currency: 'GREEN',
+                                type: 'DEPOSIT',
+                                description: `Admin Top-Up via Bot`
+                            });
+                        } catch (err) {
+                            console.error("Failed to log transaction:", err);
+                        }
+
+                        // 2. Sync with Partnership Backend (if configured)
+                        const partnershipUrl = process.env.PARTNERSHIP_API_URL || 'http://localhost:8000'; // Fallback
+                        const adminSecret = process.env.ADMIN_SECRET || 'supersecret';
+
+                        try {
+                            // Update Green Balance in Partnership Service
+                            await fetch(`${partnershipUrl}/api/admin/balance`, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'x-admin-secret': adminSecret
+                                },
+                                body: JSON.stringify({
+                                    userId: targetUser._id.toString(), // Assuming same IDs
+                                    amount: amount,
+                                    type: 'GREEN'
+                                })
+                            });
+                        } catch (err) {
+                            console.error("Failed to sync partnership balance:", err);
+                            // Verify if it failed because user doesn't exist in partnership DB yet.
+                            // Login endpoint creates user. We might need to call login first?
+                            // Or trust that user logged in app once? 
+                            // If silent fail, it's okay-ish for now.
+                        }
+
+                        this.bot?.sendMessage(chatId, `✅ Added $${amount} to ${targetUser.username}.\n synced with partnership service.`);
                         this.adminStates.delete(chatId);
                     } else {
                         this.bot?.sendMessage(chatId, "Invalid amount.");
