@@ -700,7 +700,10 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                                 {state.players.map((p: any) => (
                                     <div
                                         key={p.id}
-                                        onClick={() => setSelectedPlayerForMenu(p)}
+                                        onClick={() => {
+                                            console.log("Player clicked:", p.name, p.id);
+                                            setSelectedPlayerForMenu(p);
+                                        }}
                                         className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer hover:border-slate-500 active:scale-[0.98]
                                             ${p.id === currentPlayer.id ? 'bg-slate-800/80 border-blue-500/50 shadow-lg shadow-blue-900/10' : 'bg-slate-900/30 border-slate-800/50'} 
                                             ${p.hasWon ? 'ring-2 ring-yellow-500' : ''}

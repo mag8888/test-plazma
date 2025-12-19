@@ -118,8 +118,13 @@ export class RoomService {
         if (roomCheck.password && roomCheck.password !== password) throw new Error("Invalid password");
 
         // Allow rejoin if player is already in the list
-        const isAlreadyInRoom = roomCheck.players.some((p: any) => p.userId === userId);
-        if (roomCheck.status !== 'waiting' && !isAlreadyInRoom) throw new Error("Game already started");
+        // Use loose equality or string conversion to handle potential Type Mismatches (String vs Number)
+        const isAlreadyInRoom = roomCheck.players.some((p: any) => p.userId == userId || p.userId?.toString() === userId?.toString());
+
+        if (roomCheck.status !== 'waiting' && !isAlreadyInRoom) {
+            console.warn(`[JoinBlock] Game Active. User ${userId} not found in room ${roomId}. Players: ${roomCheck.players.map((p: any) => p.userId)}`);
+            throw new Error("Game already started");
+        }
 
         // Determine unique token for new player
         const ALL_TOKENS = ['🦁', '🦅', '🦊', '🐻', '🐅', '🐺', '🐘', '🦈', '🦉', '🐬']; // Synced with Frontend Visual Order
