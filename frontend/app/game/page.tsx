@@ -179,7 +179,7 @@ function GameContent() {
             board: [],
             log: []
         };
-        return <GameBoard roomId={roomId} initialState={initialBoardState} />;
+        return <GameBoard roomId={roomId} initialState={initialBoardState} isHost={isHost} />;
     }
 
     return (

@@ -201,18 +201,59 @@ export class GameGateway {
             // Kick Player
             socket.on('kick_player', async (data, callback) => {
                 try {
-                    const { roomId, playerId, userId } = data; // Expect userId
+                    const { roomId, playerId, userId } = data; // Expect userId (Requester)
+
+                    // 1. Perform RoomService Logic (Lobby/DB check)
                     await this.roomService.kickPlayer(roomId, userId, playerId);
+
+                    // 2. Active Game Logic
+                    const game = this.games.get(roomId);
+                    if (game) {
+                        game.removePlayer(playerId);
+                        // If game ended due to lack of players?
+                        this.io.to(roomId).emit('game_state_update', game.getState());
+                        this.saveState(roomId, game);
+                    }
 
                     // Notify the kicked player
                     this.io.to(roomId).emit('player_kicked', { playerId });
 
+                    // Broadcast Room Update
                     const room = await this.roomService.getRoom(roomId);
                     if (room) {
                         this.io.to(roomId).emit('room_state_updated', room);
+                        // If game is active, also sync players list in DB if needed? 
+                        // roomService.kickPlayer handles DB pull.
                     }
                     const rooms = await this.roomService.getRooms();
                     this.io.emit('rooms_updated', rooms);
+
+                    callback({ success: true });
+                } catch (e: any) {
+                    console.error("Kick Player Error:", e);
+                    callback({ success: false, error: e.message });
+                }
+            });
+
+            // Host Skip Turn (Force End Turn)
+            socket.on('host_skip_turn', async (data, callback) => {
+                try {
+                    const { roomId, userId } = data;
+                    const game = this.games.get(roomId);
+                    if (!game) return callback({ success: false, error: "Game not found" });
+
+                    // Verify Host
+                    const room = await this.roomService.getRoom(roomId);
+                    if (!room || room.creatorId !== userId) {
+                        return callback({ success: false, error: "Only host can skip turns" });
+                    }
+
+                    game.addLog(`⏩ Host forced end of turn.`);
+                    game.endTurn();
+
+                    const state = game.getState();
+                    this.io.to(roomId).emit('turn_ended', { state });
+                    this.saveState(roomId, game);
 
                     callback({ success: true });
                 } catch (e: any) {

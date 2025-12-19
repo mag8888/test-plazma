@@ -12,6 +12,7 @@ import { sfx } from './SoundManager';
 interface BoardProps {
     roomId: string;
     initialState: any;
+    isHost?: boolean;
 }
 
 interface PlayerState {
@@ -100,7 +101,7 @@ const getInitials = (name: string) => {
     return name.substring(0, 2).toUpperCase();
 };
 
-export default function GameBoard({ roomId, initialState }: BoardProps) {
+export default function GameBoard({ roomId, initialState, isHost }: BoardProps) {
     const router = useRouter();
     const [state, setState] = useState(initialState);
     const [showBank, setShowBank] = useState(false);
@@ -488,6 +489,16 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
         }
     };
 
+    const handleKickPlayer = (playerId: string) => {
+        if (!window.confirm("Вы действительно хотите удалить этого игрока из игры?")) return;
+        socket.emit('kick_player', { roomId, playerId, userId: me.id });
+    };
+
+    const handleForceSkip = () => {
+        if (!window.confirm("Принудительно завершить ход текущего игрока?")) return;
+        socket.emit('host_skip_turn', { roomId, userId: me.id });
+    };
+
     const me = state.players.find((p: any) => p.id === socket.id) || initialState.players[0];
     const isMyTurn = state.players[state.currentPlayerIndex]?.id === me?.id;
     const currentTurnPlayer = state.players[state.currentPlayerIndex];
@@ -697,13 +708,38 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
                                                     {p.name}
                                                     {(p.skippedTurns || 0) > 0 && <span className="text-[10px] bg-red-900/50 text-red-200 px-1.5 py-0.5 rounded border border-red-500/30" title="Пропуск хода">⛔ {p.skippedTurns}</span>}
                                                 </div>
-                                                {p.id === currentPlayer.id && <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Ходит</span>}
+                                                {p.id === currentPlayer.id && (
+                                                    <div className="flex items-center gap-2">
+                                                        <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Ходит</span>
+                                                        {isHost && (
+                                                            <button
+                                                                onClick={handleForceSkip}
+                                                                title="Принудительно завершить ход"
+                                                                className="p-1 bg-amber-500/20 hover:bg-amber-500/40 text-amber-400 rounded transition-colors"
+                                                            >
+                                                                ⏩
+                                                            </button>
+                                                        )}
+                                                    </div>
+                                                )}
                                             </div>
                                             <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
                                                 <span>${p.cash?.toLocaleString()}</span>
                                                 {p.loanDebt > 0 && <span className="text-red-400">-${p.loanDebt?.toLocaleString()}</span>}
                                             </div>
                                         </div>
+
+                                        {isHost && p.id !== socket.id && (
+                                            <button
+                                                onClick={() => handleKickPlayer(p.id)}
+                                                className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 text-red-500 hover:bg-red-500/20 rounded-lg ml-2"
+                                                title="Удалить игрока"
+                                            >
+                                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-4 h-4">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                                </svg>
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>
@@ -1682,36 +1718,40 @@ export default function GameBoard({ roomId, initialState }: BoardProps) {
             }
             {showRules && <RulesModal onClose={() => setShowRules(false)} counts={state.deckCounts} />}
 
-            {showMenuModal && (
-                <MenuModal
-                    onClose={() => setShowMenuModal(false)}
-                    onExit={handleExit}
-                    onEndGame={handleEndGame}
-                    onShowRules={() => setShowRules(true)}
-                    isMuted={isMuted}
-                    toggleMute={toggleMute}
-                    volume={volume}
-                    setVolume={handleVolumeChange}
-                    isHost={state.players[0]?.id === me.id}
-                    hasWinner={state.players.some((p: any) => p.hasWon)}
-                />
-            )}
+            {
+                showMenuModal && (
+                    <MenuModal
+                        onClose={() => setShowMenuModal(false)}
+                        onExit={handleExit}
+                        onEndGame={handleEndGame}
+                        onShowRules={() => setShowRules(true)}
+                        isMuted={isMuted}
+                        toggleMute={toggleMute}
+                        volume={volume}
+                        setVolume={handleVolumeChange}
+                        isHost={state.players[0]?.id === me.id}
+                        hasWinner={state.players.some((p: any) => p.hasWon)}
+                    />
+                )
+            }
             {/* Notifications Overlay */}
-            {(babyNotification || turnNotification) && (
-                <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-slate-900 border-2 border-slate-700 p-8 rounded-3xl shadow-2xl max-w-md text-center transform scale-100 animate-in zoom-in-95 duration-200">
-                        <div className="text-6xl mb-4 animate-bounce">
-                            {babyNotification ? '👶' : '🚫'}
-                        </div>
-                        <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">
-                            {babyNotification ? 'Новая Жизнь!' : 'Пропуск Хода!'}
-                        </h2>
-                        <div className={`text-lg font-bold ${babyNotification ? 'text-pink-300' : 'text-red-400'}`}>
-                            {babyNotification || turnNotification}
+            {
+                (babyNotification || turnNotification) && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                        <div className="bg-slate-900 border-2 border-slate-700 p-8 rounded-3xl shadow-2xl max-w-md text-center transform scale-100 animate-in zoom-in-95 duration-200">
+                            <div className="text-6xl mb-4 animate-bounce">
+                                {babyNotification ? '👶' : '🚫'}
+                            </div>
+                            <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">
+                                {babyNotification ? 'Новая Жизнь!' : 'Пропуск Хода!'}
+                            </h2>
+                            <div className={`text-lg font-bold ${babyNotification ? 'text-pink-300' : 'text-red-400'}`}>
+                                {babyNotification || turnNotification}
+                            </div>
                         </div>
                     </div>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 }

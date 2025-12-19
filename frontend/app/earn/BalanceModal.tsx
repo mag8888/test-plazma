@@ -1,5 +1,7 @@
 import { useState } from 'react';
-import { X, Wallet, ArrowUpRight, ArrowDownLeft, AlertCircle } from 'lucide-react';
+import { X, Wallet, ArrowUpRight, ArrowDownLeft, AlertCircle, RefreshCw } from 'lucide-react';
+import { useTelegram } from '../../components/TelegramProvider';
+import { partnershipApi } from '../../lib/partnershipApi';
 
 interface BalanceModalProps {
     isOpen: boolean;
@@ -10,8 +12,31 @@ interface BalanceModalProps {
 }
 
 export function BalanceModal({ isOpen, onClose, balance, tariff, onTopUp }: BalanceModalProps) {
+    const { webApp } = useTelegram();
     const [activeTab, setActiveTab] = useState<'topup' | 'withdraw'>('topup');
     const [withdrawAmount, setWithdrawAmount] = useState<string>('');
+    const [isSyncing, setIsSyncing] = useState(false);
+
+    const handleSync = async () => {
+        if (!webApp?.initData) return;
+        setIsSyncing(true);
+        try {
+            const res = await partnershipApi.syncLegacyBalance(webApp.initData);
+            if (res.success && res.synced > 0) {
+                if (webApp) webApp.showAlert(`Успешно синхронизировано: $${res.synced}`);
+                window.location.reload(); // Reload to refresh all data
+            } else if (res.success && res.synced === 0) {
+                if (webApp) webApp.showAlert('Нет средств для синхронизации');
+            } else {
+                if (webApp) webApp.showAlert('Ошибка синхронизации: ' + (res.error || 'Unknown'));
+            }
+        } catch (e) {
+            console.error(e);
+            if (webApp) webApp.showAlert('Ошибка сети');
+        } finally {
+            setIsSyncing(false);
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -66,8 +91,17 @@ export function BalanceModal({ isOpen, onClose, balance, tariff, onTopUp }: Bala
                 {/* Content */}
                 <div className="p-6 overflow-y-auto">
 
-                    {/* Common Balance Display */}
-                    <div className="text-center mb-6">
+                    <div className="text-center mb-6 relative">
+                        {/* Debug Sync Button */}
+                        <button
+                            onClick={handleSync}
+                            disabled={isSyncing}
+                            className="absolute -top-2 right-0 p-2 text-slate-500 hover:text-blue-400 transition-colors"
+                            title="Синхронизировать старый баланс"
+                        >
+                            <RefreshCw size={14} className={isSyncing ? 'animate-spin' : ''} />
+                        </button>
+
                         <div className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-1">Зеленый Баланс</div>
                         <div className="text-4xl font-black text-green-400">${balance.toLocaleString()}</div>
                         <div className="text-[10px] text-slate-500 mt-1 px-4">
@@ -97,9 +131,9 @@ export function BalanceModal({ isOpen, onClose, balance, tariff, onTopUp }: Bala
                             <div className="flex justify-between items-center bg-slate-700/50 p-3 rounded-xl border border-slate-700">
                                 <div className="text-xs text-slate-400">Ваш тариф:</div>
                                 <div className={`text-xs font-bold px-2 py-0.5 rounded border ${tariff === 'PARTNER' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-500/30' :
-                                        tariff === 'MASTER' ? 'bg-purple-900/30 text-purple-400 border-purple-500/30' :
-                                            tariff === 'PLAYER' ? 'bg-blue-900/30 text-blue-400 border-blue-500/30' :
-                                                'bg-slate-600 text-slate-300 border-slate-500'
+                                    tariff === 'MASTER' ? 'bg-purple-900/30 text-purple-400 border-purple-500/30' :
+                                        tariff === 'PLAYER' ? 'bg-blue-900/30 text-blue-400 border-blue-500/30' :
+                                            'bg-slate-600 text-slate-300 border-slate-500'
                                     }`}>
                                     {tariff || 'GUEST'}
                                 </div>

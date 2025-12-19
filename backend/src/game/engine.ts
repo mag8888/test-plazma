@@ -735,6 +735,40 @@ export class GameEngine {
         }
     }
 
+    public removePlayer(playerId: string) {
+        const index = this.state.players.findIndex(p => p.id === playerId);
+        if (index === -1) return;
+
+        const player = this.state.players[index];
+        this.addLog(`🚫 ${player.name} kicked by Host.`);
+
+        // Remove player
+        this.state.players.splice(index, 1);
+
+        // Adjust Current Player Index
+        if (index < this.state.currentPlayerIndex) {
+            // Player before current was removed, shift index left
+            this.state.currentPlayerIndex--;
+        } else if (index === this.state.currentPlayerIndex) {
+            // Current player removed
+            if (this.state.players.length === 0) {
+                this.state.isGameEnded = true;
+                return;
+            }
+            // Index now points to next player (or out of bounds)
+            if (this.state.currentPlayerIndex >= this.state.players.length) {
+                this.state.currentPlayerIndex = 0;
+            }
+            // Reset phase for the new player
+            this.state.phase = 'ROLL';
+            this.state.turnExpiresAt = Date.now() + (this.state.currentTurnTime * 1000);
+
+            const nextPlayer = this.state.players[this.state.currentPlayerIndex];
+            this.addLog(`🎲 Turn passed to ${nextPlayer.name}`);
+        }
+        // If index > current, no change needed to index
+    }
+
     public calculateRankings() {
         // 1. Winners (hasWon) - Sorted by time? Or just grouped.
         // 2. Fast Track Players (Sorted by Income Gain? or Total Income?)
