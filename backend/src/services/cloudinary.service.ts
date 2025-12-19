@@ -60,4 +60,20 @@ export class CloudinaryService {
             throw error;
         }
     }
+
+    /**
+     * Uploads media (video, image, auto) from URL
+     */
+    async uploadMedia(url: string, resourceType: 'auto' | 'image' | 'video' | 'raw' = 'auto', folder: string = 'moneo_uploads'): Promise<string> {
+        try {
+            const result = await cloudinary.uploader.upload(url, {
+                folder: folder,
+                resource_type: resourceType
+            });
+            return result.secure_url;
+        } catch (error: any) {
+            console.warn("Cloudinary Upload Skipped:", error.message);
+            throw error;
+        }
+    }
 }

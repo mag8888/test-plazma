@@ -905,39 +905,55 @@ export class BotService {
                 }
             }
         });
-        // Handle Photos for Cloudinary Upload
-        this.bot.on('photo', async (msg) => {
+        // Helper for Uploads
+        const handleUpload = async (msg: any, type: 'image' | 'video' | 'raw' | 'auto' = 'auto') => {
             const chatId = msg.chat.id;
+            // Only process if user explicitly sent media to the bot directly (not in group unless mentioned?)
+            // Assuming private chat mainly.
 
-            // Allow anyone or restrict? "User said bot could upload".
-            // Let's just allow it for simplicity.
+            let fileId = '';
+            let caption = '';
 
-            if (!msg.photo || msg.photo.length === 0) return;
-
-            // Get the largest photo
-            const photo = msg.photo[msg.photo.length - 1];
-            const fileId = photo.file_id;
+            if (msg.photo) {
+                fileId = msg.photo[msg.photo.length - 1].file_id;
+                type = 'image';
+            } else if (msg.video) {
+                fileId = msg.video.file_id;
+                type = 'video';
+            } else if (msg.document) {
+                fileId = msg.document.file_id;
+                type = 'auto'; // Could be anything
+            } else if (msg.animation) {
+                fileId = msg.animation.file_id;
+                type = 'video'; // GIFs are usually videos (mp4)
+            } else {
+                return;
+            }
 
             this.bot?.sendMessage(chatId, "⏳ Uploading to Cloudinary...");
 
             try {
-                // Get file link
                 const fileLink = await this.bot?.getFileLink(fileId);
                 if (!fileLink) throw new Error("Could not get file link");
 
-                // Dynamic Import Service
                 const { CloudinaryService } = await import('../services/cloudinary.service');
                 const cloudinaryService = new CloudinaryService();
 
-                const url = await cloudinaryService.uploadImage(fileLink);
+                const url = await cloudinaryService.uploadMedia(fileLink, type);
 
-                this.bot?.sendMessage(chatId, `✅ **Image Uploaded!**\n\n\`${url}\``, { parse_mode: 'Markdown' });
+                this.bot?.sendMessage(chatId, `✅ **Uploaded!**\n\n\`${url}\``, { parse_mode: 'Markdown' });
 
             } catch (error: any) {
                 console.error("Upload failed", error);
                 this.bot?.sendMessage(chatId, `❌ Upload failed: ${error.message}`);
             }
-        });
+        };
+
+        // Media Handlers
+        this.bot.on('photo', (msg) => handleUpload(msg));
+        this.bot.on('video', (msg) => handleUpload(msg));
+        this.bot.on('document', (msg) => handleUpload(msg));
+        this.bot.on('animation', (msg) => handleUpload(msg));
     }
 
     sendMainMenu(chatId: number, text: string) {
