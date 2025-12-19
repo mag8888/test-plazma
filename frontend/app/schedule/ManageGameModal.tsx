@@ -19,6 +19,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
     // Settings State
     const [timeVal, setTimeVal] = useState('');
     const [maxPlayers, setMaxPlayers] = useState(8);
+    const [promoSpots, setPromoSpots] = useState(2);
     const [description, setDescription] = useState('');
 
     // Broadcast State
@@ -44,6 +45,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
                 const mskTime = d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
                 setTimeVal(mskTime);
                 setMaxPlayers(data.maxPlayers);
+                setPromoSpots(data.promoSpots || 2);
                 setDescription(data.description || '');
             }
         } catch (e) {
@@ -74,6 +76,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
                     initData: webApp?.initData,
                     startTime: finalDate.toISOString(),
                     maxPlayers: Number(maxPlayers),
+                    promoSpots: Number(promoSpots),
                     description: description
                 })
             });
@@ -241,6 +244,18 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
                                 className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-lg font-mono focus:border-blue-500 outline-none"
                                 value={maxPlayers}
                                 onChange={(e) => setMaxPlayers(Number(e.target.value))}
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-sm text-slate-400 mb-1 flex items-center gap-2">
+                                <Users size={14} /> Промо мест
+                            </label>
+                            <input
+                                type="number"
+                                className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-lg font-mono focus:border-blue-500 outline-none"
+                                value={promoSpots}
+                                onChange={(e) => setPromoSpots(Number(e.target.value))}
                             />
                         </div>
 
