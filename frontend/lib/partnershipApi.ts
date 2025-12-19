@@ -1,3 +1,5 @@
+import { getBackendUrl } from './config';
+
 const API_URL = process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'http://localhost:4000/api';
 
 export const partnershipApi = {
@@ -51,8 +53,9 @@ export const partnershipApi = {
 
     // Sync from Main Backend Legacy Balance
     async syncLegacyBalance(initData: string) {
+        const BACKEND_URL = getBackendUrl();
         try {
-            const res = await fetch('/api/partnership/sync-balance', {
+            const res = await fetch(`${BACKEND_URL}/api/partnership/sync-balance`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ initData })

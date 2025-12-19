@@ -3,6 +3,8 @@
 import Script from 'next/script';
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import type { WebApp as WebAppType } from '@twa-dev/types';
+import { getBackendUrl } from '../lib/config';
+import { socket } from '../app/socket';
 
 declare global {
     interface Window {
@@ -31,6 +33,22 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
     const [isReady, setIsReady] = useState(false);
     const [user, setUser] = useState<any>(null);
 
+    // Reconnection Logic for Mobile Stability
+    useEffect(() => {
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                console.log("📱 App visible, checking socket connection...");
+                if (!socket.connected) {
+                    console.log("🔌 Socket disconnected, forcing reconnect...");
+                    socket.connect();
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+        return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+    }, []);
+
     useEffect(() => {
         const app = (window as any).Telegram?.WebApp;
         if (app) {
@@ -43,8 +61,13 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
             document.documentElement.style.setProperty('--tg-theme-bg-color', app.backgroundColor);
             document.documentElement.style.setProperty('--tg-theme-text-color', app.textColor);
 
+
+
+            // ...
+
             // 2. Authenticate & Fetch User Data
             const login = async () => {
+                const BACKEND_URL = getBackendUrl();
                 try {
                     const initData = app.initData;
                     // Check for Auth Code (Direct Link)
@@ -53,7 +76,7 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
 
                     if (initData) {
                         // Priority 1: Telegram Web App Init Data
-                        const res = await fetch('/api/auth/login/telegram', {
+                        const res = await fetch(`${BACKEND_URL}/api/auth/login/telegram`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ initData })
@@ -63,13 +86,14 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                             const data = await res.json();
                             setUser(data.user);
                         } else {
-                            console.error("Telegram Auth failed");
+                            console.error("Telegram Auth failed", res.status);
+                            // Fallback to offline user if available? No, better to show error or guest.
                             setUser(app.initDataUnsafe?.user || { id: 123456789, first_name: 'Guest (Auth Failed)', username: 'guest_fallback', balanceRed: 1000, referralBalance: 50 });
                         }
                     } else if (authCode) {
                         // Priority 2: Magic Link Auth Code
                         console.log("Attempting Magic Login with code:", authCode);
-                        const res = await fetch('/api/auth/magic-login', {
+                        const res = await fetch(`${BACKEND_URL}/api/auth/magic-login`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ code: authCode })
@@ -78,19 +102,20 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                         if (res.ok) {
                             const data = await res.json();
                             setUser(data.user);
-                            // Optional: Clear URL param
                         } else {
                             console.error("Magic Login failed");
                             setUser({ id: 123456789, first_name: 'Guest (Bad Link)', username: 'guest_link', balanceRed: 1000, referralBalance: 50 });
                         }
                     } else {
+                        // ... existing dev fallback
                         console.warn("No initData or Auth Code (Dev mode?)");
-                        // Fallback for dev: usage mock
                         setUser(app.initDataUnsafe?.user || { id: 123456789, first_name: 'Dev Guest', username: 'dev_guest', balanceRed: 1000, referralBalance: 50 });
                     }
 
                 } catch (e) {
                     console.error("Login failed", e);
+                    // If network error, we might want to retry?
+                    // For now, set guest to avoid crash.
                     setUser({ id: 999999, first_name: 'Guest (Error)', username: 'guest_err', balanceRed: 1000, referralBalance: 50 });
                 } finally {
                     setIsReady(true);
