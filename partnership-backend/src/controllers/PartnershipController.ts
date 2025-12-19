@@ -108,4 +108,45 @@ export class PartnershipController {
             res.status(500).json({ error: error.message });
         }
     }
+    // Public stats for profile modal (Avatar + Level)
+    static async getPublicStats(req: Request, res: Response) {
+        try {
+            const { telegramId } = req.params;
+            const user = await User.findOne({ telegramId: Number(telegramId) });
+
+            if (!user) {
+                // Return defaults if user not in partnership system yet
+                return res.json({ tariff: 'GUEST', level: 0, partners: 0 });
+            }
+
+            // Find best active avatar
+            // Priority: PARTNER > MASTER > PLAYER > GUEST
+            // Sort by tariff price desc
+            const avatars = await Avatar.find({ owner: user._id, active: true }).lean();
+
+            let bestAvatar: any = null;
+            let maxPrice = -1;
+
+            for (const av of avatars) {
+                const p = TARIFF_PRICES[av.tariff as TariffType] || 0;
+                if (p > maxPrice) {
+                    maxPrice = p;
+                    bestAvatar = av;
+                }
+            }
+
+            if (!bestAvatar) {
+                return res.json({ tariff: 'GUEST', level: 0, partners: 0 });
+            }
+
+            res.json({
+                tariff: bestAvatar.tariff,
+                level: bestAvatar.level,
+                partners: bestAvatar.partners?.length || 0 // Direct children count
+            });
+
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
