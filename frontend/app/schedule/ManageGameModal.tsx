@@ -25,7 +25,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
     // Broadcast State
     const [message, setMessage] = useState('');
 
-    const [message, setMessage] = useState('');
+
 
     // Private Message State
     const [dmTarget, setDmTarget] = useState<any>(null);
