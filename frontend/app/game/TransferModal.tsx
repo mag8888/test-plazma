@@ -43,7 +43,20 @@ export const TransferModal = ({ isOpen, onClose, asset, players, myId, onTransfe
                             <div className="mt-4 pt-4 border-t border-slate-800">
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="text-slate-400 text-xs font-bold uppercase">Кол-во для передачи:</span>
-                                    <span className="text-white font-mono font-bold">{quantity} / {asset.quantity}</span>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="number"
+                                            min="1"
+                                            max={asset.quantity}
+                                            value={quantity}
+                                            onChange={(e) => {
+                                                const val = Math.max(1, Math.min(asset.quantity, Number(e.target.value)));
+                                                setQuantity(val);
+                                            }}
+                                            className="w-20 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-right text-white font-mono font-bold text-sm focus:outline-none focus:border-blue-500 transition-colors"
+                                        />
+                                        <span className="text-slate-500 text-xs">/ {asset.quantity}</span>
+                                    </div>
                                 </div>
                                 <input
                                     type="range"
