@@ -966,7 +966,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
             <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-full overflow-hidden items-center justify-center">
 
                 {/* MOBILE VIDEO CALL (MOVED TO TOP) */}
-                <div className="lg:hidden w-full px-0 py-0 flex-1 z-0 min-h-0 order-first relative">
+                <div className="lg:hidden w-full h-[25vh] shrink-0 z-0 relative order-first bg-black/50">
                     {/* <AudioChat
                         className="w-full h-full shadow-lg rounded-none object-cover"
                         roomId={roomId}
@@ -975,7 +975,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         currentPlayerName={me?.name}
                     /> */}
                     {/* Placeholder for Video Chat */}
-                    <div className="w-full h-full bg-slate-900 border-b border-white/5 flex items-center justify-center text-slate-500 text-xs uppercase tracking-widest font-bold">
+                    <div className="w-full h-full border-b border-white/5 flex items-center justify-center text-slate-500 text-xs uppercase tracking-widest font-bold">
                         Video Disabled
                     </div>
 
@@ -996,8 +996,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                 {/* 📱 MOBILE STATS HUD */}
                 <div className="lg:hidden w-full bg-[#1e293b]/80 backdrop-blur-md border-b border-white/5 p-2 grid grid-cols-3 gap-2 shrink-0 z-20">
-                    <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
-                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс</span>
+                    <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
+                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс 🏦</span>
                         <div className="flex items-center gap-1">
                             <span className="text-sm font-black text-green-400 font-mono tracking-tight">${me.cash?.toLocaleString()}</span>
                             {/* Simple indicator if cash changed recently could go here */}
@@ -1007,8 +1007,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Выплата</span>
                         <span className="text-sm font-black text-green-400 font-mono tracking-tight">+${me.cashflow?.toLocaleString()}</span>
                     </div>
-                    <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
-                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Кредит</span>
+                    <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
+                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Кредит 💳</span>
                         <span className="text-sm font-black text-red-400 font-mono tracking-tight">-${me.loanDebt?.toLocaleString()}</span>
                     </div>
                 </div>
@@ -1818,6 +1818,14 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         🚀
                     </button>
                 )}
+
+                {/* BANK BUTTON (Mobile) */}
+                <button
+                    onClick={() => setShowBank(true)}
+                    className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors"
+                >
+                    🏦
+                </button>
 
                 {/* MENU TOGGLE */}
                 <button
