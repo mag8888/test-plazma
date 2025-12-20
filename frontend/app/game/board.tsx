@@ -1809,6 +1809,16 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
                 </button>
 
+                {/* Fast Track Button (Mobile) */}
+                {me.canEnterFastTrack && isMyTurn && (
+                    <button
+                        onClick={() => setShowFastTrackModal(true)}
+                        className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
+                    >
+                        🚀
+                    </button>
+                )}
+
                 {/* MENU TOGGLE */}
                 <button
                     onClick={() => setShowMobileMenu(true)}
