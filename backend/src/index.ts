@@ -93,12 +93,25 @@ app.get('/game/:id', (req, res) => {
 app.get('/api/games', async (req, res) => {
     try {
         const { ScheduledGameModel } = await import('./models/scheduled-game.model');
-        // Fetch upcoming games, populated with host info if needed (hostId is Ref)
-        const games = await ScheduledGameModel.find({
+        const { type } = req.query;
+
+        let query: any = {
             status: 'SCHEDULED',
             startTime: { $gt: new Date() }
-        })
-            .sort({ startTime: 1 })
+        };
+        let sort: any = { startTime: 1 };
+
+        if (type === 'history') {
+            query = {
+                // Show completed or past scheduled games
+                startTime: { $lt: new Date() }
+            };
+            sort = { startTime: -1 };
+        }
+
+        // Fetch games, populated with host info
+        const games = await ScheduledGameModel.find(query)
+            .sort(sort)
             .populate('hostId', 'username first_name photo_url') // Get host details
             .limit(20);
 
