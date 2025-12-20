@@ -95,16 +95,33 @@ export class PartnershipController {
         }
     }
 
-    // Helper to create user if not exists (for testing)
+    // Unified Create or Login
     static async createUser(req: Request, res: Response) {
         try {
             const { telegramId, username, referrerId } = req.body;
-            let user = await User.findOne({ telegramId });
-            if (!user) {
-                user = await User.create({ telegramId, username, referrer: referrerId });
-            }
+
+            // Use atomic upsert to handle race conditions and ensure login works if user exists
+            const user = await User.findOneAndUpdate(
+                { telegramId },
+                {
+                    $setOnInsert: { telegramId, referrer: referrerId },
+                    $set: { username } // Update username on login
+                },
+                { new: true, upsert: true, setDefaultsOnInsert: true }
+            );
+
             res.json(user);
         } catch (error: any) {
+            console.error("CreateUser Error:", error);
+            // If error is duplicate key (race condition despite upsert?), try findOne
+            if (error.code === 11000) {
+                try {
+                    const existing = await User.findOne({ telegramId });
+                    return res.json(existing);
+                } catch (e) {
+                    return res.status(500).json({ error: "Login failed via recovery" });
+                }
+            }
             res.status(500).json({ error: error.message });
         }
     }
