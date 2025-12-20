@@ -15,12 +15,25 @@ const API_URL = getPartnershipUrl();
 
 export const partnershipApi = {
     login: async (telegramId: string, username?: string, referrerId?: string) => {
-        const res = await fetch(`${API_URL}/user`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ telegramId, username, referrerId })
-        });
-        return res.json();
+        const url = `${API_URL}/user`;
+        console.log(`[Partnership] Attempting login to: ${url}`, { telegramId, username, referrerId });
+        try {
+            const res = await fetch(url, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ telegramId, username, referrerId })
+            });
+            if (!res.ok) {
+                const text = await res.text();
+                console.error(`[Partnership] Login failed ${res.status}: ${text}`);
+                throw new Error(`HTTP ${res.status}: ${text.slice(0, 50)}`);
+            }
+            return res.json();
+        } catch (e: any) {
+            console.error("[Partnership] Fetch Error:", e);
+            // Re-throw with more context to be caught by UI
+            throw new Error(`Fetch Fail: ${e.message} (URL: ${url})`);
+        }
     },
 
     subscribe: async (userId: string, tariff: string, referrerId?: string) => {

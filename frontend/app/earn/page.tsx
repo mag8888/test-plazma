@@ -421,11 +421,27 @@ export default function EarnPage() {
                             )}
                         </div>
                         {partnershipError && <div className="text-red-500 text-[10px] mt-1 break-all bg-red-900/10 p-1 rounded">Err: {partnershipError}</div>}
-                        <div className="text-[9px] text-slate-700 mt-1 truncate">API: {process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'default'}</div>
-                        <div><span className="text-slate-600">Green Balance (DB):</span> <span className="text-green-400">${partnershipUser?.greenBalance}</span></div>
-                        <div><span className="text-slate-600">Pending Legacy Balance:</span> <span className="text-yellow-400">${partnershipUser?.pendingBalance || 0}</span></div>
+                        <div className="text-[9px] text-slate-700 mt-1 truncate">Env Valid: {process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL?.includes('http') ? 'Yes' : 'No'}</div>
 
                         <div className="pt-2 flex gap-2">
+                            <button
+                                onClick={async () => {
+                                    if (!webApp?.initData) return;
+                                    try {
+                                        // Manual Login Test
+                                        const rawTelegramId = webApp.initDataUnsafe?.user?.id;
+                                        const pid = rawTelegramId ? rawTelegramId.toString() : (user.telegram_id || user.id).toString();
+                                        alert(`Attempting login for: ${pid}`);
+                                        const res = await partnershipApi.login(pid, user.username);
+                                        alert('Login Success: ' + JSON.stringify(res));
+                                    } catch (e: any) {
+                                        alert('Login Failed: ' + e.message + '\nStack: ' + e.stack);
+                                    }
+                                }}
+                                className="px-3 py-1 bg-purple-900/30 hover:bg-purple-900/50 text-purple-400 rounded border border-purple-900/50"
+                            >
+                                Test Login
+                            </button>
                             <button
                                 onClick={() => {
                                     if (!webApp?.initData) return;

@@ -127,7 +127,7 @@ export class RoomService {
         }
 
         // Determine unique token for new player
-        const ALL_TOKENS = ['🦁', '🦅', '🦊', '🐻', '🐅', '🐺', '🐘', '🦈', '🦉', '🐬']; // Synced with Frontend Visual Order
+        const ALL_TOKENS = ['🦊', '🐱', '🐭', '🐹', '🐰', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷']; // 12 Tokens for max 12 players
         const existingTokens = roomCheck.players.map((p: any) => p.token);
         let finalToken = token || '🦊';
 

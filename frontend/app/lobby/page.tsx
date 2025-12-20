@@ -338,8 +338,8 @@ export default function Lobby() {
                                         <span>Количество игроков</span>
                                         <span className="text-white text-lg">{maxPlayers}</span>
                                     </label>
-                                    <div className="flex gap-2">
-                                        {[...Array(8)].map((_, i) => {
+                                    <div className="flex gap-2 font-mono">
+                                        {[...Array(10)].map((_, i) => {
                                             const count = i + 1;
                                             if (count < 2) return null;
                                             return (
