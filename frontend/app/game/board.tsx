@@ -176,6 +176,16 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     const [turnNotification, setTurnNotification] = useState<string | null>(null);
     const [isAnimating, setIsAnimating] = useState(false);
 
+    // Card Modal Visibility (Local Override)
+    const [isCardModalOpen, setIsCardModalOpen] = useState(true);
+
+    // Auto-open modal when a new card appears
+    useEffect(() => {
+        if (state.currentCard) {
+            setIsCardModalOpen(true);
+        }
+    }, [state.currentCard]);
+
     // Host Menu State
     const [selectedPlayerForMenu, setSelectedPlayerForMenu] = useState<PlayerState | null>(null);
 
@@ -651,21 +661,23 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         >
                                             👢 Кикнуть
                                         </button>
-                                        <button
-                                            onClick={() => {
-                                                const amountStr = window.prompt(`Сколько подарить ${selectedPlayerForMenu.name}?`, '1000');
-                                                if (amountStr) {
-                                                    const amount = parseInt(amountStr);
-                                                    if (!isNaN(amount) && amount > 0) {
-                                                        socket.emit('host_give_cash', { roomId, userId: selectedPlayerForMenu.id, amount });
-                                                        setSelectedPlayerForMenu(null);
+                                        {isHost && (
+                                            <button
+                                                onClick={() => {
+                                                    const amountStr = window.prompt(`Сколько подарить ${selectedPlayerForMenu.name}?`, '1000');
+                                                    if (amountStr) {
+                                                        const amount = parseInt(amountStr);
+                                                        if (!isNaN(amount) && amount > 0) {
+                                                            socket.emit('host_give_cash', { roomId, userId: selectedPlayerForMenu.id, amount });
+                                                            setSelectedPlayerForMenu(null);
+                                                        }
                                                     }
-                                                }
-                                            }}
-                                            className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors col-span-2"
-                                        >
-                                            💵 Подарить деньги
-                                        </button>
+                                                }}
+                                                className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors col-span-2"
+                                            >
+                                                💵 Подарить деньги
+                                            </button>
+                                        )}
                                     </div>
                                 </>
                             )}
@@ -765,6 +777,32 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
                                     <div className="text-[9px] text-slate-500 uppercase tracking-wider">Расходы</div>
                                     <div className="font-mono text-slate-300 font-medium">${me.expenses?.toLocaleString()}</div>
+                                </div>
+                            </div>
+
+                            {/* Payday / Cashflow Status Bar */}
+                            <div className="bg-[#0B0E14]/50 p-4 rounded-xl border border-slate-800 border-l-4 border-l-green-500 mb-4 shadow-lg relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-16 h-16 bg-green-500/10 rounded-full blur-xl -mr-8 -mt-8"></div>
+                                <div className="flex justify-between items-center relative z-10">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-0.5">PAYDAY (Денежный поток)</span>
+                                        <div className="text-2xl font-mono text-green-400 font-bold tracking-tight">
+                                            +${(me.cashflow || 0).toLocaleString()} <span className="text-xs text-slate-500 font-normal">/мес</span>
+                                        </div>
+                                    </div>
+                                    <div className="text-3xl filter drop-shadow-md group-hover:scale-110 transition-transform">💰</div>
+                                </div>
+                                <div className="w-full bg-slate-800/50 h-1.5 mt-3 rounded-full overflow-hidden">
+                                    {/* Progress visual: ratio of passive to expenses? or just filled */}
+                                    {/* Let's show % of Freedom (Passive / Expenses) */}
+                                    <div
+                                        className="h-full bg-gradient-to-r from-green-600 to-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                                        style={{ width: `${Math.min(100, (me.passiveIncome / Math.max(1, me.expenses)) * 100)}%` }}
+                                    ></div>
+                                </div>
+                                <div className="flex justify-between items-center mt-1">
+                                    <span className="text-[9px] text-slate-500">Финансовая свобода</span>
+                                    <span className="text-[9px] text-green-400 font-bold">{Math.floor((me.passiveIncome / Math.max(1, me.expenses)) * 100)}%</span>
                                 </div>
                             </div>
                         </div>
@@ -1257,9 +1295,10 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         })}
 
                         {/* Action Card Overlay */}
-                        {state.currentCard && !showDice && !isAnimating && (
+                        {state.currentCard && !showDice && !isAnimating && isCardModalOpen && (
                             <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
                                 <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative">
+                                    <button onClick={() => setIsCardModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white z-50 hover:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-colors">✕</button>
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
                                     {/* Card ID Display (Integrated Style) */}
                                     {/* Card ID Display (Integrated Style) */}
@@ -1952,7 +1991,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 <MenuModal
                     onClose={() => setShowMenuModal(false)}
                     onExit={handleExit}
-                    onEndGame={() => socket.emit('end_game', { roomId })}
+                    onEndGame={() => socket.emit('end_game_host', { roomId, userId })}
                     toggleMute={toggleMute}
                     isMuted={isMuted}
                     volume={volume}
