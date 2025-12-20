@@ -8,7 +8,11 @@ const getPartnershipUrl = () => {
     if (!url.startsWith('http')) {
         url = `https://${url}`;
     }
-    return url.replace(/\/$/, '');
+    url = url.replace(/\/$/, '');
+    if (!url.endsWith('/api')) {
+        url = `${url}/api`;
+    }
+    return url;
 };
 
 const API_URL = getPartnershipUrl();
