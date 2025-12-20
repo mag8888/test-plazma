@@ -13,6 +13,8 @@ interface MenuModalProps {
     setZoom: (val: number) => void;
     isHost: boolean;
     hasWinner: boolean;
+    onSkipTurn?: () => void;
+    onKickCurrent?: () => void;
 }
 
 export const MenuModal = ({
@@ -27,7 +29,9 @@ export const MenuModal = ({
     zoom,
     setZoom,
     isHost,
-    hasWinner
+    hasWinner,
+    onSkipTurn,
+    onKickCurrent
 }: MenuModalProps) => {
     return (
         <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
@@ -103,12 +107,30 @@ export const MenuModal = ({
 
                     {/* HOST: End Game Button */}
                     {isHost && (
-                        <button
-                            onClick={onEndGame}
-                            className="w-full py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-widest text-xs shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
-                        >
-                            <span className="text-lg">🛑</span> ЗАВЕРШИТЬ ИГРУ
-                        </button>
+                        <div className="space-y-3 pt-4 border-t border-slate-700/50">
+                            <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider text-center">Меню Организатора</div>
+                            <button
+                                onClick={onEndGame}
+                                className="w-full py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-widest text-xs shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
+                            >
+                                <span className="text-lg">🛑</span> ЗАВЕРШИТЬ ИГРУ
+                            </button>
+
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={onSkipTurn}
+                                    className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors"
+                                >
+                                    Пропустить ход
+                                </button>
+                                <button
+                                    onClick={onKickCurrent}
+                                    className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600/50 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors"
+                                >
+                                    Кикнуть
+                                </button>
+                            </div>
+                        </div>
                     )}
                 </div>
             </div>

@@ -1849,6 +1849,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     setZoom={setZoom}
                     isHost={!!isHost}
                     hasWinner={state.players.some((p: any) => p.hasWon)}
+                    onSkipTurn={handleForceSkip}
+                    onKickCurrent={() => handleKickPlayer(currentPlayer.id)}
                 />
             )}
 
