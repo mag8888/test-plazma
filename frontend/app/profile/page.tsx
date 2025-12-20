@@ -46,8 +46,9 @@ export default function ProfilePage() {
         const fetchHistory = async () => {
             if (!user || !webApp) return;
             try {
-                const res = await fetch('/api/transactions', {
-                    headers: { 'Authorization': `Bearer ${webApp.initData}` }
+                // Send initData as query param to avoid Header Char issues
+                const res = await fetch(`/api/transactions?initData=${encodeURIComponent(webApp.initData)}`, {
+                    // headers: { 'Authorization': `Bearer ${webApp.initData}` }
                 });
                 if (res.ok) {
                     const data = await res.json();

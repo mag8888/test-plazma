@@ -137,7 +137,12 @@ app.get('/api/stats', async (req, res) => {
 // Transaction History API
 app.get('/api/transactions', async (req, res) => {
     try {
-        const initData = req.headers.authorization?.split(' ')[1]; // Expecting 'Bearer initData'
+        let initData = req.headers.authorization?.split(' ')[1]; // Expecting 'Bearer initData'
+
+        // Fallback to query param if header is missing (avoids Header Char validation issues on frontend)
+        if (!initData && req.query.initData) {
+            initData = req.query.initData as string;
+        }
 
         if (!initData) return res.status(401).json({ error: "No auth data" });
 
