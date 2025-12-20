@@ -42,6 +42,7 @@ import { TransferModal } from './TransferModal';
 import { RulesModal } from './RulesModal';
 import { RankingsModal } from './RankingsModal';
 import { MenuModal } from './MenuModal';
+import { ExitToFastTrackModal } from './ExitToFastTrackModal';
 
 // Helper for Cash Animation
 const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
@@ -117,6 +118,7 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
     // Sound Settings
     const [volume, setVolume] = useState(0.5);
     const [showMenuModal, setShowMenuModal] = useState(false);
+    const [showFastTrackModal, setShowFastTrackModal] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
 
     // Chat State
@@ -1758,6 +1760,41 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                     </div>
                 )
             }
+
+            {/* 🚀 EXIT TO FAST TRACK BUTTON (Fixed Pyramid/Triangle) */}
+            <div
+                onClick={() => setShowFastTrackModal(true)}
+                className={`fixed bottom-24 right-4 z-[90] w-24 h-24 cursor-pointer transition-transform hover:scale-105 active:scale-95 drop-shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-700
+                    ${(currentPlayer.loanDebt <= 0 && currentPlayer.passiveIncome >= 10000 && currentPlayer.cash >= 200000) ? 'filter hue-rotate-[240deg]' : ''}
+                `}
+                style={{
+                    clipPath: 'polygon(100% 100%, 0% 100%, 100% 0%)',
+                    background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', // Rose-600 to Rose-700
+                }}
+            >
+                {/* Icon inside triangle */}
+                <div className="absolute bottom-2 right-2 text-white font-bold text-3xl transform rotate-0 drop-shadow-md">
+                    🚀
+                </div>
+                <div className="absolute bottom-2 right-12 text-white/80 font-bold text-[10px] transform rotate-0 drop-shadow-md whitespace-nowrap">
+                    EXIT
+                </div>
+            </div>
+
+            {/* EXIT TO FAST TRACK MODAL */}
+            {showFastTrackModal && (
+                <ExitToFastTrackModal
+                    onClose={() => setShowFastTrackModal(false)}
+                    player={currentPlayer}
+                    onConfirm={() => {
+                        // TODO: Implement actual exit logic (Socket emit)
+                        console.log("EXIT TO FAST TRACK CONFIRMED");
+                        // For now just close or maybe show a "You Win" if logic allows? 
+                        // The user requested just the UI/UX for now.
+                        setShowFastTrackModal(false);
+                    }}
+                />
+            )}
 
             {/* 🛠️ PLAYER ACTION MENU (HOST) */}
             {selectedPlayerForMenu && (
