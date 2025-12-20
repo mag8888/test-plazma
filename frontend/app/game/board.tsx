@@ -139,6 +139,15 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     // Chat State
     const [chatMessage, setChatMessage] = useState('');
 
+    // Mobile Detection
+    const [isMobile, setIsMobile] = useState(false);
+    useEffect(() => {
+        const checkMobile = () => setIsMobile(window.innerWidth < 1024);
+        checkMobile();
+        window.addEventListener('resize', checkMobile);
+        return () => window.removeEventListener('resize', checkMobile);
+    }, []);
+
     useEffect(() => {
         setVolume(sfx.getVolume());
         setIsMuted(sfx.getMute());
