@@ -51,7 +51,7 @@ const getGradient = (type: string, isFT: boolean) => {
     return 'bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700';
 };
 
-export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId, onSquareClick }: any) => {
+export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId, onSquareClick, zoom = 1 }: any) => {
 
     // Helper: Is Fast Track?
     const isFastTrackSquare = (index: number) => index >= 24;
@@ -130,13 +130,13 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                 title={sq.name}
                             >
                                 <div className="flex flex-col items-center justify-between h-full py-1 w-full overflow-hidden">
-                                    <span className="text-[0.9cqw] leading-tight text-center px-0.5 text-slate-200 font-bold line-clamp-2 h-[3.0cqw] flex items-center shadow-black drop-shadow-md">{sq.name}</span>
-                                    <span className="text-[4cqw] leading-none filter drop-shadow-lg my-[0.2cqw] transform hover:scale-110 transition-transform">{getSticker(sq.type, sq.name)}</span>
+                                    <span style={{ fontSize: `${0.9 * zoom}cqw`, height: `${3.0 * zoom}cqw` }} className="leading-tight text-center px-0.5 text-slate-200 font-bold line-clamp-2 flex items-center shadow-black drop-shadow-md">{sq.name}</span>
+                                    <span style={{ fontSize: `${4 * zoom}cqw` }} className="leading-none filter drop-shadow-lg my-[0.2cqw] transform hover:scale-110 transition-transform">{getSticker(sq.type, sq.name)}</span>
 
                                     <div className="flex flex-col items-center leading-none space-y-[0.2cqw]">
-                                        {sq.cost && <span className="text-[0.8cqw] text-red-300 font-mono font-bold">-${(sq.cost / 1000).toFixed(0)}k</span>}
-                                        {sq.cashflow && <span className="text-[0.8cqw] text-green-300 font-bold font-mono shadow-black drop-shadow-sm">+${(sq.cashflow / 1000).toFixed(0)}k</span>}
-                                        {sq.type === 'CASHFLOW' && <span className="text-emerald-400 font-black tracking-tighter text-[0.8cqw] uppercase shadow-black drop-shadow-sm">Day</span>}
+                                        {sq.cost && <span style={{ fontSize: `${0.8 * zoom}cqw` }} className="text-red-300 font-mono font-bold">-${(sq.cost / 1000).toFixed(0)}k</span>}
+                                        {sq.cashflow && <span style={{ fontSize: `${0.8 * zoom}cqw` }} className="text-green-300 font-bold font-mono shadow-black drop-shadow-sm">+${(sq.cashflow / 1000).toFixed(0)}k</span>}
+                                        {sq.type === 'CASHFLOW' && <span style={{ fontSize: `${0.8 * zoom}cqw` }} className="text-emerald-400 font-black tracking-tighter uppercase shadow-black drop-shadow-sm">Day</span>}
                                     </div>
                                 </div>
 
@@ -197,8 +197,8 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                 title={sq.name}
                             >
                                 <div className="flex flex-col items-center justify-center transform hover:rotate-0 transition-transform">
-                                    <span className="text-[3cqw] lg:text-[4cqw] filter drop-shadow-lg">{getSticker(sq.type, sq.name)}</span>
-                                    <span className="text-[0.8cqw] font-bold text-slate-400 uppercase tracking-tight mt-[-0.2cqw] bg-black/40 px-[0.5cqw] rounded-full backdrop-blur-sm hidden lg:block scale-75">
+                                    <span style={{ fontSize: `${3 * zoom}cqw` }} className="filter drop-shadow-lg">{getSticker(sq.type, sq.name)}</span>
+                                    <span style={{ fontSize: `${0.8 * zoom}cqw` }} className="font-bold text-slate-400 uppercase tracking-tight mt-[-0.2cqw] bg-black/40 px-[0.5cqw] rounded-full backdrop-blur-sm hidden lg:block scale-75">
                                         {sq.type === 'OPPORTUNITY' ? (sq.name.includes('Big') ? 'Big' : 'Small') : sq.type}
                                     </span>
                                 </div>

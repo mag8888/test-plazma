@@ -9,6 +9,8 @@ interface MenuModalProps {
     toggleMute: () => void;
     volume: number;
     setVolume: (val: number) => void;
+    zoom: number;
+    setZoom: (val: number) => void;
     isHost: boolean;
     hasWinner: boolean;
 }
@@ -22,6 +24,8 @@ export const MenuModal = ({
     toggleMute,
     volume,
     setVolume,
+    zoom,
+    setZoom,
     isHost,
     hasWinner
 }: MenuModalProps) => {
@@ -38,7 +42,7 @@ export const MenuModal = ({
                 </h2>
 
                 {/* Sound Settings */}
-                <div className="space-y-4 mb-8">
+                <div className="space-y-4 mb-6">
                     <div className="flex justify-between items-center text-sm font-bold text-slate-400 uppercase tracking-wider">
                         <span>Звук эффектов</span>
                         <button onClick={toggleMute} className={`text-xs px-2 py-1 rounded ${isMuted ? 'bg-red-500/20 text-red-400' : 'bg-green-500/20 text-green-400'}`}>
@@ -53,6 +57,25 @@ export const MenuModal = ({
                         value={volume}
                         onChange={(e) => setVolume(parseFloat(e.target.value))}
                         className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                    />
+                </div>
+
+                {/* Zoom Settings */}
+                <div className="space-y-4 mb-8">
+                    <div className="flex justify-between items-center text-sm font-bold text-slate-400 uppercase tracking-wider">
+                        <span>Масштаб текста</span>
+                        <span className="text-xs bg-slate-800 text-slate-300 px-2 py-1 rounded">
+                            {(zoom * 100).toFixed(0)}%
+                        </span>
+                    </div>
+                    <input
+                        type="range"
+                        min="0.8"
+                        max="2.0"
+                        step="0.1"
+                        value={zoom}
+                        onChange={(e) => setZoom(parseFloat(e.target.value))}
+                        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-yellow-500"
                     />
                 </div>
 

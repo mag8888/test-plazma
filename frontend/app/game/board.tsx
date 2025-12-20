@@ -1087,6 +1087,7 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                             players={state.players}
                             animatingPos={animatingPos}
                             currentPlayerId={currentPlayer.id}
+                            zoom={zoom}
                             onSquareClick={(sq: any) => setSquareInfo(sq)}
                         />
 
@@ -1775,6 +1776,8 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                         toggleMute={toggleMute}
                         volume={volume}
                         setVolume={handleVolumeChange}
+                        zoom={zoom}
+                        setZoom={setZoom}
                         isHost={state.players[0]?.id === me.id}
                         hasWinner={state.players.some((p: any) => p.hasWon)}
                     />
