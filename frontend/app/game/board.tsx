@@ -1070,6 +1070,30 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         ) : <div className="text-xs text-slate-600 text-center py-4 italic">Нет активов</div>}
                     </div>
 
+                    {/* HOST CONTROLS */}
+                    {isHost && (
+                        <div className="bg-red-900/10 rounded-2xl p-4 border border-red-500/20 mt-2 shrink-0">
+                            <h3 className="text-[10px] uppercase tracking-widest text-red-400 font-bold mb-3 flex items-center gap-2">
+                                <span>🛠️</span> Управление Игрой
+                            </h3>
+                            <div className="grid grid-cols-2 gap-2">
+                                <button
+                                    onClick={handleForceSkip}
+                                    className="bg-red-900/20 hover:bg-red-900/40 text-red-300 border border-red-500/20 rounded-xl py-2 text-[10px] font-bold uppercase transition-all"
+                                >
+                                    Пропустить ход
+                                </button>
+                                <button
+                                    onClick={() => handleKickPlayer(currentPlayer.id)}
+                                    disabled={currentPlayer.id === me.id}
+                                    className="bg-slate-800 hover:bg-slate-700 text-slate-400 disabled:opacity-50 border border-slate-700 rounded-xl py-2 text-[10px] font-bold uppercase transition-all"
+                                >
+                                    Кикнуть
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
 
                 </div>
 
