@@ -1868,6 +1868,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
             {transferAssetItem && (
                 <TransferModal
+                    isOpen={true}
                     onClose={() => setTransferAssetItem(null)}
                     asset={transferAssetItem.item}
                     players={state.players}
