@@ -1828,11 +1828,6 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 </button>
             </div>
         </div>
-
-            {/* --- MODALS --- */ }
-
-    {/* VISUALIZER TOOLTIP PORTAL? */ }
-        </div >
     );
 
 
