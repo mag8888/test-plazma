@@ -150,6 +150,16 @@ export class BotService {
             }
         });
 
+        // /admin_sync command
+        this.bot.onText(/\/admin_sync/, async (msg) => {
+            const chatId = msg.chat.id;
+            const telegramId = msg.from?.id;
+            const isAdmin = process.env.ADMIN_IDS?.split(',').includes(String(telegramId));
+            if (!isAdmin) return;
+            this.adminStates.set(chatId, { state: 'WAITING_FOR_SYNC_USER' });
+            this.bot?.sendMessage(chatId, "Enter username or ID to force sync:");
+        });
+
         // /start command (supports ?start=referrerId)
         this.bot.onText(/\/start(.*)/, async (msg, match) => {
             const chatId = msg.chat.id;
@@ -276,6 +286,41 @@ export class BotService {
                         this.adminStates.delete(chatId);
                     } else {
                         this.bot?.sendMessage(chatId, "Invalid amount.");
+                    }
+                    return;
+                } else if (adminState.state === 'WAITING_FOR_SYNC_USER') {
+                    const { UserModel } = await import('../models/user.model');
+                    let targetUser = await UserModel.findOne({ username: text.replace('@', '') });
+                    if (!targetUser && !isNaN(Number(text))) {
+                        targetUser = await UserModel.findOne({ telegram_id: Number(text) });
+                    }
+                    if (targetUser) {
+                        // Force Sync Logic
+                        const partnershipUrl = process.env.PARTNERSHIP_API_URL || 'http://localhost:4000/api';
+                        const adminSecret = process.env.ADMIN_SECRET || 'supersecret';
+                        try {
+                            if (targetUser.referralBalance > 0) {
+                                await fetch(`${partnershipUrl}/api/admin/balance`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json', 'x-admin-secret': adminSecret },
+                                    body: JSON.stringify({
+                                        userId: targetUser.telegram_id || targetUser._id.toString(),
+                                        amount: targetUser.referralBalance,
+                                        type: 'GREEN'
+                                    })
+                                });
+                                this.bot?.sendMessage(chatId, `✅ Synced $${targetUser.referralBalance} for ${targetUser.username}.`);
+                                targetUser.referralBalance = 0;
+                                await targetUser.save();
+                            } else {
+                                this.bot?.sendMessage(chatId, `⚠️ No pending balance to sync for ${targetUser.username}.`);
+                            }
+                        } catch (e) {
+                            this.bot?.sendMessage(chatId, `❌ Sync failed: ${e}`);
+                        }
+                        this.adminStates.delete(chatId);
+                    } else {
+                        this.bot?.sendMessage(chatId, "User not found.");
                     }
                     return;
                 } else if (adminState.state === 'WAITING_FOR_MASTER_USER') {

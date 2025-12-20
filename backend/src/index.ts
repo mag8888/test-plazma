@@ -603,6 +603,24 @@ app.get('/api/partnership/legacy-balance', async (req, res) => {
     }
 });
 
+// DEBUG: Get Raw User Balances (Admin only - verify with secret if possible, or just open for now for rapid debug)
+app.get('/api/debug-balance/:username', async (req, res) => {
+    try {
+        const { UserModel } = await import('./models/user.model');
+        const user = await UserModel.findOne({ username: req.params.username });
+        if (!user) return res.json({ error: "User not found" });
+        res.json({
+            username: user.username,
+            referralBalance: user.referralBalance, // Green (Legacy)
+            greenBalance: user.greenBalance,       // Green (Synced)
+            balanceRed: user.balanceRed,           // Red
+            isMaster: user.isMaster
+        });
+    } catch (e) {
+        res.json({ error: e });
+    }
+});
+
 // Get User Stats (Public Profile)
 app.get('/api/users/:id/stats', async (req, res) => {
     try {

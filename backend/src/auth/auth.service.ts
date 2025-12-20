@@ -88,6 +88,7 @@ export class AuthService {
                 } else {
                     // Update user info if changed
                     let changed = false;
+                    // Force update photo if provided (Telegram photo might have changed)
                     if (photoUrl && user.photo_url !== photoUrl) {
                         user.photo_url = photoUrl;
                         changed = true;
@@ -100,6 +101,12 @@ export class AuthService {
                         user.first_name = tgUser.first_name;
                         changed = true;
                     }
+                    // Ensure last_name is updated too
+                    if (tgUser.last_name !== undefined && user.last_name !== tgUser.last_name) {
+                        user.last_name = tgUser.last_name;
+                        changed = true;
+                    }
+
                     if (changed) await user.save();
                 }
 
