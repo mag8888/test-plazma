@@ -32,12 +32,16 @@ export default function EarnPage() {
             })
             .catch(err => console.error("Stats fetch error", err));
 
-        if (user?.id && webApp?.initData) {
+        if (user && webApp?.initData) {
+            // Determine the ID to use for Partnership Backend
+            // Ideally we use telegram_id because Sync uses it.
+            const partnershipId = user.telegram_id ? user.telegram_id.toString() : user.id.toString();
+
             // 1. Try to Sync Balance First
             partnershipApi.syncLegacyBalance(webApp.initData)
                 .then(() => {
                     // 2. Login to get fresh data (including synced balance)
-                    return partnershipApi.login(user.id.toString(), user.username);
+                    return partnershipApi.login(partnershipId, user.username);
                 })
                 .then(dbUser => {
                     setPartnershipUser(dbUser);
@@ -45,7 +49,7 @@ export default function EarnPage() {
                 .catch(err => {
                     console.error("Partnership login/sync error", err);
                     // Fallback attempt to login even if sync fails
-                    partnershipApi.login(user.id.toString(), user.username)
+                    partnershipApi.login(partnershipId, user.username)
                         .then(dbUser => {
                             // Check if there is pending legacy balance anyway
                             partnershipApi.getLegacyBalance(webApp.initData).then(res => {
