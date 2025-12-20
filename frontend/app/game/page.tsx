@@ -165,7 +165,7 @@ function GameContent() {
         }
     };
 
-    const isHost = !!(room && myUserId && room.creatorId === myUserId);
+    const isHost = !!(room && myUserId && String(room.creatorId) === String(myUserId));
 
     if (!room) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Загрузка комнаты... {error && <span className="text-red-500 ml-2">{error}</span>}</div>;
 

@@ -665,7 +665,11 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                             {me.assets?.length > 0 ? (
                                 <div className="space-y-2">
                                     {me.assets.map((a: any, i: number) => (
-                                        <div key={i} className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50">
+                                        <div
+                                            key={i}
+                                            onClick={() => setTransferAssetItem({ item: a, index: i })}
+                                            className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 cursor-pointer hover:border-slate-500 active:scale-[0.98] transition-all"
+                                        >
                                             <div className="flex flex-col">
                                                 <span className="text-slate-300 font-medium">
                                                     {a.title}
@@ -1044,7 +1048,11 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                         {me.assets?.length > 0 ? (
                             <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1">
                                 {me.assets.map((a: any, i: number) => (
-                                    <div key={i} className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-700 transition-colors group">
+                                    <div
+                                        key={i}
+                                        onClick={() => setTransferAssetItem({ item: a, index: i })}
+                                        className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-500 active:scale-[0.98] transition-all cursor-pointer group"
+                                    >
                                         <div className="flex items-center gap-2">
                                             <span className="text-slate-300 font-medium">
                                                 {a.title}
@@ -1053,7 +1061,6 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                                             <span className="font-mono text-green-400 font-bold bg-green-900/10 px-1.5 py-0.5 rounded">+${a.cashflow}</span>
                                         </div>
                                         <button
-                                            onClick={() => setTransferAssetItem({ item: a, index: i })}
                                             className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-700/50 rounded-lg transition-all text-slate-500 hover:text-blue-400"
                                             title="Передать актив"
                                         >
@@ -1754,7 +1761,7 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
 
             {/* 🛠️ PLAYER ACTION MENU (HOST) */}
             {selectedPlayerForMenu && (
-                <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedPlayerForMenu(null)}>
+                <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedPlayerForMenu(null)}>
                     <div className="bg-slate-900 border border-slate-700/50 rounded-3xl w-full max-w-xs overflow-hidden shadow-2xl relative" onClick={e => e.stopPropagation()}>
 
                         {/* Header */}

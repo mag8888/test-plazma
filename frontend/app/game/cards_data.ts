@@ -131,6 +131,7 @@ export const BIG_DEALS: Card[] = [
     ...expand(3, { title: 'Дом 3Br/2Ba (Дуплекс)', cost: 12000, cashflow: 400, description: 'Дуплекс в хорошем районе.', downPayment: 4000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
     ...expand(4, { title: '4-квартирный дом', cost: 35000, cashflow: 1200, description: 'Многоквартирный дом. Стабильные жильцы.', downPayment: 8000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
     ...expand(4, { title: '8-квартирный комплекс', cost: 100000, cashflow: 2800, description: 'Жилой комплекс с управляющим.', downPayment: 25000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+    { id: 'bd_8plex_3', title: 'ЖК "Заря"', cost: 90000, downPayment: 20000, cashflow: 3000, description: 'Эконом класс.', assetType: 'REAL_ESTATE', type: 'DEAL_BIG' },
 
     // Hospitality
     ...expand(4, { title: 'Мини-отель', cost: 80000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 20000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
