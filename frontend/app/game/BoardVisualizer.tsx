@@ -130,13 +130,13 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                 title={sq.name}
                             >
                                 <div className="flex flex-col items-center justify-between h-full py-1 w-full overflow-hidden">
-                                    <span className="text-[0.6cqw] leading-tight text-center px-0.5 text-slate-200 font-medium line-clamp-2 h-[2.5cqw] flex items-center">{sq.name}</span>
-                                    <span className="text-[3cqw] leading-none filter drop-shadow-md my-[0.2cqw]">{getSticker(sq.type, sq.name)}</span>
+                                    <span className="text-[0.9cqw] leading-tight text-center px-0.5 text-slate-200 font-bold line-clamp-2 h-[3.0cqw] flex items-center shadow-black drop-shadow-md">{sq.name}</span>
+                                    <span className="text-[4cqw] leading-none filter drop-shadow-lg my-[0.2cqw] transform hover:scale-110 transition-transform">{getSticker(sq.type, sq.name)}</span>
 
                                     <div className="flex flex-col items-center leading-none space-y-[0.2cqw]">
-                                        {sq.cost && <span className="text-[0.6cqw] text-red-300 font-mono">-${(sq.cost / 1000).toFixed(0)}k</span>}
-                                        {sq.cashflow && <span className="text-[0.6cqw] text-green-300 font-bold font-mono">+${(sq.cashflow / 1000).toFixed(0)}k</span>}
-                                        {sq.type === 'CASHFLOW' && <span className="text-emerald-400 font-bold tracking-tighter text-[0.6cqw]">Day</span>}
+                                        {sq.cost && <span className="text-[0.8cqw] text-red-300 font-mono font-bold">-${(sq.cost / 1000).toFixed(0)}k</span>}
+                                        {sq.cashflow && <span className="text-[0.8cqw] text-green-300 font-bold font-mono shadow-black drop-shadow-sm">+${(sq.cashflow / 1000).toFixed(0)}k</span>}
+                                        {sq.type === 'CASHFLOW' && <span className="text-emerald-400 font-black tracking-tighter text-[0.8cqw] uppercase shadow-black drop-shadow-sm">Day</span>}
                                     </div>
                                 </div>
 

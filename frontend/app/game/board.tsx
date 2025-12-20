@@ -1087,8 +1087,29 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                             players={state.players}
                             animatingPos={animatingPos}
                             currentPlayerId={currentPlayer.id}
-                            onSquareClick={(sq: any) => setSquareInfo(sq)} // Re-using squareInfo state for click popup
+                            onSquareClick={(sq: any) => setSquareInfo(sq)}
                         />
+
+                        {/* 🚀 EXIT TO FAST TRACK BUTTON (Overlay on Board) */}
+                        {showExitButton && (
+                            <div
+                                onClick={() => setShowFastTrackModal(true)}
+                                className={`absolute bottom-0 right-0 z-[50] w-16 h-16 md:w-24 md:h-24 cursor-pointer transition-transform hover:scale-105 active:scale-95 drop-shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-700
+                                    ${(currentPlayer.loanDebt <= 0 && currentPlayer.passiveIncome >= 10000 && currentPlayer.cash >= 200000) ? 'filter hue-rotate-[240deg]' : ''}
+                                `}
+                                style={{
+                                    clipPath: 'polygon(100% 100%, 0% 100%, 100% 0%)',
+                                    background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', // Rose-600 to Rose-700
+                                }}
+                            >
+                                <div className="absolute bottom-1 right-1 md:bottom-2 md:right-2 text-white font-bold text-xl md:text-3xl transform rotate-0 drop-shadow-md">
+                                    🚀
+                                </div>
+                                <div className="absolute bottom-1 right-8 md:bottom-2 md:right-12 text-white/90 font-bold text-[8px] md:text-[10px] transform rotate-0 drop-shadow-md whitespace-nowrap">
+                                    EXIT
+                                </div>
+                            </div>
+                        )}
 
                         {/* Action Card Overlay */}
                         {state.currentCard && !showDice && !isAnimating && (
@@ -1778,25 +1799,7 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                 )
             }
 
-            {/* 🚀 EXIT TO FAST TRACK BUTTON (Fixed Pyramid/Triangle) */}
-            <div
-                onClick={() => setShowFastTrackModal(true)}
-                className={`fixed bottom-32 right-[400px] z-[90] w-24 h-24 cursor-pointer transition-transform hover:scale-105 active:scale-95 drop-shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-700
-                    ${(currentPlayer.loanDebt <= 0 && currentPlayer.passiveIncome >= 10000 && currentPlayer.cash >= 200000) ? 'filter hue-rotate-[240deg]' : ''}
-                `}
-                style={{
-                    clipPath: 'polygon(100% 100%, 0% 100%, 100% 0%)',
-                    background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', // Rose-600 to Rose-700
-                }}
-            >
-                {/* Icon inside triangle */}
-                <div className="absolute bottom-2 right-2 text-white font-bold text-3xl transform rotate-0 drop-shadow-md">
-                    🚀
-                </div>
-                <div className="absolute bottom-2 right-12 text-white/80 font-bold text-[10px] transform rotate-0 drop-shadow-md whitespace-nowrap">
-                    EXIT
-                </div>
-            </div>
+
 
             {/* EXIT TO FAST TRACK MODAL */}
             {
