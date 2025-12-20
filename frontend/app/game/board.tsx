@@ -1095,25 +1095,19 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                             onSquareClick={(sq: any) => setSquareInfo(sq)}
                         />
 
-                        {/* 🚀 EXIT TO FAST TRACK BUTTON (Overlay on Board) */}
+                        {/* 🚀 EXIT TO FAST TRACK BUTTON (Floating in Void) */}
                         {showExitButton && (
-                            <div
+                            <button
                                 onClick={() => setShowFastTrackModal(true)}
-                                className={`absolute bottom-0 right-0 z-[50] w-16 h-16 md:w-24 md:h-24 cursor-pointer transition-transform hover:scale-105 active:scale-95 drop-shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-700
-                                    ${(currentPlayer.loanDebt <= 0 && currentPlayer.passiveIncome >= 10000 && currentPlayer.cash >= 200000) ? 'filter hue-rotate-[240deg]' : ''}
+                                className={`absolute bottom-[18%] right-[18%] z-[90] w-20 h-20 rounded-full cursor-pointer transition-transform hover:scale-110 active:scale-95 shadow-[0_0_20px_rgba(244,63,94,0.6)] animate-in zoom-in duration-700 border-4 border-slate-900
+                                    ${(currentPlayer.loanDebt <= 0 && currentPlayer.passiveIncome >= 10000 && currentPlayer.cash >= 200000) ? 'animate-pulse ring-4 ring-green-400' : 'bg-gradient-to-br from-[#f43f5e] to-[#e11d48]'}
                                 `}
-                                style={{
-                                    clipPath: 'polygon(100% 100%, 0% 100%, 100% 0%)',
-                                    background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', // Rose-600 to Rose-700
-                                }}
                             >
-                                <div className="absolute bottom-1 right-1 md:bottom-2 md:right-2 text-white font-bold text-xl md:text-3xl transform rotate-0 drop-shadow-md">
-                                    🚀
+                                <div className="flex flex-col items-center justify-center h-full">
+                                    <span className="text-3xl filter drop-shadow-md mb-0.5">🚀</span>
+                                    <span className="text-white font-black text-[9px] uppercase tracking-wider drop-shadow-md leading-none">EXIT</span>
                                 </div>
-                                <div className="absolute bottom-1 right-8 md:bottom-2 md:right-12 text-white/90 font-bold text-[8px] md:text-[10px] transform rotate-0 drop-shadow-md whitespace-nowrap">
-                                    EXIT
-                                </div>
-                            </div>
+                            </button>
                         )}
 
                         {/* Action Card Overlay */}
