@@ -10,13 +10,15 @@ import JoinGameModal from './JoinGameModal';
 export default function SchedulePage() {
     const { webApp, user } = useTelegram();
     const [games, setGames] = useState<any[]>([]);
+    const [viewMode, setViewMode] = useState<'upcoming' | 'history'>('upcoming');
     const [refreshKey, setRefreshKey] = useState(0);
 
     // Mock Data loading
     useEffect(() => {
         const fetchGames = async () => {
             try {
-                const res = await fetch('/api/games');
+                const endpoint = viewMode === 'history' ? '/api/games?type=history' : '/api/games';
+                const res = await fetch(endpoint);
                 if (res.ok) {
                     const data = await res.json();
 
@@ -53,7 +55,7 @@ export default function SchedulePage() {
         };
 
         if (user) fetchGames();
-    }, [refreshKey, user]); // Refresh when key changes
+    }, [refreshKey, user, viewMode]); // Refresh when key or viewMode changes
 
     // Edit Logic
     const [editingGame, setEditingGame] = useState<any>(null);
@@ -83,8 +85,15 @@ export default function SchedulePage() {
         <div className="min-h-screen bg-slate-900 text-white p-4 space-y-4 pt-6 pb-24">
             <h1 className="text-2xl font-bold flex items-center gap-2">
                 <Calendar className="text-blue-500" />
-                Расписание
+                {viewMode === 'history' ? 'История игр' : 'Расписание'}
             </h1>
+
+            <button
+                onClick={() => setViewMode(v => v === 'upcoming' ? 'history' : 'upcoming')}
+                className={`fixed top-6 right-4 p-2 rounded-xl border transition-all ${viewMode === 'history' ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-800 text-slate-400 border-slate-700'}`}
+            >
+                <Clock size={24} />
+            </button>
 
             {editingGame && (
                 <ManageGameModal
