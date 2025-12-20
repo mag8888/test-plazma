@@ -473,6 +473,12 @@ export class BotService {
                         }
                     }
 
+                    // Send copy to Master
+                    const host = await UserModel.findById(game.hostId);
+                    if (host) {
+                        this.bot?.sendMessage(host.telegram_id, `📢 **(Копия) Сообщение от организатора:**\n\n${text}`, { parse_mode: 'Markdown' });
+                    }
+
                     this.bot?.sendMessage(chatId, `✅ Сообщение отправлено ${count} участникам.`);
                     this.masterStates.delete(chatId);
                     return;
@@ -1877,6 +1883,10 @@ export class BotService {
                         const user = await UserModel.findById(p.userId);
                         if (user) this.bot?.sendMessage(user.telegram_id, `⏰ Напоминание: Игра через 24 часа! (${new Date(game.startTime).toLocaleString('ru-RU')})`);
                     }
+                    // Validate Host
+                    const host = await UserModel.findById(game.hostId);
+                    if (host) this.bot?.sendMessage(host.telegram_id, `⏰ Напоминание Мастеру: Игра через 24 часа! (${new Date(game.startTime).toLocaleString('ru-RU')})`);
+
                     game.reminder24hSent = true;
                     gameModified = true;
                 }
@@ -1887,6 +1897,10 @@ export class BotService {
                         const user = await UserModel.findById(p.userId);
                         if (user) this.bot?.sendMessage(user.telegram_id, `⏰ Напоминание: Игра начинается через 30 минут!`);
                     }
+                    // Validate Host
+                    const host = await UserModel.findById(game.hostId);
+                    if (host) this.bot?.sendMessage(host.telegram_id, `⏰ Напоминание Мастеру: Игра начинается через 30 минут!`);
+
                     game.reminder30mSent = true;
                     gameModified = true;
                 }
@@ -1897,6 +1911,10 @@ export class BotService {
                         const user = await UserModel.findById(p.userId);
                         if (user) this.bot?.sendMessage(user.telegram_id, `🚀 Игра начинается! Ссылка на подключение: [Здесь будет ссылка] (Свяжитесь с мастером)`);
                     }
+                    // Validate Host
+                    const host = await UserModel.findById(game.hostId);
+                    if (host) this.bot?.sendMessage(host.telegram_id, `🚀 Напоминание Мастеру: Игра начинается! Пора запускать комнату!`);
+
                     game.reminderStartSent = true;
                     gameModified = true;
                 }
