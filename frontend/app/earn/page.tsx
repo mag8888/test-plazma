@@ -405,7 +405,10 @@ export default function EarnPage() {
                         <div><span className="text-slate-600">Raw Telegram ID:</span> <span className="text-blue-400">{webApp?.initDataUnsafe?.user?.id || 'N/A'}</span></div>
                         <div><span className="text-slate-600">Backend Mongo ID:</span> <span className="text-blue-400">{user?.id}</span></div>
                         <div><span className="text-slate-600">Username:</span> <span className="text-blue-400">{user?.username}</span></div>
+                        <div><span className="text-slate-600">Local Green (DB):</span> <span className="text-green-400">${user?.greenBalance || 0}</span></div>
+                        <div><span className="text-slate-600">Local Referral (DB):</span> <span className="text-green-400">${user?.referralBalance || 0}</span></div>
                         <div>
+                            <span className="text-slate-600">Partnership User:</span>{' '}
                             <span className="text-slate-600">Partnership User:</span>{' '}
                             {partnershipUser ? (
                                 <span className="text-green-400">Found ({partnershipUser.telegramId})</span>
