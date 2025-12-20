@@ -494,18 +494,18 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
 
     const handleEndGame = () => {
         if (window.confirm("Вы уверены, что хотите принудительно завершить игру и подсчитать рейтинги?")) {
-            socket.emit('host_end_game', { roomId, userId: me.id });
+            socket.emit('host_end_game', { roomId, userId: me.userId || me.id });
         }
     };
 
     const handleKickPlayer = (playerId: string) => {
         if (!window.confirm("Вы действительно хотите удалить этого игрока из игры?")) return;
-        socket.emit('kick_player', { roomId, playerId, userId: me.id });
+        socket.emit('kick_player', { roomId, playerId, userId: me.userId || me.id });
     };
 
     const handleForceSkip = () => {
         if (!window.confirm("Принудительно завершить ход текущего игрока?")) return;
-        socket.emit('host_skip_turn', { roomId, userId: me.id });
+        socket.emit('host_skip_turn', { roomId, userId: me.userId || me.id });
     };
 
     const me = state.players.find((p: any) => p.id === socket.id) || initialState.players[0];
@@ -1095,19 +1095,28 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                             onSquareClick={(sq: any) => setSquareInfo(sq)}
                         />
 
-                        {/* 🚀 EXIT TO FAST TRACK BUTTON (Floating in Void) */}
+                        {/* 🚀 EXIT TO FAST TRACK BUTTON (Semi-Circle Bottom Center) */}
                         {showExitButton && (
-                            <button
-                                onClick={() => setShowFastTrackModal(true)}
-                                className={`absolute bottom-[18%] right-[18%] z-[90] w-20 h-20 rounded-full cursor-pointer transition-transform hover:scale-110 active:scale-95 shadow-[0_0_20px_rgba(244,63,94,0.6)] animate-in zoom-in duration-700 border-4 border-slate-900
-                                    ${(currentPlayer.loanDebt <= 0 && currentPlayer.passiveIncome >= 10000 && currentPlayer.cash >= 200000) ? 'animate-pulse ring-4 ring-green-400' : 'bg-gradient-to-br from-[#f43f5e] to-[#e11d48]'}
-                                `}
-                            >
-                                <div className="flex flex-col items-center justify-center h-full">
-                                    <span className="text-3xl filter drop-shadow-md mb-0.5">🚀</span>
-                                    <span className="text-white font-black text-[9px] uppercase tracking-wider drop-shadow-md leading-none">EXIT</span>
-                                </div>
-                            </button>
+                            <div className="absolute top-[68%] left-1/2 -translate-x-1/2 z-[30]">
+                                <button
+                                    onClick={() => setShowFastTrackModal(true)}
+                                    className={`
+                                        relative w-48 h-24 bg-gradient-to-b from-[#f43f5e] to-[#be123c] 
+                                        rounded-b-full cursor-pointer shadow-[0_10px_30px_rgba(244,63,94,0.6)]
+                                        border-t-0 border-x-4 border-b-4 border-slate-900
+                                        flex flex-col items-center justify-start pt-2
+                                        transition-all transform hover:scale-105 active:scale-95 group
+                                        ${(currentPlayer.loanDebt <= 0 && currentPlayer.passiveIncome >= 10000 && currentPlayer.cash >= 200000) ? 'animate-pulse ring-4 ring-green-400' : ''}
+                                    `}
+                                >
+                                    <span className="text-4xl filter drop-shadow-md group-hover:-translate-y-1 transition-transform">🚀</span>
+                                    <span className="text-white font-black text-xs uppercase tracking-[0.2em] drop-shadow-md mt-1">EXIT</span>
+
+                                    {/* Grip Lines */}
+                                    <div className="absolute bottom-3 w-12 h-1 bg-black/20 rounded-full"></div>
+                                    <div className="absolute bottom-5 w-8 h-1 bg-black/20 rounded-full"></div>
+                                </button>
+                            </div>
                         )}
 
                         {/* Action Card Overlay */}
