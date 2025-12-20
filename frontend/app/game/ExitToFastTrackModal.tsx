@@ -3,6 +3,7 @@ import React from 'react';
 interface ExitToFastTrackModalProps {
     onClose: () => void;
     player: {
+        name?: string;
         cash: number;
         passiveIncome: number;
         loanDebt: number;
@@ -28,6 +29,7 @@ export const ExitToFastTrackModal: React.FC<ExitToFastTrackModalProps> = ({ onCl
                 {/* Header */}
                 <div className="bg-gradient-to-r from-pink-600 to-rose-600 p-6 text-center">
                     <h2 className="text-2xl font-black text-white uppercase tracking-wider">Выход на Большой Трек</h2>
+                    <div className="text-xs text-white/50">{player.name || 'Unknown Player'}</div>
                     <p className="text-pink-100 text-sm mt-1">Выполните условия для победы в крысиных бегах</p>
                 </div>
 

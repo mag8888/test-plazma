@@ -886,6 +886,7 @@ export class GameEngine {
             } else {
                 this.addLog(`Entered Payday (Start)!`);
             }
+            this.checkFastTrackCondition(player);
         } else if (square.type === 'DEAL') {
             // Prompt for Small/Big Deal.
             this.state.phase = 'OPPORTUNITY_CHOICE';
@@ -1376,6 +1377,8 @@ export class GameEngine {
 
         // Clear card
         this.state.currentCard = undefined;
+        this.state.currentCard = undefined;
+        this.checkFastTrackCondition(player);
         this.endTurn();
     }
 
@@ -1627,6 +1630,8 @@ export class GameEngine {
             description: 'Gift from Host',
             type: 'PAYDAY' // Green positive visual
         });
+
+        this.checkFastTrackCondition(player);
     }
 
     sellStock(playerId: string, quantity: number) {
@@ -1672,6 +1677,7 @@ export class GameEngine {
         this.addLog(`📈 ${player.name} sold ${quantity} ${card.symbol} @ $${price} for $${saleTotal}`);
 
         // Do NOT end turn. Selling stock is an open market action.
+        this.checkFastTrackCondition(player);
     }
 
     transferFunds(fromId: string, toId: string, amount: number) {
