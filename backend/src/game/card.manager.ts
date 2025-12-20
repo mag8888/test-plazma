@@ -90,7 +90,7 @@ export const SMALL_DEALS: Card[] = [
     ...expand(2, {
         title: 'Акции: AT&T (Pref)',
         symbol: 'T',
-        cost: 5000,
+        cost: 2500,
         cashflow: 50,
         maxQuantity: 1000,
         description: 'Привилегированные акции AT&T. Дивиденды $50/акцию. Макс 1000 шт.',
@@ -101,20 +101,20 @@ export const SMALL_DEALS: Card[] = [
     ...expand(2, {
         title: 'Акции: P&G (Pref)',
         symbol: 'PG',
-        cost: 2000,
+        cost: 500,
         cashflow: 10,
         maxQuantity: 1000,
         description: 'Привилегированные акции P&G. Дивиденды $10/акцию. Макс 1000 шт.',
         assetType: 'STOCK'
     }, 'DEAL_SMALL'),
 
-    ...expand(5, { title: 'Комната в пригороде', cost: 3000, cashflow: 250, description: 'Сдача в аренду. ROI ~100%.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Студия маникюра', cost: 4900, cashflow: 200, description: 'Студия маникюра на 1 место.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Кофейня', cost: 4900, cashflow: 100, description: 'Небольшая кофейня.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Партнёрство в автомастерской', cost: 4500, cashflow: 350, description: 'Доля в бизнесе.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
+    ...expand(5, { title: 'Комната в пригороде', cost: 12500, cashflow: 250, description: 'Сдача в аренду. ROI ~24%.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
+    ...expand(2, { title: 'Студия маникюра', cost: 10000, cashflow: 200, description: 'Студия маникюра на 1 место.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
+    ...expand(2, { title: 'Кофейня', cost: 5000, cashflow: 100, description: 'Небольшая кофейня.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
+    ...expand(2, { title: 'Партнёрство в автомастерской', cost: 17500, cashflow: 350, description: 'Доля в бизнесе.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
     ...expand(2, { title: 'Участок земли 20га', cost: 5000, cashflow: 0, description: 'Земля без дохода.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
-    ...expand(1, { title: 'Покупка дрона', cost: 3000, cashflow: 50, description: 'Дрон для съёмок.', assetType: 'OTHER' }, 'DEAL_SMALL'),
-    ...expand(5, { title: 'Флипинг студии', cost: 5000, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
+    ...expand(1, { title: 'Покупка дрона', cost: 2500, cashflow: 50, description: 'Дрон для съёмок.', assetType: 'OTHER' }, 'DEAL_SMALL'),
+    ...expand(5, { title: 'Флипинг студии', cost: 2500, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
     ...expand(3, { title: 'Сетевой бизнес', cost: 500, cashflow: 100, description: 'Старт в MLM компании.', businessType: 'NETWORK' }, 'DEAL_SMALL'),
     ...expand(3, { title: 'Сетевой бизнес: Plazma Water', cost: 200, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' }, 'DEAL_SMALL'),
     ...expand(3, { title: 'Сетевой бизнес: MONEO', cost: 100, cashflow: 0, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($50/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL' }, 'DEAL_SMALL'),
@@ -130,24 +130,24 @@ export const SMALL_DEALS: Card[] = [
 
 export const BIG_DEALS: Card[] = [
     // Real Estate
-    { id: 'bd_house_ex', title: 'Дом (3Br/2Ba)', description: 'Дом под сдачу. Цена $7000-10000. Доход $100-300.', cost: 8500, cashflow: 200, type: 'DEAL_BIG' },
-    ...expand(3, { title: 'Дом 3Br/2Ba (Дуплекс)', cost: 12000, cashflow: 400, description: 'Дуплекс в хорошем районе.', downPayment: 4000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
-    ...expand(4, { title: '4-квартирный дом', cost: 35000, cashflow: 1200, description: 'Многоквартирный дом. Стабильные жильцы.', downPayment: 8000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
-    ...expand(4, { title: '8-квартирный комплекс', cost: 100000, cashflow: 2800, description: 'Жилой комплекс с управляющим.', downPayment: 25000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
-    { id: 'bd_8plex_3', title: 'ЖК "Заря"', cost: 90000, downPayment: 20000, cashflow: 3000, description: 'Эконом класс.', assetType: 'REAL_ESTATE', type: 'DEAL_BIG' },
+    { id: 'bd_house_ex', title: 'Дом (3Br/2Ba)', description: 'Дом под сдачу. Цена $8500-12000. Доход $200.', cost: 10000, cashflow: 200, type: 'DEAL_BIG' },
+    ...expand(3, { title: 'Дом 3Br/2Ba (Дуплекс)', cost: 20000, cashflow: 400, description: 'Дуплекс в хорошем районе.', downPayment: 6000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+    ...expand(4, { title: '4-квартирный дом', cost: 60000, cashflow: 1200, description: 'Многоквартирный дом. Стабильные жильцы.', downPayment: 15000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+    ...expand(4, { title: '8-квартирный комплекс', cost: 140000, cashflow: 2800, description: 'Жилой комплекс с управляющим.', downPayment: 35000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+    { id: 'bd_8plex_3', title: 'ЖК "Заря"', cost: 150000, downPayment: 30000, cashflow: 3000, description: 'Эконом класс.', assetType: 'REAL_ESTATE', type: 'DEAL_BIG' },
 
     // Hospitality
-    ...expand(4, { title: 'Мини-отель', cost: 80000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 20000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+    ...expand(4, { title: 'Мини-отель', cost: 150000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 40000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
 
     // Classic Business
-    ...expand(4, { title: 'Сеть кафе быстрого питания', cost: 200000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 40000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
-    ...expand(3, { title: 'Ферма органических овощей', cost: 120000, cashflow: 4500, description: 'Экологичное хозяйство с контрактами на поставку.', downPayment: 30000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
-    ...expand(3, { title: 'Сеть автомоек', cost: 150000, cashflow: 5000, description: 'Хорошее расположение, стабильный трафик клиентов.', downPayment: 35000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
-    ...expand(3, { title: 'Коворкинг-центр', cost: 250000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 50000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
+    ...expand(4, { title: 'Сеть кафе быстрого питания', cost: 350000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 70000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
+    ...expand(3, { title: 'Ферма органических овощей', cost: 225000, cashflow: 4500, description: 'Экологичное хозяйство с контрактами на поставку.', downPayment: 50000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
+    ...expand(3, { title: 'Сеть автомоек', cost: 250000, cashflow: 5000, description: 'Хорошее расположение, стабильный трафик клиентов.', downPayment: 60000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
+    ...expand(3, { title: 'Коворкинг-центр', cost: 400000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 80000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
 
     // Network
-    ...expand(6, { title: 'Франшиза: Plazma Water', cost: 5000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG'),
-    ...expand(5, { title: 'Франшиза: MONEO', cost: 5000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG'),
+    ...expand(6, { title: 'Франшиза: Plazma Water', cost: 40000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG'),
+    ...expand(5, { title: 'Франшиза: MONEO', cost: 40000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG'),
 ];
 
 export const MARKET_CARDS: Card[] = [
@@ -187,9 +187,9 @@ export const MARKET_CARDS: Card[] = [
     { title: 'Слияние сетей', targetTitle: 'Студия маникюра', offerPrice: 25000, description: 'Выкуп сети. $25,000.', type: 'MARKET', id: 'mkt_nail_5' },
     { title: 'Покупатель бизнеса', targetTitle: 'Кофейня', offerPrice: 15000, description: 'Инвестор. $15,000.', type: 'MARKET', id: 'mkt_coffee_3' },
     { title: 'Застройщик', targetTitle: 'Участок земли 20га', offerPrice: 150000, description: 'Цена земли взлетела до $150,000.', type: 'MARKET', id: 'mkt_land_high' },
-    { title: 'Покупатель студии', targetTitle: 'Флипинг студии', offerPrice: 7000, description: 'Покупатель квартиры студии (субаренда) за $7,000.', type: 'MARKET', id: 'mkt_6' },
-    { title: 'Выкуп доли', targetTitle: 'Партнёрство в автомастерской', offerPrice: 50000, description: 'Есть покупатель на партнерство за $50,000.', type: 'MARKET', id: 'mkt_4' },
-    { title: 'Покупатель жилья', targetTitle: 'Комната в пригороде', offerPrice: 25000, description: 'Старое жилье идет под снос. Предлагают $25,000 за комнату.', type: 'MARKET', id: 'mkt_1' },
+    { title: 'Покупатель студии', targetTitle: 'Флипинг студии', offerPrice: 4000, description: 'Покупатель квартиры студии (субаренда) за $4,000.', type: 'MARKET', id: 'mkt_6' },
+    { title: 'Выкуп доли', targetTitle: 'Партнёрство в автомастерской', offerPrice: 30000, description: 'Есть покупатель на партнерство за $30,000.', type: 'MARKET', id: 'mkt_4' },
+    { title: 'Покупатель жилья', targetTitle: 'Комната в пригороде', offerPrice: 20000, description: 'Старое жилье идет под снос. Предлагают $20,000 за комнату.', type: 'MARKET', id: 'mkt_1' },
 
     // BITCOIN SCAM
     { title: 'Скам на криптобирже', targetTitle: 'Bitcoin', offerPrice: 0, description: 'Биржа рухнула. Все ваши BTC сгорают (Цена $0).', type: 'MARKET', id: 'mkt_btc_scam' },
