@@ -9,9 +9,28 @@ import { BalanceModal } from './BalanceModal';
 
 export default function EarnPage() {
     const { webApp, user } = useTelegram();
-    const [totalUsers, setTotalUsers] = useState(0);
-    const [partnershipUser, setPartnershipUser] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [partnershipUser, setPartnershipUser] = useState<any>(null);
+    const [partnershipError, setPartnershipError] = useState<string | null>(null);
+    const [totalUsers, setTotalUsers] = useState(0);
+
+    // ... (inside useEffect)
+                .catch (err => {
+        console.error("Partnership flow failed", err);
+        setPartnershipError(err.message || JSON.stringify(err));
+    });
+
+    // ... (inside Debug Info render)
+    <div>
+        <span className="text-slate-600">Partnership User:</span>{' '}
+        {partnershipUser ? (
+            <span className="text-green-400">Found ({partnershipUser.telegramId})</span>
+        ) : (
+            <span className="text-red-400">Not Found {partnershipError && `(${partnershipError})`}</span>
+        )}
+    </div>
+    { partnershipError && <div className="text-red-500 text-[10px] mt-1 break-all">Err: {partnershipError}</div> }
+    <div className="text-[9px] text-slate-700 mt-1">API: {process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL}</div>
 
     // Modal State
     const [showRefillModal, setShowRefillModal] = useState(false);
@@ -66,6 +85,7 @@ export default function EarnPage() {
                 })
                 .catch(err => {
                     console.error("Partnership flow failed", err);
+                    setPartnershipError(err?.message || "Unknown Error");
                 });
         }
     }, [user, webApp]);
@@ -412,13 +432,14 @@ export default function EarnPage() {
                         <div><span className="text-slate-600">Local Referral (DB):</span> <span className="text-green-400">${user?.referralBalance || 0}</span></div>
                         <div>
                             <span className="text-slate-600">Partnership User:</span>{' '}
-                            <span className="text-slate-600">Partnership User:</span>{' '}
                             {partnershipUser ? (
                                 <span className="text-green-400">Found ({partnershipUser.telegramId})</span>
                             ) : (
                                 <span className="text-red-400">Not Found</span>
                             )}
                         </div>
+                        {partnershipError && <div className="text-red-500 text-[10px] mt-1 break-all bg-red-900/10 p-1 rounded">Err: {partnershipError}</div>}
+                        <div className="text-[9px] text-slate-700 mt-1 truncate">API: {process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'default'}</div>
                         <div><span className="text-slate-600">Green Balance (DB):</span> <span className="text-green-400">${partnershipUser?.greenBalance}</span></div>
                         <div><span className="text-slate-600">Pending Legacy Balance:</span> <span className="text-yellow-400">${partnershipUser?.pendingBalance || 0}</span></div>
 
