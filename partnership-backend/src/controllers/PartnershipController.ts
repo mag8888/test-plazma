@@ -100,12 +100,24 @@ export class PartnershipController {
         try {
             const { telegramId, username, referrerId } = req.body;
 
-            // Use atomic upsert to handle race conditions and ensure login works if user exists
-            const user = await User.findOneAndUpdate(
+            // 1. Try to find existing user first (Read-Heavy optimization)
+            let user = await User.findOne({ telegramId });
+
+            if (user) {
+                // Update username if changed
+                if (username && user.username !== username) {
+                    user.username = username;
+                    await user.save();
+                }
+                return res.json(user);
+            }
+
+            // 2. If not found, try to create (Atomic upsert to handle race conditions)
+            user = await User.findOneAndUpdate(
                 { telegramId },
                 {
                     $setOnInsert: { telegramId, referrer: referrerId },
-                    $set: { username } // Update username on login
+                    $set: { username }
                 },
                 { new: true, upsert: true, setDefaultsOnInsert: true }
             );
@@ -113,16 +125,18 @@ export class PartnershipController {
             res.json(user);
         } catch (error: any) {
             console.error("CreateUser Error:", error);
-            // If error is duplicate key (race condition despite upsert?), try findOne
-            if (error.code === 11000) {
+
+            // Handle Race Condition (Duplicate Key)
+            if (error.code === 11000 || error.message.includes('E11000')) {
                 try {
-                    const existing = await User.findOne({ telegramId });
-                    return res.json(existing);
+                    const existing = await User.findOne({ telegramId: req.body.telegramId });
+                    if (existing) return res.json(existing);
                 } catch (e) {
-                    return res.status(500).json({ error: "Login failed via recovery" });
+                    console.error("Recovery failed:", e);
                 }
             }
-            res.status(500).json({ error: error.message });
+
+            res.status(500).json({ error: error.message || "Login failed" });
         }
     }
     // Public stats for profile modal (Avatar + Level)
