@@ -58,7 +58,7 @@ export default function EarnPage() {
                                 // Just check legacy balance presence for UI
                                 partnershipApi.getLegacyBalance(webApp.initData).then(res => {
                                     if (res.legacyBalance > 0) {
-                                        setPartnershipUser(prev => ({ ...prev, pendingBalance: res.legacyBalance }));
+                                        setPartnershipUser((prev: any) => ({ ...prev, pendingBalance: res.legacyBalance }));
                                     }
                                 });
                             }
