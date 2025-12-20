@@ -588,7 +588,8 @@ app.post('/api/partnership/sync-balance', async (req, res) => {
 // Check Legacy Balance (For UI debugging)
 app.get('/api/partnership/legacy-balance', async (req, res) => {
     try {
-        const initData = req.headers.authorization?.split(' ')[1];
+        const authHeader = req.headers.authorization;
+        const initData = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : null;
         if (!initData) return res.status(401).json({ error: "No auth data" });
 
         const { AuthService } = await import('./auth/auth.service');

@@ -39,33 +39,36 @@ export default function EarnPage() {
             const rawTelegramId = webApp.initDataUnsafe?.user?.id;
             const partnershipId = rawTelegramId ? rawTelegramId.toString() : (user.telegram_id || user.id).toString();
 
-            // 1. Try to Sync Balance First
-            partnershipApi.syncLegacyBalance(webApp.initData)
-                .then(() => {
-                    // 2. Login to get fresh data (including synced balance)
-                    return partnershipApi.login(partnershipId, user.username);
-                })
+            // 1. REORDER: Login First to ensure user exists in Partner DB
+            partnershipApi.login(partnershipId, user.username)
                 .then(dbUser => {
                     setPartnershipUser(dbUser);
+                    console.log("Partnership Login Success. Attempting Sync...");
+
+                    // 2. Sync Balance (Now that user exists)
+                    return partnershipApi.syncLegacyBalance(webApp.initData)
+                        .then((syncRes) => {
+                            console.log("Sync Result:", syncRes);
+                            if (syncRes.success && syncRes.synced > 0) {
+                                // 3. Refresh User Data if Sync moved money
+                                return partnershipApi.getStats(dbUser._id).then(updated => {
+                                    setPartnershipUser({ ...dbUser, ...updated });
+                                });
+                            } else {
+                                // Just check legacy balance presence for UI
+                                partnershipApi.getLegacyBalance(webApp.initData).then(res => {
+                                    if (res.legacyBalance > 0) {
+                                        setPartnershipUser(prev => ({ ...prev, pendingBalance: res.legacyBalance }));
+                                    }
+                                });
+                            }
+                        });
                 })
                 .catch(err => {
-                    console.error("Partnership login/sync error", err);
-                    // Fallback attempt to login even if sync fails
-                    partnershipApi.login(partnershipId, user.username)
-                        .then(dbUser => {
-                            // Check if there is pending legacy balance anyway
-                            partnershipApi.getLegacyBalance(webApp.initData).then(res => {
-                                if (res.legacyBalance > 0) {
-                                    setPartnershipUser({ ...dbUser, pendingBalance: res.legacyBalance });
-                                } else {
-                                    setPartnershipUser(dbUser);
-                                }
-                            });
-                        })
-                        .catch(e => console.error("Fallback login failed", e));
+                    console.error("Partnership flow failed", err);
                 });
         }
-    }, [user, webApp]); // Add webApp dependency
+    }, [user, webApp]);
 
     const handleBuy = async (tariff: string, price: number) => {
         if (!partnershipUser) return;
