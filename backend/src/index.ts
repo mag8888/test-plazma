@@ -585,6 +585,24 @@ app.post('/api/partnership/sync-balance', async (req, res) => {
     }
 });
 
+// Check Legacy Balance (For UI debugging)
+app.get('/api/partnership/legacy-balance', async (req, res) => {
+    try {
+        const initData = req.headers.authorization?.split(' ')[1];
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyTelegramAuth(initData);
+        if (!user) return res.status(401).json({ error: "Invalid auth" });
+
+        // Return legacy balance
+        res.json({ legacyBalance: user.referralBalance || 0 });
+    } catch (e) {
+        res.status(500).json({ error: "Failed to fetch legacy balance" });
+    }
+});
+
 // Get User Stats (Public Profile)
 app.get('/api/users/:id/stats', async (req, res) => {
     try {

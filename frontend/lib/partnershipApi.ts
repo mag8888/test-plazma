@@ -65,5 +65,20 @@ export const partnershipApi = {
             console.error("Sync Balance Error", e);
             return { error: "Sync failed" };
         }
+    },
+
+    // Check Pending Legacy Balance
+    async getLegacyBalance(initData: string) {
+        const BACKEND_URL = getBackendUrl();
+        try {
+            // Using /api/partnership/legacy-balance on Main Backend
+            const res = await fetch(`${BACKEND_URL}/api/partnership/legacy-balance`, {
+                headers: { 'Authorization': `Bearer ${initData}` }
+            });
+            return res.json();
+        } catch (e) {
+            console.error("Get Legacy Balance Error", e);
+            return { legacyBalance: 0 };
+        }
     }
 };

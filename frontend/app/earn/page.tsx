@@ -46,7 +46,16 @@ export default function EarnPage() {
                     console.error("Partnership login/sync error", err);
                     // Fallback attempt to login even if sync fails
                     partnershipApi.login(user.id.toString(), user.username)
-                        .then(dbUser => setPartnershipUser(dbUser))
+                        .then(dbUser => {
+                            // Check if there is pending legacy balance anyway
+                            partnershipApi.getLegacyBalance(webApp.initData).then(res => {
+                                if (res.legacyBalance > 0) {
+                                    setPartnershipUser({ ...dbUser, pendingBalance: res.legacyBalance });
+                                } else {
+                                    setPartnershipUser(dbUser);
+                                }
+                            });
+                        })
                         .catch(e => console.error("Fallback login failed", e));
                 });
         }
@@ -117,6 +126,39 @@ export default function EarnPage() {
                 <TrendingUp className="text-green-400" />
                 Партнерская программа
             </h1>
+
+            {/* Pending Balance Warning (Sync Button) */}
+            {partnershipUser?.pendingBalance > 0 && (
+                <div className="bg-orange-500/20 border border-orange-500/50 rounded-xl p-4 flex justify-between items-center animate-pulse">
+                    <div>
+                        <div className="text-orange-300 font-bold text-sm">Найдены старые средства</div>
+                        <div className="text-2xl font-bold text-white">${partnershipUser.pendingBalance}</div>
+                    </div>
+                    <button
+                        onClick={async () => {
+                            if (!webApp?.initData) return;
+                            setIsLoading(true);
+                            try {
+                                const res = await partnershipApi.syncLegacyBalance(webApp.initData);
+                                if (res.success) {
+                                    webApp.showAlert(`Успешно перенесено: $${res.synced}`);
+                                    window.location.reload();
+                                } else {
+                                    webApp.showAlert("Ошибка синхронизации. Попробуйте позже.");
+                                }
+                            } catch (e) {
+                                webApp.showAlert("Ошибка сети");
+                            } finally {
+                                setIsLoading(false);
+                            }
+                        }}
+                        disabled={isLoading}
+                        className="bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-lg text-sm"
+                    >
+                        {isLoading ? '...' : 'Получить'}
+                    </button>
+                </div>
+            )}
 
             {/* Total Participants Card */}
             <div className="bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 rounded-3xl p-6 relative overflow-hidden shadow-2xl border border-indigo-500/30">
