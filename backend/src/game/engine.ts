@@ -1612,6 +1612,23 @@ export class GameEngine {
         return mlmResult;
     }
 
+    giveCash(playerId: string, amount: number) {
+        const player = this.state.players.find(p => p.id === playerId);
+        if (!player) return;
+        if (amount <= 0) return;
+
+        player.cash += amount;
+        this.addLog(`🎁 Host gave $${amount.toLocaleString()} to ${player.name}`);
+
+        this.recordTransaction({
+            from: 'Host',
+            to: player.name,
+            amount: amount,
+            description: 'Gift from Host',
+            type: 'PAYDAY' // Green positive visual
+        });
+    }
+
     sellStock(playerId: string, quantity: number) {
         const player = this.state.players.find(p => p.id === playerId);
         const card = this.state.currentCard;

@@ -1938,6 +1938,22 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                                                 </button>
                                             )}
 
+                                            <button
+                                                onClick={() => {
+                                                    const amountStr = prompt("Введите сумму для начисления ($):");
+                                                    if (amountStr) {
+                                                        const amount = parseInt(amountStr.replace(/\D/g, '')); // Strip non-digits
+                                                        if (!isNaN(amount) && amount > 0) {
+                                                            socket.emit('host_give_cash', { roomId, userId: me.userId, targetPlayerId: selectedPlayerForMenu.id, amount });
+                                                            setSelectedPlayerForMenu(null);
+                                                        }
+                                                    }
+                                                }}
+                                                className="w-full p-4 rounded-xl bg-green-500/10 hover:bg-green-500/20 border border-green-500/20 text-green-500 font-bold transition-all flex items-center gap-3 group"
+                                            >
+                                                <span className="bg-green-500/20 p-2 rounded-lg group-hover:scale-110 transition-transform">🎁</span> Подарить деньги
+                                            </button>
+
                                             {selectedPlayerForMenu.id !== socket.id ? (
                                                 <button
                                                     onClick={() => {

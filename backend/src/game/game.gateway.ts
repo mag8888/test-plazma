@@ -261,6 +261,31 @@ export class GameGateway {
                 }
             });
 
+            // Host Give Cash (Gift)
+            socket.on('host_give_cash', async (data, callback) => {
+                try {
+                    const { roomId, userId, targetPlayerId, amount } = data;
+                    const game = this.games.get(roomId);
+                    if (!game) return callback({ success: false, error: "Game not found" });
+
+                    // Verify Host
+                    const room = await this.roomService.getRoom(roomId);
+                    if (!room || room.creatorId !== userId) {
+                        return callback({ success: false, error: "Only host can give cash" });
+                    }
+
+                    game.giveCash(targetPlayerId, amount);
+
+                    const state = game.getState();
+                    this.io.to(roomId).emit('game_state_update', state);
+                    this.saveState(roomId, game);
+
+                    callback({ success: true });
+                } catch (e: any) {
+                    callback({ success: false, error: e.message });
+                }
+            });
+
             // Host Force End Game
             socket.on('host_end_game', async (data, callback) => {
                 try {
