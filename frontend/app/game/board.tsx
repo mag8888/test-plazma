@@ -1573,7 +1573,11 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                                     {state.players.map((p: any) => {
                                         const isActive = p.id === currentPlayer.id;
                                         return (
-                                            <div key={p.id} className={`flex items-center gap-3 px-3 py-2 rounded-xl border transition-all duration-300 ${isActive ? 'bg-slate-800 border-green-500/30' : 'bg-slate-900/30 border-transparent opacity-60'}`}>
+                                            <div
+                                                key={p.id}
+                                                onClick={() => setSelectedPlayerForMenu(p)}
+                                                className={`flex items-center gap-3 px-3 py-2 rounded-xl border transition-all duration-300 cursor-pointer hover:border-slate-500/50 hover:bg-slate-800/80 ${isActive ? 'bg-slate-800 border-green-500/30' : 'bg-slate-900/30 border-transparent opacity-60 hover:opacity-100'}`}
+                                            >
                                                 <div className="relative">
                                                     <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs border ${isActive ? 'border-green-400' : 'border-slate-600'} ${getAvatarColor(p.id)}`}>
                                                         {p.photo_url ? <img src={p.photo_url} className="w-full h-full object-cover rounded-full" /> : p.token}
