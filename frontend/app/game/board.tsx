@@ -1822,8 +1822,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     🍔
                 </button>
             </div>
-        </div>
-            {/* --- MODALS --- */ }
+
+            {/* --- MODALS --- */}
             <BankModal
                 isOpen={showBank}
                 onClose={() => setShowBank(false)}
@@ -1856,20 +1856,20 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 onEnterFastTrack={handleEnterFastTrack}
             />
 
-    {
-        transferAssetItem && (
-            <TransferModal
-                isOpen={true}
-                onClose={() => setTransferAssetItem(null)}
-                item={transferAssetItem.item}
-                index={transferAssetItem.index}
-                players={state.players}
-                currentPlayerId={me.id}
-                roomId={roomId}
-                socket={socket}
-            />
-        )
-    }
+            {
+                transferAssetItem && (
+                    <TransferModal
+                        isOpen={true}
+                        onClose={() => setTransferAssetItem(null)}
+                        item={transferAssetItem.item}
+                        index={transferAssetItem.index}
+                        players={state.players}
+                        currentPlayerId={me.id}
+                        roomId={roomId}
+                        socket={socket}
+                    />
+                )
+            }
         </div >
     );
 
