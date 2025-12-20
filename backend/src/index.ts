@@ -276,6 +276,43 @@ app.post('/api/games/:id/broadcast', async (req, res) => {
     }
 });
 
+// Private Message
+app.post('/api/games/:id/message', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { targetUserId, message, initData } = req.body;
+
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyTelegramAuth(initData);
+        if (!user) return res.status(401).json({ error: "Invalid auth" });
+
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const game = await ScheduledGameModel.findById(id);
+        if (!game) return res.status(404).json({ error: "Game not found" });
+
+        if (game.hostId.toString() !== user.id.toString()) return res.status(403).json({ error: "Not master" });
+
+        if (!botService) return res.status(503).json({ error: "Bot not active" });
+
+        const { UserModel } = await import('./models/user.model');
+        const targetUser = await UserModel.findById(targetUserId);
+
+        if (!targetUser || !targetUser.telegram_id) {
+            return res.status(404).json({ error: "User not found or no Telegram ID" });
+        }
+
+        await botService.bot?.sendMessage(targetUser.telegram_id, `📩 <b>Личное сообщение от Мастера:</b>\n\n${message}`, { parse_mode: 'HTML' });
+
+        res.json({ success: true });
+
+    } catch (e) {
+        console.error("Message send failed:", e);
+        res.status(500).json({ error: "Message send failed" });
+    }
+});
+
 // Join Game
 app.post('/api/games/:id/join', async (req, res) => {
     try {

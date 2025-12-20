@@ -14,24 +14,6 @@ export default function EarnPage() {
     const [partnershipError, setPartnershipError] = useState<string | null>(null);
     const [totalUsers, setTotalUsers] = useState(0);
 
-    // ... (inside useEffect)
-                .catch (err => {
-        console.error("Partnership flow failed", err);
-        setPartnershipError(err.message || JSON.stringify(err));
-    });
-
-    // ... (inside Debug Info render)
-    <div>
-        <span className="text-slate-600">Partnership User:</span>{' '}
-        {partnershipUser ? (
-            <span className="text-green-400">Found ({partnershipUser.telegramId})</span>
-        ) : (
-            <span className="text-red-400">Not Found {partnershipError && `(${partnershipError})`}</span>
-        )}
-    </div>
-    { partnershipError && <div className="text-red-500 text-[10px] mt-1 break-all">Err: {partnershipError}</div> }
-    <div className="text-[9px] text-slate-700 mt-1">API: {process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL}</div>
-
     // Modal State
     const [showRefillModal, setShowRefillModal] = useState(false);
     const [showBalanceModal, setShowBalanceModal] = useState(false);
