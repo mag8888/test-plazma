@@ -1093,31 +1093,10 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                             currentPlayerId={currentPlayer.id}
                             zoom={zoom}
                             onSquareClick={(sq: any) => setSquareInfo(sq)}
+                            showExitButton={showExitButton}
+                            onExitClick={() => setShowFastTrackModal(true)}
                         />
 
-                        {/* 🚀 EXIT TO FAST TRACK BUTTON (Semi-Circle Bottom Center) */}
-                        {showExitButton && (
-                            <div className="absolute top-[68%] left-1/2 -translate-x-1/2 z-[30]">
-                                <button
-                                    onClick={() => setShowFastTrackModal(true)}
-                                    className={`
-                                        relative w-48 h-24 bg-gradient-to-b from-[#f43f5e] to-[#be123c] 
-                                        rounded-b-full cursor-pointer shadow-[0_10px_30px_rgba(244,63,94,0.6)]
-                                        border-t-0 border-x-4 border-b-4 border-slate-900
-                                        flex flex-col items-center justify-start pt-2
-                                        transition-all transform hover:scale-105 active:scale-95 group
-                                        ${(currentPlayer.loanDebt <= 0 && currentPlayer.passiveIncome >= 10000 && currentPlayer.cash >= 200000) ? 'animate-pulse ring-4 ring-green-400' : ''}
-                                    `}
-                                >
-                                    <span className="text-4xl filter drop-shadow-md group-hover:-translate-y-1 transition-transform">🚀</span>
-                                    <span className="text-white font-black text-xs uppercase tracking-[0.2em] drop-shadow-md mt-1">EXIT</span>
-
-                                    {/* Grip Lines */}
-                                    <div className="absolute bottom-3 w-12 h-1 bg-black/20 rounded-full"></div>
-                                    <div className="absolute bottom-5 w-8 h-1 bg-black/20 rounded-full"></div>
-                                </button>
-                            </div>
-                        )}
 
                         {/* Action Card Overlay */}
                         {state.currentCard && !showDice && !isAnimating && (
@@ -1826,7 +1805,7 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                         setVolume={handleVolumeChange}
                         zoom={zoom}
                         setZoom={setZoom}
-                        isHost={state.players[0]?.id === me.id}
+                        isHost={(state.players[0]?.userId && state.players[0]?.userId === me.userId) || state.players[0]?.id === me.id}
                         hasWinner={state.players.some((p: any) => p.hasWon)}
                     />
                 )

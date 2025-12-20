@@ -51,7 +51,7 @@ const getGradient = (type: string, isFT: boolean) => {
     return 'bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700';
 };
 
-export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId, onSquareClick, zoom = 1 }: any) => {
+export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId, onSquareClick, zoom = 1, showExitButton, onExitClick }: any) => {
 
     // Helper: Is Fast Track?
     const isFastTrackSquare = (index: number) => index >= 24;
@@ -171,8 +171,29 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                     {/* CENTER HUB (Inside Grid Layer) */}
                     <div className="col-start-4 col-end-11 row-start-4 row-end-11 relative rounded-full bg-slate-950 border-4 border-slate-800/80 shadow-2xl flex flex-col items-center justify-center z-10 overflow-hidden pointer-events-auto">
                         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900 via-slate-900 to-black animate-pulse"></div>
-                        <h1 className="text-[4cqw] lg:text-[6cqw] font-black bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent transform -skew-x-6 drop-shadow-2xl">MONEO</h1>
-                        <span className="text-[1cqw] text-slate-500 tracking-[0.4em] uppercase font-bold mt-1">Energy of Money</span>
+                        <h1 className="text-[4cqw] lg:text-[6cqw] font-black bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent transform -skew-x-6 drop-shadow-2xl mb-4">MONEO</h1>
+                        <span className="text-[1cqw] text-slate-500 tracking-[0.4em] uppercase font-bold mt-1 mb-8">Energy of Money</span>
+
+                        {/* EXIT BUTTON Built-in */}
+                        {showExitButton && (
+                            <button
+                                onClick={onExitClick}
+                                className={`
+                                    absolute bottom-0
+                                    w-[60%] h-[30%]
+                                    bg-gradient-to-t from-[#be123c] to-[#f43f5e]
+                                    rounded-t-full
+                                    flex flex-col items-center justify-center
+                                    cursor-pointer shadow-[0_-5px_20px_rgba(244,63,94,0.5)]
+                                    border-t-4 border-x-4 border-slate-900
+                                    transition-all transform hover:scale-105 active:scale-95 group z-20
+                                    hover:pb-2
+                                `}
+                            >
+                                <span className="text-[2cqw] filter drop-shadow-md group-hover:-translate-y-1 transition-transform">🚀</span>
+                                <span className="text-white font-black text-[1cqw] uppercase tracking-[0.2em] drop-shadow-md mt-1">EXIT</span>
+                            </button>
+                        )}
                     </div>
 
                 </div>
