@@ -112,30 +112,25 @@ export class PartnershipController {
                 return res.json(user);
             }
 
-            // 2. If not found, try to create (Atomic upsert to handle race conditions)
-            user = await User.findOneAndUpdate(
-                { telegramId },
-                {
-                    $setOnInsert: { telegramId, referrer: referrerId },
-                    $set: { username }
-                },
-                { new: true, upsert: true, setDefaultsOnInsert: true }
-            );
-
-            res.json(user);
-        } catch (error: any) {
-            console.error("CreateUser Error:", error);
-
-            // Handle Race Condition (Duplicate Key)
-            if (error.code === 11000 || error.message.includes('E11000')) {
-                try {
-                    const existing = await User.findOne({ telegramId: req.body.telegramId });
+            // 2. If not found, Create Explicitly (Avoid findOneAndUpdate upsert executor error)
+            try {
+                user = await User.create({
+                    telegramId,
+                    username,
+                    referrer: referrerId
+                });
+                return res.json(user);
+            } catch (createError: any) {
+                // Handle Race Condition (Duplicate Key)
+                if (createError.code === 11000 || createError.message.includes('E11000')) {
+                    const existing = await User.findOne({ telegramId });
                     if (existing) return res.json(existing);
-                } catch (e) {
-                    console.error("Recovery failed:", e);
                 }
+                throw createError;
             }
 
+        } catch (error: any) {
+            console.error("CreateUser Error:", error);
             res.status(500).json({ error: error.message || "Login failed" });
         }
     }

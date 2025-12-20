@@ -11,9 +11,24 @@ import { sfx } from './SoundManager';
 
 interface BoardProps {
     roomId: string;
+    userId?: string | null;
     initialState: any;
     isHost?: boolean;
 }
+
+// ... (existing code top)
+
+// (At line 511, remove duplicate me/isMyTurn/currentPlayer if I moved them up? No, I only added `me` up top. But wait, `isMyTurn` etc depend on `me`.)
+// Actually, I should probably keep `me` at line 511 where it was, just Update it.
+// My previous tool call injected `me` at line 108? 
+// Let's Undo line 108 addition if possible or just remove it, and Update line 511 properly.
+// Wait, I can't undo. I will Update Line 511 to be empty (or just the new logic) and Remove the one at line 108 if it exists.
+// Actually, `me` is used in `useEffects`? No, it's used in Render.
+// Ideally `me` is derived near top is fine.
+// But `isMyTurn` etc are at 512.
+// Let's just update the ONE place it should be.
+// I will target the `BoardProps` specifically first to fix the build error.
+
 
 interface PlayerState {
     id: string;
@@ -103,7 +118,7 @@ const getInitials = (name: string) => {
     return name.substring(0, 2).toUpperCase();
 };
 
-export default function GameBoard({ roomId, initialState, isHost }: BoardProps) {
+export default function GameBoard({ roomId, userId, initialState, isHost }: BoardProps) {
     const router = useRouter();
     const [state, setState] = useState(initialState);
     const [showBank, setShowBank] = useState(false);
@@ -508,7 +523,7 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
         socket.emit('host_skip_turn', { roomId, userId: me.userId || me.id });
     };
 
-    const me = state.players.find((p: any) => p.id === socket.id) || initialState.players[0];
+    const me = state.players.find((p: any) => p.id === socket.id || (userId && p.userId === userId)) || initialState.players[0];
     const isMyTurn = state.players[state.currentPlayerIndex]?.id === me?.id;
     const currentTurnPlayer = state.players[state.currentPlayerIndex];
     const currentPlayer = currentTurnPlayer; // Alias for existing code
