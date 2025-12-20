@@ -140,6 +140,9 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
         sfx.setMute(newVal);
     };
 
+    // Zoom State
+    const [zoom, setZoom] = useState(1.0);
+
     // Animation & Popup States
     const [showDice, setShowDice] = useState(false);
     const [diceValue, setDiceValue] = useState<number | null>(null);
