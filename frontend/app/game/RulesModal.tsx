@@ -18,11 +18,14 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
     const renderCard = (card: Card) => (
         <div key={card.id} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-2 hover:bg-slate-800 transition-colors">
             <div className="flex justify-between items-start">
-                <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider type-badge">
-                    {card.type === 'DEAL_SMALL' ? 'Малая сделка' :
-                        card.type === 'DEAL_BIG' ? 'Крупная сделка' :
-                            card.type === 'MARKET' ? 'Рынок' : 'Расход'}
-                </span>
+                <div className="flex gap-2 items-center">
+                    {card.displayId && <span className="text-[10px] font-mono text-slate-600 font-bold">#{card.displayId}</span>}
+                    <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider type-badge">
+                        {card.type === 'DEAL_SMALL' ? 'Малая сделка' :
+                            card.type === 'DEAL_BIG' ? 'Крупная сделка' :
+                                card.type === 'MARKET' ? 'Рынок' : 'Расход'}
+                    </span>
+                </div>
                 {card.symbol && <span className="text-xs font-mono text-blue-400 bg-blue-900/20 px-1.5 rounded">{card.symbol}</span>}
             </div>
             <h4 className="font-bold text-white text-sm leading-tight">{card.title}</h4>

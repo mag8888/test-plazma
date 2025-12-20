@@ -1,6 +1,7 @@
 
 export interface Card {
     id: string;
+    displayId?: number;
     type: 'MARKET' | 'EXPENSE' | 'DEAL_SMALL' | 'DEAL_BIG' | 'BUSINESS' | 'DREAM';
     title: string;
     description: string;

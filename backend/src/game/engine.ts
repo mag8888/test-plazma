@@ -439,44 +439,36 @@ export class GameEngine {
         return { total, values };
     }
 
-    handleDownsizedDecision(playerId: string, decision: 'PAY_2X' | 'PAY_4X' | 'BANKRUPT') {
+    handleDownsizedDecision(playerId: string, decision: 'PAY_1M' | 'PAY_2M' | 'BANKRUPT') {
         const player = this.state.players.find(p => p.id === playerId);
         if (!player || player.id !== this.state.players[this.state.currentPlayerIndex].id) return;
         if (this.state.phase !== 'DOWNSIZED_DECISION') return;
 
         const expenses = player.expenses;
 
-        if (decision === 'PAY_2X') {
-            const cost = expenses * 2; // "2 расхода" as per prompt (implied 2 months usually OR just 2x expense amount)
-            // Prompt says: "с него списываются 2 расхода и ход передается другому игроку, после хода другого игрока уволенный получает ход и через секунду его пропускает и второй игрок ходит, так два хода"
-            // So: Pay 2x expenses + Skip 2 turns.
+        if (decision === 'PAY_1M') {
+            const cost = expenses * 1; // User Request: "заплатить мес 1 расход"
 
             if (player.cash >= cost) {
                 player.cash -= cost;
-                player.skippedTurns = 2;
-                this.addLog(`📉 ${player.name} Paid 2x Expenses ($${cost}) & Skips 2 Turns.`);
+                player.skippedTurns = 2; // "пропустить 2 хода"
+                this.addLog(`📉 ${player.name} Paid 1 Month Expenses ($${cost}) & Skips 2 Turns.`);
                 this.endTurn();
             } else {
-                // Should force modal to only enable this if cash/loans sufficient.
-                // If they clicked this but checked failed (e.g. race condition), log error.
-                this.addLog(`⚠️ Cannot Pay 2x ($${cost}). Insufficient funds.`);
+                this.addLog(`⚠️ Cannot Pay 1 Month ($${cost}). Insufficient funds.`);
             }
 
-        } else if (decision === 'PAY_4X') {
-            const cost = expenses * 4; // "оплатить 4 мес расходов и не пропускать ход"
+        } else if (decision === 'PAY_2M') {
+            const cost = expenses * 2; // User Request: "платит 2 расхода"
 
             if (player.cash >= cost) {
                 player.cash -= cost;
                 player.skippedTurns = 0; // "не пропускать ход"
-                this.addLog(`🛡️ ${player.name} Paid 4x Expenses ($${cost}) to avoid skipping turns!`);
-                this.state.phase = 'ACTION'; // Can user do anything else? Usually Downsized = Turn Over, but prompt says "not skip turn".
-                // In context of game, if you land on Downsized, your turn is done anyway (you moved). 
-                // "Skip turn" usually means NEXT turn.
-                // So "Not skip turn" means next turn is normal.
-                // So we just end turn now.
+                this.addLog(`🛡️ ${player.name} Paid 2 Month Expenses ($${cost}) to avoid skipping turns!`);
+                this.state.phase = 'ACTION';
                 this.endTurn();
             } else {
-                this.addLog(`⚠️ Cannot Pay 4x ($${cost}). Insufficient funds.`);
+                this.addLog(`⚠️ Cannot Pay 2 Months ($${cost}). Insufficient funds.`);
             }
         } else if (decision === 'BANKRUPT') {
             this.bankruptPlayer(player);

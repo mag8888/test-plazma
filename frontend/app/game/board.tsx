@@ -1097,555 +1097,574 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
                                     {/* Card ID Display (Integrated Style) */}
                                     {state.currentCard.displayId && (
-                                        <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-md text-slate-400 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-slate-700/50 shadow-sm z-10 flex items-center gap-1">
-                                            <span className="opacity-50">#</span>{state.currentCard.displayId}
-                                        </div>
-                                    )}
-                                    <div className="text-5xl mb-4 text-center">{state.currentCard.type === 'MARKET' ? '🏠' : '💸'}</div>
-                                    {state.currentCard.type === 'MARKET' && (
-                                        <div className="text-center mb-2">
-                                            <span className="bg-blue-900/50 text-blue-300 text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-blue-800/50">РЫНОК</span>
-                                        </div>
-                                    )}
-                                    <h2 className="text-xl font-bold text-white mb-2 text-center">{state.currentCard.title}</h2>
-                                    <p className="text-slate-400 text-sm mb-6 text-center">{state.currentCard.description}</p>
-
-                                    {state.currentCard.type === 'MARKET' ? (
-                                        <div className="bg-slate-900/50 p-3 rounded-xl mb-6 border border-slate-800 text-center">
-                                            <div className="text-[10px] text-slate-500 uppercase">Предложение</div>
-                                            <div className="text-2xl font-mono text-green-400 font-bold">${(state.currentCard.offerPrice || 0).toLocaleString()}</div>
-                                            <div className="text-slate-400 text-xs mt-1">за: {state.currentCard.targetTitle}</div>
-                                        </div>
-                                    ) : state.currentCard.cost && (
-                                        <div className="bg-slate-900/50 p-3 rounded-xl mb-6 border border-slate-800 text-center">
-                                            <div className="text-[10px] text-slate-500 uppercase">Цена</div>
-                                            <div className="text-2xl font-mono text-white font-bold">${(state.currentCard.downPayment ?? state.currentCard.cost).toLocaleString()}</div>
-                                            {state.currentCard.cashflow && <div className="text-green-400 text-xs mt-1">+${state.currentCard.cashflow}/мес</div>}
-                                        </div>
-                                    )}
-
-                                    <div className="flex flex-col gap-3 w-full">
-                                        {/* STOCK LOGIC */}
-                                        {state.currentCard.symbol ? (
-                                            <div className="flex flex-col gap-2 w-full animate-in slide-in-from-bottom duration-300">
-                                                {/* Quantity Input */}
-                                                <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-800 flex flex-col gap-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-slate-400 text-xs font-bold uppercase ml-2">Кол-во:</span>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            max="100000"
-                                                            value={stockQty}
-                                                            onChange={(e) => setStockQty(Math.max(1, parseInt(e.target.value) || 1))}
-                                                            onFocus={(e) => e.target.select()}
-                                                            className="flex-1 bg-transparent text-white font-mono font-bold text-lg outline-none text-right"
-                                                        />
-                                                    </div>
-                                                    <input
-                                                        type="range"
-                                                        min="1"
-                                                        max={Math.max(50, Math.floor(me.cash / (state.currentCard.cost || 1)), me.assets.find((a: any) => a.symbol === state.currentCard.symbol)?.quantity || 0)}
-                                                        value={stockQty}
-                                                        onChange={(e) => setStockQty(Number(e.target.value))}
-                                                        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:accent-blue-400 transition-all"
-                                                    />
+                                        {
+                                            state.currentCard.displayId && (
+                                                <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-md text-slate-400 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-slate-700/50 shadow-sm z-10 flex items-center gap-1">
+                                                    <span className="opacity-50">#</span>{state.currentCard.displayId}
                                                 </div>
+                                            )
+                                        }
+                                        < div className="text-5xl mb-4 text-center">{state.currentCard.type === 'MARKET' ? '🏠' : '💸'}</div>
+                                {state.currentCard.type === 'MARKET' && (
+                                    <div className="text-center mb-2">
+                                        <span className="bg-blue-900/50 text-blue-300 text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-blue-800/50">РЫНОК</span>
+                                    </div>
+                                )}
+                                <h2 className="text-xl font-bold text-white mb-2 text-center">{state.currentCard.title}</h2>
+                                <p className="text-slate-400 text-sm mb-6 text-center">{state.currentCard.description}</p>
 
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    {/* BUY BUTTON (Current Player Only) */}
-                                                    {/* BUY BUTTON (Current Player Only) */}
-                                                    {isMyTurn && (
-                                                        me.cash < (state.currentCard.cost || 0) * stockQty ? (
-                                                            // INSUFFICIENT FUNDS -> SHOW LOAN
-                                                            <div className="flex flex-col gap-1 w-full">
-                                                                <button
-                                                                    className="bg-red-600/50 cursor-not-allowed opacity-50 text-white font-bold py-2 rounded-xl flex flex-col items-center"
-                                                                    disabled
-                                                                >
-                                                                    <span className="text-sm">Не хватает средств</span>
-                                                                    <span className="text-[10px]">-${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const deficit = ((state.currentCard.cost || 0) * stockQty) - me.cash;
-                                                                        const loanAmount = Math.ceil(deficit / 1000) * 1000;
-                                                                        handleLoan(loanAmount);
-                                                                    }}
-                                                                    disabled={(me.loanDebt || 0) + ((state.currentCard.cost || 0) * stockQty - me.cash) > 38000}
-                                                                    className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold py-2 rounded-xl shadow-lg shadow-yellow-900/20"
-                                                                >
-                                                                    🏦 Взять кредит (+${Math.ceil(((state.currentCard.cost || 0) * stockQty - me.cash) / 1000) * 1000})
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            // SUFFICIENT FUNDS -> SHOW BUY
-                                                            <button
-                                                                onClick={handleBuyStock}
-                                                                className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-900/20 flex flex-col items-center"
-                                                            >
-                                                                <span className="text-sm">КУПИТЬ</span>
-                                                                <span className="text-[10px] opacity-70">-${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
-                                                            </button>
-                                                        )
-                                                    )}
-
-                                                    {/* SELL BUTTON (Anyone with stock) */}
-                                                    {me.assets.some((a: any) => a.symbol === state.currentCard.symbol && a.quantity >= stockQty) ? (
-                                                        <button
-                                                            onClick={handleSellStock}
-                                                            className="bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-orange-900/20 flex flex-col items-center"
-                                                        >
-                                                            <span className="text-sm">ПРОДАТЬ</span>
-                                                            <span className="text-[10px] opacity-70">+${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
-                                                        </button>
-                                                    ) : (
-                                                        // Placeholder to keep grid layout if not selling
-                                                        !isMyTurn && <div className="bg-slate-800/50 rounded-xl flex items-center justify-center text-slate-600 text-xs font-bold">Нет акций</div>
-                                                    )}
+                                {state.currentCard.type === 'MARKET' ? (
+                                    <div className="bg-slate-900/50 p-3 rounded-xl mb-6 border border-slate-800 text-center">
+                                        <div className="text-[10px] text-slate-500 uppercase">Предложение</div>
+                                        <div className="text-2xl font-mono text-green-400 font-bold">${(state.currentCard.offerPrice || 0).toLocaleString()}</div>
+                                        <div className="text-slate-400 text-xs mt-1">за: {state.currentCard.targetTitle}</div>
+                                    </div>
+                                ) : state.currentCard.cost && (
+                                    <div className="bg-slate-900/50 p-3 rounded-xl mb-6 border border-slate-800 text-center">
+                                        {state.currentCard.downPayment ? (
+                                            <div className="grid grid-cols-2 gap-2 mb-2 pb-2 border-b border-white/5">
+                                                <div>
+                                                    <div className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">Стоимость</div>
+                                                    <div className="text-sm font-mono text-slate-300">${state.currentCard.cost.toLocaleString()}</div>
                                                 </div>
-
-                                                {isMyTurn && (
-                                                    <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-xs mt-1">
-                                                        ПАС (Завершить ход)
-                                                    </button>
-                                                )}
-
-                                                <div className="text-center text-[10px] text-slate-500 mt-1 animate-pulse">
-                                                    Рынок открыт: Сделки доступны всем!
+                                                <div>
+                                                    <div className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">Взнос</div>
+                                                    <div className="text-xl font-mono text-white font-bold">${state.currentCard.downPayment.toLocaleString()}</div>
                                                 </div>
-                                            </div>
-                                        ) : state.currentCard.type === 'MARKET' ? (
-                                            /* MARKET: Special Logic for Global Interaction */
-                                            <div className="flex gap-2 w-full">
-                                                {me.assets.some((a: any) => a.title === state.currentCard?.targetTitle) ? (
-                                                    <button onClick={() => socket.emit('sell_asset', { roomId })} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
-                                                        ПРОДАТЬ
-                                                    </button>
-                                                ) : (
-                                                    <div className="flex-1 flex items-center justify-center bg-slate-800 text-slate-500 text-xs font-bold py-3 rounded-xl border border-slate-700">
-                                                        Нет актива
-                                                    </div>
-                                                )}
-
-                                                {/* Only Current Player can Dismiss (Close Market) */}
-                                                {isMyTurn && (
-                                                    <button onClick={handleDismissCard} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
-                                                        ЗАКРЫТЬ
-                                                    </button>
-                                                )}
                                             </div>
                                         ) : (
-                                            /* Standard Interaction (Current Player Only) */
-                                            isMyTurn ? (
-                                                me.cash >= ((state.currentCard.downPayment ?? state.currentCard.cost) || 0) ? (
-                                                    <div className="flex gap-2 w-full">
-                                                        <button onClick={handleBuy} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
-                                                            {state.currentCard.mandatory ? 'ОПЛАТИТЬ' : 'КУПИТЬ'}
-                                                        </button>
-                                                        {!state.currentCard.mandatory && (
-                                                            <button onClick={handleEndTurn} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
-                                                                ПАС
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex flex-col gap-2 w-full animate-in slide-in-from-bottom duration-300">
-                                                        <div className="bg-red-900/40 border border-red-500/50 p-2 rounded-lg text-center">
-                                                            <div className="text-red-400 font-bold text-xs uppercase tracking-widest">Недостаточно средств</div>
-                                                            <div className="text-white font-mono text-sm">
-                                                                Нужно еще: <span className="font-bold">${(((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash).toLocaleString()}</span>
-                                                            </div>
-                                                        </div>
+                                            // No down payment (Small deals/expenses)
+                                            <>
+                                                <div className="text-[10px] text-slate-500 uppercase">Цена</div>
+                                                <div className="text-2xl font-mono text-white font-bold">${state.currentCard.cost.toLocaleString()}</div>
+                                            </>
+                                        )}
+                                        {state.currentCard.cashflow && <div className="text-emerald-400 font-bold text-sm tracking-wide mt-1">+${state.currentCard.cashflow}/мес</div>}
+                                    </div>
+                                )}
 
-                                                        <div className="grid grid-cols-2 gap-2">
+                                <div className="flex flex-col gap-3 w-full">
+                                    {/* STOCK LOGIC */}
+                                    {state.currentCard.symbol ? (
+                                        <div className="flex flex-col gap-2 w-full animate-in slide-in-from-bottom duration-300">
+                                            {/* Quantity Input */}
+                                            <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-800 flex flex-col gap-3">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-slate-400 text-xs font-bold uppercase ml-2">Кол-во:</span>
+                                                    <input
+                                                        type="number"
+                                                        min="1"
+                                                        max="100000"
+                                                        value={stockQty}
+                                                        onChange={(e) => setStockQty(Math.max(1, parseInt(e.target.value) || 1))}
+                                                        onFocus={(e) => e.target.select()}
+                                                        className="flex-1 bg-transparent text-white font-mono font-bold text-lg outline-none text-right"
+                                                    />
+                                                </div>
+                                                <input
+                                                    type="range"
+                                                    min="1"
+                                                    max={Math.max(50, Math.floor(me.cash / (state.currentCard.cost || 1)), me.assets.find((a: any) => a.symbol === state.currentCard.symbol)?.quantity || 0)}
+                                                    value={stockQty}
+                                                    onChange={(e) => setStockQty(Number(e.target.value))}
+                                                    className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:accent-blue-400 transition-all"
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-2">
+                                                {/* BUY BUTTON (Current Player Only) */}
+                                                {/* BUY BUTTON (Current Player Only) */}
+                                                {isMyTurn && (
+                                                    me.cash < (state.currentCard.cost || 0) * stockQty ? (
+                                                        // INSUFFICIENT FUNDS -> SHOW LOAN
+                                                        <div className="flex flex-col gap-1 w-full">
+                                                            <button
+                                                                className="bg-red-600/50 cursor-not-allowed opacity-50 text-white font-bold py-2 rounded-xl flex flex-col items-center"
+                                                                disabled
+                                                            >
+                                                                <span className="text-sm">Не хватает средств</span>
+                                                                <span className="text-[10px]">-${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
+                                                            </button>
                                                             <button
                                                                 onClick={() => {
-                                                                    const deficit = ((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash;
+                                                                    const deficit = ((state.currentCard.cost || 0) * stockQty) - me.cash;
                                                                     const loanAmount = Math.ceil(deficit / 1000) * 1000;
                                                                     handleLoan(loanAmount);
                                                                 }}
-                                                                disabled={(me.loanDebt || 0) + (((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash) > 38000}
-                                                                className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-yellow-900/20 flex flex-col items-center justify-center gap-1"
+                                                                disabled={(me.loanDebt || 0) + ((state.currentCard.cost || 0) * stockQty - me.cash) > 38000}
+                                                                className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold py-2 rounded-xl shadow-lg shadow-yellow-900/20"
                                                             >
-                                                                <span>🏦 Взять кредит</span>
-                                                                {((me.loanDebt || 0) + (((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash) > 38000) && <span className="text-[9px] text-red-200">(Лимит)</span>}
-                                                            </button>
-                                                            <button
-                                                                onClick={() => setShowBank(true)}
-                                                                className={`bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 ${me.isFastTrack ? 'hidden' : ''}`}
-                                                            >
-                                                                🤝 Попросить
+                                                                🏦 Взять кредит (+${Math.ceil(((state.currentCard.cost || 0) * stockQty - me.cash) / 1000) * 1000})
                                                             </button>
                                                         </div>
+                                                    ) : (
+                                                        // SUFFICIENT FUNDS -> SHOW BUY
+                                                        <button
+                                                            onClick={handleBuyStock}
+                                                            className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-900/20 flex flex-col items-center"
+                                                        >
+                                                            <span className="text-sm">КУПИТЬ</span>
+                                                            <span className="text-[10px] opacity-70">-${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
+                                                        </button>
+                                                    )
+                                                )}
 
-                                                        <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-xs mt-1">
-                                                            Отказаться
+                                                {/* SELL BUTTON (Anyone with stock) */}
+                                                {me.assets.some((a: any) => a.symbol === state.currentCard.symbol && a.quantity >= stockQty) ? (
+                                                    <button
+                                                        onClick={handleSellStock}
+                                                        className="bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-orange-900/20 flex flex-col items-center"
+                                                    >
+                                                        <span className="text-sm">ПРОДАТЬ</span>
+                                                        <span className="text-[10px] opacity-70">+${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
+                                                    </button>
+                                                ) : (
+                                                    // Placeholder to keep grid layout if not selling
+                                                    !isMyTurn && <div className="bg-slate-800/50 rounded-xl flex items-center justify-center text-slate-600 text-xs font-bold">Нет акций</div>
+                                                )}
+                                            </div>
+
+                                            {isMyTurn && (
+                                                <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-xs mt-1">
+                                                    ПАС (Завершить ход)
+                                                </button>
+                                            )}
+
+                                            <div className="text-center text-[10px] text-slate-500 mt-1 animate-pulse">
+                                                Рынок открыт: Сделки доступны всем!
+                                            </div>
+                                        </div>
+                                    ) : state.currentCard.type === 'MARKET' ? (
+                                        /* MARKET: Special Logic for Global Interaction */
+                                        <div className="flex gap-2 w-full">
+                                            {me.assets.some((a: any) => a.title === state.currentCard?.targetTitle) ? (
+                                                <button onClick={() => socket.emit('sell_asset', { roomId })} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
+                                                    ПРОДАТЬ
+                                                </button>
+                                            ) : (
+                                                <div className="flex-1 flex items-center justify-center bg-slate-800 text-slate-500 text-xs font-bold py-3 rounded-xl border border-slate-700">
+                                                    Нет актива
+                                                </div>
+                                            )}
+
+                                            {/* Only Current Player can Dismiss (Close Market) */}
+                                            {isMyTurn && (
+                                                <button onClick={handleDismissCard} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
+                                                    ЗАКРЫТЬ
+                                                </button>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        /* Standard Interaction (Current Player Only) */
+                                        isMyTurn ? (
+                                            me.cash >= ((state.currentCard.downPayment ?? state.currentCard.cost) || 0) ? (
+                                                <div className="flex gap-2 w-full">
+                                                    <button onClick={handleBuy} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
+                                                        {state.currentCard.mandatory ? 'ОПЛАТИТЬ' : 'КУПИТЬ'}
+                                                    </button>
+                                                    {!state.currentCard.mandatory && (
+                                                        <button onClick={handleEndTurn} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
+                                                            ПАС
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <div className="flex flex-col gap-2 w-full animate-in slide-in-from-bottom duration-300">
+                                                    <div className="bg-red-900/40 border border-red-500/50 p-2 rounded-lg text-center">
+                                                        <div className="text-red-400 font-bold text-xs uppercase tracking-widest">Недостаточно средств</div>
+                                                        <div className="text-white font-mono text-sm">
+                                                            Нужно еще: <span className="font-bold">${(((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash).toLocaleString()}</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="grid grid-cols-2 gap-2">
+                                                        <button
+                                                            onClick={() => {
+                                                                const deficit = ((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash;
+                                                                const loanAmount = Math.ceil(deficit / 1000) * 1000;
+                                                                handleLoan(loanAmount);
+                                                            }}
+                                                            disabled={(me.loanDebt || 0) + (((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash) > 38000}
+                                                            className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-yellow-900/20 flex flex-col items-center justify-center gap-1"
+                                                        >
+                                                            <span>🏦 Взять кредит</span>
+                                                            {((me.loanDebt || 0) + (((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash) > 38000) && <span className="text-[9px] text-red-200">(Лимит)</span>}
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setShowBank(true)}
+                                                            className={`bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-blue-900/20 flex items-center justify-center gap-2 ${me.isFastTrack ? 'hidden' : ''}`}
+                                                        >
+                                                            🤝 Попросить
                                                         </button>
                                                     </div>
-                                                )
-                                            ) : (
-                                                <div className="w-full text-center text-slate-500 text-sm animate-pulse bg-slate-900/50 p-3 rounded-xl border border-slate-800">⏳ Ожидание игрока...</div>
+
+                                                    <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-xs mt-1">
+                                                        Отказаться
+                                                    </button>
+                                                </div>
                                             )
-                                        )}
-                                    </div>
+                                        ) : (
+                                            <div className="w-full text-center text-slate-500 text-sm animate-pulse bg-slate-900/50 p-3 rounded-xl border border-slate-800">⏳ Ожидание игрока...</div>
+                                        )
+                                    )}
                                 </div>
+                            </div>
+                            </div>
+                        )}
+                </div>
+
+
+                {/* Charity Overlay */}
+                {state.phase === 'CHARITY_CHOICE' && isMyTurn && !isAnimating && (
+                    <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
+                        <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative text-center">
+                            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-red-500"></div>
+                            <div className="text-5xl mb-4">❤️</div>
+                            <h2 className="text-xl font-bold text-white mb-2">Благотворительность</h2>
+                            <p className="text-slate-400 text-sm mb-6">
+                                Пожертвуйте {me.isFastTrack ? '$100,000' : '10% от общего дохода'}, чтобы получить возможность выбирать {me.isFastTrack ? '1, 2 или 3' : '1 или 2'} кубика на следующие 3 хода.
+                            </p>
+
+                            <div className="flex gap-2 w-full">
+                                <button onClick={() => socket.emit('donate_charity', { roomId })} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-pink-900/20 transform hover:-translate-y-0.5 transition-all">
+                                    Пожертвовать
+                                </button>
+                                <button onClick={() => socket.emit('skip_charity', { roomId })} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
+                                    Отказаться
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Opportunity Choice Overlay */}
+                {state.phase === 'OPPORTUNITY_CHOICE' && !isAnimating && (
+                    <div className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
+                        {isMyTurn ? (
+                            <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative text-center">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-amber-600"></div>
+                                <div className="text-5xl mb-4">⚡</div>
+                                <h2 className="text-xl font-bold text-white mb-2">Возможность</h2>
+                                <p className="text-slate-400 text-sm mb-6">Выберите тип сделки:</p>
+
+                                <div className="flex gap-2 w-full">
+                                    <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })} className="flex-1 bg-gradient-to-br from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-bold py-4 rounded-2xl text-sm shadow-xl shadow-green-900/40 relative overflow-hidden group transform hover:-translate-y-1 transition-all">
+                                        <div className="relative z-10">Малая</div>
+                                        <div className="text-[10px] opacity-70 relative z-10">До $5,000</div>
+                                        {(state.deckCounts?.small) && (
+                                            <div className="text-[10px] bg-black/20 text-white/90 font-mono mt-1 mx-auto w-fit px-2 py-0.5 rounded relative z-10">
+                                                {state.deckCounts.small.remaining}/{state.deckCounts.small.total}
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                                    </button>
+
+                                    <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })} className="flex-1 bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-bold py-4 rounded-2xl text-sm shadow-xl shadow-purple-900/40 relative overflow-hidden group transform hover:-translate-y-1 transition-all">
+                                        <div className="relative z-10">Крупная</div>
+                                        <div className="text-[10px] opacity-70 relative z-10">$6,000+</div>
+                                        {(state.deckCounts?.big) && (
+                                            <div className="text-[10px] bg-black/20 text-white/90 font-mono mt-1 mx-auto w-fit px-2 py-0.5 rounded relative z-10">
+                                                {state.deckCounts.big.remaining}/{state.deckCounts.big.total}
+                                            </div>
+                                        )}
+                                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="bg-[#1e293b] w-full max-w-xs p-6 rounded-3xl border border-slate-700 shadow-2xl text-center">
+                                <h2 className="text-xl font-bold text-white mb-2">⚡ Возможность</h2>
+                                <p className="text-slate-400 text-sm">Игрок выбирает сделку...</p>
                             </div>
                         )}
                     </div>
+                )}
 
-
-                    {/* Charity Overlay */}
-                    {state.phase === 'CHARITY_CHOICE' && isMyTurn && !isAnimating && (
-                        <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
-                            <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative text-center">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-red-500"></div>
-                                <div className="text-5xl mb-4">❤️</div>
-                                <h2 className="text-xl font-bold text-white mb-2">Благотворительность</h2>
-                                <p className="text-slate-400 text-sm mb-6">
-                                    Пожертвуйте {me.isFastTrack ? '$100,000' : '10% от общего дохода'}, чтобы получить возможность выбирать {me.isFastTrack ? '1, 2 или 3' : '1 или 2'} кубика на следующие 3 хода.
+                {/* DOWNSIZED DECISION OVERLAY */}
+                {state.phase === 'DOWNSIZED_DECISION' && !isAnimating && (
+                    <div className="absolute inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
+                        {isMyTurn ? (
+                            <div className="bg-[#1e293b] w-full max-w-md p-8 rounded-3xl border border-red-500/30 shadow-2xl relative text-center">
+                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-orange-600"></div>
+                                <div className="text-6xl mb-6">📉</div>
+                                <h2 className="text-2xl font-bold text-white mb-2">Увольнение!</h2>
+                                <p className="text-slate-400 text-sm mb-6 px-4">
+                                    Вы потеряли работу. Что будете делать?
                                 </p>
 
-                                <div className="flex gap-2 w-full">
-                                    <button onClick={() => socket.emit('donate_charity', { roomId })} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-pink-900/20 transform hover:-translate-y-0.5 transition-all">
-                                        Пожертвовать
+                                <div className="flex flex-col gap-3 w-full">
+                                    {/* Option 1: Pay 1 Month & Skip 2 */}
+                                    <button
+                                        onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_1M' })}
+                                        disabled={me.cash < me.expenses * 1}
+                                        className="w-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl border border-slate-700 flex items-center justify-between px-6 group transition-all"
+                                    >
+                                        <div className="flex flex-col items-start">
+                                            <span className="text-sm group-hover:text-blue-400 transition-colors">Оплатить 1 мес. и Пропустить</span>
+                                            <span className="text-[10px] text-slate-500">Пропуск 2 ходов</span>
+                                        </div>
+                                        <div className="text-red-400 font-mono font-bold">-${(me.expenses * 1).toLocaleString()}</div>
                                     </button>
-                                    <button onClick={() => socket.emit('skip_charity', { roomId })} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
-                                        Отказаться
+
+                                    {/* Option 2: Pay 2 Months & No Skip */}
+                                    <button
+                                        onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_2M' })}
+                                        disabled={me.cash < me.expenses * 2}
+                                        className="w-full bg-gradient-to-r from-blue-900/50 to-indigo-900/50 hover:from-blue-800/50 hover:to-indigo-800/50 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl border border-blue-500/30 flex items-center justify-between px-6 group transition-all"
+                                    >
+                                        <div className="flex flex-col items-start">
+                                            <span className="text-sm group-hover:text-cyan-400 transition-colors">Оплатить 2 мес. и Играть</span>
+                                            <span className="text-[10px] text-slate-500">Без пропуска ходов</span>
+                                        </div>
+                                        <div className="text-red-400 font-mono font-bold">-${(me.expenses * 2).toLocaleString()}</div>
+                                    </button>
+
+                                    {/* Helper: Insufficient Funds Actions */}
+                                    {((me.cash < me.expenses * 1)) && (
+                                        <div className="grid grid-cols-2 gap-2 mt-2">
+                                            <button
+                                                onClick={() => {
+                                                    const deficit = (me.expenses * 1) - me.cash;
+                                                    const loanAmount = Math.ceil(deficit / 1000) * 1000;
+                                                    handleLoan(loanAmount);
+                                                }}
+                                                className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold py-3 rounded-xl"
+                                            >
+                                                🏦 Взять кредит
+                                            </button>
+                                            <button
+                                                onClick={() => setShowBank(true)}
+                                                className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl"
+                                            >
+                                                Попросить
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {/* Option 3: Bankruptcy */}
+                                    <button
+                                        onClick={() => {
+                                            if (confirm('ВЫ УВЕРЕНЫ? Вы начнете заново с штрафом на кредиты.')) {
+                                                socket.emit('decision_downsized', { roomId, choice: 'BANKRUPT' });
+                                            }
+                                        }}
+                                        className="w-full mt-2 text-red-500/70 hover:text-red-400 text-xs font-bold py-2 uppercase tracking-widest transition-colors"
+                                    >
+                                        Объявить банкротство
                                     </button>
                                 </div>
                             </div>
+                        ) : (
+                            <div className="bg-[#1e293b] w-full max-w-xs p-6 rounded-3xl border border-slate-700 shadow-2xl text-center">
+                                <div className="text-4xl mb-4">📉</div>
+                                <h2 className="text-xl font-bold text-white mb-2">Увольнение</h2>
+                                <p className="text-slate-400 text-sm">Игрок принимает решение...</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* BABY ROLL OVERLAY */}
+                {state.phase === 'BABY_ROLL' && !isAnimating && (
+                    <div className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
+                        {isMyTurn ? (
+                            <div className="text-center">
+                                <div className="text-6xl mb-6 animate-bounce">👶</div>
+                                <h2 className="text-2xl font-bold text-white mb-8 drop-shadow-lg">Рождение ребенка?</h2>
+                                <button
+                                    onClick={() => handleRoll()}
+                                    className="bg-gradient-to-br from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-bold py-6 px-12 rounded-full text-xl shadow-2xl shadow-pink-900/50 transform hover:scale-110 transition-all duration-300 ring-4 ring-pink-500/20"
+                                >
+                                    Бросить кубик
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="bg-[#1e293b] w-full max-w-xs p-6 rounded-3xl border border-slate-700 shadow-2xl text-center">
+                                <div className="text-4xl mb-4">👶</div>
+                                <h2 className="text-xl font-bold text-white mb-2">Ребенок</h2>
+                                <p className="text-slate-400 text-sm">Игрок бросает кубик...</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+
+
+
+
+            {/* RIGHT SIDEBAR (Redesigned) */}
+            <div className="hidden lg:flex flex-col w-[380px] h-full border-l border-slate-800/50 bg-[#0f172a]/50 relative z-40 overflow-hidden shadow-xl shrink-0">
+
+                {/* 1. STATUS CARD (Player + Timer) */}
+                <div className="p-4 pb-0 shrink-0">
+                    <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden group">
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none group-hover:bg-blue-500/20 transition-all duration-500"></div>
+                        <div>
+                            <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-1 flex items-center gap-2">
+                                <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
+                                Ход игрока
+                            </div>
+                            <div className="text-lg font-bold text-white tracking-wide truncate max-w-[180px]">{currentPlayer.name}</div>
                         </div>
-                    )}
-
-                    {/* Opportunity Choice Overlay */}
-                    {state.phase === 'OPPORTUNITY_CHOICE' && !isAnimating && (
-                        <div className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
-                            {isMyTurn ? (
-                                <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative text-center">
-                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-amber-600"></div>
-                                    <div className="text-5xl mb-4">⚡</div>
-                                    <h2 className="text-xl font-bold text-white mb-2">Возможность</h2>
-                                    <p className="text-slate-400 text-sm mb-6">Выберите тип сделки:</p>
-
-                                    <div className="flex gap-2 w-full">
-                                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })} className="flex-1 bg-gradient-to-br from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-bold py-4 rounded-2xl text-sm shadow-xl shadow-green-900/40 relative overflow-hidden group transform hover:-translate-y-1 transition-all">
-                                            <div className="relative z-10">Малая</div>
-                                            <div className="text-[10px] opacity-70 relative z-10">До $5,000</div>
-                                            {(state.deckCounts?.small) && (
-                                                <div className="text-[10px] bg-black/20 text-white/90 font-mono mt-1 mx-auto w-fit px-2 py-0.5 rounded relative z-10">
-                                                    {state.deckCounts.small.remaining}/{state.deckCounts.small.total}
-                                                </div>
-                                            )}
-                                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                                        </button>
-
-                                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })} className="flex-1 bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-bold py-4 rounded-2xl text-sm shadow-xl shadow-purple-900/40 relative overflow-hidden group transform hover:-translate-y-1 transition-all">
-                                            <div className="relative z-10">Крупная</div>
-                                            <div className="text-[10px] opacity-70 relative z-10">$6,000+</div>
-                                            {(state.deckCounts?.big) && (
-                                                <div className="text-[10px] bg-black/20 text-white/90 font-mono mt-1 mx-auto w-fit px-2 py-0.5 rounded relative z-10">
-                                                    {state.deckCounts.big.remaining}/{state.deckCounts.big.total}
-                                                </div>
-                                            )}
-                                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="bg-[#1e293b] w-full max-w-xs p-6 rounded-3xl border border-slate-700 shadow-2xl text-center">
-                                    <h2 className="text-xl font-bold text-white mb-2">⚡ Возможность</h2>
-                                    <p className="text-slate-400 text-sm">Игрок выбирает сделку...</p>
-                                </div>
-                            )}
+                        <div className={`text-4xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
+                            {formatTime(timeLeft)}
                         </div>
-                    )}
-
-                    {/* DOWNSIZED DECISION OVERLAY */}
-                    {state.phase === 'DOWNSIZED_DECISION' && !isAnimating && (
-                        <div className="absolute inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
-                            {isMyTurn ? (
-                                <div className="bg-[#1e293b] w-full max-w-md p-8 rounded-3xl border border-red-500/30 shadow-2xl relative text-center">
-                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-orange-600"></div>
-                                    <div className="text-6xl mb-6">📉</div>
-                                    <h2 className="text-2xl font-bold text-white mb-2">Увольнение!</h2>
-                                    <p className="text-slate-400 text-sm mb-6 px-4">
-                                        Вы потеряли работу. Что будете делать?
-                                    </p>
-
-                                    <div className="flex flex-col gap-3 w-full">
-                                        {/* Option 1: Pay 2x & Skip 2 */}
-                                        <button
-                                            onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_2X' })}
-                                            disabled={me.cash < me.expenses * 2}
-                                            className="w-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl border border-slate-700 flex items-center justify-between px-6 group transition-all"
-                                        >
-                                            <div className="flex flex-col items-start">
-                                                <span className="text-sm group-hover:text-blue-400 transition-colors">Оплатить 2x и Пропустить</span>
-                                                <span className="text-[10px] text-slate-500">Пропуск 2 ходов</span>
-                                            </div>
-                                            <div className="text-red-400 font-mono font-bold">-${(me.expenses * 2).toLocaleString()}</div>
-                                        </button>
-
-                                        {/* Option 2: Pay 4x & No Skip */}
-                                        <button
-                                            onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_4X' })}
-                                            disabled={me.cash < me.expenses * 4}
-                                            className="w-full bg-gradient-to-r from-blue-900/50 to-indigo-900/50 hover:from-blue-800/50 hover:to-indigo-800/50 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl border border-blue-500/30 flex items-center justify-between px-6 group transition-all"
-                                        >
-                                            <div className="flex flex-col items-start">
-                                                <span className="text-sm group-hover:text-cyan-400 transition-colors">Оплатить 4x и Играть</span>
-                                                <span className="text-[10px] text-slate-500">Без пропуска ходов</span>
-                                            </div>
-                                            <div className="text-red-400 font-mono font-bold">-${(me.expenses * 4).toLocaleString()}</div>
-                                        </button>
-
-                                        {/* Helper: Insufficient Funds Actions */}
-                                        {((me.cash < me.expenses * 2)) && (
-                                            <div className="grid grid-cols-2 gap-2 mt-2">
-                                                <button
-                                                    onClick={() => {
-                                                        const deficit = (me.expenses * 2) - me.cash;
-                                                        const loanAmount = Math.ceil(deficit / 1000) * 1000;
-                                                        handleLoan(loanAmount);
-                                                    }}
-                                                    className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold py-3 rounded-xl"
-                                                >
-                                                    🏦 Взять кредит
-                                                </button>
-                                                <button
-                                                    onClick={() => setShowBank(true)}
-                                                    className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl"
-                                                >
-                                                    Попросить
-                                                </button>
-                                            </div>
-                                        )}
-
-                                        {/* Option 3: Bankruptcy */}
-                                        <button
-                                            onClick={() => {
-                                                if (confirm('ВЫ УВЕРЕНЫ? Вы начнете заново с штрафом на кредиты.')) {
-                                                    socket.emit('decision_downsized', { roomId, choice: 'BANKRUPT' });
-                                                }
-                                            }}
-                                            className="w-full mt-2 text-red-500/70 hover:text-red-400 text-xs font-bold py-2 uppercase tracking-widest transition-colors"
-                                        >
-                                            Объявить банкротство
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="bg-[#1e293b] w-full max-w-xs p-6 rounded-3xl border border-slate-700 shadow-2xl text-center">
-                                    <div className="text-4xl mb-4">📉</div>
-                                    <h2 className="text-xl font-bold text-white mb-2">Увольнение</h2>
-                                    <p className="text-slate-400 text-sm">Игрок принимает решение...</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* BABY ROLL OVERLAY */}
-                    {state.phase === 'BABY_ROLL' && !isAnimating && (
-                        <div className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
-                            {isMyTurn ? (
-                                <div className="text-center">
-                                    <div className="text-6xl mb-6 animate-bounce">👶</div>
-                                    <h2 className="text-2xl font-bold text-white mb-8 drop-shadow-lg">Рождение ребенка?</h2>
-                                    <button
-                                        onClick={() => handleRoll()}
-                                        className="bg-gradient-to-br from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-bold py-6 px-12 rounded-full text-xl shadow-2xl shadow-pink-900/50 transform hover:scale-110 transition-all duration-300 ring-4 ring-pink-500/20"
-                                    >
-                                        Бросить кубик
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="bg-[#1e293b] w-full max-w-xs p-6 rounded-3xl border border-slate-700 shadow-2xl text-center">
-                                    <div className="text-4xl mb-4">👶</div>
-                                    <h2 className="text-xl font-bold text-white mb-2">Ребенок</h2>
-                                    <p className="text-slate-400 text-sm">Игрок бросает кубик...</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                    </div>
                 </div>
 
+                {/* 2. ACTIONS PANEL */}
+                <div className="p-4 shrink-0">
 
-
-
-
-                {/* RIGHT SIDEBAR (Redesigned) */}
-                <div className="hidden lg:flex flex-col w-[380px] h-full border-l border-slate-800/50 bg-[#0f172a]/50 relative z-40 overflow-hidden shadow-xl shrink-0">
-
-                    {/* 1. STATUS CARD (Player + Timer) */}
+                    {/* 1.5. PLAYERS LIST (New for Desktop) */}
                     <div className="p-4 pb-0 shrink-0">
-                        <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none group-hover:bg-blue-500/20 transition-all duration-500"></div>
-                            <div>
-                                <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-1 flex items-center gap-2">
-                                    <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
-                                    Ход игрока
-                                </div>
-                                <div className="text-lg font-bold text-white tracking-wide truncate max-w-[180px]">{currentPlayer.name}</div>
-                            </div>
-                            <div className={`text-4xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
-                                {formatTime(timeLeft)}
+                        <div className="bg-[#1e293b]/50 rounded-2xl p-4 border border-slate-700/50 shadow-lg flex flex-col gap-2 relative overflow-hidden">
+                            <h3 className="text-slate-500 text-[10px] uppercase tracking-[0.25em] font-black mb-2 flex items-center gap-2">
+                                <span className="text-blue-400">👥</span> ИГРОКИ ({state.players.length})
+                            </h3>
+                            <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
+                                {state.players.map((p: any) => {
+                                    const isActive = p.id === currentPlayer.id;
+                                    return (
+                                        <div key={p.id} className={`flex items-center gap-3 px-3 py-2 rounded-xl border transition-all duration-300 ${isActive ? 'bg-slate-800 border-green-500/30' : 'bg-slate-900/30 border-transparent opacity-60'}`}>
+                                            <div className="relative">
+                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs border ${isActive ? 'border-green-400' : 'border-slate-600'} ${getAvatarColor(p.id)}`}>
+                                                    {p.photo_url ? <img src={p.photo_url} className="w-full h-full object-cover rounded-full" /> : p.token}
+                                                </div>
+                                                {isActive && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <div className={`text-xs font-bold truncate ${isActive ? 'text-white' : 'text-slate-400'}`}>{p.name}</div>
+                                                <div className="text-[10px] font-mono text-slate-500">$ {p.cash?.toLocaleString()}</div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
 
-                    {/* 2. ACTIONS PANEL */}
-                    <div className="p-4 shrink-0">
 
-                        {/* 1.5. PLAYERS LIST (New for Desktop) */}
-                        <div className="p-4 pb-0 shrink-0">
-                            <div className="bg-[#1e293b]/50 rounded-2xl p-4 border border-slate-700/50 shadow-lg flex flex-col gap-2 relative overflow-hidden">
-                                <h3 className="text-slate-500 text-[10px] uppercase tracking-[0.25em] font-black mb-2 flex items-center gap-2">
-                                    <span className="text-blue-400">👥</span> ИГРОКИ ({state.players.length})
-                                </h3>
-                                <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
-                                    {state.players.map((p: any) => {
-                                        const isActive = p.id === currentPlayer.id;
-                                        return (
-                                            <div key={p.id} className={`flex items-center gap-3 px-3 py-2 rounded-xl border transition-all duration-300 ${isActive ? 'bg-slate-800 border-green-500/30' : 'bg-slate-900/30 border-transparent opacity-60'}`}>
-                                                <div className="relative">
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs border ${isActive ? 'border-green-400' : 'border-slate-600'} ${getAvatarColor(p.id)}`}>
-                                                        {p.photo_url ? <img src={p.photo_url} className="w-full h-full object-cover rounded-full" /> : p.token}
-                                                    </div>
-                                                    {isActive && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className={`text-xs font-bold truncate ${isActive ? 'text-white' : 'text-slate-400'}`}>{p.name}</div>
-                                                    <div className="text-[10px] font-mono text-slate-500">$ {p.cash?.toLocaleString()}</div>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-                        </div>
+                    <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-2xl relative">
+                        <h3 className="text-slate-400 text-[10px] uppercase tracking-[0.25em] font-black mb-4 flex items-center gap-2">
+                            <span className="text-yellow-400">⚡</span> ДЕЙСТВИЯ
+                        </h3>
 
-
-                        <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-2xl relative">
-                            <h3 className="text-slate-400 text-[10px] uppercase tracking-[0.25em] font-black mb-4 flex items-center gap-2">
-                                <span className="text-yellow-400">⚡</span> ДЕЙСТВИЯ
-                            </h3>
-
-                            <div className="grid grid-cols-2 gap-3 mb-3">
-                                {/* Roll Logic */}
-                                {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
-                                    <div className="flex gap-2 h-28">
-                                        <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                            <span className="text-2xl">🎲</span>
-                                            <span>1</span>
-                                        </button>
-                                        <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                            <span className="text-2xl">🎲🎲</span>
-                                            <span>2</span>
-                                        </button>
-                                        {me.isFastTrack && (
-                                            <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                                <span className="text-2xl">🎲×3</span>
-                                                <span>3</span>
-                                            </button>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <button
-                                        onClick={() => handleRoll()}
-                                        disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
-                                        className={`h-28 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all relative overflow-hidden group
-                                        ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
-                                                ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400/50 text-white shadow-lg shadow-emerald-900/30'
-                                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-                                    >
-                                        {hasRolled ? (
-                                            <div className="flex flex-col items-center animate-in zoom-in">
-                                                <span className="text-4xl font-black">{diceValue}</span>
-                                                <span className="text-[9px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <span className="text-4xl group-hover:rotate-12 transition-transform">🎲</span>
-                                                <span className="text-[10px] font-black uppercase tracking-widest">БРОСОК</span>
-                                            </>
-                                        )}
+                        <div className="grid grid-cols-2 gap-3 mb-3">
+                            {/* Roll Logic */}
+                            {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+                                <div className="flex gap-2 h-28">
+                                    <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                        <span className="text-2xl">🎲</span>
+                                        <span>1</span>
                                     </button>
-                                )}
-
+                                    <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                        <span className="text-2xl">🎲🎲</span>
+                                        <span>2</span>
+                                    </button>
+                                    {me.isFastTrack && (
+                                        <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                            <span className="text-2xl">🎲×3</span>
+                                            <span>3</span>
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
                                 <button
-                                    onClick={handleEndTurn}
-                                    disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
+                                    onClick={() => handleRoll()}
+                                    disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
                                     className={`h-28 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all relative overflow-hidden group
-                                    ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
-                                            ? 'bg-blue-600 hover:bg-blue-500 border-blue-400/50 text-white shadow-lg shadow-blue-900/30'
+                                        ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
+                                            ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400/50 text-white shadow-lg shadow-emerald-900/30'
                                             : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
                                 >
-                                    <span className="text-4xl group-hover:translate-x-1 transition-transform">➡</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest">ДАЛЕЕ</span>
-                                </button>
-                            </div>
-
-                            <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-wider transition-colors">
-                                <span>🏦</span> Открыть Банк
-                            </button>
-
-                            {me.canEnterFastTrack && isMyTurn && (
-                                <button
-                                    onClick={handleEnterFastTrack}
-                                    className="w-full mt-2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white p-3 rounded-xl shadow-lg flex items-center justify-center gap-2 font-bold text-xs uppercase animate-pulse"
-                                >
-                                    🚀 Выйти на Fast Track
+                                    {hasRolled ? (
+                                        <div className="flex flex-col items-center animate-in zoom-in">
+                                            <span className="text-4xl font-black">{diceValue}</span>
+                                            <span className="text-[9px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <span className="text-4xl group-hover:rotate-12 transition-transform">🎲</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest">БРОСОК</span>
+                                        </>
+                                    )}
                                 </button>
                             )}
+
+                            <button
+                                onClick={handleEndTurn}
+                                disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
+                                className={`h-28 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all relative overflow-hidden group
+                                    ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
+                                        ? 'bg-blue-600 hover:bg-blue-500 border-blue-400/50 text-white shadow-lg shadow-blue-900/30'
+                                        : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                            >
+                                <span className="text-4xl group-hover:translate-x-1 transition-transform">➡</span>
+                                <span className="text-[10px] font-black uppercase tracking-widest">ДАЛЕЕ</span>
+                            </button>
                         </div>
-                    </div>
 
-                    {/* 3. CHAT (Fills Space) */}
-                    <div className="flex-1 min-h-0 px-4 pb-2 flex flex-col">
-                        <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 ml-1">Чат и События</div>
-                        <TextChat
-                            roomId={roomId}
-                            socket={socket}
-                            messages={state.chat || []}
-                            currentUser={me}
-                            className="w-full h-full shadow-inner rounded-2xl border border-slate-800/50"
-                        />
-                    </div>
-
-                    {/* 4. MENU BUTTON */}
-                    <div className="p-4 pt-2 shrink-0">
-                        <button
-                            onClick={() => setShowMenuModal(true)}
-                            className="w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white font-bold uppercase tracking-[0.2em] text-xs transition-colors shadow-lg flex items-center justify-center gap-3"
-                        >
-                            <span>⚙️</span> МЕНЮ
+                        <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-wider transition-colors">
+                            <span>🏦</span> Открыть Банк
                         </button>
-                    </div>
 
+                        {me.canEnterFastTrack && isMyTurn && (
+                            <button
+                                onClick={handleEnterFastTrack}
+                                className="w-full mt-2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white p-3 rounded-xl shadow-lg flex items-center justify-center gap-2 font-bold text-xs uppercase animate-pulse"
+                            >
+                                🚀 Выйти на Fast Track
+                            </button>
+                        )}
+                    </div>
+                </div>
+
+                {/* 3. CHAT (Fills Space) */}
+                <div className="flex-1 min-h-0 px-4 pb-2 flex flex-col">
+                    <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 ml-1">Чат и События</div>
+                    <TextChat
+                        roomId={roomId}
+                        socket={socket}
+                        messages={state.chat || []}
+                        currentUser={me}
+                        className="w-full h-full shadow-inner rounded-2xl border border-slate-800/50"
+                    />
+                </div>
+
+                {/* 4. MENU BUTTON */}
+                <div className="p-4 pt-2 shrink-0">
+                    <button
+                        onClick={() => setShowMenuModal(true)}
+                        className="w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white font-bold uppercase tracking-[0.2em] text-xs transition-colors shadow-lg flex items-center justify-center gap-3"
+                    >
+                        <span>⚙️</span> МЕНЮ
+                    </button>
                 </div>
 
             </div>
-            {/* End Main Grid */}
 
-            {/* BABY NOTIFICATION OVERLAY */}
-            {
-                babyNotification && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-                        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-3xl shadow-2xl animate-in zoom-in-50 duration-500 flex flex-col items-center gap-4">
-                            <div className="text-6xl animate-bounce">👶</div>
-                            <div className="text-3xl font-black text-white text-center drop-shadow-lg leading-tight">
-                                {babyNotification}
-                            </div>
-                            <div className="text-white/80 text-xl font-bold bg-green-500/20 px-4 py-2 rounded-xl mt-2 border border-green-500/50">
-                                +$5,000 Подарок!
-                            </div>
-                        </div>
+        </div>
+            {/* End Main Grid */ }
+
+    {/* BABY NOTIFICATION OVERLAY */ }
+    {
+        babyNotification && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
+                <div className="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-3xl shadow-2xl animate-in zoom-in-50 duration-500 flex flex-col items-center gap-4">
+                    <div className="text-6xl animate-bounce">👶</div>
+                    <div className="text-3xl font-black text-white text-center drop-shadow-lg leading-tight">
+                        {babyNotification}
                     </div>
-                )
-            }
+                    <div className="text-white/80 text-xl font-bold bg-green-500/20 px-4 py-2 rounded-xl mt-2 border border-green-500/50">
+                        +$5,000 Подарок!
+                    </div>
+                </div>
+            </div>
+        )
+    }
 
-            {/* BOTTOM NAV MOBILE */}
+    {/* BOTTOM NAV MOBILE */ }
             <div className="lg:hidden bg-[#0B0E14]/90 backdrop-blur-xl border-t border-slate-800/50 p-3 pb-3 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
                 <div className="max-w-md mx-auto flex justify-between items-center gap-3">
                     <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="flex flex-col items-center gap-1 p-2 w-14 text-slate-400 hover:text-white transition-colors">
@@ -1694,180 +1713,184 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                 myId={me.id}
                 onTransfer={handleTransferAsset}
             />
-            {
-                state.winner && (
-                    <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-md">
-                        <div className="text-8xl mb-8 animate-bounce">🏆</div>
-                        <h2 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 mb-6 tracking-tighter shadow-2xl">ПОБЕДА!</h2>
-                        <div className="text-3xl text-white mb-12 font-light"><span className="font-bold text-yellow-400">{state.winner}</span> Выграл!</div>
-                        <button onClick={() => window.location.reload()} className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-full text-xl shadow-lg">Играть снова</button>
-                    </div>
-                )
-            }
-            {
-                me.isBankrupted && !state.winner && (
-                    <div className="absolute inset-0 z-[110] bg-black/95 flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-md p-4">
-                        <div className="text-9xl mb-8 animate-pulse grayscale filter drop-shadow-[0_0_15px_rgba(255,0,0,0.3)]">💸</div>
-                        <h2 className="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-slate-500 to-slate-200 mb-8 tracking-tighter shadow-2xl uppercase text-center">
-                            БАНКРОТ!
-                        </h2>
-                        <div className="text-2xl text-slate-400 mb-12 font-light max-w-2xl text-center leading-relaxed">
-                            <span className="block text-red-500 font-bold mb-2">ИГРА ОКОНЧЕНА</span>
-                            К сожалению, ваши доходы не покрыли расходы.
-                        </div>
-                        <button
-                            onClick={() => router.push('/lobby')}
-                            className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-bold py-5 px-16 rounded-2xl text-xl shadow-2xl border border-slate-700 hover:border-red-500/30 transition-all transform hover:scale-105"
-                        >
-                            🚪 Вернуться в лобби
-                        </button>
-                    </div>
-                )
-            }
-            {showRules && <RulesModal onClose={() => setShowRules(false)} counts={state.deckCounts} />}
-
-            {
-                showMenuModal && (
-                    <MenuModal
-                        onClose={() => setShowMenuModal(false)}
-                        onExit={handleExit}
-                        onEndGame={handleEndGame}
-                        onShowRules={() => setShowRules(true)}
-                        isMuted={isMuted}
-                        toggleMute={toggleMute}
-                        volume={volume}
-                        setVolume={handleVolumeChange}
-                        isHost={state.players[0]?.id === me.id}
-                        hasWinner={state.players.some((p: any) => p.hasWon)}
-                    />
-                )
-            }
-            {/* Notifications Overlay */}
-            {
-                (babyNotification || turnNotification) && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
-                        <div className="bg-slate-900 border-2 border-slate-700 p-8 rounded-3xl shadow-2xl max-w-md text-center transform scale-100 animate-in zoom-in-95 duration-200">
-                            <div className="text-6xl mb-4 animate-bounce">
-                                {babyNotification ? '👶' : '🚫'}
-                            </div>
-                            <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">
-                                {babyNotification ? 'Новая Жизнь!' : 'Пропуск Хода!'}
-                            </h2>
-                            <div className={`text-lg font-bold ${babyNotification ? 'text-pink-300' : 'text-red-400'}`}>
-                                {babyNotification || turnNotification}
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* 🚀 EXIT TO FAST TRACK BUTTON (Fixed Pyramid/Triangle) */}
-            <div
-                onClick={() => setShowFastTrackModal(true)}
-                className={`fixed bottom-24 right-4 z-[90] w-24 h-24 cursor-pointer transition-transform hover:scale-105 active:scale-95 drop-shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-700
-                    ${(currentPlayer.loanDebt <= 0 && currentPlayer.passiveIncome >= 10000 && currentPlayer.cash >= 200000) ? 'filter hue-rotate-[240deg]' : ''}
-                `}
-                style={{
-                    clipPath: 'polygon(100% 100%, 0% 100%, 100% 0%)',
-                    background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', // Rose-600 to Rose-700
-                }}
-            >
-                {/* Icon inside triangle */}
-                <div className="absolute bottom-2 right-2 text-white font-bold text-3xl transform rotate-0 drop-shadow-md">
-                    🚀
+    {
+        state.winner && (
+            <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-md">
+                <div className="text-8xl mb-8 animate-bounce">🏆</div>
+                <h2 className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 mb-6 tracking-tighter shadow-2xl">ПОБЕДА!</h2>
+                <div className="text-3xl text-white mb-12 font-light"><span className="font-bold text-yellow-400">{state.winner}</span> Выграл!</div>
+                <button onClick={() => window.location.reload()} className="bg-green-600 hover:bg-green-500 text-white font-bold py-4 px-12 rounded-full text-xl shadow-lg">Играть снова</button>
+            </div>
+        )
+    }
+    {
+        me.isBankrupted && !state.winner && (
+            <div className="absolute inset-0 z-[110] bg-black/95 flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-md p-4">
+                <div className="text-9xl mb-8 animate-pulse grayscale filter drop-shadow-[0_0_15px_rgba(255,0,0,0.3)]">💸</div>
+                <h2 className="text-7xl md:text-8xl font-black text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-slate-500 to-slate-200 mb-8 tracking-tighter shadow-2xl uppercase text-center">
+                    БАНКРОТ!
+                </h2>
+                <div className="text-2xl text-slate-400 mb-12 font-light max-w-2xl text-center leading-relaxed">
+                    <span className="block text-red-500 font-bold mb-2">ИГРА ОКОНЧЕНА</span>
+                    К сожалению, ваши доходы не покрыли расходы.
                 </div>
-                <div className="absolute bottom-2 right-12 text-white/80 font-bold text-[10px] transform rotate-0 drop-shadow-md whitespace-nowrap">
-                    EXIT
+                <button
+                    onClick={() => router.push('/lobby')}
+                    className="bg-gradient-to-r from-slate-800 to-slate-900 hover:from-slate-700 hover:to-slate-800 text-white font-bold py-5 px-16 rounded-2xl text-xl shadow-2xl border border-slate-700 hover:border-red-500/30 transition-all transform hover:scale-105"
+                >
+                    🚪 Вернуться в лобби
+                </button>
+            </div>
+        )
+    }
+    { showRules && <RulesModal onClose={() => setShowRules(false)} counts={state.deckCounts} /> }
+
+    {
+        showMenuModal && (
+            <MenuModal
+                onClose={() => setShowMenuModal(false)}
+                onExit={handleExit}
+                onEndGame={handleEndGame}
+                onShowRules={() => setShowRules(true)}
+                isMuted={isMuted}
+                toggleMute={toggleMute}
+                volume={volume}
+                setVolume={handleVolumeChange}
+                isHost={state.players[0]?.id === me.id}
+                hasWinner={state.players.some((p: any) => p.hasWon)}
+            />
+        )
+    }
+    {/* Notifications Overlay */ }
+    {
+        (babyNotification || turnNotification) && (
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+                <div className="bg-slate-900 border-2 border-slate-700 p-8 rounded-3xl shadow-2xl max-w-md text-center transform scale-100 animate-in zoom-in-95 duration-200">
+                    <div className="text-6xl mb-4 animate-bounce">
+                        {babyNotification ? '👶' : '🚫'}
+                    </div>
+                    <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-wide">
+                        {babyNotification ? 'Новая Жизнь!' : 'Пропуск Хода!'}
+                    </h2>
+                    <div className={`text-lg font-bold ${babyNotification ? 'text-pink-300' : 'text-red-400'}`}>
+                        {babyNotification || turnNotification}
+                    </div>
                 </div>
             </div>
+        )
+    }
 
-            {/* EXIT TO FAST TRACK MODAL */}
-            {showFastTrackModal && (
-                <ExitToFastTrackModal
-                    onClose={() => setShowFastTrackModal(false)}
-                    player={currentPlayer}
-                    onConfirm={() => {
-                        // TODO: Implement actual exit logic (Socket emit)
-                        console.log("EXIT TO FAST TRACK CONFIRMED");
-                        // For now just close or maybe show a "You Win" if logic allows? 
-                        // The user requested just the UI/UX for now.
-                        setShowFastTrackModal(false);
-                    }}
-                />
-            )}
+    {/* 🚀 EXIT TO FAST TRACK BUTTON (Fixed Pyramid/Triangle) */ }
+    <div
+        onClick={() => setShowFastTrackModal(true)}
+        className={`fixed bottom-32 right-[400px] z-[90] w-24 h-24 cursor-pointer transition-transform hover:scale-105 active:scale-95 drop-shadow-2xl animate-in slide-in-from-bottom-10 fade-in duration-700
+                    ${(currentPlayer.loanDebt <= 0 && currentPlayer.passiveIncome >= 10000 && currentPlayer.cash >= 200000) ? 'filter hue-rotate-[240deg]' : ''}
+                `}
+        style={{
+            clipPath: 'polygon(100% 100%, 0% 100%, 100% 0%)',
+            background: 'linear-gradient(135deg, #f43f5e 0%, #e11d48 100%)', // Rose-600 to Rose-700
+        }}
+    >
+        {/* Icon inside triangle */}
+        <div className="absolute bottom-2 right-2 text-white font-bold text-3xl transform rotate-0 drop-shadow-md">
+            🚀
+        </div>
+        <div className="absolute bottom-2 right-12 text-white/80 font-bold text-[10px] transform rotate-0 drop-shadow-md whitespace-nowrap">
+            EXIT
+        </div>
+    </div>
 
-            {/* 🛠️ PLAYER ACTION MENU (HOST) */}
-            {selectedPlayerForMenu && (
-                <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedPlayerForMenu(null)}>
-                    <div className="bg-slate-900 border border-slate-700/50 rounded-3xl w-full max-w-xs overflow-hidden shadow-2xl relative" onClick={e => e.stopPropagation()}>
+    {/* EXIT TO FAST TRACK MODAL */ }
+    {
+        showFastTrackModal && (
+            <ExitToFastTrackModal
+                onClose={() => setShowFastTrackModal(false)}
+                player={currentPlayer}
+                onConfirm={() => {
+                    // TODO: Implement actual exit logic (Socket emit)
+                    console.log("EXIT TO FAST TRACK CONFIRMED");
+                    // For now just close or maybe show a "You Win" if logic allows? 
+                    // The user requested just the UI/UX for now.
+                    setShowFastTrackModal(false);
+                }}
+            />
+        )
+    }
 
-                        {/* Header */}
-                        <div className="h-24 bg-gradient-to-br from-blue-900/50 to-slate-900 relative">
-                            <button className="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition" onClick={() => setSelectedPlayerForMenu(null)}>
-                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                            </button>
-                        </div>
+    {/* 🛠️ PLAYER ACTION MENU (HOST) */ }
+    {
+        selectedPlayerForMenu && (
+            <div className="fixed inset-0 z-[9999] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedPlayerForMenu(null)}>
+                <div className="bg-slate-900 border border-slate-700/50 rounded-3xl w-full max-w-xs overflow-hidden shadow-2xl relative" onClick={e => e.stopPropagation()}>
 
-                        <div className="px-6 pb-6 -mt-12 relative z-10">
-                            <div className="flex items-center gap-4 mb-6">
-                                <div className={`w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl bg-gradient-to-br border-4 border-slate-900 shadow-xl overflow-hidden ${getAvatarColor(selectedPlayerForMenu.id)}`}>
-                                    {selectedPlayerForMenu.photo_url ? (
-                                        <img src={selectedPlayerForMenu.photo_url} className="w-full h-full object-cover" />
-                                    ) : (
-                                        getInitials(selectedPlayerForMenu.name)
-                                    )}
-                                </div>
-                                <div className="mt-10">
-                                    <h3 className="font-bold text-xl text-white leading-tight">{selectedPlayerForMenu.name}</h3>
-                                    <div className="text-sm text-slate-400 font-mono">${selectedPlayerForMenu.cash?.toLocaleString()}</div>
-                                </div>
-                            </div>
+                    {/* Header */}
+                    <div className="h-24 bg-gradient-to-br from-blue-900/50 to-slate-900 relative">
+                        <button className="absolute top-4 right-4 bg-black/50 text-white rounded-full p-2 hover:bg-black/70 transition" onClick={() => setSelectedPlayerForMenu(null)}>
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                            </svg>
+                        </button>
+                    </div>
 
-                            <div className="space-y-2">
-                                {/* Host Actions */}
-                                {isHost ? (
-                                    <>
-                                        {selectedPlayerForMenu.id === state.players[state.currentPlayerIndex].id && (
-                                            <button
-                                                onClick={() => {
-                                                    handleForceSkip();
-                                                    setSelectedPlayerForMenu(null);
-                                                }}
-                                                className="w-full p-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-500 font-bold transition-all flex items-center gap-3 group"
-                                            >
-                                                <span className="bg-amber-500/20 p-2 rounded-lg group-hover:scale-110 transition-transform">⏭️</span> Пропустить ход
-                                            </button>
-                                        )}
-
-                                        {selectedPlayerForMenu.id !== socket.id ? (
-                                            <button
-                                                onClick={() => {
-                                                    handleKickPlayer(selectedPlayerForMenu.id);
-                                                    setSelectedPlayerForMenu(null);
-                                                }}
-                                                className="w-full p-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 font-bold transition-all flex items-center gap-3 group"
-                                            >
-                                                <span className="bg-red-500/20 p-2 rounded-lg group-hover:scale-110 transition-transform">👢</span> Исключить игрока
-                                            </button>
-                                        ) : (
-                                            <div className="p-3 text-center text-xs text-slate-500 italic">
-                                                Это вы (Хост)
-                                            </div>
-                                        )}
-                                    </>
+                    <div className="px-6 pb-6 -mt-12 relative z-10">
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className={`w-20 h-20 rounded-full flex items-center justify-center font-bold text-2xl bg-gradient-to-br border-4 border-slate-900 shadow-xl overflow-hidden ${getAvatarColor(selectedPlayerForMenu.id)}`}>
+                                {selectedPlayerForMenu.photo_url ? (
+                                    <img src={selectedPlayerForMenu.photo_url} className="w-full h-full object-cover" />
                                 ) : (
-                                    // Non-Host View
-                                    <div className="p-4 text-center text-slate-500 text-sm border border-slate-800 rounded-xl bg-slate-950/50">
-                                        Действия доступны только хосту
-                                    </div>
+                                    getInitials(selectedPlayerForMenu.name)
                                 )}
                             </div>
+                            <div className="mt-10">
+                                <h3 className="font-bold text-xl text-white leading-tight">{selectedPlayerForMenu.name}</h3>
+                                <div className="text-sm text-slate-400 font-mono">${selectedPlayerForMenu.cash?.toLocaleString()}</div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            {/* Host Actions */}
+                            {isHost ? (
+                                <>
+                                    {selectedPlayerForMenu.id === state.players[state.currentPlayerIndex].id && (
+                                        <button
+                                            onClick={() => {
+                                                handleForceSkip();
+                                                setSelectedPlayerForMenu(null);
+                                            }}
+                                            className="w-full p-4 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/20 text-amber-500 font-bold transition-all flex items-center gap-3 group"
+                                        >
+                                            <span className="bg-amber-500/20 p-2 rounded-lg group-hover:scale-110 transition-transform">⏭️</span> Пропустить ход
+                                        </button>
+                                    )}
+
+                                    {selectedPlayerForMenu.id !== socket.id ? (
+                                        <button
+                                            onClick={() => {
+                                                handleKickPlayer(selectedPlayerForMenu.id);
+                                                setSelectedPlayerForMenu(null);
+                                            }}
+                                            className="w-full p-4 rounded-xl bg-red-500/10 hover:bg-red-500/20 border border-red-500/20 text-red-500 font-bold transition-all flex items-center gap-3 group"
+                                        >
+                                            <span className="bg-red-500/20 p-2 rounded-lg group-hover:scale-110 transition-transform">👢</span> Исключить игрока
+                                        </button>
+                                    ) : (
+                                        <div className="p-3 text-center text-xs text-slate-500 italic">
+                                            Это вы (Хост)
+                                        </div>
+                                    )}
+                                </>
+                            ) : (
+                                // Non-Host View
+                                <div className="p-4 text-center text-slate-500 text-sm border border-slate-800 rounded-xl bg-slate-950/50">
+                                    Действия доступны только хосту
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
-            )}
+            </div>
+        )
+    }
         </div >
     );
 }
