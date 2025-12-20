@@ -1805,7 +1805,7 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                         setVolume={handleVolumeChange}
                         zoom={zoom}
                         setZoom={setZoom}
-                        isHost={(state.players[0]?.userId && state.players[0]?.userId === me.userId) || state.players[0]?.id === me.id}
+                        isHost={state.creatorId ? state.creatorId === me.userId : ((state.players[0]?.userId && state.players[0]?.userId === me.userId) || state.players[0]?.id === me.id)}
                         hasWinner={state.players.some((p: any) => p.hasWon)}
                     />
                 )

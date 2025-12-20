@@ -5,6 +5,7 @@ import { PROFESSIONS } from './professions';
 
 export interface GameState {
     roomId: string;
+    creatorId?: string;
     players: PlayerState[];
     currentPlayerIndex: number;
     currentTurnTime: number;
@@ -221,11 +222,12 @@ export class GameEngine {
     state: GameState;
     cardManager: CardManager;
 
-    constructor(roomId: string, players: IPlayer[]) {
+    constructor(roomId: string, players: IPlayer[], creatorId?: string) {
         // Init CardManager
         this.cardManager = new CardManager();
         this.state = {
             roomId,
+            creatorId,
             players: players.map(p => this.initPlayer(p)),
             currentPlayerIndex: 0,
             currentTurnTime: 120,
