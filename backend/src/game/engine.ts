@@ -1300,6 +1300,8 @@ export class GameEngine {
         if (!card) return;
         if ((card.type !== 'MARKET' && !card.offerPrice) || !card.targetTitle) return;
 
+        const salePrice = card.offerPrice!;
+
         // Find Asset (Exact or Partial Match)
         let assetIndex = player.assets.findIndex(a => a.title === card.targetTitle);
 
@@ -1316,7 +1318,7 @@ export class GameEngine {
 
         // Process Sale
         const oldCash = player.cash;
-        player.cash += card.offerPrice;
+        player.cash += salePrice;
 
         // Remove Asset
         player.assets.splice(assetIndex, 1);
@@ -1358,12 +1360,12 @@ export class GameEngine {
         this.cardManager.discard(returnedCard);
         this.addLog(`🔄 Returned ${asset.title} card to ${inferredType === 'DEAL_BIG' ? 'Big Deals' : 'Small Deals'} deck.`);
 
-        this.addLog(`💰 ${player.name} sold ${asset.title} to Market for $${card.offerPrice}`);
+        this.addLog(`💰 ${player.name} sold ${asset.title} to Market for $${salePrice}`);
 
         this.recordTransaction({
             from: 'Market',
             to: player.name,
-            amount: card.offerPrice,
+            amount: salePrice,
             description: `Sold ${asset.title}`,
             type: 'PAYDAY' // Use Payday type or Generic Income? Maybe new type 'SALE'? Reusing PAYDAY for Green Color in UI usually. Or 'TRANSFER'.
         });
