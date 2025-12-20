@@ -392,6 +392,61 @@ export default function EarnPage() {
                 </div>
             </div>
 
+            {/* DEBUG INFO (For diagnosing Sync Issues) */}
+            <div className="mt-8 p-4 bg-slate-900/50 rounded-xl border border-slate-800 text-xs font-mono text-slate-500 overflow-hidden">
+                <details>
+                    <summary className="cursor-pointer hover:text-slate-300 transition-colors mb-2 font-bold flex items-center gap-2">
+                        <span>🛠️ Debug Info</span>
+                    </summary>
+
+                    <div className="space-y-2 pl-2 border-l-2 border-slate-800">
+                        <div><span className="text-slate-600">Telegram ID (InitData):</span> <span className="text-blue-400">{user?.id}</span></div>
+                        <div><span className="text-slate-600">Username:</span> <span className="text-blue-400">{user?.username}</span></div>
+                        <div>
+                            <span className="text-slate-600">Partnership User:</span>{' '}
+                            {partnershipUser ? (
+                                <span className="text-green-400">Found ({partnershipUser.telegramId})</span>
+                            ) : (
+                                <span className="text-red-400">Not Found</span>
+                            )}
+                        </div>
+                        <div><span className="text-slate-600">Green Balance (DB):</span> <span className="text-green-400">${partnershipUser?.greenBalance}</span></div>
+                        <div><span className="text-slate-600">Pending Legacy Balance:</span> <span className="text-yellow-400">${partnershipUser?.pendingBalance || 0}</span></div>
+
+                        <div className="pt-2 flex gap-2">
+                            <button
+                                onClick={() => {
+                                    if (!webApp?.initData) return;
+                                    partnershipApi.syncLegacyBalance(webApp.initData)
+                                        .then(res => alert(JSON.stringify(res)))
+                                        .catch(err => alert("Sync Error: " + err.message));
+                                }}
+                                className="px-3 py-1 bg-blue-900/30 hover:bg-blue-900/50 text-blue-400 rounded border border-blue-900/50"
+                            >
+                                Force Sync
+                            </button>
+                            <button
+                                onClick={() => {
+                                    if (!webApp?.initData) return;
+                                    partnershipApi.getLegacyBalance(webApp.initData)
+                                        .then(res => alert("Legacy: " + JSON.stringify(res)))
+                                        .catch(err => alert("Check Error: " + err.message));
+                                }}
+                                className="px-3 py-1 bg-yellow-900/30 hover:bg-yellow-900/50 text-yellow-400 rounded border border-yellow-900/50"
+                            >
+                                Check Legacy
+                            </button>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="px-3 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded border border-slate-700"
+                            >
+                                Reload
+                            </button>
+                        </div>
+                    </div>
+                </details>
+            </div>
+
             {/* Insufficient Funds Modal */}
             {showRefillModal && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
