@@ -632,7 +632,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         <button
                                             onClick={() => {
                                                 if (window.confirm(`Пропустить ход игрока ${selectedPlayerForMenu.name}?`)) {
-                                                    socket.emit('host_skip_turn', { roomId, userId: selectedPlayerForMenu.userId || selectedPlayerForMenu.id });
+                                                    socket.emit('host_skip_turn', { roomId, userId: selectedPlayerForMenu.id });
                                                     setSelectedPlayerForMenu(null);
                                                 }
                                             }}
