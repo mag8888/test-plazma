@@ -512,6 +512,7 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
     const isMyTurn = state.players[state.currentPlayerIndex]?.id === me?.id;
     const currentTurnPlayer = state.players[state.currentPlayerIndex];
     const currentPlayer = currentTurnPlayer; // Alias for existing code
+    const showExitButton = !me.isFastTrack;
 
     // Calculate total asset yield
     const totalAssetYield = me.assets?.reduce((sum: number, a: any) => sum + (a.cashflow || 0), 0) || 0;
