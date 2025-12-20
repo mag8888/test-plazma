@@ -47,13 +47,13 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
     const getTabContent = () => {
         switch (activeTab) {
             case 'SMALL':
-                return <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{SMALL_DEALS.map(renderCard)}</div>;
+                return <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{SMALL_DEALS.map((card, i) => renderCard({ ...card, displayId: i + 1 }))}</div>;
             case 'BIG':
-                return <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{BIG_DEALS.map(renderCard)}</div>;
+                return <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{BIG_DEALS.map((card, i) => renderCard({ ...card, displayId: i + 1 }))}</div>;
             case 'MARKET':
-                return <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{MARKET_CARDS.map(renderCard)}</div>;
+                return <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{MARKET_CARDS.map((card, i) => renderCard({ ...card, displayId: i + 1 }))}</div>;
             case 'EXPENSE':
-                return <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{EXPENSE_CARDS.map(renderCard)}</div>;
+                return <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">{EXPENSE_CARDS.map((card, i) => renderCard({ ...card, displayId: i + 1 }))}</div>;
             default:
                 return (
                     <div className="space-y-6 text-slate-300 leading-relaxed">
@@ -64,7 +64,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
                             </p>
                             <p className="mt-2 text-sm text-slate-400">
                                 Ваша задача — вырваться из «Крысиных бегов» на «Скоростную дорожку».
-                                Для этого ваш <span className="text-blue-400 font-bold">Пассивный Доход</span> должен превысить ваши <span className="text-red-400 font-bold">Расходы</span>.
+                                Для этого нужно накопить Пассивный Доход $10,000 и $200,000 наличных.
                             </p>
                         </section>
 
@@ -91,8 +91,8 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
                             <h3 className="text-lg font-bold text-cyan-400 mb-2">🚀 Скоростная дорожка (Fast Track)</h3>
                             <p className="mb-2">
                                 <strong className="text-white">Как выйти:</strong> Чтобы выйти на Скоростную дорожку:
-                                <br />1. Ваш Пассивный Доход должен превышать Расходы в 2 раза.
-                                <br />2. Кредит должен быть полностью погашен.
+                                <br />1. Ваш <span className="text-blue-400 font-bold">Пассивный Доход</span> должен быть ≥ $10,000.
+                                <br />2. Кредит должен быть полностью погашен (0).
                                 <br />3. <span className="text-green-400 font-bold">Наличные: $200,000+</span>
                                 <br />После выполнения условий появится кнопка выхода.
                             </p>

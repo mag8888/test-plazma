@@ -1717,8 +1717,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                             {me.canEnterFastTrack && isMyTurn && (
                                 <button
-                                    onClick={handleEnterFastTrack}
-                                    className="w-full mt-2 bg-gradient-to-r from-yellow-600 to-orange-600 text-white p-3 rounded-xl shadow-lg flex items-center justify-center gap-2 font-bold text-xs uppercase animate-pulse"
+                                    onClick={() => setShowFastTrackModal(true)}
+                                    className="w-full mt-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white p-3 rounded-xl shadow-lg flex items-center justify-center gap-2 font-bold text-xs uppercase animate-pulse hover:scale-105 transition-transform"
                                 >
                                     🚀 Выйти на Fast Track
                                 </button>
@@ -1749,76 +1749,103 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     </div>
 
                 </div>
-
             </div>
             {/* End Main Grid */}
 
-            {/* BABY NOTIFICATION OVERLAY */}
+            {/* --- MODALS --- */}
+
+            {/* VISUALIZER TOOLTIP PORTAL? */}
+        </div>
+    );
+
+    // --- RENDER MODALS OUTSIDE MAIN LAYOUT ---
+    return (
+        <div className="h-full bg-slate-950 font-sans selection:bg-pink-500/30">
+            {isMobile ? renderMobileLayout() : renderDesktopLayout()}
+
+            {/* 🎲 DICE OVERLAY */}
             {
-                babyNotification && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center pointer-events-none">
-                        <div className="bg-white/10 backdrop-blur-md border border-white/20 p-8 rounded-3xl shadow-2xl animate-in zoom-in-50 duration-500 flex flex-col items-center gap-4">
-                            <div className="text-6xl animate-bounce">👶</div>
-                            <div className="text-3xl font-black text-white text-center drop-shadow-lg leading-tight">
-                                {babyNotification}
-                            </div>
-                            <div className="text-white/80 text-xl font-bold bg-green-500/20 px-4 py-2 rounded-xl mt-2 border border-green-500/50">
-                                +$5,000 Подарок!
+                showDice && (
+                    <div className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center pointer-events-none animate-in fade-in duration-300">
+                        <div className="transform scale-150 animate-bounce">
+                            {
+                                mlmMessage ? (
+                                    <div className="bg-slate-900 border-2 border-slate-700 p-6 rounded-2xl shadow-2xl text-center">
+                                        <div className="text-4xl mb-2">🎲 {diceValue}</div>
+                                        <div className="text-sm font-bold text-green-400">{mlmMessage}</div>
+                                    </div>
+                                ) : (
+                                    <div className="bg-white text-slate-900 w-24 h-24 rounded-2xl flex items-center justify-center text-4xl font-black shadow-[0_0_50px_rgba(255,255,255,0.3)] border-4 border-slate-200">
+                                        {diceValue}
+                                        {diceBreakdown && (
+                                            <div className="absolute -bottom-8 text-white text-xs font-mono bg-black/50 px-2 py-1 rounded">
+                                                {diceBreakdown}
+                                            </div>
+                                        )}
+                                    </div>
+                                )
+                            }
+                        </div>
+                    </div>
+                )
+            }
+
+            {/* ℹ️ SQUARE INFO POPUP */}
+            {
+                squareInfo && !showDice && (
+                    <div className="fixed bottom-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-bottom-8 duration-300 w-[90%] max-w-sm" onClick={() => setSquareInfo(null)}>
+                        <div className={`p-5 rounded-2xl shadow-2xl border backdrop-blur-md relative overflow-hidden
+                            ${squareInfo.type === 'PAYDAY' ? 'bg-green-900/90 border-green-500/50' :
+                                squareInfo.type === 'Doodad' ? 'bg-red-900/90 border-red-500/50' :
+                                    squareInfo.type === 'Market' ? 'bg-blue-900/90 border-blue-500/50' :
+                                        'bg-slate-900/90 border-slate-700/50'}`}>
+
+                            <button className="absolute top-2 right-2 text-white/50 hover:text-white" onClick={(e) => { e.stopPropagation(); setSquareInfo(null); }}>✕</button>
+
+                            <div className="flex items-start gap-4">
+                                <div className="text-3xl bg-black/20 p-3 rounded-xl">
+                                    {squareInfo.type === 'PAYDAY' ? '💰' :
+                                        squareInfo.type === 'Doodad' ? '💔' :
+                                            squareInfo.type === 'Market' ? '📈' :
+                                                squareInfo.type === 'Opportunity' ? '🔥' : '📍'}
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-white text-lg leading-tight mb-1">{squareInfo.name}</h3>
+                                    <p className="text-white/70 text-sm leading-relaxed">{squareInfo.description}</p>
+                                    {squareInfo.cost !== undefined && (
+                                        <div className="mt-3 inline-block bg-black/30 px-3 py-1 rounded-lg font-mono text-sm">
+                                            {squareInfo.cost === 0 ? <span className="text-green-400">FREE</span> :
+                                                squareInfo.cost > 0 ? <span className="text-red-400">-${squareInfo.cost.toLocaleString()}</span> :
+                                                    <span className="text-green-400">+${Math.abs(squareInfo.cost).toLocaleString()}</span>}
+                                        </div>
+                                    )}
+                                    {squareInfo.cashflow !== undefined && (
+                                        <div className="mt-3 ml-2 inline-block bg-black/30 px-3 py-1 rounded-lg font-mono text-sm text-green-400">
+                                            CF: +${squareInfo.cashflow}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     </div>
                 )
             }
 
-            {/* BOTTOM NAV MOBILE */}
-            <div className="lg:hidden bg-[#0B0E14]/90 backdrop-blur-xl border-t border-slate-800/50 p-3 pb-3 z-50 shadow-[0_-10px_40px_rgba(0,0,0,0.5)]">
-                <div className="max-w-md mx-auto flex justify-between items-center gap-3">
-                    <button onClick={() => setShowMobileMenu(!showMobileMenu)} className="flex flex-col items-center gap-1 p-2 w-14 text-slate-400 hover:text-white transition-colors">
-                        <span className="text-xl">☰</span>
-                        <span className="text-[9px] font-bold tracking-wider">МЕНЮ</span>
-                    </button>
+            {showBank && <BankModal isOpen={showBank} onClose={() => setShowBank(false)} player={me} roomId={roomId} transactions={state.transactions} players={state.players} />}
+            {
+                transferAssetItem && (
+                    <TransferModal
+                        isOpen={!!transferAssetItem}
+                        onClose={() => setTransferAssetItem(null)}
+                        asset={transferAssetItem?.item}
+                        players={state.players}
+                        myId={me.id}
+                        onTransfer={handleTransferAsset}
+                    />
+                )
+            }
+            {showRules && <RulesModal onClose={() => setShowRules(false)} counts={state.deckCounts} />}
 
-                    <button
-                        onClick={() => handleRoll()}
-                        disabled={!isMyTurn || state.phase !== 'ROLL' || !!state.currentCard || hasRolled}
-                        className={`flex-1 h-12 rounded-xl flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest shadow-lg transition-all relative overflow-hidden group
-                              ${isMyTurn && state.phase === 'ROLL' && !state.currentCard && !hasRolled
-                                ? 'bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-emerald-900/40 hover:-translate-y-0.5 active:scale-95'
-                                : 'bg-slate-800/50 text-slate-500 opacity-50 cursor-not-allowed border border-slate-700/50'}`}
-                    >
-                        <span className="text-lg filter drop-shadow-md group-active:rotate-12 transition-transform">🎲</span> Бросок
-                    </button>
-
-                    <button
-                        onClick={handleEndTurn}
-                        disabled={!isMyTurn || (state.phase === 'ROLL' && !state.currentCard && !hasRolled) || isAnimating}
-                        className={`flex-1 h-12 rounded-xl flex items-center justify-center gap-2 font-black text-xs uppercase tracking-widest shadow-lg transition-all relative overflow-hidden group
-                              ${isMyTurn && (state.phase !== 'ROLL' || !!state.currentCard || hasRolled) && !isAnimating
-                                ? 'bg-gradient-to-br from-blue-500 to-blue-700 text-white shadow-blue-900/40 hover:-translate-y-0.5 active:scale-95'
-                                : 'bg-slate-800/50 text-slate-500 opacity-50 cursor-not-allowed border border-slate-700/50'}`}
-                    >
-                        <span className="text-lg filter drop-shadow-md group-active:translate-x-1 transition-transform">➡</span> Далее
-                    </button>
-
-                    <button
-                        onClick={() => setShowBank(true)}
-                        className="flex flex-col items-center gap-1 p-2 rounded-xl text-slate-400 hover:text-white transition-all w-14"
-                    >
-                        <span className="text-xl">🏦</span>
-                        <span className="text-[9px] font-bold uppercase tracking-wider">Банк</span>
-                    </button>
-                </div>
-            </div>
-
-            <BankModal isOpen={showBank} onClose={() => setShowBank(false)} player={me} roomId={roomId} transactions={state.transactions} players={state.players} />
-            <TransferModal
-                isOpen={!!transferAssetItem}
-                onClose={() => setTransferAssetItem(null)}
-                asset={transferAssetItem?.item}
-                players={state.players}
-                myId={me.id}
-                onTransfer={handleTransferAsset}
-            />
             {
                 state.winner && (
                     <div className="absolute inset-0 z-[100] bg-black/90 flex flex-col items-center justify-center animate-in fade-in duration-1000 backdrop-blur-md">
@@ -1897,11 +1924,9 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         onClose={() => setShowFastTrackModal(false)}
                         player={me}
                         onConfirm={() => {
-                            // TODO: Implement actual exit logic (Socket emit)
-                            console.log("EXIT TO FAST TRACK CONFIRMED");
-                            // For now just close or maybe show a "You Win" if logic allows? 
-                            // The user requested just the UI/UX for now.
+                            socket.emit('enter_fast_track', { roomId, userId: me.id });
                             setShowFastTrackModal(false);
+                            // sfx.play('fasttrack_enter'); // If sound exists
                         }}
                     />
                 )

@@ -296,17 +296,17 @@ export class GameEngine {
         // Condition: 
         // 1. Credits 0
         // 2. 200 000+ on balance
-        // 3. Passive income * 2 (Passive Income >= 2 * Expenses)
+        // 3. Passive income >= 10,000 (User Request Revert)
 
         // Reset flag
         const wasCanEnter = player.canEnterFastTrack;
         player.canEnterFastTrack = false;
 
-        if (player.passiveIncome >= (player.expenses * 2)) {
+        if (player.passiveIncome >= 10000) {
             if (player.loanDebt === 0 && player.cash >= 200000) {
                 player.canEnterFastTrack = true;
                 if (!wasCanEnter) {
-                    this.addLog(`🚀 ${player.name} is ready for Fast Track! (Passive > 2x Expenses, No Debt, $200k+)`);
+                    this.addLog(`🚀 ${player.name} is ready for Fast Track! (Passive >= $10k, No Debt, $200k+)`);
                 }
             }
         }

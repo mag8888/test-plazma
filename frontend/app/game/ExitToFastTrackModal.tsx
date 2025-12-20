@@ -7,6 +7,7 @@ interface ExitToFastTrackModalProps {
         cash: number;
         passiveIncome: number;
         loanDebt: number;
+        expenses: number;
     };
     onConfirm?: () => void; // Optional future action
 }
@@ -14,6 +15,7 @@ interface ExitToFastTrackModalProps {
 export const ExitToFastTrackModal: React.FC<ExitToFastTrackModalProps> = ({ onClose, player, onConfirm }) => {
     // Requirements
     const reqLoan = player.loanDebt <= 0;
+    // Backend Rule: Passive Income >= 10,000 (User Request)
     const reqPassive = player.passiveIncome >= 10000;
     const reqCash = player.cash >= 200000;
 
