@@ -74,8 +74,12 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                     const urlParams = new URLSearchParams(window.location.search);
                     const authCode = urlParams.get('auth');
 
+                    // Check LocalStorage for cached Auth Code
+                    const cachedAuthCode = localStorage.getItem('moneo_auth_code');
+
                     if (initData) {
                         // Priority 1: Telegram Web App Init Data
+                        console.log("🔑 Login via Telegram InitData");
                         const res = await fetch(`${BACKEND_URL}/api/auth/login/telegram`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
@@ -87,23 +91,36 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                             setUser(data.user);
                         } else {
                             console.error("Telegram Auth failed", res.status);
-                            // Fallback to offline user if available? No, better to show error or guest.
                             setUser(app.initDataUnsafe?.user || { id: 123456789, first_name: 'Guest (Auth Failed)', username: 'guest_fallback', balanceRed: 1000, referralBalance: 50 });
                         }
-                    } else if (authCode) {
-                        // Priority 2: Magic Link Auth Code
-                        console.log("Attempting Magic Login with code:", authCode);
+                    } else if (authCode || cachedAuthCode) {
+                        // Priority 2: Magic Link Auth Code (URL or Cached)
+                        const codeToUse = authCode || cachedAuthCode;
+                        console.log("🔑 Attempting Magic Login with code:", codeToUse, authCode ? '(URL)' : '(Cached)');
+
                         const res = await fetch(`${BACKEND_URL}/api/auth/magic-login`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ code: authCode })
+                            body: JSON.stringify({ code: codeToUse })
                         });
 
                         if (res.ok) {
                             const data = await res.json();
                             setUser(data.user);
+
+                            // Save valid code to cache if it came from URL
+                            if (authCode) {
+                                localStorage.setItem('moneo_auth_code', authCode);
+                                // Optional: Clean URL
+                                window.history.replaceState({}, '', window.location.pathname);
+                            }
                         } else {
                             console.error("Magic Login failed");
+                            // If cached code failed, clear it
+                            if (cachedAuthCode && !authCode) {
+                                console.warn("Cached auth code invalid, clearing.");
+                                localStorage.removeItem('moneo_auth_code');
+                            }
                             setUser({ id: 123456789, first_name: 'Guest (Bad Link)', username: 'guest_link', balanceRed: 1000, referralBalance: 50 });
                         }
                     } else {

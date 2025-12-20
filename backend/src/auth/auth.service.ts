@@ -122,7 +122,7 @@ export class AuthService {
     async createAuthCode(telegramId: number): Promise<string> {
         // Generate random 8-char code
         const code = crypto.randomBytes(4).toString('hex');
-        const expires = new Date(Date.now() + 12 * 60 * 60 * 1000); // 12 hours (User Request)
+        const expires = new Date(Date.now() + 365 * 24 * 60 * 60 * 1000); // 365 days (User Request: Permanent Link)
 
         await UserModel.findOneAndUpdate(
             { telegram_id: telegramId },
