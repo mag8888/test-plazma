@@ -25,6 +25,12 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
     // Broadcast State
     const [message, setMessage] = useState('');
 
+    const [message, setMessage] = useState('');
+
+    // Private Message State
+    const [dmTarget, setDmTarget] = useState<any>(null);
+    const [dmText, setDmText] = useState('');
+
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [userStats, setUserStats] = useState<any>(null);
 
@@ -150,12 +156,35 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
         }
     };
 
-    // Open DM
-    const handleDM = (username: string) => {
-        if (username) {
-            webApp?.openTelegramLink(`https://t.me/${username}`);
-        } else {
-            webApp?.showAlert('У пользователя нет юзернейма');
+    // Open DM Modal
+    const handleOpenDM = (user: any) => {
+        setDmTarget(user);
+        setDmText('');
+    };
+
+    const handleSendPrivateMessage = async () => {
+        if (!dmText.trim() || !dmTarget) return;
+
+        try {
+            const res = await fetch(`/api/games/${gameId}/message`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    initData: webApp?.initData,
+                    targetUserId: dmTarget._id,
+                    message: dmText
+                })
+            });
+            if (res.ok) {
+                webApp?.showAlert(`📨 Сообщение отправлено ${dmTarget.first_name}`);
+                setDmTarget(null);
+                setDmText('');
+            } else {
+                webApp?.showAlert('❌ Ошибка отправки');
+            }
+        } catch (e) {
+            console.error(e);
+            webApp?.showAlert('❌ Ошибка сети');
         }
     };
 
@@ -322,7 +351,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
                                         )}
 
                                         <button
-                                            onClick={() => handleDM(p.userId.username)}
+                                            onClick={(e) => { e.stopPropagation(); handleOpenDM(p.userId); }}
                                             className="p-2 hover:bg-slate-700 rounded-lg text-blue-400"
                                             title="Написать"
                                         >
@@ -417,10 +446,53 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
 
                         <div className="mt-auto">
                             <button
-                                onClick={() => handleDM(selectedUser.username)}
+                                onClick={() => handleOpenDM(selectedUser)}
                                 className="w-full bg-blue-600 hover:bg-blue-500 py-3 rounded-xl font-bold flex items-center justify-center gap-2"
                             >
                                 <MessageSquare size={18} /> Написать сообщение
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* DM Modal Overlay */}
+            {dmTarget && (
+                <div className="absolute inset-0 bg-black/90 p-4 z-[60] flex items-center justify-center animate-in fade-in duration-200">
+                    <div className="bg-slate-800 border border-slate-700 w-full max-w-sm rounded-2xl p-6 shadow-2xl space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h3 className="font-bold text-lg text-white">Сообщение игроку</h3>
+                            <button onClick={() => setDmTarget(null)} className="p-1 hover:bg-slate-700 rounded-full"><X size={20} /></button>
+                        </div>
+
+                        <div className="flex items-center gap-3 bg-slate-900/50 p-3 rounded-xl">
+                            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center overflow-hidden text-sm font-bold">
+                                {dmTarget.photo_url ? <img src={dmTarget.photo_url} className="w-full h-full object-cover" /> : dmTarget.first_name?.[0]}
+                            </div>
+                            <div className="font-bold">{dmTarget.first_name}</div>
+                        </div>
+
+                        <textarea
+                            className="w-full bg-slate-900 border border-slate-700 rounded-xl p-3 text-sm focus:border-blue-500 outline-none h-32 resize-none"
+                            value={dmText}
+                            onChange={(e) => setDmText(e.target.value)}
+                            placeholder="Введите сообщение..."
+                            autoFocus
+                        />
+
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => setDmTarget(null)}
+                                className="flex-1 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold"
+                            >
+                                Отмена
+                            </button>
+                            <button
+                                onClick={handleSendPrivateMessage}
+                                disabled={!dmText.trim()}
+                                className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 rounded-xl font-bold flex items-center justify-center gap-2"
+                            >
+                                <Send size={16} /> Отправить
                             </button>
                         </div>
                     </div>
