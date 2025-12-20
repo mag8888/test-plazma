@@ -72,8 +72,10 @@ export const partnershipApi = {
         const BACKEND_URL = getBackendUrl();
         try {
             // Using /api/partnership/legacy-balance on Main Backend
-            const res = await fetch(`${BACKEND_URL}/api/partnership/legacy-balance`, {
-                headers: { 'Authorization': `Bearer ${initData}` }
+            // Send initData as query param to avoid Header Character issues (Cyrillic names etc)
+            const res = await fetch(`${BACKEND_URL}/api/partnership/legacy-balance?initData=${encodeURIComponent(initData)}`, {
+                method: 'GET',
+                // headers: { 'Authorization': `Bearer ${initData}` } // Removed to prevent DOMException
             });
             return res.json();
         } catch (e) {
