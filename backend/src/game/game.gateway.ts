@@ -669,6 +669,28 @@ export class GameGateway {
                 }
             });
 
+            // Host Grant Cash
+            socket.on('host_give_cash', ({ roomId, userId, amount }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        if (game.getClientId(game.state.creatorId || '') !== socket.id) {
+                            return; // Silent fail if not host
+                        }
+                        const player = game.state.players.find(p => p.id === userId);
+                        if (player) {
+                            player.cash += amount;
+                            game.addLog(`👑 Организатор подарил ${player.name} $${amount.toLocaleString()}`);
+                            const state = game.getState();
+                            this.io.to(roomId).emit('state_updated', { state });
+                            saveState(roomId, game);
+                        }
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
             socket.on('draw_deal', ({ roomId, type }) => {
                 const game = this.games.get(roomId);
                 if (game) {

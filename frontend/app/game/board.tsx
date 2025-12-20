@@ -651,6 +651,21 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         >
                                             👢 Кикнуть
                                         </button>
+                                        <button
+                                            onClick={() => {
+                                                const amountStr = window.prompt(`Сколько подарить ${selectedPlayerForMenu.name}?`, '1000');
+                                                if (amountStr) {
+                                                    const amount = parseInt(amountStr);
+                                                    if (!isNaN(amount) && amount > 0) {
+                                                        socket.emit('host_give_cash', { roomId, userId: selectedPlayerForMenu.id, amount });
+                                                        setSelectedPlayerForMenu(null);
+                                                    }
+                                                }
+                                            }}
+                                            className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors col-span-2"
+                                        >
+                                            💵 Подарить деньги
+                                        </button>
                                     </div>
                                 </>
                             )}
