@@ -136,6 +136,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     const [showFastTrackModal, setShowFastTrackModal] = useState(false);
     const [isMuted, setIsMuted] = useState(false);
 
+
+
     // Chat State
     const [chatMessage, setChatMessage] = useState('');
 
@@ -1833,16 +1835,22 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 players={state.players}
             />
 
-            <MenuModal
-                isOpen={showMenuModal}
-                onClose={() => setShowMenuModal(false)}
-                onExitGame={handleExit}
-                toggleMute={toggleMute}
-                isMuted={isMuted}
-                volume={volume}
-                setVolume={handleVolumeChange}
-                setShowRules={() => setShowRules(true)}
-            />
+            {showMenuModal && (
+                <MenuModal
+                    onClose={() => setShowMenuModal(false)}
+                    onExit={handleExit}
+                    onEndGame={() => socket.emit('end_game', { roomId })}
+                    toggleMute={toggleMute}
+                    isMuted={isMuted}
+                    volume={volume}
+                    setVolume={handleVolumeChange}
+                    onShowRules={() => setShowRules(true)}
+                    zoom={zoom}
+                    setZoom={setZoom}
+                    isHost={!!isHost}
+                    hasWinner={state.players.some((p: any) => p.hasWon)}
+                />
+            )}
 
             <RulesModal
                 isOpen={showRules}
