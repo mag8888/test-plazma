@@ -1852,32 +1852,29 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 />
             )}
 
-            <RulesModal
-                isOpen={showRules}
-                onClose={() => setShowRules(false)}
-            />
+            {showRules && (
+                <RulesModal
+                    onClose={() => setShowRules(false)}
+                />
+            )}
 
-            <ExitToFastTrackModal
-                isOpen={showFastTrackModal}
-                onClose={() => setShowFastTrackModal(false)}
-                player={me}
-                onEnterFastTrack={handleEnterFastTrack}
-            />
+            {showFastTrackModal && (
+                <ExitToFastTrackModal
+                    onClose={() => setShowFastTrackModal(false)}
+                    player={me}
+                    onConfirm={handleEnterFastTrack}
+                />
+            )}
 
-            {
-                transferAssetItem && (
-                    <TransferModal
-                        isOpen={true}
-                        onClose={() => setTransferAssetItem(null)}
-                        item={transferAssetItem.item}
-                        index={transferAssetItem.index}
-                        players={state.players}
-                        currentPlayerId={me.id}
-                        roomId={roomId}
-                        socket={socket}
-                    />
-                )
-            }
+            {transferAssetItem && (
+                <TransferModal
+                    onClose={() => setTransferAssetItem(null)}
+                    asset={transferAssetItem.item}
+                    players={state.players}
+                    myId={me.id}
+                    onTransfer={handleTransferAsset}
+                />
+            )}
         </div >
     );
 
