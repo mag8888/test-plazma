@@ -141,6 +141,9 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     // Chat State
     const [chatMessage, setChatMessage] = useState('');
 
+    // Bank Recipient State
+    const [bankRecipientId, setBankRecipientId] = useState<string>('');
+
 
 
     useEffect(() => {
@@ -585,6 +588,76 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
     return (
         <div className="h-[100dvh] max-h-[100dvh] bg-[#0f172a] text-white font-sans flex flex-col overflow-hidden relative">
+
+            {/* PLAYER ACTION MENU (Skip, Kick, Gift) */}
+            {selectedPlayerForMenu && (
+                <div className="absolute inset-0 z-[150] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedPlayerForMenu(null)}>
+                    <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => setSelectedPlayerForMenu(null)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">✕</button>
+
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className={`w-16 h-16 rounded-full border-2 border-slate-600 shadow-lg flex items-center justify-center text-2xl bg-gradient-to-br overflow-hidden ${getAvatarColor(selectedPlayerForMenu.id)}`}>
+                                {selectedPlayerForMenu.photo_url ? (
+                                    <img src={selectedPlayerForMenu.photo_url} alt={selectedPlayerForMenu.name} className="w-full h-full object-cover" />
+                                ) : getInitials(selectedPlayerForMenu.name)}
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white max-w-[180px] break-words leading-tight">{selectedPlayerForMenu.name}</h3>
+                                <div className="text-sm text-emerald-400 font-mono mt-1">${selectedPlayerForMenu.cash?.toLocaleString()}</div>
+                            </div>
+                        </div>
+
+                        <div className="space-y-3">
+                            {/* GIFT ACTION (Available to everyone) */}
+                            {selectedPlayerForMenu.id !== me.id ? (
+                                <button
+                                    onClick={() => {
+                                        setBankRecipientId(selectedPlayerForMenu.id);
+                                        setSelectedPlayerForMenu(null);
+                                        setShowBank(true);
+                                    }}
+                                    className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-widest text-sm shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02]"
+                                >
+                                    <span>🎁</span> Подарить
+                                </button>
+                            ) : (
+                                <div className="text-center text-xs text-slate-500 italic py-2">Это ваш профиль</div>
+                            )}
+
+                            {/* HOST ACTIONS */}
+                            {isHost && selectedPlayerForMenu.id !== me.id && (
+                                <>
+                                    <div className="h-px bg-slate-700/50 my-2"></div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm(`Пропустить ход игрока ${selectedPlayerForMenu.name}?`)) {
+                                                    socket.emit('host_skip_turn', { roomId, userId: selectedPlayerForMenu.userId || selectedPlayerForMenu.id });
+                                                    setSelectedPlayerForMenu(null);
+                                                }
+                                            }}
+                                            className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors"
+                                        >
+                                            🚫 Пропустить
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                if (window.confirm(`Выгнать игрока ${selectedPlayerForMenu.name}?`)) {
+                                                    handleKickPlayer(selectedPlayerForMenu.id);
+                                                    setSelectedPlayerForMenu(null);
+                                                }
+                                            }}
+                                            className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600/50 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors"
+                                        >
+                                            👢 Кикнуть
+                                        </button>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
 
 
@@ -1852,11 +1925,12 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
             {/* --- MODALS --- */}
             <BankModal
                 isOpen={showBank}
-                onClose={() => setShowBank(false)}
+                onClose={() => { setShowBank(false); setBankRecipientId(''); }}
                 player={me}
                 roomId={roomId}
                 transactions={state.transactions || []}
                 players={state.players}
+                initialRecipientId={bankRecipientId}
             />
 
             {showMenuModal && (

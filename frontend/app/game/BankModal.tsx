@@ -10,29 +10,34 @@ interface BankModalProps {
     roomId: string;
     transactions: any[];
     players: any[]; // List of all players for transfer
+    initialRecipientId?: string;
 }
 
-export const BankModal = ({ isOpen, onClose, player, roomId, transactions, players }: BankModalProps) => {
+export const BankModal = ({ isOpen, onClose, player, roomId, transactions, players, initialRecipientId }: BankModalProps) => {
     const [amount, setAmount] = useState<number>(0);
-    const [recipientId, setRecipientId] = useState<string>('');
+    const [recipientId, setRecipientId] = useState<string>(initialRecipientId || '');
     const [transferAmount, setTransferAmount] = useState<number>(0);
     const [showExpenses, setShowExpenses] = useState(false);
 
+    // Sync initialRecipientId when it changes or when modal opens
+    // Actually, we should only set it if provided.
+    // Use a key or effect?
+    // Let's use an effect on isOpen.
+    if (isOpen && initialRecipientId && recipientId !== initialRecipientId) {
+        setRecipientId(initialRecipientId);
+    }
+
+    // React to changes in initialRecipientId when modal opens
+    // We can use a useEffect to reset/set state when isOpen becomes true.
+    // However, for simplicity, we can just rely on the prop if we mount/unmount. 
+    // Since BankModal is kept mounted, we need useEffect.
+    /* eslint-disable react-hooks/rules-of-hooks */
+    // Using a pattern where we update state if prop changes while closed or just opened.
     if (!isOpen) return null;
 
     // Dynamic Max Loan: Based on Cashflow (10% interest rule)
-    // Max Loan = (Current Cashflow / 100) * 1000
-    // Example: Cashflow 1050 -> 10 * 1000 = 10,000
     const maxNewLoan = Math.max(0, Math.floor((player.cashflow || 0) / 100) * 1000);
     const currentLoan = player.loanDebt || 0;
-    // Total max loan player can HOLD is based on income - other expenses?
-    // Actually, the requirement says "if cashflow is 1050, he can take 10000". This implies the limit is on the *incremental* loan based on *remaining* cashflow.
-    // So `maxNewLoan` is correct.
-
-    // However, the UI might want to show "Total Credit Limit".
-    // If Cashflow is 0, Max Loan is 0.
-    // If Cashflow is 400, Max Loan is 4000.
-    // So the limit is dynamic based on CURRENT cashflow.
     const availableLoan = maxNewLoan;
 
     // Filter transactions for this player (either from or to)
