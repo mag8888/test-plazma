@@ -965,34 +965,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
             {/* MAIN LAYOUT CONTAINER - FLEXBOX for Aspect Ratio Control */}
             <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-full overflow-hidden items-center justify-center">
 
-                {/* MOBILE VIDEO CALL (MOVED TO TOP) */}
-                <div className="lg:hidden w-full h-[25vh] shrink-0 z-0 relative order-first bg-black/50">
-                    {/* <AudioChat
-                        className="w-full h-full shadow-lg rounded-none object-cover"
-                        roomId={roomId}
-                        players={state.players}
-                        currentUserId={me?.id}
-                        currentPlayerName={me?.name}
-                    /> */}
-                    {/* Placeholder for Video Chat */}
-                    <div className="w-full h-full border-b border-white/5 flex items-center justify-center text-slate-500 text-xs uppercase tracking-widest font-bold">
-                        Video Disabled
-                    </div>
 
-                    {/* MOBILE TIMER OVERLAY */}
-                    <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 flex items-center gap-2 shadow-lg z-10">
-                        <span className="text-xs text-slate-300 font-bold uppercase tracking-wider">⏳</span>
-                        <span className={`font-mono font-black text-xl leading-none ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
-                            {formatTime(timeLeft)}
-                        </span>
-                    </div>
-
-                    {/* MOBILE TURN INDICATOR */}
-                    <div className="absolute top-4 left-4 bg-black/40 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/10 flex items-center gap-2 shadow-lg z-10">
-                        <div className="text-[10px] text-slate-400 font-bold uppercase">Ход</div>
-                        <div className="font-bold text-white text-sm max-w-[100px] truncate">{currentPlayer?.name}</div>
-                    </div>
-                </div>
 
                 {/* 📱 MOBILE STATS HUD */}
                 <div className="lg:hidden w-full bg-[#1e293b]/80 backdrop-blur-md border-b border-white/5 p-2 grid grid-cols-3 gap-2 shrink-0 z-20">
@@ -1113,6 +1086,20 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             showExitButton={showExitButton}
                             onExitClick={() => setShowFastTrackModal(true)}
                         />
+
+                        {/* MOBILE TIMER OVERLAY (Abs on Board) */}
+                        <div className="lg:hidden absolute top-4 right-4 bg-black/40 backdrop-blur-md px-4 py-2 rounded-2xl border border-white/10 flex items-center gap-2 shadow-lg z-20 pointer-events-none">
+                            <span className="text-xs text-slate-300 font-bold uppercase tracking-wider">⏳</span>
+                            <span className={`font-mono font-black text-xl leading-none ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                                {formatTime(timeLeft)}
+                            </span>
+                        </div>
+
+                        {/* MOBILE TURN INDICATOR (Abs on Board) */}
+                        <div className="lg:hidden absolute top-4 left-4 bg-black/40 backdrop-blur-md px-3 py-2 rounded-2xl border border-white/10 flex items-center gap-2 shadow-lg z-20 pointer-events-none">
+                            <div className="text-[10px] text-slate-400 font-bold uppercase">Ход</div>
+                            <div className="font-bold text-white text-sm max-w-[100px] truncate">{currentPlayer?.name}</div>
+                        </div>
 
 
                         {/* Active Market Cards Overlay (Persistent) */}
