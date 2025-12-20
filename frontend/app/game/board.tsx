@@ -1523,6 +1523,47 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                 {/* RIGHT SIDEBAR (Redesigned) */}
                 <div className="hidden lg:flex flex-col w-[380px] h-full border-l border-slate-800/50 bg-[#0f172a]/50 relative z-40 overflow-hidden shadow-xl shrink-0">
 
+                    {/* 2. PLAYER STATUS (Debts/Income) */}
+                    <div className="p-4 border-b border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
+
+                        {/* Persistent Market Cards (Active Opportunities) */}
+                        {state.activeMarketCards && state.activeMarketCards.length > 0 && (
+                            <div className="mb-4 space-y-2 animate-in slide-in-from-left duration-300">
+                                {state.activeMarketCards
+                                    .filter((ac: any) => ac.expiresAt > Date.now())
+                                    .map((ac: any) => (
+                                        <div
+                                            key={ac.id}
+                                            onClick={() => setSquareInfo({
+                                                type: 'MARKET',
+                                                card: ac.card, // Pass full card logic to modal
+                                                title: ac.card.title,
+                                                description: ac.card.description
+                                            })}
+                                            className="bg-gradient-to-r from-emerald-900/80 to-emerald-800/80 p-3 rounded-xl border border-emerald-500/50 cursor-pointer hover:scale-105 transition-transform flex items-center justify-between shadow-lg"
+                                        >
+                                            <div className="flex flex-col">
+                                                <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1">
+                                                    <span>🔥</span> Рынок Открыт
+                                                </span>
+                                                <span className="text-white text-xs font-medium truncate max-w-[120px]">
+                                                    {ac.card.title}
+                                                </span>
+                                            </div>
+                                            <div className="text-emerald-400 font-mono text-xs">
+                                                {Math.ceil((ac.expiresAt - Date.now()) / 1000)}s
+                                            </div>
+                                        </div>
+                                    ))
+                                }
+                            </div>
+                        )}
+
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            {/* Placeholder for other player status elements if needed */}
+                        </div>
+                    </div>
+
                     {/* 1. STATUS CARD (Player + Timer) */}
                     <div className="p-4 pb-0 shrink-0">
                         <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden group">

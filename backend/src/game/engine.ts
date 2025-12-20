@@ -25,6 +25,14 @@ export interface GameState {
     rankings?: { name: string; reason: string; place: number }[];
     isGameEnded?: boolean;
     chat: ChatMessage[];
+    activeMarketCards?: ActiveCard[];
+}
+
+export interface ActiveCard {
+    id: string;
+    card: Card;
+    expiresAt: number;
+    sourcePlayerId: string;
 }
 
 export interface ChatMessage {
@@ -885,8 +893,16 @@ export class GameEngine {
             if (card) {
                 this.state.currentCard = card;
                 this.addLog(`🏪 MARKET: ${card.title} - ${card.description}`);
-                // Check if player has the asset?
-                // Visuals will handle "Sell" button visibility.
+
+                // Add to Persistent Active Cards (2 Mins)
+                if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
+                this.state.activeMarketCards.push({
+                    id: uuidv4(),
+                    card: card,
+                    expiresAt: Date.now() + 2 * 60 * 1000,
+                    sourcePlayerId: player.id
+                });
+
                 this.state.phase = 'ACTION';
             } else {
                 this.addLog(`🏪 MARKET: No cards left.`);
@@ -1034,6 +1050,17 @@ export class GameEngine {
         }
 
         this.state.currentCard = card;
+
+        // Persist if it offers to buy something
+        if (card.offerPrice && card.offerPrice > 0) {
+            if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
+            this.state.activeMarketCards.push({
+                id: uuidv4(),
+                card: card,
+                expiresAt: Date.now() + 2 * 60 * 1000,
+                sourcePlayerId: player.id
+            });
+        }
 
         // Handle Mandatory Cards (Damages/Events)
         if (card.mandatory) {
@@ -1236,9 +1263,12 @@ export class GameEngine {
     }
 
     dismissCard() {
-        // Discard the card before clearing it
+        // Discard the card before clearing it (Only if NOT persistent)
         if (this.state.currentCard) {
-            this.cardManager.discard(this.state.currentCard);
+            const isPersistent = this.state.activeMarketCards?.some(ac => ac.card.title === this.state.currentCard?.title && ac.expiresAt > Date.now());
+            if (!isPersistent) {
+                this.cardManager.discard(this.state.currentCard);
+            }
         }
         this.state.currentCard = undefined;
         this.state.phase = 'ACTION';
@@ -1246,10 +1276,29 @@ export class GameEngine {
 
     sellAsset(playerId: string) {
         const player = this.state.players.find(p => p.id === playerId);
-        const card = this.state.currentCard;
+        let card = this.state.currentCard;
 
-        if (!player || !card) return;
-        if (card.type !== 'MARKET' || !card.targetTitle || !card.offerPrice) return;
+        if (!player) return;
+
+        // Fallback: Check Active Market Cards if current card is invalid or missing
+        if (!card || (card.type !== 'MARKET' && !card.offerPrice)) {
+            // Find matching active card for any of player's assets
+            const validCards = this.state.activeMarketCards?.filter(ac => ac.expiresAt > Date.now()) || [];
+            for (const ac of validCards) {
+                // Check matching
+                if (ac.card.type === 'MARKET' || (ac.card.offerPrice && ac.card.offerPrice > 0)) {
+                    // Do we have the asset?
+                    const matches = player.assets.some(a => a.title === ac.card.targetTitle || a.title.includes(ac.card.targetTitle || ''));
+                    if (matches) {
+                        card = ac.card;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!card) return;
+        if ((card.type !== 'MARKET' && !card.offerPrice) || !card.targetTitle) return;
 
         // Find Asset (Exact or Partial Match)
         let assetIndex = player.assets.findIndex(a => a.title === card.targetTitle);
@@ -1652,9 +1701,27 @@ export class GameEngine {
     }
 
     endTurn() {
-        // Discard current card if it exists (was not bought)
+        // 1. Clean up expired Active Cards
+        if (this.state.activeMarketCards) {
+            // Find expired ones to discard properly
+            const expired = this.state.activeMarketCards.filter(ac => ac.expiresAt <= Date.now());
+            // Remove expired from list
+            this.state.activeMarketCards = this.state.activeMarketCards.filter(ac => ac.expiresAt > Date.now());
+
+            // Discard them? We should discard if they are not in currentCard.
+            // But simplest is: when they leave 'activeMarketCards', we discard them?
+            // Actually, if we didn't discard in dismissCard, we must discard now.
+            for (const exp of expired) {
+                this.cardManager.discard(exp.card);
+            }
+        }
+
+        // 2. Clear current card (Discard if not persistent)
         if (this.state.currentCard) {
-            this.cardManager.discard(this.state.currentCard);
+            const isPersistent = this.state.activeMarketCards?.some(ac => ac.card.title === this.state.currentCard?.title);
+            if (!isPersistent) {
+                this.cardManager.discard(this.state.currentCard);
+            }
             this.state.currentCard = undefined;
         }
 
@@ -1848,4 +1915,3 @@ export class GameEngine {
         };
     }
 }
-```
