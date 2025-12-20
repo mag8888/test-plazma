@@ -34,8 +34,10 @@ export default function EarnPage() {
 
         if (user && webApp?.initData) {
             // Determine the ID to use for Partnership Backend
-            // Ideally we use telegram_id because Sync uses it.
-            const partnershipId = user.telegram_id ? user.telegram_id.toString() : user.id.toString();
+            // CRITICAL: Use webApp.initDataUnsafe.user.id (Raw Telegram ID) if available.
+            // Backend User object has 'id' as MongoID, which causes mismatch.
+            const rawTelegramId = webApp.initDataUnsafe?.user?.id;
+            const partnershipId = rawTelegramId ? rawTelegramId.toString() : (user.telegram_id || user.id).toString();
 
             // 1. Try to Sync Balance First
             partnershipApi.syncLegacyBalance(webApp.initData)
@@ -63,7 +65,7 @@ export default function EarnPage() {
                         .catch(e => console.error("Fallback login failed", e));
                 });
         }
-    }, [user]);
+    }, [user, webApp]); // Add webApp dependency
 
     const handleBuy = async (tariff: string, price: number) => {
         if (!partnershipUser) return;
@@ -400,7 +402,8 @@ export default function EarnPage() {
                     </summary>
 
                     <div className="space-y-2 pl-2 border-l-2 border-slate-800">
-                        <div><span className="text-slate-600">Telegram ID (InitData):</span> <span className="text-blue-400">{user?.id}</span></div>
+                        <div><span className="text-slate-600">Raw Telegram ID:</span> <span className="text-blue-400">{webApp?.initDataUnsafe?.user?.id || 'N/A'}</span></div>
+                        <div><span className="text-slate-600">Backend Mongo ID:</span> <span className="text-blue-400">{user?.id}</span></div>
                         <div><span className="text-slate-600">Username:</span> <span className="text-blue-400">{user?.username}</span></div>
                         <div>
                             <span className="text-slate-600">Partnership User:</span>{' '}
