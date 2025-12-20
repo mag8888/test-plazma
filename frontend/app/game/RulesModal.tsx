@@ -19,7 +19,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
         <div key={card.id} className="bg-slate-800/50 p-4 rounded-xl border border-slate-700 flex flex-col gap-2 hover:bg-slate-800 transition-colors">
             <div className="flex justify-between items-start">
                 <div className="flex gap-2 items-center">
-                    {card.displayId && <span className="text-[10px] font-mono text-slate-600 font-bold">#{card.displayId}</span>}
+                    {card.displayId && <span className="text-[10px] font-mono text-yellow-500/80 font-bold bg-yellow-500/10 px-1.5 py-0.5 rounded border border-yellow-500/20">No.{card.displayId}</span>}
                     <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider type-badge">
                         {card.type === 'DEAL_SMALL' ? 'Малая сделка' :
                             card.type === 'DEAL_BIG' ? 'Крупная сделка' :

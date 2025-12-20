@@ -1146,8 +1146,8 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                                     {/* Card ID Display (Integrated Style) */}
                                     {/* Card ID Display (Integrated Style) */}
                                     {state.currentCard.displayId && (
-                                        <div className="absolute top-4 right-4 bg-slate-800/80 backdrop-blur-md text-slate-400 text-[10px] font-bold px-3 py-1.5 rounded-lg border border-slate-700/50 shadow-sm z-10 flex items-center gap-1">
-                                            <span className="opacity-50">#</span>{state.currentCard.displayId}
+                                        <div className="absolute top-4 right-4 bg-slate-900/60 backdrop-blur-md text-white/90 text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg border border-white/10 shadow-sm z-10 flex items-center gap-1">
+                                            <span className="text-yellow-500">No.</span> {state.currentCard.displayId}
                                         </div>
                                     )}
                                     <div className="text-5xl mb-4 text-center">{state.currentCard.type === 'MARKET' ? '🏠' : '💸'}</div>

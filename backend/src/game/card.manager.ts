@@ -213,8 +213,10 @@ export class CardManager {
         let globalCounter = 1;
         // Helper: Assign then Shuffle
         const prepareDeck = (deck: Card[]) => {
-            deck.forEach(c => c.displayId = globalCounter++);
-            return this.shuffle(deck);
+            // IMPORTANT: Create copy of objects to avoid mutating shared constants
+            const distinctDeck = deck.map(c => ({ ...c }));
+            distinctDeck.forEach(c => c.displayId = globalCounter++);
+            return this.shuffle(distinctDeck);
         };
 
         this.smallDeals = prepareDeck([...SMALL_DEALS]);
