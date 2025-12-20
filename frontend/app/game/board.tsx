@@ -1098,6 +1098,46 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                         />
 
 
+                        {/* Active Market Cards Overlay (Persistent) */}
+                        {state.activeMarketCards?.map((ac: any) => {
+                            const timeLeft = ac.expiresAt - Date.now();
+                            if (timeLeft <= 0) return null;
+                            if (state.currentCard?.title === ac.card.title) return null; // Already shown
+
+                            // Check ownership
+                            const hasAsset = me.assets.some((a: any) => a.title === ac.card.targetTitle || a.title.includes(ac.card.targetTitle || ''));
+                            if (!hasAsset) return null;
+
+                            return (
+                                <div key={ac.id} className="absolute inset-0 z-[95] bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-4 pointer-events-none">
+                                    <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-blue-500/50 shadow-2xl relative pointer-events-auto animate-in fade-in zoom-in duration-300">
+                                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-cyan-500"></div>
+                                        <div className="text-4xl mb-2 text-center">🏠</div>
+                                        <div className="text-center mb-4">
+                                            <div className="text-blue-400 font-bold uppercase tracking-widest text-xs">Рынок открыт</div>
+                                            <div className="text-white font-bold text-lg">{ac.card.title}</div>
+                                            <div className="text-slate-400 text-xs text-center mt-1">
+                                                Осталось: {Math.ceil(timeLeft / 1000)} сек.
+                                            </div>
+                                        </div>
+
+                                        <div className="bg-slate-900/50 p-4 rounded-xl mb-4 text-center border border-slate-700">
+                                            <div className="text-[10px] text-slate-500 uppercase">Предложение</div>
+                                            <div className="text-2xl font-mono text-green-400 font-bold">${(ac.card.offerPrice || 0).toLocaleString()}</div>
+                                            <div className="text-slate-400 text-xs mt-1">за: {ac.card.targetTitle}</div>
+                                        </div>
+
+                                        <button
+                                            onClick={() => socket.emit('sell_asset', { roomId })}
+                                            className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all"
+                                        >
+                                            ПРОДАТЬ АКТИВ
+                                        </button>
+                                    </div>
+                                </div>
+                            );
+                        })}
+
                         {/* Action Card Overlay */}
                         {state.currentCard && !showDice && !isAnimating && (
                             <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
