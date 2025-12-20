@@ -1880,7 +1880,7 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
                 showFastTrackModal && (
                     <ExitToFastTrackModal
                         onClose={() => setShowFastTrackModal(false)}
-                        player={currentPlayer}
+                        player={me}
                         onConfirm={() => {
                             // TODO: Implement actual exit logic (Socket emit)
                             console.log("EXIT TO FAST TRACK CONFIRMED");
