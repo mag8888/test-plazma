@@ -1,6 +1,17 @@
 import { getBackendUrl } from './config';
 
-const API_URL = process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'http://localhost:4000/api';
+// 1. Ensure Protocol for Partnership API
+const getPartnershipUrl = () => {
+    let url = (process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || '').trim();
+    if (!url) return 'http://localhost:4000/api';
+    url = url.replace(/^["']|["']$/g, '');
+    if (!url.startsWith('http')) {
+        url = `https://${url}`;
+    }
+    return url.replace(/\/$/, '');
+};
+
+const API_URL = getPartnershipUrl();
 
 export const partnershipApi = {
     login: async (telegramId: string, username?: string, referrerId?: string) => {
