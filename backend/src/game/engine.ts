@@ -1474,9 +1474,9 @@ export class GameEngine {
 
             this.addLog(`${player.name} bought ${quantity} ${card.symbol} @ $${card.cost}.`);
 
-            // For stocks, do we clear card? 
-            // "Buy 1-100k". If I buy 50, can I buy another 50?
-            // Usually Turn ends after buying.
+            // Discard the stock card so it returns to deck (Market Fluctuation)
+            this.cardManager.discard(card);
+
             this.state.currentCard = undefined;
             this.state.phase = 'ACTION';
             return;
