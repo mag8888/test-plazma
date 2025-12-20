@@ -493,8 +493,8 @@ export default function GameBoard({ roomId, initialState, isHost }: BoardProps) 
     };
 
     const handleEndGame = () => {
-        if (window.confirm("Are you sure you want to end the game and calculate rankings?")) {
-            socket.emit('end_game_host', { roomId, userId: me.id });
+        if (window.confirm("Вы уверены, что хотите принудительно завершить игру и подсчитать рейтинги?")) {
+            socket.emit('host_end_game', { roomId, userId: me.id });
         }
     };
 

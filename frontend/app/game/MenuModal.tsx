@@ -102,7 +102,7 @@ export const MenuModal = ({
                     </button>
 
                     {/* HOST: End Game Button */}
-                    {isHost && hasWinner && (
+                    {isHost && (
                         <button
                             onClick={onEndGame}
                             className="w-full py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-widest text-xs shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"

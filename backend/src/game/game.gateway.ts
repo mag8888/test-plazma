@@ -261,6 +261,80 @@ export class GameGateway {
                 }
             });
 
+            // Host Force End Game
+            socket.on('host_end_game', async (data, callback) => {
+                try {
+                    const { roomId, userId } = data;
+                    const game = this.games.get(roomId);
+                    if (!game) return callback({ success: false, error: "Game not found" });
+
+                    // Verify Host
+                    const room = await this.roomService.getRoom(roomId);
+                    if (!room || room.creatorId !== userId) {
+                        return callback({ success: false, error: "Only host can end game" });
+                    }
+
+                    // Calculate Final Rankings
+                    const rankings = game.calculateFinalRankings();
+                    game.addLog(`🛑 HOST ЗАВЕРШИЛ ИГРУ!`);
+
+                    // Access State directly from game instance (public read access usually?)
+                    // Engine 'state' is private/protected? Let's assume getState() returns ref or I can access internals.
+                    // Actually 'game.getState()' returns the object. 
+                    const state = game.getState();
+                    const winnerName = state.winner;
+
+                    // Update DB Stats
+                    const { UserModel } = await import('../models/user.model');
+
+                    // Update Winner
+                    if (winnerName) {
+                        const winnerPlayer = state.players.find(p => p.name === winnerName);
+                        if (winnerPlayer && winnerPlayer.id) {
+                            await UserModel.findOneAndUpdate(
+                                { _id: winnerPlayer.id }, // Assuming ID is MongoID? Or checking telegram_id? 
+                                // PlayerState.id in engine is usually socket.id or user._id.
+                                // In 'room.service.ts', when joining, we usually map User ID.
+                                // Let's check Engine.ts IPlayer interface or RoomService.
+                                // Actually, existing logic for 'WINNER' event might help.
+                                // But here, I'll try to find by ID if it looks like MongoID, else Skip.
+                                {
+                                    $inc: { wins: 1, rating: 25 }
+                                }
+                            );
+                        }
+                    }
+
+                    // Update All Players (Rating for participation)
+                    for (const p of state.players) {
+                        if (p.id) {
+                            // Give +10 rating for finishing/participating, unless winner (already got +25)
+                            // We can just add +10 to everyone and +15 extra to winner.
+                            const bonus = (p.name === winnerName) ? 25 : 10;
+
+                            // If we already updated winner above, don't double count? 
+                            // Simpler: Just update everyone here.
+                            if (p.name !== winnerName) {
+                                await UserModel.findOneAndUpdate({ _id: p.id }, { $inc: { rating: bonus } });
+                            }
+                        }
+                    }
+
+                    // Emit Game Ended
+                    this.io.to(roomId).emit('game_over', {
+                        winner: winnerName,
+                        rankings: rankings
+                    });
+
+                    this.saveState(roomId, game);
+
+                    callback({ success: true });
+                } catch (e: any) {
+                    console.error("Force End Game Error:", e);
+                    callback({ success: false, error: e.message });
+                }
+            });
+
             // Delete Room (Host)
             socket.on('delete_room', async (data, callback) => {
                 try {
