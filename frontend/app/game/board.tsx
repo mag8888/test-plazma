@@ -1751,13 +1751,78 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     </div>
 
                 </div>
+
             </div>
-            {/* End Main Grid */}
 
-            {/* --- MODALS --- */}
+            {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */}
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-slate-900/90 backdrop-blur-xl border-t border-slate-700/50 z-50 flex gap-3 pb-8">
+                {/* Roll Logic */}
+                {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+                    <div className="flex gap-2 flex-1 h-16">
+                        <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                            <span className="text-xl">🎲</span>
+                            <span>1</span>
+                        </button>
+                        <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                            <span className="text-xl">🎲🎲</span>
+                            <span>2</span>
+                        </button>
+                        {me.isFastTrack && (
+                            <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                <span className="text-xl">🎲×3</span>
+                                <span>3</span>
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => handleRoll()}
+                        disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
+                        className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+                            ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
+                                ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
+                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                    >
+                        {hasRolled ? (
+                            <div className="flex items-center gap-2">
+                                <span className="text-2xl font-black">{diceValue}</span>
+                                <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
+                            </div>
+                        ) : (
+                            <>
+                                <span className="text-2xl">🎲</span>
+                                <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
+                            </>
+                        )}
+                    </button>
+                )}
 
-            {/* VISUALIZER TOOLTIP PORTAL? */}
+                <button
+                    onClick={handleEndTurn}
+                    disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
+                    className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+                        ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
+                            ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
+                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                >
+                    <span className="text-2xl">➡</span>
+                    <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
+                </button>
+
+                {/* MENU TOGGLE */}
+                <button
+                    onClick={() => setShowMobileMenu(true)}
+                    className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center text-2xl"
+                >
+                    🍔
+                </button>
+            </div>
         </div>
+
+            {/* --- MODALS --- */ }
+
+    {/* VISUALIZER TOOLTIP PORTAL? */ }
+        </div >
     );
 
 
