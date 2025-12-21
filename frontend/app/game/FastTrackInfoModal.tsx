@@ -2,9 +2,12 @@
 
 interface FastTrackInfoModalProps {
     onClose: () => void;
+    player: any;
 }
 
-export const FastTrackInfoModal = ({ onClose }: FastTrackInfoModalProps) => {
+export const FastTrackInfoModal = ({ onClose, player }: FastTrackInfoModalProps) => {
+    const needed = Math.max(0, 50000 - (player.passiveIncome - (player.fastTrackStartIncome || 0)));
+
     return (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-300" onClick={onClose}>
             <div className="bg-[#1e293b] w-full max-w-md p-8 rounded-3xl border border-yellow-500/30 shadow-[0_0_50px_rgba(234,179,8,0.2)] relative text-center" onClick={e => e.stopPropagation()}>
@@ -37,7 +40,11 @@ export const FastTrackInfoModal = ({ onClose }: FastTrackInfoModalProps) => {
                         <div>
                             <div className="text-green-400 font-bold uppercase text-xs tracking-wider mb-1">Способ 2</div>
                             <div className="text-white font-bold leading-tight">Увеличить Ден.Поток</div>
-                            <div className="text-slate-400 text-xs mt-1">Добавьте <span className="text-green-400">+$50,000</span> к вашему стартовому Денежному Потоку на Большом Треке.</div>
+                            <div className="text-slate-400 text-xs mt-1">
+                                Добавьте <span className="text-green-400">+$50,000</span> к вашему стартовому Денежному Потоку.
+                                <br />
+                                <span className="text-yellow-400 font-bold">Осталось набрать: ${needed.toLocaleString()}</span>
+                            </div>
                         </div>
                     </div>
                 </div>

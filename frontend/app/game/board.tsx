@@ -2047,7 +2047,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 />
             )}
 
-            {showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} />}
+            {showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} player={me} />}
 
             {transferAssetItem && (
                 <TransferModal
