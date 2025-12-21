@@ -121,9 +121,10 @@ export class RoomService {
         // Use loose equality or string conversion to handle potential Type Mismatches (String vs Number)
         const isAlreadyInRoom = roomCheck.players.some((p: any) => p.userId == userId || p.userId?.toString() === userId?.toString());
 
+        // Allow joining active games (User Request)
         if (roomCheck.status !== 'waiting' && !isAlreadyInRoom) {
-            console.warn(`[JoinBlock] Game Active. User ${userId} not found in room ${roomId}. Players: ${roomCheck.players.map((p: any) => p.userId)}`);
-            throw new Error("Game already started");
+            console.log(`[JoinBlock] Game Active. User ${userId} joining LATE.`);
+            // throw new Error("Game already started"); // DISABLED
         }
 
         // Determine unique token for new player

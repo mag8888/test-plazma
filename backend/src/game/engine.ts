@@ -283,6 +283,17 @@ export class GameEngine {
         }
     }
 
+    addPlayer(player: IPlayer) {
+        // Prevent duplicates
+        if (this.state.players.some(p => p.userId === player.userId)) {
+            return;
+        }
+
+        const newPlayerState = this.initPlayer(player);
+        this.state.players.push(newPlayerState);
+        this.state.log.push(`👋 ${player.name} присоединился к игре!`);
+    }
+
     addLog(message: string) {
         this.state.log.push(message);
         if (this.state.log.length > 200) {

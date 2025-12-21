@@ -139,9 +139,27 @@ export class GameGateway {
                     // Sync Active Game Engine if exists
                     const game = this.games.get(roomId);
                     if (game) {
-                        game.updatePlayerId(userId, socket.id);
-                        // Re-emit game start to ensure client has latest state with correct ID
+                        // Check if player exists in Engine
+                        const existsInEngine = game.state.players.find(p => p.userId === userId);
+
+                        if (!existsInEngine) {
+                            // NEW PLAYER JOINING ACTIVE GAME
+                            console.log(`[Gateway] New player joining active game ${roomId}: ${userId}`);
+                            // Find full player object from RoomService return (it has token, dream, etc updated)
+                            const playerInfo = room.players.find((p: any) => p.userId === userId);
+                            if (playerInfo) {
+                                game.addPlayer(playerInfo);
+                            }
+                        } else {
+                            // RECONNECTING PLAYER
+                            game.updatePlayerId(userId, socket.id);
+                        }
+
+                        // Re-emit game start to ensure client has latest state with correct ID/List
                         this.io.to(roomId).emit('game_started', { roomId, state: game.getState() });
+
+                        // Force state update broadcast
+                        this.io.to(roomId).emit('state_updated', { state: game.getState() });
                     }
 
                     this.io.to(roomId).emit('room_state_updated', room);
