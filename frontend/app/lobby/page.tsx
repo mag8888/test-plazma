@@ -400,13 +400,16 @@ export default function Lobby() {
 
                                         <button
                                             onClick={() => joinRoom(room.id)}
-                                            disabled={room.status === 'playing' || room.players.length >= room.maxPlayers}
-                                            className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${room.status === 'playing' || room.players.length >= room.maxPlayers
+                                            disabled={room.players.length >= room.maxPlayers}
+                                            className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${room.players.length >= room.maxPlayers
                                                 ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
                                                 : 'bg-slate-700 hover:bg-blue-600 text-white shadow-lg'
                                                 }`}
                                         >
-                                            {room.status === 'playing' ? 'Игра идет' : room.players.length >= room.maxPlayers ? 'Мест нет' : 'Присоединиться'}
+                                            {room.status === 'playing'
+                                                ? (room.players.length >= room.maxPlayers ? 'Мест нет (Игра идет)' : 'Присоединиться (Игра идет)')
+                                                : (room.players.length >= room.maxPlayers ? 'Мест нет' : 'Присоединиться')
+                                            }
                                         </button>
                                     </div>
                                 ))}
