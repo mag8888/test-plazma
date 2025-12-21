@@ -1157,9 +1157,9 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             </div>
                         </div>
 
-                        <div className="flex justify-between items-center pt-4 border-t border-slate-800/50">
+                        <div className="flex justify-between items-center pt-4 border-t border-slate-800/50 mt-auto">
                             <span className="text-blue-400 font-black text-sm tracking-widest uppercase filter drop-shadow-sm">PAYDAY</span>
-                            <span className="font-mono font-black text-lg text-green-400 bg-green-900/10 px-2 py-0.5 rounded-md border border-green-500/20">+${me.cashflow?.toLocaleString()}</span>
+                            <span className="font-mono font-black text-lg text-green-400 bg-green-900/10 px-2 py-0.5 rounded-md border border-green-500/20">+${(me.cashflow || 0).toLocaleString()}</span>
                         </div>
                     </div>
 
