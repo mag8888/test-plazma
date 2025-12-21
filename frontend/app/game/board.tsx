@@ -58,6 +58,7 @@ import { RulesModal } from './RulesModal';
 import { RankingsModal } from './RankingsModal';
 import { MenuModal } from './MenuModal';
 import { ExitToFastTrackModal } from './ExitToFastTrackModal';
+import { AdminActionModal, AdminActionType } from './AdminActionModal';
 
 // Helper for Cash Animation
 const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
@@ -124,6 +125,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     const [showBank, setShowBank] = useState(false);
     const [showRules, setShowRules] = useState(false);
     const [transferAssetItem, setTransferAssetItem] = useState<{ item: any, index: number } | null>(null);
+    const [adminAction, setAdminAction] = useState<{ type: AdminActionType; player: any } | null>(null);
     const [stockQty, setStockQty] = useState(1);
 
     // Mobile Drawer State
@@ -641,10 +643,10 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                     <div className="grid grid-cols-2 gap-3">
                                         <button
                                             onClick={() => {
-                                                if (window.confirm(`Пропустить ход игрока ${selectedPlayerForMenu.name}?`)) {
-                                                    socket.emit('host_skip_turn', { roomId, userId: selectedPlayerForMenu.id });
-                                                    setSelectedPlayerForMenu(null);
-                                                }
+                                                setAdminAction({ type: 'SKIP', player: selectedPlayerForMenu });
+                                                // Don't close menu yet, or maybe close it? 
+                                                // Better to close menu so modal is focused.
+                                                setSelectedPlayerForMenu(null);
                                             }}
                                             className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors"
                                         >
@@ -652,10 +654,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         </button>
                                         <button
                                             onClick={() => {
-                                                if (window.confirm(`Выгнать игрока ${selectedPlayerForMenu.name}?`)) {
-                                                    handleKickPlayer(selectedPlayerForMenu.id);
-                                                    setSelectedPlayerForMenu(null);
-                                                }
+                                                setAdminAction({ type: 'KICK', player: selectedPlayerForMenu });
+                                                setSelectedPlayerForMenu(null);
                                             }}
                                             className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600/50 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors"
                                         >
@@ -664,14 +664,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         {isHost && (
                                             <button
                                                 onClick={() => {
-                                                    const amountStr = window.prompt(`Сколько подарить ${selectedPlayerForMenu.name}?`, '1000');
-                                                    if (amountStr) {
-                                                        const amount = parseInt(amountStr);
-                                                        if (!isNaN(amount) && amount > 0) {
-                                                            socket.emit('host_give_cash', { roomId, userId: selectedPlayerForMenu.id, amount });
-                                                            setSelectedPlayerForMenu(null);
-                                                        }
-                                                    }
+                                                    setAdminAction({ type: 'GIFT', player: selectedPlayerForMenu });
+                                                    setSelectedPlayerForMenu(null);
                                                 }}
                                                 className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors col-span-2"
                                             >
@@ -2047,10 +2041,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     players={state.players}
                     myId={me.id}
                     onTransfer={handleTransferAsset}
-                />
             )}
-        </div >
+        </div>
     );
-
-
 }
