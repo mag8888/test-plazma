@@ -58,6 +58,7 @@ import { RulesModal } from './RulesModal';
 import { RankingsModal } from './RankingsModal';
 import { MenuModal } from './MenuModal';
 import { ExitToFastTrackModal } from './ExitToFastTrackModal';
+import { FastTrackInfoModal } from './FastTrackInfoModal';
 import { AdminActionModal, AdminActionType } from './AdminActionModal';
 
 // Helper for Cash Animation
@@ -136,6 +137,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     const [volume, setVolume] = useState(0.5);
     const [showMenuModal, setShowMenuModal] = useState(false);
     const [showFastTrackModal, setShowFastTrackModal] = useState(false);
+    const [showFastTrackInfo, setShowFastTrackInfo] = useState(false);
+    const [dismissedMarketCards, setDismissedMarketCards] = useState<string[]>([]);
     const [isMuted, setIsMuted] = useState(false);
 
 
@@ -521,9 +524,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     };
 
     const handleEnterFastTrack = () => {
-        if (window.confirm("Do you want to enter the Fast Track? Logic: Reset Cash, Passive Income x10, Debt Free!")) {
-            socket.emit('enter_fast_track', { roomId, userId: me.id });
-        }
+        socket.emit('enter_fast_track', { roomId, userId: me.id });
     };
 
     const handleEndGame = () => {
@@ -1278,14 +1279,21 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             const timeLeft = ac.expiresAt - Date.now();
                             if (timeLeft <= 0) return null;
                             if (state.currentCard?.title === ac.card.title) return null; // Already shown
+                            if (dismissedMarketCards.includes(ac.id)) return null; // Dismissed by user
 
                             // Check ownership
                             const hasAsset = me.assets.some((a: any) => a.title === ac.card.targetTitle || a.title.includes(ac.card.targetTitle || ''));
                             if (!hasAsset) return null;
 
                             return (
-                                <div key={ac.id} className="absolute inset-0 z-[95] bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-4 pointer-events-none">
+                                <div key={ac.id} className="absolute inset-0 z-[95] bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-4">
                                     <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-blue-500/50 shadow-2xl relative pointer-events-auto animate-in fade-in zoom-in duration-300">
+                                        <button
+                                            onClick={() => setDismissedMarketCards(prev => [...prev, ac.id])}
+                                            className="absolute top-4 right-4 text-slate-500 hover:text-white z-50 hover:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-colors"
+                                        >
+                                            ✕
+                                        </button>
                                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-cyan-500"></div>
                                         <div className="text-4xl mb-2 text-center">🏠</div>
                                         <div className="text-center mb-4">
@@ -2041,6 +2049,26 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     players={state.players}
                     myId={me.id}
                     onTransfer={handleTransferAsset}
+                />
+            )}
+
+            {adminAction && (
+                <AdminActionModal
+                    isOpen={!!adminAction}
+                    onClose={() => setAdminAction(null)}
+                    type={adminAction.type}
+                    targetPlayer={adminAction.player}
+                    onConfirm={(amount) => {
+                        if (adminAction.type === 'SKIP') {
+                            socket.emit('host_skip_turn', { roomId, userId: adminAction.player.id });
+                        } else if (adminAction.type === 'KICK') {
+                            handleKickPlayer(adminAction.player.id);
+                        } else if (adminAction.type === 'GIFT' && amount) {
+                            socket.emit('host_give_cash', { roomId, userId: adminAction.player.id, amount });
+                        }
+                        setAdminAction(null);
+                    }}
+                />
             )}
         </div>
     );

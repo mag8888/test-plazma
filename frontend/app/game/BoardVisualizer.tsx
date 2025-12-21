@@ -194,6 +194,28 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                 <span className="text-white font-black text-[1cqw] uppercase tracking-[0.2em] drop-shadow-md mt-1">EXIT</span>
                             </button>
                         )}
+
+                        {/* VICTORY INFO BUTTON (Fast Track) */}
+                        {!showExitButton && (
+                            <button
+                                onClick={onExitClick} // Reusing prop name or pass new one? Let's assume onExitClick handles both or we pass a new prop.
+                                // Wait, board.tsx will pass the correct handler.
+                                className={`
+                                    absolute bottom-0
+                                    w-[60%] h-[30%]
+                                    bg-gradient-to-t from-yellow-700 to-amber-500
+                                    rounded-t-full
+                                    flex flex-col items-center justify-center
+                                    cursor-pointer shadow-[0_-5px_20px_rgba(245,158,11,0.5)]
+                                    border-t-4 border-x-4 border-slate-900
+                                    transition-all transform hover:scale-105 active:scale-95 group z-20
+                                    hover:pb-2
+                                `}
+                            >
+                                <span className="text-[2cqw] filter drop-shadow-md group-hover:-translate-y-1 transition-transform">🏆</span>
+                                <span className="text-white font-black text-[1cqw] uppercase tracking-[0.2em] drop-shadow-md mt-1">WIN</span>
+                            </button>
+                        )}
                     </div>
 
                 </div>
