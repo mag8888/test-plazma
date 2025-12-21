@@ -445,7 +445,7 @@ export class BotService {
                     });
                     await newGame.save();
                     this.masterStates.delete(chatId);
-                    this.bot?.sendMessage(chatId, `✅ Игра создана! ${newGame.startTime.toLocaleString()}`);
+                    this.bot?.sendMessage(chatId, `✅ Игра создана! ${newGame.startTime.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`);
                     return;
                 } else if (masterState.state === 'WAITING_ANNOUNCEMENT_TEXT') {
                     const gameId = masterState.gameId;
@@ -590,7 +590,7 @@ export class BotService {
                         await game.save();
 
                         this.bot?.sendMessage(chatId, `✅ Игрок ${targetUser.first_name} (@${targetUser.username}) добавлен!`);
-                        this.bot?.sendMessage(targetUser.telegram_id, `🎉 Вы были добавлены в игру ${new Date(game.startTime).toLocaleString('ru-RU')} организатором!`);
+                        this.bot?.sendMessage(targetUser.telegram_id, `🎉 Вы были добавлены в игру ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} организатором!`);
 
                         this.masterStates.delete(chatId);
                     }
@@ -913,7 +913,7 @@ export class BotService {
                         // Notify Host
                         const host = await UserModel.findById(game.hostId);
                         if (host) {
-                            this.bot?.sendMessage(host.telegram_id, `ℹ️ Игрок ${user.first_name} (@${user.username}) отменил запись на игру ${new Date(game.startTime).toLocaleString('ru-RU')}.`);
+                            this.bot?.sendMessage(host.telegram_id, `ℹ️ Игрок ${user.first_name} (@${user.username}) отменил запись на игру ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}.`);
                         }
                     } else {
                         this.bot?.sendMessage(chatId, "Вы не записаны на эту игру.");
@@ -1605,7 +1605,7 @@ export class BotService {
                     // Notify user
                     const user = await UserModel.findById(userId);
                     if (user) {
-                        this.bot?.sendMessage(user.telegram_id, `❌ Вы были исключены из игры ${new Date(game.startTime).toLocaleString('ru-RU')}.`);
+                        this.bot?.sendMessage(user.telegram_id, `❌ Вы были исключены из игры ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}.`);
                     }
                 } else {
                     this.bot?.sendMessage(chatId, "Игрок не найден в списке.");
@@ -1628,7 +1628,7 @@ export class BotService {
             for (const p of game.participants) {
                 const user = await UserModel.findById(p.userId);
                 if (user) {
-                    this.bot?.sendMessage(user.telegram_id, `⚠️ Игра ${new Date(game.startTime).toLocaleString('ru-RU')} была отменена организатором.`);
+                    this.bot?.sendMessage(user.telegram_id, `⚠️ Игра ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} была отменена организатором.`);
                     // Refund logic if needed
                 }
             }
@@ -1740,7 +1740,7 @@ export class BotService {
             await game.save();
 
             if (isPaid) {
-                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PAID)!\n📅 ${new Date(game.startTime).toLocaleString('ru-RU')}`, {
+                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PAID)!\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`, {
                     reply_markup: {
                         inline_keyboard: [[{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]]
                     }
@@ -1881,11 +1881,11 @@ export class BotService {
                     // Send to all
                     for (const p of game.participants) {
                         const user = await UserModel.findById(p.userId);
-                        if (user) this.bot?.sendMessage(user.telegram_id, `⏰ Напоминание: Игра через 24 часа! (${new Date(game.startTime).toLocaleString('ru-RU')})`);
+                        if (user) this.bot?.sendMessage(user.telegram_id, `⏰ Напоминание: Игра через 24 часа! (${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })})`);
                     }
                     // Validate Host
                     const host = await UserModel.findById(game.hostId);
-                    if (host) this.bot?.sendMessage(host.telegram_id, `⏰ Напоминание Мастеру: Игра через 24 часа! (${new Date(game.startTime).toLocaleString('ru-RU')})`);
+                    if (host) this.bot?.sendMessage(host.telegram_id, `⏰ Напоминание Мастеру: Игра через 24 часа! (${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })})`);
 
                     game.reminder24hSent = true;
                     gameModified = true;
