@@ -2068,7 +2068,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     targetPlayer={adminAction.player}
                     onConfirm={(amount) => {
                         if (adminAction.type === 'SKIP') {
-                            socket.emit('host_skip_turn', { roomId, userId: me.id }, (response: any) => {
+                            // Use 'userId' prop (Persistent ID) for permission check
+                            socket.emit('host_skip_turn', { roomId, userId }, (response: any) => {
                                 if (!response.success) {
                                     alert(`Ошибка: ${response.error}`);
                                 }
@@ -2076,7 +2077,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         } else if (adminAction.type === 'KICK') {
                             handleKickPlayer(adminAction.player.id);
                         } else if (adminAction.type === 'GIFT' && amount) {
-                            socket.emit('host_give_cash', { roomId, userId: adminAction.player.id, amount });
+                            // Use 'userId' prop for Host Auth, and adminAction.player.id as target
+                            socket.emit('host_give_cash', { roomId, userId, targetPlayerId: adminAction.player.id, amount });
                         }
                         setAdminAction(null);
                     }}
