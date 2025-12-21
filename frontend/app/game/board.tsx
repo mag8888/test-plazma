@@ -2068,7 +2068,11 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     targetPlayer={adminAction.player}
                     onConfirm={(amount) => {
                         if (adminAction.type === 'SKIP') {
-                            socket.emit('host_skip_turn', { roomId, userId: me.id });
+                            socket.emit('host_skip_turn', { roomId, userId: me.id }, (response: any) => {
+                                if (!response.success) {
+                                    alert(`Ошибка: ${response.error}`);
+                                }
+                            });
                         } else if (adminAction.type === 'KICK') {
                             handleKickPlayer(adminAction.player.id);
                         } else if (adminAction.type === 'GIFT' && amount) {
