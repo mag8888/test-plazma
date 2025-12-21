@@ -996,7 +996,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
             {/* ℹ️ SQUARE INFO POPUP */}
             {
-                squareInfo && (
+                squareInfo && !state.currentCard && (
                     <div className="absolute inset-0 z-[90] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSquareInfo(null)}>
                         <div className="bg-[#1e293b] border border-slate-600 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center relative overflow-hidden" onClick={e => e.stopPropagation()}>
                             {/* Gradient Line handled by helper */}
@@ -1268,7 +1268,13 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             zoom={zoom}
                             onSquareClick={(sq: any) => setSquareInfo(sq)}
                             showExitButton={showExitButton}
-                            onExitClick={() => setShowFastTrackModal(true)}
+                            onExitClick={() => {
+                                if (me.isFastTrack) {
+                                    setShowFastTrackInfo(true);
+                                } else {
+                                    setShowFastTrackModal(true);
+                                }
+                            }}
                         />
 
 
@@ -2040,6 +2046,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     onConfirm={handleEnterFastTrack}
                 />
             )}
+
+            {showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} />}
 
             {transferAssetItem && (
                 <TransferModal
