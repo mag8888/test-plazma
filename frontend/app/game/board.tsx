@@ -799,9 +799,9 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                                 ></div>
                                             </div>
                                             <div className="flex justify-between items-center mt-1">
-                                                <span className="text-[9px] text-slate-500">Цель: +$50,000 Ден.потока</span>
+                                                <span className="text-[9px] text-slate-500">Цель: +$50,000 (Нужно еще)</span>
                                                 <span className="text-[9px] text-pink-400 font-bold">
-                                                    ${me.cashflow?.toLocaleString()} / $50,000
+                                                    ${Math.max(0, 50000 - (me.passiveIncome - (me.fastTrackStartIncome || 0))).toLocaleString()}
                                                 </span>
                                             </div>
                                         </>

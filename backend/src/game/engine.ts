@@ -290,7 +290,7 @@ export class GameEngine {
         }
     }
 
-    private checkFastTrackCondition(player: PlayerState) {
+    checkFastTrackCondition(player: PlayerState) {
         if (player.isFastTrack) return;
 
         // Condition: 
@@ -309,6 +309,30 @@ export class GameEngine {
                     this.addLog(`🚀 ${player.name} is ready for Fast Track! (Passive >= $10k, No Debt, $200k+)`);
                 }
             }
+        }
+    }
+
+    checkWinCondition(player: PlayerState) {
+        if (!player.isFastTrack) return;
+
+        const incomeGoalMet = player.fastTrackStartIncome !== undefined
+            ? (player.passiveIncome >= player.fastTrackStartIncome + 50000)
+            : (player.passiveIncome >= 50000);
+
+        const businessCount = player.assets.filter(a => a.type === 'BUSINESS').length;
+        const dreamBought = player.assets.some(a => a.type === 'DREAM' && a.title === player.dream);
+
+        // Win Condition: +50k Income OR (Buy Dream AND 2 Businesses)
+        // User Screenshot shows they have +$54,000 but didn't win, implying OR logic was desired but AND was implemented.
+        let won = false;
+        if (incomeGoalMet || (dreamBought && businessCount >= 2)) {
+            won = true;
+        }
+
+        if (won && !player.hasWon) {
+            player.hasWon = true;
+            this.addLog(`🏆 ${player.name} HAS WON THE GAME! (+50k Flow, Dream, 2 Businesses)`);
+            this.addLog(`✨ CONGRATULATIONS! ✨`);
         }
     }
 
@@ -600,27 +624,7 @@ export class GameEngine {
         // 1. Passive Income +$50k
         // 2. Buy your Dream
         // 3. Buy at least 2 Businesses (User Request: "Купить 2 бизнеса и свою Мечту")
-
-        let won = false;
-
-        const incomeGoalMet = player.fastTrackStartIncome !== undefined
-            ? (player.passiveIncome >= player.fastTrackStartIncome + 50000)
-            : (player.passiveIncome >= 50000);
-
-        const businessCount = player.assets.filter(a => a.type === 'BUSINESS').length;
-        const dreamBought = player.assets.some(a => a.type === 'DREAM' && a.title === player.dream);
-
-        if (incomeGoalMet && dreamBought && businessCount >= 2) {
-            won = true;
-        }
-
-        if (won && !player.hasWon) {
-            player.hasWon = true;
-            this.addLog(`🏆 ${player.name} HAS WON THE GAME! (+50k Flow, Dream, 2 Businesses)`);
-            this.addLog(`Game continues for others...`);
-
-            // Broadcast End Game event if needed or handled by state change
-        }
+        this.checkWinCondition(player);
 
         switch (square.type) {
             case 'PAYDAY':
@@ -1609,6 +1613,7 @@ export class GameEngine {
         this.state.currentCard = undefined;
 
         this.checkFastTrackCondition(player);
+        this.checkWinCondition(player);
         // Do NOT end turn. Allow player to continue actions.
         this.state.phase = 'ACTION';
 
