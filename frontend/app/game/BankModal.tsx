@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { socket } from '../socket';
 
 interface BankModalProps {
@@ -19,20 +19,16 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
     const [transferAmount, setTransferAmount] = useState<number>(0);
     const [showExpenses, setShowExpenses] = useState(false);
 
-    // Sync initialRecipientId when it changes or when modal opens
-    // Actually, we should only set it if provided.
-    // Use a key or effect?
-    // Let's use an effect on isOpen.
-    if (isOpen && initialRecipientId && recipientId !== initialRecipientId) {
-        setRecipientId(initialRecipientId);
-    }
-
     // React to changes in initialRecipientId when modal opens
-    // We can use a useEffect to reset/set state when isOpen becomes true.
-    // However, for simplicity, we can just rely on the prop if we mount/unmount. 
-    // Since BankModal is kept mounted, we need useEffect.
-    /* eslint-disable react-hooks/rules-of-hooks */
-    // Using a pattern where we update state if prop changes while closed or just opened.
+    useEffect(() => {
+        if (isOpen && initialRecipientId) {
+            setRecipientId(initialRecipientId);
+        } else if (isOpen && !initialRecipientId) {
+            // Optional: Reset if opened without recipient? 
+            // setRecipientId(''); 
+        }
+    }, [isOpen, initialRecipientId]);
+
     if (!isOpen) return null;
 
     // Dynamic Max Loan: Based on Cashflow (10% interest rule)
@@ -63,7 +59,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-md p-2 md:p-4 animate-in fade-in duration-300">
+        <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-md p-2 md:p-4 animate-in fade-in duration-300">
             <div className="bg-[#1e293b]/90 backdrop-blur-2xl w-full max-w-4xl rounded-3xl border border-slate-700/50 shadow-[0_0_50px_rgba(30,41,59,0.5)] flex flex-col md:flex-row h-[90vh] md:h-auto md:max-h-[90vh] overflow-y-auto md:overflow-hidden relative group custom-scrollbar">
                 {/* Background Glow */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
