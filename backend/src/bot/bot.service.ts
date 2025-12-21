@@ -599,54 +599,7 @@ export class BotService {
             }
 
             // Participant State
-            const participantState = this.participantStates.get(chatId);
-            if (participantState) {
-                if (participantState.state === 'WAITING_POST_LINK') {
-                    // Expecting link
-                    // Simple URL validation
-                    const urlRegex = /(https?:\/\/[^\s]+)/g;
-                    if (!urlRegex.test(text)) {
-                        this.bot?.sendMessage(chatId, "⚠️ Пожалуйста, отправьте корректную ссылку на пост.");
-                        return;
-                    }
 
-                    // Save Link
-                    const { ScheduledGameModel } = await import('../models/scheduled-game.model');
-                    const game = await ScheduledGameModel.findById(participantState.gameId);
-                    if (game) {
-                        const userIdx = game.participants.findIndex((p: any) => p.userId.toString() === msg.from?.id.toString());
-                        // Wait, we need to find user by telegram ID first to get _id
-                        const { UserModel } = await import('../models/user.model');
-                        const user = await UserModel.findOne({ telegram_id: msg.from?.id });
-
-                        // Re-find index with user._id
-                        const pRealIndex = game.participants.findIndex((p: any) => p.userId.toString() === user._id.toString());
-
-                        if (pRealIndex > -1 && user) {
-                            game.participants[pRealIndex].postLink = text;
-                            game.participants[pRealIndex].isVerified = false;
-                            await game.save();
-
-                            this.bot?.sendMessage(chatId, "✅ Ссылка принята! Ожидайте подтверждения организатора.");
-                            this.participantStates.delete(chatId);
-
-                            // Notify Host
-                            const host = await UserModel.findById(game.hostId);
-                            if (host) {
-                                this.bot?.sendMessage(host.telegram_id, `🔔 Игрок ${user.username || user.first_name} прикрепил ссылку на пост:\n${text}`, {
-                                    reply_markup: {
-                                        inline_keyboard: [[
-                                            { text: '✅ Одобрить', callback_data: `approve_link_${game._id}_${user._id}` },
-                                            { text: 'Написать', url: `tg://user?id=${user.telegram_id}` }
-                                        ]]
-                                    }
-                                });
-                            }
-                        }
-                    }
-                    return;
-                }
-            }
 
             if (text === '/admin') {
                 const adminId = process.env.TELEGRAM_ADMIN_ID;
@@ -1670,21 +1623,20 @@ export class BotService {
                     return;
                 }
 
+                // Auto-verify PROMO users now (Link requirement removed)
                 game.participants.push({
                     userId: user._id,
                     username: user.username,
                     firstName: user.first_name || 'Игрок',
                     type: 'PROMO',
                     joinedAt: new Date(),
-                    isVerified: false
+                    isVerified: true
                 });
 
-                // Request Link
-                this.participantStates.set(chatId, { state: 'WAITING_POST_LINK', gameId: game._id });
-                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PROMO)!\n\n📝 Для подтверждения участия, пожалуйста, отправьте ссылку на репост о нашей игре в течение 3 часов.`, {
+                // Notify Success (No Link Request)
+                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PROMO)!\n\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`, {
                     reply_markup: {
                         inline_keyboard: [
-                            [{ text: '⏭ Пропустить', callback_data: `skip_post_link_${game._id}` }],
                             [{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]
                         ]
                     }
