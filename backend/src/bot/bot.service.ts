@@ -1381,7 +1381,7 @@ export class BotService {
         state.state = 'WAITING_TIME'; // Update state to allow manual input
 
         // Time Slots
-        const times = ['10:00', '12:00', '14:00', '16:00', '18:00', '20:00', '21:00', '22:00'];
+        const times = ['09:00', '10:00', '12:00', '13:00', '14:00', '16:00', '18:00', '20:00', '21:00', '22:00'];
         const buttons = times.map(t => ({ text: t, callback_data: `time_select_${t}` }));
 
         // Group rows of 4
