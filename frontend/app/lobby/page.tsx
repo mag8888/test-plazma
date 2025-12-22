@@ -143,7 +143,22 @@ export default function Lobby() {
     };
 
     const joinRoom = (roomId: string) => {
-        router.push(`/game?id=${roomId}`);
+        // Check if user is already in another room
+        const currentRoom = myRooms.find(r => r.id !== roomId);
+
+        if (currentRoom) {
+            const isConfirm = confirm(`Вы сейчас в комнате "${currentRoom.name}". Хотите перейти? (Вы покинете текущую комнату)`);
+            if (isConfirm) {
+                if (user) {
+                    socket.emit('leave_room', { roomId: currentRoom.id, userId: user._id || user.id });
+                    // Optimistically remove from local state
+                    setMyRooms(prev => prev.filter(r => r.id !== currentRoom.id));
+                }
+                router.push(`/game?id=${roomId}`);
+            }
+        } else {
+            router.push(`/game?id=${roomId}`);
+        }
     };
 
     const handleDeleteRoom = (roomId: string) => {

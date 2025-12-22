@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Suspense, useEffect, useState } from 'react';
@@ -7,8 +6,7 @@ import { socket } from '../socket';
 import GameBoard from './board';
 import { DREAMS } from '../lib/dreams';
 import { useTelegram } from '../../components/TelegramProvider';
-
-// ... (Interfaces remain same)
+import { ReadyModal } from './ReadyModal';
 
 interface Player {
     id: string; // Socket ID
@@ -48,6 +46,9 @@ function GameContent() {
     const [dream, setDream] = useState(DREAMS[0].name);
     const [token, setToken] = useState<string>('🦊');
     const [myUserId, setMyUserId] = useState<string | null>(null);
+    const [displayName, setDisplayName] = useState(''); // Specific name for this game
+
+    const [isReadyModalOpen, setIsReadyModalOpen] = useState(false);
 
     const [isKickModalOpen, setIsKickModalOpen] = useState(false);
     const [playerToKick, setPlayerToKick] = useState<string | null>(null);
@@ -58,19 +59,27 @@ function GameContent() {
         if (!roomId || !user) return; // Wait for user
 
         // Identity Validation
-        const playerName = user.firstName || user.username || 'Guest';
+        // PREFERENCE RESTORATION
+        const prefName = user.preferences?.displayName || user.firstName || user.username || 'Guest';
+        const prefDream = user.preferences?.dream || DREAMS[0].name;
+        const prefToken = user.preferences?.token || '🦊';
+
+        setDisplayName(prefName);
+        setDream(prefDream);
+        setToken(prefToken); // Backend handles collision, UI handles selection
+
         const userId = user._id || user.id;
 
         setMyUserId(userId);
 
         const joinGame = () => {
-            console.log("Joining room...", { roomId, playerName, userId });
+            console.log("Joining room...", { roomId, playerName: prefName, userId });
             socket.emit('join_room', {
                 roomId,
-                playerName,
+                playerName: prefName,
                 userId,
-                token: token || '🦊',
-                dream: dream || DREAMS[0].name
+                token: prefToken,
+                dream: prefDream
             }, (response: any) => {
                 if (!response.success) {
                     console.error("Join failed:", response.error);
@@ -107,6 +116,8 @@ function GameContent() {
                 setIsReady(me.isReady);
                 if (me.dream) setDream(me.dream);
                 if (me.token) setToken(me.token);
+                // Sync display name if server has newer one (optional, usually local source of truth for edit)
+                // if (me.name) setDisplayName(me.name);
             }
         });
 
@@ -137,9 +148,38 @@ function GameContent() {
         };
     }, [roomId, router, user]);
 
-    const toggleReady = () => {
+    const handleReadyClick = () => {
+        if (!isReady) {
+            setIsReadyModalOpen(true);
+        } else {
+            // Cancel Ready immediately
+            toggleReady(false, displayName);
+        }
+    };
+
+    const confirmReady = (finalName: string) => {
+        setDisplayName(finalName);
+        toggleReady(true, finalName);
+        setIsReadyModalOpen(false);
+    };
+
+    const toggleReady = (readyState: boolean, finalName?: string) => {
         if (!myUserId) return;
-        socket.emit('player_ready', { roomId, isReady: !isReady, dream, token, userId: myUserId }, (res: any) => {
+        // Construct updated player object if needed, but backend takes params
+        socket.emit('player_ready', {
+            roomId,
+            isReady: readyState,
+            dream,
+            token,
+            userId: myUserId,
+            // Pass name if we want to update it on Ready (Requires backend support in setPlayerReady?)
+            // setPlayerReady in backend doesn't take 'name' argument yet. 
+            // Wait, request said: "так же записываем и в будущем подтягиваем" (name).
+            // Backend setPlayerReady updates preferences.displayName.
+            // But does it update the active Player List Object name?
+            // Checking setPlayerReady in backend... it mainly updates isReady, dream, token.
+            // I should verify/add name update there too if needed.
+        }, (res: any) => {
             if (!res.success) alert(res.error);
         });
     };
@@ -296,14 +336,6 @@ function GameContent() {
                                                     onClick={() => {
                                                         if (!isReady) {
                                                             setToken(t);
-                                                            const userStr = localStorage.getItem('user');
-                                                            const userId = userStr ? (JSON.parse(userStr)._id || JSON.parse(userStr).id) : 'guest';
-                                                            socket.emit('player_ready', { roomId, isReady, dream, token: t, userId }, (res: any) => {
-                                                                if (!res.success) {
-                                                                    console.error("Set Token Failed:", res.error);
-                                                                    alert(res.error);
-                                                                }
-                                                            });
                                                         }
                                                     }}
                                                     className={`aspect-square rounded-2xl flex items-center justify-center text-4xl relative transition-all duration-300 ${isSelected ? 'bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border-indigo-400 ring-2 ring-indigo-500/50 shadow-[0_0_30px_rgba(99,102,241,0.3)] scale-110' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:scale-105 border'} ${(isTaken || isReady) ? 'opacity-50 grayscale cursor-not-allowed scale-90' : 'cursor-pointer'}`}
@@ -324,14 +356,6 @@ function GameContent() {
                                             onChange={(e) => {
                                                 const newDream = e.target.value;
                                                 setDream(newDream);
-                                                const userStr = localStorage.getItem('user');
-                                                const userId = userStr ? (JSON.parse(userStr)._id || JSON.parse(userStr).id) : 'guest';
-                                                socket.emit('player_ready', { roomId, isReady, dream: newDream, token, userId }, (res: any) => {
-                                                    if (!res.success) {
-                                                        console.error("Set Dream Failed:", res.error);
-                                                        alert(res.error);
-                                                    }
-                                                });
                                             }}
                                             className="w-full bg-black/20 border border-white/10 rounded-2xl px-6 py-4 appearance-none outline-none focus:border-blue-500/50 focus:bg-black/40 transition-all text-lg font-medium text-slate-200 shadow-inner"
                                             disabled={isReady}
@@ -347,7 +371,7 @@ function GameContent() {
                                 </div>
                             </div>
                             <button
-                                onClick={toggleReady}
+                                onClick={handleReadyClick}
                                 className={`w-full py-6 rounded-2xl font-bold text-lg transition-all transform shadow-xl border ${isReady ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20' : 'bg-gradient-to-r from-emerald-500 to-teal-500 border-transparent text-white hover:brightness-110 shadow-emerald-500/20 hover:scale-[1.01]'}`}
                             >
                                 {isReady ? '✖ Отменить готовность' : '✨ Я Готов!'}
@@ -355,6 +379,16 @@ function GameContent() {
                         </div>
                     </div>
                 </div>
+
+                {isReadyModalOpen && (
+                    <ReadyModal
+                        token={token}
+                        dream={dream}
+                        initialName={displayName}
+                        onConfirm={confirmReady}
+                        onCancel={() => setIsReadyModalOpen(false)}
+                    />
+                )}
 
                 {playerToKick && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm">

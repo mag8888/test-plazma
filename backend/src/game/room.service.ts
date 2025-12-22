@@ -316,7 +316,8 @@ export class RoomService {
         // Validate Token Uniqueness and Auto-Assign if taken
         const ALL_TOKENS = ['🦊', '🐱', '🐭', '🐹', '🐰', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷'];
 
-        let finalToken = token || '🦊';
+        // Fix: Use existing token if not provided
+        let finalToken = token || (player as any).token || '🦊';
 
         // Check availability of the requested token
         const isTokenTaken = (roomCheck as any).players.some((p: IPlayer) => p.token === finalToken && p.userId !== player!.userId);
@@ -331,6 +332,8 @@ export class RoomService {
                 finalToken = freeToken;
                 console.log(`Assigned free token: ${finalToken}`);
             } else {
+                // If all taken, keep duplicates or throw? Throwing is safer for game logic.
+                // But for 12 players and 12 tokens, it should fit.
                 throw new Error("Все фишки заняты! Невозможно выбрать уникальную.");
             }
         }
@@ -363,7 +366,7 @@ export class RoomService {
             ? [{ "elem.userId": targetUserId }]
             : [{ "elem.id": targetSocketId }];
 
-        console.log('RoomService.setPlayerReady: filter', JSON.stringify(filter), 'update', JSON.stringify(updateOp), 'arrayFilters', JSON.stringify(arrayFilters));
+        console.log('RoomService.setPlayerReady: filter', JSON.stringify(filter), 'update', JSON.stringify(updateOp));
 
         const updatedRoom = await RoomModel.findOneAndUpdate(
             filter,

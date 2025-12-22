@@ -40,7 +40,12 @@ const UserSchema: Schema = new Schema({
     wins: { type: Number, default: 0 },
     rating: { type: Number, default: 1000 },
     isMaster: { type: Boolean, default: false },
-    masterExpiresAt: { type: Date }
+    masterExpiresAt: { type: Date },
+    preferences: {
+        dream: String,
+        token: String,
+        displayName: String
+    }
 }, { timestamps: true });
 
 export const UserModel = mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
