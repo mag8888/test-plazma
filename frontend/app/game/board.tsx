@@ -1294,7 +1294,10 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         <div className="flex items-center gap-2">
                                             <span className="text-slate-300 font-medium">
                                                 {a.title}
-                                                {a.quantity > 0 && <span className="text-slate-500 ml-1 text-[10px]">({a.quantity} шт)</span>}
+                                                <span className="text-slate-500 ml-1 text-[10px]">
+                                                    {a.quantity > 0 ? `(${a.quantity} шт)` : ''}
+                                                    {a.averageCost && ` • Avg: $${Math.round(a.averageCost).toLocaleString()}`}
+                                                </span>
                                             </span>
                                             <span className="font-mono text-green-400 font-bold bg-green-900/10 px-1.5 py-0.5 rounded">+${a.cashflow}</span>
                                         </div>
@@ -1334,6 +1337,13 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         </div>
                     )}
 
+                    {/* MENU BUTTON (Moved to Left Sidebar Bottom) */}
+                    <button
+                        onClick={() => setShowMenuModal(true)}
+                        className="w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 mt-auto border border-slate-700 shadow-lg transition-all"
+                    >
+                        <span>⚙️</span> МЕНЮ
+                    </button>
 
                 </div>
 
@@ -1358,7 +1368,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         />                    </div>
                 </div>
 
-                {/* RIGHT SIDEBAR (Redesigned) */}
+                {/* RIGHT SIDEBAR (Redesigned) - Flex Column */}
                 <div className="hidden lg:flex flex-col w-[380px] h-full border-l border-slate-800/50 bg-[#0f172a]/50 relative z-40 overflow-hidden shadow-xl shrink-0">
 
                     {/* 1. STATUS CARD (Player + Timer) - TOP PRIORITY */}
@@ -1367,45 +1377,87 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             {/* Glow Effect */}
                             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none group-hover:bg-blue-500/20 transition-all duration-500"></div>
 
-                            <div>
-                                <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-1 flex items-center gap-2">
+                            <div className="flex flex-col items-start gap-1 z-10">
+                                <div className="text-[9px] text-slate-500 uppercase tracking-[0.2em] font-medium flex items-center gap-2"> {/* Thinner font */}
                                     <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
                                     Ход игрока
                                 </div>
-                                <div className="text-xl font-bold text-white tracking-wide truncate max-w-[180px]">{currentPlayer.name}</div>
+                                <div className="text-xl font-bold text-white tracking-wide truncate max-w-[150px] text-left leading-tight">{currentPlayer.name}</div>
                             </div>
 
-                            <div className={`text-5xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
-                                {formatTime(timeLeft)}
+                            <div className="flex items-center gap-4 z-10">
+                                <div className={`text-4xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
+                                    {formatTime(timeLeft)}
+                                </div>
                             </div>
                         </div>
                     </div>
 
-                    {/* TOP: ACTIVE CARD ZONE (Fixed Height) */}
-                    <ActiveCardZone
-                        state={state}
-                        isMyTurn={isMyTurn}
-                        me={me}
-                        roomId={roomId}
-                        onDismissMarket={handleDismissCard}
-                        onMarketCardClick={(card) => setSquareInfo({
-                            type: 'MARKET',
-                            card: card.card,
-                            title: card.card.title,
-                            description: card.card.description
-                        })}
-                    />
+                    {/* TOP: ACTIVE CARD ZONE (Expanded to fill Box 2) */}
+                    <div className="flex-1 min-h-[350px] p-4 py-0 flex flex-col">
+                        <ActiveCardZone
+                            state={state}
+                            isMyTurn={isMyTurn}
+                            me={me}
+                            roomId={roomId}
+                            onDismissMarket={handleDismissCard}
+                            onMarketCardClick={(card) => setSquareInfo({
+                                type: 'MARKET',
+                                card: card.card,
+                                title: card.card.title,
+                                description: card.card.description
+                            })}
+                        />
+                    </div>
 
-                    {/* SCROLLABLE CONTENT BELOW (Players, Actions, Old Status) */}
-                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 pt-0 flex flex-col gap-4">
+                    {/* PERMANENT ACTION BUTTONS (Roll / Next) - Box 3 Area */}
+                    <div className="p-4 shrink-0 flex flex-col gap-2 z-50 bg-[#0f172a]/50 backdrop-blur-sm">
+                        {me.canEnterFastTrack && isMyTurn && (
+                            <button
+                                onClick={() => setShowFastTrackModal(true)}
+                                className="w-full h-12 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-white rounded-xl shadow-lg flex items-center justify-center gap-2 font-bold text-xs uppercase animate-pulse transition-all"
+                            >
+                                🚀 Выйти на Fast Track
+                            </button>
+                        )}
+                        <div className="grid grid-cols-2 gap-3">
+                            {isRollingRef.current || state.phase === 'ROLL' ? (
+                                <button
+                                    onClick={() => handleRoll()}
+                                    disabled={!isMyTurn || state.phase !== 'ROLL' || isRollingRef.current}
+                                    className={`h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg col-span-2
+                                        ${isMyTurn && state.phase === 'ROLL' && !isRollingRef.current
+                                            ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 border-emerald-500/50 text-white shadow-emerald-900/30'
+                                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                                >
+                                    <span className="text-2xl animate-bounce">🎲</span>
+                                    <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
+                                </button>
+                            ) : (
+                                <button
+                                    onClick={handleEndTurn}
+                                    disabled={!isMyTurn || (state.phase === 'ROLL') || isAnimating || state.phase === 'BABY_ROLL'}
+                                    className={`h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg col-span-2
+                                        ${isMyTurn && state.phase !== 'ROLL' && !isAnimating && state.phase !== 'BABY_ROLL'
+                                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border-blue-500/50 text-white shadow-blue-900/30'
+                                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                                >
+                                    <span className="text-2xl">➡</span>
+                                    <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
+                                </button>
+                            )}
+                        </div>
+                    </div>
 
+                    {/* SCROLLABLE LOG / CHAT (Box 4) */}
+                    <div className="h-[250px] overflow-y-auto custom-scrollbar p-4 pt-0 flex flex-col gap-4">
                         {/* 1.5. PLAYERS LIST (New for Desktop) */}
                         <div className="p-0 shrink-0">
                             <div className="bg-[#1e293b]/50 rounded-2xl p-4 border border-slate-700/50 shadow-lg flex flex-col gap-2 relative overflow-hidden">
                                 <h3 className="text-slate-500 text-[10px] uppercase tracking-[0.25em] font-black mb-2 flex items-center gap-2">
                                     <span className="text-blue-400">👥</span> ИГРОКИ ({state.players.length})
                                 </h3>
-                                <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto custom-scrollbar pr-1">
+                                <div className="flex flex-col gap-2 max-h-[100px] overflow-y-auto custom-scrollbar pr-1">
                                     {state.players.map((p: any) => {
                                         const isActive = p.id === currentPlayer.id;
                                         return (
@@ -1432,79 +1484,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         </div>
 
 
-                        <div className="bg-[#1e293b]/80 backdrop-blur-xl rounded-3xl p-5 border border-slate-700/50 shadow-2xl relative">
-                            <h3 className="text-slate-400 text-[10px] uppercase tracking-[0.25em] font-black mb-4 flex items-center gap-2">
-                                <span className="text-yellow-400">⚡</span> ДЕЙСТВИЯ
-                            </h3>
 
-                            <div className="grid grid-cols-2 gap-3 mb-3">
-                                {/* Roll Logic */}
-                                {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
-                                    <div className="flex gap-2 h-28">
-                                        <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                            <span className="text-2xl">🎲</span>
-                                            <span>1</span>
-                                        </button>
-                                        <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                            <span className="text-2xl">🎲🎲</span>
-                                            <span>2</span>
-                                        </button>
-                                        {me.isFastTrack && (
-                                            <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                                <span className="text-2xl">🎲×3</span>
-                                                <span>3</span>
-                                            </button>
-                                        )}
-                                    </div>
-                                ) : (
-                                    <button
-                                        onClick={() => handleRoll()}
-                                        disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
-                                        className={`h-28 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all relative overflow-hidden group
-                                        ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
-                                                ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-400/50 text-white shadow-lg shadow-emerald-900/30'
-                                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-                                    >
-                                        {hasRolled ? (
-                                            <div className="flex flex-col items-center animate-in zoom-in">
-                                                <span className="text-4xl font-black">{diceValue}</span>
-                                                <span className="text-[9px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
-                                            </div>
-                                        ) : (
-                                            <>
-                                                <span className="text-4xl group-hover:rotate-12 transition-transform">🎲</span>
-                                                <span className="text-[10px] font-black uppercase tracking-widest">БРОСОК</span>
-                                            </>
-                                        )}
-                                    </button>
-                                )}
-
-                                <button
-                                    onClick={handleEndTurn}
-                                    disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
-                                    className={`h-28 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all relative overflow-hidden group
-                                    ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
-                                            ? 'bg-blue-600 hover:bg-blue-500 border-blue-400/50 text-white shadow-lg shadow-blue-900/30'
-                                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-                                >
-                                    <span className="text-4xl group-hover:translate-x-1 transition-transform">➡</span>
-                                    <span className="text-[10px] font-black uppercase tracking-widest">ДАЛЕЕ</span>
-                                </button>
-                            </div>
-
-                            <button onClick={() => setShowBank(!showBank)} className="w-full bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center gap-2 font-bold text-xs uppercase tracking-wider transition-colors">
-                                <span>🏦</span> Открыть Банк
-                            </button>
-
-                            {me.canEnterFastTrack && isMyTurn && (
-                                <button
-                                    onClick={() => setShowFastTrackModal(true)}
-                                    className="w-full mt-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white p-3 rounded-xl shadow-lg flex items-center justify-center gap-2 font-bold text-xs uppercase animate-pulse hover:scale-105 transition-transform"
-                                >
-                                    🚀 Выйти на Fast Track
-                                </button>
-                            )}
-                        </div>
                     </div>
 
                     {/* 3. CHAT (Fills Space) */}

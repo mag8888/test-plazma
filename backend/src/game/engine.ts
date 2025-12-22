@@ -1591,26 +1591,38 @@ export class GameEngine {
             // Find existing stock to merge
             const existingStock = player.assets.find(a => a.symbol === card.symbol);
             if (existingStock) {
-                // Weighted Average Cost could be calculated here if needed, but for Cashflow game usually just quantity matters for dividends? 
-                // Or just track raw quantity.
-                // We will update quantity.
-                // If cashflow is per share (Dividend), update it.
-                existingStock.quantity = (existingStock.quantity || 0) + quantity;
-                // Assuming card.cashflow is PER SHARE? usually yes.
+                // WEIGHTED AVERAGE COST LOGIC
+                const oldQty = existingStock.quantity || 0;
+                const oldAvg = existingStock.averageCost || existingStock.cost || 0;
+                const newQty = quantity;
+                const newPrice = costPerShare;
+
+                const totalValue = (oldQty * oldAvg) + (newQty * newPrice);
+                const totalQty = oldQty + newQty;
+                const newAvg = totalQty > 0 ? totalValue / totalQty : 0;
+
+                existingStock.quantity = totalQty;
+                existingStock.averageCost = newAvg;
+
                 const additionalIncome = (card.cashflow || 0) * quantity;
                 existingStock.cashflow = (existingStock.cashflow || 0) + additionalIncome;
 
                 player.passiveIncome += additionalIncome;
+                this.addLog(`📈 Bought ${quantity} more ${card.symbol}. Avg Cost: $${Math.round(newAvg)}`);
+
             } else {
                 player.assets.push({
                     title: card.title,
-                    cost: card.cost, // Cost per share
+                    cost: card.cost,
+                    averageCost: costPerShare, // Init Avg
                     cashflow: (card.cashflow || 0) * quantity,
                     symbol: card.symbol,
                     type: 'STOCK',
-                    quantity: quantity
+                    quantity: quantity,
+                    sourceType: card.type
                 });
                 player.passiveIncome += (card.cashflow || 0) * quantity;
+                this.addLog(`📈 Bought ${quantity} x ${card.symbol} at $${costPerShare}`);
             }
 
             player.income = player.salary + player.passiveIncome;
