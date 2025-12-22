@@ -1221,7 +1221,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 </div>
 
                 {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
-                <div className="hidden lg:flex flex-col gap-2 h-full overflow-hidden flex-1 min-w-0 pt-0">
+                <div className="hidden lg:flex flex-col gap-2 h-full overflow-hidden flex-1 min-w-0 p-4 pb-0">
                     <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden group">
                         {/* Glow effect */}
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500"></div>
@@ -1407,8 +1407,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     {/* 2. BODY SPLIT: Cards (Top) & Chat (Bottom) - Equal Flex */}
                     <div className="flex-1 flex flex-col min-h-0 px-4 pb-4 gap-4 overflow-hidden">
 
-                        {/* Zone 2: Available Cards */}
-                        <div className="flex-1 min-h-0 flex flex-col relative">
+                        {/* Zone 2: Available Cards (Module Style) */}
+                        <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-4 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-0">
                             <ActiveCardZone
                                 state={state}
                                 isMyTurn={isMyTurn}
@@ -1462,15 +1462,23 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             </div>
                         </div>
 
-                        {/* Zone 4: Chat */}
-                        <div className="flex-1 min-h-0 flex flex-col relative">
-                            <div className="text-[9px] uppercase tracking-widest text-slate-500 font-bold mb-1 ml-1 shrink-0">Чат</div>
+                        {/* Zone 4: Chat (Module Style) */}
+                        <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-4 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-0 group">
+                            {/* Glow effect for Chat too? maybe subtle */}
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-[40px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-purple-500/10 transition-all duration-500"></div>
+
+                            <div className="flex items-center justify-between mb-2 shrink-0 px-1">
+                                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold flex items-center gap-2">
+                                    <span>💬</span> Чат
+                                </div>
+                            </div>
+
                             <TextChat
                                 roomId={roomId}
                                 socket={socket}
                                 messages={state.chat || []}
                                 currentUser={me}
-                                className="w-full h-full shadow-inner rounded-2xl border border-slate-800/50"
+                                className="w-full h-full rounded-xl border border-slate-800/30 bg-slate-900/20"
                             />
                         </div>
 
