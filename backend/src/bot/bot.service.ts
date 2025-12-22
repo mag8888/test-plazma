@@ -473,6 +473,7 @@ export class BotService {
                         }
                     }
 
+
                     // Send copy to Master
                     const host = await UserModel.findById(game.hostId);
                     if (host) {
@@ -795,6 +796,35 @@ export class BotService {
                 const gameId = data.replace('edit_time_', '');
                 this.masterStates.set(chatId, { state: 'WAITING_EDIT_TIME', gameId });
                 this.bot?.sendMessage(chatId, "⏰ Введите новое время (МСК) в формате ЧЧ:ММ (например 19:00):");
+            } else if (data.startsWith('cancel_game_')) {
+                const gameId = data.replace('cancel_game_', '');
+                try {
+                    const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                    const { UserModel } = await import('../models/user.model');
+                    const game = await ScheduledGameModel.findById(gameId);
+                    if (game) {
+                        // Notify participants
+                        for (const p of game.participants) {
+                            const user = await UserModel.findById(p.userId);
+                            if (user) {
+                                this.bot?.sendMessage(user.telegram_id, "⚠️ К сожалению эта игра отменена, вы можете записаться на другие игры.");
+                            }
+                        }
+
+                        // Delete Game
+                        await ScheduledGameModel.findByIdAndDelete(gameId);
+
+                        this.bot?.editMessageText("❌ Игра отменена и участники оповещены.", {
+                            chat_id: chatId,
+                            message_id: query.message?.message_id
+                        });
+                    } else {
+                        this.bot?.sendMessage(chatId, "Игра не найдена.");
+                    }
+                } catch (e) {
+                    console.error("Cancel Game Error:", e);
+                    this.bot?.sendMessage(chatId, "Ошибка при отмене игры.");
+                }
             } else if (data.startsWith('edit_max_')) {
                 const gameId = data.replace('edit_max_', '');
                 this.masterStates.set(chatId, { state: 'WAITING_EDIT_MAX', gameId });

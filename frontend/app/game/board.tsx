@@ -60,6 +60,7 @@ import { MenuModal } from './MenuModal';
 import { ExitToFastTrackModal } from './ExitToFastTrackModal';
 import { FastTrackInfoModal } from './FastTrackInfoModal';
 import { AdminActionModal, AdminActionType } from './AdminActionModal';
+import { ActiveCardZone } from './ActiveCardZone';
 
 // Helper for Cash Animation
 const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
@@ -1110,10 +1111,21 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
             {/* MAIN LAYOUT CONTAINER - FLEXBOX for Aspect Ratio Control */}
             <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-full overflow-hidden justify-start lg:justify-center items-center">
 
-                {/* 📱 MOBILE STATS HUD (Enhanced) */}
-                <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-20">
+                {/* 📱 MOBILE TOP ZONE (Cards + Stats) */}
+                <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-20 max-h-[40vh] overflow-y-auto">
 
-                    {/* Top Row: Turn & Timer */}
+                    {/* 1. Active Card Zone (Priority) */}
+                    <div className="w-full">
+                        <ActiveCardZone
+                            state={state}
+                            isMyTurn={isMyTurn}
+                            me={me}
+                            roomId={roomId}
+                            onDismissMarket={handleDismissCard}
+                        />
+                    </div>
+
+                    {/* 2. Compact Stats Row */}
                     <div className="flex items-center justify-between px-1">
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-slate-400 font-bold uppercase">Ход:</span>
@@ -1127,20 +1139,18 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         </div>
                     </div>
 
-                    {/* Bottom Row: Stats Grid */}
+                    {/* 3. Stats Grid */}
                     <div className="grid grid-cols-3 gap-2">
                         <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
-                            <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс 🏦</span>
-                            <div className="flex items-center gap-1">
-                                <span className="text-sm font-black text-green-400 font-mono tracking-tight">${me.cash?.toLocaleString()}</span>
-                            </div>
+                            <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс</span>
+                            <span className="text-sm font-black text-green-400 font-mono tracking-tight">${me.cash?.toLocaleString()}</span>
                         </div>
                         <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
                             <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Выплата</span>
                             <span className="text-sm font-black text-green-400 font-mono tracking-tight">+${(me.cashflow || 0).toLocaleString()}</span>
                         </div>
                         <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
-                            <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Кредит 💳</span>
+                            <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Кредит</span>
                             <span className="text-sm font-black text-red-400 font-mono tracking-tight">-${me.loanDebt?.toLocaleString()}</span>
                         </div>
                     </div>
@@ -1275,453 +1285,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                     setShowFastTrackModal(true);
                                 }
                             }}
-                        />
-
-
-
-
-                        {/* Active Market Cards Overlay (Persistent) */}
-                        {state.activeMarketCards?.map((ac: any) => {
-                            const timeLeft = ac.expiresAt - Date.now();
-                            if (timeLeft <= 0) return null;
-                            if (state.currentCard?.title === ac.card.title) return null; // Already shown
-                            if (dismissedMarketCards.includes(ac.id)) return null; // Dismissed by user
-
-                            // Check ownership
-                            const hasAsset = me.assets.some((a: any) => a.title === ac.card.targetTitle || a.title.includes(ac.card.targetTitle || ''));
-                            if (!hasAsset) return null;
-
-                            return (
-                                <div key={ac.id} className="absolute inset-0 z-[95] bg-black/40 backdrop-blur-[2px] flex items-center justify-center p-4">
-                                    <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-blue-500/50 shadow-2xl relative pointer-events-auto animate-in fade-in zoom-in duration-300">
-                                        <button
-                                            onClick={() => setDismissedMarketCards(prev => [...prev, ac.id])}
-                                            className="absolute top-4 right-4 text-slate-500 hover:text-white z-50 hover:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-colors"
-                                        >
-                                            ✕
-                                        </button>
-                                        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-600 to-cyan-500"></div>
-                                        <div className="text-4xl mb-2 text-center">🏠</div>
-                                        <div className="text-center mb-4">
-                                            <div className="text-blue-400 font-bold uppercase tracking-widest text-xs">Рынок открыт</div>
-                                            <div className="text-white font-bold text-lg">{ac.card.title}</div>
-                                            <div className="text-slate-400 text-xs text-center mt-1">
-                                                Осталось: {Math.ceil(timeLeft / 1000)} сек.
-                                            </div>
-                                        </div>
-
-                                        <div className="bg-slate-900/50 p-4 rounded-xl mb-4 text-center border border-slate-700">
-                                            <div className="text-[10px] text-slate-500 uppercase">Предложение</div>
-                                            <div className="text-2xl font-mono text-green-400 font-bold">${(ac.card.offerPrice || 0).toLocaleString()}</div>
-                                            <div className="text-slate-400 text-xs mt-1">за: {ac.card.targetTitle}</div>
-                                        </div>
-
-                                        <button
-                                            onClick={() => socket.emit('sell_asset', { roomId })}
-                                            className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all"
-                                        >
-                                            ПРОДАТЬ АКТИВ
-                                        </button>
-                                    </div>
-                                </div>
-                            );
-                        })}
-
-                        {/* Action Card Overlay */}
-                        {state.currentCard && !showDice && !isAnimating && isCardModalOpen && (
-                            <div className="fixed inset-0 z-[2000] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
-                                <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative">
-                                    <button onClick={() => setIsCardModalOpen(false)} className="absolute top-4 right-4 text-slate-500 hover:text-white z-50 hover:bg-slate-800 rounded-full w-8 h-8 flex items-center justify-center transition-colors">✕</button>
-                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500"></div>
-                                    {/* Card ID Display (Integrated Style) */}
-                                    {/* Card ID Display (Integrated Style) */}
-                                    {state.currentCard.displayId && (
-                                        <div className="absolute top-4 right-4 bg-slate-900/60 backdrop-blur-md text-white/90 text-[10px] font-mono font-bold px-3 py-1.5 rounded-lg border border-white/10 shadow-sm z-10 flex items-center gap-1">
-                                            <span className="text-yellow-500">No.</span> {state.currentCard.displayId}
-                                        </div>
-                                    )}
-                                    <div className="text-5xl mb-4 text-center">{state.currentCard.type === 'MARKET' ? '🏠' : '💸'}</div>
-                                    {state.currentCard.type === 'MARKET' && (
-                                        <div className="text-center mb-2">
-                                            <span className="bg-blue-900/50 text-blue-300 text-[10px] font-bold uppercase tracking-[0.2em] px-3 py-1 rounded-full border border-blue-800/50">РЫНОК</span>
-                                        </div>
-                                    )}
-                                    <h2 className="text-xl font-bold text-white mb-2 text-center">{state.currentCard.title}</h2>
-                                    <p className="text-slate-400 text-sm mb-6 text-center">{state.currentCard.description}</p>
-
-                                    {state.currentCard.type === 'MARKET' ? (
-                                        <div className="bg-slate-900/50 p-3 rounded-xl mb-6 border border-slate-800 text-center">
-                                            <div className="text-[10px] text-slate-500 uppercase">Предложение</div>
-                                            <div className="text-2xl font-mono text-green-400 font-bold">${(state.currentCard.offerPrice || 0).toLocaleString()}</div>
-                                            <div className="text-slate-400 text-xs mt-1">за: {state.currentCard.targetTitle}</div>
-                                        </div>
-                                    ) : state.currentCard.cost && (
-                                        <div className="bg-slate-900/50 p-3 rounded-xl mb-6 border border-slate-800 text-center">
-                                            {state.currentCard.downPayment ? (
-                                                <div className="grid grid-cols-2 gap-2 mb-2 pb-2 border-b border-white/5">
-                                                    <div>
-                                                        <div className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">Стоимость</div>
-                                                        <div className="text-sm font-mono text-slate-300">${state.currentCard.cost.toLocaleString()}</div>
-                                                    </div>
-                                                    <div>
-                                                        <div className="text-[9px] text-slate-500 uppercase tracking-widest mb-1">Взнос</div>
-                                                        <div className="text-xl font-mono text-white font-bold">${state.currentCard.downPayment.toLocaleString()}</div>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                // No down payment (Small deals/expenses)
-                                                <>
-                                                    <div className="text-[10px] text-slate-500 uppercase">Цена</div>
-                                                    <div className="text-2xl font-mono text-white font-bold">${state.currentCard.cost.toLocaleString()}</div>
-                                                </>
-                                            )}
-                                            {state.currentCard.cashflow && <div className="text-emerald-400 font-bold text-sm tracking-wide mt-1">+${state.currentCard.cashflow}/мес</div>}
-                                        </div>
-                                    )}
-
-                                    <div className="flex flex-col gap-3 w-full">
-                                        {/* STOCK LOGIC */}
-                                        {state.currentCard.symbol ? (
-                                            <div className="flex flex-col gap-2 w-full animate-in slide-in-from-bottom duration-300">
-                                                {/* Quantity Input */}
-                                                <div className="bg-slate-900/50 p-3 rounded-xl border border-slate-800 flex flex-col gap-3">
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-slate-400 text-xs font-bold uppercase ml-2">Кол-во:</span>
-                                                        <input
-                                                            type="number"
-                                                            min="1"
-                                                            max="100000"
-                                                            value={stockQty}
-                                                            onChange={(e) => setStockQty(Math.max(1, parseInt(e.target.value) || 1))}
-                                                            onFocus={(e) => e.target.select()}
-                                                            className="flex-1 bg-transparent text-white font-mono font-bold text-lg outline-none text-right"
-                                                        />
-                                                    </div>
-                                                    <input
-                                                        type="range"
-                                                        min="1"
-                                                        max={Math.max(50, Math.floor(me.cash / (state.currentCard.cost || 1)), me.assets.find((a: any) => a.symbol === state.currentCard.symbol)?.quantity || 0)}
-                                                        value={stockQty}
-                                                        onChange={(e) => setStockQty(Number(e.target.value))}
-                                                        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500 hover:accent-blue-400 transition-all"
-                                                    />
-                                                </div>
-
-                                                <div className="grid grid-cols-2 gap-2">
-                                                    {/* BUY BUTTON (Current Player Only) */}
-                                                    {/* BUY BUTTON (Current Player Only) */}
-                                                    {isMyTurn && (
-                                                        me.cash < (state.currentCard.cost || 0) * stockQty ? (
-                                                            // INSUFFICIENT FUNDS -> SHOW LOAN
-                                                            <div className="flex flex-col gap-1 w-full">
-                                                                <button
-                                                                    className="bg-red-600/50 cursor-not-allowed opacity-50 text-white font-bold py-2 rounded-xl flex flex-col items-center"
-                                                                    disabled
-                                                                >
-                                                                    <span className="text-sm">Не хватает средств</span>
-                                                                    <span className="text-[10px]">-${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
-                                                                </button>
-                                                                <button
-                                                                    onClick={() => {
-                                                                        const deficit = ((state.currentCard.cost || 0) * stockQty) - me.cash;
-                                                                        const loanAmount = Math.ceil(deficit / 1000) * 1000;
-                                                                        handleLoan(loanAmount);
-                                                                    }}
-                                                                    disabled={(me.loanDebt || 0) + ((state.currentCard.cost || 0) * stockQty - me.cash) > 38000}
-                                                                    className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold py-2 rounded-xl shadow-lg shadow-yellow-900/20"
-                                                                >
-                                                                    🏦 Взять кредит (+${Math.ceil(((state.currentCard.cost || 0) * stockQty - me.cash) / 1000) * 1000})
-                                                                </button>
-                                                            </div>
-                                                        ) : (
-                                                            // SUFFICIENT FUNDS -> SHOW BUY
-                                                            <button
-                                                                onClick={handleBuyStock}
-                                                                className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-900/20 flex flex-col items-center"
-                                                            >
-                                                                <span className="text-sm">КУПИТЬ</span>
-                                                                <span className="text-[10px] opacity-70">-${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
-                                                            </button>
-                                                        )
-                                                    )}
-
-                                                    {/* SELL BUTTON (Anyone with stock) */}
-                                                    {me.assets.some((a: any) => a.symbol === state.currentCard.symbol && a.quantity >= stockQty) ? (
-                                                        <button
-                                                            onClick={handleSellStock}
-                                                            className="bg-orange-600 hover:bg-orange-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-orange-900/20 flex flex-col items-center"
-                                                        >
-                                                            <span className="text-sm">ПРОДАТЬ</span>
-                                                            <span className="text-[10px] opacity-70">+${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
-                                                        </button>
-                                                    ) : (
-                                                        // Placeholder to keep grid layout if not selling
-                                                        !isMyTurn && <div className="bg-slate-800/50 rounded-xl flex items-center justify-center text-slate-600 text-xs font-bold">Нет акций</div>
-                                                    )}
-                                                </div>
-
-                                                {isMyTurn && (
-                                                    <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-xs mt-1">
-                                                        ПАС (Завершить ход)
-                                                    </button>
-                                                )}
-
-                                                <div className="text-center text-[10px] text-slate-500 mt-1 animate-pulse">
-                                                    Рынок открыт: Сделки доступны всем!
-                                                </div>
-                                            </div>
-                                        ) : state.currentCard.type === 'MARKET' ? (
-                                            /* MARKET: Special Logic for Global Interaction */
-                                            <div className="flex gap-2 w-full">
-                                                {me.assets.some((a: any) => a.title === state.currentCard?.targetTitle) ? (
-                                                    <button onClick={() => socket.emit('sell_asset', { roomId })} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
-                                                        ПРОДАТЬ
-                                                    </button>
-                                                ) : (
-                                                    <div className="flex-1 flex items-center justify-center bg-slate-800 text-slate-500 text-xs font-bold py-3 rounded-xl border border-slate-700">
-                                                        Нет актива
-                                                    </div>
-                                                )}
-
-                                                {/* Only Current Player can Dismiss (Close Market) */}
-                                                {isMyTurn && (
-                                                    <button onClick={handleDismissCard} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
-                                                        ЗАКРЫТЬ
-                                                    </button>
-                                                )}
-                                            </div>
-                                        ) : (
-                                            /* Standard Interaction (Current Player Only) */
-                                            isMyTurn ? (
-                                                me.cash >= ((state.currentCard.downPayment ?? state.currentCard.cost) || 0) ? (
-                                                    <div className="flex gap-2 w-full">
-                                                        <button onClick={handleBuy} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 transition-all">
-                                                            {state.currentCard.mandatory ? 'ОПЛАТИТЬ' : 'КУПИТЬ'}
-                                                        </button>
-                                                        {!state.currentCard.mandatory && (
-                                                            <button onClick={handleEndTurn} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
-                                                                ПАС
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                ) : (
-                                                    <div className="flex flex-col gap-2 w-full animate-in slide-in-from-bottom duration-300">
-                                                        <div className="bg-red-900/40 border border-red-500/50 p-2 rounded-lg text-center">
-                                                            <div className="text-red-400 font-bold text-xs uppercase tracking-widest">Недостаточно средств</div>
-                                                            <div className="text-white font-mono text-sm">
-                                                                Нужно еще: <span className="font-bold">${(((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash).toLocaleString()}</span>
-                                                            </div>
-                                                        </div>
-
-                                                        <div className="grid grid-cols-1 gap-2">
-                                                            <button
-                                                                onClick={() => {
-                                                                    const deficit = ((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash;
-                                                                    const loanAmount = Math.ceil(deficit / 1000) * 1000;
-                                                                    handleLoan(loanAmount);
-                                                                }}
-                                                                disabled={(me.loanDebt || 0) + (((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash) > 38000}
-                                                                className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-xs font-bold py-3 rounded-xl shadow-lg shadow-yellow-900/20 flex flex-col items-center justify-center gap-1"
-                                                            >
-                                                                <span>🏦 Взять кредит</span>
-                                                                {((me.loanDebt || 0) + (((state.currentCard.downPayment ?? state.currentCard.cost) || 0) - me.cash) > 38000) && <span className="text-[9px] text-red-200">(Лимит)</span>}
-                                                            </button>
-                                                        </div>
-
-                                                        <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-xs mt-1">
-                                                            Отказаться
-                                                        </button>
-                                                    </div>
-                                                )
-                                            ) : (
-                                                <div className="w-full text-center text-slate-500 text-sm animate-pulse bg-slate-900/50 p-3 rounded-xl border border-slate-800">⏳ Ожидание игрока...</div>
-                                            )
-                                        )}
-                                    </div>
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-
-                    {/* Charity Overlay */}
-                    {state.phase === 'CHARITY_CHOICE' && isMyTurn && !isAnimating && (
-                        <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
-                            <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative text-center">
-                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-red-500"></div>
-                                <div className="text-5xl mb-4">❤️</div>
-                                <h2 className="text-xl font-bold text-white mb-2">Благотворительность</h2>
-                                <p className="text-slate-400 text-sm mb-6">
-                                    Пожертвуйте {me.isFastTrack ? '$100,000' : '10% от общего дохода'}, чтобы получить возможность выбирать {me.isFastTrack ? '1, 2 или 3' : '1 или 2'} кубика на следующие 3 хода.
-                                </p>
-
-                                <div className="flex gap-2 w-full">
-                                    <button onClick={() => socket.emit('donate_charity', { roomId })} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-sm shadow-lg shadow-pink-900/20 transform hover:-translate-y-0.5 transition-all">
-                                        Пожертвовать
-                                    </button>
-                                    <button onClick={() => socket.emit('skip_charity', { roomId })} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-sm transform hover:-translate-y-0.5 transition-all">
-                                        Отказаться
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Opportunity Choice Overlay */}
-                    {state.phase === 'OPPORTUNITY_CHOICE' && !isAnimating && (
-                        <div className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-200">
-                            {isMyTurn ? (
-                                <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative text-center">
-                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-amber-600"></div>
-                                    <div className="text-5xl mb-4">⚡</div>
-                                    <h2 className="text-xl font-bold text-white mb-2">Возможность</h2>
-                                    <p className="text-slate-400 text-sm mb-6">Выберите тип сделки:</p>
-
-                                    <div className="flex gap-2 w-full">
-                                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })} className="flex-1 bg-gradient-to-br from-emerald-500 to-green-600 hover:from-emerald-400 hover:to-green-500 text-white font-bold py-4 rounded-2xl text-sm shadow-xl shadow-green-900/40 relative overflow-hidden group transform hover:-translate-y-1 transition-all">
-                                            <div className="relative z-10">Малая</div>
-                                            <div className="text-[10px] opacity-70 relative z-10">До $5,000</div>
-                                            {(state.deckCounts?.small) && (
-                                                <div className="text-[10px] bg-black/20 text-white/90 font-mono mt-1 mx-auto w-fit px-2 py-0.5 rounded relative z-10">
-                                                    {state.deckCounts.small.remaining}/{state.deckCounts.small.total}
-                                                </div>
-                                            )}
-                                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                                        </button>
-
-                                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })} className="flex-1 bg-gradient-to-br from-purple-500 to-indigo-600 hover:from-purple-400 hover:to-indigo-500 text-white font-bold py-4 rounded-2xl text-sm shadow-xl shadow-purple-900/40 relative overflow-hidden group transform hover:-translate-y-1 transition-all">
-                                            <div className="relative z-10">Крупная</div>
-                                            <div className="text-[10px] opacity-70 relative z-10">$6,000+</div>
-                                            {(state.deckCounts?.big) && (
-                                                <div className="text-[10px] bg-black/20 text-white/90 font-mono mt-1 mx-auto w-fit px-2 py-0.5 rounded relative z-10">
-                                                    {state.deckCounts.big.remaining}/{state.deckCounts.big.total}
-                                                </div>
-                                            )}
-                                            <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="bg-[#1e293b] w-full max-w-xs p-6 rounded-3xl border border-slate-700 shadow-2xl text-center">
-                                    <h2 className="text-xl font-bold text-white mb-2">⚡ Возможность</h2>
-                                    <p className="text-slate-400 text-sm">Игрок выбирает сделку...</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* DOWNSIZED DECISION OVERLAY */}
-                    {state.phase === 'DOWNSIZED_DECISION' && !isAnimating && (
-                        <div className="absolute inset-0 z-[200] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
-                            {isMyTurn ? (
-                                <div className="bg-[#1e293b] w-full max-w-md p-8 rounded-3xl border border-red-500/30 shadow-2xl relative text-center">
-                                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-orange-600"></div>
-                                    <div className="text-6xl mb-6">📉</div>
-                                    <h2 className="text-2xl font-bold text-white mb-2">Увольнение!</h2>
-                                    <p className="text-slate-400 text-sm mb-6 px-4">
-                                        Вы потеряли работу. Что будете делать?
-                                    </p>
-
-                                    <div className="flex flex-col gap-3 w-full">
-                                        {/* Option 1: Pay 1 Month & Skip 2 */}
-                                        <button
-                                            onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_1M' })}
-                                            disabled={me.cash < me.expenses * 1}
-                                            className="w-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl border border-slate-700 flex items-center justify-between px-6 group transition-all"
-                                        >
-                                            <div className="flex flex-col items-start">
-                                                <span className="text-sm group-hover:text-blue-400 transition-colors">Оплатить 1 мес. и Пропустить</span>
-                                                <span className="text-[10px] text-slate-500">Пропуск 2 ходов</span>
-                                            </div>
-                                            <div className="text-red-400 font-mono font-bold">-${(me.expenses * 1).toLocaleString()}</div>
-                                        </button>
-
-                                        {/* Option 2: Pay 2 Months & No Skip */}
-                                        <button
-                                            onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_2M' })}
-                                            disabled={me.cash < me.expenses * 2}
-                                            className="w-full bg-gradient-to-r from-blue-900/50 to-indigo-900/50 hover:from-blue-800/50 hover:to-indigo-800/50 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 rounded-2xl border border-blue-500/30 flex items-center justify-between px-6 group transition-all"
-                                        >
-                                            <div className="flex flex-col items-start">
-                                                <span className="text-sm group-hover:text-cyan-400 transition-colors">Оплатить 2 мес. и Играть</span>
-                                                <span className="text-[10px] text-slate-500">Без пропуска ходов</span>
-                                            </div>
-                                            <div className="text-red-400 font-mono font-bold">-${(me.expenses * 2).toLocaleString()}</div>
-                                        </button>
-
-                                        {/* Helper: Insufficient Funds Actions */}
-                                        {((me.cash < me.expenses * 1)) && (
-                                            <div className="grid grid-cols-2 gap-2 mt-2">
-                                                <button
-                                                    onClick={() => {
-                                                        const deficit = (me.expenses * 1) - me.cash;
-                                                        const loanAmount = Math.ceil(deficit / 1000) * 1000;
-                                                        handleLoan(loanAmount);
-                                                    }}
-                                                    className="bg-yellow-600 hover:bg-yellow-500 text-white text-xs font-bold py-3 rounded-xl"
-                                                >
-                                                    🏦 Взять кредит
-                                                </button>
-                                                <button
-                                                    onClick={() => setShowBank(true)}
-                                                    className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold py-3 rounded-xl"
-                                                >
-                                                    Попросить
-                                                </button>
-                                            </div>
-                                        )}
-
-                                        {/* Option 3: Bankruptcy */}
-                                        <button
-                                            onClick={() => {
-                                                if (confirm('ВЫ УВЕРЕНЫ? Вы начнете заново с штрафом на кредиты.')) {
-                                                    socket.emit('decision_downsized', { roomId, choice: 'BANKRUPT' });
-                                                }
-                                            }}
-                                            className="w-full mt-2 text-red-500/70 hover:text-red-400 text-xs font-bold py-2 uppercase tracking-widest transition-colors"
-                                        >
-                                            Объявить банкротство
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="bg-[#1e293b] w-full max-w-xs p-6 rounded-3xl border border-slate-700 shadow-2xl text-center">
-                                    <div className="text-4xl mb-4">📉</div>
-                                    <h2 className="text-xl font-bold text-white mb-2">Увольнение</h2>
-                                    <p className="text-slate-400 text-sm">Игрок принимает решение...</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
-
-                    {/* BABY ROLL OVERLAY */}
-                    {state.phase === 'BABY_ROLL' && !isAnimating && (
-                        <div className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in zoom-in duration-300">
-                            {isMyTurn ? (
-                                <div className="text-center">
-                                    <div className="text-6xl mb-6 animate-bounce">👶</div>
-                                    <h2 className="text-2xl font-bold text-white mb-8 drop-shadow-lg">Рождение ребенка?</h2>
-                                    <button
-                                        onClick={() => handleRoll()}
-                                        className="bg-gradient-to-br from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-bold py-6 px-12 rounded-full text-xl shadow-2xl shadow-pink-900/50 transform hover:scale-110 transition-all duration-300 ring-4 ring-pink-500/20"
-                                    >
-                                        Бросить кубик
-                                    </button>
-                                </div>
-                            ) : (
-                                <div className="bg-[#1e293b] w-full max-w-xs p-6 rounded-3xl border border-slate-700 shadow-2xl text-center">
-                                    <div className="text-4xl mb-4">👶</div>
-                                    <h2 className="text-xl font-bold text-white mb-2">Ребенок</h2>
-                                    <p className="text-slate-400 text-sm">Игрок бросает кубик...</p>
-                                </div>
-                            )}
-                        </div>
-                    )}
+                        />                    </div>
                 </div>
-
-
-
-
 
                 {/* RIGHT SIDEBAR (Redesigned) */}
                 <div className="hidden lg:flex flex-col w-[380px] h-full border-l border-slate-800/50 bg-[#0f172a]/50 relative z-40 overflow-hidden shadow-xl shrink-0">
@@ -1729,9 +1294,46 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     {/* 2. PLAYER STATUS (Debts/Income) */}
                     <div className="p-4 border-b border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
 
-                        {/* Persistent Market Cards (Active Opportunities) */}
+
+
+                        <div className="grid grid-cols-2 gap-4 mb-4">
+                            {/* Placeholder for other player status elements if needed */}
+                        </div>
+                    </div>
+
+                    {/* 1. STATUS CARD (Player + Timer) */}
+                    <div className="p-4 pb-0 shrink-0">
+                        <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden group">
+                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none group-hover:bg-blue-500/20 transition-all duration-500"></div>
+                            <div>
+                                <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-1 flex items-center gap-2">
+                                    <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
+                                    Ход игрока
+                                </div>
+                                <div className="text-lg font-bold text-white tracking-wide truncate max-w-[180px]">{currentPlayer.name}</div>
+                            </div>
+                            <div className={`text-4xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
+                                {formatTime(timeLeft)}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* 2. ACTIONS PANEL (Cards) */}
+                    <div className="p-4 flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-4">
+
+                        {/* ACTIVE CARD ZONE (Desktop) */}
+                        <ActiveCardZone
+                            state={state}
+                            isMyTurn={isMyTurn}
+                            me={me}
+                            roomId={roomId}
+                            onDismissMarket={handleDismissCard}
+                        />
+
+                        {/* Persistent Market Cards (Small Rows) */}
                         {state.activeMarketCards && state.activeMarketCards.length > 0 && (
-                            <div className="mb-4 space-y-2 animate-in slide-in-from-left duration-300">
+                            <div className="space-y-2 animate-in slide-in-from-left duration-300">
+                                <h3 className="text-[10px] uppercase text-slate-500 font-bold mb-1">Рынок</h3>
                                 {state.activeMarketCards
                                     .filter((ac: any) => ac.expiresAt > Date.now())
                                     .map((ac: any) => (
@@ -1762,33 +1364,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                            {/* Placeholder for other player status elements if needed */}
-                        </div>
-                    </div>
-
-                    {/* 1. STATUS CARD (Player + Timer) */}
-                    <div className="p-4 pb-0 shrink-0">
-                        <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none group-hover:bg-blue-500/20 transition-all duration-500"></div>
-                            <div>
-                                <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-1 flex items-center gap-2">
-                                    <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
-                                    Ход игрока
-                                </div>
-                                <div className="text-lg font-bold text-white tracking-wide truncate max-w-[180px]">{currentPlayer.name}</div>
-                            </div>
-                            <div className={`text-4xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
-                                {formatTime(timeLeft)}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 2. ACTIONS PANEL */}
-                    <div className="p-4 shrink-0">
-
                         {/* 1.5. PLAYERS LIST (New for Desktop) */}
-                        <div className="p-4 pb-0 shrink-0">
+                        <div className="p-0 shrink-0">
                             <div className="bg-[#1e293b]/50 rounded-2xl p-4 border border-slate-700/50 shadow-lg flex flex-col gap-2 relative overflow-hidden">
                                 <h3 className="text-slate-500 text-[10px] uppercase tracking-[0.25em] font-black mb-2 flex items-center gap-2">
                                     <span className="text-blue-400">👥</span> ИГРОКИ ({state.players.length})
