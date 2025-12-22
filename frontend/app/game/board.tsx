@@ -1230,7 +1230,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 <span className="text-3xl filter drop-shadow-md">👷</span>
                                 <div>
                                     <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Профессия</span>
-                                    <div className="text-xl font-bold text-white leading-tight tracking-tight">{me.professionName || 'Выбор...'}</div>
+                                    <div className="text-sm font-bold text-white leading-tight tracking-tight">{me.professionName || 'Выбор...'}</div>
                                 </div>
                             </div>
 
@@ -1345,10 +1345,10 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 </div>
 
                 {/* RIGHT SIDEBAR (Redesigned) - Flex Column */}
-                <div className="hidden lg:flex flex-col w-[380px] h-full border-l border-slate-800/50 bg-[#0f172a]/50 relative z-40 overflow-hidden shadow-xl shrink-0">
+                <div className="hidden lg:flex flex-col w-[380px] h-full border-l border-slate-800/50 bg-[#0f172a]/50 relative z-40 overflow-hidden shadow-xl shrink-0 p-4 gap-3">
 
                     {/* 1. TOP HEADER: Player + Timer + Actions */}
-                    <div className="p-4 pb-0 shrink-0 mb-2">
+                    <div className="shrink-0">
                         <div className="bg-[#151b2b] rounded-2xl p-3 border border-slate-800/80 shadow-lg relative overflow-hidden group flex flex-col gap-3">
                             {/* Player Info Row */}
                             <div className="flex items-center justify-between">
@@ -1404,84 +1404,79 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         </div>
                     </div>
 
-                    {/* 2. BODY SPLIT: Cards (Top) & Chat (Bottom) - Equal Flex */}
-                    <div className="flex-1 flex flex-col min-h-0 px-4 pb-4 gap-4 overflow-hidden">
-
-                        {/* Zone 2: Available Cards (Module Style) */}
-                        <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-4 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-0">
-                            <ActiveCardZone
-                                state={state}
-                                isMyTurn={isMyTurn}
-                                me={me}
-                                roomId={roomId}
-                                onDismissMarket={handleDismissCard}
-                                onMarketCardClick={(card) => setSquareInfo({
-                                    type: 'MARKET',
-                                    card: card.card,
-                                    title: card.card.title,
-                                    description: card.card.description
-                                })}
-                            />
-                        </div>
+                    {/* 2. Available Cards (Module Style) */}
+                    <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-4 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-0">
+                        <ActiveCardZone
+                            state={state}
+                            isMyTurn={isMyTurn}
+                            me={me}
+                            roomId={roomId}
+                            onDismissMarket={handleDismissCard}
+                            onMarketCardClick={(card) => setSquareInfo({
+                                type: 'MARKET',
+                                card: card.card,
+                                title: card.card.title,
+                                description: card.card.description
+                            })}
+                        />
+                    </div>
 
 
-                        {/* Zone 3: Player List (Horizontal Module) */}
-                        <div className="shrink-0 relative px-1 py-1">
-                            <div className="bg-[#1e293b]/40 rounded-xl p-2 border border-slate-800/50 shadow-inner flex flex-col gap-1">
-                                <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar mask-horizontal px-1 justify-center">
-                                    {state.players.map((p: any) => {
-                                        const isCurrentTurn = p.id === currentPlayer.id;
-                                        return (
-                                            <div
-                                                key={p.id}
-                                                onClick={() => setSelectedPlayerForMenu(p)}
-                                                className={`relative shrink-0 cursor-pointer group transition-all duration-300 ${isCurrentTurn ? 'scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'}`}
-                                                title={p.name}
-                                            >
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs border-2 shadow-lg relative z-10 
+                    {/* Zone 3: Player List (Horizontal Module) */}
+                    <div className="shrink-0 relative px-1 py-1">
+                        <div className="bg-[#1e293b]/40 rounded-xl p-2 border border-slate-800/50 shadow-inner flex flex-col gap-1">
+                            <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar mask-horizontal px-1 justify-center">
+                                {state.players.map((p: any) => {
+                                    const isCurrentTurn = p.id === currentPlayer.id;
+                                    return (
+                                        <div
+                                            key={p.id}
+                                            onClick={() => setSelectedPlayerForMenu(p)}
+                                            className={`relative shrink-0 cursor-pointer group transition-all duration-300 ${isCurrentTurn ? 'scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'}`}
+                                            title={p.name}
+                                        >
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs border-2 shadow-lg relative z-10 
                                                 ${isCurrentTurn ? 'border-green-400 ring-2 ring-green-500/30' : 'border-slate-600 bg-slate-800'}`}>
-                                                    {p.photo_url ? (
-                                                        <img src={p.photo_url} className="w-full h-full object-cover rounded-full" />
-                                                    ) : (
-                                                        <span className={`w-full h-full rounded-full flex items-center justify-center ${getAvatarColor(p.id)} text-white`}>
-                                                            {p.token}
-                                                        </span>
-                                                    )}
-                                                </div>
-
-                                                {/* Name Tooltip (Always visible for current turn, hover for others) */}
-                                                {isCurrentTurn && (
-                                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-900/80 text-green-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-green-500/30 backdrop-blur-sm z-20">
-                                                        ХОДИТ
-                                                    </div>
+                                                {p.photo_url ? (
+                                                    <img src={p.photo_url} className="w-full h-full object-cover rounded-full" />
+                                                ) : (
+                                                    <span className={`w-full h-full rounded-full flex items-center justify-center ${getAvatarColor(p.id)} text-white`}>
+                                                        {p.token}
+                                                    </span>
                                                 )}
                                             </div>
-                                        );
-                                    })}
-                                </div>
+
+                                            {/* Name Tooltip (Always visible for current turn, hover for others) */}
+                                            {isCurrentTurn && (
+                                                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-900/80 text-green-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-green-500/30 backdrop-blur-sm z-20">
+                                                    ХОДИТ
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Zone 4: Chat (Module Style) */}
+                    <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-4 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-0 group">
+                        {/* Glow effect for Chat too? maybe subtle */}
+                        <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-[40px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-purple-500/10 transition-all duration-500"></div>
+
+                        <div className="flex items-center justify-between mb-2 shrink-0 px-1">
+                            <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold flex items-center gap-2">
+                                <span>💬</span> Чат
                             </div>
                         </div>
 
-                        {/* Zone 4: Chat (Module Style) */}
-                        <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-4 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-0 group">
-                            {/* Glow effect for Chat too? maybe subtle */}
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-[40px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-purple-500/10 transition-all duration-500"></div>
-
-                            <div className="flex items-center justify-between mb-2 shrink-0 px-1">
-                                <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold flex items-center gap-2">
-                                    <span>💬</span> Чат
-                                </div>
-                            </div>
-
-                            <TextChat
-                                roomId={roomId}
-                                socket={socket}
-                                messages={state.chat || []}
-                                currentUser={me}
-                                className="w-full h-full rounded-xl border border-slate-800/30 bg-slate-900/20"
-                            />
-                        </div>
-
+                        <TextChat
+                            roomId={roomId}
+                            socket={socket}
+                            messages={state.chat || []}
+                            currentUser={me}
+                            className="w-full h-full rounded-xl border border-slate-800/30 bg-slate-900/20"
+                        />
                     </div>
 
                 </div>

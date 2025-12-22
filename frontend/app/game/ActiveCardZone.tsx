@@ -75,31 +75,36 @@ export const ActiveCardZone = ({ state, isMyTurn, me, roomId, onDismissMarket, o
                 );
             }
             return (
-                <div className="flex flex-col items-center justify-center h-full w-full relative">
+                <div className="flex flex-col h-full w-full relative pt-1">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-t-3xl"></div>
-                    <div className="text-5xl mb-4 text-yellow-500">⚡</div>
-                    <h2 className="text-2xl font-bold text-white mb-6">Возможность</h2>
+                    <div className="p-4 flex-1 flex flex-col overflow-y-auto custom-scrollbar">
+                        <div className="flex items-center gap-3 mb-4 shrink-0">
+                            <div className="w-12 h-12 bg-yellow-500/20 rounded-xl flex items-center justify-center text-2xl">⚡</div>
+                            <div>
+                                <h2 className="text-lg font-bold text-white leading-tight">Возможность</h2>
+                                <p className="text-[10px] text-slate-400">Выберите тип сделки</p>
+                            </div>
+                        </div>
 
-                    <div className="flex gap-4 w-full px-4">
-                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })} className="flex-1 bg-gradient-to-br from-emerald-600 to-emerald-800 hover:from-emerald-500 hover:to-emerald-700 text-white font-bold py-6 rounded-2xl text-lg shadow-xl relative overflow-hidden group border border-emerald-500/30">
-                            <div className="relative z-10">Малая</div>
-                            <div className="text-xs opacity-70 relative z-10 mt-1">До $5,000</div>
-                            {(state.deckCounts?.small) && (
-                                <div className="text-[10px] bg-black/30 text-white/90 font-mono mt-2 mx-auto w-fit px-2 py-0.5 rounded relative z-10">
-                                    {state.deckCounts.small.remaining} шт
+                        <div className="flex flex-col gap-2 w-full">
+                            <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })} className="w-full bg-slate-800 hover:bg-slate-700/80 p-3 rounded-xl border border-emerald-500/30 flex items-center justify-between group transition-all relative overflow-hidden">
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
+                                <div className="text-left pl-3">
+                                    <div className="font-bold text-emerald-400 text-sm">Малая Сделка</div>
+                                    <div className="text-[10px] text-slate-500">Макс. 5 000$</div>
                                 </div>
-                            )}
-                        </button>
+                                {(state.deckCounts?.small) && <div className="text-[10px] bg-emerald-900/40 px-2 py-0.5 rounded text-emerald-300 font-mono">{state.deckCounts.small.remaining} шт</div>}
+                            </button>
 
-                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })} className="flex-1 bg-gradient-to-br from-purple-600 to-indigo-800 hover:from-purple-500 hover:to-indigo-700 text-white font-bold py-6 rounded-2xl text-lg shadow-xl relative overflow-hidden group border border-purple-500/30">
-                            <div className="relative z-10">Крупная</div>
-                            <div className="text-xs opacity-70 relative z-10 mt-1">$6,000+</div>
-                            {(state.deckCounts?.big) && (
-                                <div className="text-[10px] bg-black/30 text-white/90 font-mono mt-2 mx-auto w-fit px-2 py-0.5 rounded relative z-10">
-                                    {state.deckCounts.big.remaining} шт
+                            <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })} className="w-full bg-slate-800 hover:bg-slate-700/80 p-3 rounded-xl border border-purple-500/30 flex items-center justify-between group transition-all relative overflow-hidden">
+                                <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500"></div>
+                                <div className="text-left pl-3">
+                                    <div className="font-bold text-purple-400 text-sm">Крупная Сделка</div>
+                                    <div className="text-[10px] text-slate-500">Мин. 6 000$</div>
                                 </div>
-                            )}
-                        </button>
+                                {(state.deckCounts?.big) && <div className="text-[10px] bg-purple-900/40 px-2 py-0.5 rounded text-purple-300 font-mono">{state.deckCounts.big.remaining} шт</div>}
+                            </button>
+                        </div>
                     </div>
                 </div>
             );
@@ -108,20 +113,22 @@ export const ActiveCardZone = ({ state, isMyTurn, me, roomId, onDismissMarket, o
         // 2. CHARITY CHOICE
         if (state.phase === 'CHARITY_CHOICE' && isMyTurn) {
             return (
-                <div className="flex flex-col items-center justify-center h-full w-full relative px-4">
+                <div className="flex flex-col h-full w-full relative pt-1">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-red-500 rounded-t-3xl"></div>
-                    <div className="text-6xl mb-4">❤️</div>
-                    <h2 className="text-2xl font-bold text-white mb-4">Благотворительность</h2>
-                    <p className="text-slate-300 text-center mb-8 max-w-xs leading-relaxed">
-                        Пожертвуйте <span className="text-pink-400 font-bold">{me.isFastTrack ? '$100,000' : '10% от дохода'}</span>,<br />чтобы использовать 1-2 кубика.
-                    </p>
-                    <div className="flex gap-3 w-full max-w-xs">
-                        <button onClick={() => socket.emit('donate_charity', { roomId })} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-4 rounded-xl text-sm shadow-lg shadow-pink-900/40">
-                            Пожертвовать (${(Math.max(0, me.income * 0.1)).toLocaleString()})
-                        </button>
-                        <button onClick={() => socket.emit('skip_charity', { roomId })} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl text-sm">
-                            Отказаться
-                        </button>
+                    <div className="p-4 flex-1 flex flex-col overflow-y-auto custom-scrollbar items-center text-center">
+                        <div className="text-4xl mb-2">❤️</div>
+                        <h2 className="text-lg font-bold text-white mb-2">Благотворительность</h2>
+                        <p className="text-slate-400 text-xs mb-4 leading-relaxed">
+                            Пожертвуйте <span className="text-pink-400 font-bold">{me.isFastTrack ? '$100k' : '10%'}</span> для бонусов.
+                        </p>
+                        <div className="flex flex-col gap-2 w-full">
+                            <button onClick={() => socket.emit('donate_charity', { roomId })} className="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg">
+                                Пожертвовать (${(Math.max(0, me.income * 0.1)).toLocaleString()})
+                            </button>
+                            <button onClick={() => socket.emit('skip_charity', { roomId })} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-3 rounded-xl text-xs uppercase tracking-wider">
+                                Отказаться
+                            </button>
+                        </div>
                     </div>
                 </div>
             );
@@ -131,15 +138,18 @@ export const ActiveCardZone = ({ state, isMyTurn, me, roomId, onDismissMarket, o
         if (state.phase === 'BABY_ROLL') {
             if (!isMyTurn) return <div className="flex flex-col items-center justify-center h-full text-slate-500 animate-pulse text-lg">👶 Ожидание броска...</div>;
             return (
-                <div className="flex flex-col items-center justify-center h-full w-full px-8">
-                    <div className="text-6xl mb-6 animate-bounce">👶</div>
-                    <h2 className="text-2xl font-bold text-white mb-8">Пополнение в семье!</h2>
-                    <button
-                        onClick={() => socket.emit('roll_dice', { roomId })}
-                        className="w-full max-w-xs bg-gradient-to-r from-pink-500 to-rose-600 hover:from-pink-400 hover:to-rose-500 text-white font-bold py-5 rounded-2xl text-xl shadow-xl shadow-pink-900/30"
-                    >
-                        Бросить кубик
-                    </button>
+                <div className="flex flex-col h-full w-full relative pt-1">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-400 to-rose-400 rounded-t-3xl"></div>
+                    <div className="p-6 flex-1 flex flex-col overflow-y-auto custom-scrollbar items-center justify-center text-center">
+                        <div className="text-5xl mb-4 animate-bounce">👶</div>
+                        <h2 className="text-lg font-bold text-white mb-6">Пополнение в семье!</h2>
+                        <button
+                            onClick={() => socket.emit('roll_dice', { roomId })}
+                            className="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-4 rounded-xl text-sm uppercase tracking-wider shadow-lg shadow-pink-900/30"
+                        >
+                            Бросить кубик
+                        </button>
+                    </div>
                 </div>
             );
         }
@@ -148,214 +158,219 @@ export const ActiveCardZone = ({ state, isMyTurn, me, roomId, onDismissMarket, o
         if (state.phase === 'DOWNSIZED_DECISION') {
             if (!isMyTurn) return <div className="flex flex-col items-center justify-center h-full text-slate-500">📉 Игрок принимает решение...</div>;
             return (
-                <div className="flex flex-col items-center justify-center h-full w-full relative px-2">
+                <div className="flex flex-col h-full w-full relative pt-1">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-t-3xl"></div>
-                    <h2 className="text-2xl font-bold text-white mb-6 mt-2 flex items-center gap-2">📉 Увольнение!</h2>
+                    <div className="p-4 flex-1 flex flex-col overflow-y-auto custom-scrollbar">
+                        <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2">📉 Увольнение!</h2>
 
-                    <div className="flex flex-col gap-3 w-full max-w-xs">
-                        {/* Pay 1M */}
-                        <button
-                            onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_1M' })}
-                            disabled={me.cash < me.expenses * 1}
-                            className="w-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-bold py-4 rounded-xl text-sm flex justify-between px-4 border border-slate-700 items-center group"
-                        >
-                            <span className="text-left flex flex-col items-start">
-                                <span>Оплатить 1 мес + Пропуск</span>
-                                <span className="text-[10px] text-slate-500 group-hover:text-slate-300">Пропуск 2 ходов</span>
-                            </span>
-                            <span className="text-red-400 font-mono text-base">-${(me.expenses).toLocaleString()}</span>
-                        </button>
-                        {/* Pay 2M */}
-                        <button
-                            onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_2M' })}
-                            disabled={me.cash < me.expenses * 2}
-                            className="w-full bg-blue-900/40 hover:bg-blue-800/40 disabled:opacity-50 text-white font-bold py-4 rounded-xl text-sm flex justify-between px-4 border border-blue-500/30 items-center group"
-                        >
-                            <span className="text-left flex flex-col items-start">
-                                <span>Оплатить 2 мес + Играть</span>
-                                <span className="text-[10px] text-slate-500 group-hover:text-slate-300">Играть сразу</span>
-                            </span>
-                            <span className="text-red-400 font-mono text-base">-${(me.expenses * 2).toLocaleString()}</span>
-                        </button>
-                        {/* Bankrupt */}
-                        <button
-                            onClick={() => { if (confirm('Банкротство?')) socket.emit('decision_downsized', { roomId, choice: 'BANKRUPT' }); }}
-                            className="text-red-500/70 hover:text-red-400 text-xs mt-2 uppercase font-bold tracking-widest"
-                        >
-                            Объявить банкротство
-                        </button>
+                        <div className="flex flex-col gap-2 w-full">
+                            <button
+                                onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_1M' })}
+                                disabled={me.cash < me.expenses * 1}
+                                className="w-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-xs flex justify-between px-3 border border-slate-700 items-center group"
+                            >
+                                <span className="text-left flex flex-col items-start">
+                                    <span>Оплатить 1 мес</span>
+                                    <span className="text-[9px] text-slate-500">Пропуск 2 ходов</span>
+                                </span>
+                                <span className="text-red-400 font-mono text-xs">-${(me.expenses).toLocaleString()}</span>
+                            </button>
+
+                            <button
+                                onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_2M' })}
+                                disabled={me.cash < me.expenses * 2}
+                                className="w-full bg-blue-900/40 hover:bg-blue-800/40 disabled:opacity-50 text-white font-bold py-3 rounded-xl text-xs flex justify-between px-3 border border-blue-500/30 items-center group"
+                            >
+                                <span className="text-left flex flex-col items-start">
+                                    <span>Оплатить 2 мес</span>
+                                    <span className="text-[9px] text-slate-500">Играть сразу</span>
+                                </span>
+                                <span className="text-red-400 font-mono text-xs">-${(me.expenses * 2).toLocaleString()}</span>
+                            </button>
+
+                            <button
+                                onClick={() => { if (confirm('Банкротство?')) socket.emit('decision_downsized', { roomId, choice: 'BANKRUPT' }); }}
+                                className="text-red-500/70 hover:text-red-400 text-[10px] mt-2 uppercase font-bold tracking-widest text-center"
+                            >
+                                Объявить банкротство
+                            </button>
+                        </div>
                     </div>
                 </div>
             );
         }
 
-        // 5. CURRENT CARD (Standard)
+        // 5. CURRENT CARD (Compact Design)
         if (state.currentCard) {
             return (
                 <div className="flex flex-col h-full w-full relative">
-                    {/* Decorative Line */}
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-purple-500 rounded-t-3xl"></div>
+                    {/* Decorative Gradient Line */}
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 opacity-80"></div>
 
-                    <div className="flex-1 flex flex-col p-4 overflow-y-auto custom-scrollbar">
-                        {/* Header Icon */}
-                        <div className="flex flex-row items-center gap-4 mb-4">
-                            {/* Icon Box */}
-                            <div className="w-20 h-20 bg-slate-800/50 rounded-2xl flex items-center justify-center shrink-0 border border-slate-700/50 shadow-inner">
-                                <span className="text-5xl drop-shadow-lg leading-none">{state.currentCard.type === 'MARKET' ? '🏠' : '💸'}</span>
+                    <div className="flex-1 flex flex-col pt-3 overflow-y-auto custom-scrollbar px-1">
+
+                        {/* Header: Icon + Title */}
+                        <div className="flex items-start gap-4 mb-3 shrink-0">
+                            <div className="w-16 h-16 bg-slate-800/80 rounded-2xl flex items-center justify-center shrink-0 border border-slate-700 shadow-md">
+                                <span className="text-4xl drop-shadow-md">{state.currentCard.type === 'MARKET' ? '🏠' : '💸'}</span>
                             </div>
-
-                            {/* Right Content */}
-                            <div className="flex-1 flex flex-col text-right items-end justify-center min-h-[5rem]">
-                                <h2 className="text-xl font-bold text-white leading-tight mb-1">{state.currentCard.title}</h2>
-                                <p className="text-slate-400 text-xs leading-relaxed">{state.currentCard.description}</p>
+                            <div className="flex flex-col min-w-0 pt-1">
+                                <h2 className="text-lg font-bold text-white leading-tight mb-1 truncate">{state.currentCard.title}</h2>
+                                <p className="text-slate-400 text-[10px] leading-relaxed line-clamp-3">{state.currentCard.description}</p>
                             </div>
                         </div>
 
-                        {/* Cost / Info Block */}
-                        {state.currentCard.type === 'MARKET' ? (
-                            <div className="bg-slate-900/80 p-3 rounded-xl mb-4 border border-slate-700 text-center shrink-0">
-                                <div className="text-[10px] text-slate-500 uppercase tracking-widest">Предложение</div>
-                                <div className="text-2xl font-mono text-green-400 font-bold my-1">${(state.currentCard.offerPrice || 0).toLocaleString()}</div>
-                                <div className="text-slate-400 text-[10px]">за: {state.currentCard.targetTitle}</div>
-                            </div>
-                        ) : state.currentCard.cost && (
-                            <div className="bg-slate-900/80 p-3 rounded-xl mb-4 border border-slate-700 text-center shrink-0">
-                                <div className="flex justify-between items-center px-4">
-                                    <div className="text-left">
-                                        <div className="text-[10px] text-slate-500 uppercase tracking-widest">Цена</div>
-                                        <div className="text-xl font-mono text-white font-bold">${state.currentCard.cost.toLocaleString()}</div>
-                                    </div>
-                                    {state.currentCard.type !== 'EXPENSE' && state.currentCard.type !== 'DOODAD' && (
-                                        <div className="text-right">
-                                            <div className="text-[10px] text-slate-500 uppercase tracking-widest">Доход</div>
-                                            <div className="text-xl font-mono text-green-400 font-bold">+${state.currentCard.cashflow || 0}</div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-
-                    {/* ACTION BUTTONS (Pinned to bottom) */}
-                    <div className="p-4 pt-0 shrink-0 bg-[#1e293b]"> {/* Background to cover scroll */}
-                        <div className="flex flex-col gap-2 w-full">
-                            {/* MARKET Logic */}
+                        {/* Info Block (Price / Income) */}
+                        <div className="bg-slate-900/40 rounded-xl p-3 border border-slate-800 mb-2 shrink-0">
                             {state.currentCard.type === 'MARKET' ? (
-                                <div className="flex gap-2 w-full">
-                                    {me.assets.some((a: any) => a.title === state.currentCard?.targetTitle) ? (
-                                        <button onClick={() => socket.emit('sell_asset', { roomId })} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl text-sm shadow-lg shadow-green-900/30">
-                                            ПРОДАТЬ
-                                        </button>
-                                    ) : (
-                                        <div className="flex-1 flex items-center justify-center bg-slate-800 text-slate-500 text-sm font-bold py-4 rounded-xl border border-slate-700">
-                                            Нет актива
-                                        </div>
-                                    )}
-                                    {isMyTurn && (
-                                        <button onClick={onDismissMarket} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl text-sm">
-                                            ЗАКРЫТЬ
-                                        </button>
-                                    )}
+                                <div className="flex justify-between items-center text-center">
+                                    <div className="text-left">
+                                        <div className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-0.5">Цена</div>
+                                        <div className="text-xl font-mono text-emerald-400 font-bold tracking-tight">${(state.currentCard.offerPrice || 0).toLocaleString()}</div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-0.5">Цель</div>
+                                        <div className="text-xs text-white font-medium max-w-[80px] truncate">{state.currentCard.targetTitle}</div>
+                                    </div>
                                 </div>
                             ) : (
-                                // Standard Logic
-                                isMyTurn ? (
-                                    (me.cash >= ((state.currentCard.downPayment ?? state.currentCard.cost) || 0) * stockQty) || state.currentCard.symbol ? (
-                                        <div className="flex gap-2 w-full">
-                                            {state.currentCard.symbol ? (
-                                                // STOCK BUY UI
-                                                <div className="flex flex-col gap-2 w-full">
+                                <div className="flex justify-between items-center">
+                                    <div className="text-left">
+                                        <div className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-0.5">Цена</div>
+                                        {state.currentCard.cost ? (
+                                            <div className="text-xl font-mono text-white font-bold tracking-tight">${state.currentCard.cost.toLocaleString()}</div>
+                                        ) : (
+                                            <div className="text-sm text-slate-400 italic">Бесплатно</div>
+                                        )}
+                                    </div>
 
-                                                    {/* BUY / SELL TOGGLE */}
-                                                    <div className="bg-slate-900/50 p-1 rounded-xl flex gap-1 border border-slate-800 mb-1">
-                                                        <button
-                                                            onClick={() => handleModeSwitch('BUY')}
-                                                            className={`flex-1 py-3 text-xs font-bold uppercase rounded-lg transition-all ${mode === 'BUY' ? 'bg-green-600 text-white shadow-lg' : 'bg-transparent text-slate-500 hover:text-slate-300'}`}
-                                                        >
-                                                            Купить
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleModeSwitch('SELL')}
-                                                            disabled={!me.assets.some((a: any) => a.symbol === state.currentCard.symbol && a.quantity > 0)}
-                                                            className={`flex-1 py-3 text-xs font-bold uppercase rounded-lg transition-all ${mode === 'SELL' ? 'bg-orange-600 text-white shadow-lg' : 'bg-transparent text-slate-500 hover:text-slate-300 disabled:opacity-30'}`}
-                                                        >
-                                                            Продать
-                                                        </button>
-                                                    </div>
-
-                                                    {/* Qty Selector */}
-                                                    <div className="flex items-center justify-between bg-slate-900/50 rounded-xl p-1 border border-slate-800 mb-1">
-                                                        <button onClick={() => setStockQty(Math.max(1, stockQty - 1))} className="w-12 py-3 text-slate-400 hover:text-white bg-slate-800/50 rounded-lg hover:bg-slate-700 transition-colors font-bold text-lg">-</button>
-                                                        <input
-                                                            type="number"
-                                                            value={stockQty}
-                                                            onChange={(e) => setStockQty(Math.max(1, parseInt(e.target.value) || 1))}
-                                                            className="flex-1 bg-transparent text-center text-white font-mono font-bold text-xl outline-none"
-                                                        />
-                                                        <button onClick={() => setStockQty(stockQty + 1)} className="w-12 py-3 text-slate-400 hover:text-white bg-slate-800/50 rounded-lg hover:bg-slate-700 transition-colors font-bold text-lg">+</button>
-                                                    </div>
-
-                                                    <div className="flex gap-2 px-1 text-[10px] text-slate-500 justify-between mb-1 uppercase tracking-widest font-bold">
-                                                        <span>Сумма: ${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
-                                                        <span>В наличии: {me.assets.find((a: any) => a.symbol === state.currentCard.symbol)?.quantity || 0}</span>
-                                                    </div>
-
-                                                    {/* MAIN EXECUTE BUTTON */}
-                                                    <button onClick={handleExecuteStock} className={`w-full font-bold py-4 rounded-xl text-sm shadow-xl flex items-center justify-center gap-2 transition-transform active:scale-[0.98] ${mode === 'BUY' ? 'bg-green-600 hover:bg-green-500 text-white shadow-green-900/30' : 'bg-orange-600 hover:bg-orange-500 text-white shadow-orange-900/30'}`}>
-                                                        {mode === 'BUY' ? `КУПИТЬ` : `ПРОДАТЬ`}
-                                                    </button>
-
-                                                    {/* PASS BUTTON (ALWAYS VISIBLE) */}
-                                                    <button onClick={handleEndTurn} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-3 rounded-xl text-xs mt-1 border border-slate-700">
-                                                        ПАС
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                // NORMAL BUY
-                                                <>
-                                                    <button onClick={handleBuy} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl text-sm shadow-lg shadow-green-900/30">
-                                                        {state.currentCard.mandatory ? 'ОПЛАТИТЬ' : 'КУПИТЬ'}
-                                                    </button>
-                                                    {!state.currentCard.mandatory && (
-                                                        <button onClick={handleEndTurn} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-4 rounded-xl text-sm">
-                                                            ПАС
-                                                        </button>
-                                                    )}
-                                                </>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        // INSUFFICIENT FUNDS
-                                        <div className="flex flex-col gap-2 w-full">
-                                            <div className="bg-red-900/30 border border-red-500/20 p-3 rounded-xl text-center flex items-center justify-between px-4">
-                                                <div className="text-red-400 font-bold text-xs uppercase">Не хватает</div>
-                                                <div className="text-white font-mono text-sm font-bold">
-                                                    -${(((state.currentCard.downPayment ?? state.currentCard.cost) || 0) * stockQty - me.cash).toLocaleString()}
-                                                </div>
+                                    {state.currentCard.type !== 'EXPENSE' && state.currentCard.type !== 'DOODAD' && (
+                                        <div className="text-right">
+                                            <div className="text-[9px] text-slate-500 uppercase tracking-widest font-bold mb-0.5">Доход</div>
+                                            <div className={`text-xl font-mono font-bold tracking-tight ${state.currentCard.cashflow < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                                {state.currentCard.cashflow > 0 ? '+' : ''}${state.currentCard.cashflow || 0}
                                             </div>
-                                            <button
-                                                onClick={() => {
-                                                    const deficit = ((state.currentCard.downPayment ?? state.currentCard.cost) || 0) * stockQty - me.cash;
-                                                    const loanAmount = Math.ceil(deficit / 1000) * 1000;
-                                                    handleLoan(loanAmount);
-                                                }}
-                                                disabled={(me.loanDebt || 0) + (((state.currentCard.downPayment ?? state.currentCard.cost) || 0) * stockQty - me.cash) > 38000}
-                                                className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 text-white text-xs font-bold py-4 rounded-xl shadow-lg border-b-4 border-yellow-700 active:border-b-0 active:translate-y-1 transition-all"
-                                            >
-                                                🏦 Взять кредит
-                                            </button>
-                                            {!state.currentCard.mandatory && (
-                                                <button onClick={handleEndTurn} className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl text-xs mt-1">
-                                                    Отказаться
-                                                </button>
-                                            )}
                                         </div>
-                                    )
-                                ) : (
-                                    <div className="w-full text-center text-slate-500 text-sm animate-pulse bg-slate-900/50 p-4 rounded-xl border border-slate-800">⏳ Ожидание игрока...</div>
-                                )
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Stock Fluctuation Hint */}
+                            {state.currentCard.symbol && (
+                                <div className="mt-2 pt-2 border-t border-slate-800/50 text-[10px] text-slate-500 text-center flex justify-between">
+                                    <span>Колебания: $10 - $30</span>
+                                    <span>В наличии: {me.assets.find((a: any) => a.symbol === state.currentCard.symbol)?.quantity || 0}</span>
+                                </div>
                             )}
                         </div>
+                    </div>
+
+                    {/* ACTION BUTTONS (Pinned Bottom) */}
+                    <div className="pt-2 shrink-0">
+                        {state.currentCard.type === 'MARKET' ? (
+                            <div className="flex gap-2">
+                                {me.assets.some((a: any) => a.title === state.currentCard?.targetTitle) ? (
+                                    <button onClick={() => socket.emit('sell_asset', { roomId })} className="flex-1 bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg">
+                                        Продать
+                                    </button>
+                                ) : (
+                                    <div className="flex-1 flex items-center justify-center bg-slate-800/50 text-slate-500 text-xs font-bold py-3 rounded-xl border border-slate-700 cursor-not-allowed">
+                                        Нет актива
+                                    </div>
+                                )}
+                                {isMyTurn && (
+                                    <button onClick={onDismissMarket} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition-colors">
+                                        Закрыть
+                                    </button>
+                                )}
+                            </div>
+                        ) : (
+                            // Standard Logic
+                            isMyTurn ? (
+                                (me.cash >= ((state.currentCard.downPayment ?? state.currentCard.cost) || 0) * stockQty) || state.currentCard.symbol ? (
+                                    <div className="flex flex-col gap-2">
+                                        {state.currentCard.symbol ? (
+                                            // STOCK ACTIONS
+                                            <>
+                                                {/* Mini Slider / Input */}
+                                                <div className="flex items-center gap-2 bg-slate-900/40 p-1 rounded-lg border border-slate-800/50">
+                                                    <button
+                                                        onClick={() => setStockQty(Math.max(1, stockQty - 1))}
+                                                        className="w-8 h-8 flex items-center justify-center bg-slate-800 rounded-lg text-white hover:bg-slate-700 transition"
+                                                    >
+                                                        -
+                                                    </button>
+                                                    <input
+                                                        type="number"
+                                                        value={stockQty}
+                                                        onChange={(e) => setStockQty(Math.max(1, parseInt(e.target.value) || 1))}
+                                                        className="flex-1 bg-transparent text-center font-mono font-bold text-lg text-white outline-none"
+                                                    />
+                                                    <button
+                                                        onClick={() => setStockQty(stockQty + 1)}
+                                                        className="w-8 h-8 flex items-center justify-center bg-slate-800 rounded-lg text-white hover:bg-slate-700 transition"
+                                                    >
+                                                        +
+                                                    </button>
+                                                </div>
+                                                <div className="text-center text-[10px] text-slate-500 font-mono mb-1">
+                                                    Итого: <span className="text-slate-300 font-bold">${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
+                                                </div>
+
+                                                <div className="grid grid-cols-2 gap-2">
+                                                    <button
+                                                        onClick={() => { setMode('BUY'); handleExecuteStock(); }}
+                                                        className="bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg"
+                                                    >
+                                                        Купить
+                                                    </button>
+                                                    <button
+                                                        onClick={() => { setMode('SELL'); handleExecuteStock(); }}
+                                                        disabled={!me.assets.some((a: any) => a.symbol === state.currentCard.symbol && a.quantity > 0)}
+                                                        className="bg-orange-600 hover:bg-orange-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg"
+                                                    >
+                                                        Продать
+                                                    </button>
+                                                </div>
+                                                <button onClick={handleEndTurn} className="w-full bg-slate-800/50 hover:bg-slate-700 text-slate-400 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider transition-colors">
+                                                    Пропустить
+                                                </button>
+                                            </>
+                                        ) : (
+                                            // NORMAL BUY
+                                            <div className="flex gap-2">
+                                                <button onClick={handleBuy} className="flex-[2] bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg">
+                                                    {state.currentCard.mandatory ? 'ОПЛАТИТЬ' : 'КУПИТЬ'}
+                                                </button>
+                                                {!state.currentCard.mandatory && (
+                                                    <button onClick={handleEndTurn} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl text-xs uppercase tracking-wider transition-colors">
+                                                        ПАС
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    // INSUFFICIENT FUNDS
+                                    <div className="flex flex-col gap-2">
+                                        <div className="text-center text-[10px] text-red-400 font-bold bg-red-900/20 py-1 rounded">Не хватает funds</div>
+                                        <button
+                                            onClick={() => handleLoan(5000)} // Simplification
+                                            className="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg"
+                                        >
+                                            Взять Кредит +$5k
+                                        </button>
+                                        {!state.currentCard.mandatory && (
+                                            <button onClick={handleEndTurn} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider">
+                                                Пропустить
+                                            </button>
+                                        )}
+                                    </div>
+                                )
+                            ) : (
+                                <div className="text-center text-slate-600 text-[10px] uppercase tracking-widest font-bold py-2">Ход другого игрока</div>
+                            )
+                        )}
                     </div>
                 </div>
             );
@@ -364,32 +379,29 @@ export const ActiveCardZone = ({ state, isMyTurn, me, roomId, onDismissMarket, o
         // 6. NO ACTIVE CARD - SHOW MARKET LIST OR PLACEHOLDER
         if (state.activeMarketCards && state.activeMarketCards.length > 0) {
             return (
-                <div className="flex flex-col h-full w-full relative">
-                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-600 to-teal-500 rounded-t-3xl"></div>
-                    <div className="p-4 flex-1 flex flex-col">
-                        <h2 className="text-sm font-bold text-emerald-300 uppercase tracking-widest mb-4 flex items-center gap-2">
-                            <span>🔥</span> Рынок ({state.activeMarketCards.length})
-                        </h2>
-                        <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
-                            {state.activeMarketCards
-                                .filter((ac: any) => ac.expiresAt > Date.now())
-                                .map((ac: any) => (
-                                    <div
-                                        key={ac.id}
-                                        onClick={() => onMarketCardClick && onMarketCardClick(ac)}
-                                        className="bg-[#0f172a]/60 hover:bg-[#0f172a]/80 p-3 rounded-xl border border-emerald-500/20 hover:border-emerald-500/50 cursor-pointer flex justify-between items-center group transition-all"
-                                    >
-                                        <div>
-                                            <div className="text-xs text-white font-bold">{ac.card.title}</div>
-                                            <div className="text-[10px] text-emerald-400 font-mono">${ac.card.offerPrice?.toLocaleString()}</div>
-                                        </div>
-                                        <div className="text-emerald-500/50 group-hover:text-emerald-400 text-xs font-mono">
-                                            {Math.ceil((ac.expiresAt - Date.now()) / 1000)}s
-                                        </div>
+                <div className="flex flex-col h-full w-full relative pt-1">
+                    <h2 className="text-[10px] font-bold text-emerald-400 uppercase tracking-widest mb-2 px-1 flex items-center gap-2">
+                        <span>🔥</span> Активные предложения
+                    </h2>
+                    <div className="flex-1 overflow-y-auto custom-scrollbar space-y-2 pr-1">
+                        {state.activeMarketCards
+                            .filter((ac: any) => ac.expiresAt > Date.now())
+                            .map((ac: any) => (
+                                <div
+                                    key={ac.id}
+                                    onClick={() => onMarketCardClick && onMarketCardClick(ac)}
+                                    className="bg-slate-900/40 hover:bg-slate-800/60 p-2 rounded-xl border border-slate-700/50 cursor-pointer flex justify-between items-center group transition-all"
+                                >
+                                    <div>
+                                        <div className="text-xs text-slate-200 font-bold">{ac.card.title}</div>
+                                        <div className="text-[10px] text-emerald-400 font-mono">${ac.card.offerPrice?.toLocaleString()}</div>
                                     </div>
-                                ))
-                            }
-                        </div>
+                                    <div className="text-slate-600 text-[10px] font-mono">
+                                        {Math.ceil((ac.expiresAt - Date.now()) / 1000)}s
+                                    </div>
+                                </div>
+                            ))
+                        }
                     </div>
                 </div>
             );
@@ -397,16 +409,15 @@ export const ActiveCardZone = ({ state, isMyTurn, me, roomId, onDismissMarket, o
 
         // 7. DEFAULT PLACEHOLDER
         return (
-            <div className="flex flex-col items-center justify-center h-full w-full text-slate-600">
-                <div className="text-4xl mb-4 opacity-30 grayscale">💼</div>
-                <h2 className="text-base font-bold text-slate-500 uppercase tracking-widest">Сделки и возможности</h2>
-                <p className="text-xs text-slate-600 mt-2">Здесь появятся ваши активные карты</p>
+            <div className="flex flex-col items-center justify-center h-full w-full text-slate-600/50">
+                <div className="text-3xl mb-2 opacity-50 grayscale">📇</div>
+                <div className="text-[10px] font-bold uppercase tracking-widest text-center">Нет активных сделок</div>
             </div>
         );
     };
 
     return (
-        <div className="bg-[#1e293b] w-full h-full lg:min-h-[400px] lg:max-h-[500px] rounded-3xl border border-slate-700 shadow-2xl relative overflow-hidden flex flex-col">
+        <div className="w-full h-full flex flex-col relative text-left">
             {renderContent()}
         </div>
     );
