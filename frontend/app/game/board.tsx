@@ -1314,28 +1314,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     </div>
 
                     {/* HOST CONTROLS */}
-                    {isHost && (
-                        <div className="bg-red-900/10 rounded-2xl p-4 border border-red-500/20 mt-2 shrink-0">
-                            <h3 className="text-[10px] uppercase tracking-widest text-red-400 font-bold mb-3 flex items-center gap-2">
-                                <span>🛠️</span> Управление Игрой
-                            </h3>
-                            <div className="grid grid-cols-2 gap-2">
-                                <button
-                                    onClick={handleForceSkip}
-                                    className="bg-red-900/20 hover:bg-red-900/40 text-red-300 border border-red-500/20 rounded-xl py-2 text-[10px] font-bold uppercase transition-all"
-                                >
-                                    Пропустить ход
-                                </button>
-                                <button
-                                    onClick={() => handleKickPlayer(currentPlayer.id)}
-                                    disabled={currentPlayer.id === me.id}
-                                    className="bg-slate-800 hover:bg-slate-700 text-slate-400 disabled:opacity-50 border border-slate-700 rounded-xl py-2 text-[10px] font-bold uppercase transition-all"
-                                >
-                                    Кикнуть
-                                </button>
-                            </div>
-                        </div>
-                    )}
+
 
                     {/* MENU BUTTON (Moved to Left Sidebar Bottom) */}
                     <button
@@ -1371,142 +1350,131 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 {/* RIGHT SIDEBAR (Redesigned) - Flex Column */}
                 <div className="hidden lg:flex flex-col w-[380px] h-full border-l border-slate-800/50 bg-[#0f172a]/50 relative z-40 overflow-hidden shadow-xl shrink-0">
 
-                    {/* 1. STATUS CARD (Player + Timer) - TOP PRIORITY */}
-                    <div className="p-4 pb-0 shrink-0 mb-4 text-center">
-                        <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden group">
-                            {/* Glow Effect */}
-                            <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none group-hover:bg-blue-500/20 transition-all duration-500"></div>
-
-                            <div className="flex flex-col items-start gap-1 z-10">
-                                <div className="text-[9px] text-slate-500 uppercase tracking-[0.2em] font-medium flex items-center gap-2"> {/* Thinner font */}
-                                    <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
-                                    Ход игрока
+                    {/* 1. TOP HEADER: Player + Timer + Actions */}
+                    <div className="p-4 pb-0 shrink-0 mb-2">
+                        <div className="bg-[#151b2b] rounded-2xl p-3 border border-slate-800/80 shadow-lg relative overflow-hidden group flex flex-col gap-3">
+                            {/* Player Info Row */}
+                            <div className="flex items-center justify-between">
+                                <div className="flex flex-col items-start gap-1 z-10">
+                                    <div className="text-[9px] text-slate-500 uppercase tracking-[0.2em] font-medium flex items-center gap-2">
+                                        <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
+                                        Ход игрока
+                                    </div>
+                                    <div className="text-lg font-bold text-white tracking-wide truncate max-w-[150px] leading-tight">{currentPlayer.name}</div>
                                 </div>
-                                <div className="text-xl font-bold text-white tracking-wide truncate max-w-[150px] text-left leading-tight">{currentPlayer.name}</div>
-                            </div>
-
-                            <div className="flex items-center gap-4 z-10">
-                                <div className={`text-4xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
+                                <div className={`text-3xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-md' : 'text-slate-200'}`}>
                                     {formatTime(timeLeft)}
                                 </div>
                             </div>
+
+                            {/* Action Buttons Row (Integrated) */}
+                            <div className="grid grid-cols-2 gap-2 z-10">
+                                {me.canEnterFastTrack && isMyTurn && (
+                                    <button
+                                        onClick={() => setShowFastTrackModal(true)}
+                                        className="col-span-2 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-white rounded-lg shadow-lg flex items-center justify-center gap-2 font-bold text-[10px] uppercase animate-pulse transition-all"
+                                    >
+                                        🚀 Fast Track
+                                    </button>
+                                )}
+
+                                {isRollingRef.current || state.phase === 'ROLL' ? (
+                                    <button
+                                        onClick={() => handleRoll()}
+                                        disabled={!isMyTurn || state.phase !== 'ROLL' || isRollingRef.current}
+                                        className={`col-span-2 h-10 rounded-lg border flex items-center justify-center gap-2 transition-all shadow-md
+                                            ${isMyTurn && state.phase === 'ROLL' && !isRollingRef.current
+                                                ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500/50 text-white'
+                                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                                    >
+                                        <span className="text-lg animate-bounce">🎲</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest">БРОСОК</span>
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={handleEndTurn}
+                                        disabled={!isMyTurn || (state.phase === 'ROLL') || isAnimating || state.phase === 'BABY_ROLL'}
+                                        className={`col-span-2 h-10 rounded-lg border flex items-center justify-center gap-2 transition-all shadow-md
+                                            ${isMyTurn && state.phase !== 'ROLL' && !isAnimating && state.phase !== 'BABY_ROLL'
+                                                ? 'bg-blue-600 hover:bg-blue-500 border-blue-500/50 text-white'
+                                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                                    >
+                                        <span className="text-lg">➡</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest">ДАЛЕЕ</span>
+                                    </button>
+                                )}
+                            </div>
                         </div>
                     </div>
 
-                    {/* TOP: ACTIVE CARD ZONE (Expanded to fill Box 2) */}
-                    <div className="flex-1 min-h-[350px] p-4 py-0 flex flex-col">
-                        <ActiveCardZone
-                            state={state}
-                            isMyTurn={isMyTurn}
-                            me={me}
-                            roomId={roomId}
-                            onDismissMarket={handleDismissCard}
-                            onMarketCardClick={(card) => setSquareInfo({
-                                type: 'MARKET',
-                                card: card.card,
-                                title: card.card.title,
-                                description: card.card.description
-                            })}
-                        />
-                    </div>
+                    {/* 2. BODY SPLIT: Cards (Top) & Chat (Bottom) - Equal Flex */}
+                    <div className="flex-1 flex flex-col min-h-0 px-4 pb-4 gap-4 overflow-hidden">
 
-                    {/* PERMANENT ACTION BUTTONS (Roll / Next) - Box 3 Area */}
-                    <div className="p-4 shrink-0 flex flex-col gap-2 z-50 bg-[#0f172a]/50 backdrop-blur-sm">
-                        {me.canEnterFastTrack && isMyTurn && (
-                            <button
-                                onClick={() => setShowFastTrackModal(true)}
-                                className="w-full h-12 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-white rounded-xl shadow-lg flex items-center justify-center gap-2 font-bold text-xs uppercase animate-pulse transition-all"
-                            >
-                                🚀 Выйти на Fast Track
-                            </button>
-                        )}
-                        <div className="grid grid-cols-2 gap-3">
-                            {isRollingRef.current || state.phase === 'ROLL' ? (
-                                <button
-                                    onClick={() => handleRoll()}
-                                    disabled={!isMyTurn || state.phase !== 'ROLL' || isRollingRef.current}
-                                    className={`h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg col-span-2
-                                        ${isMyTurn && state.phase === 'ROLL' && !isRollingRef.current
-                                            ? 'bg-gradient-to-r from-emerald-600 to-green-600 hover:from-emerald-500 hover:to-green-500 border-emerald-500/50 text-white shadow-emerald-900/30'
-                                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-                                >
-                                    <span className="text-2xl animate-bounce">🎲</span>
-                                    <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={handleEndTurn}
-                                    disabled={!isMyTurn || (state.phase === 'ROLL') || isAnimating || state.phase === 'BABY_ROLL'}
-                                    className={`h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg col-span-2
-                                        ${isMyTurn && state.phase !== 'ROLL' && !isAnimating && state.phase !== 'BABY_ROLL'
-                                            ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 border-blue-500/50 text-white shadow-blue-900/30'
-                                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-                                >
-                                    <span className="text-2xl">➡</span>
-                                    <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
-                                </button>
-                            )}
+                        {/* Zone 2: Available Cards */}
+                        <div className="flex-1 min-h-0 flex flex-col relative">
+                            <ActiveCardZone
+                                state={state}
+                                isMyTurn={isMyTurn}
+                                me={me}
+                                roomId={roomId}
+                                onDismissMarket={handleDismissCard}
+                                onMarketCardClick={(card) => setSquareInfo({
+                                    type: 'MARKET',
+                                    card: card.card,
+                                    title: card.card.title,
+                                    description: card.card.description
+                                })}
+                            />
                         </div>
-                    </div>
 
-                    {/* SCROLLABLE LOG / CHAT (Box 4) */}
-                    <div className="h-[250px] overflow-y-auto custom-scrollbar p-4 pt-0 flex flex-col gap-4">
-                        {/* 1.5. PLAYERS LIST (New for Desktop) */}
-                        <div className="p-0 shrink-0">
-                            <div className="bg-[#1e293b]/50 rounded-2xl p-4 border border-slate-700/50 shadow-lg flex flex-col gap-2 relative overflow-hidden">
-                                <h3 className="text-slate-500 text-[10px] uppercase tracking-[0.25em] font-black mb-2 flex items-center gap-2">
-                                    <span className="text-blue-400">👥</span> ИГРОКИ ({state.players.length})
-                                </h3>
-                                <div className="flex flex-col gap-2 max-h-[100px] overflow-y-auto custom-scrollbar pr-1">
-                                    {state.players.map((p: any) => {
-                                        const isActive = p.id === currentPlayer.id;
-                                        return (
-                                            <div
-                                                key={p.id}
-                                                onClick={() => setSelectedPlayerForMenu(p)}
-                                                className={`flex items-center gap-3 px-3 py-2 rounded-xl border transition-all duration-300 cursor-pointer hover:border-slate-500/50 hover:bg-slate-800/80 ${isActive ? 'bg-slate-800 border-green-500/30' : 'bg-slate-900/30 border-transparent opacity-60 hover:opacity-100'}`}
-                                            >
-                                                <div className="relative">
-                                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-xs border ${isActive ? 'border-green-400' : 'border-slate-600'} ${getAvatarColor(p.id)}`}>
-                                                        {p.photo_url ? <img src={p.photo_url} className="w-full h-full object-cover rounded-full" /> : p.token}
-                                                    </div>
-                                                    {isActive && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <div className={`text-xs font-bold truncate ${isActive ? 'text-white' : 'text-slate-400'}`}>{p.name}</div>
-                                                    <div className="text-[10px] font-mono text-slate-500">$ {p.cash?.toLocaleString()}</div>
-                                                </div>
+
+                        {/* Zone 3: Player List (Horizontal) */}
+                        <div className="shrink-0 relative px-1">
+                            <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-2 mask-horizontal">
+                                {state.players.map((p: any) => {
+                                    const isCurrentTurn = p.id === currentPlayer.id;
+                                    return (
+                                        <div
+                                            key={p.id}
+                                            onClick={() => setSelectedPlayerForMenu(p)}
+                                            className={`relative shrink-0 cursor-pointer group transition-all duration-300 ${isCurrentTurn ? 'scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'}`}
+                                            title={p.name}
+                                        >
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs border-2 shadow-lg relative z-10 
+                                                ${isCurrentTurn ? 'border-green-400 ring-2 ring-green-500/30' : 'border-slate-600 bg-slate-800'}`}>
+                                                {p.photo_url ? (
+                                                    <img src={p.photo_url} className="w-full h-full object-cover rounded-full" />
+                                                ) : (
+                                                    <span className={`w-full h-full rounded-full flex items-center justify-center ${getAvatarColor(p.id)} text-white`}>
+                                                        {p.token}
+                                                    </span>
+                                                )}
                                             </div>
-                                        );
-                                    })}
-                                </div>
+
+                                            {/* Name Tooltip (Always visible for current turn, hover for others) */}
+                                            {isCurrentTurn && (
+                                                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-900/80 text-green-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-green-500/30 backdrop-blur-sm z-20">
+                                                    ХОДИТ
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
+                        {/* Zone 4: Chat */}
+                        <div className="flex-1 min-h-0 flex flex-col relative">
+                            <div className="text-[9px] uppercase tracking-widest text-slate-500 font-bold mb-1 ml-1 shrink-0">Чат</div>
+                            <TextChat
+                                roomId={roomId}
+                                socket={socket}
+                                messages={state.chat || []}
+                                currentUser={me}
+                                className="w-full h-full shadow-inner rounded-2xl border border-slate-800/50"
+                            />
+                        </div>
 
-
-                    </div>
-
-                    {/* 3. CHAT (Fills Space) */}
-                    <div className="flex-1 min-h-0 px-4 pb-2 flex flex-col">
-                        <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold mb-2 ml-1">Чат и События</div>
-                        <TextChat
-                            roomId={roomId}
-                            socket={socket}
-                            messages={state.chat || []}
-                            currentUser={me}
-                            className="w-full h-full shadow-inner rounded-2xl border border-slate-800/50"
-                        />
-                    </div>
-
-                    {/* 4. MENU BUTTON */}
-                    <div className="p-4 pt-2 shrink-0">
-                        <button
-                            onClick={() => setShowMenuModal(true)}
-                            className="w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 hover:text-white font-bold uppercase tracking-[0.2em] text-xs transition-colors shadow-lg flex items-center justify-center gap-3"
-                        >
-                            <span>⚙️</span> МЕНЮ
-                        </button>
                     </div>
 
                 </div>
