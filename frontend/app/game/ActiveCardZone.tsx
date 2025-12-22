@@ -13,20 +13,41 @@ interface ActiveCardZoneProps {
 
 export const ActiveCardZone = ({ state, isMyTurn, me, roomId, onDismissMarket, onMarketCardClick }: ActiveCardZoneProps) => {
     const [stockQty, setStockQty] = useState(1);
+    const [mode, setMode] = useState<'BUY' | 'SELL'>('BUY'); // Toggle State
 
-    // Reset stock qty when card changes
+    // Reset state when card changes
     useEffect(() => {
-        setStockQty(1);
-    }, [state.currentCard?.title]);
+        if (state.currentCard?.type === 'OFFER' && state.currentCard?.symbol) {
+            // Default to BUY mode and max affordable qty
+            setMode('BUY');
+            const cost = state.currentCard.cost || 0;
+            const maxAffordable = cost > 0 ? Math.floor(me.cash / cost) : 0;
+            setStockQty(Math.max(1, maxAffordable));
+        } else {
+            setStockQty(1);
+        }
+    }, [state.currentCard?.title, state.currentCard?.symbol, me.cash, state.currentCard?.cost]);
 
-    // Handlers
-    const handleBuyStock = () => {
-        socket.emit('buy_asset', { roomId, quantity: stockQty });
-        setStockQty(1);
+    // Handle Mode Switching and Auto-Fill
+    const handleModeSwitch = (newMode: 'BUY' | 'SELL') => {
+        setMode(newMode);
+        if (newMode === 'BUY') {
+            const cost = state.currentCard.cost || 0;
+            const maxAffordable = cost > 0 ? Math.floor(me.cash / cost) : 0;
+            setStockQty(Math.max(1, maxAffordable)); // Default to max can buy
+        } else {
+            const owned = me.assets.find((a: any) => a.symbol === state.currentCard.symbol)?.quantity || 0;
+            setStockQty(owned > 0 ? owned : 1); // Default to all owned
+        }
     };
 
-    const handleSellStock = () => {
-        socket.emit('sell_stock', { roomId, quantity: stockQty });
+    // Handlers
+    const handleExecuteStock = () => {
+        if (mode === 'BUY') {
+            socket.emit('buy_asset', { roomId, quantity: stockQty });
+        } else {
+            socket.emit('sell_stock', { roomId, quantity: stockQty });
+        }
         setStockQty(1);
     };
 
@@ -177,10 +198,18 @@ export const ActiveCardZone = ({ state, isMyTurn, me, roomId, onDismissMarket, o
 
                     <div className="flex-1 flex flex-col p-4 overflow-y-auto custom-scrollbar">
                         {/* Header Icon */}
-                        <div className="text-5xl mb-2 text-center mt-2">{state.currentCard.type === 'MARKET' ? '🏠' : '💸'}</div>
+                        <div className="flex flex-row items-center gap-4 mb-4">
+                            {/* Icon Box */}
+                            <div className="w-20 h-20 bg-slate-800/50 rounded-2xl flex items-center justify-center shrink-0 border border-slate-700/50 shadow-inner">
+                                <span className="text-5xl drop-shadow-lg leading-none">{state.currentCard.type === 'MARKET' ? '🏠' : '💸'}</span>
+                            </div>
 
-                        <h2 className="text-xl font-bold text-white mb-2 text-center leading-tight px-2">{state.currentCard.title}</h2>
-                        <p className="text-slate-400 text-sm mb-4 text-center leading-relaxed px-2 flex-grow">{state.currentCard.description}</p>
+                            {/* Right Content */}
+                            <div className="flex-1 flex flex-col text-right items-end justify-center min-h-[5rem]">
+                                <h2 className="text-xl font-bold text-white leading-tight mb-1">{state.currentCard.title}</h2>
+                                <p className="text-slate-400 text-xs leading-relaxed">{state.currentCard.description}</p>
+                            </div>
+                        </div>
 
                         {/* Cost / Info Block */}
                         {state.currentCard.type === 'MARKET' ? (
@@ -231,36 +260,52 @@ export const ActiveCardZone = ({ state, isMyTurn, me, roomId, onDismissMarket, o
                             ) : (
                                 // Standard Logic
                                 isMyTurn ? (
-                                    me.cash >= ((state.currentCard.downPayment ?? state.currentCard.cost) || 0) * stockQty ? (
+                                    (me.cash >= ((state.currentCard.downPayment ?? state.currentCard.cost) || 0) * stockQty) || state.currentCard.symbol ? (
                                         <div className="flex gap-2 w-full">
                                             {state.currentCard.symbol ? (
-                                                // STOCK BUY
+                                                // STOCK BUY UI
                                                 <div className="flex flex-col gap-2 w-full">
+
+                                                    {/* BUY / SELL TOGGLE */}
+                                                    <div className="bg-slate-900/50 p-1 rounded-xl flex gap-1 border border-slate-800 mb-1">
+                                                        <button
+                                                            onClick={() => handleModeSwitch('BUY')}
+                                                            className={`flex-1 py-3 text-xs font-bold uppercase rounded-lg transition-all ${mode === 'BUY' ? 'bg-green-600 text-white shadow-lg' : 'bg-transparent text-slate-500 hover:text-slate-300'}`}
+                                                        >
+                                                            Купить
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleModeSwitch('SELL')}
+                                                            disabled={!me.assets.some((a: any) => a.symbol === state.currentCard.symbol && a.quantity > 0)}
+                                                            className={`flex-1 py-3 text-xs font-bold uppercase rounded-lg transition-all ${mode === 'SELL' ? 'bg-orange-600 text-white shadow-lg' : 'bg-transparent text-slate-500 hover:text-slate-300 disabled:opacity-30'}`}
+                                                        >
+                                                            Продать
+                                                        </button>
+                                                    </div>
+
                                                     {/* Qty Selector */}
                                                     <div className="flex items-center justify-between bg-slate-900/50 rounded-xl p-1 border border-slate-800 mb-1">
-                                                        <button onClick={() => setStockQty(Math.max(1, stockQty - 1))} className="w-12 py-2 text-slate-400 hover:text-white bg-slate-800/50 rounded-lg hover:bg-slate-700 transition-colors font-bold text-lg">-</button>
+                                                        <button onClick={() => setStockQty(Math.max(1, stockQty - 1))} className="w-12 py-3 text-slate-400 hover:text-white bg-slate-800/50 rounded-lg hover:bg-slate-700 transition-colors font-bold text-lg">-</button>
                                                         <input
                                                             type="number"
                                                             value={stockQty}
                                                             onChange={(e) => setStockQty(Math.max(1, parseInt(e.target.value) || 1))}
                                                             className="flex-1 bg-transparent text-center text-white font-mono font-bold text-xl outline-none"
                                                         />
-                                                        <button onClick={() => setStockQty(stockQty + 1)} className="w-12 py-2 text-slate-400 hover:text-white bg-slate-800/50 rounded-lg hover:bg-slate-700 transition-colors font-bold text-lg">+</button>
+                                                        <button onClick={() => setStockQty(stockQty + 1)} className="w-12 py-3 text-slate-400 hover:text-white bg-slate-800/50 rounded-lg hover:bg-slate-700 transition-colors font-bold text-lg">+</button>
                                                     </div>
+
                                                     <div className="flex gap-2 px-1 text-[10px] text-slate-500 justify-between mb-1 uppercase tracking-widest font-bold">
                                                         <span>Сумма: ${((state.currentCard.cost || 0) * stockQty).toLocaleString()}</span>
                                                         <span>В наличии: {me.assets.find((a: any) => a.symbol === state.currentCard.symbol)?.quantity || 0}</span>
                                                     </div>
-                                                    <div className="flex gap-2">
-                                                        <button onClick={handleBuyStock} className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-4 rounded-xl text-sm shadow-lg">
-                                                            КУПИТЬ
-                                                        </button>
-                                                        {me.assets.some((a: any) => a.symbol === state.currentCard.symbol && a.quantity >= stockQty) && (
-                                                            <button onClick={handleSellStock} className="flex-1 bg-orange-600 hover:bg-orange-500 text-white font-bold py-4 rounded-xl text-sm shadow-lg">
-                                                                ПРОДАТЬ
-                                                            </button>
-                                                        )}
-                                                    </div>
+
+                                                    {/* MAIN EXECUTE BUTTON */}
+                                                    <button onClick={handleExecuteStock} className={`w-full font-bold py-4 rounded-xl text-sm shadow-xl flex items-center justify-center gap-2 transition-transform active:scale-[0.98] ${mode === 'BUY' ? 'bg-green-600 hover:bg-green-500 text-white shadow-green-900/30' : 'bg-orange-600 hover:bg-orange-500 text-white shadow-orange-900/30'}`}>
+                                                        {mode === 'BUY' ? `КУПИТЬ` : `ПРОДАТЬ`}
+                                                    </button>
+
+                                                    {/* PASS BUTTON (ALWAYS VISIBLE) */}
                                                     <button onClick={handleEndTurn} className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-3 rounded-xl text-xs mt-1 border border-slate-700">
                                                         ПАС
                                                     </button>

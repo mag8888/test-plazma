@@ -198,6 +198,32 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     // Timer State
     const [timeLeft, setTimeLeft] = useState(120);
 
+    // LAYOUT MODE: Default to 'auto' (responsive). 'landscape' forces desktop layout.
+    const [forceLandscape, setForceLandscape] = useState(false);
+
+    // Auto-detect orientation changes
+    useEffect(() => {
+        const handleResize = () => {
+            // If width > height and Width is small (mobile landscape), force desktop mode
+            // We use 900 as a safe breakpoint for phones. Tablets often trigger lg anyway.
+            if (window.innerWidth > window.innerHeight && window.innerWidth < 1024) {
+                setForceLandscape(true);
+            } else {
+                setForceLandscape(false);
+            }
+        };
+
+        handleResize(); // Initial check
+        window.addEventListener('resize', handleResize);
+        window.addEventListener('orientationchange', handleResize);
+
+        return () => {
+            window.removeEventListener('resize', handleResize);
+            window.removeEventListener('orientationchange', handleResize);
+        };
+    }, []);
+
+    // ... (existing effects) hasRolled when turn changes or Phase resets to ROLL
     // Local state to track if player has rolled this turn
     const [hasRolled, setHasRolled] = useState(false);
 
@@ -465,12 +491,18 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
             sfx.play('start');
         });
 
+        socket.on('room_deleted', () => {
+            alert('Игра была отменена организатором.');
+            router.push('/lobby');
+        });
+
         return () => {
             socket.off('dice_rolled');
             socket.off('game_over');
             socket.off('turn_ended');
             socket.off('state_updated');
             socket.off('game_started');
+            socket.off('room_deleted');
         };
     }, []);
 
@@ -973,9 +1005,32 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         step="0.1"
                                         value={volume}
                                         onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                                        className="w-full accent-blue-500 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer"
+                                        className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
                                     />
                                 </div>
+                            </div>
+
+                            {/* NEW: MOBILE SETTINGS ACTIONS */}
+                            <div className="flex flex-col gap-2 mt-4 pb-8">
+                                <button
+                                    onClick={() => {
+                                        setShowMobileMenu(false);
+                                        setForceLandscape(!forceLandscape);
+                                    }}
+                                    className="w-full py-4 rounded-xl bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 font-bold flex items-center justify-center gap-3 transition-colors uppercase tracking-widest text-xs"
+                                >
+                                    <span className="text-xl">🔄</span> Перевернуть экран
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        setShowMobileMenu(false);
+                                        setShowMenuModal(true);
+                                    }}
+                                    className="w-full py-4 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                                >
+                                    <span>⚙️</span> Полные Настройки
+                                </button>
                             </div>
 
                             {/* Exit Button in Menu */}
@@ -1085,6 +1140,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                             {squareInfo.description && (
                                 <p className="text-slate-400 text-sm mb-6 bg-slate-800/30 p-3 rounded-lg border border-slate-700/30">
+                                    ```
                                     {squareInfo.description}
                                 </p>
                             )}
@@ -1175,6 +1231,14 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 <div>
                                     <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Профессия</span>
                                     <div className="text-xl font-bold text-white leading-tight tracking-tight">{me.professionName || 'Выбор...'}</div>
+                                </div>
+                            </div>
+
+                            {/* Payday Header Badge */}
+                            <div className="flex flex-col items-end">
+                                <span className="text-[9px] text-blue-400 uppercase font-bold tracking-wider mb-0.5">Payday</span>
+                                <div className="text-2xl font-black text-green-400 tracking-tight leading-none filter drop-shadow-lg">
+                                    +${(me.cashflow || 0).toLocaleString()}
                                 </div>
                             </div>
                         </div>
@@ -1274,9 +1338,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 </div>
 
                 {/* CENTER BOARD (Strict Aspect Square) */}
-                <div className="w-full lg:w-auto lg:h-full aspect-square flex-shrink-0 relative bg-[#0f172a] overflow-hidden flex flex-col rounded-3xl border border-slate-800/50 shadow-2xl max-h-full">
-
-
+                <div className={`${forceLandscape ? 'w-auto h-full' : 'w-full lg:w-auto lg:h-full'} aspect-square flex-shrink-0 relative bg-[#0f172a] overflow-hidden flex flex-col rounded-3xl border border-slate-800/50 shadow-2xl max-h-full`}>
                     <div className="flex-1 relative overflow-hidden p-0 flex items-center justify-center">
                         <BoardVisualizer
                             board={state.board}
@@ -1319,23 +1381,20 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         </div>
                     </div>
 
-                    {/* 2. ACTIONS PANEL (Cards) - FIXED HEIGHT AREA */}
-                    <div className="px-4 mb-4 shrink-0">
-                        {/* ACTIVE CARD ZONE (Desktop) */}
-                        <ActiveCardZone
-                            state={state}
-                            isMyTurn={isMyTurn}
-                            me={me}
-                            roomId={roomId}
-                            onDismissMarket={handleDismissCard}
-                            onMarketCardClick={(card) => setSquareInfo({
-                                type: 'MARKET',
-                                card: card.card,
-                                title: card.card.title,
-                                description: card.card.description
-                            })}
-                        />
-                    </div>
+                    {/* TOP: ACTIVE CARD ZONE (Fixed Height) */}
+                    <ActiveCardZone
+                        state={state}
+                        isMyTurn={isMyTurn}
+                        me={me}
+                        roomId={roomId}
+                        onDismissMarket={handleDismissCard}
+                        onMarketCardClick={(card) => setSquareInfo({
+                            type: 'MARKET',
+                            card: card.card,
+                            title: card.card.title,
+                            description: card.card.description
+                        })}
+                    />
 
                     {/* SCROLLABLE CONTENT BELOW (Players, Actions, Old Status) */}
                     <div className="flex-1 overflow-y-auto custom-scrollbar p-4 pt-0 flex flex-col gap-4">
@@ -1583,6 +1642,12 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     hasWinner={state.players.some((p: any) => p.hasWon)}
                     onSkipTurn={handleForceSkip}
                     onKickCurrent={() => handleKickPlayer(currentPlayer.id)}
+                    onToggleOrientation={() => setForceLandscape(!forceLandscape)}
+                    onCancelGame={() => {
+                        if (window.confirm("Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.")) {
+                            socket.emit('delete_room', { roomId, userId: me.userId || me.id });
+                        }
+                    }}
                 />
             )}
 

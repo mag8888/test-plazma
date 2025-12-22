@@ -15,6 +15,8 @@ interface MenuModalProps {
     hasWinner: boolean;
     onSkipTurn?: () => void;
     onKickCurrent?: () => void;
+    onToggleOrientation?: () => void; // New Prop
+    onCancelGame?: () => void;
 }
 
 export const MenuModal = ({
@@ -31,7 +33,9 @@ export const MenuModal = ({
     isHost,
     hasWinner,
     onSkipTurn,
-    onKickCurrent
+    onKickCurrent,
+    onToggleOrientation,
+    onCancelGame // Destructure
 }: MenuModalProps) => {
     return (
         <div className="absolute inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
@@ -96,6 +100,21 @@ export const MenuModal = ({
                     </button>
                 </div>
 
+                {/* Landscape Toggle */}
+                {onToggleOrientation && (
+                    <div className="mb-8">
+                        <button
+                            onClick={() => {
+                                onToggleOrientation();
+                                onClose();
+                            }}
+                            className="w-full py-4 rounded-xl bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 font-bold flex items-center justify-center gap-3 transition-colors uppercase tracking-widest text-xs"
+                        >
+                            <span className="text-xl">🔄</span> Перевернуть экран
+                        </button>
+                    </div>
+                )}
+
                 {/* Danger Zone */}
                 <div className="mt-auto space-y-3">
                     <button
@@ -109,12 +128,23 @@ export const MenuModal = ({
                     {isHost && (
                         <div className="space-y-3 pt-4 border-t border-slate-700/50">
                             <div className="text-[10px] text-slate-500 uppercase font-bold tracking-wider text-center">Меню Организатора</div>
+
                             <button
                                 onClick={onEndGame}
                                 className="w-full py-4 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold uppercase tracking-widest text-xs shadow-lg shadow-purple-900/20 flex items-center justify-center gap-2 transition-all transform hover:scale-[1.02]"
                             >
                                 <span className="text-lg">🛑</span> ЗАВЕРШИТЬ ИГРУ
                             </button>
+
+                            {/* CANCEL GAME (DELETE ROOM) */}
+                            {onCancelGame && (
+                                <button
+                                    onClick={onCancelGame}
+                                    className="w-full py-3 rounded-xl bg-red-900/40 hover:bg-red-900/60 text-red-400 border border-red-500/20 font-bold uppercase tracking-widest text-[10px] flex items-center justify-center gap-2 transition-colors"
+                                >
+                                    ❌ ОТМЕНИТЬ ИГРУ
+                                </button>
+                            )}
 
                             <div className="grid grid-cols-2 gap-2">
                                 <button
