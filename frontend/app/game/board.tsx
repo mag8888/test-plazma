@@ -1112,9 +1112,25 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
             <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-full overflow-hidden justify-start lg:justify-center items-center">
 
                 {/* 📱 MOBILE TOP ZONE (Cards + Stats) */}
-                <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-20 max-h-[40vh] overflow-y-auto">
+                <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-20 max-h-[50vh] overflow-y-auto">
 
-                    {/* 1. Active Card Zone (Priority) */}
+                    {/* 1. Status Row (Top Priority) */}
+                    <div className="flex items-center justify-between px-1 bg-slate-800/50 p-2 rounded-xl mb-1">
+                        <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></div>
+                            <div className="flex flex-col">
+                                <span className="text-[9px] text-slate-400 font-bold uppercase leading-none">Ход</span>
+                                <span className="font-bold text-white text-sm max-w-[150px] truncate leading-tight">{currentPlayer?.name}</span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className={`font-mono font-black text-2xl ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                                {formatTime(timeLeft)}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* 2. Active Card Zone (Priority) */}
                     <div className="w-full">
                         <ActiveCardZone
                             state={state}
@@ -1122,21 +1138,13 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             me={me}
                             roomId={roomId}
                             onDismissMarket={handleDismissCard}
+                            onMarketCardClick={(card) => setSquareInfo({
+                                type: 'MARKET',
+                                card: card.card,
+                                title: card.card.title,
+                                description: card.card.description
+                            })}
                         />
-                    </div>
-
-                    {/* 2. Compact Stats Row */}
-                    <div className="flex items-center justify-between px-1">
-                        <div className="flex items-center gap-2">
-                            <span className="text-xs text-slate-400 font-bold uppercase">Ход:</span>
-                            <span className="font-bold text-white text-sm max-w-[150px] truncate">{currentPlayer?.name}</span>
-                        </div>
-                        <div className="flex items-center gap-2 bg-slate-800/50 px-3 py-1 rounded-lg border border-white/5">
-                            <span className="text-xs text-slate-300">⏳</span>
-                            <span className={`font-mono font-black text-sm ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
-                                {formatTime(timeLeft)}
-                            </span>
-                        </div>
                     </div>
 
                     {/* 3. Stats Grid */}
@@ -1291,36 +1299,28 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 {/* RIGHT SIDEBAR (Redesigned) */}
                 <div className="hidden lg:flex flex-col w-[380px] h-full border-l border-slate-800/50 bg-[#0f172a]/50 relative z-40 overflow-hidden shadow-xl shrink-0">
 
-                    {/* 2. PLAYER STATUS (Debts/Income) */}
-                    <div className="p-4 border-b border-slate-700/50 bg-slate-800/30 backdrop-blur-sm">
-
-
-
-                        <div className="grid grid-cols-2 gap-4 mb-4">
-                            {/* Placeholder for other player status elements if needed */}
-                        </div>
-                    </div>
-
-                    {/* 1. STATUS CARD (Player + Timer) */}
-                    <div className="p-4 pb-0 shrink-0">
+                    {/* 1. STATUS CARD (Player + Timer) - TOP PRIORITY */}
+                    <div className="p-4 pb-0 shrink-0 mb-4 text-center">
                         <div className="bg-gradient-to-br from-[#151b2b] to-[#0f172a] rounded-2xl p-5 border border-slate-800/80 shadow-lg flex items-center justify-between relative overflow-hidden group">
+                            {/* Glow Effect */}
                             <div className="absolute top-0 right-0 w-24 h-24 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none group-hover:bg-blue-500/20 transition-all duration-500"></div>
+
                             <div>
                                 <div className="text-[10px] text-slate-500 uppercase tracking-[0.2em] font-bold mb-1 flex items-center gap-2">
                                     <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
                                     Ход игрока
                                 </div>
-                                <div className="text-lg font-bold text-white tracking-wide truncate max-w-[180px]">{currentPlayer.name}</div>
+                                <div className="text-xl font-bold text-white tracking-wide truncate max-w-[180px]">{currentPlayer.name}</div>
                             </div>
-                            <div className={`text-4xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
+
+                            <div className={`text-5xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-[0_0_10px_rgba(239,68,68,0.5)]' : 'text-slate-200'} `}>
                                 {formatTime(timeLeft)}
                             </div>
                         </div>
                     </div>
 
-                    {/* 2. ACTIONS PANEL (Cards) */}
-                    <div className="p-4 flex-1 overflow-y-auto custom-scrollbar flex flex-col gap-4">
-
+                    {/* 2. ACTIONS PANEL (Cards) - FIXED HEIGHT AREA */}
+                    <div className="px-4 mb-4 shrink-0">
                         {/* ACTIVE CARD ZONE (Desktop) */}
                         <ActiveCardZone
                             state={state}
@@ -1328,41 +1328,17 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             me={me}
                             roomId={roomId}
                             onDismissMarket={handleDismissCard}
+                            onMarketCardClick={(card) => setSquareInfo({
+                                type: 'MARKET',
+                                card: card.card,
+                                title: card.card.title,
+                                description: card.card.description
+                            })}
                         />
+                    </div>
 
-                        {/* Persistent Market Cards (Small Rows) */}
-                        {state.activeMarketCards && state.activeMarketCards.length > 0 && (
-                            <div className="space-y-2 animate-in slide-in-from-left duration-300">
-                                <h3 className="text-[10px] uppercase text-slate-500 font-bold mb-1">Рынок</h3>
-                                {state.activeMarketCards
-                                    .filter((ac: any) => ac.expiresAt > Date.now())
-                                    .map((ac: any) => (
-                                        <div
-                                            key={ac.id}
-                                            onClick={() => setSquareInfo({
-                                                type: 'MARKET',
-                                                card: ac.card, // Pass full card logic to modal
-                                                title: ac.card.title,
-                                                description: ac.card.description
-                                            })}
-                                            className="bg-gradient-to-r from-emerald-900/80 to-emerald-800/80 p-3 rounded-xl border border-emerald-500/50 cursor-pointer hover:scale-105 transition-transform flex items-center justify-between shadow-lg"
-                                        >
-                                            <div className="flex flex-col">
-                                                <span className="text-xs font-bold text-emerald-300 uppercase tracking-wider flex items-center gap-1">
-                                                    <span>🔥</span> Рынок Открыт
-                                                </span>
-                                                <span className="text-white text-xs font-medium truncate max-w-[120px]">
-                                                    {ac.card.title}
-                                                </span>
-                                            </div>
-                                            <div className="text-emerald-400 font-mono text-xs">
-                                                {Math.ceil((ac.expiresAt - Date.now()) / 1000)}s
-                                            </div>
-                                        </div>
-                                    ))
-                                }
-                            </div>
-                        )}
+                    {/* SCROLLABLE CONTENT BELOW (Players, Actions, Old Status) */}
+                    <div className="flex-1 overflow-y-auto custom-scrollbar p-4 pt-0 flex flex-col gap-4">
 
                         {/* 1.5. PLAYERS LIST (New for Desktop) */}
                         <div className="p-0 shrink-0">
