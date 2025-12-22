@@ -10,6 +10,8 @@ interface ActiveCardZoneProps {
     onMarketCardClick?: (card: any) => void;
     showDice?: boolean;
     diceValue?: number | null;
+    previewCard?: any;
+    onDismissPreview?: () => void;
 }
 
 export const ActiveCardZone = ({
@@ -20,7 +22,9 @@ export const ActiveCardZone = ({
     onDismissMarket,
     onMarketCardClick,
     showDice,
-    diceValue
+    diceValue,
+    previewCard,
+    onDismissPreview
 }: ActiveCardZoneProps) => {
     const [stockQty, setStockQty] = useState(1);
     // 'DETAILS' = Initial View (Info + Action Buttons)
@@ -32,7 +36,7 @@ export const ActiveCardZone = ({
     useEffect(() => {
         setStep('DETAILS');
         setStockQty(1);
-    }, [state.currentCard?.id]);
+    }, [state.currentCard?.id, previewCard?.title]);
 
     // DICE ANIMATION (Self)
     if (showDice && isMyTurn) {
@@ -190,9 +194,12 @@ export const ActiveCardZone = ({
         );
     }
 
-    // 5. CURRENT CARD (Main Logic)
-    if (state.currentCard) {
-        const card = state.currentCard;
+    // 5. CURRENT CARD OR PREVIEW (Main Logic)
+    const effectiveCard = state.currentCard || previewCard;
+    if (effectiveCard) {
+        const card = effectiveCard;
+        const isPreview = !!previewCard && !state.currentCard;
+
         const isOffer = card.type === 'OFFER'; // Market offer
         const isStock = !!card.symbol; // Stock card
         // Check if we own this stock (for Sell option)
@@ -205,7 +212,7 @@ export const ActiveCardZone = ({
             return (
                 <div className="flex flex-col h-full w-full relative">
                     <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r rounded-t-3xl ${card.cashflow > 0 ? 'from-green-500 to-emerald-500' :
-                            card.cost > 0 && !card.symbol ? 'from-red-500 to-rose-600' : 'from-blue-500 to-indigo-500'
+                        card.cost > 0 && !card.symbol ? 'from-red-500 to-rose-600' : 'from-blue-500 to-indigo-500'
                         }`}></div>
 
                     <div className="p-3 flex-1 flex flex-col h-full overflow-hidden">
@@ -256,6 +263,7 @@ export const ActiveCardZone = ({
                         {/* Actions */}
                         {isMyTurn && (
                             <div className="grid grid-cols-2 gap-2 mt-auto shrink-0">
+                                {/* Buy Button */}
                                 <button
                                     onClick={() => {
                                         if (isStock) {
@@ -264,18 +272,12 @@ export const ActiveCardZone = ({
                                             setStockQty(maxBuy > 0 ? maxBuy : 1);
                                             setStep('TRANSACTION');
                                         } else {
-                                            // Direct Buy? Or confirm? 
-                                            // The user asked for "Transaction Step" for everything? 
-                                            // "Show card... after clicking buy or sell a slider and button"
-                                            // For non-stock assets, quantity is usually 1. 
-                                            // But let's follow standard flow: Click Buy -> Confirm.
                                             setTransactionMode('BUY');
                                             setStockQty(1);
-                                            // If simple asset, maybe skip slider or disable it?
                                             setStep('TRANSACTION');
                                         }
                                     }}
-                                    disabled={!canAfford && !isStock} // Allow entering stock flow to see price even if 0 afford?
+                                    disabled={!canAfford && !isStock}
                                     className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg"
                                 >
                                     Купить
@@ -296,14 +298,58 @@ export const ActiveCardZone = ({
 
                                 <button
                                     onClick={() => {
-                                        if (isOffer) onDismissMarket?.(); // Market card logic
+                                        if (isPreview) onDismissPreview?.();
+                                        else if (isOffer) onDismissMarket?.();
                                         else socket.emit('end_turn', { roomId });
                                     }}
                                     className={`bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider ${(!isStock && ownedQty <= 0) ? 'col-span-1' : 'col-span-2'}`}
                                 >
-                                    {isStock || isOffer ? 'Пропустить' : 'Отказаться'}
+                                    {isPreview ? 'Закрыть' : (isStock || isOffer ? 'Пропустить' : 'Отказаться')}
                                 </button>
                             </div>
+                        )}
+
+                        {/* DEAL CHOICE (Small / Big) */}
+                        {isMyTurn && card.type === 'DEAL' && !card.id && (
+                            <div className="grid grid-cols-2 gap-2 mt-auto shrink-0">
+                                <button
+                                    onClick={() => { socket.emit('draw_deal', { roomId, type: 'SMALL' }); onDismissPreview?.(); }}
+                                    disabled={me.cash < 500}
+                                    className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg flex flex-col items-center justify-center p-1"
+                                >
+                                    <span>Малая</span>
+                                    <span className="text-[8px] opacity-70">до $5k</span>
+                                </button>
+                                <button
+                                    onClick={() => { socket.emit('draw_deal', { roomId, type: 'BIG' }); onDismissPreview?.(); }}
+                                    disabled={me.cash < 2000} // $2000 requirement for Big Deal? Or $6000? Board.tsx had $2000 check for UI but text said "От $6000". Cashflow 101 rules usually say Big Deal costs start at $6k, but you need some cash to enter? Usually you just need enough cash to buy it. Or allow drawing. Let's stick to $2000 as a safe filter or what was there. Old modal had me.cash >= 2000.
+                                    className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg flex flex-col items-center justify-center p-1"
+                                >
+                                    <span>Крупная</span>
+                                    <span className="text-[8px] opacity-70">от $6k</span>
+                                </button>
+                            </div>
+                        )}
+
+                        {/* PREVIEW ONLY BUTTON (For Events etc) */}
+                        {(isMyTurn && isPreview && card.type !== 'DEAL' && !isOffer && !isStock) && (
+                            <button
+                                onClick={() => {
+                                    // For Payday/Baby/etc, checking logic is in parent `onDismissPreview`
+                                    onDismissPreview?.();
+                                }}
+                                className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider mt-auto"
+                            >
+                                {['PAYDAY', 'BABY', 'DOWNSIZED', 'LOSS', 'DOODAD', 'TAX'].includes(card.type) ? 'OK' : 'Закрыть'}
+                            </button>
+                        )}
+                        {!isMyTurn && isPreview && (
+                            <button
+                                onClick={onDismissPreview}
+                                className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider mt-auto"
+                            >
+                                Закрыть
+                            </button>
                         )}
                     </div>
                 </div>
@@ -316,8 +362,6 @@ export const ActiveCardZone = ({
             const total = price * stockQty;
             const maxBuy = Math.floor(me.cash / (price || 1));
             const maxVal = transactionMode === 'BUY' ? (isStock ? Math.max(1, maxBuy) : 1) : ownedQty;
-            // Ensure min value is always 1, unless maxVal is 0 (can't buy any).
-            // If buying and maxVal is 0, setup minVal to 1 but show error
             const minVal = 1;
 
             return (
@@ -385,6 +429,7 @@ export const ActiveCardZone = ({
                                     } else {
                                         socket.emit('sell_stock', { roomId, quantity: stockQty });
                                     }
+                                    if (isPreview) onDismissPreview?.();
                                 }}
                                 disabled={transactionMode === 'BUY' && me.cash < total}
                                 className={`w-full py-3 rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg

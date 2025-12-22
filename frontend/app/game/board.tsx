@@ -1027,118 +1027,9 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
 
 
-            {/* ℹ️ SQUARE INFO POPUP */}
-            {
-                squareInfo && !state.currentCard && (
-                    <div className="absolute inset-0 z-[90] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSquareInfo(null)}>
-                        <div className="bg-[#1e293b] border border-slate-600 p-8 rounded-3xl shadow-2xl max-w-sm w-full text-center relative overflow-hidden" onClick={e => e.stopPropagation()}>
-                            {/* Gradient Line handled by helper */}
-                            <div className={`absolute top-0 left-0 w-full h-2 bg-gradient-to-r ${['DREAM'].includes(squareInfo.type) ? 'from-fuchsia-600 to-purple-600' :
-                                ['BUSINESS', 'MARKET', 'DEAL', 'OPPORTUNITY'].includes(squareInfo.type) ? 'from-emerald-500 to-green-600' :
-                                    ['LOSS', 'EXPENSE', 'DOODAD', 'DOWNSIZED', 'TAX'].includes(squareInfo.type) ? 'from-red-700 to-rose-900' :
-                                        squareInfo.type === 'PAYDAY' ? 'from-yellow-500 to-amber-500' :
-                                            squareInfo.type === 'BABY' ? 'from-pink-400 to-blue-400' :
-                                                'from-blue-500 to-indigo-500' // Default
-                                }`}></div>
 
-                            {/* Close Button */}
-                            <button onClick={() => setSquareInfo(null)} className="absolute top-4 right-4 text-slate-400 hover:text-white transition-colors">✕</button>
 
-                            <div className="text-6xl mb-6 filter drop-shadow-lg animate-bounce-short">
-                                {['MARKET', 'OPPORTUNITY', 'DEAL'].includes(squareInfo.type) ? '⚡' :
-                                    squareInfo.type === 'BABY' ? '👶' :
-                                        squareInfo.type === 'PAYDAY' ? '💰' :
-                                            squareInfo.type === 'DOWNSIZED' ? '📉' :
-                                                squareInfo.type === 'CHARITY' ? '❤️' :
-                                                    squareInfo.type === 'DREAM' ? '✨' :
-                                                        squareInfo.type === 'BUSINESS' ? '🏢' :
-                                                            ['LOSS', 'EXPENSE', 'DOODAD'].includes(squareInfo.type) ? '💸' : '📍'}
-                            </div>
 
-                            <h3 className="text-2xl font-black text-white uppercase tracking-wider mb-2">{squareInfo.name || squareInfo.type}</h3>
-
-                            <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-800 mb-6 flex flex-col gap-2">
-                                {squareInfo.type === 'PAYDAY' ? (
-                                    <div className="text-center py-2">
-                                        <div className="text-xs text-slate-500 uppercase font-bold mb-1">Ваш доход</div>
-                                        <div className="text-3xl font-mono text-green-400 font-bold p-2 bg-green-900/10 rounded-xl border border-green-500/20 shadow-lg shadow-green-900/20">
-                                            +${me.cashflow?.toLocaleString()}
-                                        </div>
-                                        <div className="text-slate-400 text-xs mt-2 italic">Начислено на баланс</div>
-                                    </div>
-                                ) : (
-                                    <>
-                                        {/* Cost */}
-                                        {squareInfo.cost !== undefined && squareInfo.cost !== null && (
-                                            <div className="flex justify-between items-center border-b border-slate-800/50 pb-2 last:border-0 last:pb-0">
-                                                <span className="text-xs text-slate-500 uppercase font-bold">Стоимость</span>
-                                                <span className="text-xl font-mono text-red-400 font-bold">-${squareInfo.cost.toLocaleString()}</span>
-                                            </div>
-                                        )}
-
-                                        {/* Cashflow / Income */}
-                                        {squareInfo.cashflow !== undefined && squareInfo.cashflow !== null && (
-                                            <div className="flex justify-between items-center border-b border-slate-800/50 pb-2 last:border-0 last:pb-0">
-                                                <span className="text-xs text-slate-500 uppercase font-bold">Доход</span>
-                                                <span className="text-xl font-mono text-green-400 font-bold">+${squareInfo.cashflow.toLocaleString()}</span>
-                                            </div>
-                                        )}
-
-                                        {/* Fallback if neither */}
-                                        {!squareInfo.cost && !squareInfo.cashflow && (
-                                            <div className="text-center">
-                                                {isMyTurn && squareInfo.type === 'DEAL' ? (
-                                                    <div className="flex gap-2 mt-4">
-                                                        <button
-                                                            onClick={() => socket.emit('draw_deal', { roomId, type: 'SMALL' })}
-                                                            className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg transition-transform active:scale-95 flex flex-col items-center"
-                                                        >
-                                                            <span>Малая сделка</span>
-                                                            <span className="text-[10px] opacity-70">До $5,000</span>
-                                                        </button>
-                                                        <button
-                                                            onClick={() => socket.emit('draw_deal', { roomId, type: 'BIG' })}
-                                                            className="flex-1 bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-3 rounded-xl shadow-lg transition-transform active:scale-95 flex flex-col items-center"
-                                                        >
-                                                            <span>Крупная сделка</span>
-                                                            <span className="text-[10px] opacity-70">От $6,000</span>
-                                                        </button>
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-slate-400 italic text-sm block py-2">
-                                                        {squareInfo.description ? 'Следуйте инструкциям на карточке' : 'Информация отсутствует'}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
-                                    </>
-                                )}
-                            </div>
-
-                            {squareInfo.description && (
-                                <p className="text-slate-400 text-sm mb-6 bg-slate-800/30 p-3 rounded-lg border border-slate-700/30">
-                                    ```
-                                    {squareInfo.description}
-                                </p>
-                            )}
-
-                            <button
-                                onClick={() => {
-                                    // For immediate events that don't require user choice (like Downsized, Baby, Payday),
-                                    // closing the modal should end the turn to prevent hanging.
-                                    if (['DOWNSIZED', 'BABY', 'PAYDAY', 'LOSS', 'DOODAD', 'TAX'].includes(squareInfo.type)) {
-                                        handleEndTurn();
-                                    }
-                                    setSquareInfo(null);
-                                }}
-                                className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl shadow-lg transition-transform hover:-translate-y-0.5 active:scale-95"
-                            >
-                                {['DOWNSIZED', 'BABY', 'LOSS', 'DOODAD', 'TAX'].includes(squareInfo.type) ? 'Завершить ход' : 'Закрыть'}
-                            </button>
-                        </div>
-                    </div>
-                )
-            }
 
             {/* MAIN GRID */}
             {/* MAIN LAYOUT CONTAINER - REDUCED GAP & PADDING */}
@@ -1162,6 +1053,18 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         })}
                         showDice={showDice}
                         diceValue={diceValue}
+                        previewCard={squareInfo ? (
+                            squareInfo.type === 'MARKET' ? squareInfo.card : {
+                                ...squareInfo,
+                                title: squareInfo.name || squareInfo.type,
+                            }
+                        ) : null}
+                        onDismissPreview={() => {
+                            if (squareInfo && ['DOWNSIZED', 'BABY', 'PAYDAY', 'LOSS', 'DOODAD', 'TAX'].includes(squareInfo.type)) {
+                                handleEndTurn();
+                            }
+                            setSquareInfo(null);
+                        }}
                     />
                 </div>
 
@@ -1232,187 +1135,187 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
             </div>
 
-        </div>
 
-                {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */ }
-    <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-slate-900/90 backdrop-blur-xl border-t border-slate-700/50 z-50 flex gap-3 pb-8">
-        {/* Roll Logic */}
-        {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
-            <div className="flex gap-2 flex-1 h-16">
-                <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                    <span className="text-xl">🎲</span>
-                    <span>1</span>
-                </button>
-                <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                    <span className="text-xl">🎲🎲</span>
-                    <span>2</span>
-                </button>
-                {me.isFastTrack && (
-                    <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                        <span className="text-xl">🎲×3</span>
-                        <span>3</span>
-                    </button>
-                )}
-            </div>
-        ) : (
-            <button
-                onClick={() => handleRoll()}
-                disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
-                className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
-                            ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
-                        ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
-                        : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-            >
-                {hasRolled ? (
-                    <div className="flex items-center gap-2">
-                        <span className="text-2xl font-black">{diceValue}</span>
-                        <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
+
+            {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */}
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-slate-900/90 backdrop-blur-xl border-t border-slate-700/50 z-50 flex gap-3 pb-8">
+                {/* Roll Logic */}
+                {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+                    <div className="flex gap-2 flex-1 h-16">
+                        <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                            <span className="text-xl">🎲</span>
+                            <span>1</span>
+                        </button>
+                        <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                            <span className="text-xl">🎲🎲</span>
+                            <span>2</span>
+                        </button>
+                        {me.isFastTrack && (
+                            <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                <span className="text-xl">🎲×3</span>
+                                <span>3</span>
+                            </button>
+                        )}
                     </div>
                 ) : (
-                    <>
-                        <span className="text-2xl">🎲</span>
-                        <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
-                    </>
+                    <button
+                        onClick={() => handleRoll()}
+                        disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
+                        className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+                            ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
+                                ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
+                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                    >
+                        {hasRolled ? (
+                            <div className="flex items-center gap-2">
+                                <span className="text-2xl font-black">{diceValue}</span>
+                                <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
+                            </div>
+                        ) : (
+                            <>
+                                <span className="text-2xl">🎲</span>
+                                <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
+                            </>
+                        )}
+                    </button>
                 )}
-            </button>
-        )}
 
-        <button
-            onClick={handleEndTurn}
-            disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
-            className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+                <button
+                    onClick={handleEndTurn}
+                    disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
+                    className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
                         ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
-                    ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
-                    : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-        >
-            <span className="text-2xl">➡</span>
-            <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
-        </button>
+                            ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
+                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                >
+                    <span className="text-2xl">➡</span>
+                    <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
+                </button>
 
-        {/* Fast Track Button (Mobile) */}
-        {me.canEnterFastTrack && isMyTurn && (
-            <button
-                onClick={() => setShowFastTrackModal(true)}
-                className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
-            >
-                🚀
-            </button>
-        )}
+                {/* Fast Track Button (Mobile) */}
+                {me.canEnterFastTrack && isMyTurn && (
+                    <button
+                        onClick={() => setShowFastTrackModal(true)}
+                        className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
+                    >
+                        🚀
+                    </button>
+                )}
 
-        {/* BANK BUTTON (Mobile) */}
-        <button
-            onClick={() => setShowBank(true)}
-            className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors"
-        >
-            🏦
-        </button>
+                {/* BANK BUTTON (Mobile) */}
+                <button
+                    onClick={() => setShowBank(true)}
+                    className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors"
+                >
+                    🏦
+                </button>
 
-        {/* MENU TOGGLE */}
-        <button
-            onClick={() => setShowMobileMenu(true)}
-            className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center text-2xl"
-        >
-            🍔
-        </button>
-    </div>
+                {/* MENU TOGGLE */}
+                <button
+                    onClick={() => setShowMobileMenu(true)}
+                    className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center text-2xl"
+                >
+                    🍔
+                </button>
+            </div>
 
-    {/* --- MODALS --- */ }
-    <BankModal
-        isOpen={showBank}
-        onClose={() => { setShowBank(false); setBankRecipientId(''); }}
-        player={me}
-        roomId={roomId}
-        transactions={state.transactions || []}
-        players={state.players}
-        initialRecipientId={bankRecipientId}
-    />
-
-    {
-        showMenuModal && (
-            <MenuModal
-                onClose={() => setShowMenuModal(false)}
-                onExit={handleExit}
-                onEndGame={() => socket.emit('end_game_host', { roomId, userId })}
-                toggleMute={toggleMute}
-                isMuted={isMuted}
-                volume={volume}
-                setVolume={handleVolumeChange}
-                onShowRules={() => setShowRules(true)}
-                zoom={zoom}
-                setZoom={setZoom}
-                isHost={!!isHost}
-                hasWinner={state.players.some((p: any) => p.hasWon)}
-                onSkipTurn={handleForceSkip}
-                onKickCurrent={() => handleKickPlayer(currentPlayer.id)}
-                onToggleOrientation={() => setForceLandscape(!forceLandscape)}
-                onCancelGame={() => {
-                    if (window.confirm("Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.")) {
-                        socket.emit('delete_room', { roomId, userId: me.userId || me.id });
-                    }
-                }}
-            />
-        )
-    }
-
-    {
-        showRules && (
-            <RulesModal
-                onClose={() => setShowRules(false)}
-            />
-        )
-    }
-
-    {
-        showFastTrackModal && (
-            <ExitToFastTrackModal
-                onClose={() => setShowFastTrackModal(false)}
+            {/* --- MODALS --- */}
+            <BankModal
+                isOpen={showBank}
+                onClose={() => { setShowBank(false); setBankRecipientId(''); }}
                 player={me}
-                onConfirm={handleEnterFastTrack}
-            />
-        )
-    }
-
-    { showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} player={me} /> }
-
-    {
-        transferAssetItem && (
-            <TransferModal
-                isOpen={true}
-                onClose={() => setTransferAssetItem(null)}
-                asset={transferAssetItem.item}
+                roomId={roomId}
+                transactions={state.transactions || []}
                 players={state.players}
-                myId={me.id}
-                onTransfer={handleTransferAsset}
+                initialRecipientId={bankRecipientId}
             />
-        )
-    }
 
-    {
-        adminAction && (
-            <AdminActionModal
-                isOpen={!!adminAction}
-                onClose={() => setAdminAction(null)}
-                type={adminAction.type}
-                targetPlayer={adminAction.player}
-                onConfirm={(amount) => {
-                    if (adminAction.type === 'SKIP') {
-                        // Use 'userId' prop (Persistent ID) for permission check
-                        socket.emit('host_skip_turn', { roomId, userId }, (response: any) => {
-                            if (!response.success) {
-                                alert(`Ошибка: ${response.error}`);
+            {
+                showMenuModal && (
+                    <MenuModal
+                        onClose={() => setShowMenuModal(false)}
+                        onExit={handleExit}
+                        onEndGame={() => socket.emit('end_game_host', { roomId, userId })}
+                        toggleMute={toggleMute}
+                        isMuted={isMuted}
+                        volume={volume}
+                        setVolume={handleVolumeChange}
+                        onShowRules={() => setShowRules(true)}
+                        zoom={zoom}
+                        setZoom={setZoom}
+                        isHost={!!isHost}
+                        hasWinner={state.players.some((p: any) => p.hasWon)}
+                        onSkipTurn={handleForceSkip}
+                        onKickCurrent={() => handleKickPlayer(currentPlayer.id)}
+                        onToggleOrientation={() => setForceLandscape(!forceLandscape)}
+                        onCancelGame={() => {
+                            if (window.confirm("Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.")) {
+                                socket.emit('delete_room', { roomId, userId: me.userId || me.id });
                             }
-                        });
-                    } else if (adminAction.type === 'KICK') {
-                        handleKickPlayer(adminAction.player.id);
-                    } else if (adminAction.type === 'GIFT' && amount) {
-                        // Use 'userId' prop for Host Auth, and adminAction.player.id as target
-                        socket.emit('host_give_cash', { roomId, userId, targetPlayerId: adminAction.player.id, amount });
-                    }
-                    setAdminAction(null);
-                }}
-            />
-        )
-    }
-            </div >
-            );
+                        }}
+                    />
+                )
+            }
+
+            {
+                showRules && (
+                    <RulesModal
+                        onClose={() => setShowRules(false)}
+                    />
+                )
+            }
+
+            {
+                showFastTrackModal && (
+                    <ExitToFastTrackModal
+                        onClose={() => setShowFastTrackModal(false)}
+                        player={me}
+                        onConfirm={handleEnterFastTrack}
+                    />
+                )
+            }
+
+            {showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} player={me} />}
+
+            {
+                transferAssetItem && (
+                    <TransferModal
+                        isOpen={true}
+                        onClose={() => setTransferAssetItem(null)}
+                        asset={transferAssetItem.item}
+                        players={state.players}
+                        myId={me.id}
+                        onTransfer={handleTransferAsset}
+                    />
+                )
+            }
+
+            {
+                adminAction && (
+                    <AdminActionModal
+                        isOpen={!!adminAction}
+                        onClose={() => setAdminAction(null)}
+                        type={adminAction.type}
+                        targetPlayer={adminAction.player}
+                        onConfirm={(amount) => {
+                            if (adminAction.type === 'SKIP') {
+                                // Use 'userId' prop (Persistent ID) for permission check
+                                socket.emit('host_skip_turn', { roomId, userId }, (response: any) => {
+                                    if (!response.success) {
+                                        alert(`Ошибка: ${response.error}`);
+                                    }
+                                });
+                            } else if (adminAction.type === 'KICK') {
+                                handleKickPlayer(adminAction.player.id);
+                            } else if (adminAction.type === 'GIFT' && amount) {
+                                // Use 'userId' prop for Host Auth, and adminAction.player.id as target
+                                socket.emit('host_give_cash', { roomId, userId, targetPlayerId: adminAction.player.id, amount });
+                            }
+                            setAdminAction(null);
+                        }}
+                    />
+                )
+            }
+        </div >
+    );
 }
