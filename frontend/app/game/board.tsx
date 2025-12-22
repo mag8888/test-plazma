@@ -1221,7 +1221,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 </div>
 
                 {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
-                <div className="hidden lg:flex flex-col gap-4 h-full overflow-hidden flex-1 min-w-0">
+                <div className="hidden lg:flex flex-col gap-2 h-full overflow-hidden flex-1 min-w-0 pt-0">
                     <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden group">
                         {/* Glow effect */}
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500"></div>
@@ -1271,10 +1271,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             </div>
                         </div>
 
-                        <div className="flex justify-between items-center pt-4 border-t border-slate-800/50 mt-auto">
-                            <span className="text-blue-400 font-black text-sm tracking-widest uppercase filter drop-shadow-sm">PAYDAY</span>
-                            <span className="font-mono font-black text-lg text-green-400 bg-green-900/10 px-2 py-0.5 rounded-md border border-green-500/20">+${(me.cashflow || 0).toLocaleString()}</span>
-                        </div>
+
                     </div>
 
                     {/* Assets */}
@@ -1428,38 +1425,40 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         </div>
 
 
-                        {/* Zone 3: Player List (Horizontal) */}
-                        <div className="shrink-0 relative px-1">
-                            <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-2 mask-horizontal">
-                                {state.players.map((p: any) => {
-                                    const isCurrentTurn = p.id === currentPlayer.id;
-                                    return (
-                                        <div
-                                            key={p.id}
-                                            onClick={() => setSelectedPlayerForMenu(p)}
-                                            className={`relative shrink-0 cursor-pointer group transition-all duration-300 ${isCurrentTurn ? 'scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'}`}
-                                            title={p.name}
-                                        >
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs border-2 shadow-lg relative z-10 
+                        {/* Zone 3: Player List (Horizontal Module) */}
+                        <div className="shrink-0 relative px-1 py-1">
+                            <div className="bg-[#1e293b]/40 rounded-xl p-2 border border-slate-800/50 shadow-inner flex flex-col gap-1">
+                                <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar mask-horizontal px-1 justify-center">
+                                    {state.players.map((p: any) => {
+                                        const isCurrentTurn = p.id === currentPlayer.id;
+                                        return (
+                                            <div
+                                                key={p.id}
+                                                onClick={() => setSelectedPlayerForMenu(p)}
+                                                className={`relative shrink-0 cursor-pointer group transition-all duration-300 ${isCurrentTurn ? 'scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'}`}
+                                                title={p.name}
+                                            >
+                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs border-2 shadow-lg relative z-10 
                                                 ${isCurrentTurn ? 'border-green-400 ring-2 ring-green-500/30' : 'border-slate-600 bg-slate-800'}`}>
-                                                {p.photo_url ? (
-                                                    <img src={p.photo_url} className="w-full h-full object-cover rounded-full" />
-                                                ) : (
-                                                    <span className={`w-full h-full rounded-full flex items-center justify-center ${getAvatarColor(p.id)} text-white`}>
-                                                        {p.token}
-                                                    </span>
+                                                    {p.photo_url ? (
+                                                        <img src={p.photo_url} className="w-full h-full object-cover rounded-full" />
+                                                    ) : (
+                                                        <span className={`w-full h-full rounded-full flex items-center justify-center ${getAvatarColor(p.id)} text-white`}>
+                                                            {p.token}
+                                                        </span>
+                                                    )}
+                                                </div>
+
+                                                {/* Name Tooltip (Always visible for current turn, hover for others) */}
+                                                {isCurrentTurn && (
+                                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-900/80 text-green-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-green-500/30 backdrop-blur-sm z-20">
+                                                        ХОДИТ
+                                                    </div>
                                                 )}
                                             </div>
-
-                                            {/* Name Tooltip (Always visible for current turn, hover for others) */}
-                                            {isCurrentTurn && (
-                                                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-900/80 text-green-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-green-500/30 backdrop-blur-sm z-20">
-                                                    ХОДИТ
-                                                </div>
-                                            )}
-                                        </div>
-                                    );
-                                })}
+                                        );
+                                    })}
+                                </div>
                             </div>
                         </div>
 
