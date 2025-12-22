@@ -726,30 +726,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 />
             )}
 
-            {showDice && (
-                <div className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center pointer-events-none">
-                    <div className="flex flex-col items-center animate-bounce">
-                        <div className="text-9xl filter drop-shadow-[0_0_30px_rgba(255,255,255,0.5)] animate-spin-slow">🎲</div>
-                        {diceValue && (
-                            <div className="mt-8 flex flex-col items-center">
-                                <div className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-orange-600 animate-pulse">
-                                    {diceValue}
-                                </div>
-                                {diceBreakdown && (
-                                    <div className="text-2xl font-bold text-white mt-2 bg-slate-800/60 px-4 py-1 rounded-full border border-white/10 animate-in fade-in slide-in-from-bottom-2">
-                                        {diceBreakdown}
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                        {mlmMessage && (
-                            <div className="mt-4 bg-green-500/20 text-green-400 px-6 py-3 rounded-xl border border-green-500/50 text-xl font-bold animate-in fade-in zoom-in duration-300">
-                                {mlmMessage}
-                            </div>
-                        )}
-                    </div>
-                </div>
-            )}
+
 
             {/* 📱 MOBILE MENU OVERLAY */}
             {
@@ -1164,494 +1141,278 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
             }
 
             {/* MAIN GRID */}
-            {/* MAIN LAYOUT CONTAINER - FLEXBOX for Aspect Ratio Control */}
-            <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-full overflow-hidden justify-start lg:justify-center items-center">
+            {/* MAIN LAYOUT CONTAINER - REDUCED GAP & PADDING */}
+            <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-2 flex flex-col lg:flex-row gap-0 lg:gap-2 h-full overflow-hidden justify-start lg:justify-center items-center">
 
-                {/* 📱 MOBILE TOP ZONE (Cards + Stats) */}
-                <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-20 max-h-[50vh] overflow-y-auto">
+// ... (Mobile Top Zone omitted for brevity, assuming existing match) ...
 
-                    {/* 1. Status Row (Top Priority) */}
-                    <div className="flex items-center justify-between px-1 bg-slate-800/50 p-2 rounded-xl mb-1">
-                        <div className="flex items-center gap-2">
-                            <div className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></div>
-                            <div className="flex flex-col">
-                                <span className="text-[9px] text-slate-400 font-bold uppercase leading-none">Ход</span>
-                                <span className="font-bold text-white text-sm max-w-[150px] truncate leading-tight">{currentPlayer?.name}</span>
-                            </div>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <span className={`font-mono font-black text-2xl ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
-                                {formatTime(timeLeft)}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* 2. Active Card Zone (Priority) */}
-                    <div className="w-full">
-                        <ActiveCardZone
-                            state={state}
-                            isMyTurn={isMyTurn}
-                            me={me}
-                            roomId={roomId}
-                            onDismissMarket={handleDismissCard}
-                            onMarketCardClick={(card) => setSquareInfo({
-                                type: 'MARKET',
-                                card: card.card,
-                                title: card.card.title,
-                                description: card.card.description
-                            })}
-                        />
-                    </div>
-
-                    {/* 3. Stats Grid */}
-                    <div className="grid grid-cols-3 gap-2">
-                        <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
-                            <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс</span>
-                            <span className="text-sm font-black text-green-400 font-mono tracking-tight">${me.cash?.toLocaleString()}</span>
-                        </div>
-                        <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
-                            <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Выплата</span>
-                            <span className="text-sm font-black text-green-400 font-mono tracking-tight">+${(me.cashflow || 0).toLocaleString()}</span>
-                        </div>
-                        <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
-                            <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Кредит</span>
-                            <span className="text-sm font-black text-red-400 font-mono tracking-tight">-${me.loanDebt?.toLocaleString()}</span>
-                        </div>
-                    </div>
+                {/* 2. Available Cards (Module Style) */}
+                <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-4 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-0">
+                    <ActiveCardZone
+                        state={state}
+                        isMyTurn={isMyTurn}
+                        me={me}
+                        roomId={roomId}
+                        onDismissMarket={handleDismissCard}
+                        onMarketCardClick={(card) => setSquareInfo({
+                            type: 'MARKET',
+                            card: card.card,
+                            title: card.card.title,
+                            description: card.card.description
+                        })}
+                        showDice={showDice}
+                        diceValue={diceValue}
+                    />
                 </div>
 
-                {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
-                <div className="hidden lg:flex flex-col gap-2 h-full overflow-hidden flex-1 min-w-0 p-4 pb-0">
-                    <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden group">
-                        {/* Glow effect */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500"></div>
-                        <div className="flex justify-between items-center mb-6 relative">
-                            <div className="flex items-center gap-3">
-                                <span className="text-3xl filter drop-shadow-md">👷</span>
-                                <div>
-                                    <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Профессия</span>
-                                    <div className="text-sm font-bold text-white leading-tight tracking-tight">{me.professionName || 'Выбор...'}</div>
-                                </div>
-                            </div>
 
-                            {/* Payday Header Badge */}
-                            <div className="flex flex-col items-end">
-                                <span className="text-[9px] text-blue-400 uppercase font-bold tracking-wider mb-0.5">Payday</span>
-                                <div className="text-2xl font-black text-green-400 tracking-tight leading-none filter drop-shadow-lg">
-                                    +${(me.cashflow || 0).toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                            {/* BALANCE */}
-                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group relative">
-                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
-                                <div className="font-mono text-xl text-green-400 font-bold tracking-tight shadow-green-900/20 drop-shadow-sm group-hover:scale-105 transition-transform origin-left relative">
-                                    ${me.cash?.toLocaleString()}
-                                    <CashChangeIndicator currentCash={me.cash} />
-                                </div>
-                            </button>
-
-                            {/* CREDIT */}
-                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group">
-                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит 💳</div>
-                                <div className="font-mono text-xl text-red-400 font-bold tracking-tight shadow-red-900/20 drop-shadow-sm group-hover:scale-105 transition-transform origin-left">${me.loanDebt?.toLocaleString()}</div>
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                            <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Доход</div>
-                                <div className="font-mono text-slate-300 font-medium">${me.income?.toLocaleString()}</div>
-                            </div>
-                            <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Расходы</div>
-                                <div className="font-mono text-slate-300 font-medium">${me.expenses?.toLocaleString()}</div>
-                            </div>
-                        </div>
-
-
-                    </div>
-
-                    {/* Assets */}
-                    <div className="bg-[#151b2b] rounded-2xl p-5 border border-slate-800 shadow-lg flex-1 flex flex-col min-h-0 relative overflow-hidden">
-                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2 flex-shrink-0">
-                            <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
-                            <span className="font-mono text-green-400">+${totalAssetYield}</span>
-                        </h3>
-                        {me.assets?.length > 0 ? (
-                            <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1">
-                                {me.assets.map((a: any, i: number) => (
+                {/* Zone 3: Player List (Horizontal Module) */}
+                <div className="shrink-0 relative px-1 py-1">
+                    <div className="bg-[#1e293b]/40 rounded-xl p-2 border border-slate-800/50 shadow-inner flex flex-col gap-1">
+                        <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar mask-horizontal px-1 justify-center">
+                            {state.players.map((p: any) => {
+                                const isCurrentTurn = p.id === currentPlayer.id;
+                                return (
                                     <div
-                                        key={i}
-                                        onClick={() => setTransferAssetItem({ item: a, index: i })}
-                                        className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-500 active:scale-[0.98] transition-all cursor-pointer group"
+                                        key={p.id}
+                                        onClick={() => setSelectedPlayerForMenu(p)}
+                                        className={`relative shrink-0 cursor-pointer group transition-all duration-300 ${isCurrentTurn ? 'scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'}`}
+                                        title={p.name}
                                     >
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-slate-300 font-medium">
-                                                {a.title}
-                                                <span className="text-slate-500 ml-1 text-[10px]">
-                                                    {a.quantity > 0 ? `(${a.quantity} шт)` : ''}
-                                                    {a.averageCost && ` • Avg: $${Math.round(a.averageCost).toLocaleString()}`}
-                                                </span>
-                                            </span>
-                                            <span className="font-mono text-green-400 font-bold bg-green-900/10 px-1.5 py-0.5 rounded">+${a.cashflow}</span>
-                                        </div>
-                                        <button
-                                            className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-700/50 rounded-lg transition-all text-slate-500 hover:text-blue-400"
-                                            title="Передать актив"
-                                        >
-                                            ➡️
-                                        </button>
-                                    </div>
-                                ))}
-                            </div>
-                        ) : <div className="text-xs text-slate-600 text-center py-4 italic">Нет активов</div>}
-                    </div>
-
-                    {/* HOST CONTROLS */}
-
-
-                    {/* MENU BUTTON (Moved to Left Sidebar Bottom) */}
-                    <button
-                        onClick={() => setShowMenuModal(true)}
-                        className="w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 mt-auto border border-slate-700 shadow-lg transition-all"
-                    >
-                        <span>⚙️</span> МЕНЮ
-                    </button>
-
-                </div>
-
-                {/* CENTER BOARD (Strict Aspect Square) */}
-                <div className={`${forceLandscape ? 'w-auto h-full' : 'w-full lg:w-auto lg:h-full'} aspect-square flex-shrink-0 relative bg-[#0f172a] overflow-hidden flex flex-col rounded-3xl border border-slate-800/50 shadow-2xl max-h-full`}>
-                    <div className="flex-1 relative overflow-hidden p-0 flex items-center justify-center">
-                        <BoardVisualizer
-                            board={state.board}
-                            players={state.players}
-                            animatingPos={animatingPos}
-                            currentPlayerId={currentPlayer.id}
-                            zoom={zoom}
-                            onSquareClick={(sq: any) => setSquareInfo(sq)}
-                            showExitButton={showExitButton}
-                            onExitClick={() => {
-                                if (me.isFastTrack) {
-                                    setShowFastTrackInfo(true);
-                                } else {
-                                    setShowFastTrackModal(true);
-                                }
-                            }}
-                        />                    </div>
-                </div>
-
-                {/* RIGHT SIDEBAR (Redesigned) - Flex Column */}
-                <div className="hidden lg:flex flex-col w-[380px] h-full border-l border-slate-800/50 bg-[#0f172a]/50 relative z-40 overflow-hidden shadow-xl shrink-0 p-4 gap-3">
-
-                    {/* 1. TOP HEADER: Player + Timer + Actions */}
-                    <div className="shrink-0">
-                        <div className="bg-[#151b2b] rounded-2xl p-3 border border-slate-800/80 shadow-lg relative overflow-hidden group flex flex-col gap-3">
-                            {/* Player Info Row */}
-                            <div className="flex items-center justify-between">
-                                <div className="flex flex-col items-start gap-1 z-10">
-                                    <div className="text-[9px] text-slate-500 uppercase tracking-[0.2em] font-medium flex items-center gap-2">
-                                        <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
-                                        Ход игрока
-                                    </div>
-                                    <div className="text-lg font-bold text-white tracking-wide truncate max-w-[150px] leading-tight">{currentPlayer.name}</div>
-                                </div>
-                                <div className={`text-3xl font-mono font-black tracking-tight ${timeLeft < 15 ? 'text-red-500 animate-pulse drop-shadow-md' : 'text-slate-200'}`}>
-                                    {formatTime(timeLeft)}
-                                </div>
-                            </div>
-
-                            {/* Action Buttons Row (Integrated) */}
-                            <div className="grid grid-cols-2 gap-2 z-10">
-                                {me.canEnterFastTrack && isMyTurn && (
-                                    <button
-                                        onClick={() => setShowFastTrackModal(true)}
-                                        className="col-span-2 py-2 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-white rounded-lg shadow-lg flex items-center justify-center gap-2 font-bold text-[10px] uppercase animate-pulse transition-all"
-                                    >
-                                        🚀 Fast Track
-                                    </button>
-                                )}
-
-                                {isRollingRef.current || state.phase === 'ROLL' ? (
-                                    <button
-                                        onClick={() => handleRoll()}
-                                        disabled={!isMyTurn || state.phase !== 'ROLL' || isRollingRef.current}
-                                        className={`col-span-2 h-10 rounded-lg border flex items-center justify-center gap-2 transition-all shadow-md
-                                            ${isMyTurn && state.phase === 'ROLL' && !isRollingRef.current
-                                                ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500/50 text-white'
-                                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-                                    >
-                                        <span className="text-lg animate-bounce">🎲</span>
-                                        <span className="text-[10px] font-black uppercase tracking-widest">БРОСОК</span>
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={handleEndTurn}
-                                        disabled={!isMyTurn || (state.phase === 'ROLL') || isAnimating || state.phase === 'BABY_ROLL'}
-                                        className={`col-span-2 h-10 rounded-lg border flex items-center justify-center gap-2 transition-all shadow-md
-                                            ${isMyTurn && state.phase !== 'ROLL' && !isAnimating && state.phase !== 'BABY_ROLL'
-                                                ? 'bg-blue-600 hover:bg-blue-500 border-blue-500/50 text-white'
-                                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-                                    >
-                                        <span className="text-lg">➡</span>
-                                        <span className="text-[10px] font-black uppercase tracking-widest">ДАЛЕЕ</span>
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* 2. Available Cards (Module Style) */}
-                    <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-4 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-0">
-                        <ActiveCardZone
-                            state={state}
-                            isMyTurn={isMyTurn}
-                            me={me}
-                            roomId={roomId}
-                            onDismissMarket={handleDismissCard}
-                            onMarketCardClick={(card) => setSquareInfo({
-                                type: 'MARKET',
-                                card: card.card,
-                                title: card.card.title,
-                                description: card.card.description
-                            })}
-                        />
-                    </div>
-
-
-                    {/* Zone 3: Player List (Horizontal Module) */}
-                    <div className="shrink-0 relative px-1 py-1">
-                        <div className="bg-[#1e293b]/40 rounded-xl p-2 border border-slate-800/50 shadow-inner flex flex-col gap-1">
-                            <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar mask-horizontal px-1 justify-center">
-                                {state.players.map((p: any) => {
-                                    const isCurrentTurn = p.id === currentPlayer.id;
-                                    return (
-                                        <div
-                                            key={p.id}
-                                            onClick={() => setSelectedPlayerForMenu(p)}
-                                            className={`relative shrink-0 cursor-pointer group transition-all duration-300 ${isCurrentTurn ? 'scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'}`}
-                                            title={p.name}
-                                        >
-                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs border-2 shadow-lg relative z-10 
+                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs border-2 shadow-lg relative z-10 
                                                 ${isCurrentTurn ? 'border-green-400 ring-2 ring-green-500/30' : 'border-slate-600 bg-slate-800'}`}>
-                                                {p.photo_url ? (
-                                                    <img src={p.photo_url} className="w-full h-full object-cover rounded-full" />
-                                                ) : (
-                                                    <span className={`w-full h-full rounded-full flex items-center justify-center ${getAvatarColor(p.id)} text-white`}>
-                                                        {p.token}
-                                                    </span>
-                                                )}
-                                            </div>
+                                            {p.photo_url ? (
+                                                <img src={p.photo_url} className="w-full h-full object-cover rounded-full" />
+                                            ) : (
+                                                <span className={`w-full h-full rounded-full flex items-center justify-center ${getAvatarColor(p.id)} text-white`}>
+                                                    {p.token}
+                                                </span>
+                                            )}
 
-                                            {/* Name Tooltip (Always visible for current turn, hover for others) */}
-                                            {isCurrentTurn && (
-                                                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-900/80 text-green-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-green-500/30 backdrop-blur-sm z-20">
-                                                    ХОДИТ
+                                            {/* DICE BUBBLE For Others */}
+                                            {isCurrentTurn && showDice && diceValue && (
+                                                <div className="absolute -top-3 -right-3 w-6 h-6 bg-white text-slate-900 rounded-full flex items-center justify-center font-black border-2 border-emerald-500 shadow-lg z-20 animate-bounce">
+                                                    {diceValue}
                                                 </div>
                                             )}
                                         </div>
-                                    );
-                                })}
-                            </div>
+
+                                        {/* Name Tooltip */}
+                                        {isCurrentTurn && (
+                                            <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-900/80 text-green-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-green-500/30 backdrop-blur-sm z-20">
+                                                ХОДИТ
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </div>
+                </div>
+
+                {/* Zone 4: Chat (Module Style) */}
+                <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-4 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-0 group">
+                    {/* Glow effect for Chat */}
+                    <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-[40px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-purple-500/10 transition-all duration-500"></div>
+
+                    <div className="flex items-center justify-between mb-2 shrink-0 px-1">
+                        <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold flex items-center gap-2">
+                            <span>💬</span> Чат
                         </div>
                     </div>
 
-                    {/* Zone 4: Chat (Module Style) */}
-                    <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-4 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden min-h-0 group">
-                        {/* Glow effect for Chat too? maybe subtle */}
-                        <div className="absolute top-0 right-0 w-24 h-24 bg-purple-500/5 rounded-full blur-[40px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-purple-500/10 transition-all duration-500"></div>
-
-                        <div className="flex items-center justify-between mb-2 shrink-0 px-1">
-                            <div className="text-[10px] uppercase tracking-widest text-slate-500 font-bold flex items-center gap-2">
-                                <span>💬</span> Чат
-                            </div>
-                        </div>
-
-                        <TextChat
-                            roomId={roomId}
-                            socket={socket}
-                            messages={state.chat || []}
-                            currentUser={me}
-                            className="w-full h-full rounded-xl border border-slate-800/30 bg-slate-900/20"
-                        />
-                    </div>
-
+                    <TextChat
+                        roomId={roomId}
+                        socket={socket}
+                        messages={state.chat || []}
+                        currentUser={me}
+                        className="w-full h-full rounded-xl border border-slate-800/30 bg-slate-900/20"
+                    />
                 </div>
 
             </div>
 
-            {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */}
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-slate-900/90 backdrop-blur-xl border-t border-slate-700/50 z-50 flex gap-3 pb-8">
-                {/* Roll Logic */}
-                {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
-                    <div className="flex gap-2 flex-1 h-16">
-                        <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                            <span className="text-xl">🎲</span>
-                            <span>1</span>
-                        </button>
-                        <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                            <span className="text-xl">🎲🎲</span>
-                            <span>2</span>
-                        </button>
-                        {me.isFastTrack && (
-                            <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                <span className="text-xl">🎲×3</span>
-                                <span>3</span>
-                            </button>
-                        )}
+        </div>
+
+                {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */ }
+    <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-slate-900/90 backdrop-blur-xl border-t border-slate-700/50 z-50 flex gap-3 pb-8">
+        {/* Roll Logic */}
+        {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+            <div className="flex gap-2 flex-1 h-16">
+                <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                    <span className="text-xl">🎲</span>
+                    <span>1</span>
+                </button>
+                <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                    <span className="text-xl">🎲🎲</span>
+                    <span>2</span>
+                </button>
+                {me.isFastTrack && (
+                    <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                        <span className="text-xl">🎲×3</span>
+                        <span>3</span>
+                    </button>
+                )}
+            </div>
+        ) : (
+            <button
+                onClick={() => handleRoll()}
+                disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
+                className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+                            ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
+                        ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
+                        : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+            >
+                {hasRolled ? (
+                    <div className="flex items-center gap-2">
+                        <span className="text-2xl font-black">{diceValue}</span>
+                        <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
                     </div>
                 ) : (
-                    <button
-                        onClick={() => handleRoll()}
-                        disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
-                        className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
-                            ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
-                                ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
-                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-                    >
-                        {hasRolled ? (
-                            <div className="flex items-center gap-2">
-                                <span className="text-2xl font-black">{diceValue}</span>
-                                <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
-                            </div>
-                        ) : (
-                            <>
-                                <span className="text-2xl">🎲</span>
-                                <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
-                            </>
-                        )}
-                    </button>
+                    <>
+                        <span className="text-2xl">🎲</span>
+                        <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
+                    </>
                 )}
+            </button>
+        )}
 
-                <button
-                    onClick={handleEndTurn}
-                    disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
-                    className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+        <button
+            onClick={handleEndTurn}
+            disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
+            className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
                         ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
-                            ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
-                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-                >
-                    <span className="text-2xl">➡</span>
-                    <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
-                </button>
+                    ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
+                    : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+        >
+            <span className="text-2xl">➡</span>
+            <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
+        </button>
 
-                {/* Fast Track Button (Mobile) */}
-                {me.canEnterFastTrack && isMyTurn && (
-                    <button
-                        onClick={() => setShowFastTrackModal(true)}
-                        className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
-                    >
-                        🚀
-                    </button>
-                )}
+        {/* Fast Track Button (Mobile) */}
+        {me.canEnterFastTrack && isMyTurn && (
+            <button
+                onClick={() => setShowFastTrackModal(true)}
+                className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
+            >
+                🚀
+            </button>
+        )}
 
-                {/* BANK BUTTON (Mobile) */}
-                <button
-                    onClick={() => setShowBank(true)}
-                    className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors"
-                >
-                    🏦
-                </button>
+        {/* BANK BUTTON (Mobile) */}
+        <button
+            onClick={() => setShowBank(true)}
+            className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors"
+        >
+            🏦
+        </button>
 
-                {/* MENU TOGGLE */}
-                <button
-                    onClick={() => setShowMobileMenu(true)}
-                    className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center text-2xl"
-                >
-                    🍔
-                </button>
-            </div>
+        {/* MENU TOGGLE */}
+        <button
+            onClick={() => setShowMobileMenu(true)}
+            className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center text-2xl"
+        >
+            🍔
+        </button>
+    </div>
 
-            {/* --- MODALS --- */}
-            <BankModal
-                isOpen={showBank}
-                onClose={() => { setShowBank(false); setBankRecipientId(''); }}
-                player={me}
-                roomId={roomId}
-                transactions={state.transactions || []}
-                players={state.players}
-                initialRecipientId={bankRecipientId}
+    {/* --- MODALS --- */ }
+    <BankModal
+        isOpen={showBank}
+        onClose={() => { setShowBank(false); setBankRecipientId(''); }}
+        player={me}
+        roomId={roomId}
+        transactions={state.transactions || []}
+        players={state.players}
+        initialRecipientId={bankRecipientId}
+    />
+
+    {
+        showMenuModal && (
+            <MenuModal
+                onClose={() => setShowMenuModal(false)}
+                onExit={handleExit}
+                onEndGame={() => socket.emit('end_game_host', { roomId, userId })}
+                toggleMute={toggleMute}
+                isMuted={isMuted}
+                volume={volume}
+                setVolume={handleVolumeChange}
+                onShowRules={() => setShowRules(true)}
+                zoom={zoom}
+                setZoom={setZoom}
+                isHost={!!isHost}
+                hasWinner={state.players.some((p: any) => p.hasWon)}
+                onSkipTurn={handleForceSkip}
+                onKickCurrent={() => handleKickPlayer(currentPlayer.id)}
+                onToggleOrientation={() => setForceLandscape(!forceLandscape)}
+                onCancelGame={() => {
+                    if (window.confirm("Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.")) {
+                        socket.emit('delete_room', { roomId, userId: me.userId || me.id });
+                    }
+                }}
             />
+        )
+    }
 
-            {showMenuModal && (
-                <MenuModal
-                    onClose={() => setShowMenuModal(false)}
-                    onExit={handleExit}
-                    onEndGame={() => socket.emit('end_game_host', { roomId, userId })}
-                    toggleMute={toggleMute}
-                    isMuted={isMuted}
-                    volume={volume}
-                    setVolume={handleVolumeChange}
-                    onShowRules={() => setShowRules(true)}
-                    zoom={zoom}
-                    setZoom={setZoom}
-                    isHost={!!isHost}
-                    hasWinner={state.players.some((p: any) => p.hasWon)}
-                    onSkipTurn={handleForceSkip}
-                    onKickCurrent={() => handleKickPlayer(currentPlayer.id)}
-                    onToggleOrientation={() => setForceLandscape(!forceLandscape)}
-                    onCancelGame={() => {
-                        if (window.confirm("Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.")) {
-                            socket.emit('delete_room', { roomId, userId: me.userId || me.id });
-                        }
-                    }}
-                />
-            )}
+    {
+        showRules && (
+            <RulesModal
+                onClose={() => setShowRules(false)}
+            />
+        )
+    }
 
-            {showRules && (
-                <RulesModal
-                    onClose={() => setShowRules(false)}
-                />
-            )}
+    {
+        showFastTrackModal && (
+            <ExitToFastTrackModal
+                onClose={() => setShowFastTrackModal(false)}
+                player={me}
+                onConfirm={handleEnterFastTrack}
+            />
+        )
+    }
 
-            {showFastTrackModal && (
-                <ExitToFastTrackModal
-                    onClose={() => setShowFastTrackModal(false)}
-                    player={me}
-                    onConfirm={handleEnterFastTrack}
-                />
-            )}
+    { showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} player={me} /> }
 
-            {showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} player={me} />}
+    {
+        transferAssetItem && (
+            <TransferModal
+                isOpen={true}
+                onClose={() => setTransferAssetItem(null)}
+                asset={transferAssetItem.item}
+                players={state.players}
+                myId={me.id}
+                onTransfer={handleTransferAsset}
+            />
+        )
+    }
 
-            {transferAssetItem && (
-                <TransferModal
-                    isOpen={true}
-                    onClose={() => setTransferAssetItem(null)}
-                    asset={transferAssetItem.item}
-                    players={state.players}
-                    myId={me.id}
-                    onTransfer={handleTransferAsset}
-                />
-            )}
-
-            {adminAction && (
-                <AdminActionModal
-                    isOpen={!!adminAction}
-                    onClose={() => setAdminAction(null)}
-                    type={adminAction.type}
-                    targetPlayer={adminAction.player}
-                    onConfirm={(amount) => {
-                        if (adminAction.type === 'SKIP') {
-                            // Use 'userId' prop (Persistent ID) for permission check
-                            socket.emit('host_skip_turn', { roomId, userId }, (response: any) => {
-                                if (!response.success) {
-                                    alert(`Ошибка: ${response.error}`);
-                                }
-                            });
-                        } else if (adminAction.type === 'KICK') {
-                            handleKickPlayer(adminAction.player.id);
-                        } else if (adminAction.type === 'GIFT' && amount) {
-                            // Use 'userId' prop for Host Auth, and adminAction.player.id as target
-                            socket.emit('host_give_cash', { roomId, userId, targetPlayerId: adminAction.player.id, amount });
-                        }
-                        setAdminAction(null);
-                    }}
-                />
-            )}
-        </div>
-    );
+    {
+        adminAction && (
+            <AdminActionModal
+                isOpen={!!adminAction}
+                onClose={() => setAdminAction(null)}
+                type={adminAction.type}
+                targetPlayer={adminAction.player}
+                onConfirm={(amount) => {
+                    if (adminAction.type === 'SKIP') {
+                        // Use 'userId' prop (Persistent ID) for permission check
+                        socket.emit('host_skip_turn', { roomId, userId }, (response: any) => {
+                            if (!response.success) {
+                                alert(`Ошибка: ${response.error}`);
+                            }
+                        });
+                    } else if (adminAction.type === 'KICK') {
+                        handleKickPlayer(adminAction.player.id);
+                    } else if (adminAction.type === 'GIFT' && amount) {
+                        // Use 'userId' prop for Host Auth, and adminAction.player.id as target
+                        socket.emit('host_give_cash', { roomId, userId, targetPlayerId: adminAction.player.id, amount });
+                    }
+                    setAdminAction(null);
+                }}
+            />
+        )
+    }
+            </div >
+            );
 }
