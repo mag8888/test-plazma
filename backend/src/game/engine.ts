@@ -221,6 +221,7 @@ export const FULL_BOARD = [...RAT_RACE_SQUARES, ...FAST_TRACK_SQUARES];
 export class GameEngine {
     state: GameState;
     cardManager: CardManager;
+    botNextActionAt?: number; // Hook for Bot Pacing
 
     constructor(roomId: string, players: IPlayer[], creatorId?: string) {
         // Init CardManager
@@ -292,6 +293,131 @@ export class GameEngine {
         const newPlayerState = this.initPlayer(player);
         this.state.players.push(newPlayerState);
         this.state.log.push(`👋 ${player.name} присоединился к игре!`);
+    }
+
+    addBot(player: IPlayer) {
+        this.addPlayer(player);
+        // Trigger immediate move if it's their turn (unlikely on join, but safe)
+        if (this.state.players[this.state.currentPlayerIndex]?.userId === player.userId) {
+            this.makeBotMove();
+        }
+    }
+
+    async makeBotMove() {
+        const player = this.state.players[this.state.currentPlayerIndex];
+        if (!player || !player.userId || !player.userId.startsWith('bot_')) return;
+
+        const isHard = player.name.includes('Hard');
+        // Simulate "Thinking" time
+        // We can't use await delay in sync engine flow easily unless we make this async and caller handles it.
+        // But checkTurnTimeout call site expects sync return? No, `checkTurnTimeout` just returns boolean.
+        // We shouldn't block the loop.
+        // Better: `checkTurnTimeout` calls this, validation happens, `makeBotMove` performs ONE step and returns.
+        // It relies on the next loop tick for next step? Or we can chain actions?
+        // Let's chain actions with minimal delay or just instant actions for V1.
+
+        console.log(`🤖 Bot ${player.name} is thinking... (Phase: ${this.state.phase})`);
+
+        if (this.state.phase === 'ROLL') {
+            this.rollDice(); // Returns result, logs it
+            // After roll, phase becomes ACTION (or specific event)
+            // We need to re-evaluate for next move, maybe in next tick or immediately?
+            // Let's rely on next tick/external call for animation pacing?
+            // Actually, if we do everything instantly, the user sees nothing.
+            // Let's allow `checkTurnTimeout` to effectively "poll" the bot.
+            return;
+        }
+
+        if (this.state.phase === 'ACTION') {
+            if (this.state.currentCard) {
+                // DECISION TIME
+                const c = this.state.currentCard;
+                const canAfford = player.cash >= (c.cost || 0);
+                let shouldBuy = false;
+
+                if (canAfford) {
+                    if (isHard) {
+                        // Smart Logic: Buy if Cashflow is positive OR it's a Big Deal/Dream worth it
+                        // Always buy Assets that give cashflow
+                        if ((c.cashflow || 0) > 0) shouldBuy = true;
+                        // For Big Deals (Dreams/Biz), check if it drains us too much
+                        // Keep $2000 buffer
+                        if (player.cash - (c.cost || 0) < 2000) shouldBuy = (c.cashflow || 0) > 1000; // Risk it for big return
+                    } else {
+                        // Easy: Random
+                        shouldBuy = Math.random() > 0.5;
+                    }
+                }
+
+                if (shouldBuy) {
+                    this.buyAsset(player.userId); // This ends turn usually or clears card
+                } else {
+                    this.addLog(`🤖 ${player.name} skips deal.`);
+                    this.endTurn();
+                }
+            } else {
+                // No card? Just end turn
+                this.endTurn();
+            }
+            return;
+        }
+
+        if (this.state.phase === 'CHARITY_CHOICE') {
+            if (player.cash > 3000) {
+                // Donate
+                player.cash -= (player.income * 0.1);
+                player.charityTurns = 3;
+                this.addLog(`🤖 ${player.name} donated to charity.`);
+            } else {
+                this.addLog(`🤖 ${player.name} declines charity.`);
+            }
+            this.state.phase = 'ROLL';
+            // End turn? Charity usually implies roll next? 
+            // Logic says: Charity is optional action BEFORE roll? Or instead of?
+            // Usually it's an option. After choice, you ROLL.
+            // Wait, `CHARITY` square index 3 creates `CHARITY_CHOICE` phase?
+            // Looking at board: Index 3 is CHARITY.
+            // Handler: Phase = CHARITY_CHOICE.
+            // After choice, phase should be ROLL? Or END?
+            // Usually Charity is "Land here, choose to donate, then turn ends"?
+            // Or "Donate to get benefits for next turns".
+            // Let's assume End Turn after decision.
+            this.endTurn();
+            return;
+        }
+
+        if (this.state.phase === 'DOWNSIZED_DECISION') {
+            // Hard bot pays if can
+            const cost2 = player.expenses * 2;
+            if (player.cash >= cost2) {
+                this.handleDownsizedDecision(player.id, 'PAY_2M');
+            } else {
+                // Try pay 1m?
+                const cost1 = player.expenses;
+                if (player.cash >= cost1) {
+                    this.handleDownsizedDecision(player.id, 'PAY_1M');
+                } else {
+                    // Skip
+                    // Logic handles auto skip if no choice? 
+                    // `handleDownsizedDecision` ... wait, if I can't pay, do I just sit?
+                    // If I can't pay, I must skip turns?
+                    // Let's just force End Turn if can't pay.
+                    // Actually, `handleDownsizedDecision` doesn't support 'SKIP' explicit?
+                    // If I just `endTurn`, what happens?
+                    // Downsized puts turns on us.
+                    this.endTurn();
+                }
+            }
+            return;
+        }
+
+        if (this.state.phase === 'BABY_ROLL') {
+            this.rollDice();
+            return;
+        }
+
+        // Catch all
+        this.endTurn();
     }
 
     addLog(message: string) {
@@ -1731,9 +1857,35 @@ export class GameEngine {
     }
 
     checkTurnTimeout(): boolean {
+        // Bot Logic Hook
+        const player = this.state.players[this.state.currentPlayerIndex];
+        if (player && player.userId && player.userId.startsWith('bot_')) {
+            // Check if we should move
+            const now = Date.now();
+            // Default 2 second delay between bot actions
+            if (!this.botNextActionAt) this.botNextActionAt = now + 2000;
+
+            if (now >= this.botNextActionAt) {
+                this.makeBotMove();
+                this.botNextActionAt = now + 2500; // Schedule next move
+                return true; // Use return true to signal state change? 
+                // Actually makeBotMove changes state, but Gateway uses return value to know if it should emit 'turn_ended'.
+                // 'turn_ended' event usually just sends state.
+                // If bot moves, we definitely strictly want to update state.
+                // But checkTurnTimeout caller (Gateway) emits 'turn_ended' ONLY if true returned.
+                // 'turn_ended' prompt might be confusing if it wasn't a timeout.
+                // Gateway line 58: `this.io.to(roomId).emit('turn_ended', { state: game.getState() });`
+                // It's just a state sync labeled 'turn_ended'.
+                // So returning true is fine to force sync.
+            }
+            return false;
+        } else {
+            // Reset bot timer when human turn
+            this.botNextActionAt = 0;
+        }
+
         // Return true if state changed (turn ended)
         if (this.state.turnExpiresAt && Date.now() > this.state.turnExpiresAt) {
-            const player = this.state.players[this.state.currentPlayerIndex];
             if (player) {
                 this.addLog(`⌛ Turn timeout for ${player.name}`);
             }

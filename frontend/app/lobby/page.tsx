@@ -119,7 +119,15 @@ export default function Lobby() {
     };
 
     const createRoom = () => {
-        if (!newRoomName || !user || isSubmitting) return;
+        if (!user) return alert("Пожалуйста, войдите в систему");
+
+        if (!newRoomName.trim()) {
+            alert("Пожалуйста, введите название комнаты");
+            return;
+        }
+
+        if (isSubmitting) return;
+
         setIsSubmitting(true);
         const playerName = user.firstName || user.username || 'Guest';
         const userId = user._id || user.id;
@@ -137,7 +145,7 @@ export default function Lobby() {
             if (response.success) {
                 router.push(`/game?id=${response.room.id}`);
             } else {
-                alert("Failed to create room: " + response.error);
+                alert("Не удалось создать комнату: " + response.error);
             }
         });
     };
@@ -375,8 +383,11 @@ export default function Lobby() {
 
                                 <button
                                     onClick={createRoom}
-                                    disabled={isSubmitting || !newRoomName}
-                                    className="w-full bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white py-4 rounded-xl font-black uppercase tracking-widest shadow-xl shadow-green-900/20 hover:-translate-y-1 active:scale-95 transition-all text-sm"
+                                    disabled={isSubmitting}
+                                    className={`w-full py-4 rounded-xl font-black uppercase tracking-widest shadow-xl transition-all text-sm ${!newRoomName.trim()
+                                            ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                            : 'bg-green-600 hover:bg-green-500 text-white shadow-green-900/20 hover:-translate-y-1 active:scale-95'
+                                        }`}
                                 >
                                     {isSubmitting ? 'Создание...' : '🚀 Запустить Игру'}
                                 </button>

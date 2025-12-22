@@ -190,6 +190,33 @@ export class RoomService {
         return this.sanitizeRoom(room);
     }
 
+    async addBot(roomId: string, difficulty: 'easy' | 'hard' = 'easy'): Promise<any> {
+        const room = await RoomModel.findById(roomId);
+        if (!room) throw new Error("Room not found");
+        if (room.players.length >= room.maxPlayers) throw new Error("Room is full");
+
+        const botId = `bot_${uuidv4().substring(0, 8)}`;
+        const botName = `Bot ${difficulty === 'easy' ? 'Easy' : 'Hard'} 🤖`;
+
+        // Token Logic
+        const ALL_TOKENS = ['🤖', '👾', '👽', '🤡', '👹', '👺']; // Specialized Bot Tokens
+        const existingTokens = room.players.map((p: any) => p.token);
+        let finalToken = ALL_TOKENS.find(t => !existingTokens.includes(t)) || '🤖';
+
+        room.players.push({
+            id: botId,
+            userId: botId, // Bot treats ID as UserId
+            name: botName,
+            isReady: true, // Bots are always ready
+            token: finalToken,
+            dream: 'Мировое господство',
+            photo_url: '' // Specific Bot Avatar URL could be here
+        });
+
+        await room.save();
+        return this.sanitizeRoom(room);
+    }
+
     async leaveRoom(roomId: string, playerId: string, userId?: string): Promise<void> {
         // We use $pull to remove the player by socket ID or User ID (to handle refreshes)
         const pullQuery: any = { id: playerId };

@@ -205,6 +205,15 @@ function GameContent() {
         }
     };
 
+    const handleAddBot = (difficulty: 'easy' | 'hard') => {
+        if (!myUserId) return;
+        socket.emit('add_bot', { roomId, difficulty, userId: myUserId }, (res: any) => {
+            if (!res.success) {
+                alert("Ошибка при добавлении бота: " + res.error);
+            }
+        });
+    };
+
     const isHost = !!(room && myUserId && String(room.creatorId) === String(myUserId));
 
     if (!room) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Загрузка комнаты... {error && <span className="text-red-500 ml-2">{error}</span>}</div>;
@@ -293,8 +302,29 @@ function GameContent() {
                                     </div>
                                 ))}
                                 {Array.from({ length: Math.max(0, (room.maxPlayers || 4) - room.players.length) }).map((_, i) => (
-                                    <div key={`empty-${i}`} className="p-4 rounded-2xl border border-white/5 border-dashed bg-transparent flex items-center justify-center text-slate-600 text-sm italic">
-                                        Ожидание игрока...
+                                    <div key={`empty-${i}`} className="p-4 rounded-2xl border border-white/5 border-dashed bg-transparent flex items-center justify-center text-slate-600 text-sm italic relative group/empty">
+                                        {isHost ? (
+                                            <div className="flex flex-col items-center gap-2">
+                                                <span className="group-hover/empty:hidden">Ожидание игрока...</span>
+                                                <div className="hidden group-hover/empty:flex gap-2">
+                                                    <button
+                                                        onClick={() => handleAddBot('easy')}
+                                                        className="px-3 py-1 bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white rounded text-xs font-bold transition-colors"
+                                                    >
+                                                        + Easy Bot
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleAddBot('hard')}
+                                                        className="px-3 py-1 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded text-xs font-bold transition-colors"
+                                                    >
+                                                        + Hard Bot
+                                                    </button>
+                                                </div>
+                                                <span className="text-[10px] text-slate-700 font-mono mt-1 group-hover/empty:hidden">+ Добавить бота</span>
+                                            </div>
+                                        ) : (
+                                            "Ожидание игрока..."
+                                        )}
                                     </div>
                                 ))}
                             </div>

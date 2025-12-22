@@ -116,6 +116,28 @@ export class GameGateway {
                 }
             });
 
+            // Add Bot
+            socket.on('add_bot', async (data, callback) => {
+                try {
+                    const { roomId, difficulty, userId } = data;
+                    // Verify Host
+                    const room = await this.roomService.getRoom(roomId);
+                    if (!room) return callback({ success: false, error: "Room not found" });
+                    if (room.creatorId !== userId) return callback({ success: false, error: "Only host can add bots" });
+
+                    const updatedRoom = await this.roomService.addBot(roomId, difficulty);
+
+                    // Broadcast
+                    this.io.to(roomId).emit('room_state_updated', updatedRoom);
+                    this.io.emit('rooms_updated', await this.roomService.getRooms());
+
+                    callback({ success: true, room: updatedRoom });
+                } catch (e: any) {
+                    console.error("Add Bot Error:", e);
+                    callback({ success: false, error: e.message });
+                }
+            });
+
             // Join Room
             socket.on('join_room', async (data, callback) => {
                 try {
