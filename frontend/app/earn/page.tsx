@@ -371,7 +371,7 @@ export default function EarnPage() {
                     {/* Partner Card - Custom Video Background */}
                     <div
                         onClick={() => handleBuy('PARTNER', 1000)}
-                        className="relative rounded-xl border border-yellow-500/50 overflow-hidden group cursor-pointer active:scale-95 transition-transform h-[220px] shadow-lg shadow-yellow-900/20"
+                        className="relative rounded-xl border border-yellow-500/50 overflow-hidden group cursor-pointer active:scale-95 transition-transform h-[300px] shadow-lg shadow-yellow-900/20"
                     >
                         {/* Video Background */}
                         <video
