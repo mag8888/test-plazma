@@ -235,12 +235,17 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
             const rawTelegramId = webApp.initDataUnsafe?.user?.id;
             const partnershipId = rawTelegramId ? rawTelegramId.toString() : (telegramUser.telegram_id || telegramUser.id).toString();
 
+            console.log('[Board] Fetching partnership data for:', partnershipId, telegramUser.username);
+
             partnershipApi.login(partnershipId, telegramUser.username)
-                .then(dbUser => {
+                .then((dbUser: any) => {
+                    console.log('[Board] Partnership data loaded:', dbUser);
                     setPartnershipUser(dbUser);
                 })
-                .catch(err => {
-                    console.error("Partnership fetch failed", err);
+                .catch((err: any) => {
+                    console.error("[Board] Partnership fetch failed:", err);
+                    // Set default to show $0 instead of hiding section
+                    setPartnershipUser({ greenBalance: 0 });
                 });
         }
     }, [telegramUser, webApp]);
