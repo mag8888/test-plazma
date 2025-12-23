@@ -8,6 +8,8 @@ import { BoardVisualizer } from './BoardVisualizer';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { TextChat } from './TextChat';
 import { sfx } from './SoundManager';
+import { partnershipApi } from '../../lib/partnershipApi';
+import { useTelegram } from '../../components/TelegramProvider';
 
 interface BoardProps {
     roomId: string;
@@ -142,6 +144,9 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     const [dismissedMarketCards, setDismissedMarketCards] = useState<string[]>([]);
     const [isMuted, setIsMuted] = useState(false);
 
+    // Partnership Data
+    const [partnershipUser, setPartnershipUser] = useState<any>(null);
+
 
 
     // Chat State
@@ -222,6 +227,23 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
             window.removeEventListener('orientationchange', handleResize);
         };
     }, []);
+
+    // Fetch Partnership Data
+    const { webApp, user: telegramUser } = useTelegram();
+    useEffect(() => {
+        if (telegramUser && webApp?.initData) {
+            const rawTelegramId = webApp.initDataUnsafe?.user?.id;
+            const partnershipId = rawTelegramId ? rawTelegramId.toString() : (telegramUser.telegram_id || telegramUser.id).toString();
+
+            partnershipApi.login(partnershipId, telegramUser.username)
+                .then(dbUser => {
+                    setPartnershipUser(dbUser);
+                })
+                .catch(err => {
+                    console.error("Partnership fetch failed", err);
+                });
+        }
+    }, [telegramUser, webApp]);
 
     // ... (existing effects) hasRolled when turn changes or Phase resets to ROLL
     // Local state to track if player has rolled this turn

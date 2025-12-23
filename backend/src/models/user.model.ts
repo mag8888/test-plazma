@@ -7,8 +7,10 @@ export interface IUser extends Document {
     last_name?: string;
     photo_url?: string;
     telegram_id?: number;
-    referralBalance: number; // Green
+    referralBalance: number; // Green (Legacy)
     balanceRed: number;      // Red
+    greenBalance?: number;   // Green (Partnership)
+    yellowBalance?: number;  // Yellow (Partnership)
     referralsCount: number;
     referredBy?: string;
     authCode?: string;

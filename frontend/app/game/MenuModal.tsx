@@ -18,6 +18,7 @@ interface MenuModalProps {
     onToggleOrientation?: () => void; // New Prop
     onCancelGame?: () => void;
     deckCounts?: any; // Pass deck counts
+    greenBalance?: number; // Partnership green balance
 }
 
 export const MenuModal = ({
@@ -37,7 +38,8 @@ export const MenuModal = ({
     onKickCurrent,
     onToggleOrientation,
     onCancelGame,
-    deckCounts
+    deckCounts,
+    greenBalance
 }: MenuModalProps) => {
     return (
         <div className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
@@ -60,6 +62,26 @@ export const MenuModal = ({
                             <div className="flex justify-between"><span className="text-purple-400">Big</span> <span className="font-mono text-white">{deckCounts.big?.remaining}/{deckCounts.big?.total}</span></div>
                             <div className="flex justify-between"><span className="text-blue-400">Market</span> <span className="font-mono text-white">{deckCounts.market?.remaining}/{deckCounts.market?.total}</span></div>
                             <div className="flex justify-between"><span className="text-pink-400">Expense</span> <span className="font-mono text-white">{deckCounts.expense?.remaining}/{deckCounts.expense?.total}</span></div>
+                        </div>
+                    </div>
+                )}
+
+                {/* Green Balance */}
+                {greenBalance !== undefined && (
+                    <div className="bg-gradient-to-r from-green-900/30 to-emerald-900/30 p-4 rounded-xl border border-green-500/30 mb-6">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <div className="text-[10px] uppercase font-bold text-green-400 tracking-wider mb-1">Зеленый баланс</div>
+                                <div className="text-2xl font-black text-green-400">${greenBalance}</div>
+                                <div className="text-[9px] text-slate-400 mt-1">Партнерская программа</div>
+                            </div>
+                            <a
+                                href="/earn"
+                                target="_blank"
+                                className="bg-green-600 hover:bg-green-500 text-white text-xs font-bold px-4 py-2 rounded-lg transition-colors"
+                            >
+                                Купить аватар
+                            </a>
                         </div>
                     </div>
                 )}
