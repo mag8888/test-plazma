@@ -114,21 +114,34 @@ const FeedCardItem = ({
                     </span>
                 </div>
             </div>
-            {card.type === 'MARKET' && card.offerPrice ? (
-                <div className="text-right shrink-0 bg-blue-900/40 px-2 py-1 rounded-lg border border-blue-500/30">
-                    <div className="text-[8px] text-blue-400 uppercase font-bold">Предложение</div>
-                    <div className="text-sm font-mono font-bold text-green-400">
-                        ${card.offerPrice.toLocaleString()}
+            <div className="flex items-center gap-2 shrink-0">
+                {card.type === 'MARKET' && card.offerPrice ? (
+                    <div className="text-right bg-blue-900/40 px-2 py-1 rounded-lg border border-blue-500/30">
+                        <div className="text-[8px] text-blue-400 uppercase font-bold">Предложение</div>
+                        <div className="text-sm font-mono font-bold text-green-400">
+                            ${card.offerPrice.toLocaleString()}
+                        </div>
                     </div>
-                </div>
-            ) : card.type !== 'MARKET' && (card.cost || card.price) ? (
-                <div className="text-right shrink-0 bg-slate-900/40 px-2 py-1 rounded-lg border border-slate-700/30">
-                    <div className="text-[8px] text-slate-500 uppercase font-bold">Цена</div>
-                    <div className="text-sm font-mono font-bold text-red-300">
-                        ${(card.cost || card.price).toLocaleString()}
+                ) : card.type !== 'MARKET' && (card.cost || card.price) ? (
+                    <div className="text-right bg-slate-900/40 px-2 py-1 rounded-lg border border-slate-700/30">
+                        <div className="text-[8px] text-slate-500 uppercase font-bold">Цена</div>
+                        <div className="text-sm font-mono font-bold text-red-300">
+                            ${(card.cost || card.price).toLocaleString()}
+                        </div>
                     </div>
-                </div>
-            ) : null}
+                ) : null}
+                {/* Close Button */}
+                <button
+                    onClick={(e) => {
+                        e.stopPropagation();
+                        onDismiss();
+                    }}
+                    className="w-6 h-6 rounded-lg bg-slate-700/50 hover:bg-red-600/80 text-slate-400 hover:text-white flex items-center justify-center transition-all text-sm font-bold"
+                    title="Закрыть"
+                >
+                    ✕
+                </button>
+            </div>
         </div>
     );
 
@@ -530,9 +543,9 @@ export const ActiveCardZone = ({
         ? [{ card: state.currentCard || previewCard, source: 'CURRENT', id: (state.currentCard || previewCard).id || 'curr' }]
         : [];
 
-    // User wants "New cards under the bottom". 
-    // Feed = [Market..., Current]. 
-    const feedItems = [...marketCards, ...currentCard];
+    // User wants "New cards at the top". 
+    // Feed = [Current, ...Market] (reversed).
+    const feedItems = [...currentCard, ...marketCards];
 
     // Show Dice if rolling (Overlay or Top Item?)
     // If showDice is true, I should probably show it ABOVE the feed or blocking.
