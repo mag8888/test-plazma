@@ -74,6 +74,9 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                 // Check LocalStorage for cached Auth Code
                 const cachedAuthCode = localStorage.getItem('moneo_auth_code');
 
+                // Check LocalStorage for Password Auth (User Login)
+                const storedUserAuth = localStorage.getItem('moneo_user_auth');
+
                 if (initData) {
                     // Priority 1: Telegram Web App Init Data
                     console.log("🔑 Login via Telegram InitData");
@@ -90,8 +93,18 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                         console.error("Telegram Auth failed", res.status);
                         setUser(app?.initDataUnsafe?.user || { id: 123456789, first_name: 'Guest (Auth Failed)', username: 'guest_fallback', balanceRed: 1000, referralBalance: 50 });
                     }
+                } else if (storedUserAuth) {
+                    // Priority 2: Stored Password Auth
+                    console.log("🔑 Login via Stored Authentication");
+                    try {
+                        const parsed = JSON.parse(storedUserAuth);
+                        setUser(parsed.user); // Assume valid for now, usually verify token
+                    } catch (e) {
+                        console.error("Invalid stored auth", e);
+                        localStorage.removeItem('moneo_user_auth');
+                    }
                 } else if (authCode || cachedAuthCode) {
-                    // Priority 2: Magic Link Auth Code (URL or Cached)
+                    // Priority 3: Magic Link Auth Code (URL or Cached)
                     const codeToUse = authCode || cachedAuthCode;
                     console.log("🔑 Attempting Magic Login with code:", codeToUse, authCode ? '(URL)' : '(Cached)');
 
