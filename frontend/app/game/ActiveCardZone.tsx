@@ -228,124 +228,97 @@ const FeedCardItem = ({
                                 {transactionMode === 'BUY' ? 'Покупка' : 'Продажа'}
                             </div>
                         </div>
-                        {/* Logic for Slider/Calc */}
-                        {(() => {
-                            const price = card.cost || card.price || 0;
 
-                            // Credit Logic
-                            const maxNewLoan = Math.max(0, Math.floor((me.cashflow || 0) / 100) * 1000);
-                            const availableLoan = Math.max(0, maxNewLoan - (me.loanDebt || 0));
-                            const maxBuyCash = Math.floor(me.cash / (price || 1));
-                            const maxBuyCredit = Math.floor(availableLoan / (price || 1));
-
-                            const maxVal = transactionMode === 'BUY'
-                                ? (isStock ? Math.max(1, maxBuyCash + maxBuyCredit) : 1)
-                                : ownedQty;
-
-                            // Ensure default is reasonable
-                            useEffect(() => {
-                                if (transactionMode === 'BUY' && isStock && stockQty === 1 && maxBuyCash > 1) {
-                                    // Optional
-                                }
-                            }, [transactionMode]);
-
-                            const total = price * stockQty;
-                            const loanNeeded = Math.max(0, total - me.cash);
-
-                            return (
+                        {/* Logic for Slider/Calc - Now using pre-calculated values */}
+                        <div className="flex flex-col gap-4 mb-4">
+                            {(isStock || maxVal > 1) && (
                                 <>
-                                    <div className="flex flex-col gap-4 mb-4">
-                                        {(isStock || maxVal > 1) && (
-                                            <>
-                                                <div className="flex items-center gap-4 justify-between">
-                                                    <button
-                                                        onClick={() => setStockQty(Math.max(1, stockQty - 1))}
-                                                        className="w-12 h-12 bg-slate-700 hover:bg-slate-600 rounded-xl flex items-center justify-center text-xl font-bold transition-colors"
-                                                    >-</button>
+                                    <div className="flex items-center gap-4 justify-between">
+                                        <button
+                                            onClick={() => setStockQty(Math.max(1, stockQty - 1))}
+                                            className="w-12 h-12 bg-slate-700 hover:bg-slate-600 rounded-xl flex items-center justify-center text-xl font-bold transition-colors"
+                                        >-</button>
 
-                                                    <div className="flex flex-col items-center">
-                                                        <input
-                                                            type="number"
-                                                            value={stockQty}
-                                                            onChange={(e) => {
-                                                                const val = Number(e.target.value);
-                                                                if (val >= 1 && val <= maxVal) setStockQty(val);
-                                                            }}
-                                                            className="w-24 bg-transparent text-center font-black text-3xl outline-none text-white font-mono"
-                                                        />
-                                                        <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Количество</span>
-                                                    </div>
+                                        <div className="flex flex-col items-center">
+                                            <input
+                                                type="number"
+                                                value={stockQty}
+                                                onChange={(e) => {
+                                                    const val = Number(e.target.value);
+                                                    if (val >= 1 && val <= maxVal) setStockQty(val);
+                                                }}
+                                                className="w-24 bg-transparent text-center font-black text-3xl outline-none text-white font-mono"
+                                            />
+                                            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Количество</span>
+                                        </div>
 
-                                                    <button
-                                                        onClick={() => setStockQty(Math.min(maxVal, stockQty + 1))}
-                                                        className="w-12 h-12 bg-slate-700 hover:bg-slate-600 rounded-xl flex items-center justify-center text-xl font-bold transition-colors"
-                                                    >+</button>
-                                                </div>
-
-                                                {/* SLIDER */}
-                                                <div className="px-2">
-                                                    <input
-                                                        type="range"
-                                                        min="1"
-                                                        max={maxVal}
-                                                        value={stockQty}
-                                                        onChange={(e) => setStockQty(Number(e.target.value))}
-                                                        className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                                                    />
-                                                    <div className="flex justify-between text-[8px] text-slate-500 font-mono mt-1">
-                                                        <span>1</span>
-                                                        <span>{maxVal} (Макс)</span>
-                                                    </div>
-                                                </div>
-                                            </>
-                                        )}
+                                        <button
+                                            onClick={() => setStockQty(Math.min(maxVal, stockQty + 1))}
+                                            className="w-12 h-12 bg-slate-700 hover:bg-slate-600 rounded-xl flex items-center justify-center text-xl font-bold transition-colors"
+                                        >+</button>
                                     </div>
 
-                                    <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 mb-3 space-y-2">
-                                        <div className="flex justify-between items-center text-xs">
-                                            <span className="text-slate-400 uppercase font-bold">Цена за шт.</span>
-                                            <span className="text-white font-mono">${price}</span>
+                                    {/* SLIDER */}
+                                    <div className="px-2">
+                                        <input
+                                            type="range"
+                                            min="1"
+                                            max={maxVal}
+                                            value={stockQty}
+                                            onChange={(e) => setStockQty(Number(e.target.value))}
+                                            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                        />
+                                        <div className="flex justify-between text-[8px] text-slate-500 font-mono mt-1">
+                                            <span>1</span>
+                                            <span>{maxVal} (Макс)</span>
                                         </div>
-                                        <div className="h-px bg-slate-700/50"></div>
-                                        <div className="flex justify-between items-center">
-                                            <span className="text-slate-200 uppercase font-black text-xs">Итого</span>
-                                            <div className="text-right">
-                                                <div className="font-mono font-black text-lg text-emerald-400">${total.toLocaleString()}</div>
-                                            </div>
-                                        </div>
-                                        {loanNeeded > 0 && transactionMode === 'BUY' && (
-                                            <div className="flex justify-between items-center bg-yellow-500/10 p-2 rounded-lg border border-yellow-500/20 mt-1">
-                                                <span className="text-[10px] text-yellow-500 font-bold uppercase">Требуется Кредит</span>
-                                                <span className="font-mono font-bold text-yellow-400 text-xs">${(Math.ceil(loanNeeded / 1000) * 1000).toLocaleString()}</span>
-                                            </div>
-                                        )}
                                     </div>
-
-                                    <button
-                                        onClick={() => {
-                                            if (transactionMode === 'BUY') {
-                                                if (loanNeeded > 0) {
-                                                    const amount = Math.ceil(loanNeeded / 1000) * 1000;
-                                                    if (confirm(`Взять кредит $${amount.toLocaleString()} для покупки?`)) {
-                                                        socket.emit('take_loan', { roomId, amount });
-                                                        setTimeout(() => socket.emit('buy_asset', { roomId, quantity: stockQty }), 500);
-                                                    }
-                                                } else {
-                                                    socket.emit('buy_asset', { roomId, quantity: stockQty });
-                                                }
-                                            } else {
-                                                socket.emit('sell_stock', { roomId, quantity: stockQty });
-                                            }
-                                        }}
-                                        className={`w-full py-4 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg transition-transform active:scale-[0.98]
-                                            ${loanNeeded > 0 ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white' : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white'}
-                                        `}
-                                    >
-                                        {loanNeeded > 0 ? '💰 Кредит и Купить' : '✅ Подтвердить'}
-                                    </button>
                                 </>
-                            );
-                        })()}
+                            )}
+                        </div>
+
+                        <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 mb-3 space-y-2">
+                            <div className="flex justify-between items-center text-xs">
+                                <span className="text-slate-400 uppercase font-bold">Цена за шт.</span>
+                                <span className="text-white font-mono">${price}</span>
+                            </div>
+                            <div className="h-px bg-slate-700/50"></div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-slate-200 uppercase font-black text-xs">Итого</span>
+                                <div className="text-right">
+                                    <div className="font-mono font-black text-lg text-emerald-400">${total.toLocaleString()}</div>
+                                </div>
+                            </div>
+                            {loanNeeded > 0 && transactionMode === 'BUY' && (
+                                <div className="flex justify-between items-center bg-yellow-500/10 p-2 rounded-lg border border-yellow-500/20 mt-1">
+                                    <span className="text-[10px] text-yellow-500 font-bold uppercase">Требуется Кредит</span>
+                                    <span className="font-mono font-bold text-yellow-400 text-xs">${(Math.ceil(loanNeeded / 1000) * 1000).toLocaleString()}</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <button
+                            onClick={() => {
+                                if (transactionMode === 'BUY') {
+                                    if (loanNeeded > 0) {
+                                        const amount = Math.ceil(loanNeeded / 1000) * 1000;
+                                        if (confirm(`Взять кредит $${amount.toLocaleString()} для покупки?`)) {
+                                            socket.emit('take_loan', { roomId, amount });
+                                            setTimeout(() => socket.emit('buy_asset', { roomId, quantity: stockQty }), 500);
+                                        }
+                                    } else {
+                                        socket.emit('buy_asset', { roomId, quantity: stockQty });
+                                    }
+                                } else {
+                                    socket.emit('sell_stock', { roomId, quantity: stockQty });
+                                }
+                            }}
+                            className={`w-full py-4 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg transition-transform active:scale-[0.98]
+                                ${loanNeeded > 0 ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white' : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white'}
+                            `}
+                        >
+                            {loanNeeded > 0 ? '💰 Кредит и Купить' : '✅ Подтвердить'}
+                        </button>
                     </div>
                 )}
             </div>
