@@ -34,10 +34,24 @@ function HomeContent() {
       </div>
 
       {/* Dev Bypass if stuck */}
+      {/* Login Options if not auto-logged in */}
       {isReady && !user && (
-        <div className="mt-8">
-          <button onClick={() => router.push('/home')} className="text-slate-600 text-xs hover:text-white transition-colors">
-            Dev: Force Enter
+        <div className="mt-8 flex flex-col gap-3 w-full max-w-xs animate-in fade-in slide-in-from-bottom-4 duration-500">
+          <button
+            onClick={() => {
+              localStorage.removeItem('moneo_is_logged_out');
+              window.location.reload();
+            }}
+            className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl transition shadow-lg shadow-blue-600/20 active:scale-95"
+          >
+            Войти как Гость
+          </button>
+
+          <button
+            onClick={() => router.push('/admin/login')}
+            className="bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3.5 rounded-xl transition border border-slate-700 active:scale-95"
+          >
+            Вход для Администратора
           </button>
         </div>
       )}

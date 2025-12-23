@@ -42,8 +42,9 @@ export default function HomePage() {
                                     // In Telegram: Close the app
                                     webApp.close();
                                 } else {
-                                    // In Browser: Clear session and reload
+                                    // In Browser: Set explicit logout flag to prevent auto-login
                                     localStorage.clear();
+                                    localStorage.setItem('moneo_is_logged_out', 'true');
                                     window.location.reload();
                                 }
                             }

@@ -123,12 +123,24 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                     }
                 } else {
                     // No Auth - Check if inside Telegram but no initData (weird) OR standard browser
-                    console.warn("No initData or Auth Code. Treating as Guest/Dev.");
+
+                    // Check if explicitly logged out
+                    const isLoggedOut = localStorage.getItem('moneo_is_logged_out');
+
                     if (app?.initDataUnsafe?.user) {
                         setUser(app.initDataUnsafe.user);
+                        // If we have real Telegram data, we are always logged in effectively
+                        if (isLoggedOut) localStorage.removeItem('moneo_is_logged_out');
                     } else {
-                        // Fallback dev/guest
-                        setUser({ id: 123456789, first_name: 'Dev Guest', username: 'dev_guest', balanceRed: 1000, referralBalance: 50 });
+                        // Standard Browser / Dev Mode
+                        if (isLoggedOut === 'true') {
+                            console.log("🔒 User explicitly logged out. Waiting for manual login.");
+                            // Do NOT set user, effectively leaving it null
+                        } else {
+                            console.warn("No initData, treating as Guest/Dev.");
+                            // Fallback dev/guest
+                            setUser({ id: 123456789, first_name: 'Dev Guest', username: 'dev_guest', balanceRed: 1000, referralBalance: 50 });
+                        }
                     }
                 }
 
