@@ -1295,7 +1295,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                         {/* Zone 3: Player List (Horizontal Module) */}
                         <div className="shrink-0 relative px-1 py-1">
-                            <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar mask-horizontal px-1 justify-center">
+                            <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-1 justify-center">
                                 {state.players.map((p: any) => {
                                     const isCurrentTurn = p.id === currentPlayer.id;
                                     return (
@@ -1317,8 +1317,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                                                 {/* DICE BUBBLE For Others */}
                                                 {isCurrentTurn && showDice && diceValue && (
-                                                    <div className="absolute -top-3 -right-3 w-6 h-6 bg-white text-slate-900 rounded-full flex items-center justify-center font-black border-2 border-emerald-500 shadow-lg z-20 animate-bounce">
-                                                        {diceValue}
+                                                    <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 w-8 h-8 bg-white text-slate-900 rounded-full flex items-center justify-center font-black border-2 border-emerald-500 shadow-lg z-20 animate-bounce">
+                                                        <span className="text-sm">{diceValue}</span>
                                                     </div>
                                                 )}
                                             </div>

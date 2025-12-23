@@ -294,9 +294,21 @@ export const ActiveCardZone = ({
         );
     }
     // 2. CHARITY
-    if (state.phase === 'CHARITY_CHOICE' && isMyTurn) {
+    // 2. CHARITY CHOICE
+    if (state.phase === 'CHARITY_CHOICE') {
+        if (!isMyTurn) {
+            return (
+                <div className="flex flex-col items-center justify-center h-full text-slate-500/80 animate-pulse bg-slate-900/40 rounded-2xl border border-slate-800/50">
+                    <div className="text-3xl mb-2 grayscale opacity-50">❤️</div>
+                    <div className="text-center">
+                        <div className="text-xs font-bold text-slate-300 mb-1">{state.players[state.currentPlayerIndex]?.name}</div>
+                        <div className="text-[10px] uppercase font-bold tracking-widest opacity-70">решает насчет<br />благотворительности</div>
+                    </div>
+                </div>
+            );
+        }
         return (
-            <div className="flex flex-col h-full w-full relative">
+            <div className="flex flex-col h-full w-full relative bg-[#1e293b] rounded-2xl overflow-hidden border border-slate-700/50 shadow-lg">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-red-500 rounded-t-3xl"></div>
                 <div className="p-3 flex-1 flex flex-col items-center text-center justify-center h-full">
                     <div className="text-3xl mb-2">❤️</div>
