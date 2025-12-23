@@ -229,26 +229,37 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     }, []);
 
     // Fetch Partnership Data
-    const { webApp, user: telegramUser } = useTelegram();
+    const { webApp } = useTelegram();
     useEffect(() => {
-        if (telegramUser && webApp?.initData) {
-            const rawTelegramId = webApp.initDataUnsafe?.user?.id;
-            const partnershipId = rawTelegramId ? rawTelegramId.toString() : (telegramUser.telegram_id || telegramUser.id).toString();
+        // Use userId from props to fetch user data and get telegram_id
+        if (userId && webApp?.initData) {
+            console.log('[Board] Fetching user data for userId:', userId);
 
-            console.log('[Board] Fetching partnership data for:', partnershipId, telegramUser.username);
+            // Fetch user data from backend to get telegram_id
+            fetch(`/api/user/${userId}`)
+                .then(res => res.json())
+                .then((userData: any) => {
+                    if (userData && userData.telegram_id) {
+                        const telegramId = userData.telegram_id.toString();
+                        console.log('[Board] Got telegram_id:', telegramId, 'username:', userData.username);
 
-            partnershipApi.login(partnershipId, telegramUser.username)
-                .then((dbUser: any) => {
-                    console.log('[Board] Partnership data loaded:', dbUser);
-                    setPartnershipUser(dbUser);
+                        // Now fetch partnership data
+                        return partnershipApi.login(telegramId, userData.username)
+                            .then((dbUser: any) => {
+                                console.log('[Board] Partnership data loaded:', dbUser);
+                                setPartnershipUser(dbUser);
+                            });
+                    } else {
+                        console.warn('[Board] No telegram_id in user data');
+                        setPartnershipUser({ greenBalance: 0 });
+                    }
                 })
                 .catch((err: any) => {
-                    console.error("[Board] Partnership fetch failed:", err);
-                    // Set default to show $0 instead of hiding section
+                    console.error("[Board] Failed to fetch partnership data:", err);
                     setPartnershipUser({ greenBalance: 0 });
                 });
         }
-    }, [telegramUser, webApp]);
+    }, [userId, webApp]);
 
     // ... (existing effects) hasRolled when turn changes or Phase resets to ROLL
     // Local state to track if player has rolled this turn
