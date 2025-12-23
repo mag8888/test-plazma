@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { socket } from '../socket';
 import { RulesModal } from '../game/RulesModal';
+import { RoomErrorModal } from './RoomErrorModal';
 import { DREAMS } from '../lib/dreams';
 
 interface Room {
@@ -118,6 +119,10 @@ export default function Lobby() {
         router.push('/');
     };
 
+    const [roomError, setRoomError] = useState<{ isOpen: boolean; message: string; roomIdToLeave?: string }>({ isOpen: false, message: '' });
+
+    // ... (existing state)
+
     const createRoom = () => {
         if (!user) return alert("Пожалуйста, войдите в систему");
 
@@ -145,9 +150,51 @@ export default function Lobby() {
             if (response.success) {
                 router.push(`/game?id=${response.room.id}`);
             } else {
-                alert("Не удалось создать комнату: " + response.error);
+                // Check for "already in room" or similar errors
+                // We assume backend might send specific error or we check if user is in 'myRooms'
+                // But the alert implies backend returned error.
+                // Optimistically check if we are in a room locally:
+                const currentRoom = myRooms[0]; // Simplistic check if we are in ANY room
+
+                if (response.error.includes('already') || currentRoom) {
+                    setRoomError({
+                        isOpen: true,
+                        message: `Вы уже находитесь в комнате "${currentRoom?.name || 'Unknown'}" (${currentRoom?.status === 'playing' ? 'Игра идет' : 'Ожидание'}). Хотите покинуть её и создать новую?`,
+                        roomIdToLeave: currentRoom?.id
+                    });
+                } else {
+                    alert("Не удалось создать комнату: " + response.error);
+                }
             }
         });
+    };
+
+    const handleForceCreate = () => {
+        if (!roomError.roomIdToLeave || !user) return;
+
+        setIsSubmitting(true);
+        // Leave old room
+        socket.emit('leave_room', { roomId: roomError.roomIdToLeave, userId: user._id || user.id });
+
+        // Optimistically remove from state
+        setMyRooms(prev => prev.filter(r => r.id !== roomError.roomIdToLeave));
+        setRoomError({ ...roomError, isOpen: false });
+
+        // Retry Create Room after short delay to allow backend processing
+        setTimeout(() => {
+            setIsSubmitting(false);
+            createRoom();
+        }, 500);
+    };
+
+    // Refactored Helper
+    const doCreateRoom = () => {
+        // Copy of createRoom logic without isSubmitting check or with it managed
+        // Let's just reset isSubmitting before calling createRoom?
+        setIsSubmitting(false);
+        // But we want to prevent double clicks.
+        // Let's rely on createRoom's logic.
+        setTimeout(() => createRoom(), 100);
     };
 
     const joinRoom = (roomId: string) => {
@@ -385,8 +432,8 @@ export default function Lobby() {
                                     onClick={createRoom}
                                     disabled={isSubmitting}
                                     className={`w-full py-4 rounded-xl font-black uppercase tracking-widest shadow-xl transition-all text-sm ${!newRoomName.trim()
-                                            ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                                            : 'bg-green-600 hover:bg-green-500 text-white shadow-green-900/20 hover:-translate-y-1 active:scale-95'
+                                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                        : 'bg-green-600 hover:bg-green-500 text-white shadow-green-900/20 hover:-translate-y-1 active:scale-95'
                                         }`}
                                 >
                                     {isSubmitting ? 'Создание...' : '🚀 Запустить Игру'}
@@ -455,6 +502,14 @@ export default function Lobby() {
             </button>
 
             {showRules && <RulesModal onClose={() => setShowRules(false)} />}
+
+            <RoomErrorModal
+                isOpen={roomError.isOpen}
+                onClose={() => setRoomError({ ...roomError, isOpen: false })}
+                onConfirm={handleForceCreate}
+                message={roomError.message}
+                isSubmitting={isSubmitting}
+            />
         </div>
     );
 }

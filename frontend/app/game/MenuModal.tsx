@@ -39,9 +39,9 @@ export const MenuModal = ({
 }: MenuModalProps) => {
     return (
         <div className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
-            <div className="bg-[#1e293b] w-full max-w-sm md:max-w-md p-6 rounded-3xl border border-slate-700 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+            <div className="bg-[#1e293b] w-full max-w-sm md:max-w-md max-h-[85vh] overflow-y-auto custom-scrollbar p-6 rounded-3xl border border-slate-700 shadow-2xl relative" onClick={e => e.stopPropagation()}>
 
-                <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">
+                <button onClick={onClose} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors z-10 bg-[#1e293b]/50 rounded-full p-1">
                     ✕
                 </button>
 
