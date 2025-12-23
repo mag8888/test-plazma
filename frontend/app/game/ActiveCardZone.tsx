@@ -154,7 +154,7 @@ const FeedCardItem = ({
 
                         {/* Actions */}
                         {isMyTurn && (
-                            <div className="grid grid-cols-2 gap-2 mt-1">
+                            <div className="flex gap-2 mt-1 w-full">
                                 {card.type === 'EXPENSE' ? (
                                     <button
                                         onClick={() => {
@@ -162,11 +162,42 @@ const FeedCardItem = ({
                                             setStockQty(1);
                                             setStep('TRANSACTION');
                                         }}
-                                        className="col-span-2 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                        className="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
                                     >
                                         Оплатить
                                     </button>
+                                ) : card.type === 'MARKET' ? (
+                                    <>
+                                        {/* Market Card Actions: Only Sell if owned, otherwise Close */}
+                                        {/* Check if player owns the asset requested by Market */}
+                                        {(() => {
+                                            // Logic to find if player has the asset
+                                            // Market card usually has 'targetTitle' or we check manually
+                                            // For now, simple check using 'ownedQty' which already calculates based on title match in FeedCardItem
+                                            const canSell = ownedQty > 0;
+                                            return canSell ? (
+                                                <button
+                                                    onClick={() => {
+                                                        setTransactionMode('SELL');
+                                                        setStockQty(ownedQty);
+                                                        setStep('TRANSACTION');
+                                                    }}
+                                                    className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                                >
+                                                    Продать
+                                                </button>
+                                            ) : null;
+                                        })()}
+
+                                        <button
+                                            onClick={onDismiss}
+                                            className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider"
+                                        >
+                                            Закрыть
+                                        </button>
+                                    </>
                                 ) : (
+                                    /* Standard Deal Actions */
                                     <>
                                         <button
                                             onClick={() => {
@@ -176,7 +207,7 @@ const FeedCardItem = ({
                                                 setStockQty(isStock && maxBuy > 0 ? maxBuy : 1);
                                                 setStep('TRANSACTION');
                                             }}
-                                            className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                            className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
                                         >
                                             Купить
                                         </button>
@@ -188,7 +219,7 @@ const FeedCardItem = ({
                                                     setStockQty(ownedQty);
                                                     setStep('TRANSACTION');
                                                 }}
-                                                className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                                className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
                                             >
                                                 Продать
                                             </button>
@@ -199,7 +230,7 @@ const FeedCardItem = ({
                                                 if (isOffer) onDismiss();
                                                 else onDismiss();
                                             }}
-                                            className={`bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider ${(!isStock && ownedQty <= 0) ? 'col-span-1' : 'col-span-2'}`}
+                                            className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider"
                                         >
                                             {isOffer ? 'Закрыть' : 'Отказаться'}
                                         </button>
@@ -453,10 +484,16 @@ export const ActiveCardZone = ({
     // MAIN FEED LOGIC
     // Combine Market Cards + Active Card
     const marketCards = (state.activeMarketCards || []).map((mc: any) => ({ ...mc, card: mc.card, source: 'MARKET', id: mc.id }));
-    const currentCard = (state.currentCard || previewCard) ? [{ card: state.currentCard || previewCard, source: 'CURRENT', id: (state.currentCard || previewCard).id || 'curr' }] : [];
+
+    // Check if current card is already in market cards to prevent dupes
+    const isDuplicate = marketCards.some((mc: any) => mc.card.id === state.currentCard?.id);
+
+    const currentCard = (state.currentCard || previewCard) && !isDuplicate
+        ? [{ card: state.currentCard || previewCard, source: 'CURRENT', id: (state.currentCard || previewCard).id || 'curr' }]
+        : [];
 
     // User wants "New cards under the bottom". 
-    // Usually Feed = [Market..., Current]. 
+    // Feed = [Market..., Current]. 
     const feedItems = [...marketCards, ...currentCard];
 
     // Show Dice if rolling (Overlay or Top Item?)
