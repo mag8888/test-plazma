@@ -698,6 +698,82 @@ app.get('/api/debug-balance/:username', async (req, res) => {
     }
 });
 
+// Recalculate Referrals and Award Bonuses
+app.post('/api/recalculate-referrals', async (req, res) => {
+    try {
+        const { initData } = req.body;
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyTelegramAuth(initData);
+        if (!user) return res.status(401).json({ error: "Invalid auth" });
+
+        const { UserModel } = await import('./models/user.model');
+        const { TransactionModel } = await import('./models/transaction.model');
+
+        // Count all users referred by this user
+        const referrals = await UserModel.find({ referredBy: user.username });
+        const actualCount = referrals.length;
+        const currentCount = user.referralsCount || 0;
+
+        console.log(`[Recalc] User ${user.username}: ${actualCount} actual refs, ${currentCount} recorded`);
+
+        // Update referralsCount
+        user.referralsCount = actualCount;
+
+        // Calculate missing bonuses
+        // Check existing referral transactions
+        const existingBonuses = await TransactionModel.countDocuments({
+            userId: user._id,
+            type: 'REFERRAL'
+        });
+
+        const missingBonuses = actualCount - existingBonuses;
+
+        if (missingBonuses > 0) {
+            const bonusAmount = missingBonuses * 10; // $10 per referral
+            user.balanceRed += bonusAmount;
+
+            // Create transaction record
+            await TransactionModel.create({
+                userId: user._id,
+                amount: bonusAmount,
+                currency: 'RED',
+                type: 'REFERRAL',
+                description: `Пересчет рефералов: ${missingBonuses} x $10`
+            });
+
+            await user.save();
+
+            console.log(`[Recalc] Awarded ${bonusAmount} RED to ${user.username} for ${missingBonuses} missing bonuses`);
+
+            res.json({
+                success: true,
+                actualReferrals: actualCount,
+                previousCount: currentCount,
+                missingBonuses: missingBonuses,
+                bonusAwarded: bonusAmount,
+                newRedBalance: user.balanceRed
+            });
+        } else {
+            await user.save();
+            res.json({
+                success: true,
+                actualReferrals: actualCount,
+                previousCount: currentCount,
+                missingBonuses: 0,
+                message: "All bonuses already awarded"
+            });
+        }
+
+    } catch (e) {
+        console.error("Recalculate Referrals Failed:", e);
+        res.status(500).json({ error: "Recalculation failed" });
+    }
+});
+
+
 // Get User Stats (Public Profile)
 app.get('/api/users/:id/stats', async (req, res) => {
     try {
