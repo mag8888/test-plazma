@@ -105,7 +105,7 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                         console.error("Invalid stored auth", e);
                         localStorage.removeItem('moneo_user_auth');
                     }
-                } else if (authCode || cachedAuthCode) {
+                } else if ((authCode || (cachedAuthCode && !isLoggedOut))) {
                     // Priority 3: Magic Link Auth Code (URL or Cached)
                     const codeToUse = authCode || cachedAuthCode;
                     console.log("🔑 Attempting Magic Login with code:", codeToUse, authCode ? '(URL)' : '(Cached)');

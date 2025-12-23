@@ -40,6 +40,7 @@ export default function HomePage() {
                             if (confirm('Выйти из приложения?')) {
                                 // Unified Logout Logic for both Browser and Telegram
                                 localStorage.clear();
+                                localStorage.removeItem('moneo_auth_code'); // Explicitly clear magic link code
                                 localStorage.setItem('moneo_is_logged_out', 'true');
                                 window.location.reload();
                             }
