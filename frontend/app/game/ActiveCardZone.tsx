@@ -130,18 +130,18 @@ const FeedCardItem = ({
     );
 
     return (
-        <div className="relative w-full shrink-0 rounded-2xl overflow-hidden bg-[#1e293b] border border-slate-700/30 shadow-lg flex flex-col group transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
+        <div className="relative w-full shrink-0 rounded-2xl overflow-hidden bg-[#1e293b] border border-slate-700/30 shadow-lg flex flex-col group transition-all duration-500 animate-in fade-in slide-in-from-bottom-4 min-h-[280px]">
             {/* Color Bar */}
             <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${card.cashflow > 0 ? 'from-green-500 to-emerald-500' :
                 card.cost > 0 && !card.symbol ? 'from-red-500 to-rose-600' : 'from-blue-500 to-indigo-500'
                 }`}></div>
 
-            <div className="p-3 flex flex-col gap-2">
+            <div className="p-3 flex flex-col gap-2 flex-1">
                 <CardHeader />
 
                 {step === 'DETAILS' ? (
                     <>
-                        <div className="bg-slate-800/30 p-2 rounded-lg border border-slate-700/30 max-h-[120px] overflow-y-auto custom-scrollbar">
+                        <div className="bg-slate-800/30 p-2 rounded-lg border border-slate-700/30 flex-1 overflow-y-auto custom-scrollbar">
                             <p className="text-[10px] text-slate-300 leading-relaxed">
                                 {card.description}
                             </p>
@@ -259,7 +259,7 @@ const FeedCardItem = ({
                     </>
                 ) : (
                     // Transaction View inside Card
-                    <div className="bg-slate-900/40 p-1.5 rounded-lg border border-white/5">
+                    <div className="bg-slate-900/40 p-1.5 rounded-lg border border-white/5 flex-1 flex flex-col">
                         <div className="flex items-center justify-between mb-1 pb-1 border-b border-white/5 h-6">
                             <button onClick={() => setStep('DETAILS')} className="text-slate-400 hover:text-white text-[9px] uppercase font-bold flex items-center gap-1 h-full px-1 hover:bg-white/5 rounded">← Назад</button>
                             <div className={`text-[9px] font-bold uppercase ${transactionMode === 'BUY' ? 'text-green-400' : 'text-blue-400'}`}>
