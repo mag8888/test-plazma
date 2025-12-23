@@ -54,12 +54,20 @@ export default function AdminLoginPage() {
                         <div className="text-red-400 text-sm text-center">{error}</div>
                     )}
 
-                    <button
-                        onClick={handleLogin}
-                        className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition"
-                    >
-                        Войти
-                    </button>
+                    <div className="flex gap-2">
+                        <button
+                            onClick={() => router.push('/profile')}
+                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold py-3 rounded-xl transition"
+                        >
+                            Назад
+                        </button>
+                        <button
+                            onClick={handleLogin}
+                            className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition"
+                        >
+                            Войти
+                        </button>
+                    </div>
                 </div>
 
                 <div className="text-center text-xs text-slate-600">
