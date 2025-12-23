@@ -312,7 +312,7 @@ export default function EarnPage() {
                     {/* Small */}
                     <div
                         onClick={() => handleBuy('PLAYER', 20)}
-                        className="relative rounded-xl border border-blue-500/50 overflow-hidden group cursor-pointer active:scale-95 transition-transform h-[220px] shadow-lg shadow-blue-900/20"
+                        className="relative rounded-xl border border-blue-500/50 overflow-hidden group cursor-pointer active:scale-95 transition-transform h-[300px] shadow-lg shadow-blue-900/20"
                     >
                         {/* Video Background */}
                         <video
@@ -341,7 +341,7 @@ export default function EarnPage() {
                     {/* Medium */}
                     <div
                         onClick={() => handleBuy('MASTER', 100)}
-                        className="relative rounded-xl border border-purple-500/50 overflow-hidden group cursor-pointer active:scale-95 transition-transform h-[220px] shadow-lg shadow-purple-900/20"
+                        className="relative rounded-xl border border-purple-500/50 overflow-hidden group cursor-pointer active:scale-95 transition-transform h-[300px] shadow-lg shadow-purple-900/20"
                     >
                         {/* Video Background */}
                         <video
