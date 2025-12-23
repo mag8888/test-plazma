@@ -70,7 +70,7 @@ export default function AllUsersPage() {
         <div className="min-h-screen bg-slate-950 text-white p-4">
             {/* Header */}
             <div className="max-w-7xl mx-auto mb-6">
-                <Link href="/admin" className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-4">
+                <Link href="/admin/" className="inline-flex items-center gap-2 text-slate-400 hover:text-white mb-4">
                     <ArrowLeft size={20} />
                     Back to Admin
                 </Link>
