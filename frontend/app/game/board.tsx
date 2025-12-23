@@ -1036,7 +1036,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
             <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-full overflow-hidden justify-start lg:justify-center items-center">
 
                 {/* 📱 MOBILE TOP ZONE (Cards + Stats) */}
-                <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-20 max-h-[50vh] overflow-y-auto">
+                <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-20 max-h-[30vh] overflow-y-auto">
 
                     {/* 1. Status Row (Top Priority) */}
                     <div className="flex items-center justify-between px-1 bg-slate-800/50 p-2 rounded-xl mb-1">
@@ -1294,8 +1294,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
 
                         {/* Zone 3: Player List (Horizontal Module) */}
-                        <div className="shrink-0 relative px-1 py-1">
-                            <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-1 justify-center">
+                        <div className="shrink-0 relative">
+                            <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-2 py-4 justify-center min-h-[80px]">
                                 {state.players.map((p: any) => {
                                     const isCurrentTurn = p.id === currentPlayer.id;
                                     return (

@@ -345,25 +345,24 @@ export const ActiveCardZone = ({
         return (
             <div className="flex flex-col h-full w-full relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-t-3xl"></div>
-                <div className="p-3 flex-1 flex flex-col h-full">
-                    <div className="flex items-center gap-2 mb-2 shrink-0 h-10">
-                        <div className="w-8 h-8 bg-yellow-500/20 rounded-lg flex items-center justify-center text-lg">⚡</div>
+                <div className="p-2 flex-1 flex flex-col h-full justify-center">
+                    <div className="flex items-center gap-2 mb-1 shrink-0 h-6">
+                        <div className="w-5 h-5 bg-yellow-500/20 rounded flex items-center justify-center text-xs">⚡</div>
                         <div>
-                            <h2 className="text-sm font-bold text-white leading-tight">Возможность</h2>
-                            <p className="text-[9px] text-slate-400">Выберите тип сделки</p>
+                            <h2 className="text-xs font-bold text-white leading-tight">Возможность</h2>
                         </div>
                     </div>
-                    <div className="flex flex-col gap-2 w-full mt-auto mb-2">
-                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })} className="w-full bg-slate-800 hover:bg-slate-700/80 p-3 rounded-xl border border-emerald-500/30 flex items-center justify-between group">
-                            <div className="text-left pl-2">
-                                <div className="font-bold text-emerald-400 text-xs">Малая Сделка</div>
-                                <div className="text-[9px] text-slate-500">Макс. 5 000$</div>
+                    <div className="flex flex-col gap-1.5 w-full mt-1">
+                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })} className="w-full bg-slate-800 hover:bg-slate-700/80 p-2 rounded-lg border border-emerald-500/30 flex items-center justify-between group">
+                            <div className="text-left pl-1">
+                                <div className="font-bold text-emerald-400 text-[10px]">Малая Сделка</div>
+                                <div className="text-[8px] text-slate-500">Макс. 5 000$</div>
                             </div>
                         </button>
-                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })} className="w-full bg-slate-800 hover:bg-slate-700/80 p-3 rounded-xl border border-purple-500/30 flex items-center justify-between group">
-                            <div className="text-left pl-2">
-                                <div className="font-bold text-purple-400 text-xs">Крупная Сделка</div>
-                                <div className="text-[9px] text-slate-500">Мин. 6 000$</div>
+                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })} className="w-full bg-slate-800 hover:bg-slate-700/80 p-2 rounded-lg border border-purple-500/30 flex items-center justify-between group">
+                            <div className="text-left pl-1">
+                                <div className="font-bold text-purple-400 text-[10px]">Крупная Сделка</div>
+                                <div className="text-[8px] text-slate-500">Мин. 6 000$</div>
                             </div>
                         </button>
                     </div>
