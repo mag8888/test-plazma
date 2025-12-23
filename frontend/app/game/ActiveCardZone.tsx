@@ -72,8 +72,9 @@ export const ActiveCardZone = ({
         return (
             <div className="flex flex-col h-full w-full relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-t-3xl"></div>
-                <div className="p-3 flex-1 flex flex-col justify-between overflow-hidden">
-                    <div className="flex items-center gap-2 mb-1 shrink-0">
+                <div className="p-3 flex-1 flex flex-col h-full">
+                    {/* Header */}
+                    <div className="flex items-center gap-2 mb-2 shrink-0 h-10">
                         <div className="w-8 h-8 bg-yellow-500/20 rounded-lg flex items-center justify-center text-lg">⚡</div>
                         <div>
                             <h2 className="text-sm font-bold text-white leading-tight">Возможность</h2>
@@ -81,8 +82,8 @@ export const ActiveCardZone = ({
                         </div>
                     </div>
 
-                    <div className="flex flex-col gap-2 w-full mt-auto">
-                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })} className="w-full bg-slate-800 hover:bg-slate-700/80 p-2.5 rounded-xl border border-emerald-500/30 flex items-center justify-between group transition-all relative overflow-hidden active:scale-[0.98]">
+                    <div className="flex flex-col gap-2 w-full mt-auto mb-2">
+                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })} className="w-full bg-slate-800 hover:bg-slate-700/80 p-3 rounded-xl border border-emerald-500/30 flex items-center justify-between group transition-all relative overflow-hidden active:scale-[0.98]">
                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-emerald-500"></div>
                             <div className="text-left pl-3">
                                 <div className="font-bold text-emerald-400 text-xs">Малая Сделка</div>
@@ -91,7 +92,7 @@ export const ActiveCardZone = ({
                             {(state.deckCounts?.small) && <div className="text-[9px] bg-emerald-900/40 px-2 py-0.5 rounded text-emerald-300 font-mono">{state.deckCounts.small.remaining}</div>}
                         </button>
 
-                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })} className="w-full bg-slate-800 hover:bg-slate-700/80 p-2.5 rounded-xl border border-purple-500/30 flex items-center justify-between group transition-all relative overflow-hidden active:scale-[0.98]">
+                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })} className="w-full bg-slate-800 hover:bg-slate-700/80 p-3 rounded-xl border border-purple-500/30 flex items-center justify-between group transition-all relative overflow-hidden active:scale-[0.98]">
                             <div className="absolute left-0 top-0 bottom-0 w-1 bg-purple-500"></div>
                             <div className="text-left pl-3">
                                 <div className="font-bold text-purple-400 text-xs">Крупная Сделка</div>
@@ -110,17 +111,18 @@ export const ActiveCardZone = ({
         return (
             <div className="flex flex-col h-full w-full relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-red-500 rounded-t-3xl"></div>
-                <div className="p-3 flex-1 flex flex-col items-center text-center justify-center">
-                    <div className="text-3xl mb-1">❤️</div>
-                    <h2 className="text-sm font-bold text-white mb-1">Благотворительность</h2>
-                    <p className="text-slate-400 text-[10px] mb-3 leading-tight max-w-[200px]">
-                        Пожертвуйте <span className="text-pink-400 font-bold">{me.isFastTrack ? '$100k' : '10%'}</span> для бонусов на 3 хода.
+                <div className="p-3 flex-1 flex flex-col items-center text-center justify-center h-full">
+                    <div className="text-3xl mb-2">❤️</div>
+                    <h2 className="text-sm font-bold text-white mb-2">Благотворительность</h2>
+                    <p className="text-slate-400 text-[10px] mb-4 leading-relaxed">
+                        Пожертвуйте <span className="text-pink-400 font-bold">{me.isFastTrack ? '$100k' : '10%'}</span> <br />
+                        для бонусов на 3 хода.
                     </p>
-                    <div className="flex gap-2 w-full">
-                        <button onClick={() => socket.emit('donate_charity', { roomId })} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg">
+                    <div className="flex gap-2 w-full mt-auto">
+                        <button onClick={() => socket.emit('donate_charity', { roomId })} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]">
                             Да (${(Math.max(0, me.income * 0.1)).toLocaleString()})
                         </button>
-                        <button onClick={() => socket.emit('skip_charity', { roomId })} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider">
+                        <button onClick={() => socket.emit('skip_charity', { roomId })} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider transition-transform active:scale-[0.98]">
                             Нет
                         </button>
                     </div>
@@ -155,36 +157,44 @@ export const ActiveCardZone = ({
         return (
             <div className="flex flex-col h-full w-full relative">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-red-600 to-orange-600 rounded-t-3xl"></div>
-                <div className="p-3 flex-1 flex flex-col">
-                    <h2 className="text-sm font-bold text-white mb-2 flex items-center gap-2">📉 Увольнение!</h2>
+                <div className="p-3 flex-1 flex flex-col h-full">
+                    {/* Header */}
+                    <div className="flex items-center gap-2 mb-2 shrink-0 h-10">
+                        <div className="text-xl">📉</div>
+                        <div>
+                            <h2 className="text-sm font-bold text-white leading-tight">Увольнение!</h2>
+                            <div className="text-[9px] text-slate-400">Вы временно без работы</div>
+                        </div>
+                    </div>
+
                     <div className="flex flex-col gap-2 w-full mt-auto">
                         <button
                             onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_1M' })}
                             disabled={me.cash < me.expenses * 1}
-                            className="w-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-bold py-2 px-3 rounded-xl text-xs flex justify-between border border-slate-700 items-center group"
+                            className="w-full bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-bold py-3 px-4 rounded-xl text-xs flex justify-between border border-slate-700 items-center group transition-all active:scale-[0.98]"
                         >
                             <span className="text-left flex flex-col items-start">
-                                <span className="text-[10px]">1 мес</span>
-                                <span className="text-[8px] text-slate-500">Пропуск 2 ходов</span>
+                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">1 месяц</span>
+                                <span className="text-[9px] text-slate-500">Пропуск 2 ходов</span>
                             </span>
-                            <span className="text-red-400 font-mono text-[10px]">${(me.expenses).toLocaleString()}</span>
+                            <span className="text-red-400 font-mono font-bold">${(me.expenses).toLocaleString()}</span>
                         </button>
 
                         <button
                             onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_2M' })}
                             disabled={me.cash < me.expenses * 2}
-                            className="w-full bg-blue-900/40 hover:bg-blue-800/40 disabled:opacity-50 text-white font-bold py-2 px-3 rounded-xl text-xs flex justify-between border border-blue-500/30 items-center group"
+                            className="w-full bg-blue-900/30 hover:bg-blue-800/40 disabled:opacity-50 text-white font-bold py-3 px-4 rounded-xl text-xs flex justify-between border border-blue-500/30 items-center group transition-all active:scale-[0.98]"
                         >
                             <span className="text-left flex flex-col items-start">
-                                <span className="text-[10px]">2 мес</span>
-                                <span className="text-[8px] text-slate-500">Играть сразу</span>
+                                <span className="text-[10px] text-blue-300 uppercase font-bold tracking-wider">2 месяца</span>
+                                <span className="text-[9px] text-slate-500">Играть сразу</span>
                             </span>
-                            <span className="text-red-400 font-mono text-[10px]">${(me.expenses * 2).toLocaleString()}</span>
+                            <span className="text-red-400 font-mono font-bold">${(me.expenses * 2).toLocaleString()}</span>
                         </button>
 
                         <button
                             onClick={() => { if (confirm('Банкротство?')) socket.emit('decision_downsized', { roomId, choice: 'BANKRUPT' }); }}
-                            className="text-red-500/70 hover:text-red-400 text-[9px] mt-1 uppercase font-bold tracking-widest text-center"
+                            className="text-red-500/70 hover:text-red-400 text-[9px] mt-2 uppercase font-bold tracking-widest text-center py-2"
                         >
                             Объявить банкротство
                         </button>

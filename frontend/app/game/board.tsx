@@ -1295,45 +1295,43 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                         {/* Zone 3: Player List (Horizontal Module) */}
                         <div className="shrink-0 relative px-1 py-1">
-                            <div className="bg-[#1e293b]/40 rounded-xl p-2 border border-slate-800/50 shadow-inner flex flex-col gap-1">
-                                <div className="flex items-center gap-2 overflow-x-auto custom-scrollbar mask-horizontal px-1 justify-center">
-                                    {state.players.map((p: any) => {
-                                        const isCurrentTurn = p.id === currentPlayer.id;
-                                        return (
-                                            <div
-                                                key={p.id}
-                                                onClick={() => setSelectedPlayerForMenu(p)}
-                                                className={`relative shrink-0 cursor-pointer group transition-all duration-300 ${isCurrentTurn ? 'scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'}`}
-                                                title={p.name}
-                                            >
-                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs border-2 shadow-lg relative z-10 
-                                                ${isCurrentTurn ? 'border-green-400 ring-2 ring-green-500/30' : 'border-slate-600 bg-slate-800'}`}>
-                                                    {p.photo_url ? (
-                                                        <img src={p.photo_url} className="w-full h-full object-cover rounded-full" />
-                                                    ) : (
-                                                        <span className={`w-full h-full rounded-full flex items-center justify-center ${getAvatarColor(p.id)} text-white`}>
-                                                            {p.token}
-                                                        </span>
-                                                    )}
+                            <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar mask-horizontal px-1 justify-center">
+                                {state.players.map((p: any) => {
+                                    const isCurrentTurn = p.id === currentPlayer.id;
+                                    return (
+                                        <div
+                                            key={p.id}
+                                            onClick={() => setSelectedPlayerForMenu(p)}
+                                            className={`relative shrink-0 cursor-pointer group transition-all duration-300 ${isCurrentTurn ? 'scale-110' : 'opacity-70 hover:opacity-100 hover:scale-105'}`}
+                                            title={p.name}
+                                        >
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center text-xs border-2 shadow-lg relative z-10 
+                                            ${isCurrentTurn ? 'border-green-400 ring-2 ring-green-500/30' : 'border-slate-600 bg-slate-800'}`}>
+                                                {p.photo_url ? (
+                                                    <img src={p.photo_url} className="w-full h-full object-cover rounded-full" />
+                                                ) : (
+                                                    <span className={`w-full h-full rounded-full flex items-center justify-center ${getAvatarColor(p.id)} text-white`}>
+                                                        {p.token}
+                                                    </span>
+                                                )}
 
-                                                    {/* DICE BUBBLE For Others */}
-                                                    {isCurrentTurn && showDice && diceValue && (
-                                                        <div className="absolute -top-3 -right-3 w-6 h-6 bg-white text-slate-900 rounded-full flex items-center justify-center font-black border-2 border-emerald-500 shadow-lg z-20 animate-bounce">
-                                                            {diceValue}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {/* Name Tooltip */}
-                                                {isCurrentTurn && (
-                                                    <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-900/80 text-green-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-green-500/30 backdrop-blur-sm z-20">
-                                                        ХОДИТ
+                                                {/* DICE BUBBLE For Others */}
+                                                {isCurrentTurn && showDice && diceValue && (
+                                                    <div className="absolute -top-3 -right-3 w-6 h-6 bg-white text-slate-900 rounded-full flex items-center justify-center font-black border-2 border-emerald-500 shadow-lg z-20 animate-bounce">
+                                                        {diceValue}
                                                     </div>
                                                 )}
                                             </div>
-                                        );
-                                    })}
-                                </div>
+
+                                            {/* Name Tooltip */}
+                                            {isCurrentTurn && (
+                                                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 whitespace-nowrap bg-green-900/80 text-green-300 text-[8px] font-bold px-1.5 py-0.5 rounded-full border border-green-500/30 backdrop-blur-sm z-20">
+                                                    ХОДИТ
+                                                </div>
+                                            )}
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
