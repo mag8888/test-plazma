@@ -72,6 +72,30 @@ const FeedCardItem = ({
     const ownedStock = me.assets?.find((a: any) => a.symbol === card.symbol);
     const ownedQty = ownedStock ? ownedStock.quantity : 0;
 
+    // --- CALCULATIONS FOR TRANSACTION MODE (Must be top level) ---
+    const price = card.cost || card.price || 0;
+
+    // Credit Logic
+    const maxNewLoan = Math.max(0, Math.floor((me.cashflow || 0) / 100) * 1000);
+    const availableLoan = Math.max(0, maxNewLoan - (me.loanDebt || 0));
+    const maxBuyCash = Math.floor(me.cash / (price || 1));
+    const maxBuyCredit = Math.floor(availableLoan / (price || 1));
+
+    const maxVal = transactionMode === 'BUY'
+        ? (isStock ? Math.max(1, maxBuyCash + maxBuyCredit) : 1)
+        : ownedQty;
+
+    const total = price * stockQty;
+    const loanNeeded = Math.max(0, total - me.cash);
+
+    // Ensure default is reasonable
+    useEffect(() => {
+        // Safe to run effect here as it's top level
+        if (step === 'TRANSACTION' && transactionMode === 'BUY' && isStock && stockQty === 1 && maxVal > 1) {
+            // Optional: Don't auto-set, let user decide
+        }
+    }, [step, transactionMode, isStock, stockQty, maxVal]);
+
     // Header Component
     const CardHeader = () => (
         <div className="flex items-start justify-between gap-2 mb-2 shrink-0 h-10">
