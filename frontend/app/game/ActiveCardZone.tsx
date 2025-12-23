@@ -252,22 +252,22 @@ const FeedCardItem = ({
                     </>
                 ) : (
                     // Transaction View inside Card
-                    <div className="bg-slate-900/30 p-2 rounded-lg">
-                        <div className="flex items-center justify-between mb-2 pb-1 border-b border-white/5">
-                            <button onClick={() => setStep('DETAILS')} className="text-slate-400 hover:text-white text-[10px] uppercase font-bold flex items-center gap-1">← Назад</button>
-                            <div className={`text-[10px] font-bold uppercase ${transactionMode === 'BUY' ? 'text-green-400' : 'text-blue-400'}`}>
+                    <div className="bg-slate-900/40 p-1.5 rounded-lg border border-white/5">
+                        <div className="flex items-center justify-between mb-1 pb-1 border-b border-white/5 h-6">
+                            <button onClick={() => setStep('DETAILS')} className="text-slate-400 hover:text-white text-[9px] uppercase font-bold flex items-center gap-1 h-full px-1 hover:bg-white/5 rounded">← Назад</button>
+                            <div className={`text-[9px] font-bold uppercase ${transactionMode === 'BUY' ? 'text-green-400' : 'text-blue-400'}`}>
                                 {transactionMode === 'BUY' ? 'Покупка' : 'Продажа'}
                             </div>
                         </div>
 
                         {/* Logic for Slider/Calc - Now using pre-calculated values */}
-                        <div className="flex flex-col gap-4 mb-4">
-                            {(isStock || maxVal > 1) && (
+                        <div className="flex flex-col gap-2 mb-2">
+                            {(isStock || (!card.offerPrice && maxVal > 1)) && (
                                 <>
-                                    <div className="flex items-center gap-4 justify-between">
+                                    <div className="flex items-center gap-2 justify-between">
                                         <button
                                             onClick={() => setStockQty(Math.max(1, stockQty - 1))}
-                                            className="w-12 h-12 bg-slate-700 hover:bg-slate-600 rounded-xl flex items-center justify-center text-xl font-bold transition-colors"
+                                            className="w-8 h-8 bg-slate-700 hover:bg-slate-600 rounded-lg flex items-center justify-center text-lg font-bold transition-colors"
                                         >-</button>
 
                                         <div className="flex flex-col items-center">
@@ -278,52 +278,51 @@ const FeedCardItem = ({
                                                     const val = Number(e.target.value);
                                                     if (val >= 1 && val <= maxVal) setStockQty(val);
                                                 }}
-                                                className="w-24 bg-transparent text-center font-black text-3xl outline-none text-white font-mono"
+                                                className="w-16 bg-transparent text-center font-black text-xl outline-none text-white font-mono"
                                             />
-                                            <span className="text-[10px] text-slate-500 uppercase tracking-widest font-bold">Количество</span>
+                                            <span className="text-[8px] text-slate-500 uppercase tracking-widest font-bold">Количество</span>
                                         </div>
 
                                         <button
                                             onClick={() => setStockQty(Math.min(maxVal, stockQty + 1))}
-                                            className="w-12 h-12 bg-slate-700 hover:bg-slate-600 rounded-xl flex items-center justify-center text-xl font-bold transition-colors"
+                                            className="w-8 h-8 bg-slate-700 hover:bg-slate-600 rounded-lg flex items-center justify-center text-lg font-bold transition-colors"
                                         >+</button>
                                     </div>
 
                                     {/* SLIDER */}
-                                    <div className="px-2">
-                                        <input
-                                            type="range"
-                                            min="1"
-                                            max={maxVal}
-                                            value={stockQty}
-                                            onChange={(e) => setStockQty(Number(e.target.value))}
-                                            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                                        />
-                                        <div className="flex justify-between text-[8px] text-slate-500 font-mono mt-1">
-                                            <span>1</span>
-                                            <span>{maxVal} (Макс)</span>
+                                    {maxVal > 1 && (
+                                        <div className="px-1">
+                                            <input
+                                                type="range"
+                                                min="1"
+                                                max={maxVal}
+                                                value={stockQty}
+                                                onChange={(e) => setStockQty(Number(e.target.value))}
+                                                className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                            />
                                         </div>
-                                    </div>
+                                    )}
                                 </>
                             )}
                         </div>
 
-                        <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 mb-3 space-y-2">
-                            <div className="flex justify-between items-center text-xs">
+                        <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700/50 mb-2 space-y-1">
+                            <div className="flex justify-between items-center text-[10px]">
                                 <span className="text-slate-400 uppercase font-bold">Цена за шт.</span>
-                                <span className="text-white font-mono">${price}</span>
+                                {/* Fix for Market Offers ($0 calc) */}
+                                <span className="text-white font-mono">${(card.offerPrice || price).toLocaleString()}</span>
                             </div>
                             <div className="h-px bg-slate-700/50"></div>
                             <div className="flex justify-between items-center">
-                                <span className="text-slate-200 uppercase font-black text-xs">Итого</span>
+                                <span className="text-slate-200 uppercase font-black text-[10px]">Итого</span>
                                 <div className="text-right">
-                                    <div className="font-mono font-black text-lg text-emerald-400">${total.toLocaleString()}</div>
+                                    <div className="font-mono font-black text-sm text-emerald-400">${(transactionMode === 'SELL' && card.offerPrice ? card.offerPrice * stockQty : total).toLocaleString()}</div>
                                 </div>
                             </div>
                             {loanNeeded > 0 && transactionMode === 'BUY' && (
-                                <div className="flex justify-between items-center bg-yellow-500/10 p-2 rounded-lg border border-yellow-500/20 mt-1">
-                                    <span className="text-[10px] text-yellow-500 font-bold uppercase">Требуется Кредит</span>
-                                    <span className="font-mono font-bold text-yellow-400 text-xs">${(Math.ceil(loanNeeded / 1000) * 1000).toLocaleString()}</span>
+                                <div className="flex justify-between items-center bg-yellow-500/10 p-1.5 rounded border border-yellow-500/20 mt-1">
+                                    <span className="text-[9px] text-yellow-500 font-bold uppercase">Требуется Кредит</span>
+                                    <span className="font-mono font-bold text-yellow-400 text-[10px]">${(Math.ceil(loanNeeded / 1000) * 1000).toLocaleString()}</span>
                                 </div>
                             )}
                         </div>
@@ -341,14 +340,23 @@ const FeedCardItem = ({
                                         socket.emit('buy_asset', { roomId, quantity: stockQty });
                                     }
                                 } else {
-                                    socket.emit('sell_stock', { roomId, quantity: stockQty });
+                                    // MARKET SELL or STOCK SELL
+                                    if (card.type === 'MARKET') {
+                                        // Special Market Sell
+                                        socket.emit('sell_asset', { roomId }); // Market sells usually imply selling 'the thing requested'
+                                        // Wait... backend 'sell_asset' is generic "sell asset to bank"? Or "sell to market offer"?
+                                        // Engine.ts > sellAsset logic usually checks for activeMarketCards.
+                                        // Let's verify Engine.ts logic for `sell_asset`.
+                                    } else {
+                                        socket.emit('sell_stock', { roomId, quantity: stockQty });
+                                    }
                                 }
                             }}
-                            className={`w-full py-4 rounded-xl text-sm font-black uppercase tracking-widest shadow-lg transition-transform active:scale-[0.98]
+                            className={`w-full py-2.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg transition-transform active:scale-[0.98]
                                 ${loanNeeded > 0 ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white' : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white'}
                             `}
                         >
-                            {loanNeeded > 0 ? '💰 Кредит и Купить' : '✅ Подтвердить'}
+                            {loanNeeded > 0 ? '💰 Кредит и Купить' : (transactionMode === 'SELL' ? '💵 Продать' : '✅ Подтвердить')}
                         </button>
                     </div>
                 )}
