@@ -299,7 +299,7 @@ export class RoomService {
     }
 
     async getRooms(): Promise<any[]> {
-        const rooms = await RoomModel.find({ status: 'waiting' }).sort({ createdAt: -1 }).lean();
+        const rooms = await RoomModel.find({ status: { $in: ['waiting', 'playing'] } }).sort({ createdAt: -1 }).lean();
         return rooms.map(r => this.sanitizeRoom(r));
     }
 
