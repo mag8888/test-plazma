@@ -1004,3 +1004,40 @@ app.get('/api/check-referrals/:username', async (req, res) => {
         res.status(500).json({ error: "Failed" });
     }
 });
+
+// Get All Users (Admin)
+app.get('/api/users/all', async (req, res) => {
+    try {
+        const { UserModel } = await import('./models/user.model');
+        const users = await UserModel.find({})
+            .select('username first_name telegram_id referralBalance balanceRed greenBalance referralsCount referredBy createdAt')
+            .sort({ createdAt: -1 })
+            .limit(1000);
+        res.json({ users });
+    } catch (e) {
+        res.status(500).json({ error: "Failed to fetch users" });
+    }
+});
+
+// Search Users (Admin)
+app.get('/api/users/search', async (req, res) => {
+    try {
+        const { q } = req.query;
+        if (!q) return res.json({ users: [] });
+        
+        const { UserModel } = await import('./models/user.model');
+        const users = await UserModel.find({
+            $or: [
+                { username: { $regex: q, $options: 'i' } },
+                { first_name: { $regex: q, $options: 'i' } },
+                { telegram_id: isNaN(Number(q)) ? undefined : Number(q) }
+            ].filter(Boolean)
+        })
+        .select('username first_name telegram_id referralBalance balanceRed greenBalance referralsCount referredBy createdAt')
+        .limit(100);
+        
+        res.json({ users });
+    } catch (e) {
+        res.status(500).json({ error: "Search failed" });
+    }
+});
