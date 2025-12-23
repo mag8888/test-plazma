@@ -38,15 +38,10 @@ export default function HomePage() {
                     <button
                         onClick={() => {
                             if (confirm('Выйти из приложения?')) {
-                                if (webApp && webApp.initData) {
-                                    // In Telegram: Close the app
-                                    webApp.close();
-                                } else {
-                                    // In Browser: Set explicit logout flag to prevent auto-login
-                                    localStorage.clear();
-                                    localStorage.setItem('moneo_is_logged_out', 'true');
-                                    window.location.reload();
-                                }
+                                // Unified Logout Logic for both Browser and Telegram
+                                localStorage.clear();
+                                localStorage.setItem('moneo_is_logged_out', 'true');
+                                window.location.reload();
                             }
                         }}
                         className="flex items-center gap-1.5 text-xs font-bold text-red-400/80 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg transition-colors border border-red-500/20"

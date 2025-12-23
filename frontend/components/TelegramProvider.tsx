@@ -77,8 +77,10 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                 // Check LocalStorage for Password Auth (User Login)
                 const storedUserAuth = localStorage.getItem('moneo_user_auth');
 
-                if (initData) {
-                    // Priority 1: Telegram Web App Init Data
+                const isLoggedOut = localStorage.getItem('moneo_is_logged_out');
+
+                if (initData && !isLoggedOut) {
+                    // Priority 1: Telegram Web App Init Data (Only if not explicitly logged out)
                     console.log("🔑 Login via Telegram InitData");
                     const res = await fetch(`${BACKEND_URL}/api/auth/login/telegram`, {
                         method: 'POST',

@@ -3,12 +3,12 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTelegram } from '../components/TelegramProvider';
-import { User, Lock, ArrowRight, Loader2 } from 'lucide-react';
+import { User, Lock, ArrowRight, Loader2, Send } from 'lucide-react';
 import { getBackendUrl } from '../lib/config';
 
 function HomeContent() {
   const router = useRouter();
-  const { user, isReady } = useTelegram();
+  const { user, isReady, webApp } = useTelegram();
 
   const [view, setView] = useState<'splash' | 'login'>('splash');
   const [username, setUsername] = useState('');
@@ -23,64 +23,33 @@ function HomeContent() {
     }
   }, [user, isReady, router]);
 
-  const handleUserLogin = async () => {
-    if (!username || !password) {
-      setError('Заполните все поля');
-      return;
-    }
-    setError('');
-    setIsLoading(true);
-
-    try {
-      const url_base = getBackendUrl();
-      const endpoint = mode === 'LOGIN' ? '/api/auth/login' : '/api/auth/register';
-
-      const res = await fetch(`${url_base}${endpoint}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password })
-      });
-
-      const data = await res.json();
-
-      if (res.ok) {
-        // Success
-        localStorage.setItem('moneo_user_auth', JSON.stringify({
-          user: data.user,
-          token: data.token
-        }));
-        localStorage.removeItem('moneo_is_logged_out');
-        window.location.reload();
-      } else {
-        setError(data.error || 'Ошибка входа');
-      }
-    } catch (e) {
-      setError('Ошибка сети');
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // ... (login handlers)
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center p-4 relative overflow-hidden">
-
-      {/* Ambience */}
-      <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
-        <div className="absolute top-[-20%] left-[-20%] w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] animate-pulse-slow"></div>
-        <div className="absolute bottom-[-20%] right-[-20%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[120px]"></div>
-      </div>
+      {/* ... (ambience) ... */}
 
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
-        <div className="text-center mb-8">
-          <h1 className="text-6xl font-black bg-gradient-to-r from-blue-400 via-indigo-500 to-purple-600 bg-clip-text text-transparent drop-shadow-2xl mb-2 tracking-tighter">
-            MONEO
-          </h1>
-          <p className="text-slate-500 text-sm font-medium tracking-widest uppercase">Финансовый Тренажер</p>
-        </div>
+        {/* ... (header) ... */}
 
         {isReady && !user ? (
           view === 'splash' ? (
             <div className="w-full space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500">
+
+              {/* Telegram Quick Login */}
+              {webApp?.initDataUnsafe?.user && (
+                <button
+                  onClick={() => {
+                    localStorage.removeItem('moneo_is_logged_out');
+                    window.location.reload();
+                  }}
+                  className="w-full bg-[#2AABEE] hover:bg-[#229ED9] text-white font-bold py-4 rounded-2xl transition shadow-lg shadow-blue-400/20 active:scale-[0.98] flex items-center justify-center gap-3 mb-2"
+                >
+                  <Send size={20} />
+                  Продолжить как {webApp.initDataUnsafe.user.first_name}
+                </button>
+              )}
+
               <button
                 onClick={() => setView('login')}
                 className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold py-4 rounded-2xl transition shadow-lg shadow-blue-900/20 active:scale-[0.98] flex items-center justify-center gap-3"
