@@ -981,3 +981,26 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 bootstrap();
+
+// Check User Referrals
+app.get('/api/check-referrals/:username', async (req, res) => {
+    try {
+        const { username } = req.params;
+        const { UserModel } = await import('./models/user.model');
+        const referrals = await UserModel.find({ referredBy: username })
+            .select('username first_name telegram_id createdAt')
+            .sort({ createdAt: -1 });
+        res.json({
+            username,
+            totalReferrals: referrals.length,
+            referrals: referrals.map((r: any) => ({
+                username: r.username,
+                firstName: r.first_name,
+                telegramId: r.telegram_id,
+                joinedAt: r.createdAt
+            }))
+        });
+    } catch (e) {
+        res.status(500).json({ error: "Failed" });
+    }
+});
