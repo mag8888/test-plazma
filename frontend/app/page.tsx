@@ -23,7 +23,43 @@ function HomeContent() {
     }
   }, [user, isReady, router]);
 
-  // ... (login handlers)
+  const handleUserLogin = async () => {
+    if (!username || !password) {
+      setError('Заполните все поля');
+      return;
+    }
+    setError('');
+    setIsLoading(true);
+
+    try {
+      const url_base = getBackendUrl();
+      const endpoint = mode === 'LOGIN' ? '/api/auth/login' : '/api/auth/register';
+
+      const res = await fetch(`${url_base}${endpoint}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        // Success
+        localStorage.setItem('moneo_user_auth', JSON.stringify({
+          user: data.user,
+          token: data.token
+        }));
+        localStorage.removeItem('moneo_is_logged_out');
+        window.location.reload();
+      } else {
+        setError(data.error || 'Ошибка входа');
+      }
+    } catch (e) {
+      setError('Ошибка сети');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#0f172a] flex flex-col items-center justify-center p-4 relative overflow-hidden">
