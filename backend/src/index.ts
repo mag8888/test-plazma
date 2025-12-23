@@ -357,31 +357,39 @@ app.post('/api/games/:id/join', async (req, res) => {
         const freeSpots = game.promoSpots - promoCount;
         const paidSpots = (game.maxPlayers - game.promoSpots) - paidCount;
 
+        let paymentStatus: 'PAID' | 'PAY_AT_GAME' | undefined;
+
         if (type === 'PROMO') {
             if (freeSpots <= 0) return res.status(400).json({ error: "No promo spots" });
-            // Repost link optional now
         } else if (type === 'PAID') {
             if (paidSpots <= 0) return res.status(400).json({ error: "No paid spots" });
 
+            paymentStatus = 'PAID';
             if (user.balanceRed >= game.price) {
                 user.balanceRed -= game.price;
+                await user.save();
+                const { TransactionModel } = await import('./models/transaction.model');
+                await TransactionModel.create({
+                    userId: user._id,
+                    amount: -game.price,
+                    currency: 'RED',
+                    type: 'GAME_FEE',
+                    description: `Оплата игры ${new Date(game.startTime).toLocaleDateString()}`
+                });
             } else if (user.referralBalance >= game.price) {
                 user.referralBalance -= game.price;
+                await user.save();
+                const { TransactionModel } = await import('./models/transaction.model');
+                await TransactionModel.create({
+                    userId: user._id,
+                    amount: -game.price,
+                    currency: 'REF',
+                    type: 'GAME_FEE',
+                    description: `Оплата игры ${new Date(game.startTime).toLocaleDateString()}`
+                });
             } else {
-                return res.status(400).json({ error: "Insufficient balance" });
+                paymentStatus = 'PAY_AT_GAME';
             }
-            await user.save();
-
-            // Log Transaction
-            const { TransactionModel } = await import('./models/transaction.model');
-            await TransactionModel.create({
-                userId: user._id,
-                amount: -game.price, // Negative for Payment
-                currency: 'RED', // Simplification: we treat spending as RED mostly, but could be green. 
-                // Let's mark as RED context for game.
-                type: 'GAME_FEE',
-                description: `Оплата игры ${new Date(game.startTime).toLocaleDateString()}`
-            });
         } else {
             return res.status(400).json({ error: "Invalid type" });
         }
@@ -393,8 +401,9 @@ app.post('/api/games/:id/join', async (req, res) => {
             username: user.username,
             firstName: user.first_name,
             type: type,
-            repostLink: isPromo ? repostLink : undefined, // Might be empty initially
-            isVerified: !isPromo, // Paid is auto-verified
+            paymentStatus: paymentStatus,
+            repostLink: isPromo ? repostLink : undefined,
+            isVerified: !isPromo,
             joinedAt: new Date()
         });
 
@@ -406,7 +415,7 @@ app.post('/api/games/:id/join', async (req, res) => {
             const host = await UserModel.findById(game.hostId);
             if (host?.telegram_id) {
                 const t = type === 'PAID' ? '💰' : '🎟';
-                const status = isPromo ? '(Ожидает подтверждения)' : '';
+                const status = isPromo ? '(Ожидает подтверждения)' : (paymentStatus === 'PAY_AT_GAME' ? '(Оплата на месте)' : '');
                 const link = (isPromo && repostLink) ? `\n🔗 Ссылка: ${repostLink}` : (isPromo ? '\n🔗 Ссылка: Не указана' : '');
 
                 botService.bot?.sendMessage(host.telegram_id,
@@ -424,7 +433,7 @@ app.post('/api/games/:id/join', async (req, res) => {
                 );
             }
 
-            // Notify User (Welcome Message)
+            // Notify User
             if (user.telegram_id) {
                 const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
                     day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit',
@@ -433,7 +442,9 @@ app.post('/api/games/:id/join', async (req, res) => {
 
                 let msg = `✅ Вы записались на игру: ${dateStr}\n\n`;
                 if (isPromo) {
-                    msg += `Ваша заявка (Промо) принята и ожидает подтверждения мастера. Мы уведомим вас, когда мастер проверит репост.`;
+                    msg += `Ваша заявка (Промо) принята и ожидает подтверждения мастера.`;
+                } else if (paymentStatus === 'PAY_AT_GAME') {
+                    msg += `Вы записаны. Оплата мастеру на месте.`;
                 } else {
                     msg += `Будем рады видеть вас на игре!`;
                 }
@@ -442,7 +453,11 @@ app.post('/api/games/:id/join', async (req, res) => {
             }
         }
 
-        res.json({ success: true, game });
+        res.json({
+            success: true,
+            game,
+            paid: paymentStatus === 'PAID'
+        });
 
     } catch (e) {
         console.error("Join failed:", e);

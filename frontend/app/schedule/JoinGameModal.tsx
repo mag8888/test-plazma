@@ -36,7 +36,11 @@ export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModa
                     // Go to Step 2
                     setStep('SUCCESS_PROMO');
                 } else {
-                    webApp?.showAlert('Оплата прошла успешно! Вы записаны.');
+                    if (data.paid === false) {
+                        webApp?.showAlert('Оплата мастеру при игре');
+                    } else {
+                        webApp?.showAlert('Оплата прошла успешно! Вы записаны.');
+                    }
                     onSuccess();
                     onClose();
                 }

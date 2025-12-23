@@ -10,6 +10,7 @@ export interface IScheduledGame extends Document {
         userId: string;
         username: string; // Cache for display
         type: 'PROMO' | 'PAID';
+        paymentStatus?: 'PAID' | 'PAY_AT_GAME';
         joinedAt: Date;
     }[];
     description?: string;
@@ -29,6 +30,7 @@ const ScheduledGameSchema: Schema = new Schema({
         firstName: { type: String },
         username: { type: String },
         type: { type: String, enum: ['PROMO', 'PAID'] },
+        paymentStatus: { type: String, enum: ['PAID', 'PAY_AT_GAME'], default: 'PAID' },
         joinedAt: { type: Date, default: Date.now },
         postLink: { type: String },
         isVerified: { type: Boolean, default: false },
