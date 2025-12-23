@@ -342,10 +342,8 @@ const FeedCardItem = ({
                                 if (transactionMode === 'BUY') {
                                     if (loanNeeded > 0) {
                                         const amount = Math.ceil(loanNeeded / 1000) * 1000;
-                                        if (confirm(`Взять кредит $${amount.toLocaleString()} для покупки?`)) {
-                                            socket.emit('take_loan', { roomId, amount });
-                                            setTimeout(() => socket.emit('buy_asset', { roomId, quantity: stockQty }), 500);
-                                        }
+                                        setPendingLoan({ amount, quantity: stockQty });
+                                        setShowLoanConfirm(true);
                                     } else {
                                         socket.emit('buy_asset', { roomId, quantity: stockQty });
                                     }
@@ -371,6 +369,28 @@ const FeedCardItem = ({
                     </div>
                 )}
             </div>
+
+            {/* Loan Confirmation Modal */}
+            <ConfirmModal
+                isOpen={showLoanConfirm}
+                title="Подтвердите действие"
+                message={`Взять кредит $${pendingLoan?.amount.toLocaleString()} для покупки?`}
+                confirmText="Взять кредит"
+                cancelText="Отмена"
+                variant="warning"
+                onConfirm={() => {
+                    if (pendingLoan) {
+                        socket.emit('take_loan', { roomId, amount: pendingLoan.amount });
+                        setTimeout(() => socket.emit('buy_asset', { roomId, quantity: pendingLoan.quantity }), 500);
+                    }
+                    setShowLoanConfirm(false);
+                    setPendingLoan(null);
+                }}
+                onCancel={() => {
+                    setShowLoanConfirm(false);
+                    setPendingLoan(null);
+                }}
+            />
         </div>
     );
 };
