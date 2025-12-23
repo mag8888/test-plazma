@@ -1480,6 +1480,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         isMuted={isMuted}
                         volume={volume}
                         deckCounts={state.deckCounts}
+                        greenBalance={partnershipUser?.greenBalance}
                         setVolume={handleVolumeChange}
                         onShowRules={() => setShowRules(true)}
                         zoom={zoom}
