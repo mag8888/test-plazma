@@ -208,7 +208,7 @@ export class BotService {
 
             // 0. GLOBAL COMMAND OVERRIDE
             // If user clicks a Menu Button while in a "Waiting" state, we must prioritize the Menu Button
-            const GLOBAL_COMMANDS = ['💸 Заработать', '🎲 Играть', '🤝 Получить клиентов', '🌐 Сообщество', 'ℹ️ О проекте', '📋 Мои игры', '/app', '🤝 Партнерская программа'];
+            const GLOBAL_COMMANDS = ['💸 Заработать', '🎲 Играть', '🤝 Получить клиентов', '🌐 Сообщество', 'ℹ️ О проекте', '📋 Мои игры', '/app'];
             if (GLOBAL_COMMANDS.includes(text)) {
                 this.adminStates.delete(chatId);
                 this.transferStates.delete(chatId);
@@ -652,6 +652,8 @@ export class BotService {
 
             if (data === 'apply_earn') {
                 this.bot?.sendMessage(chatId, 'Отлично! Напишите менеджеру: @Arctur_888');
+            } else if (data === 'partnership_info') {
+                await this.handlePartnership(chatId);
             } else if (data === 'become_master') {
                 await this.handleBecomeMaster(chatId, userId);
             } else if (data.startsWith('join_game_')) {
@@ -970,7 +972,7 @@ export class BotService {
             reply_markup: {
                 keyboard: [
                     [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
-                    [{ text: '🤝 Получить клиентов' }, { text: '🤝 Партнерская программа' }],
+                    [{ text: '🤝 Получить клиентов' }],
                     [{ text: '🌐 Сообщество' }, { text: 'ℹ️ О проекте' }]
                 ],
                 resize_keyboard: true
@@ -1127,7 +1129,7 @@ export class BotService {
                 reply_markup: {
                     inline_keyboard: [
                         [{ text: 'Оставить заявку', callback_data: 'apply_earn' }],
-                        [{ text: '💸 Перевод', callback_data: 'start_transfer' }]
+                        [{ text: '🤝 Партнерская программа', callback_data: 'partnership_info' }]
                     ]
                 }
             });
@@ -1272,7 +1274,7 @@ export class BotService {
                 keyboard: [
                     [{ text: '➕ Добавить игру' }, { text: '📅 Ближайшие игры' }],
                     [{ text: '📋 Мои игры' }],
-                    [{ text: '🎲 Играть' }, { text: '💸 Заработать' }, { text: '💸 Перевод' }],
+                    [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
                     [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
                     [{ text: 'ℹ️ О проекте' }]
                 ],
