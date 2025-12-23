@@ -155,7 +155,7 @@ export default function AdminPage() {
                             <TreePine size={18} /> Tree
                         </button>
                     </div>
-                    <button onClick={logout} className="text-xs text-red-500 hover:text-red-400">Logout</button>
+                    <button onClick={logout} className="bg-red-900/30 hover:bg-red-900/50 text-red-400 px-4 py-1.5 rounded-lg text-xs font-bold transition border border-red-500/30">Выйти</button>
                 </div>
             </div>
 
