@@ -2,13 +2,23 @@
 
 import { useTelegram } from '../../components/TelegramProvider';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Zap, DollarSign, BookOpen, Presentation, ChevronRight, LogOut } from 'lucide-react';
 import { RulesModal } from '../game/RulesModal';
 import PresentationModal from './PresentationModal';
 
 export default function HomePage() {
-    const { webApp, user } = useTelegram();
+    const router = useRouter();
+    const { webApp, user, isReady } = useTelegram();
+
+    // Redirect if not logged in
+    useEffect(() => {
+        if (isReady && !user) {
+            router.replace('/');
+        }
+    }, [isReady, user, router]);
+
     const [showRules, setShowRules] = useState(false);
     const [showPresentation, setShowPresentation] = useState(false);
 
@@ -42,7 +52,7 @@ export default function HomePage() {
                                 localStorage.clear();
                                 localStorage.removeItem('moneo_auth_code'); // Explicitly clear magic link code
                                 localStorage.setItem('moneo_is_logged_out', 'true');
-                                window.location.reload();
+                                window.location.href = '/'; // Hard redirect to Splash
                             }
                         }}
                         className="flex items-center gap-1.5 text-xs font-bold text-red-400/80 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg transition-colors border border-red-500/20"
