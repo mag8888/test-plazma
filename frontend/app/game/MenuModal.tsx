@@ -17,6 +17,7 @@ interface MenuModalProps {
     onKickCurrent?: () => void;
     onToggleOrientation?: () => void; // New Prop
     onCancelGame?: () => void;
+    deckCounts?: any; // Pass deck counts
 }
 
 export const MenuModal = ({
@@ -35,7 +36,8 @@ export const MenuModal = ({
     onSkipTurn,
     onKickCurrent,
     onToggleOrientation,
-    onCancelGame // Destructure
+    onCancelGame,
+    deckCounts
 }: MenuModalProps) => {
     return (
         <div className="absolute inset-0 z-[100] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
@@ -48,6 +50,19 @@ export const MenuModal = ({
                 <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
                     <span>⚙️</span> Настройки
                 </h2>
+
+                {/* Deck Counts */}
+                {deckCounts && (
+                    <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 mb-6 text-xs">
+                        <h3 className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Состояние Колод</h3>
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="flex justify-between"><span className="text-emerald-400">Small</span> <span className="font-mono text-white">{deckCounts.small?.remaining}/{deckCounts.small?.total}</span></div>
+                            <div className="flex justify-between"><span className="text-purple-400">Big</span> <span className="font-mono text-white">{deckCounts.big?.remaining}/{deckCounts.big?.total}</span></div>
+                            <div className="flex justify-between"><span className="text-blue-400">Market</span> <span className="font-mono text-white">{deckCounts.market?.remaining}/{deckCounts.market?.total}</span></div>
+                            <div className="flex justify-between"><span className="text-pink-400">Expense</span> <span className="font-mono text-white">{deckCounts.expense?.remaining}/{deckCounts.expense?.total}</span></div>
+                        </div>
+                    </div>
+                )}
 
                 {/* Sound Settings */}
                 <div className="space-y-4 mb-6">

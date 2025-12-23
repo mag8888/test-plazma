@@ -1457,6 +1457,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         toggleMute={toggleMute}
                         isMuted={isMuted}
                         volume={volume}
+                        deckCounts={state.deckCounts}
                         setVolume={handleVolumeChange}
                         onShowRules={() => setShowRules(true)}
                         zoom={zoom}
