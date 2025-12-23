@@ -142,10 +142,10 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                     // Check if explicitly logged out
                     const isLoggedOut = localStorage.getItem('moneo_is_logged_out');
 
-                    if (app?.initDataUnsafe?.user) {
+                    if (app?.initDataUnsafe?.user && !isLoggedOut) {
                         setUser(app.initDataUnsafe.user);
-                        // If we have real Telegram data, we are always logged in effectively
-                        if (isLoggedOut) localStorage.removeItem('moneo_is_logged_out');
+                    } else if (app?.initDataUnsafe?.user && isLoggedOut) {
+                        console.log("🔒 User explicitly logged out. Ignoring Telegram auto-login.");
                     } else {
                         // Standard Browser / Dev Mode
                         if (isLoggedOut === 'true') {
