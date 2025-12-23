@@ -5,14 +5,14 @@ import { CloudinaryService } from './cloudinary.service';
 export class BackupService {
     private cloudinaryService: CloudinaryService;
     private intervalId: NodeJS.Timeout | null = null;
-    private readonly BACKUP_INTERVAL_MS = 3 * 60 * 60 * 1000; // 3 Hours
+    private readonly BACKUP_INTERVAL_MS = 60 * 60 * 1000; // 1 Hour
 
     constructor() {
         this.cloudinaryService = new CloudinaryService();
     }
 
     start() {
-        console.log("Starting Backup Service (Every 12h)...");
+        console.log("Starting Backup Service (Every 1h)...");
         // Run immediately on start (optional, maybe delay a bit)
         setTimeout(() => this.performBackup(), 60 * 1000);
 
