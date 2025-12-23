@@ -248,6 +248,20 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             .then((dbUser: any) => {
                                 console.log('[Board] Partnership data loaded:', dbUser);
                                 setPartnershipUser(dbUser);
+
+                                // Auto-sync legacy balance if needed
+                                if (dbUser.greenBalance === 0 && userData.referralBalance > 0) {
+                                    console.log('[Board] Syncing legacy balance:', userData.referralBalance);
+                                    return partnershipApi.syncLegacyBalance(webApp.initData)
+                                        .then((syncRes: any) => {
+                                            if (syncRes.success && syncRes.synced > 0) {
+                                                console.log('[Board] Synced $' + syncRes.synced);
+                                                // Refresh data
+                                                return partnershipApi.login(telegramId, userData.username)
+                                                    .then((updated: any) => setPartnershipUser(updated));
+                                            }
+                                        });
+                                }
                             });
                     } else {
                         console.warn('[Board] No telegram_id in user data');
