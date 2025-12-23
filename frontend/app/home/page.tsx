@@ -3,7 +3,7 @@
 import { useTelegram } from '../../components/TelegramProvider';
 import Link from 'next/link';
 import { useState } from 'react';
-import { Zap, DollarSign, BookOpen, Presentation, ChevronRight } from 'lucide-react';
+import { Zap, DollarSign, BookOpen, Presentation, ChevronRight, LogOut } from 'lucide-react';
 import { RulesModal } from '../game/RulesModal';
 import PresentationModal from './PresentationModal';
 
@@ -32,7 +32,19 @@ export default function HomePage() {
                     <h1 className="text-3xl font-black tracking-tight text-white mb-1">
                         Привет, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">{user?.first_name || 'Гость'}</span>!
                     </h1>
-                    <p className="text-slate-400 text-sm font-medium">Готов приумножить капитал?</p>
+                    <p className="text-slate-400 text-sm font-medium mb-3">Готов приумножить капитал?</p>
+                    <button
+                        onClick={() => {
+                            if (confirm('Выйти из аккаунта?')) {
+                                localStorage.clear();
+                                window.location.reload();
+                            }
+                        }}
+                        className="flex items-center gap-1.5 text-xs font-bold text-red-400/80 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg transition-colors border border-red-500/20"
+                    >
+                        <LogOut size={12} />
+                        Выйти
+                    </button>
                 </div>
 
                 <div className="flex-1 flex flex-col justify-center space-y-6">
