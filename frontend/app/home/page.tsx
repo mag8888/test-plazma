@@ -33,11 +33,19 @@ export default function HomePage() {
                         Привет, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">{user?.first_name || 'Гость'}</span>!
                     </h1>
                     <p className="text-slate-400 text-sm font-medium mb-3">Готов приумножить капитал?</p>
+
+                    {/* Logout / Exit Button */}
                     <button
                         onClick={() => {
-                            if (confirm('Выйти из аккаунта?')) {
-                                localStorage.clear();
-                                window.location.reload();
+                            if (confirm('Выйти из приложения?')) {
+                                if (webApp && webApp.initData) {
+                                    // In Telegram: Close the app
+                                    webApp.close();
+                                } else {
+                                    // In Browser: Clear session and reload
+                                    localStorage.clear();
+                                    window.location.reload();
+                                }
                             }
                         }}
                         className="flex items-center gap-1.5 text-xs font-bold text-red-400/80 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg transition-colors border border-red-500/20"
@@ -71,7 +79,7 @@ export default function HomePage() {
                         </div>
                     </Link>
 
-                    {/* PRESENTATION BUTTON (New) */}
+                    {/* PRESENTATION BUTTON */}
                     <button
                         onClick={() => {
                             handleHaptic('medium');
