@@ -172,6 +172,19 @@ const FeedCardItem = ({
                                         ROI: {card.roi}%
                                     </div>
                                 )}
+                                {/* Market Card: Show asset ownership status */}
+                                {card.type === 'MARKET' && (
+                                    <div className={`text-[9px] px-1.5 py-0.5 rounded font-mono flex items-center gap-1 ${ownedQty > 0
+                                            ? 'bg-green-900/30 border border-green-500/30 text-green-300'
+                                            : 'bg-red-900/30 border border-red-500/30 text-red-300'
+                                        }`}>
+                                        {ownedQty > 0 ? (
+                                            <><span>✓</span> <b>У вас есть ({ownedQty} шт)</b></>
+                                        ) : (
+                                            <><span>✕</span> <b>У вас нет такого актива</b></>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                         </div>
 
