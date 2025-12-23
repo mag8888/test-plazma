@@ -191,7 +191,7 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                 `}
                             >
                                 <span className="text-[2cqw] filter drop-shadow-md group-hover:-translate-y-1 transition-transform">🚀</span>
-                                <span className="text-white font-black text-[1cqw] uppercase tracking-[0.2em] drop-shadow-md mt-1">EXIT</span>
+                                <span className="text-white font-black text-[1cqw] uppercase tracking-[0.2em] drop-shadow-md mt-1">FAST TRACK</span>
                             </button>
                         )}
 

@@ -207,247 +207,294 @@ export const ActiveCardZone = ({
         const ownedQty = ownedStock ? ownedStock.quantity : 0;
         const canAfford = me.cash >= (card.cost || 0);
 
-        // -- STEP 1: DETAILS & ACTIONS --
-        if (step === 'DETAILS') {
-            return (
-                <div className="flex flex-col h-full w-full relative">
-                    <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r rounded-t-3xl ${card.cashflow > 0 ? 'from-green-500 to-emerald-500' :
-                        card.cost > 0 && !card.symbol ? 'from-red-500 to-rose-600' : 'from-blue-500 to-indigo-500'
-                        }`}></div>
-
-                    <div className="p-3 flex-1 flex flex-col h-full overflow-hidden">
-                        {/* Header */}
-                        <div className="flex items-start justify-between gap-2 mb-2 shrink-0">
-                            <div>
-                                <h3 className="text-sm font-bold text-white leading-tight line-clamp-2">{card.title}</h3>
-                                <div className="text-[9px] text-slate-400 uppercase font-bold tracking-wider mt-0.5 opacity-70">
-                                    {card.symbol || card.type}
-                                </div>
-                            </div>
-                            {/* Price Badge */}
-                            {(card.cost || card.price) && (
-                                <div className="text-right shrink-0">
-                                    <div className="text-[8px] text-slate-500 uppercase font-bold">Цена</div>
-                                    <div className="text-sm font-mono font-bold text-red-300">
-                                        ${(card.cost || card.price).toLocaleString()}
-                                    </div>
-                                </div>
-                            )}
+        // --- SHARED LAYOUT: HEADER ---
+        // Keeps the top part fixed to prevent jumping
+        const CardHeader = () => (
+            <div className="flex items-start justify-between gap-2 mb-2 shrink-0 h-10">
+                {/* Title Section */}
+                <div className="flex-1 min-w-0">
+                    <h3 className="text-sm font-bold text-white leading-tight line-clamp-2" title={card.title}>{card.title}</h3>
+                    <div className="text-[9px] text-slate-400 uppercase font-bold tracking-wider mt-0.5 opacity-70">
+                        {card.symbol || card.type}
+                    </div>
+                </div>
+                {/* Price Badge */}
+                {(card.cost || card.price) && (
+                    <div className="text-right shrink-0 bg-slate-900/40 px-2 py-1 rounded-lg border border-slate-700/30">
+                        <div className="text-[8px] text-slate-500 uppercase font-bold">Цена</div>
+                        <div className="text-sm font-mono font-bold text-red-300">
+                            ${(card.cost || card.price).toLocaleString()}
                         </div>
+                    </div>
+                )}
+            </div>
+        );
 
-                        {/* Description (Truncated) */}
-                        <div className="bg-slate-800/30 p-2 rounded-lg border border-slate-700/30 mb-2 flex-1 min-h-0">
-                            <p className="text-[10px] text-slate-300 leading-relaxed line-clamp-4">
-                                {card.description}
-                            </p>
-                            {/* Stats */}
-                            <div className="mt-2 flex gap-2">
-                                {card.cashflow !== 0 && (
-                                    <div className="text-[9px] px-1.5 py-0.5 rounded bg-green-900/30 border border-green-500/30 text-green-300 font-mono">
-                                        Flow: +${card.cashflow}
+        return (
+            <div className="flex flex-col h-full w-full relative">
+                {/* Color Bar */}
+                <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r rounded-t-3xl ${card.cashflow > 0 ? 'from-green-500 to-emerald-500' :
+                    card.cost > 0 && !card.symbol ? 'from-red-500 to-rose-600' : 'from-blue-500 to-indigo-500'
+                    }`}></div>
+
+                <div className="p-3 flex-1 flex flex-col h-full overflow-hidden">
+                    {/* FIXED HEADER */}
+                    <CardHeader />
+
+                    {/* BODY CONTENT (Swappable) */}
+                    <div className="flex-1 flex flex-col min-h-0 relative">
+                        {step === 'DETAILS' ? (
+                            // -- DETAILS VIEW --
+                            <>
+                                {/* Description (Scrollable) */}
+                                <div className="bg-slate-800/30 p-2 rounded-lg border border-slate-700/30 mb-2 flex-1 min-h-0 overflow-y-auto custom-scrollbar">
+                                    <p className="text-[10px] text-slate-300 leading-relaxed">
+                                        {card.description}
+                                    </p>
+                                    {/* Stats Grid */}
+                                    <div className="mt-2 flex flex-wrap gap-2">
+                                        {card.cashflow !== 0 && (
+                                            <div className="text-[9px] px-1.5 py-0.5 rounded bg-green-900/30 border border-green-500/30 text-green-300 font-mono flex items-center gap-1">
+                                                <span>Cashflow:</span> <b>+${card.cashflow}</b>
+                                            </div>
+                                        )}
+                                        {card.roi && (
+                                            <div className="text-[9px] px-1.5 py-0.5 rounded bg-blue-900/30 border border-blue-500/30 text-blue-300 font-mono">
+                                                ROI: {card.roi}%
+                                            </div>
+                                        )}
+                                        {card.rule && (
+                                            <div className="text-[9px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400 font-mono">
+                                                {card.rule}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+
+                                {/* Actions (Fixed at Bottom) */}
+                                {isMyTurn && (
+                                    <div className="grid grid-cols-2 gap-2 mt-auto shrink-0">
+                                        <button
+                                            onClick={() => {
+                                                if (isStock) {
+                                                    setTransactionMode('BUY');
+                                                    const maxBuy = Math.floor(me.cash / (card.cost || 1));
+                                                    setStockQty(maxBuy > 0 ? maxBuy : 1);
+                                                    setStep('TRANSACTION');
+                                                } else {
+                                                    setTransactionMode('BUY');
+                                                    setStockQty(1);
+                                                    setStep('TRANSACTION');
+                                                }
+                                            }}
+                                            // Enable button even if low cash, to allow credit-buy flow in Transaction step
+                                            disabled={!isStock && false}
+                                            className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                        >
+                                            Купить
+                                        </button>
+
+                                        {isStock && ownedQty > 0 && (
+                                            <button
+                                                onClick={() => {
+                                                    setTransactionMode('SELL');
+                                                    setStockQty(ownedQty);
+                                                    setStep('TRANSACTION');
+                                                }}
+                                                className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                            >
+                                                Продать
+                                            </button>
+                                        )}
+
+                                        <button
+                                            onClick={() => {
+                                                if (isPreview) onDismissPreview?.();
+                                                else if (isOffer) onDismissMarket?.();
+                                                else socket.emit('end_turn', { roomId });
+                                            }}
+                                            className={`bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider ${(!isStock && ownedQty <= 0) ? 'col-span-1' : 'col-span-2'}`}
+                                        >
+                                            {isPreview ? 'Закрыть' : (isStock || isOffer ? 'Пропустить' : 'Отказаться')}
+                                        </button>
                                     </div>
                                 )}
-                                {card.roi && (
-                                    <div className="text-[9px] px-1.5 py-0.5 rounded bg-blue-900/30 border border-blue-500/30 text-blue-300 font-mono">
-                                        ROI: {card.roi}%
+
+                                {/* Deal Choice for Details View */}
+                                {isMyTurn && card.type === 'DEAL' && !card.id && (
+                                    <div className="grid grid-cols-2 gap-2 mt-auto shrink-0">
+                                        <button
+                                            onClick={() => { socket.emit('draw_deal', { roomId, type: 'SMALL' }); onDismissPreview?.(); }}
+                                            disabled={me.cash < 500}
+                                            className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg flex flex-col items-center justify-center p-1"
+                                        >
+                                            <span>Малая</span>
+                                            <span className="text-[8px] opacity-70">до $5k</span>
+                                        </button>
+                                        <button
+                                            onClick={() => { socket.emit('draw_deal', { roomId, type: 'BIG' }); onDismissPreview?.(); }}
+                                            disabled={me.cash < 2000}
+                                            className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg flex flex-col items-center justify-center p-1"
+                                        >
+                                            <span>Крупная</span>
+                                            <span className="text-[8px] opacity-70">от $6k</span>
+                                        </button>
                                     </div>
                                 )}
-                                {card.rule && (
-                                    <div className="text-[9px] px-1.5 py-0.5 rounded bg-slate-700/50 text-slate-400 font-mono">
-                                        {card.rule}
-                                    </div>
-                                )}
-                            </div>
-                        </div>
 
-                        {/* Actions */}
-                        {isMyTurn && (
-                            <div className="grid grid-cols-2 gap-2 mt-auto shrink-0">
-                                {/* Buy Button */}
-                                <button
-                                    onClick={() => {
-                                        if (isStock) {
-                                            setTransactionMode('BUY');
-                                            const maxBuy = Math.floor(me.cash / (card.cost || 1));
-                                            setStockQty(maxBuy > 0 ? maxBuy : 1);
-                                            setStep('TRANSACTION');
-                                        } else {
-                                            setTransactionMode('BUY');
-                                            setStockQty(1);
-                                            setStep('TRANSACTION');
-                                        }
-                                    }}
-                                    disabled={!canAfford && !isStock}
-                                    className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg"
-                                >
-                                    Купить
-                                </button>
-
-                                {isStock && ownedQty > 0 && (
+                                {/* Read Only / Not My Turn */}
+                                {(isMyTurn && isPreview && card.type !== 'DEAL' && !isOffer && !isStock) && (
                                     <button
-                                        onClick={() => {
-                                            setTransactionMode('SELL');
-                                            setStockQty(ownedQty);
-                                            setStep('TRANSACTION');
-                                        }}
-                                        className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg"
+                                        onClick={() => onDismissPreview?.()}
+                                        className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider mt-auto"
                                     >
-                                        Продать
+                                        {['PAYDAY', 'BABY', 'DOWNSIZED', 'LOSS', 'DOODAD', 'TAX'].includes(card.type) ? 'OK' : 'Закрыть'}
                                     </button>
                                 )}
+                                {!isMyTurn && isPreview && (
+                                    <button
+                                        onClick={onDismissPreview}
+                                        className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider mt-auto"
+                                    >
+                                        Закрыть
+                                    </button>
+                                )}
+                            </>
+                        ) : (
+                            // -- TRANSACTION VIEW --
+                            <>
+                                {/* Transaction Mode Header (Back + Mode) */}
+                                <div className="flex items-center justify-between mb-4 pb-2 border-b border-white/5 shrink-0">
+                                    <button onClick={() => setStep('DETAILS')} className="text-slate-400 hover:text-white text-[10px] uppercase font-bold flex items-center gap-1 group">
+                                        <span className="group-hover:-translate-x-1 transition-transform">←</span> Назад
+                                    </button>
+                                    <div className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${transactionMode === 'BUY' ? 'bg-green-900/40 text-green-400' : 'bg-blue-900/40 text-blue-400'}`}>
+                                        {transactionMode === 'BUY' ? 'Покупка' : 'Продажа'}
+                                    </div>
+                                </div>
 
-                                <button
-                                    onClick={() => {
-                                        if (isPreview) onDismissPreview?.();
-                                        else if (isOffer) onDismissMarket?.();
-                                        else socket.emit('end_turn', { roomId });
-                                    }}
-                                    className={`bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider ${(!isStock && ownedQty <= 0) ? 'col-span-1' : 'col-span-2'}`}
-                                >
-                                    {isPreview ? 'Закрыть' : (isStock || isOffer ? 'Пропустить' : 'Отказаться')}
-                                </button>
-                            </div>
-                        )}
+                                {/* Slider Control */}
+                                <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 mb-auto">
+                                    {(() => {
+                                        const price = card.cost || card.price || 0;
+                                        const total = price * stockQty;
+                                        // Don't limit maxBuy by cash for stocks if we want to allow loans, BUT loans for stocks is risky/complex. 
+                                        // User said "2 when buying... allowed to take loan". Usually stocks allow buying as much as you want if you take loans? 
+                                        // Let's allow max 100 or something if cash is 0, or just keep maxBuy for stocks logic but enable 'Borrow' if they want more.
+                                        // For Simplicity, if it's a regular asset (Startups, Real Estate), enable borrow. For stocks, usually you borrow to buy? Yes.
+                                        // But range input depends on max!
+                                        // If we want to buy MORE than cash allows, we need to increase Max. 
+                                        // Let's set Max to a high number (e.g. 100 or cost/1000) if we want to support credit buys for stocks.
+                                        // For now, let's keep stock limits simple (cash based) unless specifically asked, but for Real Estate (qty=1), it matters most.
 
-                        {/* DEAL CHOICE (Small / Big) */}
-                        {isMyTurn && card.type === 'DEAL' && !card.id && (
-                            <div className="grid grid-cols-2 gap-2 mt-auto shrink-0">
-                                <button
-                                    onClick={() => { socket.emit('draw_deal', { roomId, type: 'SMALL' }); onDismissPreview?.(); }}
-                                    disabled={me.cash < 500}
-                                    className="bg-green-600 hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg flex flex-col items-center justify-center p-1"
-                                >
-                                    <span>Малая</span>
-                                    <span className="text-[8px] opacity-70">до $5k</span>
-                                </button>
-                                <button
-                                    onClick={() => { socket.emit('draw_deal', { roomId, type: 'BIG' }); onDismissPreview?.(); }}
-                                    disabled={me.cash < 2000} // $2000 requirement for Big Deal? Or $6000? Board.tsx had $2000 check for UI but text said "От $6000". Cashflow 101 rules usually say Big Deal costs start at $6k, but you need some cash to enter? Usually you just need enough cash to buy it. Or allow drawing. Let's stick to $2000 as a safe filter or what was there. Old modal had me.cash >= 2000.
-                                    className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg flex flex-col items-center justify-center p-1"
-                                >
-                                    <span>Крупная</span>
-                                    <span className="text-[8px] opacity-70">от $6k</span>
-                                </button>
-                            </div>
-                        )}
+                                        // Re-calc variables inside render to be safe or use state?
+                                        // Using the ones from parent scope if I didn't hide them. 
+                                        // Since I replaced the block, I need to re-declare or use logic here.
+                                        // Step was checking 'step' variable.
 
-                        {/* PREVIEW ONLY BUTTON (For Events etc) */}
-                        {(isMyTurn && isPreview && card.type !== 'DEAL' && !isOffer && !isStock) && (
-                            <button
-                                onClick={() => {
-                                    // For Payday/Baby/etc, checking logic is in parent `onDismissPreview`
-                                    onDismissPreview?.();
-                                }}
-                                className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider mt-auto"
-                            >
-                                {['PAYDAY', 'BABY', 'DOWNSIZED', 'LOSS', 'DOODAD', 'TAX'].includes(card.type) ? 'OK' : 'Закрыть'}
-                            </button>
-                        )}
-                        {!isMyTurn && isPreview && (
-                            <button
-                                onClick={onDismissPreview}
-                                className="w-full bg-slate-700 hover:bg-slate-600 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider mt-auto"
-                            >
-                                Закрыть
-                            </button>
+                                        // Logic Re-implementation:
+                                        const maxBuyCash = Math.floor(me.cash / (price || 1));
+                                        // If stock, allow at least 100 to show loan possibility? Or just limited to cash?
+                                        // Standard Cashflow: You can borrow to buy stock.
+                                        // Let's set a 'theoretical' max based on credit limit? Borrowing limit is usually cashflow related.
+                                        // To remain simple: For Stocks, allow up to 100 items (arbitrary) or just keep cash limit? 
+                                        // User's request specifically showed a Real Estate card ("Room in suburbs") which usually has Qty=1.
+                                        // So for non-stocks, Max is 1.
+                                        // For Stocks, I'll update Max to be larger.
+
+                                        const maxVal = transactionMode === 'BUY'
+                                            ? (isStock ? Math.max(maxBuyCash, 100) : 1)
+                                            : ownedQty;
+
+                                        const minVal = 1;
+
+                                        // Loan Check
+                                        const loanNeeded = total > me.cash ? (total - me.cash) : 0;
+
+                                        return (
+                                            <>
+                                                <div className="flex items-center gap-3 mb-2">
+                                                    <button
+                                                        onClick={() => setStockQty(Math.max(minVal, stockQty - 1))}
+                                                        className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center active:scale-95"
+                                                    >-</button>
+                                                    <div className="flex-1 text-center font-mono text-2xl font-black text-white">{stockQty}</div>
+                                                    <button
+                                                        onClick={() => setStockQty(Math.min(maxVal, stockQty + 1))}
+                                                        className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center active:scale-95"
+                                                    >+</button>
+                                                </div>
+
+                                                {(isStock || maxVal > 1) && (
+                                                    <input
+                                                        type="range"
+                                                        min={minVal}
+                                                        max={maxVal}
+                                                        value={stockQty}
+                                                        onChange={(e) => setStockQty(parseInt(e.target.value))}
+                                                        className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-white"
+                                                    />
+                                                )}
+
+                                                <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-700/30">
+                                                    <span className="text-[10px] text-slate-500 uppercase font-bold">Итого</span>
+                                                    <div className="text-right flex flex-col items-end">
+                                                        <span className={`text-sm font-mono font-bold ${transactionMode === 'BUY' ? 'text-red-400' : 'text-green-400'}`}>
+                                                            {transactionMode === 'BUY' ? '-' : '+'}${total.toLocaleString()}
+                                                        </span>
+                                                        {loanNeeded > 0 && transactionMode === 'BUY' && (
+                                                            <span className="text-[9px] text-yellow-500 font-mono">
+                                                                (Кредит: +${(Math.ceil(loanNeeded / 1000) * 1000).toLocaleString()})
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Confirm Actions */}
+                                                <div className="mt-4 flex flex-col gap-2">
+                                                    <button
+                                                        onClick={() => {
+                                                            if (transactionMode === 'BUY') {
+                                                                // Auto Credit Logic
+                                                                if (loanNeeded > 0) {
+                                                                    const amount = Math.ceil(loanNeeded / 1000) * 1000;
+                                                                    if (confirm(`Не хватает средств. Взять кредит $${amount.toLocaleString()} и купить?`)) {
+                                                                        socket.emit('take_loan', { roomId, amount });
+                                                                        // Small delay to ensure loan is processed (optimistic UI)
+                                                                        setTimeout(() => {
+                                                                            socket.emit('buy_asset', { roomId, quantity: stockQty });
+                                                                        }, 200);
+                                                                    }
+                                                                } else {
+                                                                    socket.emit('buy_asset', { roomId, quantity: stockQty });
+                                                                }
+                                                            } else {
+                                                                socket.emit('sell_stock', { roomId, quantity: stockQty });
+                                                            }
+                                                            if (isPreview) onDismissPreview?.();
+                                                        }}
+                                                        // Disable only if selling and no qty (shouldn't happen) or if technically impossible (but buying with credit is now possible)
+                                                        disabled={transactionMode === 'SELL' && stockQty > ownedQty}
+                                                        className={`w-full py-3 rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]
+                                                            ${transactionMode === 'BUY'
+                                                                ? (loanNeeded > 0 ? 'bg-yellow-600 hover:bg-yellow-500 text-white' : 'bg-green-600 hover:bg-green-500 text-white')
+                                                                : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
+                                                    >
+                                                        {transactionMode === 'BUY'
+                                                            ? (loanNeeded > 0 ? `Кредит и Купить` : `Купить за $${total.toLocaleString()}`)
+                                                            : `Продать за $${total.toLocaleString()}`}
+                                                    </button>
+                                                </div>
+                                            </>
+                                        );
+                                    })()}
+                                </div>
+                            </>
                         )}
                     </div>
                 </div>
-            );
-        }
-
-        // -- STEP 2: TRANSACTION (Slider + Confirm) --
-        if (step === 'TRANSACTION') {
-            const price = card.cost || card.price || 0;
-            const total = price * stockQty;
-            const maxBuy = Math.floor(me.cash / (price || 1));
-            const maxVal = transactionMode === 'BUY' ? (isStock ? Math.max(1, maxBuy) : 1) : ownedQty;
-            const minVal = 1;
-
-            return (
-                <div className="flex flex-col h-full w-full relative">
-                    {/* Top Bar (Progress/Back) */}
-                    <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r rounded-t-3xl ${transactionMode === 'BUY' ? 'from-green-500 to-emerald-500' : 'from-blue-500 to-indigo-500'
-                        }`}></div>
-
-                    <div className="p-3 flex-1 flex flex-col h-full">
-                        {/* Title Row */}
-                        <div className="flex items-center justify-between mb-2">
-                            <button onClick={() => setStep('DETAILS')} className="text-slate-400 hover:text-white text-[10px] uppercase font-bold flex items-center gap-1">
-                                <span>←</span> Назад
-                            </button>
-                            <div className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${transactionMode === 'BUY' ? 'bg-green-900/40 text-green-400' : 'bg-blue-900/40 text-blue-400'}`}>
-                                {transactionMode === 'BUY' ? 'Покупка' : 'Продажа'}
-                            </div>
-                        </div>
-
-                        {/* Card Preview (Mini) */}
-                        <div className="text-center mb-4">
-                            <h3 className="text-sm font-bold text-white line-clamp-1">{card.title}</h3>
-                            <div className="text-[10px] text-slate-500 font-mono">${price.toLocaleString()} / шт</div>
-                        </div>
-
-                        {/* Slider Control */}
-                        <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 mb-4">
-                            <div className="flex items-center gap-3 mb-2">
-                                <button
-                                    onClick={() => setStockQty(Math.max(minVal, stockQty - 1))}
-                                    className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center"
-                                >-</button>
-                                <div className="flex-1 text-center font-mono text-2xl font-black text-white">{stockQty}</div>
-                                <button
-                                    onClick={() => setStockQty(Math.min(maxVal, stockQty + 1))}
-                                    className="w-8 h-8 rounded-lg bg-slate-700 hover:bg-slate-600 text-white font-bold flex items-center justify-center"
-                                >+</button>
-                            </div>
-
-                            {(isStock || maxVal > 1) && (
-                                <input
-                                    type="range"
-                                    min={minVal}
-                                    max={maxVal}
-                                    value={stockQty}
-                                    onChange={(e) => setStockQty(parseInt(e.target.value))}
-                                    className="w-full h-1.5 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-white"
-                                />
-                            )}
-
-                            <div className="flex justify-between items-center mt-2 pt-2 border-t border-slate-700/30">
-                                <span className="text-[10px] text-slate-500 uppercase font-bold">Итого</span>
-                                <span className={`text-sm font-mono font-bold ${transactionMode === 'BUY' ? 'text-red-400' : 'text-green-400'}`}>
-                                    {transactionMode === 'BUY' ? '-' : '+'}${total.toLocaleString()}
-                                </span>
-                            </div>
-                        </div>
-
-                        {/* Confirm Actions */}
-                        <div className="mt-auto flex flex-col gap-2">
-                            <button
-                                onClick={() => {
-                                    if (transactionMode === 'BUY') {
-                                        socket.emit('buy_asset', { roomId, quantity: stockQty });
-                                    } else {
-                                        socket.emit('sell_stock', { roomId, quantity: stockQty });
-                                    }
-                                    if (isPreview) onDismissPreview?.();
-                                }}
-                                disabled={transactionMode === 'BUY' && me.cash < total}
-                                className={`w-full py-3 rounded-xl text-xs font-bold uppercase tracking-wider shadow-lg
-                                    ${transactionMode === 'BUY'
-                                        ? 'bg-green-600 hover:bg-green-500 text-white'
-                                        : 'bg-blue-600 hover:bg-blue-500 text-white'}`}
-                            >
-                                {transactionMode === 'BUY' ? `Купить за $${total.toLocaleString()}` : `Продать за $${total.toLocaleString()}`}
-                            </button>
-
-                            {transactionMode === 'BUY' && me.cash < total && (
-                                <div className="text-center text-[9px] text-red-500 font-bold">Недостаточно средств</div>
-                            )}
-                        </div>
-                    </div>
-                </div>
-            );
-        }
+            </div>
+        );
     }
 
     // 6. MARKET OFFERS (Placeholder or List)
