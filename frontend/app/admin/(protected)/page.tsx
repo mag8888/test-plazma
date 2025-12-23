@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Search, DollarSign, Users, BarChart, TreePine, Lock } from 'lucide-react';
-import { partnershipApi } from '../../lib/partnershipApi';
+import { partnershipApi } from '../../../lib/partnershipApi';
 
 const API_URL = process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'http://localhost:4000/api';
 
