@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '../socket';
+import { ConfirmModal } from './ConfirmModal';
 
 interface ActiveCardZoneProps {
     state: any;
@@ -34,6 +35,8 @@ const FeedCardItem = ({
     const [stockQty, setStockQty] = useState(1);
     const [step, setStep] = useState<'DETAILS' | 'TRANSACTION'>('DETAILS');
     const [transactionMode, setTransactionMode] = useState<'BUY' | 'SELL'>('BUY');
+    const [showLoanConfirm, setShowLoanConfirm] = useState(false);
+    const [pendingLoan, setPendingLoan] = useState<{ amount: number; quantity: number } | null>(null);
 
     // Timer Logic Corrected: Use expiresAt if available, else default to 120 (but don't reset on re-render if possible?)
     // Actually, if re-rendered with same wrapper, we want to persist. 
