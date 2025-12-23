@@ -891,7 +891,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                             ${p.isBankrupted ? 'opacity-50 grayscale' : ''}
                                         `}
                                         >
-                                            <div className={`text-lg w-10 h-10 flex items-center justify-center rounded-full border-2 border-amber-500/20 shadow-[0_0_15px_rgba(251,191,36,0.1)] text-white font-bold bg-gradient-to-br overflow-hidden relative ${getAvatarColor(p.id)}`}>
+                                            <div className={`text-lg w-10 h-10 flex items-center justify-center rounded-full border-2 border-amber-500/20 shadow-[0_0_15px_rgba(251,191,36,0.1)] text-white font-bold bg-gradient-to-br relative ${getAvatarColor(p.id)}`}>
                                                 {p.photo_url ? (
                                                     <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
                                                 ) : (

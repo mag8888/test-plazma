@@ -34,15 +34,32 @@ const FeedCardItem = ({
     const [stockQty, setStockQty] = useState(1);
     const [step, setStep] = useState<'DETAILS' | 'TRANSACTION'>('DETAILS');
     const [transactionMode, setTransactionMode] = useState<'BUY' | 'SELL'>('BUY');
-    const [timeLeft, setTimeLeft] = useState(120); // 2 minutes per card
+
+    // Timer Logic Corrected: Use expiresAt if available, else default to 120 (but don't reset on re-render if possible?)
+    // Actually, if re-rendered with same wrapper, we want to persist. 
+    // wrapper.expiresAt is absolute timestamp.
+    const getInitialTime = () => {
+        if (cardWrapper.expiresAt) {
+            return Math.max(0, Math.ceil((cardWrapper.expiresAt - Date.now()) / 1000));
+        }
+        return 120;
+    };
+
+    const [timeLeft, setTimeLeft] = useState(getInitialTime());
 
     // Local Timer
     useEffect(() => {
         const timer = setInterval(() => {
-            setTimeLeft((prev) => Math.max(0, prev - 1));
+            if (cardWrapper.expiresAt) {
+                // Sync exactly with server time
+                setTimeLeft(Math.max(0, Math.ceil((cardWrapper.expiresAt - Date.now()) / 1000)));
+            } else {
+                // Fallback countdown
+                setTimeLeft((prev) => Math.max(0, prev - 1));
+            }
         }, 1000);
         return () => clearInterval(timer);
-    }, []);
+    }, [cardWrapper.expiresAt]);
 
     const formatTime = (sec: number) => {
         const m = Math.floor(sec / 60);
@@ -143,10 +160,7 @@ const FeedCardItem = ({
 
                                 <button
                                     onClick={() => {
-                                        if (isOffer) onDismiss(); // Needs socket logic for market? Usually market cards persist unless bought or cancelled by owner?
-                                        // If I am NOT the owner, I can't dismiss market card usually. 
-                                        // Unless 'Dismiss' means 'Hide locally'? 
-                                        // For now, onDismiss passed from parent handles logic.
+                                        if (isOffer) onDismiss();
                                         else onDismiss();
                                     }}
                                     className={`bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider ${(!isStock && ownedQty <= 0) ? 'col-span-1' : 'col-span-2'}`}
@@ -209,7 +223,8 @@ const FeedCardItem = ({
                                                     const amount = Math.ceil(loanNeeded / 1000) * 1000;
                                                     if (confirm(`Взять кредит $${amount.toLocaleString()}?`)) {
                                                         socket.emit('take_loan', { roomId, amount });
-                                                        setTimeout(() => socket.emit('buy_asset', { roomId, quantity: stockQty }), 200);
+                                                        // Increased delay to 500ms to allow loan processing
+                                                        setTimeout(() => socket.emit('buy_asset', { roomId, quantity: stockQty }), 500);
                                                     }
                                                 } else {
                                                     socket.emit('buy_asset', { roomId, quantity: stockQty });
@@ -217,7 +232,7 @@ const FeedCardItem = ({
                                             } else {
                                                 socket.emit('sell_stock', { roomId, quantity: stockQty });
                                             }
-                                            if (!isOffer) onDismiss();
+                                            // DO NOT Dismiss here. Let server update state to remove card.
                                         }}
                                         className={`w-full py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider ${loanNeeded > 0 ? 'bg-yellow-600' : 'bg-green-600'} text-white`}
                                     >
