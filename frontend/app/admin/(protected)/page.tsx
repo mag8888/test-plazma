@@ -1,12 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { Search, DollarSign, Users, BarChart, TreePine, Lock } from 'lucide-react';
 import { partnershipApi } from '../../../lib/partnershipApi';
 
 const API_URL = process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'http://localhost:4000/api';
 
 export default function AdminPage() {
+    const router = useRouter();
     const [secret, setSecret] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [activeTab, setActiveTab] = useState<'USERS' | 'STATS' | 'TREE'>('USERS');
@@ -48,6 +50,7 @@ export default function AdminPage() {
         localStorage.removeItem('admin_secret');
         setSecret('');
         setIsAuthenticated(false);
+        router.push('/admin/login');
     };
 
     const fetchWithAuth = async (endpoint: string, options: any = {}) => {
