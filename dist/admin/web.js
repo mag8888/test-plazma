@@ -5499,6 +5499,75 @@ router.post('/reviews/add', requireAdmin, upload.single('image'), async (req, re
   }
 });
 
+// Toggle review pinned status
+router.post('/reviews/:id/toggle-pinned', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const review = await prisma.review.findUnique({ where: { id } });
+    await prisma.review.update({
+      where: { id },
+      data: { isPinned: !review.isPinned }
+    });
+    res.redirect('/admin/reviews?success=review_updated');
+  } catch (error) {
+    console.error('Toggle pinned error:', error);
+    res.redirect('/admin/reviews?error=update_failed');
+  }
+});
+
+// Toggle review active status
+router.post('/reviews/:id/toggle-active', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const review = await prisma.review.findUnique({ where: { id } });
+    await prisma.review.update({
+      where: { id },
+      data: { isActive: !review.isActive }
+    });
+    res.redirect('/admin/reviews?success=review_updated');
+  } catch (error) {
+    console.error('Toggle active error:', error);
+    res.redirect('/admin/reviews?error=update_failed');
+  }
+});
+
+// Delete review
+router.post('/reviews/:id/delete', requireAdmin, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await prisma.review.delete({ where: { id } });
+    res.redirect('/admin/reviews?success=review_deleted');
+  } catch (error) {
+    console.error('Delete review error:', error);
+    res.redirect('/admin/reviews?error=delete_failed');
+  }
+});
+
+// Upload review image
+router.post('/reviews/:id/upload-image', requireAdmin, upload.single('image'), async (req, res) => {
+  try {
+    const { id } = req.params;
+    if (!req.file) return res.redirect('/admin/reviews?error=no_image');
+
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream({ resource_type: 'auto', folder: 'plazma-bot/reviews' }, (error, result) => {
+        if (error) reject(error);
+        else resolve(result);
+      }).end(req.file.buffer);
+    });
+
+    await prisma.review.update({
+      where: { id },
+      data: { photoUrl: result.secure_url }
+    });
+
+    res.redirect('/admin/reviews?success=image_updated');
+  } catch (error) {
+    console.error('Upload review image error:', error);
+    res.redirect('/admin/reviews?error=image_upload');
+  }
+});
+
 router.get('/reviews', requireAdmin, async (req, res) => {
   try {
     const reviews = await prisma.review.findMany({
