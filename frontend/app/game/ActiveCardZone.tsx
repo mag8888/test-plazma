@@ -85,7 +85,7 @@ const FeedCardItem = ({
         <div className="relative w-full shrink-0 rounded-2xl overflow-hidden bg-[#1e293b] border border-slate-700/30 shadow-lg flex flex-col group transition-all duration-500 animate-in fade-in slide-in-from-bottom-4">
             {/* Color Bar */}
             <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${card.cashflow > 0 ? 'from-green-500 to-emerald-500' :
-                    card.cost > 0 && !card.symbol ? 'from-red-500 to-rose-600' : 'from-blue-500 to-indigo-500'
+                card.cost > 0 && !card.symbol ? 'from-red-500 to-rose-600' : 'from-blue-500 to-indigo-500'
                 }`}></div>
 
             <div className="p-3 flex flex-col gap-2">
@@ -219,7 +219,7 @@ const FeedCardItem = ({
                                             }
                                             if (!isOffer) onDismiss();
                                         }}
-                                        className={`w-full py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider ${loopNeeded > 0 ? 'bg-yellow-600' : 'bg-green-600'} text-white`}
+                                        className={`w-full py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider ${loanNeeded > 0 ? 'bg-yellow-600' : 'bg-green-600'} text-white`}
                                     >
                                         {loanNeeded > 0 ? 'Кредит и Купить' : 'Подтвердить'}
                                     </button>
