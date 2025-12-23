@@ -131,42 +131,56 @@ const FeedCardItem = ({
                         {/* Actions */}
                         {isMyTurn && (
                             <div className="grid grid-cols-2 gap-2 mt-1">
-                                <button
-                                    onClick={() => {
-                                        setTransactionMode('BUY');
-                                        const price = card.cost || card.price || 0;
-                                        const maxBuy = price > 0 ? Math.floor(me.cash / price) : 1;
-                                        // Default at least 1 even if cash 0 (for credit logic later)
-                                        setStockQty(isStock && maxBuy > 0 ? maxBuy : 1);
-                                        setStep('TRANSACTION');
-                                    }}
-                                    className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
-                                >
-                                    Купить
-                                </button>
-
-                                {isStock && ownedQty > 0 && (
+                                {card.type === 'EXPENSE' ? (
                                     <button
                                         onClick={() => {
-                                            setTransactionMode('SELL');
-                                            setStockQty(ownedQty);
+                                            setTransactionMode('BUY');
+                                            setStockQty(1);
                                             setStep('TRANSACTION');
                                         }}
-                                        className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                        className="col-span-2 bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
                                     >
-                                        Продать
+                                        Оплатить
                                     </button>
-                                )}
+                                ) : (
+                                    <>
+                                        <button
+                                            onClick={() => {
+                                                setTransactionMode('BUY');
+                                                const price = card.cost || card.price || 0;
+                                                const maxBuy = price > 0 ? Math.floor(me.cash / price) : 1;
+                                                setStockQty(isStock && maxBuy > 0 ? maxBuy : 1);
+                                                setStep('TRANSACTION');
+                                            }}
+                                            className="bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                        >
+                                            Купить
+                                        </button>
 
-                                <button
-                                    onClick={() => {
-                                        if (isOffer) onDismiss();
-                                        else onDismiss();
-                                    }}
-                                    className={`bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider ${(!isStock && ownedQty <= 0) ? 'col-span-1' : 'col-span-2'}`}
-                                >
-                                    {isOffer ? 'Закрыть' : 'Отказаться'}
-                                </button>
+                                        {isStock && ownedQty > 0 && (
+                                            <button
+                                                onClick={() => {
+                                                    setTransactionMode('SELL');
+                                                    setStockQty(ownedQty);
+                                                    setStep('TRANSACTION');
+                                                }}
+                                                className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                            >
+                                                Продать
+                                            </button>
+                                        )}
+
+                                        <button
+                                            onClick={() => {
+                                                if (isOffer) onDismiss();
+                                                else onDismiss();
+                                            }}
+                                            className={`bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider ${(!isStock && ownedQty <= 0) ? 'col-span-1' : 'col-span-2'}`}
+                                        >
+                                            {isOffer ? 'Закрыть' : 'Отказаться'}
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         )}
                         {/* Deal Choice (Small/Big) Helper - If Card is a generic Deal placeholder */}
