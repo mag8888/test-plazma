@@ -23,7 +23,7 @@ export const BottomNav = () => {
     ];
 
     return (
-        <div className="fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-lg border-t border-slate-700 pb-safe pt-2 px-6 z-50">
+        <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-lg border-t border-slate-700 pb-safe pt-2 px-6 z-50">
             <div className="flex justify-between items-center max-w-md mx-auto">
                 {tabs.map((tab) => {
                     const isActive = pathname === tab.path;

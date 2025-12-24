@@ -1126,60 +1126,9 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                 {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
                 <div className="hidden lg:flex flex-col gap-2 h-full overflow-hidden flex-1 min-w-0 pt-0">
-                    <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden group">
-                        {/* Glow effect */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500"></div>
-                        <div className="flex justify-between items-center mb-6 relative">
-                            <div className="flex items-center gap-3">
-                                <span className="text-3xl filter drop-shadow-md">👷</span>
-                                <div>
-                                    <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Профессия</span>
-                                    <div className="text-xl font-bold text-white leading-tight tracking-tight">{me.professionName || 'Выбор...'}</div>
-                                </div>
-                            </div>
 
-                            {/* Payday Header Badge */}
-                            <div className="flex flex-col items-end">
-                                <span className="text-[9px] text-blue-400 uppercase font-bold tracking-wider mb-0.5">Payday</span>
-                                <div className="text-2xl font-black text-green-400 tracking-tight leading-none filter drop-shadow-lg">
-                                    +${(me.cashflow || 0).toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                            {/* BALANCE */}
-                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group relative">
-                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
-                                <div className="font-mono text-xl text-green-400 font-bold tracking-tight shadow-green-900/20 drop-shadow-sm group-hover:scale-105 transition-transform origin-left relative">
-                                    ${me.cash?.toLocaleString()}
-                                    <CashChangeIndicator currentCash={me.cash} />
-                                </div>
-                            </button>
-
-                            {/* CREDIT */}
-                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group">
-                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит 💳</div>
-                                <div className="font-mono text-xl text-red-400 font-bold tracking-tight shadow-red-900/20 drop-shadow-sm group-hover:scale-105 transition-transform origin-left">${me.loanDebt?.toLocaleString()}</div>
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                            <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Доход</div>
-                                <div className="font-mono text-slate-300 font-medium">${me.income?.toLocaleString()}</div>
-                            </div>
-                            <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Расходы</div>
-                                <div className="font-mono text-slate-300 font-medium">${me.expenses?.toLocaleString()}</div>
-                            </div>
-                        </div>
-
-
-                    </div>
-
-                    {/* Assets */}
-                    <div className="bg-[#151b2b] rounded-2xl p-5 border border-slate-800 shadow-lg flex-1 flex flex-col min-h-0 relative overflow-hidden">
+                    {/* Assets FIRST */}
+                    <div className="bg-[#151b2b] rounded-2xl p-5 border border-slate-800 shadow-lg flex flex-col min-h-0 relative overflow-hidden max-h-[40vh]">
                         <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2 flex-shrink-0">
                             <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
                             <span className="font-mono text-green-400">+${totalAssetYield}</span>
@@ -1213,6 +1162,59 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             </div>
                         ) : <div className="text-xs text-slate-600 text-center py-4 italic">Нет активов</div>}
                     </div>
+
+                    {/* Player Info SECOND */}
+                    <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden group min-h-0">
+                        {/* Glow effect */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500"></div>
+                        <div className="flex justify-between items-center mb-4 relative">
+                            <div className="flex items-center gap-3">
+                                <span className="text-2xl filter drop-shadow-md">👷</span>
+                                <div>
+                                    <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider">Профессия</span>
+                                    <div className="text-base font-bold text-white leading-tight tracking-tight">{me.professionName || 'Выбор...'}</div>
+                                </div>
+                            </div>
+
+                            {/* Payday Header Badge */}
+                            <div className="flex flex-col items-end">
+                                <span className="text-[8px] text-blue-400 uppercase font-bold tracking-wider mb-0.5">Payday</span>
+                                <div className="text-xl font-black text-green-400 tracking-tight leading-none filter drop-shadow-lg">
+                                    +${(me.cashflow || 0).toLocaleString()}
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2 mb-3">
+                            {/* BALANCE */}
+                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-2 rounded-xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group relative">
+                                <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
+                                <div className="font-mono text-lg text-green-400 font-bold tracking-tight shadow-green-900/20 drop-shadow-sm group-hover:scale-105 transition-transform origin-left relative">
+                                    ${me.cash?.toLocaleString()}
+                                    <CashChangeIndicator currentCash={me.cash} />
+                                </div>
+                            </button>
+
+                            {/* CREDIT */}
+                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-2 rounded-xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group">
+                                <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит 💳</div>
+                                <div className="font-mono text-lg text-red-400 font-bold tracking-tight shadow-red-900/20 drop-shadow-sm group-hover:scale-105 transition-transform origin-left">${me.loanDebt?.toLocaleString()}</div>
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-2">
+                            <div className="bg-[#0B0E14]/30 p-2 rounded-lg border border-slate-800/50">
+                                <div className="text-[8px] text-slate-500 uppercase tracking-wider">Доход</div>
+                                <div className="font-mono text-sm text-slate-300 font-medium">${me.income?.toLocaleString()}</div>
+                            </div>
+                            <div className="bg-[#0B0E14]/30 p-2 rounded-lg border border-slate-800/50">
+                                <div className="text-[8px] text-slate-500 uppercase tracking-wider">Расходы</div>
+                                <div className="font-mono text-sm text-slate-300 font-medium">${me.expenses?.toLocaleString()}</div>
+                            </div>
+                        </div>
+                    </div>
+
+
 
                     {/* HOST CONTROLS */}
 
