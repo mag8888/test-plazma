@@ -352,36 +352,25 @@ export class GameGateway {
                     // Update DB Stats
                     const { UserModel } = await import('../models/user.model');
 
-                    // Update Winner
-                    if (winnerName) {
-                        const winnerPlayer = state.players.find(p => p.name === winnerName);
-                        if (winnerPlayer && winnerPlayer.id) {
-                            await UserModel.findOneAndUpdate(
-                                { _id: winnerPlayer.id }, // Assuming ID is MongoID? Or checking telegram_id? 
-                                // PlayerState.id in engine is usually socket.id or user._id.
-                                // In 'room.service.ts', when joining, we usually map User ID.
-                                // Let's check Engine.ts IPlayer interface or RoomService.
-                                // Actually, existing logic for 'WINNER' event might help.
-                                // But here, I'll try to find by ID if it looks like MongoID, else Skip.
-                                {
-                                    $inc: { wins: 1, rating: 25 }
-                                }
-                            );
-                        }
-                    }
+                    // New Ranking Logic (10, 6, 4, 3, 2, 1, 0.5, 0)
+                    const POINTS_MAP = [10, 6, 4, 3, 2, 1, 0.5]; // Index 0 = Place 1
 
-                    // Update All Players (Rating for participation)
-                    for (const p of state.players) {
-                        if (p.id) {
-                            // Give +10 rating for finishing/participating, unless winner (already got +25)
-                            // We can just add +10 to everyone and +15 extra to winner.
-                            const bonus = (p.name === winnerName) ? 25 : 10;
+                    for (const rank of rankings) {
+                        if (rank.userId) {
+                            const points = POINTS_MAP[rank.place - 1] || 0;
 
-                            // If we already updated winner above, don't double count? 
-                            // Simpler: Just update everyone here.
-                            if (p.name !== winnerName) {
-                                await UserModel.findOneAndUpdate({ _id: p.id }, { $inc: { rating: bonus } });
+                            const update: any = { $inc: { rating: points } };
+                            if (rank.place === 1) {
+                                update.$inc.wins = 1;
                             }
+
+                            await UserModel.findOneAndUpdate(
+                                { _id: rank.userId },
+                                update
+                            ).catch(e => console.error(`Failed to update ranking for ${rank.name}:`, e));
+
+                            // Attach points to ranking object for frontend display if needed
+                            (rank as any).earnedPoints = points;
                         }
                     }
 

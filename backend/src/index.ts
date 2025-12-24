@@ -30,6 +30,8 @@ declare global {
 
 let dbStatus = 'pending';
 let botStatus = 'pending';
+let botService: BotService | null = null;
+let gameGateway: GameGateway | null = null;
 
 const app = express();
 app.set('trust proxy', 1); // Enable Trust Proxy for Railway LB
@@ -362,6 +364,76 @@ app.delete('/api/games/:id/players/:userId', async (req, res) => {
     } catch (e) {
         console.error("Kick failed:", e);
         res.status(500).json({ error: "Kick failed" });
+    }
+});
+
+// NEW: Global Admin Broadcast
+app.post('/api/admin/broadcast', async (req, res) => {
+    const secret = req.headers['x-admin-secret'];
+    if (secret !== process.env.ADMIN_SECRET) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const { message, filter } = req.body;
+    if (!message) return res.status(400).json({ error: 'Message required' });
+
+    try {
+        const { UserModel } = await import('./models/user.model');
+        const query: any = { telegram_id: { $exists: true, $ne: null } };
+        // Apply filters if any
+        if (filter) {
+            if (filter.isMaster) query.isMaster = true;
+            // Add more filters as needed
+        }
+
+        const users = await UserModel.find(query).select('telegram_id username');
+        let sentCount = 0;
+        let failCount = 0;
+
+        // Send in batches to avoid spam limits
+        for (const user of users) {
+            try {
+                await botService.bot?.sendMessage(user.telegram_id, message, { parse_mode: 'Markdown' });
+                sentCount++;
+                // Tiny delay to be safe
+                await new Promise(r => setTimeout(r, 50));
+            } catch (e) {
+                failCount++;
+                console.error(`Failed to send to ${user.username}:`, e);
+            }
+        }
+
+        res.json({ success: true, sent: sentCount, failed: failCount });
+    } catch (e: any) {
+        console.error("Broadcast error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// NEW: Campaign Management
+app.get('/api/admin/campaigns', async (req, res) => {
+    const secret = req.headers['x-admin-secret'];
+    if (secret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Unauthorized' });
+
+    try {
+        const { CampaignModel } = await import('./models/campaign.model');
+        const campaigns = await CampaignModel.find().sort({ createdAt: -1 });
+        res.json(campaigns);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/admin/campaigns', async (req, res) => {
+    const secret = req.headers['x-admin-secret'];
+    if (secret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Unauthorized' });
+
+    try {
+        const { CampaignModel } = await import('./models/campaign.model');
+        const campaign = await CampaignModel.create(req.body);
+        res.json(campaign);
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
     }
 });
 

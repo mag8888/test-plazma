@@ -23,6 +23,7 @@ app.post('/api/subscribe', PartnershipController.subscribe as any);
 app.post('/api/withdraw', PartnershipController.withdraw as any);
 app.get('/api/tree/:userId', PartnershipController.getTree as any);
 app.get('/api/stats/:userId', PartnershipController.getStats as any);
+app.get('/api/partners/:userId', PartnershipController.getPartners as any);
 
 // Admin Routes
 const adminRouter = express.Router();

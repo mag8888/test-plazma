@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import { partnershipApi } from '../../lib/partnershipApi';
 import { ProgramDescription } from './ProgramDescription';
 import { BalanceModal } from './BalanceModal';
+import { PartnersModal } from './PartnersModal';
 
 export default function EarnPage() {
     const { webApp, user } = useTelegram();
@@ -17,6 +18,12 @@ export default function EarnPage() {
     // Modal State
     const [showRefillModal, setShowRefillModal] = useState(false);
     const [showBalanceModal, setShowBalanceModal] = useState(false);
+    const [showPartnersModal, setShowPartnersModal] = useState(false);
+
+    // Partners State
+    const [partners, setPartners] = useState<any[]>([]);
+    const [loadingPartners, setLoadingPartners] = useState(false);
+
     const [missingAmount, setMissingAmount] = useState(0);
 
     // Get current tariff
@@ -124,6 +131,20 @@ export default function EarnPage() {
     const handleSupportTopUp = () => {
         window.open('https://t.me/Aurelia_8888?text=хочу пополнить счет Moneo', '_blank');
         setShowRefillModal(false);
+    };
+
+    const handleShowPartners = async () => {
+        if (!partnershipUser?._id) return;
+        setLoadingPartners(true);
+        setShowPartnersModal(true);
+        try {
+            const data = await partnershipApi.getPartners(partnershipUser._id);
+            setPartners(data);
+        } catch (e) {
+            console.error("Partners fetch error", e);
+        } finally {
+            setLoadingPartners(false);
+        }
     };
 
     const GOAL = 1000000;
@@ -264,8 +285,11 @@ export default function EarnPage() {
             </div>
 
             <div className="grid grid-cols-2 gap-4">
-                <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                    <Users className="text-purple-400 mb-2" />
+                <div
+                    onClick={handleShowPartners}
+                    className="bg-slate-800 p-4 rounded-xl border border-slate-700 cursor-pointer hover:bg-slate-750 active:scale-95 transition-all group"
+                >
+                    <Users className="text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
                     <div className="text-xl font-bold">{user?.referralsCount || 0}</div>
                     <div className="text-xs text-slate-400">Друзей</div>
                 </div>
@@ -303,6 +327,13 @@ export default function EarnPage() {
                 balance={partnershipUser?.greenBalance || 0}
                 tariff={currentTariff}
                 onTopUp={handleSupportTopUp}
+            />
+
+            <PartnersModal
+                isOpen={showPartnersModal}
+                onClose={() => setShowPartnersModal(false)}
+                partners={partners}
+                isLoading={loadingPartners}
             />
 
             {/* Avatar Profiles */}

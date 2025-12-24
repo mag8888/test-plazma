@@ -951,6 +951,8 @@ export class GameEngine {
             // Criteria 5: Rat Race - Cash
             return b.cash - a.cash;
         }).map((p, i) => ({
+            id: p.id,
+            userId: p.userId,
             name: p.name,
             place: i + 1,
             reason: p.hasWon ? 'Winner' : p.isFastTrack ? 'Fast Track' : 'Rat Race'

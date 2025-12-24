@@ -61,6 +61,11 @@ export const partnershipApi = {
         return res.json();
     },
 
+    async getPartners(userId: string) {
+        const res = await fetch(`${API_URL}/partners/${userId}`);
+        return res.json();
+    },
+
     async getPublicProfile(telegramId: number) {
         try {
             const res = await fetch(`${API_URL}/public-profile/${telegramId}`);

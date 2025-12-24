@@ -29,6 +29,32 @@ export default function AdminPage() {
     const [treeUserId, setTreeUserId] = useState('');
     const [treeData, setTreeData] = useState<any>(null);
 
+    // Edit Referrer
+    const [editReferrerUser, setEditReferrerUser] = useState<any>(null);
+    const [newReferrer, setNewReferrer] = useState('');
+
+    const updateReferrer = async () => {
+        if (!editReferrerUser) return;
+        if (!confirm(`Change referrer for ${editReferrerUser.username} to ${newReferrer || 'Nobody'}?`)) return;
+
+        const res = await fetchWithAuth('/referrer', {
+            method: 'POST',
+            body: JSON.stringify({
+                userId: editReferrerUser._id,
+                referrerIdentifier: newReferrer
+            })
+        });
+
+        if (res.success) {
+            alert(res.message);
+            setEditReferrerUser(null);
+            setNewReferrer('');
+            searchUsers();
+        } else {
+            alert(res.error || 'Error');
+        }
+    };
+
     // Removed auto-login useEffect to prevent 403 loops and enforce manual login
     // useEffect(() => {
     //     const stored = localStorage.getItem('admin_secret');
@@ -247,139 +273,117 @@ export default function AdminPage() {
 
                         <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
                             <table className="w-full text-left">
-// ... (imports remain same)
-
-                                const [editReferrerUser, setEditReferrerUser] = useState<any>(null);
-                                    const [newReferrer, setNewReferrer] = useState('');
-
-    // ... (existing code)
-
-    const updateReferrer = async () => {
-        if (!editReferrerUser) return;
-                                    if (!confirm(`Change referrer for ${editReferrerUser.username} to ${newReferrer || 'Nobody'}?`)) return;
-
-                                    const res = await fetchWithAuth('/referrer', {
-                                        method: 'POST',
-                                    body: JSON.stringify({
-                                        userId: editReferrerUser._id,
-                                    referrerIdentifier: newReferrer
-            })
-        });
-
-                                    if (res.success) {
-                                        alert(res.message);
-                                    setEditReferrerUser(null);
-                                    setNewReferrer('');
-                                    searchUsers();
-        } else {
-                                        alert(res.error || 'Error');
-        }
-    };
-
-                                    // ... (render)
-
-                                    <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
-                                        <tr>
-                                            <th className="p-4">User</th>
-                                            <th className="p-4">Referrer</th>
-                                            <th className="p-4">Green Bal</th>
-                                            <th className="p-4">Yellow Bal</th>
-                                            <th className="p-4">Red Bal</th>
-                                            <th className="p-4">Actions</th>
+                                <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
+                                    <tr>
+                                        <th className="p-4">User</th>
+                                        <th className="p-4">Referrer</th>
+                                        <th className="p-4">Green Bal</th>
+                                        <th className="p-4">Yellow Bal</th>
+                                        <th className="p-4">Red Bal</th>
+                                        <th className="p-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-700">
+                                    {users.map(u => (
+                                        <tr key={u._id} className="hover:bg-slate-700/50 transition">
+                                            <td className="p-4 font-bold text-white">
+                                                {u.username || 'No Name'}
+                                                <div className="text-xs text-slate-500 font-mono">{u.telegram_id}</div>
+                                            </td>
+                                            <td className="p-4 text-slate-300">
+                                                {u.referrer ? (u.referrer.username || u.referrer.telegram_id || u.referrer) : '-'}
+                                            </td>
+                                            <td className="p-4 text-green-400 font-bold">${u.greenBalance}</td>
+                                            <td className="p-4 text-yellow-400 font-bold">${u.yellowBalance}</td>
+                                            <td className="p-4 text-red-400 font-bold">${u.balanceRed || 0}</td>
+                                            <td className="p-4 flex gap-2">
+                                                <button
+                                                    onClick={() => setSelectedUser(u)}
+                                                    className="bg-slate-700 hover:bg-slate-600 text-white text-xs px-3 py-1.5 rounded-lg transition border border-slate-600"
+                                                >
+                                                    Balance
+                                                </button>
+                                                <button
+                                                    onClick={() => {
+                                                        setEditReferrerUser(u);
+                                                        setNewReferrer(u.referrer ? (u.referrer.username || u.referrer) : '');
+                                                    }}
+                                                    className="bg-slate-700 hover:bg-slate-600 text-blue-300 text-xs px-3 py-1.5 rounded-lg transition border border-slate-600"
+                                                >
+                                                    Edit Ref
+                                                </button>
+                                            </td>
                                         </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-700">
-                                        {users.map(u => (
-                                            <tr key={u._id} className="hover:bg-slate-700/50 transition">
-                                                <td className="p-4 font-bold text-white">
-                                                    {u.username || 'No Name'}
-                                                    <div className="text-xs text-slate-500 font-mono">{u.telegram_id}</div>
-                                                </td>
-                                                <td className="p-4 text-slate-300">
-                                                    {u.referrer ? (u.referrer.username || u.referrer.telegram_id || u.referrer) : '-'}
-                                                </td>
-                                                <td className="p-4 text-green-400 font-bold">${u.greenBalance}</td>
-                                                <td className="p-4 text-yellow-400 font-bold">${u.yellowBalance}</td>
-                                                <td className="p-4 text-red-400 font-bold">${u.balanceRed || 0}</td>
-                                                <td className="p-4 flex gap-2">
-                                                    <button
-                                                        onClick={() => setSelectedUser(u)}
-                                                        className="bg-slate-700 hover:bg-slate-600 text-white text-xs px-3 py-1.5 rounded-lg transition border border-slate-600"
-                                                    >
-                                                        Balance
-                                                    </button>
-                                                    <button
-                                                        onClick={() => {
-                                                            setEditReferrerUser(u);
-                                                            setNewReferrer(u.referrer ? (u.referrer.username || u.referrer) : '');
-                                                        }}
-                                                        className="bg-slate-700 hover:bg-slate-600 text-blue-300 text-xs px-3 py-1.5 rounded-lg transition border border-slate-600"
-                                                    >
-                                                        Edit Ref
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        ))}
-// ...
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
 
-                                        {/* BALANCE MODAL */}
-                                        {selectedUser && (
-                                            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                                                <div className="bg-slate-800 rounded-2xl p-6 w-full max-w-sm border border-slate-700 shadow-2xl space-y-4">
-                                                    <h2 className="text-xl font-bold text-white">Manage Balance</h2>
-                                                    <div className="text-sm text-slate-400">User: <span className="text-white font-bold">{selectedUser.username}</span></div>
+                {/* BALANCE MODAL */}
+                {selectedUser && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                        <div className="bg-slate-800 rounded-2xl p-6 w-full max-w-sm border border-slate-700 shadow-2xl space-y-4">
+                            <h2 className="text-xl font-bold text-white">Manage Balance</h2>
+                            <div className="text-sm text-slate-400">User: <span className="text-white font-bold">{selectedUser.username}</span></div>
 
-                                                    <div className="grid grid-cols-3 gap-2">
-                                                        <button
-                                                            onClick={() => setBalanceType('GREEN')}
-                                                            className={`p-2 rounded-xl border text-xs font-bold transition ${balanceType === 'GREEN' ? 'bg-green-900/50 border-green-500 text-green-400' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
-                                                        >
-                                                            Green
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setBalanceType('YELLOW')}
-                                                            className={`p-2 rounded-xl border text-xs font-bold transition ${balanceType === 'YELLOW' ? 'bg-yellow-900/50 border-yellow-500 text-yellow-400' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
-                                                        >
-                                                            Yellow
-                                                        </button>
-                                                        <button
-                                                            onClick={() => setBalanceType('RED')}
-                                                            className={`p-2 rounded-xl border text-xs font-bold transition ${balanceType === 'RED' ? 'bg-red-900/50 border-red-500 text-red-400' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
-                                                        >
-                                                            Red
-                                                        </button>
-                                                    </div>
+                            <div className="grid grid-cols-3 gap-2">
+                                <button
+                                    onClick={() => setBalanceType('GREEN')}
+                                    className={`p-2 rounded-xl border text-xs font-bold transition ${balanceType === 'GREEN' ? 'bg-green-900/50 border-green-500 text-green-400' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
+                                >
+                                    Green
+                                </button>
+                                <button
+                                    onClick={() => setBalanceType('YELLOW')}
+                                    className={`p-2 rounded-xl border text-xs font-bold transition ${balanceType === 'YELLOW' ? 'bg-yellow-900/50 border-yellow-500 text-yellow-400' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
+                                >
+                                    Yellow
+                                </button>
+                                <button
+                                    onClick={() => setBalanceType('RED')}
+                                    className={`p-2 rounded-xl border text-xs font-bold transition ${balanceType === 'RED' ? 'bg-red-900/50 border-red-500 text-red-400' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
+                                >
+                                    Red
+                                </button>
+                            </div>
 // ... (Input/Buttons remain same)
-                                                </div>
-                                            </div>
-                                        )}
+                        </div>
+                    </div>
+                )}
 
-                                        {/* REFERRER MODAL */}
-                                        {editReferrerUser && (
-                                            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                                                <div className="bg-slate-800 rounded-2xl p-6 w-full max-w-sm border border-slate-700 shadow-2xl space-y-4">
-                                                    <h2 className="text-xl font-bold text-white">Edit Referrer</h2>
-                                                    <div className="text-sm text-slate-400">User: <span className="text-white font-bold">{editReferrerUser.username}</span></div>
+                {/* REFERRER MODAL */}
+                {editReferrerUser && (
+                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+                        <div className="bg-slate-800 rounded-2xl p-6 w-full max-w-sm border border-slate-700 shadow-2xl space-y-4">
+                            <h2 className="text-xl font-bold text-white">Edit Referrer</h2>
+                            <div className="text-sm text-slate-400">User: <span className="text-white font-bold">{editReferrerUser.username}</span></div>
 
-                                                    <div className="space-y-1">
-                                                        <label className="text-xs text-slate-500">New Referrer (Username or ID)</label>
-                                                        <input
-                                                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                                                            placeholder="Enter username (leave empty to remove)"
-                                                            value={newReferrer}
-                                                            onChange={(e) => setNewReferrer(e.target.value)}
-                                                        />
-                                                    </div>
+                            <div className="space-y-1">
+                                <label className="text-xs text-slate-500">New Referrer (Username or ID)</label>
+                                <input
+                                    className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                                    placeholder="Enter username (leave empty to remove)"
+                                    value={newReferrer}
+                                    onChange={(e) => setNewReferrer(e.target.value)}
+                                />
+                            </div>
 
-                                                    <div className="flex gap-2 pt-2">
-                                                        <button onClick={() => setEditReferrerUser(null)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition">
-                                                            Cancel
-                                                        </button>
-                                                        <button onClick={updateReferrer} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition">
-                                                            Save
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        )}
+                            <div className="flex gap-2 pt-2">
+                                <button onClick={() => setEditReferrerUser(null)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition">
+                                    Cancel
+                                </button>
+                                <button onClick={updateReferrer} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition">
+                                    Save
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+            </div>
+        </div>
+    );
+}
 
