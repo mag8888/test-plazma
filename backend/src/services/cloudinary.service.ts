@@ -83,7 +83,7 @@ export class CloudinaryService {
             const result = await cloudinary.search
                 .expression(`folder:${folder} AND resource_type:raw`)
                 .sort_by('created_at', 'desc')
-                .max_results(10)
+                .max_results(500) // Fetch more history to find pre-wipe backups
                 .execute();
             return result.resources;
         } catch (error: any) {
