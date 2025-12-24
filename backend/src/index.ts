@@ -80,8 +80,7 @@ app.use('/api/partnership', async (req, res) => {
 
     try {
         // Use native fetch (Node 18+)
-        // Strip the body for GET/HEAD, otherwise pass it
-        const body = (req.method === 'GET' || req.method === 'HEAD') ? undefined : JSON.stringify(req.body);
+        // const fetch = (await import('node-fetch')).default || global.fetch; // REMOVED
 
         const response = await fetch(url, {
             method: req.method,
@@ -151,7 +150,7 @@ app.post('/api/admin/restore', async (req, res) => {
 
     console.log(`[RESTORE] Starting restore from ${url}...`);
     try {
-        const fetch = (await import('node-fetch')).default || global.fetch;
+        // const fetch = (await import('node-fetch')).default || global.fetch; // REMOVED
         const response = await fetch(url);
         if (!response.ok) throw new Error(`Download failed: ${response.status}`);
 
