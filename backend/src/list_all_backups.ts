@@ -1,6 +1,6 @@
 export { };
 const API_BASE = 'https://moneo.up.railway.app/api/admin';
-const SECRET = 'admin'; // Or use the one user set if changed, but likely still 'admin' or I can ask.
+const SECRET = 'adminroman: R7#x9$vL2mPz!Q5'; // Trying full string just in case
 // User said "how to enter admin secret", imply they haven't changed it yet or just did.
 // I will try 'admin' first.
 

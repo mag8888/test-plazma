@@ -40,7 +40,10 @@ export class AdminController {
                 }
             }
 
-            const users = await User.find(filter).sort({ createdAt: -1 }).limit(50);
+            const users = await User.find(filter)
+                .sort({ createdAt: -1 })
+                .limit(50)
+                .populate('referrer', 'username telegram_id');
             res.json(users);
         } catch (error: any) {
             res.status(500).json({ error: error.message });
@@ -85,6 +88,8 @@ export class AdminController {
                 user.greenBalance = (user.greenBalance || 0) + value;
             } else if (type === 'YELLOW') {
                 user.yellowBalance = (user.yellowBalance || 0) + value;
+            } else if (type === 'RED') {
+                user.balanceRed = (user.balanceRed || 0) + value;
             } else {
                 return res.status(400).json({ error: 'Invalid balance type' });
             }
@@ -120,6 +125,57 @@ export class AdminController {
                 totalYellow: balanceStats[0]?.totalYellow || 0
             });
         } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+    // Update Referrer
+    static async updateReferrer(req: Request, res: Response) {
+        try {
+            const { userId, referrerIdentifier } = req.body;
+            if (!userId) return res.status(400).json({ error: 'Missing userId' });
+
+            // 1. Find User
+            let user;
+            if (userId.match(/^[0-9a-fA-F]{24}$/)) {
+                user = await User.findById(userId);
+            } else {
+                user = await User.findOne({ telegram_id: Number(userId) }) || await User.findOne({ username: userId });
+            }
+
+            if (!user) return res.status(404).json({ error: 'User not found' });
+
+            // 2. Handle Removal (if empty referrer)
+            if (!referrerIdentifier) {
+                user.referrer = undefined;
+                await user.save();
+                return res.json({ success: true, message: 'Referrer removed' });
+            }
+
+            // 3. Find New Referrer
+            let newRef;
+            if (referrerIdentifier.match(/^[0-9a-fA-F]{24}$/)) {
+                newRef = await User.findById(referrerIdentifier);
+            } else {
+                // Try username (remove @ if present)
+                const cleanUser = referrerIdentifier.replace('@', '');
+                newRef = await User.findOne({ username: new RegExp(`^${cleanUser}$`, 'i') });
+                // If not found by username, try ID
+                if (!newRef && !isNaN(Number(referrerIdentifier))) {
+                    newRef = await User.findOne({ telegram_id: Number(referrerIdentifier) });
+                }
+            }
+
+            if (!newRef) return res.status(404).json({ error: 'New Referrer not found' });
+            if (newRef._id.equals(user._id)) return res.status(400).json({ error: 'Cannot refer self' });
+
+            // 4. Update
+            user.referrer = newRef._id;
+            await user.save();
+
+            res.json({ success: true, message: `Referrer updated to ${newRef.username}` });
+
+        } catch (error: any) {
+            console.error("Update Referrer Error:", error);
             res.status(500).json({ error: error.message });
         }
     }
