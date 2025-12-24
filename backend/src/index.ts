@@ -97,25 +97,9 @@ let botService: BotService | null = null;
 let gameGateway: GameGateway | null = null;
 
 // Static File Serving
-app.get(['/game', '/game.html'], (req, res) => {
-    const file = path.join(__dirname, '../../frontend/out/game.html');
-    if (fs.existsSync(file)) {
-        res.sendFile(file);
-    } else {
-        console.error(`Missing game.html at ${file}`);
-        res.status(404).send('Game file not found');
-    }
-});
 
-app.get(['/lobby', '/lobby.html'], (req, res) => {
-    const file = path.join(__dirname, '../../frontend/out/lobby.html');
-    if (fs.existsSync(file)) {
-        res.sendFile(file);
-    } else {
-        console.error(`Missing lobby.html at ${file}`);
-        res.sendFile(path.join(__dirname, '../../frontend/out/index.html'));
-    }
-});
+
+
 
 app.get('/game/:id', (req, res) => {
     const id = req.params.id;
@@ -862,7 +846,11 @@ app.get('/api/rankings', async (req, res) => {
     }
 });
 
-app.use(express.static(path.join(__dirname, '../../frontend/out')));
+// Static File Serving (with HTML extension support)
+app.use(express.static(path.join(__dirname, '../../frontend/out'), {
+    extensions: ['html'],
+    index: false // We handle index.html manually via wildcard if needed, or let standard serving work
+}));
 
 // SPA Fallback
 app.get(/.*/, (req, res) => {
@@ -1078,31 +1066,12 @@ app.get('/api/users/search', async (req, res) => {
 
 
 // SPA Fallback - Must be the last route
-// Debugging Endpoint for SPA path
-app.get('/api/debug-spa', (req, res) => {
-    const indexPath = path.join(__dirname, '../../frontend/out/index.html');
-    res.json({
-        cwd: process.cwd(),
-        dirname: __dirname,
-        resolvedPath: indexPath,
-        exists: fs.existsSync(indexPath)
-    });
-});
-
 // SPA Fallback - Must be the last route
 app.get('*', (req, res) => {
-    // 1. API 404
     if (req.path.startsWith('/api')) {
         return res.status(404).json({ error: 'Not found' });
     }
-
-    // 2. Serve Index or Error
-    const indexPath = path.join(__dirname, '../../frontend/out/index.html');
-    if (fs.existsSync(indexPath)) {
-        res.sendFile(indexPath);
-    } else {
-        console.error('SPA Index NOT FOUND at:', indexPath);
-        res.status(500).send('Error: Frontend build not found on server. Try /api/debug-spa for details.');
-    }
+    // Serve index.html for all other routes (client-side routing)
+    res.sendFile(path.join(__dirname, '../../frontend/out/index.html'));
 });
 
