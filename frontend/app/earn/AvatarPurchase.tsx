@@ -16,6 +16,7 @@ const AVATAR_TYPES = [
         name: 'Базовый Аватар',
         cost: 20,
         subscription: '1 месяц',
+        withdrawalPercent: null, // No special withdrawal rate
         icon: Shield,
         color: 'from-green-600 to-emerald-600',
         borderColor: 'border-green-500/30',
@@ -26,6 +27,7 @@ const AVATAR_TYPES = [
         name: 'Продвинутый Аватар',
         cost: 100,
         subscription: '1 год',
+        withdrawalPercent: 60,
         icon: Star,
         color: 'from-blue-600 to-indigo-600',
         borderColor: 'border-blue-500/30',
@@ -36,6 +38,7 @@ const AVATAR_TYPES = [
         name: 'Премиум Аватар',
         cost: 1000,
         subscription: 'Навсегда',
+        withdrawalPercent: 80,
         icon: Crown,
         color: 'from-yellow-600 to-amber-600',
         borderColor: 'border-yellow-500/30',
@@ -181,6 +184,9 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
                             )}
 
                             <div className="text-sm text-slate-300">
+                                {avatar.withdrawalPercent && (
+                                    <div className="text-green-400 font-bold mb-1">• {avatar.withdrawalPercent}% вывод зеленых бонусов</div>
+                                )}
                                 <div>• 50% зеленых → пригласителю</div>
                                 <div>• 50% желтых → владельцу родительского аватара</div>
                                 <div>• Подписка нужна для получения бонусов</div>
