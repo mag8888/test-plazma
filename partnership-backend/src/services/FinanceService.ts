@@ -1,86 +1,19 @@
 import { User } from '../models/User';
-import { Avatar, IAvatar, TariffType } from '../models/Avatar';
+import { Avatar, AvatarType } from '../models/Avatar';
 import { Transaction, TransactionType } from '../models/Transaction';
 
-const TARIFF_PRICES = {
-    [TariffType.GUEST]: 0,
-    [TariffType.PLAYER]: 20,
-    [TariffType.MASTER]: 100,
-    [TariffType.PARTNER]: 1000
-};
-
-const LEVEL_5_PAYOUTS = {
-    [TariffType.GUEST]: 0,
-    [TariffType.PLAYER]: 480,
-    [TariffType.MASTER]: 2400,
-    [TariffType.PARTNER]: 24000
-};
-
-const WITHDRAWAL_LIMITS = {
-    [TariffType.GUEST]: 0.3, // Only on win
-    [TariffType.PLAYER]: 0.5,
-    [TariffType.MASTER]: 0.6,
-    [TariffType.PARTNER]: 0.8
-};
-
+// DEPRECATED - Old finance service, use MatrixService instead for new avatar logic
 export class FinanceService {
 
-    static async distributePayment(amount: number, payerId: string, referrerId?: string) {
-        if (!referrerId) return; // No referrer, money stays in system (Admin)
-
-        const referrer = await User.findById(referrerId);
-        if (!referrer) return;
-
-        // 50% to Green
-        const greenShare = amount * 0.5;
-        // 50% to Yellow (Bonus Pool)
-        const yellowShare = amount * 0.5;
-
-        // Update Referrer
-        referrer.greenBalance += greenShare;
-        referrer.yellowBalance += yellowShare; // Accumulate as per spec? "Accumulates inside structure"
-        await referrer.save();
-
-        // Create Transactions
-        await Transaction.create({
-            user: referrerId,
-            amount: greenShare,
-            type: TransactionType.BONUS_GREEN,
-            description: `Referral bonus from user ${payerId}`
-        });
-
-        await Transaction.create({
-            user: referrerId,
-            amount: yellowShare,
-            type: TransactionType.BONUS_YELLOW,
-            description: `Yellow bonus from user ${payerId}`
-        });
+    // Comment out old service methods - use MatrixService for all new avatar logic
+    static async distributePayment(amount: number, userId: string, referrerId?: string) {
+        // DEPRECATED - use MatrixService.purchaseAvatar instead
+        return { success: false, error: 'Use MatrixService.purchase Avatar instead' };
     }
 
-    static async payoutLevel5(avatar: IAvatar) {
-        const owner = await User.findById(avatar.owner);
-        if (!owner) return;
-
-        const payoutAmount = LEVEL_5_PAYOUTS[avatar.tariff];
-
-        if (payoutAmount > 0) {
-            owner.greenBalance += payoutAmount;
-
-            if (owner.yellowBalance >= payoutAmount) {
-                owner.yellowBalance -= payoutAmount;
-            } else {
-                owner.yellowBalance = 0;
-            }
-
-            await owner.save();
-
-            await Transaction.create({
-                user: owner._id,
-                amount: payoutAmount,
-                type: TransactionType.LEVEL_UP_REWARD,
-                description: `Level 5 Closed for Avatar ${avatar._id}`
-            });
-        }
+    static async payoutLevel5(avatar: any) {
+        // DEPRECATED - use MatrixService.checkLevelProgression instead
+        return;
     }
 
     static async processWithdrawal(userId: string, amount: number) {
@@ -90,19 +23,9 @@ export class FinanceService {
         // Check balance
         if (user.greenBalance < amount) throw new Error('Insufficient green balance');
 
-        // Determine limit based on MAX tariff the user has
-        const avatars = await Avatar.find({ owner: userId, isActive: true });
-
-        // Find highest tariff value
-        let maxLimit = 0.3; // Default GUEST
-
-        avatars.forEach(avatar => {
-            const limit = WITHDRAWAL_LIMITS[avatar.tariff];
-            if (limit > maxLimit) maxLimit = limit;
-        });
-
-        // Calculate payout and commission
-        const payout = amount * maxLimit;
+        // Simple withdrawal - no tariff-based limits for now
+        // TODO: Implement withdrawal limits based on avatar tier
+        const payout = amount * 0.7; // 70% payout, 30% commission
         const commission = amount - payout;
 
         user.greenBalance -= amount;
@@ -110,9 +33,9 @@ export class FinanceService {
 
         await Transaction.create({
             user: userId,
-            amount: -amount, // Total deducted
+            amount: -amount,
             type: TransactionType.WITHDRAWAL,
-            description: `Withdrawal request: ${amount}. Payout: ${payout}. Comm: ${commission}`
+            description: `Withdrawal: ${amount}. Payout: ${payout}. Commission: ${commission}`
         });
 
         return { payout, commission };

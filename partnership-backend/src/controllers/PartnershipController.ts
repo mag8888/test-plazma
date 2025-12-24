@@ -157,7 +157,7 @@ export class PartnershipController {
             let maxPrice = -1;
 
             for (const av of avatars) {
-                const p = TARIFF_PRICES[av.tariff as TariffType] || 0;
+                const p = av.cost || 0; // Use actual avatar cost
                 if (p > maxPrice) {
                     maxPrice = p;
                     bestAvatar = av;
@@ -169,7 +169,7 @@ export class PartnershipController {
             }
 
             res.json({
-                tariff: bestAvatar.tariff,
+                avatarType: bestAvatar.type,
                 level: bestAvatar.level,
                 partners: bestAvatar.partners?.length || 0 // Direct children count
             });
@@ -221,7 +221,7 @@ export class PartnershipController {
                     username: refUser.username,
                     firstName: refUser.first_name,
                     telegramId: refUser.telegram_id,
-                    tariff: bestAvatar?.tariff || 'GUEST',
+                    avatarType: bestAvatar?.type || null,
                     level: bestAvatar?.level || 0,
                     incomeGreen: green,
                     incomeYellow: yellow,
