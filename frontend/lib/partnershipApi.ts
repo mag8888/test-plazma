@@ -3,7 +3,7 @@ import { getBackendUrl } from './config';
 // 1. Ensure Protocol for Partnership API
 const getPartnershipUrl = () => {
     let url = (process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || '').trim();
-    if (!url) return 'http://localhost:4000/api';
+    if (!url) return '/api/partnership'; // Use relative Proxy path by default
     url = url.replace(/^["']|["']$/g, '');
     if (!url.startsWith('http')) {
         url = `https://${url}`;

@@ -35,8 +35,19 @@ export default function AdminPage() {
             setSecret(stored);
             setIsAuthenticated(true);
             fetchStats(stored);
+            searchUsers(stored); // Load users on mount
         }
     }, []);
+
+    // Also reload when switching tabs
+    useEffect(() => {
+        if (activeTab === 'USERS' && isAuthenticated) {
+            searchUsers();
+        }
+        if (activeTab === 'TREE' && isAuthenticated) {
+            fetchTree();
+        }
+    }, [activeTab, isAuthenticated]);
 
     const login = () => {
         if (secret) {
@@ -53,30 +64,47 @@ export default function AdminPage() {
         router.push('/admin/login');
     };
 
-    const fetchWithAuth = async (endpoint: string, options: any = {}) => {
+    const fetchWithAuth = async (endpoint: string, options: any = {}, key: string = secret) => {
         const headers = {
             'Content-Type': 'application/json',
-            'x-admin-secret': secret,
+            'x-admin-secret': key,
             ...options.headers
         };
-        const res = await fetch(`${API_URL}/admin${endpoint}`, { ...options, headers });
-        return res.json();
+        try {
+            const res = await fetch(`${API_URL}/admin${endpoint}`, { ...options, headers });
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        } catch (e) {
+            console.error(e);
+            return { error: 'Fetch failed' };
+        }
     };
 
     const fetchStats = async (key: string = secret) => {
         const headers = { 'x-admin-secret': key };
-        const res = await fetch(`${API_URL}/admin/stats`, { headers });
-        const data = await res.json();
-        if (data.error) {
-            if (data.error.includes('Unauthorized')) logout();
-        } else {
-            setStats(data);
+        try {
+            const res = await fetch(`${API_URL}/admin/stats`, { headers });
+            const data = await res.json();
+            if (data.error) {
+                if (data.error.includes('Unauthorized')) logout();
+            } else {
+                setStats(data);
+            }
+        } catch (e) {
+            console.error('Stats error:', e);
         }
     };
 
-    const searchUsers = async () => {
-        const data = await fetchWithAuth(`/users?query=${userQuery}`);
-        setUsers(data);
+    const searchUsers = async (key: string = secret) => {
+        const data = await fetchWithAuth(`/users?query=${userQuery}`, {}, key);
+        if (data.users && Array.isArray(data.users)) {
+            setUsers(data.users);
+        } else if (Array.isArray(data)) {
+            setUsers(data);
+        } else {
+            console.warn('Unknown users format', data);
+            setUsers([]);
+        }
     };
 
     const updateBalance = async () => {
