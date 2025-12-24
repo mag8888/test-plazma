@@ -1,3 +1,5 @@
+'use client';
+
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight } from 'lucide-react';
