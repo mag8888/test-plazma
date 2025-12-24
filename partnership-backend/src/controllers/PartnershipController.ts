@@ -2,19 +2,20 @@ import { Request, Response } from 'express';
 import { MatrixService } from '../services/MatrixService';
 import { FinanceService } from '../services/FinanceService';
 import { User } from '../models/User';
-import { Avatar, TariffType } from '../models/Avatar';
+import { Avatar, AvatarType } from '../models/Avatar';
 import { Transaction, TransactionType } from '../models/Transaction';
 import mongoose from 'mongoose';
 
 const TARIFF_PRICES = {
-    [TariffType.GUEST]: 0,
-    [TariffType.PLAYER]: 20,
-    [TariffType.MASTER]: 100,
-    [TariffType.PARTNER]: 1000
+    BASIC: 20,
+    ADVANCED: 100,
+    PREMIUM: 1000
 };
 
 export class PartnershipController {
 
+    // OLD SUBSCRIBE METHOD - DEPRECATED, USE AVATAR PURCHASE INSTEAD
+    /*
     static async subscribe(req: Request, res: Response) {
         try {
             const { userId, tariff, referrerId } = req.body;
@@ -43,6 +44,7 @@ export class PartnershipController {
             res.status(500).json({ error: error.message });
         }
     }
+    */
 
     static async getTree(req: Request, res: Response) {
         try {
