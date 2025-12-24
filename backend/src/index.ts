@@ -41,7 +41,7 @@ app.get('/api/health', (req, res) => {
         uptime: process.uptime(),
         db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
         bot: global.bot ? 'active' : 'inactive',
-        version: '1.1.0-strict-rooms' // Tracer
+        version: '1.1.1-restore-feature' // Tracer
     };
     res.status(200).json(health);
 });
