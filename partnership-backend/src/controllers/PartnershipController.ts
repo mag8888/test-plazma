@@ -3,7 +3,7 @@ import { MatrixService } from '../services/MatrixService';
 import { FinanceService } from '../services/FinanceService';
 import { User } from '../models/User';
 import { Avatar, TariffType } from '../models/Avatar';
-import { Transaction } from '../models/Transaction';
+import { Transaction, TransactionType } from '../models/Transaction';
 import mongoose from 'mongoose';
 
 const TARIFF_PRICES = {
@@ -202,7 +202,7 @@ export class PartnershipController {
                 // Actually let's check Transaction model if possible, but description is safer fallback based on "Bonus from ..."
 
                 const bonuses = await Transaction.find({
-                    userId: user._id, // Received by current user
+                    user: user._id, // Received by current user (Schema field is 'user')
                     description: { $regex: new RegExp(`from ${refUser.username}`, 'i') }
                 }).lean();
 
@@ -210,8 +210,8 @@ export class PartnershipController {
                 let yellow = 0;
 
                 for (const tx of bonuses) {
-                    if (tx.currency === 'GREEN') green += tx.amount;
-                    if (tx.currency === 'YELLOW') yellow += tx.amount;
+                    if (tx.type === TransactionType.BONUS_GREEN) green += tx.amount;
+                    if (tx.type === TransactionType.BONUS_YELLOW) yellow += tx.amount;
                 }
 
                 result.push({
