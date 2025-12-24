@@ -26,6 +26,30 @@ export class AuthService {
      * Logs in a user
      */
     async login(username: string, password: string): Promise<any> {
+        // 1. Check ENV defined admins first
+        // Format: "user1:pass1;user2:pass2"
+        const envAdmins = process.env.ADMIN_ACCOUNTS || '';
+        if (envAdmins) {
+            const accounts = envAdmins.split(';');
+            for (const account of accounts) {
+                const [envUser, envPass] = account.split(':');
+                if (envUser && envPass &&
+                    envUser.trim() === username &&
+                    envPass.trim() === password) {
+
+                    // Return synthetic admin user
+                    return {
+                        id: `admin_${username}`,
+                        username: username,
+                        first_name: 'Admin',
+                        last_name: 'User',
+                        isAdmin: true
+                    };
+                }
+            }
+        }
+
+        // 2. Fallback to Database
         const user = await UserModel.findOne({ username, password });
         return user;
     }
