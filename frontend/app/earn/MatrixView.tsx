@@ -10,6 +10,7 @@ interface Avatar {
     level: number;
     partners: string[];
     parent?: string;
+    isClosed?: boolean; // Level 5 closure flag
 }
 
 interface MatrixViewProps {
