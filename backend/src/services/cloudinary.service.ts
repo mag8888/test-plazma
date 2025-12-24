@@ -76,4 +76,20 @@ export class CloudinaryService {
             throw error;
         }
     }
+    async listFiles(folder: string = 'moneo_backups'): Promise<any[]> {
+        try {
+            // Search for raw files in the backup folder
+            // Requires Admin API access (API Key/Secret)
+            const result = await cloudinary.search
+                .expression(`folder:${folder} AND resource_type:raw`)
+                .sort_by('created_at', 'desc')
+                .max_results(10)
+                .execute();
+            return result.resources;
+        } catch (error: any) {
+            console.error("Cloudinary List Error:", error);
+            // Fallback: If search API is restricted, maybe return empty or error
+            return [];
+        }
+    }
 }
