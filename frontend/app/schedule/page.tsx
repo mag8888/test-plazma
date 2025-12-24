@@ -6,6 +6,7 @@ import { Calendar, Users, ArrowRight, Clock, X } from 'lucide-react';
 import clsx from 'clsx';
 import ManageGameModal from './ManageGameModal';
 import JoinGameModal from './JoinGameModal';
+import ParticipantsModal from './ParticipantsModal';
 
 export default function SchedulePage() {
     const { webApp, user } = useTelegram();
@@ -17,10 +18,13 @@ export default function SchedulePage() {
     useEffect(() => {
         const fetchGames = async () => {
             try {
+                console.log('🗓️ [Schedule] Fetching games...', { viewMode, hasUser: !!user, userId: user?.id });
                 const endpoint = viewMode === 'history' ? '/api/games?type=history' : '/api/games';
                 const res = await fetch(endpoint);
+                console.log('🗓️ [Schedule] Response status:', res.status);
                 if (res.ok) {
                     const data = await res.json();
+                    console.log('🗓️ [Schedule] Games fetched:', data.length, 'games');
 
                     // Transform backend model to UI model if needed
                     // Backend: { startTime (ISO), price, maxPlayers, participants: [], hostId: { username... } }
@@ -47,14 +51,18 @@ export default function SchedulePage() {
                             rawParticipants: g.participants // Pass full list for Modal
                         };
                     });
+                    console.log('🗓️ [Schedule] Formatted games:', formatted.length);
                     setGames(formatted);
+                } else {
+                    console.error('🗓️ [Schedule] Fetch failed with status:', res.status);
                 }
             } catch (e) {
-                console.error("Failed to fetch schedule", e);
+                console.error("🗓️ [Schedule] Failed to fetch schedule", e);
             }
         };
 
-        if (user) fetchGames();
+        // Always fetch, even without user (to debug the issue)
+        fetchGames();
     }, [refreshKey, user, viewMode]); // Refresh when key or viewMode changes
 
     // Edit Logic
@@ -119,73 +127,84 @@ export default function SchedulePage() {
             )}
 
             <div className="space-y-3">
-                {games.map(game => (
-                    <div
-                        key={game.id}
-                        onClick={() => setShowingParticipants(game)}
-                        className="bg-slate-800 rounded-xl p-4 border border-slate-700 relative overflow-hidden active:bg-slate-700 transition-colors cursor-pointer"
-                    >
-                        <div className="flex justify-between items-start mb-3">
-                            <div>
-                                <div className="flex flex-col">
-                                    <div className="flex items-center gap-2 text-blue-400 font-bold mb-1">
-                                        <Clock size={16} />
-                                        {game.time} <span className="text-xs font-normal opacity-70">(МСК)</span>
-                                    </div>
-                                    {game.localTime && (
-                                        <div className="text-xs text-slate-500 mb-1">
-                                            {game.localTime} (Ваше время)
-                                        </div>
-                                    )}
-                                    <div className="text-lg font-bold">{game.date}</div>
-                                </div>
-                            </div>
-                            <div className="bg-slate-900 px-3 py-1 rounded-lg text-sm font-mono border border-slate-700 h-fit">
-                                ${game.price}
-                            </div>
+                {games.length === 0 ? (
+                    <div className="text-center py-16 text-slate-500">
+                        <Calendar className="w-16 h-16 mx-auto mb-4 opacity-30" />
+                        <div className="text-lg font-bold mb-2">
+                            {viewMode === 'history' ? 'История пуста' : 'Нет запланированных игр'}
                         </div>
-
-                        <div className="flex items-center justify-between text-sm text-slate-400 mb-4">
-                            <span>👑 {game.master}</span>
-                            <span className="flex items-center gap-1"><Users size={14} /> {game.players}/{game.max}</span>
-                        </div>
-
-                        <div onClick={(e) => e.stopPropagation()}>
-                            {/* Stop Propagation to prevent opening modal when clicking action buttons */}
-                            {game.hostId === user?.id ? (
-                                <button
-                                    onClick={() => setEditingGame(game)}
-                                    className="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 border border-slate-600"
-                                >
-                                    ⚙️ Редактировать
-                                </button>
-                            ) : game.isJoined ? (
-                                <button
-                                    onClick={() => handleCancel(game.id)}
-                                    className="w-full bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-900/50 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95"
-                                >
-                                    <X size={18} /> Отменить запись
-                                </button>
-                            ) : (
-                                <button
-                                    onClick={() => setJoiningGame(game)}
-                                    className={clsx(
-                                        "w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95",
-                                        game.players >= game.max ? "bg-slate-700 text-slate-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-500"
-                                    )}
-                                    disabled={game.players >= game.max}
-                                >
-                                    {game.players >= game.max ? "Мест нет" : <>Записаться <ArrowRight size={18} /></>}
-                                </button>
-                            )}
+                        <div className="text-sm">
+                            {viewMode === 'history' ? 'Вы еще не участвовали в играх' : 'Загляните позже или создайте игру'}
                         </div>
                     </div>
-                ))}
+                ) : (
+                    games.map(game => (
+                        <div
+                            key={game.id}
+                            onClick={() => setShowingParticipants(game)}
+                            className="bg-slate-800 rounded-xl p-4 border border-slate-700 relative overflow-hidden active:bg-slate-700 transition-colors cursor-pointer"
+                        >
+                            <div className="flex justify-between items-start mb-3">
+                                <div>
+                                    <div className="flex flex-col">
+                                        <div className="flex items-center gap-2 text-blue-400 font-bold mb-1">
+                                            <Clock size={16} />
+                                            {game.time} <span className="text-xs font-normal opacity-70">(МСК)</span>
+                                        </div>
+                                        {game.localTime && (
+                                            <div className="text-xs text-slate-500 mb-1">
+                                                {game.localTime} (Ваше время)
+                                            </div>
+                                        )}
+                                        <div className="text-lg font-bold">{game.date}</div>
+                                    </div>
+                                </div>
+                                <div className="bg-slate-900 px-3 py-1 rounded-lg text-sm font-mono border border-slate-700 h-fit">
+                                    ${game.price}
+                                </div>
+                            </div>
+
+                            <div className="flex items-center justify-between text-sm text-slate-400 mb-4">
+                                <span>👑 {game.master}</span>
+                                <span className="flex items-center gap-1"><Users size={14} /> {game.players}/{game.max}</span>
+                            </div>
+
+                            <div onClick={(e) => e.stopPropagation()}>
+                                {/* Stop Propagation to prevent opening modal when clicking action buttons */}
+                                {game.hostId === user?.id ? (
+                                    <button
+                                        onClick={() => setEditingGame(game)}
+                                        className="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 border border-slate-600"
+                                    >
+                                        ⚙️ Редактировать
+                                    </button>
+                                ) : game.isJoined ? (
+                                    <button
+                                        onClick={() => handleCancel(game.id)}
+                                        className="w-full bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-900/50 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95"
+                                    >
+                                        <X size={18} /> Отменить запись
+                                    </button>
+                                ) : (
+                                    <button
+                                        onClick={() => setJoiningGame(game)}
+                                        className={clsx(
+                                            "w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95",
+                                            game.players >= game.max ? "bg-slate-700 text-slate-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-500"
+                                        )}
+                                        disabled={game.players >= game.max}
+                                    >
+                                        {game.players >= game.max ? "Мест нет" : <>Записаться <ArrowRight size={18} /></>}
+                                    </button>
+                                )}
+                            </div>
+                        </div>
+                    ))
+                )}
             </div>
         </div>
     );
 }
 
-import ParticipantsModal from './ParticipantsModal';
 
 
