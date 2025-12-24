@@ -29,15 +29,16 @@ export default function AdminPage() {
     const [treeUserId, setTreeUserId] = useState('');
     const [treeData, setTreeData] = useState<any>(null);
 
-    useEffect(() => {
-        const stored = localStorage.getItem('admin_secret');
-        if (stored) {
-            setSecret(stored);
-            setIsAuthenticated(true);
-            fetchStats(stored);
-            searchUsers(stored); // Load users on mount
-        }
-    }, []);
+    // Removed auto-login useEffect to prevent 403 loops and enforce manual login
+    // useEffect(() => {
+    //     const stored = localStorage.getItem('admin_secret');
+    //     if (stored) {
+    //         setSecret(stored);
+    //         setIsAuthenticated(true);
+    //         fetchStats(stored);
+    //         searchUsers(stored); // Load users on mount
+    //     }
+    // }, []);
 
     // Also reload when switching tabs
     useEffect(() => {
@@ -51,17 +52,18 @@ export default function AdminPage() {
 
     const login = () => {
         if (secret) {
-            localStorage.setItem('admin_secret', secret);
+            // localStorage.setItem('admin_secret', secret); // disable persistence as requested
             setIsAuthenticated(true);
             fetchStats(secret);
+            searchUsers(secret);
         }
     };
 
     const logout = () => {
-        localStorage.removeItem('admin_secret');
+        // localStorage.removeItem('admin_secret');
         setSecret('');
         setIsAuthenticated(false);
-        router.push('/admin/login');
+        // router.push('/admin/login'); // No need to redirect, just show login state
     };
 
     const fetchWithAuth = async (endpoint: string, options: any = {}, key: string = secret) => {
