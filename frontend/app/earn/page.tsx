@@ -7,6 +7,7 @@ import { partnershipApi } from '../../lib/partnershipApi';
 import { ProgramDescription } from './ProgramDescription';
 import { BalanceModal } from './BalanceModal';
 import { PartnersModal } from './PartnersModal';
+import { AvatarPurchase } from './AvatarPurchase';
 
 export default function EarnPage() {
     const { webApp, user } = useTelegram();
