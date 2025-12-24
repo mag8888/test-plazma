@@ -163,17 +163,21 @@ export class GameGateway {
                     if (game) {
                         // Check if player exists in Engine
                         const existsInEngine = game.state.players.find(p => p.userId === userId);
+                        console.log(`[Gateway] Player ${userId} joining room ${roomId}. ExistsInEngine:`, !!existsInEngine);
+                        console.log(`[Gateway] Current players in engine:`, game.state.players.map(p => `${p.name}(${p.userId})`).join(', '));
 
                         if (!existsInEngine) {
                             // NEW PLAYER JOINING ACTIVE GAME
-                            console.log(`[Gateway] New player joining active game ${roomId}: ${userId}`);
+                            console.log(`[Gateway] Adding NEW player ${userId} to active game ${roomId}`);
                             // Find full player object from RoomService return (it has token, dream, etc updated)
                             const playerInfo = room.players.find((p: any) => p.userId === userId);
+                            console.log(`[Gateway] PlayerInfo from room.players:`, playerInfo ? `${playerInfo.name}(${playerInfo.userId})` : 'NOT FOUND');
                             if (playerInfo) {
                                 game.addPlayer(playerInfo);
                             }
                         } else {
                             // RECONNECTING PLAYER
+                            console.log(`[Gateway] Reconnecting player ${userId}, updating socket ID from ${existsInEngine.id} to ${socket.id}`);
                             game.updatePlayerId(userId, socket.id);
                         }
 

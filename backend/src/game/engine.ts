@@ -287,9 +287,11 @@ export class GameEngine {
     addPlayer(player: IPlayer) {
         // Prevent duplicates
         if (this.state.players.some(p => p.userId === player.userId)) {
+            console.log(`[Engine] Prevented duplicate: Player ${player.name}(${player.userId}) already exists`);
             return;
         }
 
+        console.log(`[Engine] Adding player ${player.name}(${player.userId})`);
         const newPlayerState = this.initPlayer(player);
         this.state.players.push(newPlayerState);
         this.state.log.push(`👋 ${player.name} присоединился к игре!`);
