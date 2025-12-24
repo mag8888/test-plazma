@@ -80,6 +80,19 @@ export default function EarnPage() {
         }
     }, [user, webApp]);
 
+    // Debug logging for referrals
+    useEffect(() => {
+        if (user) {
+            console.log('🔍 [Earn Page] User data:', {
+                userId: user.id,
+                username: user.username,
+                referralsCount: user.referralsCount,
+                hasReferralsCount: 'referralsCount' in user,
+                typeof_referralsCount: typeof user.referralsCount
+            });
+        }
+    }, [user]);
+
     const handleBuy = async (tariff: string, price: number) => {
         if (!partnershipUser) return;
         if (isLoading) return;
