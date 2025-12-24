@@ -8,6 +8,7 @@ interface Card {
     type: 'MARKET' | 'EXPENSE' | 'DEAL_SMALL' | 'DEAL_BIG' | 'BUSINESS' | 'DREAM';
     title: string;
     description: string;
+    cardNumber?: string; // Unique card number
     cost?: number;
     cashflow?: number;
     price?: number;
@@ -139,14 +140,17 @@ export default function CardEditor({ secret }: CardEditorProps) {
         <div className="space-y-6">
             {/* Type Selector */}
             <div className="flex justify-between items-center">
-                <div className="flex gap-2">
+                <div className="flex gap-2 items-center">
+                    <div className="text-slate-400 text-sm font-bold mr-4">
+                        Всего: <span className="text-white">{cards.length}</span> карточек
+                    </div>
                     {CARD_TYPES.map(type => (
                         <button
                             key={type.value}
                             onClick={() => setSelectedType(type.value)}
                             className={`px-4 py-2 rounded-lg font-bold transition ${selectedType === type.value
-                                    ? 'bg-blue-600 text-white'
-                                    : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
+                                ? 'bg-blue-600 text-white'
+                                : 'bg-slate-800 text-slate-400 hover:bg-slate-700'
                                 }`}
                         >
                             {type.label}
@@ -191,6 +195,11 @@ export default function CardEditor({ secret }: CardEditorProps) {
                             {/* Card Preview */}
                             <div className="p-4 h-full flex flex-col">
                                 <div className="flex-1 overflow-hidden">
+                                    {card.cardNumber && (
+                                        <div className="bg-blue-500/20 text-blue-400 text-xs font-bold px-2 py-1 rounded mb-2 inline-block">
+                                            № {card.cardNumber}
+                                        </div>
+                                    )}
                                     <h3 className="text-white font-bold text-sm mb-2 line-clamp-2">{card.title}</h3>
                                     <p className="text-slate-400 text-xs mb-3 line-clamp-3">{card.description}</p>
                                     <div className="space-y-1 text-xs">
