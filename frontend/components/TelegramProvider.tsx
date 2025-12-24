@@ -82,7 +82,40 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                     return;
                 }
 
-                // Priority 1: Stored Authentication (highest priority for persistence)
+                // Priority 1: Magic Link Auth Code from URL (highest for fresh login)
+                if (authCode) {
+                    console.log("🔑 Magic Login from URL with code:", authCode);
+
+                    const res = await fetch(`${BACKEND_URL}/api/auth/magic-login`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ code: authCode })
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        setUser(data.user);
+
+                        // Save to localStorage for persistence
+                        localStorage.setItem('moneo_user_auth', JSON.stringify({
+                            user: data.user,
+                            token: data.token || authCode
+                        }));
+
+                        // Save code to cache
+                        localStorage.setItem('moneo_auth_code', authCode);
+
+                        // Clean URL
+                        window.history.replaceState({}, '', window.location.pathname);
+                        setIsReady(true);
+                        return;
+                    } else {
+                        console.error("Magic Login from URL failed");
+                        // Continue to other auth methods
+                    }
+                }
+
+                // Priority 2: Stored Authentication (for persistence)
                 const storedUserAuth = localStorage.getItem('moneo_user_auth');
                 if (storedUserAuth) {
                     console.log("✅ Restoring session from localStorage");
@@ -90,14 +123,14 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                         const parsed = JSON.parse(storedUserAuth);
                         setUser(parsed.user);
                         setIsReady(true);
-                        return; // Exit early - don't check other auth methods
+                        return;
                     } catch (e) {
                         console.error("Invalid stored auth", e);
                         localStorage.removeItem('moneo_user_auth');
                     }
                 }
 
-                // Priority 2: Telegram InitData (only if no stored session)
+                // Priority 3: Telegram InitData (Telegram Web App)
                 if (app?.initData) {
                     console.log("🔑 Login via Telegram InitData");
                     const res = await fetch(`${BACKEND_URL}/api/auth/telegram`, {
@@ -114,45 +147,33 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                             user: data.user,
                             token: data.token
                         }));
+                        setIsReady(true);
+                        return;
                     } else {
                         console.error("Telegram Auth failed", res.status);
                         setUser(app?.initDataUnsafe?.user || { id: 123456789, first_name: 'Guest (Auth Failed)', username: 'guest_fallback', balanceRed: 1000, referralBalance: 50 });
                     }
-                } else if ((authCode || cachedAuthCode)) {
-                    // Priority 3: Magic Link Auth Code (URL or Cached)
-                    const codeToUse = authCode || cachedAuthCode;
-                    console.log("🔑 Attempting Magic Login with code:", codeToUse, authCode ? '(URL)' : '(Cached)');
+                } else if (cachedAuthCode) {
+                    // Priority 4: Cached Magic Link code (fallback)
+                    console.log("🔑 Attempting cached Magic Login");
 
                     const res = await fetch(`${BACKEND_URL}/api/auth/magic-login`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ code: codeToUse })
+                        body: JSON.stringify({ code: cachedAuthCode })
                     });
 
                     if (res.ok) {
                         const data = await res.json();
                         setUser(data.user);
 
-                        // IMPORTANT: Save to localStorage for persistence across refreshes
                         localStorage.setItem('moneo_user_auth', JSON.stringify({
                             user: data.user,
-                            token: data.token || codeToUse
+                            token: data.token || cachedAuthCode
                         }));
-
-                        // Save valid code to cache if it came from URL
-                        if (authCode) {
-                            localStorage.setItem('moneo_auth_code', authCode);
-                            // Optional: Clean URL
-                            window.history.replaceState({}, '', window.location.pathname);
-                        }
                     } else {
-                        console.error("Magic Login failed");
-                        // If cached code failed, clear it
-                        if (cachedAuthCode && !authCode) {
-                            console.warn("Cached auth code invalid, clearing.");
-                            localStorage.removeItem('moneo_auth_code');
-                        }
-                        // Fallback for failed magic login
+                        console.error("Cached Magic Login failed");
+                        localStorage.removeItem('moneo_auth_code');
                         setUser({ id: 123456789, first_name: 'Guest (Bad Link)', username: 'guest_link', balanceRed: 1000, referralBalance: 50 });
                     }
                 } else {
