@@ -298,4 +298,64 @@ export class AdminController {
             res.status(500).json({ error: error.message });
         }
     }
+
+    // Debug: Check for missing referrers
+    static async checkReferrers(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const { searchUsername } = req.query;
+
+            // 1. Search for specific user
+            let targetUser = null;
+            if (searchUsername) {
+                targetUser = await User.findOne({
+                    $or: [
+                        { username: new RegExp(`^${searchUsername}$`, 'i') },
+                        { telegram_id: !isNaN(Number(searchUsername)) ? Number(searchUsername) : null }
+                    ]
+                });
+            }
+
+            // 2. Count users with this referredBy
+            const referredByCount = searchUsername
+                ? await User.countDocuments({ referredBy: new RegExp(`^${searchUsername}$`, 'i') })
+                : 0;
+
+            // 3. Sample users with this referredBy
+            const sampleReferrals = searchUsername
+                ? await User.find({ referredBy: new RegExp(`^${searchUsername}$`, 'i') })
+                    .limit(10)
+                    .select('username telegram_id referredBy referrer')
+                : [];
+
+            // 4. Total broken referrals (referredBy exists but referrer ObjectId doesn't)
+            const brokenCount = await User.countDocuments({
+                referredBy: { $exists: true, $ne: null, $ne: '' },
+                $or: [
+                    { referrer: { $exists: false } },
+                    { referrer: null }
+                ]
+            });
+
+            res.json({
+                searchUsername,
+                userExists: !!targetUser,
+                user: targetUser ? {
+                    username: targetUser.username,
+                    telegram_id: targetUser.telegram_id,
+                    _id: targetUser._id
+                } : null,
+                referredByCount,
+                sampleReferrals: sampleReferrals.map(u => ({
+                    username: u.username,
+                    telegram_id: u.telegram_id,
+                    referredBy: u.referredBy,
+                    hasReferrerObjectId: !!u.referrer
+                })),
+                totalBrokenReferrals: brokenCount
+            });
+        } catch (error: any) {
+            console.error('checkReferrers error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
 }

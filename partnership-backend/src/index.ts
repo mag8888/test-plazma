@@ -40,6 +40,7 @@ adminRouter.post('/referrer', AdminController.updateReferrer as any);
 adminRouter.get('/stats', AdminController.getGlobalStats as any);
 adminRouter.get('/logs', AdminController.getLogs as any);
 adminRouter.post('/rebuild-referrals', AdminController.rebuildReferrals as any);
+adminRouter.get('/check-referrers', AdminController.checkReferrers as any); // Debug endpoint
 
 app.use('/api/admin', adminRouter);
 
