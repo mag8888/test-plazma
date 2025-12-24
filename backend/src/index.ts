@@ -26,77 +26,7 @@ declare global {
 // Actually, I can just update the route here and use `any` for now or better, update the model properly in next step.
 // But to be fast, I'll assume I can just write to it.
 
-// --- RESTORE & BACKUP API START ---
-app.get('/api/admin/backups', async (req, res) => {
-    // Basic Auth Check
-    const secret = req.headers['x-admin-secret'];
-    const expected = process.env.ADMIN_SECRET || 'admin';
-    if (secret !== expected) return res.status(403).json({ error: 'Unauthorized' });
-
-    try {
-        const { CloudinaryService } = await import('./services/cloudinary.service');
-        const cloudinaryService = new CloudinaryService();
-        const files = await cloudinaryService.listFiles('moneo_backups');
-        res.json({ backups: files });
-    } catch (e: any) {
-        console.error("Backup List Error:", e);
-        res.status(500).json({ error: e.message });
-    }
-});
-
-app.post('/api/admin/restore', async (req, res) => {
-    // Basic Auth Check
-    const secret = req.headers['x-admin-secret'];
-    const expected = process.env.ADMIN_SECRET || 'admin';
-    if (secret !== expected) return res.status(403).json({ error: 'Unauthorized' });
-
-    const { url } = req.body;
-    if (!url) return res.status(400).json({ error: 'Missing backup URL' });
-
-    console.log(`[RESTORE] Starting restore from ${url}...`);
-    try {
-        const fetch = (await import('node-fetch')).default || global.fetch;
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-
-        const data = await response.json();
-        if (!data.users || !Array.isArray(data.users)) {
-            return res.status(400).json({ error: 'Invalid backup format: missing users array' });
-        }
-
-        const { UserModel } = await import('./models/user.model');
-        const { PartnershipController } = await import('./controllers/partnership.controller'); // if sync needed
-        // But here we just restore to Mongo.
-
-        let restoredCount = 0;
-        for (const u of data.users) {
-            // Upsert user
-            // We trust telegram_id as unique key. Use _id if available?
-            // Safer to use telegram_id.
-            if (u.telegram_id) {
-                // Ensure unique index isn't violated.
-                // delete u._id; // Let Mongo handle ID if new, or update existing?
-                // If we want to restore exact state including _id (for refs), we should try to keep it.
-                // But upserting with _id is tricky if it conflicts.
-                // Strategy: Find by telegram_id. Update ALL fields.
-                const filter = { telegram_id: u.telegram_id };
-                const update = { ...u };
-                delete update._id; // Don't try to update immutable _id field
-
-                await UserModel.findOneAndUpdate(filter, { $set: update }, { upsert: true, new: true });
-                restoredCount++;
-            }
-        }
-
-        console.log(`[RESTORE] Restored ${restoredCount} users.`);
-        res.json({ success: true, restored: restoredCount, message: 'Restore complete' });
-
-    } catch (e: any) {
-        console.error("Restore Error:", e);
-        res.status(500).json({ error: e.message });
-    }
-});
-// --- RESTORE & BACKUP API END ---
+// (Code moved to after app init)
 
 let dbStatus = 'pending';
 let botStatus = 'pending';
@@ -191,6 +121,67 @@ app.get('/admin', (req, res) => {
 });
 
 app.use('/api/auth', AuthController);
+
+// --- RESTORE & BACKUP API START ---
+app.get('/api/admin/backups', async (req, res) => {
+    // Basic Auth Check
+    const secret = req.headers['x-admin-secret'];
+    const expected = process.env.ADMIN_SECRET || 'admin';
+    if (secret !== expected) return res.status(403).json({ error: 'Unauthorized' });
+
+    try {
+        const { CloudinaryService } = await import('./services/cloudinary.service');
+        const cloudinaryService = new CloudinaryService();
+        const files = await cloudinaryService.listFiles('moneo_backups');
+        res.json({ backups: files });
+    } catch (e: any) {
+        console.error("Backup List Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.post('/api/admin/restore', async (req, res) => {
+    // Basic Auth Check
+    const secret = req.headers['x-admin-secret'];
+    const expected = process.env.ADMIN_SECRET || 'admin';
+    if (secret !== expected) return res.status(403).json({ error: 'Unauthorized' });
+
+    const { url } = req.body;
+    if (!url) return res.status(400).json({ error: 'Missing backup URL' });
+
+    console.log(`[RESTORE] Starting restore from ${url}...`);
+    try {
+        const fetch = (await import('node-fetch')).default || global.fetch;
+        const response = await fetch(url);
+        if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+
+        const data = await response.json();
+        if (!data.users || !Array.isArray(data.users)) {
+            return res.status(400).json({ error: 'Invalid backup format: missing users array' });
+        }
+
+        const { UserModel } = await import('./models/user.model');
+
+        let restoredCount = 0;
+        for (const u of data.users) {
+            if (u.telegram_id) {
+                const filter = { telegram_id: u.telegram_id };
+                const update = { ...u };
+                delete update._id;
+                await UserModel.findOneAndUpdate(filter, { $set: update }, { upsert: true, new: true });
+                restoredCount++;
+            }
+        }
+
+        console.log(`[RESTORE] Restored ${restoredCount} users.`);
+        res.json({ success: true, restored: restoredCount, message: 'Restore complete' });
+
+    } catch (e: any) {
+        console.error("Restore Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+// --- RESTORE & BACKUP API END ---
 
 let botService: BotService | null = null;
 let gameGateway: GameGateway | null = null;
