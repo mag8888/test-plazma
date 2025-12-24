@@ -5,7 +5,7 @@
         "node": ">=20.9.0"
     },
     "scripts": {
-        "build": "cd frontend && npm install && npm run build && cd ../backend && npm install && npm run build",
-        "start": "cd backend && npm start"
+        "build": "cd frontend && npm install && npm run build && cd ../backend && npm install && npm run build && cd ../partnership-backend && npm install && npm run build",
+        "start": "(cd partnership-backend && PORT=4000 npm start) & (cd backend && npm start)"
     }
 }
