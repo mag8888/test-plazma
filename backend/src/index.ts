@@ -80,7 +80,8 @@ app.use('/api/partnership', async (req, res) => {
 
     try {
         // Use native fetch (Node 18+)
-        // const fetch = (await import('node-fetch')).default || global.fetch; // REMOVED
+        // Strip the body for GET/HEAD, otherwise pass it
+        const body = (req.method === 'GET' || req.method === 'HEAD') ? undefined : JSON.stringify(req.body);
 
         const response = await fetch(url, {
             method: req.method,
