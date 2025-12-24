@@ -74,17 +74,13 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                 // Check LocalStorage for cached Auth Code
                 const cachedAuthCode = localStorage.getItem('moneo_auth_code');
 
-                // Check for explicit logout first
-                const isLoggedOut = localStorage.getItem('moneo_is_logged_out');
-                if (isLoggedOut) {
-                    console.log("⛔ User explicitly logged out, ignoring all auth");
-                    setIsReady(true);
-                    return;
-                }
-
                 // Priority 1: Magic Link Auth Code from URL (highest for fresh login)
+                // This bypasses logout state - magic link always works
                 if (authCode) {
                     console.log("🔑 Magic Login from URL with code:", authCode);
+
+                    // Clear logout flag when using magic link
+                    localStorage.removeItem('moneo_is_logged_out');
 
                     const res = await fetch(`${BACKEND_URL}/api/auth/magic-login`, {
                         method: 'POST',
@@ -113,6 +109,14 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                         console.error("Magic Login from URL failed");
                         // Continue to other auth methods
                     }
+                }
+
+                // Check for explicit logout (only if NO auth param)
+                const isLoggedOut = localStorage.getItem('moneo_is_logged_out');
+                if (isLoggedOut) {
+                    console.log("⛔ User explicitly logged out, ignoring all auth");
+                    setIsReady(true);
+                    return;
                 }
 
                 // Priority 2: Stored Authentication (for persistence)
