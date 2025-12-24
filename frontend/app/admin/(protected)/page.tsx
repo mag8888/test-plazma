@@ -1,8 +1,6 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, DollarSign, Users, BarChart, TreePine, Lock } from 'lucide-react';
+import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight } from 'lucide-react';
 import { partnershipApi } from '../../../lib/partnershipApi';
 
 const API_URL = '/api/partnership'; // Use internal proxy for Monolith
@@ -11,7 +9,7 @@ export default function AdminPage() {
     const router = useRouter();
     const [secret, setSecret] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [activeTab, setActiveTab] = useState<'USERS' | 'STATS' | 'TREE'>('USERS');
+    const [activeTab, setActiveTab] = useState<'USERS' | 'STATS' | 'TREE' | 'LOGS'>('USERS');
 
     // Stats
     const [stats, setStats] = useState<any>(null);
@@ -19,10 +17,17 @@ export default function AdminPage() {
     // Users
     const [userQuery, setUserQuery] = useState('');
     const [users, setUsers] = useState<any[]>([]);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+
+    // Logs
+    const [logs, setLogs] = useState<any[]>([]);
 
     // Balance Modal
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [amount, setAmount] = useState('');
+    const [operation, setOperation] = useState<'ADD' | 'DEDUCT'>('ADD');
+    const [reason, setReason] = useState('');
     const [balanceType, setBalanceType] = useState('GREEN');
 
     // Tree
@@ -49,7 +54,7 @@ export default function AdminPage() {
             alert(res.message);
             setEditReferrerUser(null);
             setNewReferrer('');
-            searchUsers();
+            searchUsers(page);
         } else {
             alert(res.error || 'Error');
         }
@@ -62,17 +67,20 @@ export default function AdminPage() {
             setSecret(stored);
             setIsAuthenticated(true);
             fetchStats(stored);
-            searchUsers(stored);
+            searchUsers(1, stored);
         }
     }, []);
 
     // Also reload when switching tabs
     useEffect(() => {
         if (activeTab === 'USERS' && isAuthenticated) {
-            searchUsers();
+            searchUsers(page);
         }
         if (activeTab === 'TREE' && isAuthenticated) {
             fetchTree();
+        }
+        if (activeTab === 'LOGS' && isAuthenticated) {
+            fetchLogs();
         }
     }, [activeTab, isAuthenticated]);
 
@@ -81,7 +89,7 @@ export default function AdminPage() {
             localStorage.setItem('admin_secret', secret); // persistence enabled
             setIsAuthenticated(true);
             fetchStats(secret);
-            searchUsers(secret);
+            searchUsers(1, secret);
         }
     };
 
@@ -98,103 +106,103 @@ export default function AdminPage() {
             'x-admin-secret': key,
             ...options.headers
         };
-        try {
-            const res = await fetch(`${API_URL}/admin${endpoint}`, { ...options, headers });
 
-            // Auto-logout on 403 (Invalid Secret)
-            if (res.status === 403) {
-                console.warn('Admin secret invalid or expired. Logging out.');
-                localStorage.removeItem('admin_secret');
-                setIsAuthenticated(false);
-                setSecret('');
-                return { error: 'Unauthorized' };
-            }
+        const res = await fetch(`${API_URL}/admin${endpoint}`, {
+            ...options,
+            headers
+        });
 
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.json();
-        } catch (e) {
-            console.error(e);
-            return { error: 'Fetch failed' };
+        if (res.status === 403) {
+            alert('Admin secret invalid or expired. Logging out.');
+            logout();
+            return { error: 'Unauthorized' };
+        }
+
+        return res.json();
+    };
+
+    const searchUsers = async (p: number = 1, key: string = secret) => {
+        const res = await fetchWithAuth(`/users?query=${userQuery}&page=${p}`, {}, key);
+        if (res.users) {
+            setUsers(res.users);
+            setTotalPages(res.pages || 1);
+            setPage(res.page || 1);
+        } else {
+            console.warn('Unknown users format', res);
         }
     };
 
     const fetchStats = async (key: string = secret) => {
-        const headers = { 'x-admin-secret': key };
-        try {
-            const res = await fetch(`${API_URL}/admin/stats`, { headers });
-            const data = await res.json();
-            if (data.error) {
-                if (data.error.includes('Unauthorized')) logout();
-            } else {
-                setStats(data);
-            }
-        } catch (e) {
-            console.error('Stats error:', e);
-        }
+        const res = await fetchWithAuth('/stats', {}, key);
+        if (!res.error) setStats(res);
     };
 
-    const searchUsers = async (key: string = secret) => {
-        const data = await fetchWithAuth(`/users?query=${userQuery}`, {}, key);
-        if (data.users && Array.isArray(data.users)) {
-            setUsers(data.users);
-        } else if (Array.isArray(data)) {
-            setUsers(data);
-        } else {
-            console.warn('Unknown users format', data);
-            setUsers([]);
+    const fetchTree = async () => {
+        if (!treeUserId) return;
+        // Not proxied through admin right now, tree is public? No, tree needs ID.
+        // Actually tree API is public /api/tree/:id
+        // But let's use the fetchWithAuth just in case or fetch directly
+        // The user wants tree in admin panel.
+        // Let's assume we can fetch public tree API.
+        const res = await fetch(`${API_URL}/tree/${treeUserId}`);
+        const data = await res.json();
+        setTreeData(data);
+    };
+
+    const fetchLogs = async () => {
+        const res = await fetchWithAuth('/logs');
+        if (Array.isArray(res)) {
+            setLogs(res);
         }
     };
 
     const updateBalance = async () => {
-        if (!selectedUser || !amount) return;
-        if (!confirm(`Are you sure you want to add ${amount} to ${selectedUser.username} (${balanceType})?`)) return;
+        if (!selectedUser || !amount || !reason) return alert('Please fill all fields');
+
+        const finalAmount = operation === 'DEDUCT' ? -Number(amount) : Number(amount);
 
         const res = await fetchWithAuth('/balance', {
             method: 'POST',
             body: JSON.stringify({
                 userId: selectedUser._id,
-                amount: Number(amount),
-                type: balanceType
+                amount: finalAmount,
+                type: balanceType,
+                description: reason
             })
         });
 
         if (res.success) {
-            alert('Balance updated');
+            alert('Balance Updated!');
             setSelectedUser(null);
             setAmount('');
-            searchUsers(); // Refresh list
+            setReason('');
+            searchUsers(page); // Refresh list
         } else {
-            alert(res.error || 'Error');
+            alert(res.error || 'Failed');
         }
-    };
-
-    const fetchTree = async () => {
-        // Reuse public API or authenticated one? 
-        // Let's use public for now since we just need data, but maybe we want a raw view
-        // Using existing partnershipApi for tree
-        const data = await partnershipApi.getTree(treeUserId);
-        setTreeData(data);
     };
 
     if (!isAuthenticated) {
         return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center p-4">
-                <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 shadow-2xl max-w-md w-full space-y-6">
+            <div className="flex items-center justify-center min-h-screen bg-slate-950">
+                <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 w-96 space-y-6 shadow-2xl">
                     <div className="flex justify-center">
-                        <div className="w-16 h-16 bg-red-500/20 rounded-full flex items-center justify-center ring-4 ring-red-500/10">
-                            <Lock size={32} className="text-red-500" />
+                        <div className="bg-red-500/10 p-4 rounded-full border border-red-500/20">
+                            <Lock className="text-red-500" size={32} />
                         </div>
                     </div>
-                    <h1 className="text-2xl font-bold text-center text-white">Admin Access</h1>
+                    <div className="text-center text-white text-xl font-bold">Admin Access</div>
                     <input
                         type="password"
                         placeholder="Enter Admin Secret"
-                        className="w-full bg-slate-950 text-white p-4 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none transition"
                         value={secret}
                         onChange={(e) => setSecret(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && login()}
                     />
-                    <button onClick={login} className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition">
+                    <button
+                        onClick={login}
+                        className="w-full bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl font-bold transition shadow-lg shadow-blue-500/20"
+                    >
                         Login
                     </button>
                     <div className="text-center text-xs text-slate-600">Secure Area for Moneo Admins</div>
@@ -214,6 +222,7 @@ export default function AdminPage() {
                     </div>
                     <div className="flex gap-4">
                         <a href="/admin/users/" className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition bg-green-900/30 text-green-400 hover:bg-green-900/50 border border-green-500/30"><Users size={18} /> All Users</a>
+
                         <button onClick={() => setActiveTab('USERS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'USERS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
                             <Users size={18} /> Users
                         </button>
@@ -222,6 +231,9 @@ export default function AdminPage() {
                         </button>
                         <button onClick={() => setActiveTab('TREE')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'TREE' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
                             <TreePine size={18} /> Tree
+                        </button>
+                        <button onClick={() => setActiveTab('LOGS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'LOGS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
+                            <History size={18} /> Logs
                         </button>
                     </div>
                     <button onClick={logout} className="bg-red-900/30 hover:bg-red-900/50 text-red-400 px-4 py-1.5 rounded-lg text-xs font-bold transition border border-red-500/30">Выйти</button>
@@ -252,6 +264,50 @@ export default function AdminPage() {
                     </div>
                 )}
 
+                {/* LOGS TAB */}
+                {activeTab === 'LOGS' && (
+                    <div className="space-y-4">
+                        <h2 className="text-xl font-bold text-white">Admin Logs</h2>
+                        <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
+                                    <tr>
+                                        <th className="p-4">Time</th>
+                                        <th className="p-4">Admin</th>
+                                        <th className="p-4">Action</th>
+                                        <th className="p-4">Target User</th>
+                                        <th className="p-4">Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-700">
+                                    {logs.map((log: any) => (
+                                        <tr key={log._id} className="hover:bg-slate-700/50 transition">
+                                            <td className="p-4 text-slate-400 text-sm">
+                                                {new Date(log.createdAt).toLocaleString()}
+                                            </td>
+                                            <td className="p-4 font-bold text-blue-400">
+                                                {log.adminName}
+                                            </td>
+                                            <td className="p-4 text-white">
+                                                <span className="bg-slate-700 px-2 py-1 rounded text-xs">{log.action}</span>
+                                            </td>
+                                            <td className="p-4 text-slate-300">
+                                                {log.targetUser ? (log.targetUser.username || log.targetUser.telegram_id || 'ID:' + log.targetUser) : 'N/A'}
+                                            </td>
+                                            <td className="p-4 text-slate-400 text-sm">
+                                                {log.details}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {logs.length === 0 && (
+                                        <tr><td colSpan={5} className="p-8 text-center text-slate-500">No logs found</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
+
                 {/* TABS */}
                 {activeTab === 'USERS' && (
                     <div className="space-y-4">
@@ -263,10 +319,10 @@ export default function AdminPage() {
                                     placeholder="Search by username or Telegram ID..."
                                     value={userQuery}
                                     onChange={(e) => setUserQuery(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && searchUsers()}
+                                    onKeyDown={(e) => e.key === 'Enter' && searchUsers(1)}
                                 />
                             </div>
-                            <button onClick={() => searchUsers()} className="bg-blue-600 hover:bg-blue-500 text-white px-6 rounded-xl font-bold transition">
+                            <button onClick={() => searchUsers(1)} className="bg-blue-600 hover:bg-blue-500 text-white px-6 rounded-xl font-bold transition">
                                 Search
                             </button>
                         </div>
@@ -299,91 +355,156 @@ export default function AdminPage() {
                                             <td className="p-4 flex gap-2">
                                                 <button
                                                     onClick={() => setSelectedUser(u)}
-                                                    className="bg-slate-700 hover:bg-slate-600 text-white text-xs px-3 py-1.5 rounded-lg transition border border-slate-600"
+                                                    className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded text-xs transition"
                                                 >
                                                     Balance
                                                 </button>
                                                 <button
-                                                    onClick={() => {
-                                                        setEditReferrerUser(u);
-                                                        setNewReferrer(u.referrer ? (u.referrer.username || u.referrer) : '');
-                                                    }}
-                                                    className="bg-slate-700 hover:bg-slate-600 text-blue-300 text-xs px-3 py-1.5 rounded-lg transition border border-slate-600"
+                                                    onClick={() => setEditReferrerUser(u)}
+                                                    className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1 rounded text-xs transition"
                                                 >
                                                     Edit Ref
                                                 </button>
                                             </td>
                                         </tr>
                                     ))}
+                                    {users.length === 0 && (
+                                        <tr><td colSpan={6} className="p-8 text-center text-slate-500">No users found</td></tr>
+                                    )}
                                 </tbody>
                             </table>
                         </div>
-                    </div>
-                )}
 
-                {/* BALANCE MODAL */}
-                {selectedUser && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                        <div className="bg-slate-800 rounded-2xl p-6 w-full max-w-sm border border-slate-700 shadow-2xl space-y-4">
-                            <h2 className="text-xl font-bold text-white">Manage Balance</h2>
-                            <div className="text-sm text-slate-400">User: <span className="text-white font-bold">{selectedUser.username}</span></div>
-
-                            <div className="grid grid-cols-3 gap-2">
+                        {/* Pagination */}
+                        <div className="flex justify-between items-center text-slate-400 text-sm">
+                            <div>Page {page} of {totalPages}</div>
+                            <div className="flex gap-2">
                                 <button
-                                    onClick={() => setBalanceType('GREEN')}
-                                    className={`p-2 rounded-xl border text-xs font-bold transition ${balanceType === 'GREEN' ? 'bg-green-900/50 border-green-500 text-green-400' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
+                                    disabled={page <= 1}
+                                    onClick={() => searchUsers(page - 1)}
+                                    className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Green
+                                    <ChevronLeft size={20} />
                                 </button>
                                 <button
-                                    onClick={() => setBalanceType('YELLOW')}
-                                    className={`p-2 rounded-xl border text-xs font-bold transition ${balanceType === 'YELLOW' ? 'bg-yellow-900/50 border-yellow-500 text-yellow-400' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
+                                    disabled={page >= totalPages}
+                                    onClick={() => searchUsers(page + 1)}
+                                    className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
-                                    Yellow
-                                </button>
-                                <button
-                                    onClick={() => setBalanceType('RED')}
-                                    className={`p-2 rounded-xl border text-xs font-bold transition ${balanceType === 'RED' ? 'bg-red-900/50 border-red-500 text-red-400' : 'bg-slate-900 border-slate-700 text-slate-400'}`}
-                                >
-                                    Red
-                                </button>
-                            </div>
-// ... (Input/Buttons remain same)
-                        </div>
-                    </div>
-                )}
-
-                {/* REFERRER MODAL */}
-                {editReferrerUser && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                        <div className="bg-slate-800 rounded-2xl p-6 w-full max-w-sm border border-slate-700 shadow-2xl space-y-4">
-                            <h2 className="text-xl font-bold text-white">Edit Referrer</h2>
-                            <div className="text-sm text-slate-400">User: <span className="text-white font-bold">{editReferrerUser.username}</span></div>
-
-                            <div className="space-y-1">
-                                <label className="text-xs text-slate-500">New Referrer (Username or ID)</label>
-                                <input
-                                    className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                                    placeholder="Enter username (leave empty to remove)"
-                                    value={newReferrer}
-                                    onChange={(e) => setNewReferrer(e.target.value)}
-                                />
-                            </div>
-
-                            <div className="flex gap-2 pt-2">
-                                <button onClick={() => setEditReferrerUser(null)} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 rounded-xl transition">
-                                    Cancel
-                                </button>
-                                <button onClick={updateReferrer} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition">
-                                    Save
+                                    <ChevronRight size={20} />
                                 </button>
                             </div>
                         </div>
+
+                    </div>
+                )}
+
+                {/* ... (TREE TAB - Keep existing) ... */}
+                {activeTab === 'TREE' && (
+                    <div className="space-y-4">
+                        <div className="flex gap-2">
+                            <input
+                                className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                                placeholder="Enter User ID for Tree View"
+                                value={treeUserId}
+                                onChange={(e) => setTreeUserId(e.target.value)}
+                            />
+                            <button onClick={fetchTree} className="bg-purple-600 hover:bg-purple-500 text-white px-6 rounded-xl font-bold transition">
+                                Load
+                            </button>
+                        </div>
+                        {treeData && (
+                            <div className="bg-slate-800 p-8 rounded-xl border border-slate-700 overflow-auto">
+                                <pre className="text-xs text-green-400 font-mono">
+                                    {JSON.stringify(treeData, null, 2)}
+                                </pre>
+                            </div>
+                        )}
                     </div>
                 )}
 
             </div>
+
+            {/* BALANCE MODAL */}
+            {selectedUser && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-6">
+                        <h2 className="text-xl font-bold text-white">Manage Balance</h2>
+                        <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{selectedUser.username}</span></div>
+
+                        {/* Operation Toggle */}
+                        <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-xl">
+                            <button
+                                onClick={() => setOperation('ADD')}
+                                className={`py-2 rounded-lg text-sm font-bold transition ${operation === 'ADD' ? 'bg-green-600 text-white' : 'text-slate-500 hover:bg-slate-800'}`}
+                            >
+                                Add (+)
+                            </button>
+                            <button
+                                onClick={() => setOperation('DEDUCT')}
+                                className={`py-2 rounded-lg text-sm font-bold transition ${operation === 'DEDUCT' ? 'bg-red-600 text-white' : 'text-slate-500 hover:bg-slate-800'}`}
+                            >
+                                Deduct (-)
+                            </button>
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button onClick={() => setBalanceType('GREEN')} className={`flex-1 py-2 rounded-xl text-sm font-bold border ${balanceType === 'GREEN' ? 'bg-green-900/50 border-green-500 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Green</button>
+                            <button onClick={() => setBalanceType('YELLOW')} className={`flex-1 py-2 rounded-xl text-sm font-bold border ${balanceType === 'YELLOW' ? 'bg-yellow-900/50 border-yellow-500 text-yellow-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Yellow</button>
+                            <button onClick={() => setBalanceType('RED')} className={`flex-1 py-2 rounded-xl text-sm font-bold border ${balanceType === 'RED' ? 'bg-red-900/50 border-red-500 text-red-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Red</button>
+                        </div>
+
+                        <input
+                            type="number"
+                            placeholder="Amount"
+                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                            value={amount}
+                            onChange={(e) => setAmount(e.target.value)}
+                        />
+
+                        <textarea
+                            placeholder="Reason (Mandatory)"
+                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none h-24 resize-none"
+                            value={reason}
+                            onChange={(e) => setReason(e.target.value)}
+                        />
+
+                        <div className="flex gap-2">
+                            <button onClick={() => setSelectedUser(null)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl font-bold transition">Cancel</button>
+                            <button onClick={updateBalance} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl font-bold transition">
+                                {operation === 'ADD' ? 'Top Up' : 'Write Off'}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* EDIT REFERRER MODAL */}
+            {editReferrerUser && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-6">
+                        <h2 className="text-xl font-bold text-white">Edit Referrer</h2>
+                        <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{editReferrerUser.username}</span></div>
+                        <div className="text-slate-500 text-xs">Current: {editReferrerUser.referrer ? (editReferrerUser.referrer.username || editReferrerUser.referrer) : 'None'}</div>
+
+                        <input
+                            type="text"
+                            placeholder="Enter new referrer Username or Telegram ID"
+                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                            value={newReferrer}
+                            onChange={(e) => setNewReferrer(e.target.value)}
+                        />
+                        <div className="text-xs text-yellow-500">
+                            Leave empty to remove referrer.
+                        </div>
+
+                        <div className="flex gap-2">
+                            <button onClick={() => setEditReferrerUser(null)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl font-bold transition">Cancel</button>
+                            <button onClick={updateReferrer} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl font-bold transition">Save</button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
-

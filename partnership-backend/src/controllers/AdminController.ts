@@ -1,6 +1,7 @@
-import { Request, Response } from 'express';
-import { User } from '../models/User';
+import { Transaction, TransactionType } from '../models/Transaction';
+import { AdminLog, AdminActionType } from '../models/AdminLog';
 import { Avatar } from '../models/Avatar';
+import mongoose from 'mongoose';
 
 // Use a simple env var for protection, fallback to a default for dev if needed
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin';
@@ -24,7 +25,11 @@ export class AdminController {
     // Search Users
     static async getUsers(req: Request, res: Response) {
         try {
-            const { query } = req.query;
+            const { query, page } = req.query;
+            const pageNum = Number(page) || 1;
+            const limit = 50;
+            const skip = (pageNum - 1) * limit;
+
             let filter = {};
             if (query) {
                 const q = query as string;
@@ -43,9 +48,13 @@ export class AdminController {
 
             const users = await User.find(filter)
                 .sort({ createdAt: -1 })
-                .limit(50)
+                .skip(skip)
+                .limit(limit)
                 .populate('referrer', 'username telegram_id');
-            res.json(users);
+
+            const total = await User.countDocuments(filter);
+
+            res.json({ users, total, page: pageNum, pages: Math.ceil(total / limit) });
         } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
@@ -54,7 +63,10 @@ export class AdminController {
     // Update Balance
     static async updateBalance(req: Request, res: Response) {
         try {
-            const { userId, amount, type } = req.body;
+            const { userId, amount, type, description } = req.body;
+            const secret = req.headers['x-admin-secret'] as string;
+            // Parse admin name
+            const adminName = secret.split(':')[0] || 'Unknown Admin';
             // type: 'GREEN' | 'YELLOW' | 'RED' (if red is stored in User?)
             // Note: User model has greenBalance and yellowBalance. 
             // The MAIN 'RED' balance is actually stored in the Main Backend (Moneo), 
@@ -93,6 +105,32 @@ export class AdminController {
                 user.balanceRed = (user.balanceRed || 0) + value;
             } else {
                 return res.status(400).json({ error: 'Invalid balance type' });
+            }
+
+            if (description) {
+                // Log Transaction (for user history)
+                await Transaction.create({
+                    user: user._id,
+                    amount: value,
+                    type: TransactionType.ADMIN_ADJUSTMENT,
+                    description: `${description} (by ${adminName})`
+                });
+
+                // Log Admin Action (for admin panel audit)
+                await AdminLog.create({
+                    adminName,
+                    action: AdminActionType.BALANCE_CHANGE,
+                    targetUser: user._id,
+                    details: `Changed ${type} balance by ${value}. Reason: ${description}`
+                });
+            } else {
+                // Even without description (legacy support?), should likely log
+                await AdminLog.create({
+                    adminName,
+                    action: AdminActionType.BALANCE_CHANGE,
+                    targetUser: user._id,
+                    details: `Changed ${type} balance by ${value}. (No reason provided)`
+                });
             }
 
             await user.save();
@@ -177,6 +215,15 @@ export class AdminController {
 
         } catch (error: any) {
             console.error("Update Referrer Error:", error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    static async getLogs(req: Request, res: Response) {
+        try {
+            const logs = await AdminLog.find().sort({ createdAt: -1 }).limit(100).populate('targetUser', 'username telegram_id');
+            res.json(logs);
+        } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
     }

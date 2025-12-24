@@ -5,7 +5,8 @@ export enum TransactionType {
     BONUS_GREEN = 'BONUS_GREEN', // 50% referral bonus
     BONUS_YELLOW = 'BONUS_YELLOW', // 50% to yellow pool
     LEVEL_UP_REWARD = 'LEVEL_UP_REWARD', // 5th level close
-    WITHDRAWAL = 'WITHDRAWAL'
+    WITHDRAWAL = 'WITHDRAWAL',
+    ADMIN_ADJUSTMENT = 'ADMIN_ADJUSTMENT'
 }
 
 export interface ITransaction extends Document {
