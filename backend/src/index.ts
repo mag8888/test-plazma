@@ -128,8 +128,8 @@ app.use('/api/auth', AuthController);
 app.get('/api/admin/backups', async (req, res) => {
     // Basic Auth Check
     const secret = req.headers['x-admin-secret'];
-    const expected = process.env.ADMIN_SECRET || 'admin';
-    if (secret !== expected) return res.status(403).json({ error: 'Unauthorized' });
+    const validSecrets = (process.env.ADMIN_SECRET || 'admin').split(',').map(s => s.trim());
+    if (!validSecrets.includes(secret as string)) return res.status(403).json({ error: 'Unauthorized' });
 
     try {
         const { CloudinaryService } = await import('./services/cloudinary.service');
@@ -145,8 +145,8 @@ app.get('/api/admin/backups', async (req, res) => {
 app.post('/api/admin/restore', async (req, res) => {
     // Basic Auth Check
     const secret = req.headers['x-admin-secret'];
-    const expected = process.env.ADMIN_SECRET || 'admin';
-    if (secret !== expected) return res.status(403).json({ error: 'Unauthorized' });
+    const validSecrets = (process.env.ADMIN_SECRET || 'admin').split(',').map(s => s.trim());
+    if (!validSecrets.includes(secret as string)) return res.status(403).json({ error: 'Unauthorized' });
 
     const { url } = req.body;
     if (!url) return res.status(400).json({ error: 'Missing backup URL' });
@@ -369,7 +369,8 @@ app.delete('/api/games/:id/players/:userId', async (req, res) => {
 // NEW: Global Admin Broadcast
 app.post('/api/admin/broadcast', async (req, res) => {
     const secret = req.headers['x-admin-secret'];
-    if (secret !== process.env.ADMIN_SECRET) {
+    const validSecrets = (process.env.ADMIN_SECRET || '').split(',').map(s => s.trim());
+    if (!validSecrets.includes(secret as string)) {
         return res.status(403).json({ error: 'Unauthorized' });
     }
 
@@ -412,7 +413,8 @@ app.post('/api/admin/broadcast', async (req, res) => {
 // NEW: Campaign Management
 app.get('/api/admin/campaigns', async (req, res) => {
     const secret = req.headers['x-admin-secret'];
-    if (secret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Unauthorized' });
+    const validSecrets = (process.env.ADMIN_SECRET || '').split(',').map(s => s.trim());
+    if (!validSecrets.includes(secret as string)) return res.status(403).json({ error: 'Unauthorized' });
 
     try {
         const { CampaignModel } = await import('./models/campaign.model');
@@ -425,7 +427,8 @@ app.get('/api/admin/campaigns', async (req, res) => {
 
 app.post('/api/admin/campaigns', async (req, res) => {
     const secret = req.headers['x-admin-secret'];
-    if (secret !== process.env.ADMIN_SECRET) return res.status(403).json({ error: 'Unauthorized' });
+    const validSecrets = (process.env.ADMIN_SECRET || '').split(',').map(s => s.trim());
+    if (!validSecrets.includes(secret as string)) return res.status(403).json({ error: 'Unauthorized' });
 
     try {
         const { CampaignModel } = await import('./models/campaign.model');

@@ -12,7 +12,8 @@ export class AdminController {
         const secret = req.headers['x-admin-secret'];
         // console.log(`[AdminAuth] Received: ${secret}, Expected: ${ADMIN_SECRET}`); // Debug log
 
-        if (secret !== ADMIN_SECRET) {
+        const validSecrets = (ADMIN_SECRET || '').split(',').map(s => s.trim());
+        if (!validSecrets.includes(secret as string)) {
             // START TEMP BYPASS IF USER REQUESTED "NO CHECKS" - But user said "leave login password".
             // So we must check.
             return res.status(403).json({ error: 'Unauthorized: Invalid Admin Secret' });
