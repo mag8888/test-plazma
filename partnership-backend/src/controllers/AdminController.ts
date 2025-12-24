@@ -231,4 +231,58 @@ export class AdminController {
             res.status(500).json({ error: error.message });
         }
     }
+
+    // Rebuild Referrals Endpoint
+    static async rebuildReferrals(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const allUsers = await User.find({});
+
+            let updated = 0;
+            let skipped = 0;
+            let errors = 0;
+
+            for (const user of allUsers) {
+                // Skip if already has referrer ObjectId
+                if (user.referrer) {
+                    skipped++;
+                    continue;
+                }
+
+                // Skip if no referredBy string
+                if (!user.referredBy) {
+                    continue;
+                }
+
+                try {
+                    // Find the referrer by username or telegram_id
+                    const referrer = await User.findOne({
+                        $or: [
+                            { username: user.referredBy },
+                            { telegram_id: !isNaN(Number(user.referredBy)) ? Number(user.referredBy) : null }
+                        ]
+                    });
+
+                    if (referrer && referrer._id.toString() !== user._id.toString()) {
+                        user.referrer = referrer._id;
+                        await user.save();
+                        updated++;
+                    }
+                } catch (err) {
+                    errors++;
+                    console.error(`Error processing ${user.username}:`, err);
+                }
+            }
+
+            res.json({
+                success: true,
+                updated,
+                skipped,
+                errors,
+                totalUsers: allUsers.length
+            });
+        } catch (error: any) {
+            console.error('AdminController.rebuildReferrals error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
