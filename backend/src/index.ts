@@ -78,6 +78,19 @@ app.use('/admin', (req, res, next) => {
     next();
 });
 
+// Explicit Admin Route (Force Serve)
+app.get('/admin', (req, res) => {
+    // Check for admin.html or fall back to index.html
+    const adminFile = path.join(__dirname, '../../frontend/out/admin.html');
+    const indexFile = path.join(__dirname, '../../frontend/out/index.html');
+
+    if (fs.existsSync(adminFile)) {
+        res.sendFile(adminFile);
+    } else {
+        res.sendFile(indexFile);
+    }
+});
+
 app.use('/api/auth', AuthController);
 
 let botService: BotService | null = null;
