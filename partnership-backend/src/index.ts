@@ -41,6 +41,7 @@ adminRouter.get('/stats', AdminController.getGlobalStats as any);
 adminRouter.get('/logs', AdminController.getLogs as any);
 adminRouter.post('/rebuild-referrals', AdminController.rebuildReferrals as any);
 adminRouter.get('/check-referrers', AdminController.checkReferrers as any); // Debug endpoint
+adminRouter.delete('/avatars/delete-all', AdminController.deleteAllAvatars as any);
 
 app.use('/api/admin', adminRouter);
 

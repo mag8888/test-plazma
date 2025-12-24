@@ -358,4 +358,29 @@ export class AdminController {
             res.status(500).json({ error: error.message });
         }
     }
+
+    // Delete all avatars (cleanup)
+    static async deleteAllAvatars(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const result = await Avatar.deleteMany({});
+            const secret = req.headers['x-admin-secret'] as string;
+            const adminName = secret.split(':')[0] || 'Unknown Admin';
+
+            // Log action
+            await AdminLog.create({
+                adminName,
+                action: AdminActionType.BALANCE_CHANGE, // Reusing enum, or add new type
+                details: `Deleted all avatars. Count: ${result.deletedCount}`
+            });
+
+            res.json({
+                success: true,
+                deletedCount: result.deletedCount,
+                message: `Deleted ${result.deletedCount} avatars`
+            });
+        } catch (error: any) {
+            console.error('deleteAllAvatars error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
