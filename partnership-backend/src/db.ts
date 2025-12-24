@@ -7,14 +7,7 @@ export const connectDB = async () => {
         console.log('Attempting to connect to MongoDB URI:', mongoURI.replace(/:([^:@]+)@/, ':****@')); // Mask password
 
         // Debug DNS Logic
-        const hostname = mongoURI.split('://')[1].split(':')[0].split('/')[0].split('@').pop();
-        if (hostname) {
-            console.log(`Resolving hostname: ${hostname}`);
-            dns.lookup(hostname, (err, address, family) => {
-                if (err) console.error('DNS Lookup Error:', err);
-                else console.log(`DNS Lookup Success: ${hostname} -> ${address}`);
-            });
-        }
+
 
         await mongoose.connect(mongoURI);
         console.log('MongoDB Connected');
