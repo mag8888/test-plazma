@@ -59,17 +59,22 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
                         <div
                             key={avatar._id}
                             onClick={() => setSelectedAvatar(avatar._id)}
-                            className="w-12 h-12 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-transform relative group"
+                            className={`w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-transform relative group ${avatar.isClosed ? 'bg-gradient-to-br from-green-600 to-emerald-600' : 'bg-gradient-to-br from-blue-600 to-indigo-600'
+                                }`}
                         >
                             <div className="text-xs text-white font-bold">{avatar.level}</div>
                             {avatar.partners && avatar.partners.length > 0 && (
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full text-[8px] flex items-center justify-center text-white">
+                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full text-[8px] flex items-center justify-center text-white font-bold">
                                     {avatar.partners.length}
                                 </div>
                             )}
+                            {avatar.isClosed && (
+                                <div className="absolute -top-1 -right-1 text-xs">✓</div>
+                            )}
                             {/* Tooltip */}
                             <div className="absolute bottom-full mb-2 hidden group-hover:block bg-slate-900 text-white text-xs p-2 rounded shadow-lg whitespace-nowrap z-10">
-                                {avatar.owner?.username || 'Unknown'}
+                                <div>{avatar.owner?.username || 'Unknown'}</div>
+                                <div className="text-slate-400">Уровень {avatar.level} • {avatar.partners?.length || 0}/3</div>
                             </div>
                         </div>
                     ))}
