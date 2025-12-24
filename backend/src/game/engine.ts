@@ -23,7 +23,7 @@ export interface GameState {
         market: { remaining: number; total: number };
         expense: { remaining: number; total: number };
     };
-    rankings?: { name: string; reason: string; place: number }[];
+    rankings?: { name: string; reason: string; place: number; id?: string; userId?: string }[];
     isGameEnded?: boolean;
     chat: ChatMessage[];
     activeMarketCards?: ActiveCard[];

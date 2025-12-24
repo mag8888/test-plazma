@@ -185,8 +185,7 @@ app.post('/api/admin/restore', async (req, res) => {
 });
 // --- RESTORE & BACKUP API END ---
 
-let botService: BotService | null = null;
-let gameGateway: GameGateway | null = null;
+// (Variable declarations moved to top)
 
 // Static File Serving
 
@@ -393,7 +392,7 @@ app.post('/api/admin/broadcast', async (req, res) => {
         // Send in batches to avoid spam limits
         for (const user of users) {
             try {
-                await botService.bot?.sendMessage(user.telegram_id, message, { parse_mode: 'Markdown' });
+                await botService?.bot?.sendMessage(user.telegram_id, message, { parse_mode: 'Markdown' });
                 sentCount++;
                 // Tiny delay to be safe
                 await new Promise(r => setTimeout(r, 50));
