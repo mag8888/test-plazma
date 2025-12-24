@@ -329,7 +329,7 @@ export class AdminController {
 
             // 4. Total broken referrals (referredBy exists but referrer ObjectId doesn't)
             const brokenCount = await User.countDocuments({
-                referredBy: { $exists: true, $ne: null, $ne: '' },
+                referredBy: { $exists: true, $nin: [null, ''] },
                 $or: [
                     { referrer: { $exists: false } },
                     { referrer: null }
