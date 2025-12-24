@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { Search, DollarSign, Users, BarChart, TreePine, Lock } from 'lucide-react';
 import { partnershipApi } from '../../../lib/partnershipApi';
 
-const API_URL = process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'http://localhost:4000/api';
+const API_URL = '/api/partnership'; // Use internal proxy for Monolith
 
 export default function AdminPage() {
     const router = useRouter();
