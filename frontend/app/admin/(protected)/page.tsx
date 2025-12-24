@@ -228,7 +228,7 @@ export default function AdminPage() {
                                     onKeyDown={(e) => e.key === 'Enter' && searchUsers()}
                                 />
                             </div>
-                            <button onClick={searchUsers} className="bg-blue-600 hover:bg-blue-500 text-white px-6 rounded-xl font-bold transition">
+                            <button onClick={() => searchUsers()} className="bg-blue-600 hover:bg-blue-500 text-white px-6 rounded-xl font-bold transition">
                                 Search
                             </button>
                         </div>
