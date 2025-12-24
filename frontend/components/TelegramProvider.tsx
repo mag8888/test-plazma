@@ -120,6 +120,12 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                         const data = await res.json();
                         setUser(data.user);
 
+                        // IMPORTANT: Save to localStorage for persistence across refreshes
+                        localStorage.setItem('moneo_user_auth', JSON.stringify({
+                            user: data.user,
+                            token: data.token || codeToUse
+                        }));
+
                         // Save valid code to cache if it came from URL
                         if (authCode) {
                             localStorage.setItem('moneo_auth_code', authCode);
