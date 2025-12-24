@@ -1,23 +1,14 @@
 import { getBackendUrl } from './config';
 
-// Get Partnership Backend URL
+// Get Partnership API URL - use backend proxy for Telegram WebApp compatibility
 const getPartnershipUrl = () => {
-    // Try environment variable for Partnership Backend
-    let url = (process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || '').trim();
-    url = url.replace(/^[\"']|[\"']$/g, '');
-
-    if (url && url.startsWith('http')) {
-        return url.replace(/\/$/, '');
+    if (typeof window !== 'undefined') {
+        const backend = getBackendUrl();
+        // Backend handles /api/partnership/* and proxies to partnership-backend
+        return `${backend}/api/partnership`;
     }
 
-    // Fallback: since Next.js is static export, we need direct backend URL
-    // In production, this should be set via NEXT_PUBLIC_PARTNERSHIP_API_URL env
-    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
-        // Production: use main backend at /api/* routes (backend proxies to partnership service)
-        return window.location.origin;
-    }
-
-    // Development: localhost partnership backend
+    // SSR/Development fallback
     return 'http://localhost:4000/api';
 };
 
@@ -75,8 +66,11 @@ export const partnershipApi = {
     },
 
     async getPartners(userId: string) {
+        console.log(`[Partnership] Loading partners for ${userId} from ${API_URL}/partners/${userId}`);
         const res = await fetch(`${API_URL}/partners/${userId}`);
-        return res.json();
+        const data = await res.json();
+        console.log(`[Partnership] Partners response:`, data);
+        return data;
     },
 
     async getPublicProfile(telegramId: number) {
