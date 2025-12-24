@@ -30,21 +30,20 @@ export default function AdminProtectedLayout({
         } else {
             router.push('/');
         }
-    }
         setIsLoading(false);
-}, [router, user, isReady]);
+    }, [router, user, isReady]);
 
-if (isLoading) {
-    return (
-        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-            <div className="text-white">Загрузка...</div>
-        </div>
-    );
-}
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+                <div className="text-white">Загрузка...</div>
+            </div>
+        );
+    }
 
-if (!isAuthenticated) {
-    return null;
-}
+    if (!isAuthenticated) {
+        return null;
+    }
 
-return <>{children}</>;
+    return <>{children}</>;
 }
