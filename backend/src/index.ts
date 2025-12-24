@@ -58,6 +58,26 @@ const io = new Server(httpServer, {
 });
 
 app.use(express.json());
+
+// Middleware: Restrict /admin access to specific host (MOVED TO TOP)
+app.use('/admin', (req, res, next) => {
+    const host = req.headers.host || '';
+    const ALLOWED_HOSTS = [
+        'moneo-production-358e.up.railway.app',
+        'localhost',
+        '127.0.0.1'
+    ];
+
+    // Check if host contains any of the allowed domains
+    const isAllowed = ALLOWED_HOSTS.some(allowed => host.includes(allowed));
+
+    if (!isAllowed) {
+        // Redirect to homepage if accessed from unauthorized domain
+        return res.redirect('/');
+    }
+    next();
+});
+
 app.use('/api/auth', AuthController);
 
 let botService: BotService | null = null;
@@ -1042,24 +1062,7 @@ app.get('/api/users/search', async (req, res) => {
     }
 });
 
-// Middleware: Restrict /admin access to specific host
-app.use('/admin', (req, res, next) => {
-    const host = req.headers.host || '';
-    const ALLOWED_HOSTS = [
-        'moneo-production-358e.up.railway.app',
-        'localhost',
-        '127.0.0.1'
-    ];
 
-    // Check if host contains any of the allowed domains
-    const isAllowed = ALLOWED_HOSTS.some(allowed => host.includes(allowed));
-
-    if (!isAllowed) {
-        // Redirect to homepage if accessed from unauthorized domain
-        return res.redirect('/');
-    }
-    next();
-});
 
 // SPA Fallback - Must be the last route
 // Debugging Endpoint for SPA path
