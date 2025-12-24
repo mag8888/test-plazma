@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight } from 'lucide-react';
-import { partnershipApi } from '../../../lib/partnershipApi';
+import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
+import { part nershipApi } from '../../../lib/partnershipApi';
+import CardEditor from './CardEditor';
 
 const API_URL = '/api/partnership'; // Use internal proxy for Monolith
 
@@ -11,7 +12,7 @@ export default function AdminPage() {
     const router = useRouter();
     const [secret, setSecret] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
-    const [activeTab, setActiveTab] = useState<'USERS' | 'STATS' | 'TREE' | 'LOGS'>('USERS');
+    const [activeTab, setActiveTab] = useState<'USERS' | 'STATS' | 'TREE' | 'LOGS' | 'CARDS'>('USERS');
 
     // Stats
     const [stats, setStats] = useState<any>(null);
@@ -252,6 +253,9 @@ export default function AdminPage() {
                         <button onClick={() => setActiveTab('LOGS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'LOGS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
                             <History size={18} /> Logs
                         </button>
+                        <button onClick={() => setActiveTab('CARDS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'CARDS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
+                            <CreditCard size={18} /> Cards
+                        </button>
                     </div>
                     <button onClick={logout} className="bg-red-900/30 hover:bg-red-900/50 text-red-400 px-4 py-1.5 rounded-lg text-xs font-bold transition border border-red-500/30">Выйти</button>
                 </div>
@@ -482,6 +486,11 @@ export default function AdminPage() {
                             </div>
                         )}
                     </div>
+                )}
+
+                {/* CARDS TAB */}
+                {activeTab === 'CARDS' && (
+                    <CardEditor secret={secret} />
                 )}
 
             </div>

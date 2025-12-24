@@ -123,6 +123,9 @@ app.get('/admin', (req, res) => {
 });
 
 app.use('/api/auth', AuthController);
+// Card Management API (Admin Only)
+import cardRoutes from './game/card.routes';
+app.use('/api/cards', cardRoutes);
 
 // --- RESTORE & BACKUP API START ---
 app.get('/api/admin/backups', async (req, res) => {
