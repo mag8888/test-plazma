@@ -19,6 +19,7 @@ interface Card {
     mandatory?: boolean;
     action?: string;
     targetTitle?: string;
+    targetCardNumber?: string; // For market cards: which card number this affects
     offerPrice?: number;
     businessType?: string;
     subtype?: string;
@@ -207,6 +208,9 @@ export default function CardEditor({ secret }: CardEditorProps) {
                                         {card.cashflow && <div className="text-green-400">+${card.cashflow}/mo</div>}
                                         {card.offerPrice && <div className="text-blue-400">Offer: ${card.offerPrice.toLocaleString()}</div>}
                                         {card.symbol && <div className="text-purple-400">Symbol: {card.symbol}</div>}
+                                        {card.targetCardNumber && (
+                                            <div className="text-purple-400 font-bold">→ Affects: #{card.targetCardNumber}</div>
+                                        )}
                                     </div>
                                 </div>
                                 {/* Actions */}
@@ -308,6 +312,32 @@ export default function CardEditor({ secret }: CardEditorProps) {
                                 />
                             </div>
                         </div>
+
+                        {/* Market Card Specific Fields */}
+                        {selectedType === 'market' && (
+                            <div className="grid grid-cols-2 gap-4 p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl">
+                                <div>
+                                    <label className="text-xs text-purple-400 uppercase font-bold block mb-2">Target Card Number</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. SD-001"
+                                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-purple-500/50 focus:border-purple-400 outline-none"
+                                        value={editingCard.targetCardNumber || ''}
+                                        onChange={(e) => setEditingCard({ ...editingCard, targetCardNumber: e.target.value })}
+                                    />
+                                    <p className="text-xs text-purple-400 mt-1">Which card does this market card affect?</p>
+                                </div>
+                                <div>
+                                    <label className="text-xs text-purple-400 uppercase font-bold block mb-2">Offer Price</label>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-purple-500/50 focus:border-purple-400 outline-none"
+                                        value={editingCard.offerPrice || ''}
+                                        onChange={(e) => setEditingCard({ ...editingCard, offerPrice: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+                        )}
 
                         <div className="flex gap-2 justify-end pt-4">
                             <button
