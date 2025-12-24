@@ -3,14 +3,18 @@ import { User } from '../models/User';
 import { Avatar } from '../models/Avatar';
 
 // Use a simple env var for protection, fallback to a default for dev if needed
-const ADMIN_SECRET = process.env.ADMIN_SECRET || 'supersecret';
+const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin';
 
 export class AdminController {
 
     // Middleware to check secret
     static async authenticate(req: Request, res: Response, next: any) {
         const secret = req.headers['x-admin-secret'];
+        // console.log(`[AdminAuth] Received: ${secret}, Expected: ${ADMIN_SECRET}`); // Debug log
+
         if (secret !== ADMIN_SECRET) {
+            // START TEMP BYPASS IF USER REQUESTED "NO CHECKS" - But user said "leave login password".
+            // So we must check.
             return res.status(403).json({ error: 'Unauthorized: Invalid Admin Secret' });
         }
         next();

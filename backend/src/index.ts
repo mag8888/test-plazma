@@ -60,24 +60,8 @@ const io = new Server(httpServer, {
 app.use(express.json());
 
 // Middleware: Restrict /admin access to specific host (MOVED TO TOP)
-app.use('/admin', (req, res, next) => {
-    const host = req.headers.host || '';
-    const ALLOWED_HOSTS = [
-        'moneo-production-358e.up.railway.app',
-        'moneo.up.railway.app',
-        'localhost',
-        '127.0.0.1'
-    ];
-
-    // Check if host contains any of the allowed domains
-    const isAllowed = ALLOWED_HOSTS.some(allowed => host.includes(allowed));
-
-    if (!isAllowed) {
-        // Redirect to homepage if accessed from unauthorized domain
-        return res.redirect('/');
-    }
-    next();
-});
+// Middleware: Restrict /admin access to specific host (REMOVED REQUESTED BY USER)
+// app.use('/admin', ...);
 
 // Proxy to Partnership Backend (Internal)
 // Frontend calls /api/partnership/user -> We forward to http://localhost:4000/api/user
