@@ -283,6 +283,19 @@ export default function AdminPage() {
                     </div>
                 )}
 
+                {/* Rebuild Referrals Button (in STATS tab) */}
+                {activeTab === 'STATS' && (
+                    <div className="mt-6">
+                        <button
+                            onClick={rebuildReferrals}
+                            className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg"
+                        >
+                            🔄 Rebuild Referrals
+                        </button>
+                        <p className="text-xs text-slate-500 mt-2">Reconstructs referrer links from referredBy strings</p>
+                    </div>
+                )}
+
                 {/* LOGS TAB */}
                 {activeTab === 'LOGS' && (
                     <div className="space-y-4">
