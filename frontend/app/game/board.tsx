@@ -1245,7 +1245,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                 {/* CENTER BOARD (Strict Aspect Square) */}
                 <div className={`${forceLandscape ? 'w-auto h-full' : 'w-full max-w-[95vw] mx-auto lg:max-w-none lg:w-auto lg:h-full'} aspect-square flex-shrink-0 relative bg-[#0f172a] overflow-hidden flex flex-col rounded-3xl border border-slate-800/50 shadow-2xl max-h-full`}>
-                    <div className="flex-1 relative overflow-hidden p-0 flex items-center justify-center">
+                    <div className="flex-1 relative overflow-hidden p-4 flex items-center justify-center">
                         <BoardVisualizer
                             board={state.board}
                             players={state.players}
