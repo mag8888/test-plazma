@@ -28,22 +28,24 @@ export default function AdminProtectedLayout({
             // Ensure flag is set for consistency
             if (auth !== 'true') localStorage.setItem('admin_authenticated', 'true');
         } else {
-            router.push('/admin/login');
+        } else {
+            router.push('/');
         }
+    }
         setIsLoading(false);
-    }, [router, user, isReady]);
+}, [router, user, isReady]);
 
-    if (isLoading) {
-        return (
-            <div className="min-h-screen bg-slate-950 flex items-center justify-center">
-                <div className="text-white">Загрузка...</div>
-            </div>
-        );
-    }
+if (isLoading) {
+    return (
+        <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+            <div className="text-white">Загрузка...</div>
+        </div>
+    );
+}
 
-    if (!isAuthenticated) {
-        return null;
-    }
+if (!isAuthenticated) {
+    return null;
+}
 
-    return <>{children}</>;
+return <>{children}</>;
 }
