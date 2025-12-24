@@ -9,6 +9,7 @@ interface Card {
     title: string;
     description: string;
     cardNumber?: string; // Unique card number
+    currentValue?: number; // Current state/price (e.g. Tesla stock at $5 or $40)
     cost?: number;
     cashflow?: number;
     price?: number;
@@ -204,6 +205,9 @@ export default function CardEditor({ secret }: CardEditorProps) {
                                     <h3 className="text-white font-bold text-sm mb-2 line-clamp-2">{card.title}</h3>
                                     <p className="text-slate-400 text-xs mb-3 line-clamp-3">{card.description}</p>
                                     <div className="space-y-1 text-xs">
+                                        {card.currentValue !== undefined && (
+                                            <div className="text-cyan-400 font-bold">Current: ${card.currentValue.toLocaleString()}</div>
+                                        )}
                                         {card.cost && <div className="text-yellow-400">Cost: ${card.cost.toLocaleString()}</div>}
                                         {card.cashflow && <div className="text-green-400">+${card.cashflow}/mo</div>}
                                         {card.offerPrice && <div className="text-blue-400">Offer: ${card.offerPrice.toLocaleString()}</div>}
@@ -273,12 +277,13 @@ export default function CardEditor({ secret }: CardEditorProps) {
                                 />
                             </div>
                             <div>
-                                <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Cost</label>
+                                <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Current Value</label>
                                 <input
                                     type="number"
+                                    placeholder="Current price/state"
                                     className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                                    value={editingCard.cost || ''}
-                                    onChange={(e) => setEditingCard({ ...editingCard, cost: Number(e.target.value) })}
+                                    value={editingCard.currentValue || ''}
+                                    onChange={(e) => setEditingCard({ ...editingCard, currentValue: Number(e.target.value) })}
                                 />
                             </div>
                         </div>
