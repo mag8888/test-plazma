@@ -22,7 +22,7 @@ const UserSchema: Schema = new Schema({
     greenBalance: { type: Number, default: 0 },
     yellowBalance: { type: Number, default: 0 },
     balanceRed: { type: Number, default: 0 }, // Game Balance
-    rating: { type: Number, default: 1000 },
+    rating: { type: Number, default: 100 },
     referredBy: { type: String },
     referrer: { type: Schema.Types.ObjectId, ref: 'User' },
     createdAt: { type: Date, default: Date.now }
