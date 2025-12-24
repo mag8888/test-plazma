@@ -2,12 +2,16 @@
 import React, { useEffect, useState } from 'react';
 import { partnershipApi } from '../../lib/partnershipApi';
 import { TreeVisualizer } from './components/TreeVisualizer';
+import { AvatarGridModal } from './AvatarGridModal';
+import { Users, Grid3x3 } from 'lucide-react';
 
 export default function PartnershipPage() {
     const [stats, setStats] = useState<any>(null);
     const [avatars, setAvatars] = useState<any[]>([]);
     const [userId, setUserId] = useState<string>(''); // Needs to be set from auth context in real app
     const [loading, setLoading] = useState(false);
+    const [partnerCount, setPartnerCount] = useState(0);
+    const [isGridModalOpen, setIsGridModalOpen] = useState(false);
 
     // Mock User ID for demo/testing - replace with actual auth logic
     useEffect(() => {
@@ -35,6 +39,9 @@ export default function PartnershipPage() {
             const treeData = await partnershipApi.getTree(userId);
             setStats(statsData);
             setAvatars(treeData);
+            // Count partners (referrals)
+            const partners = treeData.filter((a: any) => a.owner).length;
+            setPartnerCount(partners);
         } catch (e) {
             console.error(e);
         }
@@ -80,9 +87,25 @@ export default function PartnershipPage() {
                     <p style={{ fontSize: '1.5rem', color: '#FFD700' }}>${stats?.yellowBalance || 0}</p>
                     <small>Accumulates inside structure</small>
                 </div>
+                <div
+                    style={{ padding: '20px', backgroundColor: '#333', borderRadius: '10px', cursor: 'pointer', position: 'relative' }}
+                    onClick={() => setIsGridModalOpen(true)}
+                    className="hover:bg-slate-700 transition"
+                >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                        <h2 style={{ margin: 0 }}>Active Avatars</h2>
+                        <Grid3x3 size={20} style={{ color: '#888' }} />
+                    </div>
+                    <p style={{ fontSize: '1.5rem', margin: '8px 0 0 0' }}>{stats?.avatarCount || 0}</p>
+                    <small style={{ color: '#888' }}>Click to view structure</small>
+                </div>
                 <div style={{ padding: '20px', backgroundColor: '#333', borderRadius: '10px' }}>
-                    <h2>Active Avatars</h2>
-                    <p style={{ fontSize: '1.5rem' }}>{stats?.avatarCount || 0}</p>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Users size={20} style={{ color: '#888' }} />
+                        <h2 style={{ margin: 0 }}>Partners</h2>
+                    </div>
+                    <p style={{ fontSize: '1.5rem', margin: '8px 0 0 0' }}>{partnerCount}</p>
+                    <small style={{ color: '#888' }}>Total referrals</small>
                 </div>
             </div>
 
@@ -99,6 +122,13 @@ export default function PartnershipPage() {
                 <h2>My Structure</h2>
                 {loading ? <p>Loading...</p> : <TreeVisualizer avatars={avatars} />}
             </div>
+
+            {/* Avatar Grid Modal */}
+            <AvatarGridModal
+                avatars={avatars}
+                isOpen={isGridModalOpen}
+                onClose={() => setIsGridModalOpen(false)}
+            />
         </div>
     );
 }
