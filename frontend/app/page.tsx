@@ -19,7 +19,16 @@ function HomeContent() {
 
   useEffect(() => {
     if (isReady && user) {
-      router.replace('/home');
+      const ADMINS = ['adminroman', 'adminmax', 'adminanton'];
+      const username = user.username?.toLowerCase() || '';
+
+      if (ADMINS.includes(username)) {
+        // Auto-grant admin access for these specific users
+        localStorage.setItem('admin_authenticated', 'true');
+        router.replace('/admin');
+      } else {
+        router.replace('/home');
+      }
     }
   }, [user, isReady, router]);
 

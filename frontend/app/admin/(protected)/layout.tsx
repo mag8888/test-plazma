@@ -3,25 +3,35 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+import { useTelegram } from '../../../components/TelegramProvider';
+
 export default function AdminProtectedLayout({
     children,
 }: {
     children: React.ReactNode;
 }) {
     const router = useRouter();
+    const { user, isReady } = useTelegram();
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Check if user is authenticated
+        // Wait for Telegram auth to be ready if possible
+        if (!isReady) return;
+
         const auth = localStorage.getItem('admin_authenticated');
-        if (auth === 'true') {
+        const ADMINS = ['adminroman', 'adminmax', 'adminanton'];
+        const username = user?.username?.toLowerCase() || '';
+
+        if (auth === 'true' || ADMINS.includes(username)) {
             setIsAuthenticated(true);
+            // Ensure flag is set for consistency
+            if (auth !== 'true') localStorage.setItem('admin_authenticated', 'true');
         } else {
             router.push('/admin/login');
         }
         setIsLoading(false);
-    }, [router]);
+    }, [router, user, isReady]);
 
     if (isLoading) {
         return (
