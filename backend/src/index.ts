@@ -1043,12 +1043,38 @@ app.get('/api/users/search', async (req, res) => {
 });
 
 // SPA Fallback - Must be the last route
+// Debugging Endpoint for SPA path
+app.get('/api/debug-spa', (req, res) => {
+    const indexPath = path.join(__dirname, '../../frontend/out/index.html');
+    res.json({
+        cwd: process.cwd(),
+        dirname: __dirname,
+        resolvedPath: indexPath,
+        exists: fs.existsSync(indexPath)
+    });
+});
+
+// SPA Fallback - Must be the last route
 app.get('*', (req, res) => {
-    // If it's an API call that wasn't caught above, return 404 JSON
+    // 1. API 404
     if (req.path.startsWith('/api')) {
         return res.status(404).json({ error: 'Not found' });
     }
 
-    // Otherwise serve index.html for client-side routing
-    res.sendFile(path.join(__dirname, '../../frontend/out/index.html'));
+    // 2. Serve Index or Error
+    const indexPath = path.join(__dirname, '../../frontend/out/index.html');
+    if (fs.existsSync(indexPath)) {
+        res.sendFile(indexPath);
+    } else {
+        console.error('SPA Index NOT FOUND at:', indexPath);
+        res.status(500).send('Error: Frontend build not found on server. Try /api/debug-spa for details.');
+    }
+});
+// If it's an API call that wasn't caught above, return 404 JSON
+if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'Not found' });
+}
+
+// Otherwise serve index.html for client-side routing
+res.sendFile(path.join(__dirname, '../../frontend/out/index.html'));
 });
