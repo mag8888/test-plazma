@@ -64,6 +64,7 @@ app.use('/admin', (req, res, next) => {
     const host = req.headers.host || '';
     const ALLOWED_HOSTS = [
         'moneo-production-358e.up.railway.app',
+        'moneo.up.railway.app',
         'localhost',
         '127.0.0.1'
     ];
