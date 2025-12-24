@@ -17,15 +17,31 @@ export const reviewsModule: BotModule = {
         }
 
         for (const review of reviews) {
-          const caption = [`⭐ ${review.name}`, review.content];
-          if (review.link) {
-            caption.push(`Подробнее: ${review.link}`);
-          }
+          const header = `⭐ ${review.name}`;
+          const link = review.link ? `\n\nПодробнее: ${review.link}` : '';
+
+          // Telegram caption limit is 1024 characters
+          const MAX_CAPTION_LENGTH = 1000; // Leave some buffer
 
           if (review.photoUrl) {
-            await ctx.replyWithPhoto(review.photoUrl, { caption: caption.join('\n\n') });
+            // If content + header + link is too long, truncate content
+            const fullCaption = `${header}\n\n${review.content}${link}`;
+
+            if (fullCaption.length > MAX_CAPTION_LENGTH) {
+              // Send photo with shortened caption and content as separate message
+              const shortCaption = `${header}\n\n${review.content.substring(0, MAX_CAPTION_LENGTH - header.length - link.length - 50)}...${link}`;
+              await ctx.replyWithPhoto(review.photoUrl, { caption: shortCaption });
+
+              // Send full content as separate message if it was truncated
+              if (review.content.length > MAX_CAPTION_LENGTH - header.length - link.length - 50) {
+                await ctx.reply(review.content);
+              }
+            } else {
+              await ctx.replyWithPhoto(review.photoUrl, { caption: fullCaption });
+            }
           } else {
-            await ctx.reply(caption.join('\n\n'));
+            // No photo, just send text
+            await ctx.reply(`${header}\n\n${review.content}${link}`);
           }
         }
       } catch (error) {
