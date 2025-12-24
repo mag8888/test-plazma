@@ -9,15 +9,27 @@ export const reviewsModule: BotModule = {
     bot.hears('Отзывы', async (ctx) => {
       try {
         await logUserAction(ctx, 'menu:reviews');
-        await showReviews(ctx);
+        await showReviews(ctx, 0);
       } catch (error) {
         console.error('Error in reviews:', error);
         await ctx.reply(`Ошибка загрузки отзывов: ${error instanceof Error ? error.message : String(error)}`);
       }
     });
 
-    // Handle "Read More" button callback
-    bot.action(/^review_more_(.+)$/, async (ctx) => {
+    // Handle "Next Review" button callback
+    bot.action(/^review_next_(\d+)$/, async (ctx) => {
+      try {
+        const nextIndex = parseInt(ctx.match[1]);
+        await showReviews(ctx, nextIndex);
+        await ctx.answerCbQuery();
+      } catch (error) {
+        console.error('Error showing next review:', error);
+        await ctx.answerCbQuery('❌ Ошибка');
+      }
+    });
+
+    // Handle "Show Full Text" button callback
+    bot.action(/^review_full_(.+)$/, async (ctx) => {
       try {
         const reviewId = ctx.match[1];
         const reviews = await getActiveReviews();
@@ -37,7 +49,7 @@ export const reviewsModule: BotModule = {
   },
 };
 
-export async function showReviews(ctx: Context) {
+export async function showReviews(ctx: Context, startIndex: number = 0) {
   const reviews = await getActiveReviews();
 
   if (reviews.length === 0) {
@@ -45,29 +57,61 @@ export async function showReviews(ctx: Context) {
     return;
   }
 
-  for (const review of reviews) {
-    const header = `⭐ ${review.name}`;
-    const link = review.link ? `\n\nПодробнее: ${review.link}` : '';
+  if (startIndex >= reviews.length) {
+    await ctx.reply('Больше отзывов нет.');
+    return;
+  }
+
+  const review = reviews[startIndex];
+  const header = `⭐ ${review.name}`;
+  const link = review.link ? `\n\nПодробнее: ${review.link}` : '';
+  
+  const MAX_CAPTION_LENGTH = 1000;
+  const hasMore = startIndex + 1 < reviews.length;
+  
+  if (review.photoUrl) {
+    const fullCaption = `${header}\n\n${review.content}${link}`;
     
-    const MAX_CAPTION_LENGTH = 1000;
-    
-    if (review.photoUrl) {
-      const fullCaption = `${header}\n\n${review.content}${link}`;
+    if (fullCaption.length > MAX_CAPTION_LENGTH) {
+      // Long review - truncate with "Read Full" button
+      const shortCaption = `${header}\n\n${review.content.substring(0, MAX_CAPTION_LENGTH - header.length - link.length - 50)}...${link}`;
       
-      if (fullCaption.length > MAX_CAPTION_LENGTH) {
-        const shortCaption = `${header}\n\n${review.content.substring(0, MAX_CAPTION_LENGTH - header.length - link.length - 50)}...${link}`;
+      const buttons = [];
+      buttons.push([Markup.button.callback('📖 Полный текст', `review_full_${review.id}`)]);
+      if (hasMore) {
+        buttons.push([Markup.button.callback('➡️ Ещё отзыв', `review_next_${startIndex + 1}`)]);
+      }
+      
+      const keyboard = Markup.inlineKeyboard(buttons);
+      await ctx.replyWithPhoto(review.photoUrl, { 
+        caption: shortCaption,
+        ...keyboard
+      });
+    } else {
+      // Short review - just "Next" button if there are more
+      if (hasMore) {
         const keyboard = Markup.inlineKeyboard([
-          [Markup.button.callback('📖 Ещё', `review_more_${review.id}`)]
+          [Markup.button.callback('➡️ Ещё отзыв', `review_next_${startIndex + 1}`)]
         ]);
         await ctx.replyWithPhoto(review.photoUrl, { 
-          caption: shortCaption,
+          caption: fullCaption,
           ...keyboard
         });
       } else {
         await ctx.replyWithPhoto(review.photoUrl, { caption: fullCaption });
       }
+    }
+  } else {
+    // No photo
+    const message = `${header}\n\n${review.content}${link}`;
+    
+    if (hasMore) {
+      const keyboard = Markup.inlineKeyboard([
+        [Markup.button.callback('➡️ Ещё отзыв', `review_next_${startIndex + 1}`)]
+      ]);
+      await ctx.reply(message, keyboard);
     } else {
-      await ctx.reply(`${header}\n\n${review.content}${link}`);
+      await ctx.reply(message);
     }
   }
 }
