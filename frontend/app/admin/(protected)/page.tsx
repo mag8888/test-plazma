@@ -240,8 +240,6 @@ export default function AdminPage() {
                         Partnership Panel
                     </div>
                     <div className="flex gap-4">
-                        <a href="/admin/users/" className="flex items-center gap-2 px-3 py-1.5 rounded-lg transition bg-green-900/30 text-green-400 hover:bg-green-900/50 border border-green-500/30"><Users size={18} /> All Users</a>
-
                         <button onClick={() => setActiveTab('USERS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'USERS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
                             <Users size={18} /> Users
                         </button>
