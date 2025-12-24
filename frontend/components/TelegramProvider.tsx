@@ -152,9 +152,9 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                             console.log("🔒 User explicitly logged out. Waiting for manual login.");
                             // Do NOT set user, effectively leaving it null
                         } else {
-                            console.warn("No initData, treating as Guest/Dev.");
-                            // Fallback dev/guest
-                            setUser({ id: 123456789, first_name: 'Dev Guest', username: 'dev_guest', balanceRed: 1000, referralBalance: 50 });
+                            console.log("ℹ️ No auth found. Waiting for user action.");
+                            // Do NOT auto-login as Dev/Guest anymore.
+                            // User must click "Enter as Guest" on Splash Screen.
                         }
                     }
                 }
