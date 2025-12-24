@@ -114,7 +114,25 @@ function GameContent() {
             const me = updatedRoom.players.find(p => p.userId === userId);
             if (me) {
                 setIsReady(me.isReady);
-                if (me.dream) setDream(me.dream);
+
+                // Auto-select free dream if current is taken
+                const takenDreams = updatedRoom.players
+                    .filter(p => p.userId !== userId)
+                    .map(p => p.dream);
+
+                const currentDreamTaken = takenDreams.includes(dream);
+
+                if (currentDreamTaken) {
+                    // Find first available dream
+                    const freeDream = DREAMS.find(d => !takenDreams.includes(d.name));
+                    if (freeDream) {
+                        console.log(`Dream "${dream}" is taken, auto-selecting "${freeDream.name}"`);
+                        setDream(freeDream.name);
+                    }
+                } else if (me.dream && !dream) {
+                    // Only update from server if we haven't selected one
+                    setDream(me.dream);
+                }
 
                 // Auto-select free token if current is taken
                 const availableTokens = ['🦁', '🦅', '🦊', '🐻', '🐅', '🐺', '🐘', '🦈', '🦉', '🐬'];
