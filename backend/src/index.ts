@@ -41,7 +41,7 @@ app.get('/api/health', (req, res) => {
         uptime: process.uptime(),
         db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
         bot: global.bot ? 'active' : 'inactive',
-        version: '1.1.1-restore-feature' // Tracer
+        version: '1.1.2-backup-list-fix' // Tracer
     };
     res.status(200).json(health);
 });
