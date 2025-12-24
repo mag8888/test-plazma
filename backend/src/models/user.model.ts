@@ -13,6 +13,7 @@ export interface IUser extends Document {
     yellowBalance?: number;  // Yellow (Partnership)
     referralsCount: number;
     referredBy?: string;
+    referrer?: mongoose.Types.ObjectId; // Reference to User
     authCode?: string;
     authCodeExpires?: Date;
     createdAt: Date;
@@ -37,6 +38,7 @@ const UserSchema: Schema = new Schema({
 
     referralsCount: { type: Number, default: 0 },
     referredBy: { type: String }, // Store referrer's username or ID
+    referrer: { type: Schema.Types.ObjectId, ref: 'User' }, // Better: ObjectId reference
     authCode: { type: String },
     authCodeExpires: { type: Date },
     wins: { type: Number, default: 0 },
