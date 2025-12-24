@@ -208,7 +208,7 @@ export class BotService {
 
             // 0. GLOBAL COMMAND OVERRIDE
             // If user clicks a Menu Button while in a "Waiting" state, we must prioritize the Menu Button
-            const GLOBAL_COMMANDS = ['💸 Заработать', '🎲 Играть', '🤝 Получить клиентов', '🌐 Сообщество', 'ℹ️ О проекте', '📋 Мои игры', '/app'];
+            const GLOBAL_COMMANDS = ['💸 Заработать', '🎲 Играть', '🤝 Получить клиентов', '🌐 Сообщество', 'ℹ️ О проекте', '📋 Мои игры', '/app', '🔑 Получить пароль'];
             if (GLOBAL_COMMANDS.includes(text)) {
                 this.adminStates.delete(chatId);
                 this.transferStates.delete(chatId);
@@ -640,6 +640,8 @@ export class BotService {
             } else if (text === '📋 Мои игры') {
                 const userId = msg.from?.id;
                 if (userId) await this.handleMyGames(chatId, userId);
+            } else if (text === '🔑 Получить пароль') {
+                await this.handleGetPassword(chatId, msg.from?.id);
             }
         });
 
@@ -973,6 +975,7 @@ export class BotService {
                 keyboard: [
                     [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
                     [{ text: '🤝 Получить клиентов' }],
+                    [{ text: '🔑 Получить пароль' }],
                     [{ text: '🌐 Сообщество' }, { text: 'ℹ️ О проекте' }]
                 ],
                 resize_keyboard: true
@@ -1136,6 +1139,54 @@ export class BotService {
 
         } catch (e) {
             console.error("Error in handleEarn:", e);
+        }
+    }
+
+    async handleGetPassword(chatId: number, telegramId?: number) {
+        try {
+            if (!telegramId) {
+                this.bot?.sendMessage(chatId, '❌ Не удалось определить ваш Telegram ID.');
+                return;
+            }
+
+            const { UserModel } = await import('../models/user.model');
+            let user = await UserModel.findOne({ telegram_id: telegramId });
+
+            if (!user) {
+                this.bot?.sendMessage(chatId, '❌ Пользователь не найден. Используйте /start для регистрации.');
+                return;
+            }
+
+            // Generate password if user doesn't have one
+            if (!user.password) {
+                // Generate a simple readable password
+                const password = Math.random().toString(36).slice(-8);
+                user.password = password;
+                await user.save();
+            }
+
+            const password = user.password;
+            const username = user.username;
+
+            const message = `🔑 **Данные для входа в браузере**\n\n` +
+                `🌐 **Сайт:** https://moneo.up.railway.app\n\n` +
+                `👤 **Логин:** \`${username}\`\n` +
+                `🔐 **Пароль:** \`${password}\`\n\n` +
+                `💡 Войдите на сайте, используя эти данные.\n` +
+                `Скопируйте пароль, нажав на него.`;
+
+            this.bot?.sendMessage(chatId, message, {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '🌐 Открыть сайт', url: 'https://moneo.up.railway.app' }]
+                    ]
+                }
+            });
+
+        } catch (e) {
+            console.error("Error in handleGetPassword:", e);
+            this.bot?.sendMessage(chatId, '❌ Ошибка генерации пароля.');
         }
     }
 
