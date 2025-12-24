@@ -25,6 +25,11 @@ app.get('/api/tree/:userId', PartnershipController.getTree as any);
 app.get('/api/stats/:userId', PartnershipController.getStats as any);
 app.get('/api/partners/:userId', PartnershipController.getPartners as any);
 
+// Avatar Routes
+app.post('/api/avatars/purchase', PartnershipController.purchaseAvatar as any);
+app.get('/api/avatars/my-avatars/:userId', PartnershipController.getMyAvatars as any);
+app.get('/api/avatars/premium-count', PartnershipController.getPremiumCount as any);
+
 // Admin Routes
 const adminRouter = express.Router();
 adminRouter.use(AdminController.authenticate as any);

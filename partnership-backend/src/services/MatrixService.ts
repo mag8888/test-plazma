@@ -1,127 +1,232 @@
-import { Avatar, IAvatar } from '../models/Avatar';
+import { Avatar, AvatarType, IAvatar } from '../models/Avatar';
 import { User } from '../models/User';
+import { AvatarPurchase } from '../models/AvatarPurchase';
+import { Transaction, TransactionType } from '../models/Transaction';
 import mongoose from 'mongoose';
-import { FinanceService } from './FinanceService';
+
+// Avatar costs and subscription periods
+const AVATAR_CONFIG = {
+    BASIC: { cost: 20, subscriptionMonths: 1 },
+    ADVANCED: { cost: 100, subscriptionMonths: 12 },
+    PREMIUM: { cost: 1000, subscriptionMonths: null } // Lifetime
+};
+
+const PREMIUM_AVATAR_LIMIT = 25;
 
 export class MatrixService {
 
-    // Place a new avatar in the tree
-    static async placeAvatar(ownerId: string, tariff: string, referrerId?: string): Promise<IAvatar> {
-        const owner = await User.findById(ownerId);
-        if (!owner) throw new Error('Owner not found');
-
-        // Create the new avatar
-        const newAvatar = new Avatar({
-            owner: ownerId,
-            tariff,
-            level: 0, // Starts at 0, "Guest" state equivalent for structure? Or Level 1? Spec says "Avatar ... starts working". Let's say Level 0 means "Just placed".
-            partners: []
+    /**
+     * Check if user has active subscription (any avatar with valid subscription)
+     */
+    static async hasActiveSubscription(userId: mongoose.Types.ObjectId): Promise<boolean> {
+        const now = new Date();
+        const activeAvatar = await Avatar.findOne({
+            owner: userId,
+            isActive: true,
+            $or: [
+                { subscriptionExpires: { $gt: now } }, // Not expired
+                { subscriptionExpires: null } // Lifetime (PREMIUM)
+            ]
         });
+        return !!activeAvatar;
+    }
 
+    /**
+     * Check premium avatar limit
+     */
+    static async checkPremiumLimit(): Promise<boolean> {
+        const count = await Avatar.countDocuments({ type: AvatarType.PREMIUM, isActive: true });
+        return count < PREMIUM_AVATAR_LIMIT;
+    }
+
+    /**
+     * Find the "hungriest" parent avatar of the same type
+     * (avatar with fewest children, prioritizing lower levels)
+     */
+    static async findHungryParent(type: AvatarType, excludeOwner?: mongoose.Types.ObjectId): Promise<IAvatar | null> {
+        // Find all avatars of this type with less than 3 partners
+        const candidates = await Avatar.find({
+            type,
+            isActive: true,
+            owner: { $ne: excludeOwner },
+            $expr: { $lt: [{ $size: "$partners" }, 3] }
+        }).populate('owner').sort({ level: 1, 'partners': 1 });
+
+        if (candidates.length === 0) return null;
+
+        // Return the one with fewest partners (already sorted)
+        return candidates[0];
+    }
+
+    /**
+     * Place avatar in matrix
+     * Priority: referrer's avatar of same type > hungry parent
+     */
+    static async placeAvatar(
+        newAvatar: IAvatar,
+        referrerId?: mongoose.Types.ObjectId
+    ): Promise<{ parent: IAvatar | null }> {
         let parentAvatar: IAvatar | null = null;
 
-        // Find placement
+        // Try to find referrer's avatar of same type
         if (referrerId) {
-            // Find referrer's avatar (or global root if structure is shared?)
-            // Assuming each user builds their own structure, but "System puts avatar under first unfilled in structure".
-            // Usually this means Referrer's structure.
-            const referrerUser = await User.findById(referrerId);
-            if (referrerUser) {
-                // Find referrer's active avatar (matching tariff? or any?)
-                // Spec: "Subscription = Avatar".
-                // Let's assume we look for the Referrer's oldest active avatar to place under.
-                const referrerAvatar = await Avatar.findOne({ owner: referrerId, isActive: true }).sort({ createdAt: 1 });
-
-                if (referrerAvatar) {
-                    parentAvatar = await this.findFirstEmptySlot(referrerAvatar);
-                }
-            }
+            parentAvatar = await Avatar.findOne({
+                owner: referrerId,
+                type: newAvatar.type,
+                isActive: true,
+                $expr: { $lt: [{ $size: "$partners" }, 3] } // Has space
+            });
         }
 
-        // If no parent found (e.g. no referrer or referrer has no avatar), place at root (null parent) or Admin?
-        // For now, if no parent, it's a root node.
+        // If no referrer avatar or it's full, find hungry parent
+        if (!parentAvatar) {
+            parentAvatar = await this.findHungryParent(newAvatar.type, newAvatar.owner);
+        }
 
+        // Update relationships
         if (parentAvatar) {
-            newAvatar.parent = parentAvatar._id as mongoose.Types.ObjectId;
-            parentAvatar.partners.push(newAvatar._id as mongoose.Types.ObjectId);
-            await newAvatar.save();
+            newAvatar.parent = parentAvatar._id;
+            newAvatar.level = parentAvatar.level + 1;
+
+            parentAvatar.partners.push(newAvatar._id);
             await parentAvatar.save();
-
-            // Trigger generic level check upwards?
-            await this.checkLevelUpRecursively(parentAvatar);
-        } else {
-            await newAvatar.save();
         }
 
-        return newAvatar;
+        await newAvatar.save();
+        return { parent: parentAvatar };
     }
 
-    // BFS to find first node with < 3 partners
-    static async findFirstEmptySlot(root: IAvatar): Promise<IAvatar> {
-        const queue: IAvatar[] = [root];
+    /**
+     * Distribute bonuses on avatar purchase
+     * 50% green to referrer (if has subscription)
+     * 50% yellow to parent avatar owner
+     */
+    static async distributeBonus(
+        buyer: mongoose.Types.ObjectId,
+        avatarId: mongoose.Types.ObjectId,
+        type: AvatarType,
+        cost: number,
+        parentAvatar: IAvatar | null
+    ): Promise<void> {
+        const buyerUser = await User.findById(buyer);
+        if (!buyerUser) return;
 
-        while (queue.length > 0) {
-            const current = queue.shift()!;
+        const halfCost = cost / 2;
 
-            // Reload current to ensure partners are populated if needed? 
-            // Assuming we need to fetch partners. The queue should store populated docs or we fetch.
-            // Better: Fetch partners of current.
-            const populatedCurrent = await Avatar.findById(current._id).populate('partners');
-            if (!populatedCurrent) continue;
+        // Green bonus to referrer (if exists and has subscription)
+        if (buyerUser.referrer) {
+            const referrer = await User.findById(buyerUser.referrer);
+            if (referrer) {
+                const hasSubscription = await this.hasActiveSubscription(referrer._id);
 
-            if (populatedCurrent.partners.length < 3) {
-                return populatedCurrent;
-            }
+                if (hasSubscription) {
+                    referrer.greenBalance = (referrer.greenBalance || 0) + halfCost;
+                    await referrer.save();
 
-            // Add partners to queue
-            queue.push(...(populatedCurrent.partners as unknown as IAvatar[]));
-        }
+                    // Log transaction
+                    await Transaction.create({
+                        user: referrer._id,
+                        amount: halfCost,
+                        type: TransactionType.AVATAR_BONUS,
+                        description: `Green bonus: ${type} avatar purchase by ${buyerUser.username}`
+                    });
 
-        return root; // Fallback, shouldn't happen if loop logic is right
-    }
-
-    // Recursive check for level updates
-    static async checkLevelUpRecursively(avatar: IAvatar) {
-        if (!avatar) return;
-
-        // Reload to get fresh state
-        const current = await Avatar.findById(avatar._id).populate('partners');
-        if (!current) return;
-        if (current.isLevel5Closed) return; // Already finished
-
-        // Logic: To reach Level X, need 3 partners of Level X-1 (or same level? "3 partners of 4th level" -> Close 5th)
-        // Interpret: To be Level 1, need 3 partners of Level 0.
-        // To be Level 2, need 3 partners of Level 1.
-        // ...
-        // To be Level 5, need 3 partners of Level 4.
-
-        const requiredLevel = current.level; // Partners must be at this level to push me up? 
-        // Wait. If I am Level 0. I need 3 partners of Level 0 to become Level 1?
-        // If so:
-        // check partners.
-
-        const validPartners = (current.partners as unknown as IAvatar[]).filter(p => p.level >= current.level);
-
-        if (validPartners.length === 3) {
-            // Level Up!
-            current.level += 1;
-            await current.save();
-
-            console.log(`Avatar ${current._id} leveled up to ${current.level}`);
-
-            if (current.level === 5) {
-                current.isLevel5Closed = true;
-                await current.save();
-                await FinanceService.payoutLevel5(current);
-            }
-
-            // Recurse up
-            if (current.parent) {
-                const parent = await Avatar.findById(current.parent);
-                if (parent) {
-                    await this.checkLevelUpRecursively(parent);
+                    // Log in purchase record
+                    await AvatarPurchase.create({
+                        buyer,
+                        avatarId,
+                        type,
+                        cost,
+                        referrerBonus: halfCost,
+                        referrerId: referrer._id,
+                        parentBonus: 0
+                    });
                 }
             }
         }
+
+        // Yellow bonus to parent avatar owner
+        if (parentAvatar) {
+            const parentOwner = await User.findById(parentAvatar.owner);
+            if (parentOwner) {
+                parentOwner.yellowBalance = (parentOwner.yellowBalance || 0) + halfCost;
+                await parentOwner.save();
+
+                // Log transaction
+                await Transaction.create({
+                    user: parentOwner._id,
+                    amount: halfCost,
+                    type: TransactionType.AVATAR_BONUS,
+                    description: `Yellow bonus: ${type} avatar placed under yours`
+                });
+
+                // Update purchase record
+                await AvatarPurchase.findOneAndUpdate(
+                    { avatarId },
+                    {
+                        parentBonus: halfCost,
+                        parentAvatarId: parentAvatar._id,
+                        parentOwnerId: parentOwner._id
+                    }
+                );
+            }
+        }
+    }
+
+    /**
+     * Purchase avatar
+     */
+    static async purchaseAvatar(
+        userId: mongoose.Types.ObjectId,
+        type: AvatarType
+    ): Promise<{ success: boolean; error?: string; avatar?: IAvatar }> {
+        const config = AVATAR_CONFIG[type];
+        const user = await User.findById(userId);
+
+        if (!user) {
+            return { success: false, error: 'User not found' };
+        }
+
+        // Check premium limit
+        if (type === AvatarType.PREMIUM) {
+            const canPurchase = await this.checkPremiumLimit();
+            if (!canPurchase) {
+                return { success: false, error: 'Premium avatar limit reached (25 max)' };
+            }
+        }
+
+        // Check balance
+        if ((user.greenBalance || 0) < config.cost) {
+            return { success: false, error: 'Insufficient green balance' };
+        }
+
+        // Deduct cost
+        user.greenBalance = (user.greenBalance || 0) - config.cost;
+        await user.save();
+
+        // Calculate subscription expiry
+        let subscriptionExpires: Date | null = null;
+        if (config.subscriptionMonths) {
+            subscriptionExpires = new Date();
+            subscriptionExpires.setMonth(subscriptionExpires.getMonth() + config.subscriptionMonths);
+        }
+
+        // Create avatar
+        const newAvatar = new Avatar({
+            owner: userId,
+            type,
+            cost: config.cost,
+            subscriptionExpires,
+            level: 1,
+            isActive: true
+        });
+
+        // Place in matrix
+        const { parent } = await this.placeAvatar(newAvatar, user.referrer);
+
+        // Distribute bonuses
+        await this.distributeBonus(userId, newAvatar._id, type, config.cost, parent);
+
+        return { success: true, avatar: newAvatar };
     }
 }

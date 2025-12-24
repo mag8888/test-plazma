@@ -233,4 +233,74 @@ export class PartnershipController {
             res.status(500).json({ error: error.message });
         }
     }
+
+    // NEW AVATAR SYSTEM ENDPOINTS
+
+    /**
+     * Purchase avatar
+     */
+    static async purchaseAvatar(req: Request, res: Response) {
+        try {
+            const { userId, type } = req.body;
+
+            if (!userId || !type) {
+                return res.status(400).json({ error: 'userId and type are required' });
+            }
+
+            const result = await MatrixService.purchaseAvatar(
+                new mongoose.Types.ObjectId(userId),
+                type
+            );
+
+            if (!result.success) {
+                return res.status(400).json({ error: result.error });
+            }
+
+            res.json({ success: true, avatar: result.avatar });
+        } catch (error: any) {
+            console.error('Avatar purchase error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    /**
+     * Get user's avatars with subscription status
+     */
+    static async getMyAvatars(req: Request, res: Response) {
+        try {
+            const { userId } = req.params;
+
+            const avatars = await Avatar.find({
+                owner: userId,
+                isActive: true
+            }).populate('parent').sort({ createdAt: -1 });
+
+            // Check subscription status
+            const now = new Date();
+            const avatarsWithStatus = avatars.map(avatar => ({
+                ...avatar.toObject(),
+                hasActiveSubscription: !avatar.subscriptionExpires || avatar.subscriptionExpires > now
+            }));
+
+            res.json({ avatars: avatarsWithStatus });
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    /**
+     * Get premium avatar count (for limit display)
+     */
+    static async getPremiumCount(req: Request, res: Response) {
+        try {
+            const count = await Avatar.countDocuments({
+                type: 'PREMIUM',
+                isActive: true
+            });
+
+            res.json({ count, limit: 25, available: Math.max(0, 25 - count) });
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
