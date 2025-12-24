@@ -89,9 +89,10 @@ app.use('/api/partnership', async (req, res) => {
 
     // console.log(`Proxying ${req.method} ${req.originalUrl} -> ${url}`);
 
-    try {
-        const fetch = (await import('node-fetch')).default;
+    // console.log(`Proxying ${req.method} ${req.originalUrl} -> ${url}`);
 
+    try {
+        // Use native fetch (Node 18+)
         // Strip the body for GET/HEAD, otherwise pass it
         const body = (req.method === 'GET' || req.method === 'HEAD') ? undefined : JSON.stringify(req.body);
 
@@ -107,7 +108,7 @@ app.use('/api/partnership', async (req, res) => {
 
         // Forward status and headers
         res.status(response.status);
-        response.headers.forEach((v, k) => res.setHeader(k, v));
+        response.headers.forEach((v: string, k: string) => res.setHeader(k, v));
 
         // Forward text/json body
         const text = await response.text();
