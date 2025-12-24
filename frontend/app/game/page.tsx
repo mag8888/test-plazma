@@ -115,9 +115,26 @@ function GameContent() {
             if (me) {
                 setIsReady(me.isReady);
                 if (me.dream) setDream(me.dream);
-                if (me.token) setToken(me.token);
-                // Sync display name if server has newer one (optional, usually local source of truth for edit)
-                // if (me.name) setDisplayName(me.name);
+
+                // Auto-select free token if current is taken
+                const availableTokens = ['🦁', '🦅', '🦊', '🐻', '🐅', '🐺', '🐘', '🦈', '🦉', '🐬'];
+                const takenTokens = updatedRoom.players
+                    .filter(p => p.userId !== userId)
+                    .map(p => p.token);
+
+                const currentTokenTaken = takenTokens.includes(token);
+
+                if (currentTokenTaken) {
+                    // Find first available token
+                    const freeToken = availableTokens.find(t => !takenTokens.includes(t));
+                    if (freeToken) {
+                        console.log(`Token ${token} is taken, auto-selecting ${freeToken}`);
+                        setToken(freeToken);
+                    }
+                } else if (me.token && !token) {
+                    // Only update from server if we haven't selected one
+                    setToken(me.token);
+                }
             }
         });
 
