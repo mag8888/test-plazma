@@ -78,6 +78,47 @@ app.use('/admin', (req, res, next) => {
     next();
 });
 
+// Proxy to Partnership Backend (Internal)
+// Frontend calls /api/partnership/user -> We forward to http://localhost:4000/api/user
+app.use('/api/partnership', async (req, res) => {
+    const PARTNERSHIP_URL = 'http://localhost:4000/api'; // Internal URL
+    const url = `${PARTNERSHIP_URL}${req.url}`; // req.url includes /user, /stats etc. because app.use strips the prefix? 
+    // Wait, express app.use('/api/partnership') STRIPS the prefix.
+    // So req.url will be just '/user'.
+    // So http://localhost:4000/api + /user = http://localhost:4000/api/user. Correct.
+
+    // console.log(`Proxying ${req.method} ${req.originalUrl} -> ${url}`);
+
+    try {
+        const fetch = (await import('node-fetch')).default;
+
+        // Strip the body for GET/HEAD, otherwise pass it
+        const body = (req.method === 'GET' || req.method === 'HEAD') ? undefined : JSON.stringify(req.body);
+
+        const response = await fetch(url, {
+            method: req.method,
+            headers: {
+                'Content-Type': 'application/json',
+                ...req.headers as any,
+                host: 'localhost:4000' // Override host
+            },
+            body: body
+        });
+
+        // Forward status and headers
+        res.status(response.status);
+        response.headers.forEach((v, k) => res.setHeader(k, v));
+
+        // Forward text/json body
+        const text = await response.text();
+        res.send(text);
+
+    } catch (e) {
+        console.error('Partnership Proxy Error:', e);
+        res.status(502).json({ error: 'Partnership Service Unavailable' });
+    }
+});
+
 // Explicit Admin Route (Force Serve)
 app.get('/admin', (req, res) => {
     // Check for admin.html or fall back to index.html
