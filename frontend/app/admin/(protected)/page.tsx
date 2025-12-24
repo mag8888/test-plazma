@@ -78,7 +78,7 @@ export default function AdminPage() {
 
     const login = () => {
         if (secret) {
-            // localStorage.setItem('admin_secret', secret); // disable persistence as requested
+            localStorage.setItem('admin_secret', secret); // persistence enabled
             setIsAuthenticated(true);
             fetchStats(secret);
             searchUsers(secret);
@@ -86,7 +86,7 @@ export default function AdminPage() {
     };
 
     const logout = () => {
-        // localStorage.removeItem('admin_secret');
+        localStorage.removeItem('admin_secret');
         setSecret('');
         setIsAuthenticated(false);
         // router.push('/admin/login'); // No need to redirect, just show login state
