@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
-import { part nershipApi } from '../../../lib/partnershipApi';
+import { partnershipApi } from '../../../lib/partnershipApi';
 import CardEditor from './CardEditor';
 
 const API_URL = '/api/partnership'; // Use internal proxy for Monolith
