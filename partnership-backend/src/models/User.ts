@@ -9,6 +9,7 @@ export interface IUser extends Document {
     yellowBalance: number;
     balanceRed: number;
     rating: number;
+    referredBy?: string; // Legacy String Referrer
     referrer?: mongoose.Types.ObjectId; // Ref to User
     createdAt: Date;
 }
@@ -22,6 +23,7 @@ const UserSchema: Schema = new Schema({
     yellowBalance: { type: Number, default: 0 },
     balanceRed: { type: Number, default: 0 }, // Game Balance
     rating: { type: Number, default: 1000 },
+    referredBy: { type: String },
     referrer: { type: Schema.Types.ObjectId, ref: 'User' },
     createdAt: { type: Date, default: Date.now }
 });

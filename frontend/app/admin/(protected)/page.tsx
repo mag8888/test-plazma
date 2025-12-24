@@ -344,11 +344,29 @@ export default function AdminPage() {
                                     {users.map(u => (
                                         <tr key={u._id} className="hover:bg-slate-700/50 transition">
                                             <td className="p-4 font-bold text-white">
-                                                {u.username || 'No Name'}
+                                                {u.username ? (
+                                                    <a
+                                                        href={`https://t.me/${u.username}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="text-white hover:text-blue-400 hover:underline"
+                                                    >
+                                                        {u.username}
+                                                    </a>
+                                                ) : 'No Name'}
                                                 <div className="text-xs text-slate-500 font-mono">{u.telegram_id}</div>
                                             </td>
                                             <td className="p-4 text-slate-300">
-                                                {u.referrer ? (u.referrer.username || u.referrer.telegram_id || u.referrer) : '-'}
+                                                {u.referrer ? (
+                                                    <a
+                                                        href={`https://t.me/${u.referrer.username}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        className="hover:text-blue-400 hover:underline"
+                                                    >
+                                                        {u.referrer.username || u.referrer.telegram_id || u.referrer}
+                                                    </a>
+                                                ) : (u.referredBy || '-')}
                                             </td>
                                             <td className="p-4 text-green-400 font-bold">${u.greenBalance}</td>
                                             <td className="p-4 text-yellow-400 font-bold">${u.yellowBalance}</td>
