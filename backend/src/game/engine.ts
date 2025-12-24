@@ -552,6 +552,12 @@ export class GameEngine {
             return 0;
         }
 
+        // Phase check BEFORE rolling
+        if (this.state.phase !== 'ROLL') {
+            console.log(`[Engine.rollDice] BLOCKED: Phase is ${this.state.phase}, expected ROLL. Current player: ${player.name}`);
+            return { total: 0, values: [] }; // Prevent double roll
+        }
+
         // Validate dice count
         let validCount = 1;
         if (player.isFastTrack) validCount = 2; // Default 2 for FT
@@ -594,9 +600,6 @@ export class GameEngine {
         // Logic check: If total is somehow 0 (shouldn't happen), force 1
         if (total === 0) total = 1;
 
-        // Phase check? 
-        if (this.state.phase !== 'ROLL') return { total: 0, values: [] }; // Prevent double roll
-
         // Move Player
         this.movePlayer(total);
 
@@ -609,6 +612,7 @@ export class GameEngine {
             this.addLog(`${player.name} rolled ${total}`);
         }
 
+        console.log(`[Engine.rollDice] SUCCESS: ${player.name} rolled ${total}, Phase now: ${this.state.phase}`);
         return { total, values };
     }
 
