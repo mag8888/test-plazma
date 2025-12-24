@@ -15,12 +15,24 @@ function HomeContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [mode, setMode] = useState<'LOGIN' | 'REGISTER'>('LOGIN');
+  const [hasAuthParam, setHasAuthParam] = useState(false);
+
+  // Check for auth parameter in URL
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const authCode = urlParams.get('auth');
+    if (authCode) {
+      console.log('🔐 Auth parameter detected, waiting for magic login...');
+      setHasAuthParam(true);
+    }
+  }, []);
 
   useEffect(() => {
+    console.log('📍 [page.tsx] isReady:', isReady, 'user:', !!user, 'hasAuthParam:', hasAuthParam);
     if (isReady && user) {
       router.replace('/home');
     }
-  }, [user, isReady, router]);
+  }, [user, isReady, router, hasAuthParam]);
 
   const handleUserLogin = async () => {
     if (!username || !password) {
@@ -83,7 +95,7 @@ function HomeContent() {
           <p className="text-slate-400 text-sm">Финансовая стратегия</p>
         </div>
 
-        {isReady && !user ? (
+        {isReady && !user && !hasAuthParam ? (
           <div className="w-full bg-slate-900/80 backdrop-blur-xl border border-white/5 p-6 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">{mode === 'LOGIN' ? 'Вход' : 'Регистрация'}</h2>
@@ -138,7 +150,7 @@ function HomeContent() {
         ) : (
           <div className="flex flex-col items-center gap-3 animate-pulse">
             <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-slate-500 text-xs">Загрузка...</p>
+            <p className="text-slate-500 text-xs">{hasAuthParam ? 'Авторизация...' : 'Загрузка...'}</p>
           </div>
         )}
       </div>
