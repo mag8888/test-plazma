@@ -55,16 +55,16 @@ export default function AdminPage() {
         }
     };
 
-    // Removed auto-login useEffect to prevent 403 loops and enforce manual login
-    // useEffect(() => {
-    //     const stored = localStorage.getItem('admin_secret');
-    //     if (stored) {
-    //         setSecret(stored);
-    //         setIsAuthenticated(true);
-    //         fetchStats(stored);
-    //         searchUsers(stored); // Load users on mount
-    //     }
-    // }, []);
+    // Auto-login from storage
+    useEffect(() => {
+        const stored = localStorage.getItem('admin_secret');
+        if (stored) {
+            setSecret(stored);
+            setIsAuthenticated(true);
+            fetchStats(stored);
+            searchUsers(stored);
+        }
+    }, []);
 
     // Also reload when switching tabs
     useEffect(() => {
