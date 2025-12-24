@@ -15,6 +15,12 @@ export interface IAvatar extends Document {
     level: number;
     subscriptionExpires?: Date; // null = lifetime (PREMIUM)
     isActive: boolean;
+
+    // Level progression tracking
+    levelProgressionAccumulated: number; // Yellow bonuses accumulated for next level
+    lastLevelUpAt?: Date; // Timestamp of last level transition
+    isClosed: boolean; // True when level 5 reached
+
     createdAt: Date;
 }
 
@@ -24,9 +30,15 @@ const AvatarSchema: Schema = new Schema({
     cost: { type: Number, required: true },
     parent: { type: Schema.Types.ObjectId, ref: 'Avatar' },
     partners: [{ type: Schema.Types.ObjectId, ref: 'Avatar' }], // Max 3
-    level: { type: Number, default: 1 },
+    level: { type: Number, default: 0 }, // Start at 0
     subscriptionExpires: { type: Date }, // null for PREMIUM
     isActive: { type: Boolean, default: true },
+
+    // Level progression
+    levelProgressionAccumulated: { type: Number, default: 0 },
+    lastLevelUpAt: { type: Date },
+    isClosed: { type: Boolean, default: false },
+
     createdAt: { type: Date, default: Date.now }
 });
 

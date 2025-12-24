@@ -2,6 +2,7 @@ import { Avatar, AvatarType, IAvatar } from '../models/Avatar';
 import { User } from '../models/User';
 import { AvatarPurchase } from '../models/AvatarPurchase';
 import { Transaction, TransactionType } from '../models/Transaction';
+import { LevelTransition } from '../models/LevelTransition';
 import mongoose from 'mongoose';
 
 // Avatar costs and subscription periods
@@ -12,6 +13,9 @@ const AVATAR_CONFIG = {
 };
 
 const PREMIUM_AVATAR_LIMIT = 25;
+
+// Level progression yellow bonuses (per avatar reaching this level)
+const LEVEL_BONUSES = [50, 100, 200, 400, 800]; // Levels 0→1, 1→2, 2→3, 3→4, 4→5
 
 export class MatrixService {
 
@@ -86,14 +90,123 @@ export class MatrixService {
         // Update relationships
         if (parentAvatar) {
             newAvatar.parent = parentAvatar._id;
-            newAvatar.level = parentAvatar.level + 1;
+            newAvatar.level = 0; // Always start at level 0
 
             parentAvatar.partners.push(newAvatar._id);
             await parentAvatar.save();
+
+            // Check if parent can level up now
+            await this.checkLevelProgression(parentAvatar);
         }
 
         await newAvatar.save();
         return { parent: parentAvatar };
+    }
+
+    /**
+     * Calculate yellow bonus for a level transition
+     */
+    static calculateYellowBonus(fromLevel: number): number {
+        return LEVEL_BONUSES[fromLevel] || 0;
+    }
+
+    /**
+     * Check and trigger level progression for an avatar
+     * Called after adding a new partner
+     */
+    static async checkLevelProgression(avatar: IAvatar): Promise<void> {
+        // Count partners at avatar's current level
+        const partners = await Avatar.find({
+            _id: { $in: avatar.partners },
+            level: avatar.level
+        });
+
+        // Need exactly 3 partners of same level to progress
+        if (partners.length !== 3) return;
+
+        const fromLevel = avatar.level;
+        const toLevel = fromLevel + 1;
+        const yellowBonus = this.calculateYellowBonus(fromLevel);
+        const totalFromPartners = yellowBonus * 3;
+
+        // Level 5 special case: all to owner as green
+        if (toLevel === 5) {
+            const owner = await User.findById(avatar.owner);
+            if (owner) {
+                owner.greenBalance = (owner.greenBalance || 0) + totalFromPartners;
+                await owner.save();
+
+                // Log transaction
+                await Transaction.create({
+                    user: owner._id,
+                    amount: totalFromPartners,
+                    type: TransactionType.AVATAR_BONUS,
+                    description: `Level 5 closure: ${totalFromPartners}$ from avatar matrix completion`
+                });
+
+                // Log level transition
+                await LevelTransition.create({
+                    avatar: avatar._id,
+                    fromLevel,
+                    toLevel,
+                    yellowBonusSent: totalFromPartners,
+                    ownerPayout: totalFromPartners
+                });
+            }
+
+            avatar.level = 5;
+            avatar.isClosed = true;
+            avatar.lastLevelUpAt = new Date();
+            await avatar.save();
+
+            return;
+        }
+
+        // Levels 0-4: distribute bonuses
+        const owner = await User.findById(avatar.owner);
+        if (!owner) return;
+
+        const referrerBonus = totalFromPartners / 3; // 1/3 to referrer
+        const progressionBonus = (totalFromPartners * 2) / 3; // 2/3 for progression
+
+        // Pay referrer if has subscription
+        if (owner.referrer) {
+            const referrer = await User.findById(owner.referrer);
+            if (referrer && await this.hasActiveSubscription(referrer._id)) {
+                referrer.greenBalance = (referrer.greenBalance || 0) + referrerBonus;
+                await referrer.save();
+
+                await Transaction.create({
+                    user: referrer._id,
+                    amount: referrerBonus,
+                    type: TransactionType.AVATAR_BONUS,
+                    description: `Referral bonus: level ${toLevel} progression of ${owner.username}'s avatar`
+                });
+            }
+        }
+
+        // Accumulate progression bonus
+        avatar.levelProgressionAccumulated = (avatar.levelProgressionAccumulated || 0) + progressionBonus;
+        avatar.level = toLevel;
+        avatar.lastLevelUpAt = new Date();
+        await avatar.save();
+
+        // Log transition
+        await LevelTransition.create({
+            avatar: avatar._id,
+            fromLevel,
+            toLevel,
+            yellowBonusSent: totalFromPartners,
+            referrerBonus: owner.referrer ? referrerBonus : 0
+        });
+
+        // Recursively check if parent can now level up
+        if (avatar.parent) {
+            const parentAvatar = await Avatar.findById(avatar.parent);
+            if (parentAvatar) {
+                await this.checkLevelProgression(parentAvatar);
+            }
+        }
     }
 
     /**
@@ -217,7 +330,7 @@ export class MatrixService {
             type,
             cost: config.cost,
             subscriptionExpires,
-            level: 1,
+            level: 0, // Start at level 0
             isActive: true
         });
 
