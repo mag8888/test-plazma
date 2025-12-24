@@ -401,7 +401,18 @@ export default function AdminPage() {
                                             <td className="p-4 text-green-400 font-bold">${u.greenBalance}</td>
                                             <td className="p-4 text-yellow-400 font-bold">${u.yellowBalance}</td>
                                             <td className="p-4 text-red-400 font-bold">${u.balanceRed || 0}</td>
-                                            <td className="p-4 text-purple-400 font-bold">{u.rating || 1000}</td>
+                                            <td className="p-4 text-purple-400 font-bold">{u.rating || 100}</td>
+                                            <td className="p-4">
+                                                {u.avatarCounts && u.avatarCounts.total > 0 ? (
+                                                    <div className="flex gap-1 text-xs">
+                                                        {u.avatarCounts.basic > 0 && <span className="bg-green-900/30 border border-green-500/30 px-2 py-1 rounded text-green-400">{u.avatarCounts.basic}</span>}
+                                                        {u.avatarCounts.advanced > 0 && <span className="bg-blue-900/30 border border-blue-500/30 px-2 py-1 rounded text-blue-400">{u.avatarCounts.advanced}</span>}
+                                                        {u.avatarCounts.premium > 0 && <span className="bg-yellow-900/30 border border-yellow-500/30 px-2 py-1 rounded text-yellow-400">{u.avatarCounts.premium}</span>}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-slate-600">-</span>
+                                                )}
+                                            </td>
                                             <td className="p-4 flex gap-2">
                                                 <button
                                                     onClick={() => setSelectedUser(u)}

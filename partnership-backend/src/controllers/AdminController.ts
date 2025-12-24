@@ -49,14 +49,27 @@ export class AdminController {
             }
 
             const users = await User.find(filter)
+                .populate('referrer', 'username')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit)
-                .populate('referrer', 'username telegram_id');
+                .lean();
 
-            const total = await User.countDocuments(filter);
+            const totalCount = await User.countDocuments(filter);
 
-            res.json({ users, total, page: pageNum, pages: Math.ceil(total / limit) });
+            // Add avatar counts for each user
+            const usersWithAvatars = await Promise.all(users.map(async (user) => {
+                const avatars = await Avatar.find({ owner: user._id, isActive: true });
+                const avatarCounts = {
+                    basic: avatars.filter(a => a.type === 'BASIC').length,
+                    advanced: avatars.filter(a => a.type === 'ADVANCED').length,
+                    premium: avatars.filter(a => a.type === 'PREMIUM').length,
+                    total: avatars.length
+                };
+                return { ...user, avatarCounts };
+            }));
+
+            res.json({ users: usersWithAvatars, totalCount });
         } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
