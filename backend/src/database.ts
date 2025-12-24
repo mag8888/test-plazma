@@ -26,7 +26,7 @@ export const connectDatabase = async () => {
         }
 
         mongoose.set('strictQuery', false);
-        await mongoose.connect(mongoUrl);
+        await mongoose.connect(mongoUrl, { dbName: 'moneo' });
         console.log('Successfully connected to MongoDB');
 
         // Seed users after connection

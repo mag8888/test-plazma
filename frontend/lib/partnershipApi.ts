@@ -2,17 +2,10 @@ import { getBackendUrl } from './config';
 
 // 1. Ensure Protocol for Partnership API
 const getPartnershipUrl = () => {
-    let url = (process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || '').trim();
-    if (!url) return '/api/partnership'; // Use relative Proxy path by default
-    url = url.replace(/^["']|["']$/g, '');
-    if (!url.startsWith('http')) {
-        url = `https://${url}`;
-    }
-    url = url.replace(/\/$/, '');
-    if (!url.endsWith('/api')) {
-        url = `${url}/api`;
-    }
-    return url;
+    // Force use of internal proxy for Monolith deployment
+    // This solves issues where env var is set to domain name without protocol
+    // or when CORS/Mixed Content would block direct access.
+    return '/api/partnership';
 };
 
 const API_URL = getPartnershipUrl();
