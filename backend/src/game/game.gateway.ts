@@ -537,338 +537,337 @@ export class GameGateway {
                 const state = game.getState();
                 this.io.to(roomId).emit('dice_rolled', { roll, diceValues, state });
                 saveState(roomId, game);
-            }
             });
 
-        socket.on('donate_charity', ({ roomId }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                game.donateCharity(socket.id);
-                const state = game.getState();
-                this.io.to(roomId).emit('state_updated', { state });
-                saveState(roomId, game);
-            }
-        });
-
-        socket.on('skip_charity', ({ roomId }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                game.skipCharity(socket.id);
-                const state = game.getState();
-                this.io.to(roomId).emit('state_updated', { state }); // Or turn_ended if it ends turn
-                saveState(roomId, game);
-            }
-        });
-
-        socket.on('take_loan', ({ roomId, amount }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                try {
-                    game.takeLoan(socket.id, amount);
+            socket.on('donate_charity', ({ roomId }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    game.donateCharity(socket.id);
                     const state = game.getState();
                     this.io.to(roomId).emit('state_updated', { state });
                     saveState(roomId, game);
-                } catch (e: any) {
-                    socket.emit('error', e.message);
                 }
-            }
-        });
+            });
 
-        socket.on('repay_loan', ({ roomId, amount }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                try {
-                    game.repayLoan(socket.id, amount);
+            socket.on('skip_charity', ({ roomId }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    game.skipCharity(socket.id);
                     const state = game.getState();
-                    this.io.to(roomId).emit('state_updated', { state });
+                    this.io.to(roomId).emit('state_updated', { state }); // Or turn_ended if it ends turn
                     saveState(roomId, game);
-                } catch (e: any) {
-                    socket.emit('error', e.message);
                 }
-            }
-        });
+            });
 
-        socket.on('transfer_funds', ({ roomId, toId, amount }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                try {
-                    game.transferFunds(socket.id, toId, amount);
-                    const state = game.getState();
-                    this.io.to(roomId).emit('state_updated', { state });
-                    saveState(roomId, game);
-                } catch (e: any) {
-                    socket.emit('error', e.message);
-                }
-            }
-        });
-
-        socket.on('buy_asset', ({ roomId, quantity }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                try {
-                    const result: any = game.buyAsset(socket.id, quantity);
-                    const state = game.getState();
-
-                    if (result && result.mlmRoll) {
-                        this.io.to(roomId).emit('dice_rolled', {
-                            roll: result.mlmRoll,
-                            state,
-                            type: 'MLM',
-                            message: `Recruited ${result.mlmRoll} Partners! +$${result.mlmCashflow}/mo`
-                        });
-                    }
-                    this.io.to(roomId).emit('state_updated', { state });
-                    saveState(roomId, game);
-                } catch (e: any) {
-                    socket.emit('error', e.message);
-                }
-            }
-        });
-
-        socket.on('resolve_opportunity', ({ roomId, choice }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                try {
-                    game.resolveOpportunity(choice);
-                    const state = game.getState();
-                    this.io.to(roomId).emit('state_updated', { state });
-                    saveState(roomId, game);
-                } catch (e: any) {
-                    socket.emit('error', e.message);
-                }
-            }
-        });
-
-        socket.on('decision_downsized', ({ roomId, choice }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                try {
-                    game.handleDownsizedDecision(socket.id, choice);
-                    const state = game.getState();
-                    this.io.to(roomId).emit('state_updated', { state });
-                    saveState(roomId, game);
-                } catch (e: any) {
-                    socket.emit('error', e.message);
-                }
-            }
-        });
-
-        socket.on('sell_stock', ({ roomId, quantity }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                try {
-                    game.sellStock(socket.id, quantity);
-                    const state = game.getState();
-                    this.io.to(roomId).emit('state_updated', { state });
-                    saveState(roomId, game);
-                } catch (e: any) {
-                    socket.emit('error', e.message);
-                }
-            }
-        });
-
-        socket.on('transfer_asset', ({ roomId, toPlayerId, assetIndex, quantity }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                try {
-                    game.transferAsset(socket.id, toPlayerId, assetIndex, quantity);
-                    const state = game.getState();
-                    this.io.to(roomId).emit('state_updated', { state });
-                    saveState(roomId, game);
-                } catch (e: any) {
-                    socket.emit('error', e.message);
-                }
-            }
-        });
-
-        socket.on('sell_asset', ({ roomId }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                try {
-                    game.sellAsset(socket.id);
-                    const state = game.getState();
-                    this.io.to(roomId).emit('state_updated', { state });
-                    saveState(roomId, game);
-                } catch (e: any) {
-                    socket.emit('error', e.message);
-                }
-            }
-        });
-
-        socket.on('dismiss_card', ({ roomId }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                try {
-                    game.dismissCard();
-                    const state = game.getState();
-                    this.io.to(roomId).emit('state_updated', { state });
-                    saveState(roomId, game);
-                } catch (e: any) {
-                    socket.emit('error', e.message);
-                }
-            }
-        });
-
-        // Host Grant Cash
-        socket.on('host_give_cash', ({ roomId, userId, amount }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                try {
-                    // TODO: Verify host strictly. GameEngine doesn't track socketIds.
-                    // For now relying on UI state/hidden button.
-                    // if (game.getClientId(game.state.creatorId || '') !== socket.id) return; 
-
-                    const player = game.state.players.find(p => p.id === userId);
-                    if (player) {
-                        player.cash += amount;
-                        game.addLog(`👑 Организатор подарил ${player.name} $${amount.toLocaleString()}`);
+            socket.on('take_loan', ({ roomId, amount }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.takeLoan(socket.id, amount);
                         const state = game.getState();
                         this.io.to(roomId).emit('state_updated', { state });
                         saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
                     }
-                } catch (e: any) {
-                    socket.emit('error', e.message);
                 }
-            }
-        });
+            });
 
-        socket.on('draw_deal', ({ roomId, type }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                try {
-                    game.drawDeal(socket.id, type);
-                    const state = game.getState();
-                    this.io.to(roomId).emit('state_updated', { state });
-                    saveState(roomId, game);
-                } catch (e: any) {
-                    socket.emit('error', e.message);
+            socket.on('repay_loan', ({ roomId, amount }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.repayLoan(socket.id, amount);
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
                 }
-            }
-        });
+            });
 
-        socket.on('end_turn', ({ roomId }) => {
-            const game = this.games.get(roomId);
-            if (game) {
-                // Prevent Ending Turn if Phase is ROLL (Must roll first)
-                // EXCEPTION: If player was Downsized (lastEvent.type === 'DOWNSIZED'), they can end turn even if phase stuck in ROLL (legacy/restored games)
-                if (game.getState().phase === 'BABY_ROLL') {
-                    return;
+            socket.on('transfer_funds', ({ roomId, toId, amount }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.transferFunds(socket.id, toId, amount);
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
                 }
+            });
 
-                if (game.getState().phase === 'ROLL') {
-                    const lastEvent = game.getState().lastEvent;
-                    if (lastEvent?.type !== 'DOWNSIZED') {
+            socket.on('buy_asset', ({ roomId, quantity }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        const result: any = game.buyAsset(socket.id, quantity);
+                        const state = game.getState();
+
+                        if (result && result.mlmRoll) {
+                            this.io.to(roomId).emit('dice_rolled', {
+                                roll: result.mlmRoll,
+                                state,
+                                type: 'MLM',
+                                message: `Recruited ${result.mlmRoll} Partners! +$${result.mlmCashflow}/mo`
+                            });
+                        }
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
+            socket.on('resolve_opportunity', ({ roomId, choice }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.resolveOpportunity(choice);
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
+            socket.on('decision_downsized', ({ roomId, choice }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.handleDownsizedDecision(socket.id, choice);
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
+            socket.on('sell_stock', ({ roomId, quantity }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.sellStock(socket.id, quantity);
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
+            socket.on('transfer_asset', ({ roomId, toPlayerId, assetIndex, quantity }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.transferAsset(socket.id, toPlayerId, assetIndex, quantity);
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
+            socket.on('sell_asset', ({ roomId }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.sellAsset(socket.id);
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
+            socket.on('dismiss_card', ({ roomId }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.dismissCard();
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
+            // Host Grant Cash
+            socket.on('host_give_cash', ({ roomId, userId, amount }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        // TODO: Verify host strictly. GameEngine doesn't track socketIds.
+                        // For now relying on UI state/hidden button.
+                        // if (game.getClientId(game.state.creatorId || '') !== socket.id) return; 
+
+                        const player = game.state.players.find(p => p.id === userId);
+                        if (player) {
+                            player.cash += amount;
+                            game.addLog(`👑 Организатор подарил ${player.name} $${amount.toLocaleString()}`);
+                            const state = game.getState();
+                            this.io.to(roomId).emit('state_updated', { state });
+                            saveState(roomId, game);
+                        }
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
+            socket.on('draw_deal', ({ roomId, type }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.drawDeal(socket.id, type);
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
+            socket.on('end_turn', ({ roomId }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    // Prevent Ending Turn if Phase is ROLL (Must roll first)
+                    // EXCEPTION: If player was Downsized (lastEvent.type === 'DOWNSIZED'), they can end turn even if phase stuck in ROLL (legacy/restored games)
+                    if (game.getState().phase === 'BABY_ROLL') {
                         return;
                     }
+
+                    if (game.getState().phase === 'ROLL') {
+                        const lastEvent = game.getState().lastEvent;
+                        if (lastEvent?.type !== 'DOWNSIZED') {
+                            return;
+                        }
+                    }
+                    game.endTurn();
+                    const state = game.getState();
+                    this.io.to(roomId).emit('turn_ended', { state });
+                    saveState(roomId, game);
                 }
-                game.endTurn();
-                const state = game.getState();
-                this.io.to(roomId).emit('turn_ended', { state });
-                saveState(roomId, game);
-            }
-        });
+            });
 
-        // Fast Track Entry
-        socket.on('enter_fast_track', (data) => {
-            const { roomId, userId } = data; // userId needed
-            const game = this.games.get(roomId);
-            if (game) {
-                game.enterFastTrack(userId || socket.id);
-                this.io.to(roomId).emit('state_updated', game.getState());
-                this.saveState(roomId, game);
-            }
-        });
-
-        // Chat Message
-        socket.on('chat_message', (data) => {
-            const { roomId, text, senderId, senderName, avatar } = data;
-            const game = this.games.get(roomId);
-            if (game) {
-                const message = {
-                    id: uuidv4(),
-                    senderId,
-                    senderName,
-                    text,
-                    timestamp: Date.now(),
-                    avatar
-                };
-                game.state.chat.push(message);
-
-                // Keep chat history limited (e.g., last 100 messages)
-                if (game.state.chat.length > 100) {
-                    game.state.chat.shift();
+            // Fast Track Entry
+            socket.on('enter_fast_track', (data) => {
+                const { roomId, userId } = data; // userId needed
+                const game = this.games.get(roomId);
+                if (game) {
+                    game.enterFastTrack(userId || socket.id);
+                    this.io.to(roomId).emit('state_updated', game.getState());
+                    this.saveState(roomId, game);
                 }
+            });
 
-                this.io.to(roomId).emit('state_updated', game.getState());
-                // Optional: Specific 'chat_update' if state is too big, but for now state_updated is fine
-                this.saveState(roomId, game);
-            }
-        });
+            // Chat Message
+            socket.on('chat_message', (data) => {
+                const { roomId, text, senderId, senderName, avatar } = data;
+                const game = this.games.get(roomId);
+                if (game) {
+                    const message = {
+                        id: uuidv4(),
+                        senderId,
+                        senderName,
+                        text,
+                        timestamp: Date.now(),
+                        avatar
+                    };
+                    game.state.chat.push(message);
 
-        // End Game (Host Only)
-        socket.on('end_game_host', async (data) => {
-            const { roomId, userId } = data;
-            const game = this.games.get(roomId);
-            const room = await this.roomService.getRoom(roomId);
+                    // Keep chat history limited (e.g., last 100 messages)
+                    if (game.state.chat.length > 100) {
+                        game.state.chat.shift();
+                    }
 
-            if (game && room) {
-                const rankings = game.calculateRankings();
-                game.state.rankings = rankings;
-                game.state.isGameEnded = true;
-                game.state.phase = 'END'; // Force END phase now
+                    this.io.to(roomId).emit('state_updated', game.getState());
+                    // Optional: Specific 'chat_update' if state is too big, but for now state_updated is fine
+                    this.saveState(roomId, game);
+                }
+            });
 
-                this.io.to(roomId).emit('game_over', { rankings, state: game.getState() });
+            // End Game (Host Only)
+            socket.on('end_game_host', async (data) => {
+                const { roomId, userId } = data;
+                const game = this.games.get(roomId);
+                const room = await this.roomService.getRoom(roomId);
 
-                // Update Wins in DB
-                const winnerName = rankings.find(r => r.place === 1)?.name;
-                if (winnerName) {
-                    const winnerPlayer = game.state.players.find(p => p.name === winnerName);
-                    if (winnerPlayer && winnerPlayer.userId && !winnerPlayer.userId.startsWith('guest_')) {
+                if (game && room) {
+                    const rankings = game.calculateRankings();
+                    game.state.rankings = rankings;
+                    game.state.isGameEnded = true;
+                    game.state.phase = 'END'; // Force END phase now
+
+                    this.io.to(roomId).emit('game_over', { rankings, state: game.getState() });
+
+                    // Update Wins in DB
+                    const winnerName = rankings.find(r => r.place === 1)?.name;
+                    if (winnerName) {
+                        const winnerPlayer = game.state.players.find(p => p.name === winnerName);
+                        if (winnerPlayer && winnerPlayer.userId && !winnerPlayer.userId.startsWith('guest_')) {
+                            try {
+                                await UserModel.findByIdAndUpdate(winnerPlayer.userId, { $inc: { wins: 1 } });
+                                console.log(`🏆 Updated wins for user ${winnerPlayer.userId}`);
+                            } catch (err) {
+                                console.error("Failed to update wins:", err);
+                            }
+                        }
+                    }
+
+                    this.saveState(roomId, game);
+                }
+            });
+
+            socket.on('disconnecting', async () => {
+                // User Request: Room should NOT disappear on refresh/re-entry.
+                // We disable auto-leave on disconnect for waiting rooms.
+                // Cleanup is handled by 'createRoom' (removing old rooms) or manual 'Exit' button.
+
+                /* 
+                for (const roomId of socket.rooms) {
+                    if (roomId !== socket.id) {
                         try {
-                            await UserModel.findByIdAndUpdate(winnerPlayer.userId, { $inc: { wins: 1 } });
-                            console.log(`🏆 Updated wins for user ${winnerPlayer.userId}`);
-                        } catch (err) {
-                            console.error("Failed to update wins:", err);
+                            const room = await this.roomService.getRoom(roomId);
+                            if (room && room.status === 'waiting') {
+                                console.log(`Client ${socket.id} disconnected from waiting room ${roomId} (Persistence Active)`);
+                                // await this.roomService.leaveRoom(roomId, socket.id);
+                                // Broadcast to remaining players in room
+                                // const updatedRoom = await this.roomService.getRoom(roomId);
+                                // if (updatedRoom) {
+                                //    this.io.to(roomId).emit('room_state_updated', updatedRoom);
+                                // }
+                                // const rooms = await this.roomService.getRooms();
+                                // this.io.emit('rooms_updated', rooms);
+                            }
+                        } catch (e) {
+                            console.error(`Disconnect error for room ${roomId}:`, e);
                         }
                     }
                 }
+                */
+            });
 
-                this.saveState(roomId, game);
-            }
+            socket.on('disconnect', () => {
+                console.log('Client disconnected:', socket.id);
+            });
         });
-
-        socket.on('disconnecting', async () => {
-            // User Request: Room should NOT disappear on refresh/re-entry.
-            // We disable auto-leave on disconnect for waiting rooms.
-            // Cleanup is handled by 'createRoom' (removing old rooms) or manual 'Exit' button.
-
-            /* 
-            for (const roomId of socket.rooms) {
-                if (roomId !== socket.id) {
-                    try {
-                        const room = await this.roomService.getRoom(roomId);
-                        if (room && room.status === 'waiting') {
-                            console.log(`Client ${socket.id} disconnected from waiting room ${roomId} (Persistence Active)`);
-                            // await this.roomService.leaveRoom(roomId, socket.id);
-                            // Broadcast to remaining players in room
-                            // const updatedRoom = await this.roomService.getRoom(roomId);
-                            // if (updatedRoom) {
-                            //    this.io.to(roomId).emit('room_state_updated', updatedRoom);
-                            // }
-                            // const rooms = await this.roomService.getRooms();
-                            // this.io.emit('rooms_updated', rooms);
-                        }
-                    } catch (e) {
-                        console.error(`Disconnect error for room ${roomId}:`, e);
-                    }
-                }
-            }
-            */
-        });
-
-        socket.on('disconnect', () => {
-            console.log('Client disconnected:', socket.id);
-        });
-    });
-}
+    }
 }
