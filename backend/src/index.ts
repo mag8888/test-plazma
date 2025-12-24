@@ -1070,11 +1070,4 @@ app.get('*', (req, res) => {
         res.status(500).send('Error: Frontend build not found on server. Try /api/debug-spa for details.');
     }
 });
-// If it's an API call that wasn't caught above, return 404 JSON
-if (req.path.startsWith('/api')) {
-    return res.status(404).json({ error: 'Not found' });
-}
 
-// Otherwise serve index.html for client-side routing
-res.sendFile(path.join(__dirname, '../../frontend/out/index.html'));
-});
