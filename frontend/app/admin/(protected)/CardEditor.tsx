@@ -238,6 +238,28 @@ export default function CardEditor({ secret }: CardEditorProps) {
 
                         <div className="grid grid-cols-2 gap-4">
                             <div>
+                                <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Card Number *</label>
+                                <input
+                                    type="text"
+                                    placeholder="e.g. SD-001, BD-025"
+                                    className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                                    value={editingCard.cardNumber || ''}
+                                    onChange={(e) => setEditingCard({ ...editingCard, cardNumber: e.target.value })}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Cost</label>
+                                <input
+                                    type="number"
+                                    className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                                    value={editingCard.cost || ''}
+                                    onChange={(e) => setEditingCard({ ...editingCard, cost: Number(e.target.value) })}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4">
+                            <div>
                                 <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Title</label>
                                 <input
                                     type="text"
