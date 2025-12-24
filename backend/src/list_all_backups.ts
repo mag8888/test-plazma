@@ -1,3 +1,4 @@
+export { };
 const API_BASE = 'https://moneo.up.railway.app/api/admin';
 const SECRET = 'admin'; // Or use the one user set if changed, but likely still 'admin' or I can ask.
 // User said "how to enter admin secret", imply they haven't changed it yet or just did.
@@ -22,7 +23,7 @@ async function run() {
 
         // Print all details
         backups.forEach((b: any) => {
-            console.log(`${b.created_at} - ${b.secure_url}`);
+            console.log(`${b.created_at} | Size: ${b.bytes} bytes | ${b.secure_url}`);
         });
 
     } catch (e) {
