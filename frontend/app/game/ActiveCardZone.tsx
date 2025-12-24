@@ -108,6 +108,12 @@ const FeedCardItem = ({
                     <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider opacity-70">
                         {card.symbol || card.type}
                     </span>
+                    {/* Show owned quantity for stocks */}
+                    {isStock && ownedQty > 0 && (
+                        <span className="text-[9px] bg-green-900/30 border border-green-500/30 text-green-300 px-1.5 py-0.5 rounded font-mono font-bold">
+                            {ownedQty} шт
+                        </span>
+                    )}
                     {/* Timer Badge */}
                     <span className={`text-[9px] font-mono px-1.5 rounded ${timeLeft < 30 ? 'bg-red-900/50 text-red-400 animate-pulse' : 'bg-slate-700 text-slate-300'}`}>
                         {formatTime(timeLeft)}
@@ -175,8 +181,8 @@ const FeedCardItem = ({
                                 {/* Market Card: Show asset ownership status */}
                                 {card.type === 'MARKET' && (
                                     <div className={`text-[9px] px-1.5 py-0.5 rounded font-mono flex items-center gap-1 ${ownedQty > 0
-                                            ? 'bg-green-900/30 border border-green-500/30 text-green-300'
-                                            : 'bg-red-900/30 border border-red-500/30 text-red-300'
+                                        ? 'bg-green-900/30 border border-green-500/30 text-green-300'
+                                        : 'bg-red-900/30 border border-red-500/30 text-red-300'
                                         }`}>
                                         {ownedQty > 0 ? (
                                             <><span>✓</span> <b>У вас есть ({ownedQty} шт)</b></>
