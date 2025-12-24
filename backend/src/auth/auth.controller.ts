@@ -27,7 +27,12 @@ router.post('/login', async (req: Request, res: Response) => {
 
         return res.json({
             token: "mock-jwt-token-for-" + user.id,
-            user: { id: user.id, username: user.username, firstName: user.first_name }
+            user: {
+                id: user.id,
+                username: user.username,
+                firstName: user.first_name,
+                isAdmin: user.isAdmin || false
+            }
         });
     } catch (e: any) {
         return res.status(500).json({ error: e.message });

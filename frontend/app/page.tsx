@@ -49,7 +49,13 @@ function HomeContent() {
           token: data.token
         }));
         localStorage.removeItem('moneo_is_logged_out');
-        window.location.reload();
+
+        // Redirect admins to admin panel
+        if (data.user?.isAdmin) {
+          window.location.href = '/admin';
+        } else {
+          window.location.reload();
+        }
       } else {
         setError(data.error || 'Ошибка входа');
       }
