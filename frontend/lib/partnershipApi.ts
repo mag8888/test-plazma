@@ -1,11 +1,24 @@
 import { getBackendUrl } from './config';
 
-// 1. Ensure Protocol for Partnership API
+// Get Partnership Backend URL
 const getPartnershipUrl = () => {
-    // Force use of internal proxy for Monolith deployment
-    // This solves issues where env var is set to domain name without protocol
-    // or when CORS/Mixed Content would block direct access.
-    return '/api/partnership';
+    // Try environment variable for Partnership Backend
+    let url = (process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || '').trim();
+    url = url.replace(/^[\"']|[\"']$/g, '');
+
+    if (url && url.startsWith('http')) {
+        return url.replace(/\/$/, '');
+    }
+
+    // Fallback: since Next.js is static export, we need direct backend URL
+    // In production, this should be set via NEXT_PUBLIC_PARTNERSHIP_API_URL env
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost') {
+        // Production: use main backend at /api/* routes (backend proxies to partnership service)
+        return window.location.origin;
+    }
+
+    // Development: localhost partnership backend
+    return 'http://localhost:4000/api';
 };
 
 const API_URL = getPartnershipUrl();
