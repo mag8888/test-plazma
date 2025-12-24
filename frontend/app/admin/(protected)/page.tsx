@@ -248,7 +248,7 @@ export default function AdminPage() {
                                     {users.map(u => (
                                         <tr key={u._id} className="hover:bg-slate-700/50 transition">
                                             <td className="p-4 font-bold text-white">{u.username || 'No Name'}</td>
-                                            <td className="p-4 font-mono text-slate-400 text-sm">{u.telegramId}</td>
+                                            <td className="p-4 font-mono text-slate-400 text-sm">{u.telegram_id}</td>
                                             <td className="p-4 text-green-400 font-bold">${u.greenBalance}</td>
                                             <td className="p-4 text-yellow-400 font-bold">${u.yellowBalance}</td>
                                             <td className="p-4">

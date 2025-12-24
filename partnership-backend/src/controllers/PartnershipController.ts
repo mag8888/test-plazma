@@ -101,7 +101,7 @@ export class PartnershipController {
             const { telegramId, username, referrerId } = req.body;
 
             // 1. Try to find existing user first (Read-Heavy optimization)
-            let user = await User.findOne({ telegramId });
+            let user = await User.findOne({ telegram_id: telegramId });
 
             if (user) {
                 // Update username if changed
@@ -115,7 +115,7 @@ export class PartnershipController {
             // 2. If not found, Create Explicitly (Avoid findOneAndUpdate upsert executor error)
             try {
                 user = await User.create({
-                    telegramId,
+                    telegram_id: telegramId,
                     username,
                     referrer: referrerId
                 });
@@ -123,7 +123,7 @@ export class PartnershipController {
             } catch (createError: any) {
                 // Handle Race Condition (Duplicate Key)
                 if (createError.code === 11000 || createError.message.includes('E11000')) {
-                    const existing = await User.findOne({ telegramId });
+                    const existing = await User.findOne({ telegram_id: telegramId });
                     if (existing) return res.json(existing);
                 }
                 throw createError;
@@ -138,7 +138,7 @@ export class PartnershipController {
     static async getPublicStats(req: Request, res: Response) {
         try {
             const { telegramId } = req.params;
-            const user = await User.findOne({ telegramId: Number(telegramId) });
+            const user = await User.findOne({ telegram_id: Number(telegramId) });
 
             if (!user) {
                 // Return defaults if user not in partnership system yet

@@ -22,13 +22,18 @@ export class AdminController {
             const { query } = req.query;
             let filter = {};
             if (query) {
-                const regex = new RegExp(query as string, 'i');
-                filter = {
-                    $or: [
-                        { username: regex },
-                        { telegramId: regex }
-                    ]
-                };
+                const q = query as string;
+                // If numeric, search exact telegram_id OR username regex
+                if (/^\d+$/.test(q)) {
+                    filter = {
+                        $or: [
+                            { username: new RegExp(q, 'i') },
+                            { telegram_id: Number(q) }
+                        ]
+                    };
+                } else {
+                    filter = { username: new RegExp(q, 'i') };
+                }
             }
 
             const users = await User.find(filter).sort({ createdAt: -1 }).limit(50);
@@ -61,7 +66,7 @@ export class AdminController {
                 user = await User.findById(userId);
             } else {
                 // Try finding by telegramId
-                user = await User.findOne({ telegramId: Number(userId) });
+                user = await User.findOne({ telegram_id: Number(userId) });
                 if (!user) {
                     user = await User.findOne({ username: userId });
                 }
