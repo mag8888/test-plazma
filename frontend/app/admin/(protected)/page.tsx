@@ -62,6 +62,23 @@ export default function AdminPage() {
         }
     };
 
+    const rebuildReferrals = async () => {
+        if (!confirm('Rebuild all referral links from referredBy strings? This will update users without referrer ObjectIds.')) {
+            return;
+        }
+
+        const res = await fetchWithAuth('/rebuild-referrals', {
+            method: 'POST'
+        });
+
+        if (res.success) {
+            alert(`Referrals rebuilt!\nUpdated: ${res.updated}\nSkipped: ${res.skipped}\nErrors: ${res.errors}`);
+            searchUsers(page);
+        } else {
+            alert(res.error || 'Error rebuilding referrals');
+        }
+    };
+
     // Auto-login from storage
     useEffect(() => {
         const stored = localStorage.getItem('admin_secret');
