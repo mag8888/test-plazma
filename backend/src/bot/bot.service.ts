@@ -1148,6 +1148,9 @@ export class BotService {
             }
 
             const { UserModel } = await import('../models/user.model');
+            const { AuthService } = await import('../auth/auth.service');
+            const authService = new AuthService();
+
             let user = await UserModel.findOne({ telegram_id: telegramId });
 
             if (!user) {
@@ -1155,36 +1158,29 @@ export class BotService {
                 return;
             }
 
-            // Generate password if user doesn't have one
-            if (!user.password) {
-                // Generate a simple readable password
-                const password = Math.random().toString(36).slice(-8);
-                user.password = password;
-                await user.save();
-            }
+            // Generate magic link code
+            const code = await authService.createAuthCode(telegramId);
+            const webAppUrl = 'https://moneo.up.railway.app';
+            const magicLink = `${webAppUrl}/?auth=${code}`;
 
-            const password = user.password;
-            const username = user.username;
-
-            const message = `🔑 **Данные для входа в браузере**\n\n` +
-                `🌐 **Сайт:** https://moneo.up.railway.app\n\n` +
-                `👤 **Логин:** \`${username}\`\n` +
-                `🔐 **Пароль:** \`${password}\`\n\n` +
-                `💡 Войдите на сайте, используя эти данные.\n` +
-                `Скопируйте пароль, нажав на него.`;
+            const message = `🔑 **Magic Ссылка для входа в браузере**\n\n` +
+                `🌐 **Сайт:** ${webAppUrl}\n\n` +
+                `🔗 **Ваша постоянная ссылка:**\n${magicLink}\n\n` +
+                `💡 Просто откройте эту ссылку в любом браузере - вы будете автоматически авторизованы!\n` +
+                `Ссылка действительна 365 дней.`;
 
             this.bot?.sendMessage(chatId, message, {
                 parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: '🌐 Открыть сайт', url: 'https://moneo.up.railway.app' }]
+                        [{ text: '🌐 Открыть Magic Link', url: magicLink }]
                     ]
                 }
             });
 
         } catch (e) {
             console.error("Error in handleGetPassword:", e);
-            this.bot?.sendMessage(chatId, '❌ Ошибка генерации пароля.');
+            this.bot?.sendMessage(chatId, '❌ Ошибка генерации ссылки.');
         }
     }
 
