@@ -336,6 +336,7 @@ export default function AdminPage() {
                                         <th className="p-4">Green Bal</th>
                                         <th className="p-4">Yellow Bal</th>
                                         <th className="p-4">Red Bal</th>
+                                        <th className="p-4">Rating</th>
                                         <th className="p-4">Actions</th>
                                     </tr>
                                 </thead>
@@ -352,6 +353,7 @@ export default function AdminPage() {
                                             <td className="p-4 text-green-400 font-bold">${u.greenBalance}</td>
                                             <td className="p-4 text-yellow-400 font-bold">${u.yellowBalance}</td>
                                             <td className="p-4 text-red-400 font-bold">${u.balanceRed || 0}</td>
+                                            <td className="p-4 text-purple-400 font-bold">{u.rating || 1000}</td>
                                             <td className="p-4 flex gap-2">
                                                 <button
                                                     onClick={() => setSelectedUser(u)}
@@ -369,7 +371,7 @@ export default function AdminPage() {
                                         </tr>
                                     ))}
                                     {users.length === 0 && (
-                                        <tr><td colSpan={6} className="p-8 text-center text-slate-500">No users found</td></tr>
+                                        <tr><td colSpan={7} className="p-8 text-center text-slate-500">No users found</td></tr>
                                     )}
                                 </tbody>
                             </table>
@@ -452,6 +454,7 @@ export default function AdminPage() {
                             <button onClick={() => setBalanceType('GREEN')} className={`flex-1 py-2 rounded-xl text-sm font-bold border ${balanceType === 'GREEN' ? 'bg-green-900/50 border-green-500 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Green</button>
                             <button onClick={() => setBalanceType('YELLOW')} className={`flex-1 py-2 rounded-xl text-sm font-bold border ${balanceType === 'YELLOW' ? 'bg-yellow-900/50 border-yellow-500 text-yellow-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Yellow</button>
                             <button onClick={() => setBalanceType('RED')} className={`flex-1 py-2 rounded-xl text-sm font-bold border ${balanceType === 'RED' ? 'bg-red-900/50 border-red-500 text-red-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Red</button>
+                            <button onClick={() => setBalanceType('RATING')} className={`flex-1 py-2 rounded-xl text-sm font-bold border ${balanceType === 'RATING' ? 'bg-purple-900/50 border-purple-500 text-purple-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Rating</button>
                         </div>
 
                         <input

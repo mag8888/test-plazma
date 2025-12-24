@@ -1,3 +1,5 @@
+import { Request as ExpressRequest, Response as ExpressResponse } from 'express';
+import { User } from '../models/User';
 import { Transaction, TransactionType } from '../models/Transaction';
 import { AdminLog, AdminActionType } from '../models/AdminLog';
 import { Avatar } from '../models/Avatar';
@@ -9,7 +11,7 @@ const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin';
 export class AdminController {
 
     // Middleware to check secret
-    static async authenticate(req: Request, res: Response, next: any) {
+    static async authenticate(req: ExpressRequest, res: ExpressResponse, next: any) {
         const secret = req.headers['x-admin-secret'];
         // console.log(`[AdminAuth] Received: ${secret}, Expected: ${ADMIN_SECRET}`); // Debug log
 
@@ -23,7 +25,7 @@ export class AdminController {
     }
 
     // Search Users
-    static async getUsers(req: Request, res: Response) {
+    static async getUsers(req: ExpressRequest, res: ExpressResponse) {
         try {
             const { query, page } = req.query;
             const pageNum = Number(page) || 1;
@@ -61,13 +63,13 @@ export class AdminController {
     }
 
     // Update Balance
-    static async updateBalance(req: Request, res: Response) {
+    static async updateBalance(req: ExpressRequest, res: ExpressResponse) {
         try {
             const { userId, amount, type, description } = req.body;
             const secret = req.headers['x-admin-secret'] as string;
             // Parse admin name
             const adminName = secret.split(':')[0] || 'Unknown Admin';
-            // type: 'GREEN' | 'YELLOW' | 'RED' (if red is stored in User?)
+            // type: 'GREEN' | 'YELLOW' | 'RED' | 'RATING'
             // Note: User model has greenBalance and yellowBalance. 
             // The MAIN 'RED' balance is actually stored in the Main Backend (Moneo), 
             // but here we might have duplicated it if we are syncing?
@@ -103,6 +105,8 @@ export class AdminController {
                 user.yellowBalance = (user.yellowBalance || 0) + value;
             } else if (type === 'RED') {
                 user.balanceRed = (user.balanceRed || 0) + value;
+            } else if (type === 'RATING') {
+                user.rating = (user.rating || 1000) + value;
             } else {
                 return res.status(400).json({ error: 'Invalid balance type' });
             }
@@ -141,7 +145,7 @@ export class AdminController {
     }
 
     // Global Stats
-    static async getGlobalStats(req: Request, res: Response) {
+    static async getGlobalStats(req: ExpressRequest, res: ExpressResponse) {
         try {
             const totalUsers = await User.countDocuments();
             const totalAvatars = await Avatar.countDocuments();
@@ -168,7 +172,7 @@ export class AdminController {
         }
     }
     // Update Referrer
-    static async updateReferrer(req: Request, res: Response) {
+    static async updateReferrer(req: ExpressRequest, res: ExpressResponse) {
         try {
             const { userId, referrerIdentifier } = req.body;
             if (!userId) return res.status(400).json({ error: 'Missing userId' });
@@ -219,7 +223,7 @@ export class AdminController {
         }
     }
 
-    static async getLogs(req: Request, res: Response) {
+    static async getLogs(req: ExpressRequest, res: ExpressResponse) {
         try {
             const logs = await AdminLog.find().sort({ createdAt: -1 }).limit(100).populate('targetUser', 'username telegram_id');
             res.json(logs);
