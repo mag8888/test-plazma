@@ -10,7 +10,7 @@ function HomeContent() {
   const router = useRouter();
   const { user, isReady, webApp } = useTelegram();
 
-  const [view, setView] = useState<'splash' | 'login'>('splash');
+  const [view, setView] = useState<'splash' | 'login'>('login');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
