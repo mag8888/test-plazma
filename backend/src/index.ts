@@ -1024,7 +1024,7 @@ app.get('/api/users/search', async (req, res) => {
     try {
         const { q } = req.query;
         if (!q) return res.json({ users: [] });
-        
+
         const { UserModel } = await import('./models/user.model');
         const users = await UserModel.find({
             $or: [
@@ -1033,11 +1033,22 @@ app.get('/api/users/search', async (req, res) => {
                 { telegram_id: isNaN(Number(q)) ? undefined : Number(q) }
             ].filter(Boolean)
         })
-        .select('username first_name telegram_id referralBalance balanceRed greenBalance referralsCount referredBy createdAt')
-        .limit(100);
-        
+            .select('username first_name telegram_id referralBalance balanceRed greenBalance referralsCount referredBy createdAt')
+            .limit(100);
+
         res.json({ users });
     } catch (e) {
         res.status(500).json({ error: "Search failed" });
     }
+});
+
+// SPA Fallback - Must be the last route
+app.get('*', (req, res) => {
+    // If it's an API call that wasn't caught above, return 404 JSON
+    if (req.path.startsWith('/api')) {
+        return res.status(404).json({ error: 'Not found' });
+    }
+
+    // Otherwise serve index.html for client-side routing
+    res.sendFile(path.join(__dirname, '../../frontend/out/index.html'));
 });
