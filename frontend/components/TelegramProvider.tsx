@@ -74,38 +74,51 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                 // Check LocalStorage for cached Auth Code
                 const cachedAuthCode = localStorage.getItem('moneo_auth_code');
 
-                // Check LocalStorage for Password Auth (User Login)
-                const storedUserAuth = localStorage.getItem('moneo_user_auth');
-
+                // Check for explicit logout first
                 const isLoggedOut = localStorage.getItem('moneo_is_logged_out');
+                if (isLoggedOut) {
+                    console.log("⛔ User explicitly logged out, ignoring all auth");
+                    setIsReady(true);
+                    return;
+                }
 
-                if (initData && !isLoggedOut) {
-                    // Priority 1: Telegram Web App Init Data (Only if not explicitly logged out)
+                // Priority 1: Stored Authentication (highest priority for persistence)
+                const storedUserAuth = localStorage.getItem('moneo_user_auth');
+                if (storedUserAuth) {
+                    console.log("✅ Restoring session from localStorage");
+                    try {
+                        const parsed = JSON.parse(storedUserAuth);
+                        setUser(parsed.user);
+                        setIsReady(true);
+                        return; // Exit early - don't check other auth methods
+                    } catch (e) {
+                        console.error("Invalid stored auth", e);
+                        localStorage.removeItem('moneo_user_auth');
+                    }
+                }
+
+                // Priority 2: Telegram InitData (only if no stored session)
+                if (app?.initData) {
                     console.log("🔑 Login via Telegram InitData");
-                    const res = await fetch(`${BACKEND_URL}/api/auth/login/telegram`, {
+                    const res = await fetch(`${BACKEND_URL}/api/auth/telegram`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ initData })
+                        body: JSON.stringify({ initData: app.initData })
                     });
 
                     if (res.ok) {
                         const data = await res.json();
                         setUser(data.user);
+                        // Save to localStorage
+                        localStorage.setItem('moneo_user_auth', JSON.stringify({
+                            user: data.user,
+                            token: data.token
+                        }));
                     } else {
                         console.error("Telegram Auth failed", res.status);
                         setUser(app?.initDataUnsafe?.user || { id: 123456789, first_name: 'Guest (Auth Failed)', username: 'guest_fallback', balanceRed: 1000, referralBalance: 50 });
                     }
-                } else if (storedUserAuth) {
-                    // Priority 2: Stored Password Auth
-                    console.log("🔑 Login via Stored Authentication");
-                    try {
-                        const parsed = JSON.parse(storedUserAuth);
-                        setUser(parsed.user); // Assume valid for now, usually verify token
-                    } catch (e) {
-                        console.error("Invalid stored auth", e);
-                        localStorage.removeItem('moneo_user_auth');
-                    }
-                } else if ((authCode || (cachedAuthCode && !isLoggedOut))) {
+                } else if ((authCode || cachedAuthCode)) {
                     // Priority 3: Magic Link Auth Code (URL or Cached)
                     const codeToUse = authCode || cachedAuthCode;
                     console.log("🔑 Attempting Magic Login with code:", codeToUse, authCode ? '(URL)' : '(Cached)');
