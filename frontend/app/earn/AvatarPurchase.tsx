@@ -2,7 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { partnershipApi } from '../../lib/partnershipApi';
-import { Shield, Crown, Star, Clock } from 'lucide-react';
+import { Shield, Crown, Star, Clock, Eye } from 'lucide-react';
+import { MatrixView } from './MatrixView';
 
 interface AvatarPurchaseProps {
     partnershipUser: any;
@@ -47,6 +48,9 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
     const [myAvatars, setMyAvatars] = useState<any[]>([]);
     const [premiumCount, setPremiumCount] = useState({ count: 0, limit: 25, available: 25 });
     const [loading, setLoading] = useState(false);
+    const [showMatrix, setShowMatrix] = useState(false);
+    const [selectedAvatarId, setSelectedAvatarId] = useState<string | null>(null);
+    const [selectedAvatarType, setSelectedAvatarType] = useState<string>('');
 
     useEffect(() => {
         if (partnershipUser?._id) {
@@ -186,8 +190,8 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
                                 onClick={() => handlePurchase(avatar.type, avatar.cost)}
                                 disabled={loading || !isAvailable}
                                 className={`w-full py-3 rounded-lg font-bold text-white transition-all ${loading || !isAvailable
-                                        ? 'bg-slate-700 cursor-not-allowed opacity-50'
-                                        : `bg-gradient-to-r ${avatar.color} hover:scale-[1.02] active:scale-[0.98]`
+                                    ? 'bg-slate-700 cursor-not-allowed opacity-50'
+                                    : `bg-gradient-to-r ${avatar.color} hover:scale-[1.02] active:scale-[0.98]`
                                     }`}
                             >
                                 {loading ? 'Обработка...' : isAvailable ? 'Купить' : 'Нет в наличии'}
@@ -222,17 +226,38 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
                                         <div className="text-xs text-slate-400">Уровень {avatar.level}</div>
                                     </div>
                                 </div>
-                                <div className="text-right">
-                                    <div className="text-sm text-white">{expiryDate}</div>
-                                    <div className={`text-xs ${avatar.hasActiveSubscription ? 'text-green-400' : 'text-red-400'}`}>
-                                        {avatar.hasActiveSubscription ? 'Активна' : 'Истекла'}
+                                <div className="flex items-center gap-2">
+                                    <div className="text-right">
+                                        <div className="text-sm text-white">{expiryDate}</div>
+                                        <div className={`text-xs ${avatar.hasActiveSubscription ? 'text-green-400' : 'text-red-400'}`}>
+                                            {avatar.hasActiveSubscription ? 'Активна' : 'Истекла'}
+                                        </div>
                                     </div>
+                                    <button
+                                        onClick={() => {
+                                            setSelectedAvatarId(avatar._id);
+                                            setSelectedAvatarType(avatarType.name);
+                                            setShowMatrix(true);
+                                        }}
+                                        className="p-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
+                                        title="Посмотреть матрицу"
+                                    >
+                                        <Eye className="w-4 h-4 text-white" />
+                                    </button>
                                 </div>
                             </div>
                         );
                     })}
                 </div>
             )}
+
+            {/* Matrix Visualization Modal */}
+            <MatrixView
+                isOpen={showMatrix}
+                onClose={() => setShowMatrix(false)}
+                avatarId={selectedAvatarId || ''}
+                avatarType={selectedAvatarType}
+            />
         </div>
     );
 }

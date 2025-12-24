@@ -303,4 +303,59 @@ export class PartnershipController {
             res.status(500).json({ error: error.message });
         }
     }
+
+    /**
+     * Get avatar matrix tree (5 levels)
+     */
+    static async getAvatarMatrix(req: Request, res: Response) {
+        try {
+            const { avatarId } = req.params;
+
+            const rootAvatar = await Avatar.findById(avatarId).populate('owner', 'username');
+            if (!rootAvatar) {
+                return res.status(404).json({ error: 'Avatar not found' });
+            }
+
+            // BFS to get 5 levels
+            const tree: any = {
+                root: rootAvatar,
+                level1: [],
+                level2: [],
+                level3: [],
+                level4: [],
+                level5: [],
+                totalPartners: 0
+            };
+
+            const queue: { avatar: any, level: number }[] = [{ avatar: rootAvatar, level: 0 }];
+            const visited = new Set<string>();
+
+            while (queue.length > 0) {
+                const { avatar, level } = queue.shift()!;
+
+                if (visited.has(avatar._id.toString())) continue;
+                visited.add(avatar._id.toString());
+
+                if (level > 0 && level <= 5) {
+                    const key = `level${level}` as keyof typeof tree;
+                    tree[key].push(avatar);
+                    tree.totalPartners++;
+                }
+
+                if (level < 5 && avatar.partners && avatar.partners.length > 0) {
+                    const partners = await Avatar.find({
+                        _id: { $in: avatar.partners }
+                    }).populate('owner', 'username');
+
+                    for (const partner of partners) {
+                        queue.push({ avatar: partner, level: level + 1 });
+                    }
+                }
+            }
+
+            res.json(tree);
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
 }

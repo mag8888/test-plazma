@@ -29,6 +29,7 @@ app.get('/api/partners/:userId', PartnershipController.getPartners as any);
 app.post('/api/avatars/purchase', PartnershipController.purchaseAvatar as any);
 app.get('/api/avatars/my-avatars/:userId', PartnershipController.getMyAvatars as any);
 app.get('/api/avatars/premium-count', PartnershipController.getPremiumCount as any);
+app.get('/api/avatars/matrix/:avatarId', PartnershipController.getAvatarMatrix as any);
 
 // Admin Routes
 const adminRouter = express.Router();

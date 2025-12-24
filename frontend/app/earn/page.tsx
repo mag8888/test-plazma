@@ -431,6 +431,23 @@ export default function EarnPage() {
                 </div>
             </div>
 
+            {/* NEW AVATAR MATRIX SYSTEM */}
+            <div className="mt-8">
+                <AvatarPurchase
+                    partnershipUser={partnershipUser}
+                    onPurchaseSuccess={() => {
+                        // Refresh user stats after purchase
+                        if (partnershipUser?._id) {
+                            partnershipApi.getStats(partnershipUser._id)
+                                .then(updated => {
+                                    setPartnershipUser({ ...partnershipUser, ...updated });
+                                })
+                                .catch(err => console.error('Failed to refresh stats:', err));
+                        }
+                    }}
+                />
+            </div>
+
             {/* DEBUG INFO (For diagnosing Sync Issues) */}
             <div className="mt-8 p-4 bg-slate-900/50 rounded-xl border border-slate-800 text-xs font-mono text-slate-500 overflow-hidden">
                 <details>
