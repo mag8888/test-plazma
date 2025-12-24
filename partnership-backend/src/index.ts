@@ -19,7 +19,7 @@ app.get('/', (req, res) => {
 
 // API Routes
 app.post('/api/user', PartnershipController.createUser as any);
-app.post('/api/subscribe', PartnershipController.subscribe as any);
+// app.post('/api/subscribe', PartnershipController.subscribe as any); // DEPRECATED - use /api/avatars/purchase instead
 app.post('/api/withdraw', PartnershipController.withdraw as any);
 app.get('/api/tree/:userId', PartnershipController.getTree as any);
 app.get('/api/stats/:userId', PartnershipController.getStats as any);
