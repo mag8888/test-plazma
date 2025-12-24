@@ -68,7 +68,7 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
             // Responsive Radius?
             // On mobile we want it max size.
             // 46% is close to edge (50% is edge).
-            const radius = 38;
+            const radius = 40;
             const x = 50 + radius * Math.cos(angleRad);
             const y = 50 + radius * Math.sin(angleRad);
 

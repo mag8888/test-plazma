@@ -63,6 +63,7 @@ import { ExitToFastTrackModal } from './ExitToFastTrackModal';
 import { FastTrackInfoModal } from './FastTrackInfoModal';
 import { AdminActionModal, AdminActionType } from './AdminActionModal';
 import { ActiveCardZone } from './ActiveCardZone';
+import { PlayerCard } from './PlayerCard';
 
 // Helper for Cash Animation
 const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
@@ -1106,24 +1107,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         </div>
                     </div>
 
-                    {/* 2. Active Card Zone (Priority) */}
-                    <div className="w-full">
-                        <ActiveCardZone
-                            state={state}
-                            isMyTurn={isMyTurn}
-                            me={me}
-                            roomId={roomId}
-                            onDismissMarket={handleDismissCard}
-                            onMarketCardClick={(card) => setSquareInfo({
-                                type: 'MARKET',
-                                card: card.card,
-                                title: card.card.title,
-                                description: card.card.description
-                            })}
-                        />
-                    </div>
-
-                    {/* 3. Stats Grid */}
+                    {/* 2. Stats Grid */}
                     <div className="grid grid-cols-3 gap-2">
                         <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
                             <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс</span>
@@ -1261,7 +1245,27 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                     setShowFastTrackModal(true);
                                 }
                             }}
-                        />                    </div>
+                        />
+
+                        {/* ActiveCardZone Overlay - Center */}
+                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-8">
+                            <div className="pointer-events-auto w-full max-w-md">
+                                <ActiveCardZone
+                                    state={state}
+                                    isMyTurn={isMyTurn}
+                                    me={me}
+                                    roomId={roomId}
+                                    onDismissMarket={handleDismissCard}
+                                    onMarketCardClick={(card) => setSquareInfo({
+                                        type: 'MARKET',
+                                        card: card.card,
+                                        title: card.card.title,
+                                        description: card.card.description
+                                    })}
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 {/* RIGHT SIDEBAR (Redesigned) - Flex Column */}
@@ -1324,25 +1328,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         </div>
                     </div>
 
-                    {/* 2. BODY SPLIT: Cards (Top) & Chat (Bottom) - Equal Flex */}
+                    {/* 2. BODY: Player List + Chat */}
                     <div className="flex-1 flex flex-col min-h-0 px-4 pb-4 gap-4 overflow-hidden">
-
-                        {/* Zone 2: Available Cards */}
-                        <div className="flex-1 min-h-0 flex flex-col relative">
-                            <ActiveCardZone
-                                state={state}
-                                isMyTurn={isMyTurn}
-                                me={me}
-                                roomId={roomId}
-                                onDismissMarket={handleDismissCard}
-                                onMarketCardClick={(card) => setSquareInfo({
-                                    type: 'MARKET',
-                                    card: card.card,
-                                    title: card.card.title,
-                                    description: card.card.description
-                                })}
-                            />
-                        </div>
 
 
                         {/* Zone 3: Player List (Horizontal Module) */}
