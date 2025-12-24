@@ -72,6 +72,16 @@ export default function AdminPage() {
         };
         try {
             const res = await fetch(`${API_URL}/admin${endpoint}`, { ...options, headers });
+
+            // Auto-logout on 403 (Invalid Secret)
+            if (res.status === 403) {
+                console.warn('Admin secret invalid or expired. Logging out.');
+                localStorage.removeItem('admin_secret');
+                setIsAuthenticated(false);
+                setSecret('');
+                return { error: 'Unauthorized' };
+            }
+
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.json();
         } catch (e) {
