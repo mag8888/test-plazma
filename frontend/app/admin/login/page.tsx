@@ -10,22 +10,3 @@ export default function AdminLoginPage() {
 
     return null;
 }
-                        >
-    Назад
-                        </button >
-    <button
-        onClick={handleLogin}
-        className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl transition"
-    >
-        Войти
-    </button>
-                    </div >
-                </div >
-
-    <div className="text-center text-xs text-slate-600">
-        Только для администраторов MONEO
-    </div>
-            </div >
-        </div >
-    );
-}

@@ -28,7 +28,6 @@ export default function AdminProtectedLayout({
             // Ensure flag is set for consistency
             if (auth !== 'true') localStorage.setItem('admin_authenticated', 'true');
         } else {
-        } else {
             router.push('/');
         }
     }
