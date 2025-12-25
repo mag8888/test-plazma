@@ -125,7 +125,34 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                     console.log("✅ Restoring session from localStorage");
                     try {
                         const parsed = JSON.parse(storedUserAuth);
-                        setUser(parsed.user);
+                        let currentUser = parsed.user;
+
+                        // AUTO-REPAIR: If user is missing telegram_id, try to fetch fresh data
+                        if (parsed.token && (!currentUser.telegram_id || !currentUser.referralsCount)) {
+                            console.log("🛠️ Session stale (missing telegram_id), attempting auto-repair...");
+                            try {
+                                const meRes = await fetch(`${BACKEND_URL}/api/auth/me`, {
+                                    headers: { 'Authorization': `Bearer ${parsed.token}` }
+                                });
+                                if (meRes.ok) {
+                                    const meData = await meRes.json();
+                                    currentUser = meData.user;
+                                    console.log("✅ Session auto-repaired!", currentUser);
+
+                                    // Update storage with fresh data
+                                    localStorage.setItem('moneo_user_auth', JSON.stringify({
+                                        user: currentUser,
+                                        token: parsed.token
+                                    }));
+                                } else {
+                                    console.warn("⚠️ Auto-repair failed", meRes.status);
+                                }
+                            } catch (err) {
+                                console.error("❌ Auto-repair network error", err);
+                            }
+                        }
+
+                        setUser(currentUser);
                         setIsReady(true);
                         return;
                     } catch (e) {
