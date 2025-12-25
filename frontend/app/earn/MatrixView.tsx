@@ -163,18 +163,23 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
 
     const cost = TARIFF_COSTS[avatarType] || 0;
 
-    // Bonus Calculation Logic
+    // Get actual earnings from backend
+    const earnings = matrixData?.earnings || {};
+
+    // Yellow = Accumulated for level upgrade
+    const yellowActual = earnings.yellowEarned || 0;
+    const yellowBalance = earnings.yellowBalance || 0;
+
+    // Green = Withdrawn/available balance  
+    const greenActual = earnings.greenEarned || 0;
+    const greenBalance = earnings.greenBalance || 0;
+
+    // Calculate potential based on slots
     const activeSlots = matrixData?.root?.partners?.length || 0;
-    const levelMultiplier = Math.pow(2, rootLevel); // Doubles each level
+    const levelMultiplier = Math.pow(2, rootLevel);
     const unitBonus = cost * 0.5 * levelMultiplier;
-
-    // Yellow = Accumulated for level upgrade (50% of each filled slot)
-    // Green = Already credited to balance (50% of each filled slot)
-    const yellowActual = unitBonus * activeSlots;  // What has accumulated
-    const yellowPotential = unitBonus * 3;  // What could accumulate (3 slots max)
-
-    const greenActual = unitBonus * activeSlots;  // What has been paid out
-    const greenPotential = unitBonus * 3;  // What could be paid out
+    const yellowPotential = unitBonus * 3;  // Max 3 slots
+    const greenPotential = unitBonus * 3;
 
     return (
         <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">

@@ -402,9 +402,30 @@ export class PartnershipController {
         try {
             const { avatarId } = req.params;
 
-            const rootAvatar = await Avatar.findById(avatarId).populate('owner', 'username');
+            const rootAvatar = await Avatar.findById(avatarId).populate('owner', 'username greenBalance yellowBalance');
             if (!rootAvatar) {
                 return res.status(404).json({ error: 'Avatar not found' });
+            }
+
+            // Calculate actual earnings from this avatar
+            const ownerId = rootAvatar.owner._id || rootAvatar.owner;
+
+            // Get transactions related to this avatar (matrix earnings)
+            const transactions = await Transaction.find({
+                recipient: ownerId,
+                type: { $in: ['MATRIX_GREEN', 'MATRIX_YELLOW', 'REFERRAL_BONUS'] }
+            });
+
+            // Sum up earnings by type
+            let greenEarned = 0;
+            let yellowEarned = 0;
+
+            for (const tx of transactions) {
+                if (tx.type === 'MATRIX_GREEN' || tx.type === 'REFERRAL_BONUS') {
+                    greenEarned += tx.amount;
+                } else if (tx.type === 'MATRIX_YELLOW') {
+                    yellowEarned += tx.amount;
+                }
             }
 
             // BFS to get 5 levels
@@ -415,7 +436,14 @@ export class PartnershipController {
                 level3: [],
                 level4: [],
                 level5: [],
-                totalPartners: 0
+                totalPartners: 0,
+                // Add earnings data
+                earnings: {
+                    greenEarned: Math.round(greenEarned * 100) / 100,
+                    yellowEarned: Math.round(yellowEarned * 100) / 100,
+                    greenBalance: rootAvatar.owner.greenBalance || 0,
+                    yellowBalance: rootAvatar.owner.yellowBalance || 0
+                }
             };
 
             const queue: { avatar: any, level: number }[] = [{ avatar: rootAvatar, level: 0 }];
