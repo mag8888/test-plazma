@@ -102,7 +102,7 @@ export class AdminController {
 
             let user;
             // Check if userId is MongoID
-            if (userId.match(/^[0-9a-fA-F]{24}$/)) {
+            if (String(userId).match(/^[0-9a-fA-F]{24}$/)) {
                 user = await User.findById(userId);
             } else {
                 // Try finding by telegramId
