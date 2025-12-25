@@ -595,8 +595,6 @@ export const ActiveCardZone = ({
 
     const feedItems = [...currentCard, ...marketCards];
 
-    const feedItems = [...currentCard, ...marketCards];
-
     if (feedItems.length === 0) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center text-slate-500/50">
