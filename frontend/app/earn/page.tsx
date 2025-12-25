@@ -96,9 +96,11 @@ export default function EarnPage() {
                         // Also fetch avatars to determine tariff
                         return fetch(`${process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'https://moneo.up.railway.app/api/partnership'}/avatars/my-avatars/${dbUser._id}`)
                             .then(res => res.json())
-                            .then(avatars => {
-                                console.log('🎭 [Earn Page] Avatars fetched:', avatars);
-                                setPartnershipUser({ ...dbUser, ...stats, avatars });
+                            .then(data => {
+                                // Backend returns { avatars: [...] }
+                                const avatarsList = data.avatars || [];
+                                console.log('🎭 [Earn Page] Avatars fetched:', avatarsList);
+                                setPartnershipUser({ ...dbUser, ...stats, avatars: avatarsList });
 
                                 // Only attempt sync if we have initData (Telegram WebApp)
                                 if (webApp?.initData) {
