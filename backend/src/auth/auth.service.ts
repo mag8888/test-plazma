@@ -26,6 +26,7 @@ export class AuthService {
      * Logs in a user
      */
     async login(username: string, password: string): Promise<any> {
+        console.log(`[Auth] Attempting login for: ${username}`);
         // 1. Check ENV defined admins first
         // Format: "user1:pass1;user2:pass2"
         const envAdmins = process.env.ADMIN_ACCOUNTS || '';
@@ -51,6 +52,11 @@ export class AuthService {
 
         // 2. Fallback to Database
         const user = await UserModel.findOne({ username, password });
+        if (!user) {
+            console.log(`[Auth] ❌ User ${username} not found in DB or password mismatch.`);
+        } else {
+            console.log(`[Auth] ✅ User ${username} authenticated via DB.`);
+        }
         return user;
     }
 
