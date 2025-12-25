@@ -125,18 +125,29 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                     ${gradient} border border-slate-800/50 backdrop-blur-sm rounded-sm
                                     flex items-center justify-center text-[10px]
                                     opacity-90 shadow-lg pointer-events-auto transition-all hover:scale-110 hover:z-20 cursor-pointer
+                                    relative
                                 `}
                                 style={style}
                                 title={sq.name}
                             >
-                                <div className="flex flex-col items-center justify-between h-full py-1 w-full overflow-hidden">
-                                    <span style={{ fontSize: `${0.9 * zoom}cqw`, height: `${3.0 * zoom}cqw` }} className="leading-tight text-center px-0.5 text-slate-200 font-bold line-clamp-2 flex items-center shadow-black drop-shadow-md">{sq.name}</span>
-                                    <span style={{ fontSize: `${4 * zoom}cqw` }} className="leading-none filter drop-shadow-lg my-[0.2cqw] transform hover:scale-110 transition-transform">{getSticker(sq.type, sq.name)}</span>
+                                <div className="absolute inset-x-0.5 top-0.5 bottom-0.5 flex flex-col justify-between items-center overflow-hidden">
+                                    {/* Sticker - Centered but slightly lower to allow top text */}
+                                    <span style={{ fontSize: `${5 * zoom}cqw` }} className="leading-none filter drop-shadow-lg transform hover:scale-110 transition-transform absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none opacity-40 grayscale-[0.3]">
+                                        {getSticker(sq.type, sq.name)}
+                                    </span>
 
-                                    <div className="flex flex-col items-center leading-none space-y-[0.2cqw]">
-                                        {sq.cost && <span style={{ fontSize: `${0.8 * zoom}cqw` }} className="text-red-300 font-mono font-bold">-${(sq.cost / 1000).toFixed(0)}k</span>}
-                                        {sq.cashflow && <span style={{ fontSize: `${0.8 * zoom}cqw` }} className="text-green-300 font-bold font-mono shadow-black drop-shadow-sm">+${(sq.cashflow / 1000).toFixed(0)}k</span>}
-                                        {sq.type === 'CASHFLOW' && <span style={{ fontSize: `${0.8 * zoom}cqw` }} className="text-emerald-400 font-black tracking-tighter uppercase shadow-black drop-shadow-sm">Day</span>}
+                                    {/* NAME - Full Width, Bold, Top */}
+                                    <div className="w-full flex items-center justify-center z-10">
+                                        <span style={{ fontSize: `${1.4 * zoom}cqw`, lineHeight: '1.1' }} className="w-full text-center font-black text-slate-100 uppercase tracking-tighter drop-shadow-md break-words line-clamp-2">
+                                            {sq.name}
+                                        </span>
+                                    </div>
+
+                                    {/* Cost/Cashflow - Bottom */}
+                                    <div className="flex flex-col items-center leading-none space-y-[0.2cqw] z-10 mt-auto">
+                                        {sq.cost && <span style={{ fontSize: `${1.0 * zoom}cqw` }} className="text-red-300 font-mono font-bold bg-black/40 px-1 rounded">-${(sq.cost / 1000).toFixed(0)}k</span>}
+                                        {sq.cashflow && <span style={{ fontSize: `${1.0 * zoom}cqw` }} className="text-green-300 font-bold font-mono shadow-black drop-shadow-sm bg-black/40 px-1 rounded">+${(sq.cashflow / 1000).toFixed(0)}k</span>}
+                                        {sq.type === 'CASHFLOW' && <span style={{ fontSize: `${1.2 * zoom}cqw` }} className="text-emerald-400 font-black tracking-tighter uppercase shadow-black drop-shadow-sm">Day</span>}
                                     </div>
                                 </div>
 
