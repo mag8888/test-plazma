@@ -449,8 +449,5 @@ export class AdminController {
             res.status(500).json({ error: error.message });
         }
     }
-            console.error('resetRatings error:', error);
-            res.status(500).json({ error: error.message });
-}
-    }
+
 }
