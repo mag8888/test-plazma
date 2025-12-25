@@ -35,6 +35,45 @@ export async function setupAdminPanel(app: Application) {
     branding: {
       companyName: 'Plazma Water MM',
     },
+    locale: {
+      language: 'ru',
+      availableLanguages: ['ru', 'en'],
+      translations: {
+        ru: {
+          actions: {
+            new: 'Создать новую',
+            edit: 'Редактировать',
+            show: 'Показать',
+            delete: 'Удалить',
+            bulkDelete: 'Удалить все',
+            list: 'Список',
+          },
+          buttons: {
+            save: 'Сохранить',
+            addNewItem: 'Добавить новый элемент',
+            filter: 'Фильтр',
+            applyChanges: 'Применить изменения',
+            resetFilter: 'Сбросить',
+            logout: 'Выйти',
+            login: 'Войти',
+            createFirstRecord: 'Создать первую запись',
+            cancel: 'Отмена',
+            confirm: 'Подтвердить',
+          },
+          labels: {
+            navigation: 'Навигация',
+            pages: 'Страницы',
+            filters: 'Фильтры',
+            dashboard: 'Панель управления',
+          },
+          messages: {
+            successfullyCreated: 'Запись успешно создана',
+            successfullyUpdated: 'Запись успешно обновлена',
+            successfullyDeleted: 'Запись успешно удалена',
+          },
+        },
+      },
+    },
     resources: [
       {
         resource: { model: getModelByName('Category'), client: prisma },
@@ -51,6 +90,8 @@ export async function setupAdminPanel(app: Application) {
           },
           actions: {
             new: {
+              actionType: 'resource',
+              label: '+ Добавить категорию',
               before: async (request: ActionRequest) => {
                 const payload = request.payload ?? {};
                 if (payload.name && !payload.slug) {
