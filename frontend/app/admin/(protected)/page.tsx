@@ -232,7 +232,7 @@ export default function AdminPage() {
         const res = await fetchWithAuth('/balance', {
             method: 'POST',
             body: JSON.stringify({
-                userId: selectedUser._id,
+                userId: selectedUser.telegram_id || selectedUser._id, // Prefer Telegram ID per user request
                 amount: finalAmount,
                 type: balanceType,
                 description: reason,

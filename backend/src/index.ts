@@ -84,15 +84,16 @@ app.use('/api/partnership', async (req, res) => {
         // Strip the body for GET/HEAD, otherwise pass it
         const body = (req.method === 'GET' || req.method === 'HEAD') ? undefined : JSON.stringify(req.body);
 
-        // Parse hostname for the host header override if needed, or just let fetch handle it.
-        // Usually fetch handles the host header automatically based on the URL.
         const urlObj = new URL(url);
+
+        // Filter headers to avoid conflicts (especially content-length mismatch after stringify)
+        const { 'content-length': cl, connection, host, ...headers } = req.headers as any;
 
         const response = await fetch(url, {
             method: req.method,
             headers: {
                 'Content-Type': 'application/json',
-                ...req.headers as any,
+                ...headers,
                 host: urlObj.host // Dynamic host
             },
             body: body
