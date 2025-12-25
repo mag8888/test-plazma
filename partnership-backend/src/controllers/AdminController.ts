@@ -135,7 +135,7 @@ export class AdminController {
                         user: user._id,
                         amount: value,
                         currency: type.toUpperCase(), // Fix: missing required field
-                        type: AdminActionType.BALANCE_CHANGE as unknown as TransactionType,
+                        type: TransactionType.ADMIN_ADJUSTMENT,
                         description: description || `Admin adjustment: ${value} ${type}`
                     });
                 }     // Log Admin Action (for admin panel audit)
