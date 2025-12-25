@@ -31,8 +31,19 @@ export default function EarnPage() {
 
     const [missingAmount, setMissingAmount] = useState(0);
 
-    // Get current tariff
-    const currentTariff = partnershipUser?.avatars?.find((a: any) => a.active)?.tariff || 'GUEST';
+    // Get current tariff - find highest active avatar type
+    const getCurrentTariff = () => {
+        const avatars = partnershipUser?.avatars || [];
+        const activeAvatars = avatars.filter((a: any) => a.active || a.isActive);
+
+        // Priority: PREMIUM > ADVANCED > BASIC > GUEST
+        if (activeAvatars.find((a: any) => a.type === 'PREMIUM')) return 'PREMIUM';
+        if (activeAvatars.find((a: any) => a.type === 'ADVANCED')) return 'ADVANCED';
+        if (activeAvatars.find((a: any) => a.type === 'BASIC')) return 'BASIC';
+        return 'GUEST';
+    };
+
+    const currentTariff = getCurrentTariff();
 
     // Use username if available, else ID. Bot handle corrected to MONEO_game_bot
     const referralLink = `https://t.me/MONEO_game_bot?start=${user?.username || user?.id || 'unknown'}`;
