@@ -123,7 +123,7 @@ function GameContent() {
         socket.on('room_state_updated', (updatedRoom: Room) => {
             console.log("Room updated:", updatedRoom);
             setRoom(updatedRoom);
-            const me = updatedRoom.players.find(p => p.userId === userId);
+            const me = updatedRoom.players.find(p => String(p.userId) === String(userId));
             if (me) {
                 setIsReady(me.isReady);
 
