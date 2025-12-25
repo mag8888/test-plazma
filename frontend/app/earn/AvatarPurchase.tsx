@@ -144,68 +144,10 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
                 </div>
             </div>
 
-            {/* Purchase Cards */}
-            <div className="grid grid-cols-1 gap-4">
-                {AVATAR_TYPES.map(avatar => {
-                    const Icon = avatar.icon;
-                    const count = avatarCounts[avatar.type as keyof typeof avatarCounts];
-                    const isAvailable = avatar.type === 'PREMIUM' ? premiumCount.available > 0 : true;
-
-                    return (
-                        <div
-                            key={avatar.type}
-                            className={`bg-slate-800/50 border ${avatar.borderColor} rounded-xl p-4 space-y-3`}
-                        >
-                            <div className="flex items-start justify-between">
-                                <div className="flex items-center gap-3">
-                                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${avatar.color} flex items-center justify-center`}>
-                                        <Icon className="w-6 h-6 text-white" />
-                                    </div>
-                                    <div>
-                                        <h3 className="font-bold text-white">{avatar.name}</h3>
-                                        <div className="flex items-center gap-2 text-sm text-slate-400">
-                                            <Clock className="w-3 h-3" />
-                                            <span>{avatar.subscription}</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="text-right">
-                                    <div className="text-2xl font-bold text-white">${avatar.cost}</div>
-                                    {count > 0 && (
-                                        <div className="text-xs text-green-400">У вас: {count}</div>
-                                    )}
-                                </div>
-                            </div>
-
-                            {avatar.limited && (
-                                <div className="bg-yellow-900/20 border border-yellow-500/30 rounded-lg p-2 text-xs text-yellow-300">
-                                    Лимит: {premiumCount.count}/{premiumCount.limit} • Доступно: {premiumCount.available}
-                                </div>
-                            )}
-
-                            <div className="text-sm text-slate-300">
-                                {avatar.withdrawalPercent && (
-                                    <div className="text-green-400 font-bold mb-1">• {avatar.withdrawalPercent}% вывод зеленых бонусов</div>
-                                )}
-                                <div>• 50% зеленых → пригласителю</div>
-                                <div>• 50% желтых → владельцу родительского аватара</div>
-                                <div>• Подписка нужна для получения бонусов</div>
-                            </div>
-
-                            <button
-                                onClick={() => handlePurchase(avatar.type, avatar.cost)}
-                                disabled={loading || !isAvailable}
-                                className={`w-full py-3 rounded-lg font-bold text-white transition-all ${loading || !isAvailable
-                                    ? 'bg-slate-700 cursor-not-allowed opacity-50'
-                                    : `bg-gradient-to-r ${avatar.color} hover:scale-[1.02] active:scale-[0.98]`
-                                    }`}
-                            >
-                                {loading ? 'Обработка...' : isAvailable ? 'Купить' : 'Нет в наличии'}
-                            </button>
-                        </div>
-                    );
-                })}
-            </div>
+            {/* Purchase Cards (Hidden as they are now in the top showcase) */}
+            {/* <div className="grid grid-cols-1 gap-4">
+                {AVATAR_TYPES.map(avatar => { ... })}
+            </div> */}
 
             {/* My Avatars List */}
             {myAvatars.length > 0 && (

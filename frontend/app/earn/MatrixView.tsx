@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ExternalLink, Info, ArrowDown } from 'lucide-react';
+import { X, ExternalLink, Info, ArrowDown, ArrowLeft, ZoomIn } from 'lucide-react';
 
 interface Avatar {
     _id: string;
@@ -29,17 +29,33 @@ const BRANCH_COLORS = [
 export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixViewProps) {
     const [matrixData, setMatrixData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [currentViewId, setCurrentViewId] = useState(avatarId);
+    const [history, setHistory] = useState<string[]>([]);
 
     useEffect(() => {
-        if (isOpen && avatarId) {
-            loadMatrix();
+        if (isOpen) {
+            // Reset to root when opening fresh, OR if prop changes
+            if (history.length === 0) {
+                setCurrentViewId(avatarId);
+            }
+        } else {
+            // Reset on close
+            setHistory([]);
+            setCurrentViewId(avatarId);
         }
     }, [isOpen, avatarId]);
 
-    const loadMatrix = async () => {
+    // Reload when currentViewId changes
+    useEffect(() => {
+        if (isOpen && currentViewId) {
+            loadMatrix(currentViewId);
+        }
+    }, [currentViewId, isOpen]);
+
+    const loadMatrix = async (id: string) => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/partnership/avatars/matrix/${avatarId}`);
+            const res = await fetch(`/api/partnership/avatars/matrix/${id}`);
             const data = await res.json();
             setMatrixData(data);
         } catch (err) {
@@ -47,6 +63,18 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleDive = (childId: string) => {
+        setHistory(prev => [...prev, currentViewId]);
+        setCurrentViewId(childId);
+    };
+
+    const handleBack = () => {
+        if (history.length === 0) return;
+        const prev = history[history.length - 1];
+        setHistory(prevHist => prevHist.slice(0, -1));
+        setCurrentViewId(prev);
     };
 
     const handleAvatarClick = (username: string) => {
@@ -74,16 +102,31 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
 
         return (
             <div className="flex flex-col items-center gap-1 group relative">
-                <div
-                    onClick={() => handleAvatarClick(avatar.owner?.username)}
-                    className={`w-10 h-10 rounded-lg ${colorTheme.bg} cursor-pointer flex items-center justify-center relative transition-transform hover:scale-110 z-10`}
-                >
-                    <span className="text-xs font-bold text-white">{avatar.level}</span>
-                    {/* Tooltip */}
-                    <div className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded border border-slate-700 pointer-events-none whitespace-nowrap z-20 transition-opacity">
-                        @{avatar.owner?.username || 'unknown'}
+                <div className="relative">
+                    <div
+                        onClick={() => handleAvatarClick(avatar.owner?.username)}
+                        className={`w-10 h-10 rounded-lg ${colorTheme.bg} cursor-pointer flex items-center justify-center relative transition-transform hover:scale-110 z-10`}
+                    >
+                        <span className="text-xs font-bold text-white">{avatar.level}</span>
+                        {/* Tooltip */}
+                        <div className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded border border-slate-700 pointer-events-none whitespace-nowrap z-20 transition-opacity">
+                            @{avatar.owner?.username || 'unknown'}
+                        </div>
                     </div>
+
+                    {/* EXPAND BUTTON (+) */}
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            handleDive(avatar._id);
+                        }}
+                        className="absolute -bottom-2 -right-2 w-5 h-5 bg-slate-900 border border-slate-600 rounded-full flex items-center justify-center hover:bg-slate-800 transition-colors z-20 shadow-lg"
+                        title="Развернуть"
+                    >
+                        <ZoomIn size={10} className="text-white" />
+                    </button>
                 </div>
+
                 {/* Bonus Indicator */}
                 <div className="text-[9px] text-yellow-500/80 font-mono opacity-60 group-hover:opacity-100 transition-opacity">
                     +50%🟡
@@ -117,13 +160,23 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
             <div className="bg-slate-900/90 rounded-2xl border border-slate-700 max-w-5xl w-full max-h-[90vh] flex flex-col shadow-2xl">
                 {/* Header */}
                 <div className="p-5 border-b border-slate-700 flex items-center justify-between bg-slate-800/50 rounded-t-2xl">
-                    <div>
-                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                            Матрица аватара
-                            <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/30">
-                                {avatarType}
-                            </span>
-                        </h2>
+                    <div className="flex items-center gap-3">
+                        {history.length > 0 && (
+                            <button
+                                onClick={handleBack}
+                                className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-600 transition-colors"
+                            >
+                                <ArrowLeft size={16} className="text-white" />
+                            </button>
+                        )}
+                        <div>
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                Матрица аватара
+                                <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/30">
+                                    {avatarType}
+                                </span>
+                            </h2>
+                        </div>
                     </div>
                     <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
                         <X className="w-5 h-5 text-slate-400" />
