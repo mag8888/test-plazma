@@ -126,8 +126,20 @@ export class PartnershipController {
             } catch (createError: any) {
                 // Handle Race Condition (Duplicate Key)
                 if (createError.code === 11000 || createError.message.includes('E11000')) {
+                    // Check if existing by telegram_id
                     const existing = await User.findOne({ telegram_id: telegramId });
                     if (existing) return res.json(existing);
+
+                    // Check if existing by username (Legacy user missing telegram_id?)
+                    if (username) {
+                        const existingByName = await User.findOne({ username });
+                        if (existingByName) {
+                            console.log(`[Partnership] Merging legacy user ${username} with new telegram_id ${telegramId}`);
+                            existingByName.telegram_id = telegramId;
+                            await existingByName.save();
+                            return res.json(existingByName);
+                        }
+                    }
                 }
                 throw createError;
             }
