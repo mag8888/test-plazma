@@ -70,6 +70,7 @@ const restoreBackup = async (url: string) => {
 
         // Only update if we have something to update
         if (Object.keys(updateData).length > 0) {
+            console.log(`Restoring ${u.username}: referrer=${u.referrer || 'N/A'}, referredBy=${u.referredBy || 'N/A'}`);
             await UserModel.findOneAndUpdate(filter, { $set: updateData }, { upsert: false }); // Do not create new users, only patch existing
             restoredCount++;
         }
