@@ -130,15 +130,15 @@ export class AdminController {
             }
 
             if (description) {
-                // Log Transaction (for user history)
-                await Transaction.create({
-                    user: user._id,
-                    amount: value,
-                    type: TransactionType.ADMIN_ADJUSTMENT,
-                    description: `${description} (by ${adminName})`
-                });
-
-                // Log Admin Action (for admin panel audit)
+                if (['GREEN', 'YELLOW', 'RED'].includes(type.toUpperCase())) {
+                    await Transaction.create({
+                        user: user._id,
+                        amount: value,
+                        currency: type.toUpperCase(), // Fix: missing required field
+                        type: AdminActionType.BALANCE_CHANGE as unknown as TransactionType,
+                        description: description || `Admin adjustment: ${value} ${type}`
+                    });
+                }     // Log Admin Action (for admin panel audit)
                 await AdminLog.create({
                     adminName,
                     action: AdminActionType.BALANCE_CHANGE,
@@ -449,29 +449,8 @@ export class AdminController {
             res.status(500).json({ error: error.message });
         }
     }
-
-    // Reset all ratings to 0
-    static async resetRatings(req: ExpressRequest, res: ExpressResponse) {
-        try {
-            const secret = req.headers['x-admin-secret'] as string;
-            const adminName = secret.split(':')[0] || 'Unknown Admin';
-
-            const result = await User.updateMany({}, { rating: 0 });
-
-            // Log action
-            await AdminLog.create({
-                adminName,
-                action: AdminActionType.BALANCE_CHANGE,
-                details: `Reset all user ratings to 0. Modified count: ${result.modifiedCount}`
-            });
-
-            res.json({
-                success: true,
-                message: `Reset ratings for ${result.modifiedCount} users to 0.`
-            });
-        } catch (error: any) {
             console.error('resetRatings error:', error);
             res.status(500).json({ error: error.message });
-        }
+}
     }
 }
