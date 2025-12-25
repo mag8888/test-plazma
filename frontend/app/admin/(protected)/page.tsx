@@ -311,29 +311,31 @@ export default function AdminPage() {
             <div className="max-w-6xl mx-auto p-4 py-8 space-y-8">
 
                 {/* Dashboard Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                    <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
-                        <div className="text-slate-400 text-sm font-bold uppercase mb-2">Total Users</div>
-                        <div className="text-3xl font-bold text-white">{stats.totalUsers}</div>
+                {stats && (
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                            <div className="text-slate-400 text-sm font-bold uppercase mb-2">Total Users</div>
+                            <div className="text-3xl font-bold text-white">{stats.totalUsers}</div>
+                        </div>
+                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                            <div className="text-slate-400 text-sm font-bold uppercase mb-2">Total Avatars</div>
+                            <div className="text-3xl font-bold text-blue-400">{stats.totalAvatars}</div>
+                        </div>
+                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                            <div className="text-slate-400 text-sm font-bold uppercase mb-2">Green Circulation</div>
+                            <div className="text-3xl font-bold text-green-400">{stats.totalGreen}</div>
+                        </div>
+                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col justify-between">
+                            <div className="text-slate-400 text-sm font-bold uppercase mb-2">Admin Tools</div>
+                            <button
+                                onClick={handleResetRatings}
+                                className="bg-red-900/30 text-red-500 border border-red-900/50 hover:bg-red-900/50 w-full py-2 rounded-lg font-bold transition flex items-center justify-center gap-2"
+                            >
+                                <Trash2 size={16} /> Reset All Ratings
+                            </button>
+                        </div>
                     </div>
-                    <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
-                        <div className="text-slate-400 text-sm font-bold uppercase mb-2">Total Avatars</div>
-                        <div className="text-3xl font-bold text-blue-400">{stats.totalAvatars}</div>
-                    </div>
-                    <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
-                        <div className="text-slate-400 text-sm font-bold uppercase mb-2">Green Circulation</div>
-                        <div className="text-3xl font-bold text-green-400">{stats.totalGreen}</div>
-                    </div>
-                    <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col justify-between">
-                        <div className="text-slate-400 text-sm font-bold uppercase mb-2">Admin Tools</div>
-                        <button
-                            onClick={handleResetRatings}
-                            className="bg-red-900/30 text-red-500 border border-red-900/50 hover:bg-red-900/50 w-full py-2 rounded-lg font-bold transition flex items-center justify-center gap-2"
-                        >
-                            <Trash2 size={16} /> Reset All Ratings
-                        </button>
-                    </div>
-                </div>
+                )}
 
                 {/* Rebuild Referrals Button (in STATS tab) */}
                 {activeTab === 'STATS' && (
