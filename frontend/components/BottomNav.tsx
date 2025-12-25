@@ -10,10 +10,11 @@ export const BottomNav = () => {
     const pathname = usePathname();
     const { webApp } = useTelegram();
 
-    // If we are in the GAME BOARD, we typically HIDE the nav, or keep it?
-    // Usually hide in active game to prevent accidental exit.
-    // Hide on Game Board to save space
-    if (pathname.startsWith('/game')) return null;
+    // Hide on Game Board to save space (only during active game with roomId)
+    // Show in lobby
+    if (pathname === '/game' && typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('id')) {
+        return null;
+    }
 
     const tabs = [
         { name: 'Главная', path: '/home', icon: Home },
