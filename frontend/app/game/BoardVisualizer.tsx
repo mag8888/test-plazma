@@ -237,6 +237,12 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                     {board.filter((sq: any) => !isFastTrackSquare(sq.index)).map((sq: any) => {
                         const style = getPosStyle(sq.index, false);
                         const gradient = getGradient(sq.type, false);
+                        const isPayday = sq.type === 'PAYDAY';
+
+                        // Payday Logic: Check if current player is here
+                        const playerHere = players.find((p: any) => p.id === currentPlayerId && p.position === sq.index);
+                        const showPaydaySum = isPayday && playerHere;
+
                         return (
                             <div
                                 key={sq.index}
@@ -246,17 +252,34 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                     flex items-center justify-center pointer-events-auto
                                     transition-all hover:scale-125 hover:z-50 duration-300 cursor-pointer
                                     ${gradient}
+                                    relative
                                 `}
                                 style={style as React.CSSProperties}
                                 title={sq.name}
                             >
-                                <div className="flex flex-col items-center justify-center transform hover:rotate-0 transition-transform">
-                                    <span style={{ fontSize: `${3 * zoom}cqw` }} className="filter drop-shadow-lg">{getSticker(sq.type, sq.name)}</span>
-                                    <span style={{ fontSize: `${0.8 * zoom}cqw` }} className="font-bold text-slate-400 uppercase tracking-tight mt-[-0.2cqw] bg-black/40 px-[0.5cqw] rounded-full backdrop-blur-sm hidden lg:block scale-75">
-                                        {sq.type === 'OPPORTUNITY' ? (sq.name.includes('Big') ? 'Big' : 'Small') : sq.type}
+                                <div className="absolute inset-1 flex flex-col items-center justify-center overflow-hidden">
+                                    {/* Sticker - Faded Background */}
+                                    <span style={{ fontSize: `${4 * zoom}cqw` }} className="absolute opacity-40 grayscale-[0.3] filter drop-shadow-lg pointer-events-none">{getSticker(sq.type, sq.name)}</span>
+
+                                    {/* Text - Foreground, Large */}
+                                    <span style={{ fontSize: `${1.1 * zoom}cqw`, lineHeight: '1' }} className="relative z-10 text-center font-black text-slate-100 uppercase tracking-tight drop-shadow-md break-words line-clamp-2 w-full">
+                                        {sq.type === 'OPPORTUNITY' ? (sq.name.includes('Big') ? 'Big Deal' : 'Small Deal') : sq.name}
                                     </span>
                                 </div>
+
                                 <span className="absolute -top-[0.2cqw] -right-[0.2cqw] w-[1.8cqw] h-[1.8cqw] bg-slate-900 border border-slate-700 rounded-full flex items-center justify-center text-[0.8cqw] text-slate-500">{sq.index}</span>
+
+                                {/* PAYDAY POPUP */}
+                                {showPaydaySum && (
+                                    <div className="absolute -top-[6cqw] left-1/2 -translate-x-1/2 z-[60] animate-bounce-in">
+                                        <div className="bg-emerald-500 text-white font-black text-[1.5cqw] px-[1cqw] py-[0.5cqw] rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.6)] flex items-center gap-1 border-2 border-emerald-400 whitespace-nowrap">
+                                            <span>💰</span>
+                                            <span>+${playerHere.monthlyCashflow?.toLocaleString()}</span>
+                                        </div>
+                                        {/* Triangle pointer */}
+                                        <div className="w-0 h-0 border-l-[0.6cqw] border-l-transparent border-r-[0.6cqw] border-r-transparent border-t-[0.8cqw] border-t-emerald-500 absolute -bottom-[0.6cqw] left-1/2 -translate-x-1/2"></div>
+                                    </div>
+                                )}
                             </div>
                         );
                     })}
