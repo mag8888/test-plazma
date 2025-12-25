@@ -312,6 +312,9 @@ export class AdminController {
             const allUsers = await User.find({});
 
             let repaired = 0;
+            let updated = 0;
+            let skipped = 0;
+            let errors = 0;
 
             for (const user of allUsers) {
                 // Skip if no referredBy string
