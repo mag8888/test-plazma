@@ -518,11 +518,23 @@ export default function AdminPage() {
                             </button>
                         </div>
 
-                        <div className="flex gap-2">
-                            <button onClick={() => setBalanceType('GREEN')} className={`flex-1 py-2 rounded-xl text-sm font-bold border ${balanceType === 'GREEN' ? 'bg-green-900/50 border-green-500 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Green</button>
-                            <button onClick={() => setBalanceType('YELLOW')} className={`flex-1 py-2 rounded-xl text-sm font-bold border ${balanceType === 'YELLOW' ? 'bg-yellow-900/50 border-yellow-500 text-yellow-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Yellow</button>
-                            <button onClick={() => setBalanceType('RED')} className={`flex-1 py-2 rounded-xl text-sm font-bold border ${balanceType === 'RED' ? 'bg-red-900/50 border-red-500 text-red-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Red</button>
-                            <button onClick={() => setBalanceType('RATING')} className={`flex-1 py-2 rounded-xl text-sm font-bold border ${balanceType === 'RATING' ? 'bg-purple-900/50 border-purple-500 text-purple-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Rating</button>
+                        <div className="grid grid-cols-4 gap-2">
+                            <div className="flex flex-col gap-1">
+                                <button onClick={() => setBalanceType('GREEN')} className={`w-full py-2 rounded-xl text-sm font-bold border ${balanceType === 'GREEN' ? 'bg-green-900/50 border-green-500 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Green</button>
+                                <div className="text-center text-green-500 font-bold">{selectedUser.greenBalance || 0}</div>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <button onClick={() => setBalanceType('YELLOW')} className={`w-full py-2 rounded-xl text-sm font-bold border ${balanceType === 'YELLOW' ? 'bg-yellow-900/50 border-yellow-500 text-yellow-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Yellow</button>
+                                <div className="text-center text-yellow-500 font-bold">{selectedUser.yellowBalance || 0}</div>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <button onClick={() => setBalanceType('RED')} className={`w-full py-2 rounded-xl text-sm font-bold border ${balanceType === 'RED' ? 'bg-red-900/50 border-red-500 text-red-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Red</button>
+                                <div className="text-center text-red-500 font-bold">{selectedUser.balanceRed || 0}</div>
+                            </div>
+                            <div className="flex flex-col gap-1">
+                                <button onClick={() => setBalanceType('RATING')} className={`w-full py-2 rounded-xl text-sm font-bold border ${balanceType === 'RATING' ? 'bg-purple-900/50 border-purple-500 text-purple-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Rating</button>
+                                <div className="text-center text-purple-500 font-bold">{selectedUser.rating || 0}</div>
+                            </div>
                         </div>
 
                         <input
