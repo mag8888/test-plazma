@@ -207,6 +207,14 @@ export class AdminController {
                 });
             }
 
+            // Notification for Green Deposit
+            if (type === 'GREEN' && value > 0 && user.telegram_id) {
+                NotificationService.sendTelegramMessage(
+                    user.telegram_id,
+                    `Ваш счет пополнен на сумму <b>$${value}</b> (Админ)`
+                ).catch(e => console.error("Failed to send admin deposit notification", e));
+            }
+
             await user.save();
             res.json({ success: true, user });
         } catch (error: any) {
