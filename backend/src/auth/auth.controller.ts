@@ -40,6 +40,42 @@ router.post('/login', async (req: Request, res: Response) => {
     }
 });
 
+router.get('/me', async (req: Request, res: Response) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader) return res.status(401).json({ error: "No token" });
+
+        // Mock token parsing: "Bearer mock-jwt-token-for-USERID"
+        const token = authHeader.split(' ')[1];
+        if (!token || !token.startsWith('mock-jwt-token-for-')) {
+            return res.status(401).json({ error: "Invalid token" });
+        }
+
+        const userId = token.replace('mock-jwt-token-for-', '');
+        const user = await authService.getUserById(userId);
+
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        return res.json({
+            user: {
+                id: user._id.toString(),
+                telegram_id: user.telegram_id,
+                username: user.username,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                photo_url: user.photo_url,
+                rating: user.rating,
+                gamesPlayed: user.gamesPlayed,
+                wins: user.wins,
+                referralsCount: user.referralsCount || 0,
+                isMaster: user.isMaster || false
+            }
+        });
+    } catch (e: any) {
+        return res.status(500).json({ error: e.message });
+    }
+});
+
 router.post('/login/telegram', async (req: Request, res: Response) => {
     try {
         const { initData } = req.body;
