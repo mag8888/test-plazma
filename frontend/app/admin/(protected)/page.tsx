@@ -176,9 +176,12 @@ export default function AdminPage() {
     };
 
     const fetchWithAuth = async (endpoint: string, options: any = {}, key: string = secret) => {
+        // Fallback to localStorage to prevent stale closure issues with useCallback
+        const token = key || localStorage.getItem('admin_secret') || '';
+
         const headers = {
             'Content-Type': 'application/json',
-            'x-admin-secret': key,
+            'x-admin-secret': token,
             ...options.headers
         };
 
