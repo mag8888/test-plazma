@@ -233,7 +233,7 @@ export class PartnershipController {
                     }));
 
                     // Add to current result list
-                    referrals = [...referrals, ...fallbackReferrals.map(r => r.toObject())];
+                    referrals = [...referrals, ...fallbackReferrals.map(r => r.toObject())] as any;
                 }
             }
 
