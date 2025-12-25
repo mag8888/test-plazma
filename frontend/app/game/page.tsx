@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useEffect, useState, useRef } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { socket } from '../socket';
 import GameBoard from './board';
@@ -53,6 +53,18 @@ function GameContent() {
     const [isKickModalOpen, setIsKickModalOpen] = useState(false);
     const [playerToKick, setPlayerToKick] = useState<string | null>(null);
     const [gameState, setGameState] = useState<any>(null);
+
+    const dreamRef = useRef(dream);
+    const tokenRef = useRef(token);
+
+    useEffect(() => {
+        dreamRef.current = dream;
+    }, [dream]);
+
+    useEffect(() => {
+        tokenRef.current = token;
+    }, [token]);
+
 
     // Initial Join & Socket Setup
     useEffect(() => {
@@ -115,43 +127,20 @@ function GameContent() {
             if (me) {
                 setIsReady(me.isReady);
 
-                // Auto-select free dream if current is taken
-                const takenDreams = updatedRoom.players
-                    .filter(p => p.userId !== userId)
-                    .map(p => p.dream);
+                // FORCE SYNC: Trust Server State for Token & Dream
+                // If the server assigned us a different token (collision resolution), we must use it.
+                // We use Refs to check current state to avoid unnecessary updates/renders if already matching.
 
-                const currentDreamTaken = takenDreams.includes(dream);
-
-                if (currentDreamTaken) {
-                    // Find first available dream
-                    const freeDream = DREAMS.find(d => !takenDreams.includes(d.name));
-                    if (freeDream) {
-                        console.log(`Dream "${dream}" is taken, auto-selecting "${freeDream.name}"`);
-                        setDream(freeDream.name);
-                    }
-                } else if (me.dream && !dream) {
-                    // Only update from server if we haven't selected one
-                    setDream(me.dream);
+                if (me.token && me.token !== tokenRef.current) {
+                    console.log(`[Sync] Token mismatch. Local: ${tokenRef.current}, Server: ${me.token}. Syncing to Server.`);
+                    setToken(me.token);
                 }
 
-                // Auto-select free token if current is taken
-                const availableTokens = ['🦁', '🦅', '🦊', '🐻', '🐅', '🐺', '🐘', '🦈', '🦉', '🐬'];
-                const takenTokens = updatedRoom.players
-                    .filter(p => p.userId !== userId)
-                    .map(p => p.token);
-
-                const currentTokenTaken = takenTokens.includes(token);
-
-                if (currentTokenTaken) {
-                    // Find first available token
-                    const freeToken = availableTokens.find(t => !takenTokens.includes(t));
-                    if (freeToken) {
-                        console.log(`Token ${token} is taken, auto-selecting ${freeToken}`);
-                        setToken(freeToken);
-                    }
-                } else if (me.token && !token) {
-                    // Only update from server if we haven't selected one
-                    setToken(me.token);
+                if (me.dream && me.dream !== dreamRef.current) {
+                    // Only sync dream if we haven't selected one? Or always? 
+                    // Always sync for consistency.
+                    setToken(me.token); // Typo protection: mistakenly copied? No, this block is new.
+                    setDream(me.dream);
                 }
             }
         });
