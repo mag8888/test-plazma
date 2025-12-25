@@ -315,8 +315,22 @@ export class PartnershipController {
                 return res.status(400).json({ error: 'userId and type are required' });
             }
 
+            let targetUserId = userId;
+
+            // Resolve Telegram ID to ObjectId if necessary
+            if (!mongoose.Types.ObjectId.isValid(userId)) {
+                // Try finding by telegram_id
+                const userByTg = await User.findOne({ telegram_id: userId });
+                if (userByTg) {
+                    targetUserId = userByTg._id.toString();
+                    console.log(`[PartnershipController] Resolved Telegram ID ${userId} to ObjectId ${targetUserId}`);
+                } else {
+                    return res.status(400).json({ error: 'Invalid user ID format and user not found by Telegram ID' });
+                }
+            }
+
             const result = await MatrixService.purchaseAvatar(
-                new mongoose.Types.ObjectId(userId),
+                new mongoose.Types.ObjectId(targetUserId),
                 type
             );
 
