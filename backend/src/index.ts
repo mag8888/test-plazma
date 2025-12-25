@@ -449,6 +449,89 @@ app.post('/api/games/:id/broadcast', async (req, res) => {
     }
 });
 
+// Invite Player by Username (Master only)
+app.post('/api/games/:id/invite', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { username, initData } = req.body;
+
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const master = await auth.verifyTelegramAuth(initData);
+        if (!master) return res.status(401).json({ error: "Invalid auth" });
+
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const game = await ScheduledGameModel.findById(id);
+        if (!game) return res.status(404).json({ error: "Game not found" });
+
+        if (game.hostId.toString() !== master._id.toString()) {
+            return res.status(403).json({ error: "Not master" });
+        }
+
+        // Find player by username or telegram_id
+        const { UserModel } = await import('./models/user.model');
+        const usernameClean = username.replace('@', '').trim();
+        const player = await UserModel.findOne({
+            $or: [
+                { username: usernameClean },
+                { telegram_id: parseInt(usernameClean) || 0 }
+            ]
+        });
+
+        if (!player) {
+            return res.status(404).json({ error: "Игрок не найден" });
+        }
+
+        // Check if already joined
+        const alreadyJoined = game.participants.some((p: any) =>
+            p.userId.toString() === player._id.toString()
+        );
+
+        if (alreadyJoined) {
+            return res.status(400).json({ error: "Игрок уже в списке" });
+        }
+
+        // Add player to game
+        game.participants.push({
+            userId: player._id,
+            type: 'PROMO', // Master invite = promo spot
+            isVerified: true, // Auto-verified since master invited
+            paymentStatus: 'PAY_AT_GAME'
+        });
+
+        await game.save();
+
+        // Send Telegram notification
+        if (botService && player.telegram_id) {
+            const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
+                day: 'numeric',
+                month: 'long',
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'Europe/Moscow'
+            });
+
+            const message = `🎮 <b>Приглашение на игру!</b>\n\n` +
+                `Мастер <b>${master.first_name}${master.username ? ` (@${master.username})` : ''}</b> пригласил вас на игру:\n\n` +
+                `📅 <b>Дата:</b> ${dateStr} (МСК)\n` +
+                `💰 <b>Цена:</b> ${game.price} ₽\n\n` +
+                `Вы добавлены в список участников!`;
+
+            botService.bot?.sendMessage(player.telegram_id, message, { parse_mode: 'HTML' });
+        }
+
+        res.json({
+            success: true,
+            playerName: player.first_name || player.username
+        });
+
+    } catch (e) {
+        console.error("Invite player failed:", e);
+        res.status(500).json({ error: "Invite failed" });
+    }
+});
+
 // Private Message
 app.post('/api/games/:id/message', async (req, res) => {
     try {

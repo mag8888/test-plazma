@@ -31,6 +31,9 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
     const [dmTarget, setDmTarget] = useState<any>(null);
     const [dmText, setDmText] = useState('');
 
+    // Invite Player State
+    const [inviteUsername, setInviteUsername] = useState('');
+
     const [selectedUser, setSelectedUser] = useState<any>(null);
     const [userStats, setUserStats] = useState<any>(null);
 
@@ -211,6 +214,38 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
         } catch (e) { console.error(e); }
     };
 
+    const handleInvitePlayer = async () => {
+        if (!inviteUsername.trim()) {
+            webApp?.showAlert('Введите имя пользователя');
+            return;
+        }
+
+        try {
+            const res = await fetch(`/api/games/${gameId}/invite`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    initData: webApp?.initData,
+                    username: inviteUsername.trim()
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                webApp?.showAlert(`✅ ${data.playerName} приглашен!`);
+                setInviteUsername('');
+                fetchGameDetails();
+                onUpdate();
+            } else {
+                const error = await res.json();
+                webApp?.showAlert(error.error || 'Ошибка приглашения');
+            }
+        } catch (e) {
+            console.error(e);
+            webApp?.showAlert('Ошибка сети');
+        }
+    };
+
     if (loading) return (
         <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
             <div className="animate-spin text-blue-500"><Clock /></div>
@@ -311,6 +346,29 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
 
                 {activeTab === 'users' && (
                     <div className="space-y-3 animate-in slide-in-from-right-4 duration-300">
+                        {/* Add Player Section */}
+                        <div className="bg-slate-800 rounded-xl p-4 border border-slate-700">
+                            <h3 className="font-bold mb-3 flex items-center gap-2">
+                                <Users size={16} /> Добавить игрока
+                            </h3>
+                            <div className="flex gap-2">
+                                <input
+                                    type="text"
+                                    placeholder="Введите @username или имя..."
+                                    className="flex-1 bg-slate-900 border border-slate-700 rounded-lg p-3 text-sm focus:border-blue-500 outline-none"
+                                    value={inviteUsername}
+                                    onChange={(e) => setInviteUsername(e.target.value)}
+                                    onKeyDown={(e) => e.key === 'Enter' && handleInvitePlayer()}
+                                />
+                                <button
+                                    onClick={handleInvitePlayer}
+                                    className="px-4 py-2 bg-blue-600 hover:bg-blue-500 rounded-lg font-bold text-sm whitespace-nowrap"
+                                >
+                                    + Пригласить
+                                </button>
+                            </div>
+                        </div>
+
                         {game?.participants?.length === 0 ? (
                             <div className="text-center text-slate-500 py-10">Нет участников</div>
                         ) : (
