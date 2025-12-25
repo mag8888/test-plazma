@@ -377,13 +377,59 @@ export class AdminController {
                 details: `Deleted all avatars. Count: ${result.deletedCount}`
             });
 
-            res.json({
-                success: true,
-                deletedCount: result.deletedCount,
-                message: `Deleted ${result.deletedCount} avatars`
+    // Add Avatar (Admin Gift)
+    static async addAvatar(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const { userId, type } = req.body;
+            const secret = req.headers['x-admin-secret'] as string;
+            const adminName = secret.split(':')[0] || 'Unknown Admin';
+
+            if (!userId || !type) return res.status(400).json({ error: 'Missing userId or type' });
+            if (!['BASIC', 'ADVANCED', 'PREMIUM'].includes(type)) return res.status(400).json({ error: 'Invalid type' });
+
+            const user = await User.findById(userId);
+            if (!user) return res.status(404).json({ error: 'User not found' });
+
+            const config = {
+                BASIC: { cost: 20, subscriptionMonths: 1 },
+                ADVANCED: { cost: 100, subscriptionMonths: 12 },
+                PREMIUM: { cost: 1000, subscriptionMonths: null }
+            }[type as 'BASIC' | 'ADVANCED' | 'PREMIUM'];
+
+            // Calculate subscription expiry
+            let subscriptionExpires: Date | null = null;
+            if (config.subscriptionMonths) {
+                subscriptionExpires = new Date();
+                subscriptionExpires.setMonth(subscriptionExpires.getMonth() + config.subscriptionMonths);
+            }
+
+            // Create avatar
+            const newAvatar = new Avatar({
+                owner: userId,
+                type,
+                cost: 0, // Free
+                subscriptionExpires,
+                level: 0,
+                isActive: true
             });
+
+            // Place in matrix using MatrixService logic (but without payment)
+            // Import MatrixService dynamically or ensure it is imported
+            const { MatrixService } = require('../services/MatrixService');
+            const { parent } = await MatrixService.placeAvatar(newAvatar, user.referrer);
+
+            // Log Admin Action
+            await AdminLog.create({
+                adminName,
+                action: AdminActionType.BALANCE_CHANGE, // Or create new AVATAR_GIFT type
+                targetUser: user._id,
+                details: `Gifted ACTIVE ${type} avatar. Parent: ${parent ? parent._id : 'None'}`
+            });
+
+            res.json({ success: true, avatar: newAvatar });
+
         } catch (error: any) {
-            console.error('deleteAllAvatars error:', error);
+            console.error('addAvatar error:', error);
             res.status(500).json({ error: error.message });
         }
     }
