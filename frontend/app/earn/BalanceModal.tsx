@@ -42,13 +42,15 @@ export function BalanceModal({ isOpen, onClose, balance, tariff, onTopUp }: Bala
 
     // Commission Logic
     // Guest: 70% comm (30% payout)
-    // Player: 50% comm
-    // Master: 40% comm (60% payout)
-    // Partner: 20% comm (80% payout)
+    // Player/Basic: 50% comm
+    // Master/Advanced: 40% comm (60% payout)
+    // Partner/Premium: 20% comm (80% payout)
     let commissionRate = 0.7; // Default Guest
-    if (tariff === 'PLAYER') commissionRate = 0.5;
-    if (tariff === 'MASTER') commissionRate = 0.4;
-    if (tariff === 'PARTNER') commissionRate = 0.2;
+
+    // Map Backend Types to UI Logic
+    if (tariff === 'PLAYER' || tariff === 'BASIC') commissionRate = 0.5;
+    if (tariff === 'MASTER' || tariff === 'ADVANCED') commissionRate = 0.4;
+    if (tariff === 'PARTNER' || tariff === 'PREMIUM') commissionRate = 0.2;
 
     const payoutRate = 1 - commissionRate;
 
