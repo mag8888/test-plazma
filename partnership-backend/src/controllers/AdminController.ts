@@ -2,6 +2,7 @@ import { Request as ExpressRequest, Response as ExpressResponse } from 'express'
 import { User } from '../models/User';
 import { Transaction, TransactionType } from '../models/Transaction';
 import { AdminLog, AdminActionType } from '../models/AdminLog';
+import { NotificationService } from '../services/NotificationService';
 import { Avatar } from '../models/Avatar';
 import mongoose from 'mongoose';
 
@@ -130,7 +131,7 @@ export class AdminController {
     // Update Balance
     static async updateBalance(req: ExpressRequest, res: ExpressResponse) {
         try {
-            const { userId, amount, type, description } = req.body;
+            const { userId, amount, type, description, bonusDescription } = req.body;
             const secret = req.headers['x-admin-secret'] as string;
             // Parse admin name
             const adminName = secret.split(':')[0] || 'Unknown Admin';
