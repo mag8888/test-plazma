@@ -60,26 +60,31 @@ export default function EarnPage() {
             partnershipApi.login(partnershipId, user.username)
                 .then(dbUser => {
                     setPartnershipUser(dbUser);
-                    console.log("Partnership Login Success. Attempting Sync...");
+                    console.log("Partnership Login Success. Fetching stats and attempting sync...");
 
-                    // 2. Sync Balance (Now that user exists)
-                    return partnershipApi.syncLegacyBalance(webApp.initData)
-                        .then((syncRes) => {
-                            console.log("Sync Result:", syncRes);
-                            if (syncRes.success && syncRes.synced > 0) {
-                                // 3. Refresh User Data if Sync moved money
-                                return partnershipApi.getStats(dbUser._id).then(updated => {
-                                    setPartnershipUser({ ...dbUser, ...updated });
-                                });
-                            } else {
-                                // Just check legacy balance presence for UI
-                                partnershipApi.getLegacyBalance(webApp.initData).then(res => {
-                                    if (res.legacyBalance > 0) {
-                                        setPartnershipUser((prev: any) => ({ ...prev, pendingBalance: res.legacyBalance }));
-                                    }
-                                });
-                            }
-                        });
+                    // Always fetch stats first to get balances
+                    return partnershipApi.getStats(dbUser._id).then(stats => {
+                        setPartnershipUser({ ...dbUser, ...stats });
+
+                        // Then attempt sync
+                        return partnershipApi.syncLegacyBalance(webApp.initData)
+                            .then((syncRes) => {
+                                console.log("Sync Result:", syncRes);
+                                if (syncRes.success && syncRes.synced > 0) {
+                                    // Refresh stats again if sync moved money
+                                    return partnershipApi.getStats(dbUser._id).then(updated => {
+                                        setPartnershipUser((prev: any) => ({ ...prev, ...updated }));
+                                    });
+                                } else {
+                                    // Just check legacy balance presence for UI
+                                    partnershipApi.getLegacyBalance(webApp.initData).then(res => {
+                                        if (res.legacyBalance > 0) {
+                                            setPartnershipUser((prev: any) => ({ ...prev, pendingBalance: res.legacyBalance }));
+                                        }
+                                    });
+                                }
+                            });
+                    });
                 })
                 .catch(err => {
                     console.error("Partnership flow failed", err);
