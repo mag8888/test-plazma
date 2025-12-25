@@ -203,7 +203,37 @@ app.get('/game/:id', (req, res) => {
     res.redirect(`/game?id=${id}`);
 });
 
+import { AuthService } from './auth/auth.service';
+
+const authService = new AuthService();
+
 // Game Schedule API
+app.post('/api/games', async (req, res) => {
+    try {
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const { initData, startTime, maxPlayers, promoSpots, description, price } = req.body;
+
+        // Auth Check
+        const user = await authService.verifyTelegramAuth(initData);
+        if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+        const game = await ScheduledGameModel.create({
+            hostId: user._id,
+            startTime: new Date(startTime),
+            maxPlayers: Number(maxPlayers),
+            promoSpots: Number(promoSpots),
+            description,
+            price: Number(price) || 20,
+            status: 'SCHEDULED'
+        });
+
+        res.json({ success: true, gameId: game._id });
+    } catch (e) {
+        console.error("Failed to create game:", e);
+        res.status(500).json({ error: "Creation failed" });
+    }
+});
+
 app.get('/api/games', async (req, res) => {
     try {
         const { ScheduledGameModel } = await import('./models/scheduled-game.model');

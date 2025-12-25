@@ -79,6 +79,11 @@ export class PartnershipController {
             res.json({
                 greenBalance: user.greenBalance,
                 yellowBalance: user.yellowBalance,
+                balanceRed: user.balanceRed,
+                rating: user.rating,
+                gamesPlayed: user.gamesPlayed,
+                wins: user.wins,
+                referralsCount: user.referralsCount,
                 avatarCount
             });
         } catch (error: any) {

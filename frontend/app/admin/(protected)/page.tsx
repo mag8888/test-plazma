@@ -32,6 +32,7 @@ export default function AdminPage() {
     const [operation, setOperation] = useState<'ADD' | 'DEDUCT'>('ADD');
     const [reason, setReason] = useState('');
     const [balanceType, setBalanceType] = useState('GREEN');
+    const [bonusDescription, setBonusDescription] = useState(''); // Initialized
 
     // Tree
     const [treeUserId, setTreeUserId] = useState('');
@@ -204,28 +205,29 @@ export default function AdminPage() {
     };
 
     const updateBalance = async () => {
-        if (!selectedUser || !amount || !reason) return alert('Please fill all fields');
+        if (!selectedUser || !amount || !reason) return alert('Amount and Reason are required');
 
-        const finalAmount = operation === 'DEDUCT' ? -Number(amount) : Number(amount);
-
-        const res = await fetchWithAuth('/balance', {
+        const res = await fetchWithAuth('/balance/update', {
             method: 'POST',
             body: JSON.stringify({
                 userId: selectedUser._id,
-                amount: finalAmount,
+                amount: Number(amount),
                 type: balanceType,
-                description: reason
+                operation,
+                description: reason,
+                bonusDescription
             })
         });
 
         if (res.success) {
-            alert('Balance Updated!');
+            alert('Balance updated!');
             setSelectedUser(null);
             setAmount('');
             setReason('');
+            setBonusDescription(''); // Reset
             searchUsers(page); // Refresh list
         } else {
-            alert(res.error || 'Failed');
+            alert(res.error || 'Failed to update balance');
         }
     };
 
@@ -590,6 +592,14 @@ export default function AdminPage() {
                             className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
                             value={amount}
                             onChange={(e) => setAmount(e.target.value)}
+                        />
+
+                        <input
+                            type="text"
+                            placeholder="Bonus Description (Optional)"
+                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                            value={bonusDescription}
+                            onChange={(e) => setBonusDescription(e.target.value)}
                         />
 
                         <textarea

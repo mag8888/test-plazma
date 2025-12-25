@@ -8,11 +8,19 @@ import ManageGameModal from './ManageGameModal';
 import JoinGameModal from './JoinGameModal';
 import ParticipantsModal from './ParticipantsModal';
 
+import CreateGameModal from './CreateGameModal'; // Added import
+
 export default function SchedulePage() {
     const { webApp, user } = useTelegram();
     const [games, setGames] = useState<any[]>([]);
     const [viewMode, setViewMode] = useState<'upcoming' | 'history'>('upcoming');
     const [refreshKey, setRefreshKey] = useState(0);
+
+    // Edit Logic
+    const [editingGame, setEditingGame] = useState<any>(null);
+    const [joiningGame, setJoiningGame] = useState<any>(null);
+    const [showingParticipants, setShowingParticipants] = useState<any>(null);
+    const [showCreateModal, setShowCreateModal] = useState(false); // Added State
 
     // Mock Data loading
     useEffect(() => {
@@ -26,8 +34,6 @@ export default function SchedulePage() {
                     const data = await res.json();
                     console.log('🗓️ [Schedule] Games fetched:', data.length, 'games');
 
-                    // Transform backend model to UI model if needed
-                    // Backend: { startTime (ISO), price, maxPlayers, participants: [], hostId: { username... } }
                     const formatted = data.map((g: any) => {
                         const dateObj = new Date(g.startTime);
                         // MSK Time
@@ -51,7 +57,6 @@ export default function SchedulePage() {
                             rawParticipants: g.participants // Pass full list for Modal
                         };
                     });
-                    console.log('🗓️ [Schedule] Formatted games:', formatted.length);
                     setGames(formatted);
                 } else {
                     console.error('🗓️ [Schedule] Fetch failed with status:', res.status);
@@ -61,14 +66,8 @@ export default function SchedulePage() {
             }
         };
 
-        // Always fetch, even without user (to debug the issue)
         fetchGames();
-    }, [refreshKey, user, viewMode]); // Refresh when key or viewMode changes
-
-    // Edit Logic
-    const [editingGame, setEditingGame] = useState<any>(null);
-    const [joiningGame, setJoiningGame] = useState<any>(null);
-    const [showingParticipants, setShowingParticipants] = useState<any>(null);
+    }, [refreshKey, user, viewMode]);
 
     const handleCancel = async (gameId: string) => {
         if (!confirm("Вы уверены, что хотите отменить запись?")) return;
@@ -91,23 +90,53 @@ export default function SchedulePage() {
 
     return (
         <div className="min-h-screen bg-slate-900 text-white p-4 space-y-4 pt-6 pb-24">
-            <h1 className="text-2xl font-bold flex items-center gap-2">
-                <Calendar className="text-blue-500" />
-                {viewMode === 'history' ? 'История игр' : 'Расписание'}
+            <h1 className="text-2xl font-bold flex items-center gap-2 justify-between">
+                <div className="flex items-center gap-2">
+                    <Calendar className="text-blue-500" />
+                    {viewMode === 'history' ? 'История игр' : 'Расписание'}
+                </div>
+
+                {/* Create Game Button (Only for Masters/Admins) */}
+                {user?.isMaster && (
+                    <button
+                        onClick={() => setShowCreateModal(true)}
+                        className="bg-green-600 hover:bg-green-500 text-white p-2 text-sm rounded-lg font-bold flex items-center gap-1 shadow-lg shadow-green-900/20"
+                    >
+                        + Создать
+                    </button>
+                )}
             </h1>
 
             <button
                 onClick={() => setViewMode(v => v === 'upcoming' ? 'history' : 'upcoming')}
                 className={`fixed top-6 right-4 p-2 rounded-xl border transition-all ${viewMode === 'history' ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-800 text-slate-400 border-slate-700'}`}
+                style={{ right: '1rem', top: '1.5rem', display: user?.isMaster ? 'none' : 'block' }} // Hide duplicate toggle for master if we place create button there? adjust layout
             >
                 <Clock size={24} />
             </button>
+            {/* Better Layout for Header buttons */}
+            <div className="fixed top-6 right-4 flex gap-2">
+                <button
+                    onClick={() => setViewMode(v => v === 'upcoming' ? 'history' : 'upcoming')}
+                    className={`p-2 rounded-xl border transition-all ${viewMode === 'history' ? 'bg-blue-600 text-white border-blue-500' : 'bg-slate-800 text-slate-400 border-slate-700'}`}
+                >
+                    <Clock size={20} />
+                </button>
+            </div>
+
 
             {editingGame && (
                 <ManageGameModal
                     gameId={editingGame.id}
                     onClose={() => setEditingGame(null)}
                     onUpdate={() => setRefreshKey(k => k + 1)}
+                />
+            )}
+
+            {showCreateModal && (
+                <CreateGameModal
+                    onClose={() => setShowCreateModal(false)}
+                    onSuccess={() => setRefreshKey(k => k + 1)}
                 />
             )}
 
@@ -134,8 +163,19 @@ export default function SchedulePage() {
                             {viewMode === 'history' ? 'История пуста' : 'Нет запланированных игр'}
                         </div>
                         <div className="text-sm">
-                            {viewMode === 'history' ? 'Вы еще не участвовали в играх' : 'Загляните позже или создайте игру'}
+                            {(user?.isMaster && viewMode === 'upcoming')
+                                ? 'Нажмите "Создать", чтобы запланировать игру'
+                                : (viewMode === 'history' ? 'Вы еще не участвовали в играх' : 'Загляните позже')
+                            }
                         </div>
+                        {user?.isMaster && viewMode === 'upcoming' && (
+                            <button
+                                onClick={() => setShowCreateModal(true)}
+                                className="mt-4 bg-slate-800 text-blue-400 border border-slate-700 px-4 py-2 rounded-lg font-bold hover:bg-slate-700 transition"
+                            >
+                                Создать игру
+                            </button>
+                        )}
                     </div>
                 ) : (
                     games.map(game => (
