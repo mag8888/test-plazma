@@ -87,7 +87,7 @@ app.use('/api/partnership', async (req, res) => {
         const urlObj = new URL(url);
 
         // Filter headers to avoid conflicts (especially content-length mismatch after stringify)
-        const { 'content-length': cl, connection, host, ...headers } = req.headers as any;
+        const { 'content-length': cl, 'content-type': ct, connection, host, ...headers } = req.headers as any;
 
         const response = await fetch(url, {
             method: req.method,
