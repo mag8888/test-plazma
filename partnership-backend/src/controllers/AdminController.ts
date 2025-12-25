@@ -178,7 +178,11 @@ export class AdminController {
                 totalUsers,
                 totalAvatars,
                 totalGreen: balanceStats[0]?.totalGreen || 0,
-                totalYellow: balanceStats[0]?.totalYellow || 0
+                totalYellow: balanceStats[0]?.totalYellow || 0,
+                debug: {
+                    dbName: mongoose.connection.db?.databaseName,
+                    host: mongoose.connection.host
+                }
             });
         } catch (error: any) {
             res.status(500).json({ error: error.message });

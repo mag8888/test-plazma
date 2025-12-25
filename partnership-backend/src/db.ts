@@ -6,13 +6,17 @@ export const connectDB = async () => {
         // USE SAME DATABASE AS GAME BACKEND
         // Old: process.env.MONGO_URL_PARTNERSHIP (separate DB)
         // New: process.env.MONGO_URL (shared with Game Backend)
-        const mongoURI = process.env.MONGO_URL || 'mongodb://localhost:27017/moneo';
+        const mongoURI = process.env.MONGO_URL;
+        if (!mongoURI) {
+            console.error('FATAL: MONGO_URL not set');
+            process.exit(1);
+        }
 
         // Mask password for logging
         const maskedURI = mongoURI.replace(/:([^:@]+)@/, ':****@');
         console.log('Attempting to connect to MongoDB URI (SHARED WITH GAME BACKEND):', maskedURI);
 
-        await mongoose.connect(mongoURI);
+        await mongoose.connect(mongoURI, { dbName: 'moneo' });
 
         // Log the connected Database Name
         if (mongoose.connection.db) {

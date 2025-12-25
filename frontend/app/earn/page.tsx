@@ -24,6 +24,8 @@ export default function EarnPage() {
     // Partners State
     const [partners, setPartners] = useState<any[]>([]);
     const [loadingPartners, setLoadingPartners] = useState(false);
+    const [dbName, setDbName] = useState<string>('?');
+    const [dbHost, setDbHost] = useState<string>('?');
 
     const [missingAmount, setMissingAmount] = useState(0);
 
@@ -38,6 +40,10 @@ export default function EarnPage() {
             .then(res => res.json())
             .then(data => {
                 if (data.users) setTotalUsers(data.users);
+                if (data.debug) {
+                    setDbName(data.debug.dbName || 'unknown');
+                    setDbHost(data.debug.host || 'unknown');
+                }
             })
             .catch(err => console.error("Stats fetch error", err));
 
@@ -484,6 +490,8 @@ export default function EarnPage() {
                         </div>
                         {partnershipError && <div className="text-red-500 text-[10px] mt-1 break-all bg-red-900/10 p-1 rounded">Err: {partnershipError}</div>}
                         <div className="text-[9px] text-slate-700 mt-1 truncate">Env Valid: {process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL?.includes('http') ? 'Yes' : 'No'}</div>
+                        <div className="text-[9px] text-slate-700 mt-1 truncate">DB Name: {dbName}</div>
+                        <div className="text-[9px] text-slate-700 mt-1 truncate">DB Host: {dbHost}</div>
 
                         <div className="pt-2 flex gap-2">
                             <button

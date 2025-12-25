@@ -70,13 +70,12 @@ app.use(express.json());
 // Proxy to Partnership Backend (Internal)
 // Frontend calls /api/partnership/user -> We forward to http://localhost:4000/api/user
 app.use('/api/partnership', async (req, res) => {
-    const PARTNERSHIP_URL = 'http://localhost:4000/api'; // Internal URL
-    const url = `${PARTNERSHIP_URL}${req.url}`; // req.url includes /user, /stats etc. because app.use strips the prefix? 
-    // Wait, express app.use('/api/partnership') STRIPS the prefix.
-    // So req.url will be just '/user'.
-    // So http://localhost:4000/api + /user = http://localhost:4000/api/user. Correct.
-
-    // console.log(`Proxying ${req.method} ${req.originalUrl} -> ${url}`);
+    const PARTNERSHIP_URL = process.env.PARTNERSHIP_API_URL;
+    if (!PARTNERSHIP_URL) {
+        console.error('FATAL: PARTNERSHIP_API_URL not set');
+        return res.status(500).json({ error: 'Configuration Error' });
+    }
+    const url = `${PARTNERSHIP_URL}${req.url}`;
 
     // console.log(`Proxying ${req.method} ${req.originalUrl} -> ${url}`);
 
@@ -85,12 +84,16 @@ app.use('/api/partnership', async (req, res) => {
         // Strip the body for GET/HEAD, otherwise pass it
         const body = (req.method === 'GET' || req.method === 'HEAD') ? undefined : JSON.stringify(req.body);
 
+        // Parse hostname for the host header override if needed, or just let fetch handle it.
+        // Usually fetch handles the host header automatically based on the URL.
+        const urlObj = new URL(url);
+
         const response = await fetch(url, {
             method: req.method,
             headers: {
                 'Content-Type': 'application/json',
                 ...req.headers as any,
-                host: 'localhost:4000' // Override host
+                host: urlObj.host // Dynamic host
             },
             body: body
         });
@@ -238,7 +241,13 @@ app.get('/api/stats', async (req, res) => {
     try {
         const { UserModel } = await import('./models/user.model');
         const userCount = await UserModel.countDocuments();
-        res.json({ users: userCount });
+        res.json({
+            users: userCount,
+            debug: {
+                dbName: mongoose.connection.db?.databaseName,
+                host: mongoose.connection.host
+            }
+        });
     } catch (e) {
         console.error("Failed to fetch stats:", e);
         res.status(500).json({ error: "Stats Error" });

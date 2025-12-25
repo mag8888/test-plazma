@@ -254,7 +254,8 @@ export class BotService {
                         }
 
                         // 2. Sync with Partnership Backend (if configured)
-                        const partnershipUrl = process.env.PARTNERSHIP_API_URL || 'http://localhost:4000/api'; // Correct default port
+                        const partnershipUrl = process.env.PARTNERSHIP_API_URL;
+                        if (!partnershipUrl) throw new Error("PARTNERSHIP_API_URL not set");
                         const adminSecret = process.env.ADMIN_SECRET || 'supersecret';
 
                         try {
@@ -296,7 +297,8 @@ export class BotService {
                     }
                     if (targetUser) {
                         // Force Sync Logic
-                        const partnershipUrl = process.env.PARTNERSHIP_API_URL || 'http://localhost:4000/api';
+                        const partnershipUrl = process.env.PARTNERSHIP_API_URL;
+                        if (!partnershipUrl) throw new Error("PARTNERSHIP_API_URL not set");
                         const adminSecret = process.env.ADMIN_SECRET || 'supersecret';
                         try {
                             if (targetUser.referralBalance > 0) {

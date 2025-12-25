@@ -4,7 +4,13 @@ import mongoose from 'mongoose';
 
 dotenv.config();
 
-const PARTNERSHIP_URL = process.env.PARTNERSHIP_API_URL || 'http://localhost:4000/api';
+const PARTNERSHIP_URL = process.env.PARTNERSHIP_API_URL;
+if (!PARTNERSHIP_URL) {
+    console.error("FATAL: PARTNERSHIP_API_URL not set in PartnershipClient");
+    // We cannot throw at top level easily without crashing app on require, 
+    // but better to fail fast or handle in methods. 
+    // For now, let's log fatal.
+}
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin';
 
 export enum Currency {

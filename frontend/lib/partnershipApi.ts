@@ -8,8 +8,10 @@ const getPartnershipUrl = () => {
         return `${backend}/api/partnership`;
     }
 
-    // SSR/Development fallback
-    return 'http://localhost:4000/api';
+    // SSR/Development fallback - MUST be set in ENV for production
+    const envUrl = process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL;
+    if (!envUrl) console.warn("NEXT_PUBLIC_PARTNERSHIP_API_URL is not set");
+    return envUrl || '';
 };
 
 const API_URL = getPartnershipUrl();

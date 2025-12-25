@@ -47,8 +47,12 @@ async function migrate() {
     console.log('🔄 Starting database migration...\n');
 
     // Connection URIs from environment
-    const gameDbUri = process.env.MONGO_URL || 'mongodb://localhost:27017/moneo';
-    const partnershipDbUri = process.env.MONGO_URL_PARTNERSHIP || 'mongodb://localhost:27017/moneo-partnership';
+    const gameDbUri = process.env.MONGO_URL;
+    const partnershipDbUri = process.env.MONGO_URL_PARTNERSHIP; // Or same
+
+    if (!gameDbUri || !partnershipDbUri) {
+        throw new Error("Missing ENV vars");
+    }
 
     console.log(`Game DB: ${gameDbUri.replace(/:([^:@]+)@/, ':****@')}`);
     console.log(`Partnership DB: ${partnershipDbUri.replace(/:([^:@]+)@/, ':****@')}\n`);

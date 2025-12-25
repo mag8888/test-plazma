@@ -2,7 +2,8 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 // Connect to Game Backend DB
-const MONGO_URL = process.env.MONGO_URL || 'mongodb://localhost:27017/moneo';
+const MONGO_URL = process.env.MONGO_URL;
+if (!MONGO_URL) { console.error("Set MONGO_URL"); process.exit(1); }
 
 async function checkUsers() {
     try {

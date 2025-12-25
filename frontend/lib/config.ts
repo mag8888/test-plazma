@@ -16,6 +16,7 @@ export const getBackendUrl = () => {
         return origin;
     }
 
-    // 3. Fallback to Localhost Dev
-    return 'http://localhost:3001';
+    // 3. No configuration found
+    console.error("Critical: Backend URL not configured. Set NEXT_PUBLIC_API_URL.");
+    return '';
 };
