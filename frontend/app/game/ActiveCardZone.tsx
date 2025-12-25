@@ -466,29 +466,52 @@ export const ActiveCardZone = ({
     // 1. OPPORTUNITY CHOICE
     if (state.phase === 'OPPORTUNITY_CHOICE' && isMyTurn) {
         return (
-            <div className="flex flex-col h-full w-full relative">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-yellow-500 to-amber-600 rounded-t-3xl"></div>
-                <div className="p-2 flex-1 flex flex-col h-full justify-center">
-                    <div className="flex items-center gap-2 mb-1 shrink-0 h-6">
-                        <div className="w-5 h-5 bg-yellow-500/20 rounded flex items-center justify-center text-xs">⚡</div>
-                        <div>
-                            <h2 className="text-xs font-bold text-white leading-tight">Возможность</h2>
+            <div className="flex flex-col h-full w-full relative overflow-hidden bg-slate-900 rounded-2xl shadow-2xl border border-slate-700/50">
+                {/* Header */}
+                <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-slate-800 to-transparent z-0 pointer-events-none"></div>
+                <div className="relative z-10 p-4 pb-2 text-center">
+                    <div className="text-4xl mb-2 filter drop-shadow-[0_0_10px_rgba(234,179,8,0.5)] animate-pulse">⚡</div>
+                    <h2 className="text-xl font-black text-white uppercase tracking-wider drop-shadow-md">Возможность</h2>
+                    <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-1">Выберите тип сделки</p>
+                </div>
+
+                {/* Cards Container */}
+                <div className="flex-1 p-4 pt-2 flex flex-col gap-3 justify-center relative z-10">
+
+                    {/* SMALL DEAL BUTTON */}
+                    <button
+                        onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })}
+                        disabled={me.cash < 500} // Assuming logic check, though button handles click usually
+                        className="group relative w-full flex-1 bg-gradient-to-r from-emerald-900/80 to-teal-900/80 hover:from-emerald-800 hover:to-teal-800 border border-emerald-500/30 rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-4 overflow-hidden disabled:opacity-50 disabled:grayscale"
+                    >
+                        <div className="absolute inset-0 bg-[url('/images/pattern-money.png')] opacity-10 mix-blend-overlay"></div>
+                        <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(16,185,129,0.3)] group-hover:scale-110 transition-transform text-white">
+                            💵
                         </div>
-                    </div>
-                    <div className="flex flex-col gap-1.5 w-full mt-1">
-                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })} className="w-full bg-slate-800 hover:bg-slate-700/80 p-2 rounded-lg border border-emerald-500/30 flex items-center justify-between group">
-                            <div className="text-left pl-1">
-                                <div className="font-bold text-emerald-400 text-[10px]">Малая Сделка</div>
-                                <div className="text-[8px] text-slate-500">Макс. 5 000$</div>
-                            </div>
-                        </button>
-                        <button onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })} className="w-full bg-slate-800 hover:bg-slate-700/80 p-2 rounded-lg border border-purple-500/30 flex items-center justify-between group">
-                            <div className="text-left pl-1">
-                                <div className="font-bold text-purple-400 text-[10px]">Крупная Сделка</div>
-                                <div className="text-[8px] text-slate-500">Мин. 6 000$</div>
-                            </div>
-                        </button>
-                    </div>
+                        <div className="text-left flex-1">
+                            <div className="text-sm font-black text-emerald-300 uppercase tracking-wide group-hover:text-emerald-200 transition-colors">Малая Сделка</div>
+                            <div className="text-[10px] text-emerald-100/60 font-medium">Стоимость до <span className="text-white font-bold">$5,000</span></div>
+                        </div>
+                        <div className="text-emerald-500/50 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all text-xl">➜</div>
+                    </button>
+
+                    {/* BIG DEAL BUTTON */}
+                    <button
+                        onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })}
+                        disabled={me.cash < 6000}
+                        className="group relative w-full flex-1 bg-gradient-to-r from-purple-900/80 to-indigo-900/80 hover:from-purple-800 hover:to-indigo-800 border border-purple-500/30 rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-4 overflow-hidden disabled:opacity-50 disabled:grayscale"
+                    >
+                        <div className="absolute inset-0 bg-[url('/images/pattern-money.png')] opacity-10 mix-blend-overlay"></div>
+                        <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(168,85,247,0.3)] group-hover:scale-110 transition-transform text-white">
+                            🏢
+                        </div>
+                        <div className="text-left flex-1">
+                            <div className="text-sm font-black text-purple-300 uppercase tracking-wide group-hover:text-purple-200 transition-colors">Крупная Сделка</div>
+                            <div className="text-[10px] text-purple-100/60 font-medium">Стоимость от <span className="text-white font-bold">$6,000</span></div>
+                        </div>
+                        <div className="text-purple-500/50 group-hover:text-purple-400 group-hover:translate-x-1 transition-all text-xl">➜</div>
+                    </button>
+
                 </div>
             </div>
         );
