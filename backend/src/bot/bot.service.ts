@@ -1166,15 +1166,6 @@ export class BotService {
             const webAppUrl = 'https://moneo.up.railway.app';
             const magicLink = `${webAppUrl}/?auth=${code}`;
 
-            // Generate password if user doesn't have one
-            const { UserModel } = await import('../models/user.model');
-            const user = await UserModel.findOne({ telegram_id: telegramId });
-
-            if (!user) {
-                this.bot?.sendMessage(chatId, '❌ Пользователь не найден.');
-                return;
-            }
-
             // Generate password if not exists
             if (!user.password) {
                 const generatePassword = () => {
