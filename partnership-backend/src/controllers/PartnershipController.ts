@@ -408,12 +408,13 @@ export class PartnershipController {
             }
 
             // Calculate actual earnings from this avatar
-            const ownerId = rootAvatar.owner._id || rootAvatar.owner;
+            const owner = rootAvatar.owner as any; // Type assertion for populated field
+            const ownerId = owner._id || rootAvatar.owner;
 
             // Get transactions related to this avatar (matrix earnings)
             const transactions = await Transaction.find({
-                recipient: ownerId,
-                type: { $in: ['MATRIX_GREEN', 'MATRIX_YELLOW', 'REFERRAL_BONUS'] }
+                user: ownerId,
+                type: { $in: [TransactionType.BONUS_GREEN, TransactionType.BONUS_YELLOW, TransactionType.AVATAR_BONUS] }
             });
 
             // Sum up earnings by type
@@ -421,9 +422,9 @@ export class PartnershipController {
             let yellowEarned = 0;
 
             for (const tx of transactions) {
-                if (tx.type === 'MATRIX_GREEN' || tx.type === 'REFERRAL_BONUS') {
+                if (tx.type === TransactionType.BONUS_GREEN || tx.type === TransactionType.AVATAR_BONUS) {
                     greenEarned += tx.amount;
-                } else if (tx.type === 'MATRIX_YELLOW') {
+                } else if (tx.type === TransactionType.BONUS_YELLOW) {
                     yellowEarned += tx.amount;
                 }
             }
@@ -441,8 +442,8 @@ export class PartnershipController {
                 earnings: {
                     greenEarned: Math.round(greenEarned * 100) / 100,
                     yellowEarned: Math.round(yellowEarned * 100) / 100,
-                    greenBalance: rootAvatar.owner.greenBalance || 0,
-                    yellowBalance: rootAvatar.owner.yellowBalance || 0
+                    greenBalance: owner.greenBalance || 0,
+                    yellowBalance: owner.yellowBalance || 0
                 }
             };
 
