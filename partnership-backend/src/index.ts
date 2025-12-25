@@ -44,7 +44,7 @@ adminRouter.post('/rebuild-referrals', AdminController.rebuildReferrals as any);
 adminRouter.get('/check-referrers', AdminController.checkReferrers as any); // Debug endpoint
 adminRouter.post('/avatars/add', AdminController.addAvatar as any);
 adminRouter.delete('/avatars/delete-all', AdminController.deleteAllAvatars as any);
-adminRouter.post('/reset-ratings', AdminController.resetRatings as any);
+
 
 // Wallet Routes (Protected by Admin Secret or Internal Network)
 // Ideally should be protected, but for now we rely on internal network proxy from backend
