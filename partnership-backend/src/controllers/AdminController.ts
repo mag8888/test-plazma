@@ -131,7 +131,7 @@ export class AdminController {
     // Update Balance
     static async updateBalance(req: ExpressRequest, res: ExpressResponse) {
         try {
-            const { userId, amount, type, description } = req.body;
+            const { userId, amount, type, description, bonusDescription } = req.body;
             const secret = req.headers['x-admin-secret'] as string;
             // Parse admin name
             const adminName = secret.split(':')[0] || 'Unknown Admin';
@@ -211,9 +211,10 @@ export class AdminController {
             // Notification for Green Deposit
             console.log(`[AdminController] Checking notification: Type=${type}, Value=${value}, TID=${user.telegram_id}`);
             if (type === 'GREEN' && value > 0 && user.telegram_id) {
+                const note = bonusDescription ? `\n\n💬 ${bonusDescription}` : '';
                 NotificationService.sendTelegramMessage(
                     user.telegram_id,
-                    `Ваш счет пополнен на сумму <b>$${value}</b> (Админ)`
+                    `Ваш счет пополнен на сумму <b>$${value}</b> (Админ)${note}`
                 ).catch(e => console.error("Failed to send admin deposit notification", e));
             }
 
