@@ -202,4 +202,7 @@ export class AuthService {
 
         return user;
     }
+    async getUserById(id: string): Promise<any> {
+        return UserModel.findById(id);
+    }
 }
