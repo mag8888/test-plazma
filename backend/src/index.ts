@@ -110,9 +110,18 @@ app.use('/api/partnership', async (req, res) => {
 });
 
 // Explicit Admin Route (Force Serve)
-// ... Keep existing ...
+app.get('/admin', (req, res) => {
+    const adminFile = path.join(__dirname, '../../frontend/out/admin.html');
+    const indexFile = path.join(__dirname, '../../frontend/out/index.html');
+    if (fs.existsSync(adminFile)) res.sendFile(adminFile);
+    else res.sendFile(indexFile);
+});
 
-// ...
+app.use('/api/auth', AuthController);
+
+// Card Management API (Admin Only)
+import cardRoutes from './game/card.routes';
+app.use('/api/cards', cardRoutes);
 
 // Static File Serving
 // Serve Next.js Static Export
