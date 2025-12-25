@@ -3,7 +3,7 @@
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTelegram } from '../components/TelegramProvider';
-import { User, Lock, ArrowRight, Loader2, Send } from 'lucide-react';
+import { User, Lock, ArrowRight, Loader2, Send, Eye, EyeOff } from 'lucide-react';
 import { getBackendUrl } from '../lib/config';
 
 function HomeContent() {
@@ -12,6 +12,7 @@ function HomeContent() {
 
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [mode, setMode] = useState<'LOGIN' | 'REGISTER'>('LOGIN');
@@ -114,14 +115,23 @@ function HomeContent() {
 
               <div className="space-y-1">
                 <label className="text-xs font-bold text-slate-500 ml-1">Пароль</label>
-                <input
-                  type="password"
-                  className="w-full bg-slate-950 text-white p-4 rounded-xl border border-slate-800 focus:border-blue-500 outline-none transition"
-                  placeholder="••••••"
-                  value={password}
-                  onChange={e => setPassword(e.target.value)}
-                  onKeyDown={e => e.key === 'Enter' && handleUserLogin()}
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    className="w-full bg-slate-950 text-white p-4 pr-12 rounded-xl border border-slate-800 focus:border-blue-500 outline-none transition"
+                    placeholder="••••••"
+                    value={password}
+                    onChange={e => setPassword(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && handleUserLogin()}
+                  />
+                  <button
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition"
+                    type="button"
+                  >
+                    {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                  </button>
+                </div>
               </div>
 
               {error && <div className="text-red-400 text-xs font-bold text-center bg-red-500/10 py-2 rounded-lg">{error}</div>}
