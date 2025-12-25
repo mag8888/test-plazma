@@ -2,7 +2,6 @@ import { Request as ExpressRequest, Response as ExpressResponse } from 'express'
 import { User } from '../models/User';
 import { Transaction, TransactionType } from '../models/Transaction';
 import { AdminLog, AdminActionType } from '../models/AdminLog';
-import { NotificationService } from '../services/NotificationService';
 import { Avatar } from '../models/Avatar';
 import mongoose from 'mongoose';
 
@@ -131,7 +130,7 @@ export class AdminController {
     // Update Balance
     static async updateBalance(req: ExpressRequest, res: ExpressResponse) {
         try {
-            const { userId, amount, type, description, bonusDescription } = req.body;
+            const { userId, amount, type, description } = req.body;
             const secret = req.headers['x-admin-secret'] as string;
             // Parse admin name
             const adminName = secret.split(':')[0] || 'Unknown Admin';
@@ -140,7 +139,7 @@ export class AdminController {
             // The MAIN 'RED' balance is actually stored in the Main Backend (Moneo), 
             // but here we might have duplicated it if we are syncing?
             // Checking User model...
-            // User.ts has: greenBalance and yellowBalance. 
+            // User.ts has: greenBalance, yellowBalance. 
             // It does NOT have redBalance (that's likely on main game backend).
             // However, the prompt asked to top up players.
             // If this is Partnership Backend, we can only update Partnership balances (Green/Yellow).
@@ -209,13 +208,6 @@ export class AdminController {
             }
 
             await user.save();
-
-            // Send Telegram Notification
-            if (user.telegram_id) {
-                const message = `💰 <b>Balance Update</b>: ${value > 0 ? '+' : ''}${value} ${type}\n📝 <b>Reason</b>: ${description || 'Admin Adjustment'}${bonusDescription ? `\nℹ️ <b>Note</b>: ${bonusDescription}` : ''}`;
-                NotificationService.sendTelegramMessage(user.telegram_id, message).catch(e => console.error('Failed to send admin notification', e));
-            }
-
             res.json({ success: true, user });
         } catch (error: any) {
             res.status(500).json({ error: error.message });
