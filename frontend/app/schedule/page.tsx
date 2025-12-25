@@ -212,32 +212,45 @@ export default function SchedulePage() {
 
                             <div onClick={(e) => e.stopPropagation()}>
                                 {/* Stop Propagation to prevent opening modal when clicking action buttons */}
-                                {(game.hostId === user?.id || (game.hostTelegramId && game.hostTelegramId === user?.telegram_id)) ? (
-                                    <button
-                                        onClick={() => setEditingGame(game)}
-                                        className="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 border border-slate-600"
-                                    >
-                                        ⚙️ Редактировать
-                                    </button>
-                                ) : game.isJoined ? (
-                                    <button
-                                        onClick={() => handleCancel(game.id)}
-                                        className="w-full bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-900/50 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95"
-                                    >
-                                        <X size={18} /> Отменить запись
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={() => setJoiningGame(game)}
-                                        className={clsx(
-                                            "w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95",
-                                            game.players >= game.max ? "bg-slate-700 text-slate-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-500"
-                                        )}
-                                        disabled={game.players >= game.max}
-                                    >
-                                        {game.players >= game.max ? "Мест нет" : <>Записаться <ArrowRight size={18} /></>}
-                                    </button>
-                                )}
+                                {(() => {
+                                    // Debug logging
+                                    console.log('HOST CHECK:', {
+                                        'game.hostId': game.hostId,
+                                        'user.id': user?.id,
+                                        'game.hostTelegramId': game.hostTelegramId,
+                                        'user.telegram_id': user?.telegram_id,
+                                        'hostId match': game.hostId === user?.id,
+                                        'telegram_id match': game.hostTelegramId === user?.telegram_id,
+                                        'isHost': game.hostId === user?.id || (game.hostTelegramId && game.hostTelegramId === user?.telegram_id)
+                                    });
+
+                                    return (game.hostId === user?.id || (game.hostTelegramId && game.hostTelegramId === user?.telegram_id)) ? (
+                                        <button
+                                            onClick={() => setEditingGame(game)}
+                                            className="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 border border-slate-600"
+                                        >
+                                            ⚙️ Редактировать
+                                        </button>
+                                    ) : game.isJoined ? (
+                                        <button
+                                            onClick={() => handleCancel(game.id)}
+                                            className="w-full bg-red-900/30 hover:bg-red-900/50 text-red-400 border border-red-900/50 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95"
+                                        >
+                                            <X size={18} /> Отменить запись
+                                        </button>
+                                    ) : (
+                                        <button
+                                            onClick={() => setJoiningGame(game)}
+                                            className={clsx(
+                                                "w-full py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95",
+                                                game.players >= game.max ? "bg-slate-700 text-slate-500 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-500"
+                                            )}
+                                            disabled={game.players >= game.max}
+                                        >
+                                            {game.players >= game.max ? "Мест нет" : <>Записаться <ArrowRight size={18} /></>}
+                                        </button>
+                                    )
+                                })()}
                             </div>
                         </div>
                     ))
