@@ -93,7 +93,10 @@ export class AdminController {
             // If this is Partnership Backend, we can only update Partnership balances (Green/Yellow).
             // Unless we proxy? For now, implementing Green/Yellow only.
 
-            if (!userId || !amount || !type) return res.status(400).json({ error: 'Missing fields' });
+            console.log('[AdminController] updateBalance body:', req.body);
+            if (!userId) return res.status(400).json({ error: 'Missing field: userId' });
+            if (!amount && amount !== 0) return res.status(400).json({ error: 'Missing field: amount' });
+            if (!type) return res.status(400).json({ error: 'Missing field: type' });
 
             let user;
             // Check if userId is MongoID
