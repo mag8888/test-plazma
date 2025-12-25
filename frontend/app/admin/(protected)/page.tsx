@@ -15,7 +15,12 @@ export default function AdminPage() {
     const [activeTab, setActiveTab] = useState<'USERS' | 'STATS' | 'TREE' | 'LOGS' | 'CARDS'>('USERS');
 
     // Stats
-    const [stats, setStats] = useState<any>(null);
+    const [stats, setStats] = useState<any>({
+        totalUsers: 0,
+        totalAvatars: 0,
+        totalGreen: 0,
+        totalYellow: 0
+    });
 
     // Users
     const [userQuery, setUserQuery] = useState('');
@@ -181,8 +186,14 @@ export default function AdminPage() {
     };
 
     const fetchStats = async (key: string = secret) => {
-        const res = await fetchWithAuth('/stats', {}, key);
-        if (!res.error) setStats(res);
+        try {
+            const res = await fetchWithAuth('/stats', {}, key);
+            if (res && !res.error) {
+                setStats(res);
+            }
+        } catch (e) {
+            console.error("Fetch stats error", e);
+        }
     };
 
     const fetchTree = async () => {
