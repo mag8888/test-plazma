@@ -530,231 +530,219 @@ export const ActiveCardZone = ({
 
     // 1. OPPORTUNITY CHOICE
     if (showPhaseContent && state.phase === 'OPPORTUNITY_CHOICE' && isMyTurn) {
-        if (state.phase === 'OPPORTUNITY_CHOICE' && isMyTurn) {
-            // ...
-        }
-    }
-    // Accessing `canShowCard` from props:
-    // Need to destructure it first.
-
-    // Better implementation:
-    // Just modify `currentCard` calculation.
-    // And for the Early Returns, wrap them in `if (canShowCard) { ... }`.
-
-    // Let's do the destructuring first.
-    return (
-        <div className="flex flex-col h-full w-full relative overflow-hidden bg-slate-900 rounded-2xl shadow-2xl border border-slate-700/50">
-            {/* Header */}
-            <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-slate-800 to-transparent z-0 pointer-events-none"></div>
-            <div className="relative z-10 p-4 pb-2 text-center">
-                <div className="text-4xl mb-2 filter drop-shadow-[0_0_10px_rgba(234,179,8,0.5)] animate-pulse">⚡</div>
-                <h2 className="text-xl font-black text-white uppercase tracking-wider drop-shadow-md">Возможность</h2>
-                <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-1">Выберите тип сделки</p>
-            </div>
-
-            {/* Cards Container */}
-            <div className="flex-1 p-4 pt-2 flex flex-col gap-3 justify-center relative z-10">
-
-                {/* SMALL DEAL BUTTON */}
-                <button
-                    onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })}
-                    disabled={me.cash < 500} // Assuming logic check, though button handles click usually
-                    className="group relative w-full flex-1 bg-gradient-to-r from-emerald-900/80 to-teal-900/80 hover:from-emerald-800 hover:to-teal-800 border border-emerald-500/30 rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-4 overflow-hidden disabled:opacity-50 disabled:grayscale"
-                >
-                    <div className="absolute inset-0 bg-[url('/images/pattern-money.png')] opacity-10 mix-blend-overlay"></div>
-                    <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(16,185,129,0.3)] group-hover:scale-110 transition-transform text-white">
-                        💵
-                    </div>
-                    <div className="text-left flex-1">
-                        <div className="text-sm font-black text-emerald-300 uppercase tracking-wide group-hover:text-emerald-200 transition-colors">Малая Сделка</div>
-                        <div className="text-[10px] text-emerald-100/60 font-medium">Стоимость до <span className="text-white font-bold">$5,000</span></div>
-                    </div>
-                    <div className="text-emerald-500/50 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all text-xl">➜</div>
-                </button>
-
-                {/* BIG DEAL BUTTON */}
-                <button
-                    onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })}
-                    disabled={me.cash < 6000}
-                    className="group relative w-full flex-1 bg-gradient-to-r from-purple-900/80 to-indigo-900/80 hover:from-purple-800 hover:to-indigo-800 border border-purple-500/30 rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-4 overflow-hidden disabled:opacity-50 disabled:grayscale"
-                >
-                    <div className="absolute inset-0 bg-[url('/images/pattern-money.png')] opacity-10 mix-blend-overlay"></div>
-                    <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(168,85,247,0.3)] group-hover:scale-110 transition-transform text-white">
-                        🏢
-                    </div>
-                    <div className="text-left flex-1">
-                        <div className="text-sm font-black text-purple-300 uppercase tracking-wide group-hover:text-purple-200 transition-colors">Крупная Сделка</div>
-                        <div className="text-[10px] text-purple-100/60 font-medium">Стоимость от <span className="text-white font-bold">$6,000</span></div>
-                    </div>
-                    <div className="text-purple-500/50 group-hover:text-purple-400 group-hover:translate-x-1 transition-all text-xl">➜</div>
-                </button>
-
-            </div>
-        </div>
-    );
-}
-// 2. CHARITY
-// 2. CHARITY CHOICE
-if (state.phase === 'CHARITY_CHOICE') {
-    if (!isMyTurn) {
         return (
-            <div className="flex flex-col items-center justify-center h-full text-slate-500/80 animate-pulse bg-slate-900/40 rounded-2xl border border-slate-800/50">
-                <div className="text-3xl mb-2 grayscale opacity-50">❤️</div>
-                <div className="text-center">
-                    <div className="text-xs font-bold text-slate-300 mb-1">{state.players[state.currentPlayerIndex]?.name}</div>
-                    <div className="text-[10px] uppercase font-bold tracking-widest opacity-70">решает насчет<br />благотворительности</div>
+            <div className="flex flex-col h-full w-full relative overflow-hidden bg-slate-900 rounded-2xl shadow-2xl border border-slate-700/50">
+                {/* Header */}
+                <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-slate-800 to-transparent z-0 pointer-events-none"></div>
+                <div className="relative z-10 p-4 pb-2 text-center">
+                    <div className="text-4xl mb-2 filter drop-shadow-[0_0_10px_rgba(234,179,8,0.5)] animate-pulse">⚡</div>
+                    <h2 className="text-xl font-black text-white uppercase tracking-wider drop-shadow-md">Возможность</h2>
+                    <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-1">Выберите тип сделки</p>
                 </div>
-            </div>
-        );
-    }
-    return (
-        <div className="flex flex-col h-full w-full relative bg-[#1e293b] rounded-2xl overflow-hidden border border-slate-700/50 shadow-lg">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-red-500 rounded-t-3xl"></div>
-            <div className="p-3 flex-1 flex flex-col items-center text-center justify-center h-full">
-                <div className="text-3xl mb-2">❤️</div>
-                <h2 className="text-sm font-bold text-white mb-2">Благотворительность</h2>
-                <p className="text-slate-400 text-[10px] mb-4 leading-relaxed">
-                    Пожертвуйте <span className="text-pink-400 font-bold">{me.isFastTrack ? '$100k' : '10%'}</span> <br />
-                    для бонусов на 3 хода.
-                </p>
-                <div className="flex gap-2 w-full mt-auto">
-                    <button onClick={() => socket.emit('donate_charity', { roomId })} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg">
-                        Да (${(Math.max(0, me.income * 0.1)).toLocaleString()})
-                    </button>
-                    <button onClick={() => socket.emit('skip_charity', { roomId })} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider">
-                        Нет
-                    </button>
-                </div>
-            </div>
-        </div>
-    );
-}
-// 3. BABY / DOWNSIZED (Simplified for Feed-like? No, these are events)
-if (['BABY_ROLL', 'DOWNSIZED_DECISION'].includes(state.phase)) {
-    // ... (Keep existing logic short or rewrite. I'll rewrite to be safe)
-    if (state.phase === 'BABY_ROLL') {
-        if (!isMyTurn) return <div className="flex flex-col items-center justify-center h-full text-slate-500 animate-pulse text-xs">👶 Ожидание броска...</div>;
-        return (
-            <div className="flex flex-col h-full w-full relative p-3 items-center justify-center text-center">
-                <div className="text-4xl mb-2 animate-bounce">👶</div>
-                <h2 className="text-sm font-bold text-white mb-3">Пополнение в семье!</h2>
-                <button onClick={() => socket.emit('roll_dice', { roomId })} className="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-lg">
-                    Бросить кубик
-                </button>
-            </div>
-        );
-    }
-    if (state.phase === 'DOWNSIZED_DECISION') {
-        if (!isMyTurn) return <div className="flex flex-col items-center justify-center h-full text-slate-500 text-xs">📉 Принимает решение...</div>;
-        return (
-            <div className="flex flex-col h-full w-full relative p-3">
-                <div className="flex items-center gap-2 mb-2 shrink-0 h-10">
-                    <div className="text-xl">📉</div>
-                    <div>
-                        <h2 className="text-sm font-bold text-white leading-tight">Увольнение!</h2>
-                        <div className="text-[9px] text-slate-400">Вы временно без работы</div>
-                    </div>
-                </div>
-                <div className="flex flex-col gap-2 w-full mt-auto">
-                    <button onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_1M' })} disabled={me.cash < me.expenses} className="w-full bg-slate-800 p-3 rounded-xl text-xs flex justify-between border border-slate-700">
-                        <span className="text-left text-[10px]">1 мес (Пропуск 2)</span>
-                        <span className="text-red-400 font-mono">${me.expenses.toLocaleString()}</span>
-                    </button>
-                    <button onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_2M' })} disabled={me.cash < me.expenses * 2} className="w-full bg-slate-800 p-3 rounded-xl text-xs flex justify-between border border-slate-700">
-                        <span className="text-left text-[10px]">2 мес (Играть)</span>
-                        <span className="text-red-400 font-mono">${(me.expenses * 2).toLocaleString()}</span>
-                    </button>
-                    <button onClick={() => { if (confirm('Банкротство?')) socket.emit('decision_downsized', { roomId, choice: 'BANKRUPT' }); }} className="text-red-500/70 text-[9px] mt-2 uppercase text-center">
-                        Объявить банкротство
-                    </button>
-                </div>
-            </div>
-        );
-    }
-}
 
-// MAIN FEED LOGIC
-// Combine Market Cards + Active Card
-// User Request: "If card is open, new one lies UNDER".
-// This implies we should keep the "Focused" card top.
-// If I have a currentCard (My Turn), it should be top.
-// If I have no CurrentCard, but MarketCards exist, the *first* one I saw should be Top?
-// Let's stick to: Current Card (Turn) -> Top. Market Cards -> Below.
+                {/* Cards Container */}
+                <div className="flex-1 p-4 pt-2 flex flex-col gap-3 justify-center relative z-10">
 
-// Also, visually "Under" means subsequent items in the list (since it's a vertical stack z-index logic).
-// In a flex-col, items appear in order.
-// To make them look "Stacked under", we can use negative margins + scale + z-index?
-// Or just a clean list. "Visible but doesn't overlap old" -> This implies they are peeking out?
-// Let's implement a visual stack effect.
-
-const marketCards = (state.activeMarketCards || []).map((mc: any) => ({ ...mc, card: mc.card, source: 'MARKET', id: mc.id }));
-const isDuplicate = marketCards.some((mc: any) => mc.card.id === state.currentCard?.id);
-const currentCard = (state.currentCard || previewCard) && !isDuplicate
-    ? [{ card: state.currentCard || previewCard, source: 'CURRENT', id: (state.currentCard || previewCard).id || 'curr' }]
-    : [];
-
-const feedItems = [...currentCard, ...marketCards];
-
-if (feedItems.length === 0) {
-    return (
-        <div className="w-full h-full flex flex-col items-center justify-center text-slate-500/50">
-            <div className="text-4xl mb-2 opacity-50">🃏</div>
-            <div className="text-[10px] items-center text-center uppercase font-bold tracking-widest">
-                <div>Нет активных</div>
-                <div>карт</div>
-            </div>
-        </div>
-    );
-}
-
-return (
-    <div className="relative w-full h-full perspective-[1000px] flex items-center justify-center">
-        {/* Stack Container - Centered */}
-        <div className="w-full relative flex items-center justify-center">
-            {feedItems.map((item: any, idx: number) => {
-                // Visual Stacking Logic
-                const isTop = idx === 0;
-                const offset = idx * 15; // px down
-                const scale = 1 - (idx * 0.05); // shrink
-                const zIndex = 50 - idx;
-
-                return (
-                    <div
-                        key={item.id || idx}
-                        className="absolute left-0 w-full transition-all duration-500 ease-out"
-                        style={{
-                            top: '50%',
-                            transform: `translateY(-50%) translateY(${offset}px) scale(${scale})`,
-                            zIndex: zIndex,
-                            opacity: Math.max(0, 1 - (idx * 0.2)),
-                            pointerEvents: isTop ? 'auto' : 'none',
-                        }}
+                    {/* SMALL DEAL BUTTON */}
+                    <button
+                        onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })}
+                        disabled={me.cash < 500}
+                        className="group relative w-full flex-1 bg-gradient-to-r from-emerald-900/80 to-teal-900/80 hover:from-emerald-800 hover:to-teal-800 border border-emerald-500/30 rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-4 overflow-hidden disabled:opacity-50 disabled:grayscale"
                     >
-                        {/* Inner Absolute Wrapper for exact positioning if needed, or just allow the card to be the div */}
-                        <div className="w-full shadow-2xl rounded-2xl overflow-hidden">
-                            <FeedCardItem
-                                cardWrapper={item}
-                                me={me}
-                                roomId={roomId}
-                                isMyTurn={isMyTurn}
-                                onDismiss={() => {
-                                    console.log('Dismissing card:', item.id, item.source);
-                                    if (item.source === 'CURRENT') {
-                                        if (previewCard && !state.currentCard) {
-                                            if (onDismissPreview) onDismissPreview();
-                                        } else {
-                                            socket.emit('end_turn', { roomId });
-                                        }
-                                    } else {
-                                        if (onDismissMarket) onDismissMarket();
-                                    }
-                                }}
-                            />
+                        <div className="absolute inset-0 bg-[url('/images/pattern-money.png')] opacity-10 mix-blend-overlay"></div>
+                        <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(16,185,129,0.3)] group-hover:scale-110 transition-transform text-white">
+                            💵
+                        </div>
+                        <div className="text-left flex-1">
+                            <div className="text-sm font-black text-emerald-300 uppercase tracking-wide group-hover:text-emerald-200 transition-colors">Малая Сделка</div>
+                            <div className="text-[10px] text-emerald-100/60 font-medium">Стоимость до <span className="text-white font-bold">$5,000</span></div>
+                        </div>
+                        <div className="text-emerald-500/50 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all text-xl">➜</div>
+                    </button>
+
+                    {/* BIG DEAL BUTTON */}
+                    <button
+                        onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })}
+                        disabled={me.cash < 6000}
+                        className="group relative w-full flex-1 bg-gradient-to-r from-purple-900/80 to-indigo-900/80 hover:from-purple-800 hover:to-indigo-800 border border-purple-500/30 rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-4 overflow-hidden disabled:opacity-50 disabled:grayscale"
+                    >
+                        <div className="absolute inset-0 bg-[url('/images/pattern-money.png')] opacity-10 mix-blend-overlay"></div>
+                        <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(168,85,247,0.3)] group-hover:scale-110 transition-transform text-white">
+                            🏢
+                        </div>
+                        <div className="text-left flex-1">
+                            <div className="text-sm font-black text-purple-300 uppercase tracking-wide group-hover:text-purple-200 transition-colors">Крупная Сделка</div>
+                            <div className="text-[10px] text-purple-100/60 font-medium">Стоимость от <span className="text-white font-bold">$6,000</span></div>
+                        </div>
+                        <div className="text-purple-500/50 group-hover:text-purple-400 group-hover:translate-x-1 transition-all text-xl">➜</div>
+                    </button>
+
+                </div>
+            </div>
+        );
+    }
+    // 2. CHARITY
+    // 2. CHARITY CHOICE
+    if (state.phase === 'CHARITY_CHOICE') {
+        if (!isMyTurn) {
+            return (
+                <div className="flex flex-col items-center justify-center h-full text-slate-500/80 animate-pulse bg-slate-900/40 rounded-2xl border border-slate-800/50">
+                    <div className="text-3xl mb-2 grayscale opacity-50">❤️</div>
+                    <div className="text-center">
+                        <div className="text-xs font-bold text-slate-300 mb-1">{state.players[state.currentPlayerIndex]?.name}</div>
+                        <div className="text-[10px] uppercase font-bold tracking-widest opacity-70">решает насчет<br />благотворительности</div>
+                    </div>
+                </div>
+            );
+        }
+        return (
+            <div className="flex flex-col h-full w-full relative bg-[#1e293b] rounded-2xl overflow-hidden border border-slate-700/50 shadow-lg">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-red-500 rounded-t-3xl"></div>
+                <div className="p-3 flex-1 flex flex-col items-center text-center justify-center h-full">
+                    <div className="text-3xl mb-2">❤️</div>
+                    <h2 className="text-sm font-bold text-white mb-2">Благотворительность</h2>
+                    <p className="text-slate-400 text-[10px] mb-4 leading-relaxed">
+                        Пожертвуйте <span className="text-pink-400 font-bold">{me.isFastTrack ? '$100k' : '10%'}</span> <br />
+                        для бонусов на 3 хода.
+                    </p>
+                    <div className="flex gap-2 w-full mt-auto">
+                        <button onClick={() => socket.emit('donate_charity', { roomId })} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg">
+                            Да (${(Math.max(0, me.income * 0.1)).toLocaleString()})
+                        </button>
+                        <button onClick={() => socket.emit('skip_charity', { roomId })} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider">
+                            Нет
+                        </button>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+    // 3. BABY / DOWNSIZED (Simplified for Feed-like? No, these are events)
+    if (['BABY_ROLL', 'DOWNSIZED_DECISION'].includes(state.phase)) {
+        // ... (Keep existing logic short or rewrite. I'll rewrite to be safe)
+        if (state.phase === 'BABY_ROLL') {
+            if (!isMyTurn) return <div className="flex flex-col items-center justify-center h-full text-slate-500 animate-pulse text-xs">👶 Ожидание броска...</div>;
+            return (
+                <div className="flex flex-col h-full w-full relative p-3 items-center justify-center text-center">
+                    <div className="text-4xl mb-2 animate-bounce">👶</div>
+                    <h2 className="text-sm font-bold text-white mb-3">Пополнение в семье!</h2>
+                    <button onClick={() => socket.emit('roll_dice', { roomId })} className="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-lg">
+                        Бросить кубик
+                    </button>
+                </div>
+            );
+        }
+        if (state.phase === 'DOWNSIZED_DECISION') {
+            if (!isMyTurn) return <div className="flex flex-col items-center justify-center h-full text-slate-500 text-xs">📉 Принимает решение...</div>;
+            return (
+                <div className="flex flex-col h-full w-full relative p-3">
+                    <div className="flex items-center gap-2 mb-2 shrink-0 h-10">
+                        <div className="text-xl">📉</div>
+                        <div>
+                            <h2 className="text-sm font-bold text-white leading-tight">Увольнение!</h2>
+                            <div className="text-[9px] text-slate-400">Вы временно без работы</div>
                         </div>
                     </div>
-                );
-            })}
+                    <div className="flex flex-col gap-2 w-full mt-auto">
+                        <button onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_1M' })} disabled={me.cash < me.expenses} className="w-full bg-slate-800 p-3 rounded-xl text-xs flex justify-between border border-slate-700">
+                            <span className="text-left text-[10px]">1 мес (Пропуск 2)</span>
+                            <span className="text-red-400 font-mono">${me.expenses.toLocaleString()}</span>
+                        </button>
+                        <button onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_2M' })} disabled={me.cash < me.expenses * 2} className="w-full bg-slate-800 p-3 rounded-xl text-xs flex justify-between border border-slate-700">
+                            <span className="text-left text-[10px]">2 мес (Играть)</span>
+                            <span className="text-red-400 font-mono">${(me.expenses * 2).toLocaleString()}</span>
+                        </button>
+                        <button onClick={() => { if (confirm('Банкротство?')) socket.emit('decision_downsized', { roomId, choice: 'BANKRUPT' }); }} className="text-red-500/70 text-[9px] mt-2 uppercase text-center">
+                            Объявить банкротство
+                        </button>
+                    </div>
+                </div>
+            );
+        }
+    }
+
+    // MAIN FEED LOGIC
+    // Combine Market Cards + Active Card
+    // User Request: "If card is open, new one lies UNDER".
+    // This implies we should keep the "Focused" card top.
+    // If I have a currentCard (My Turn), it should be top.
+    // If I have no CurrentCard, but MarketCards exist, the *first* one I saw should be Top?
+    // Let's stick to: Current Card (Turn) -> Top. Market Cards -> Below.
+
+    // Also, visually "Under" means subsequent items in the list (since it's a vertical stack z-index logic).
+    // In a flex-col, items appear in order.
+    // To make them look "Stacked under", we can use negative margins + scale + z-index?
+    // Or just a clean list. "Visible but doesn't overlap old" -> This implies they are peeking out?
+    // Let's implement a visual stack effect.
+
+    const marketCards = (state.activeMarketCards || []).map((mc: any) => ({ ...mc, card: mc.card, source: 'MARKET', id: mc.id }));
+    const isDuplicate = marketCards.some((mc: any) => mc.card.id === state.currentCard?.id);
+    const currentCard = (state.currentCard || previewCard) && !isDuplicate
+        ? [{ card: state.currentCard || previewCard, source: 'CURRENT', id: (state.currentCard || previewCard).id || 'curr' }]
+        : [];
+
+    const feedItems = [...currentCard, ...marketCards];
+
+    if (feedItems.length === 0) {
+        return (
+            <div className="w-full h-full flex flex-col items-center justify-center text-slate-500/50">
+                <div className="text-4xl mb-2 opacity-50">🃏</div>
+                <div className="text-[10px] items-center text-center uppercase font-bold tracking-widest">
+                    <div>Нет активных</div>
+                    <div>карт</div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="relative w-full h-full perspective-[1000px] flex items-center justify-center">
+            {/* Stack Container - Centered */}
+            <div className="w-full relative flex items-center justify-center">
+                {feedItems.map((item: any, idx: number) => {
+                    // Visual Stacking Logic
+                    const isTop = idx === 0;
+                    const offset = idx * 15; // px down
+                    const scale = 1 - (idx * 0.05); // shrink
+                    const zIndex = 50 - idx;
+
+                    return (
+                        <div
+                            key={item.id || idx}
+                            className="absolute left-0 w-full transition-all duration-500 ease-out"
+                            style={{
+                                top: '50%',
+                                transform: `translateY(-50%) translateY(${offset}px) scale(${scale})`,
+                                zIndex: zIndex,
+                                opacity: Math.max(0, 1 - (idx * 0.2)),
+                                pointerEvents: isTop ? 'auto' : 'none',
+                            }}
+                        >
+                            {/* Inner Absolute Wrapper for exact positioning if needed, or just allow the card to be the div */}
+                            <div className="w-full shadow-2xl rounded-2xl overflow-hidden">
+                                <FeedCardItem
+                                    cardWrapper={item}
+                                    me={me}
+                                    roomId={roomId}
+                                    isMyTurn={isMyTurn}
+                                    onDismiss={() => {
+                                        console.log('Dismissing card:', item.id, item.source);
+                                        if (item.source === 'CURRENT') {
+                                            if (previewCard && !state.currentCard) {
+                                                if (onDismissPreview) onDismissPreview();
+                                            } else {
+                                                socket.emit('end_turn', { roomId });
+                                            }
+                                        } else {
+                                            if (onDismissMarket) onDismissMarket();
+                                        }
+                                    }}
+                                />
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
         </div>
-    </div>
-);
+    );
 };
