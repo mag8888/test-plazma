@@ -575,21 +575,27 @@ export const ActiveCardZone = ({
 
     // MAIN FEED LOGIC
     // Combine Market Cards + Active Card
+    // User Request: "If card is open, new one lies UNDER".
+    // This implies we should keep the "Focused" card top.
+    // If I have a currentCard (My Turn), it should be top.
+    // If I have no CurrentCard, but MarketCards exist, the *first* one I saw should be Top?
+    // Let's stick to: Current Card (Turn) -> Top. Market Cards -> Below.
+
+    // Also, visually "Under" means subsequent items in the list (since it's a vertical stack z-index logic).
+    // In a flex-col, items appear in order.
+    // To make them look "Stacked under", we can use negative margins + scale + z-index?
+    // Or just a clean list. "Visible but doesn't overlap old" -> This implies they are peeking out?
+    // Let's implement a visual stack effect.
+
     const marketCards = (state.activeMarketCards || []).map((mc: any) => ({ ...mc, card: mc.card, source: 'MARKET', id: mc.id }));
-
-    // Check if current card is already in market cards to prevent dupes
     const isDuplicate = marketCards.some((mc: any) => mc.card.id === state.currentCard?.id);
-
     const currentCard = (state.currentCard || previewCard) && !isDuplicate
         ? [{ card: state.currentCard || previewCard, source: 'CURRENT', id: (state.currentCard || previewCard).id || 'curr' }]
         : [];
 
-    // User wants "New cards at the top". 
-    // Feed = [Current, ...Market] (reversed).
     const feedItems = [...currentCard, ...marketCards];
 
     // Show Dice if rolling (Overlay or Top Item?)
-    // If showDice is true, I should probably show it ABOVE the feed or blocking.
     if (showDice && isMyTurn) {
         return (
             <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900/50 rounded-xl relative overflow-hidden group">
@@ -613,35 +619,48 @@ export const ActiveCardZone = ({
     }
 
     return (
-        <div className="flex flex-col h-full w-full relative">
-            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500 rounded-t-3xl z-10"></div>
+        <div className="relative w-full h-full perspective-[1000px]">
+            {/* Stack Container */}
+            <div className="w-full h-full relative">
+                {feedItems.map((item: any, idx: number) => {
+                    // Visual Stacking Logic
+                    // Top item (idx 0) is fully visible.
+                    // Subsequent items are pushed down/back.
+                    const isTop = idx === 0;
+                    const offset = idx * 15; // px down
+                    const scale = 1 - (idx * 0.05); // shrink
+                    const zIndex = 50 - idx;
 
-            {/* Scrollable Feed */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-2 flex flex-col gap-3 pb-4">
-                {/* Header for Market? User screenshot showed 'РЫНОК'. */}
-                {/* I'll just render items. If there are market items, maybe a small label? */}
-
-                {feedItems.map((item: any, idx: number) => (
-                    <FeedCardItem
-                        key={item.id || idx}
-                        cardWrapper={item}
-                        me={me}
-                        roomId={roomId}
-                        isMyTurn={isMyTurn}
-                        onDismiss={() => {
-                            if (item.source === 'CURRENT') {
-                                if (previewCard && !state.currentCard) onDismissPreview?.();
-                                else socket.emit('end_turn', { roomId });
-                            } else {
-                                // Market dismiss
-                                onDismissMarket?.(); // This might dismiss ALL? Needs specific logic usually.
-                                // If onDismissMarket is global, we can't dismiss specific card.
-                                // Assuming onDismissMarket is for 'closing the view', but here view is permanent feed.
-                                // Maybe 'buy' is the only action for market unless owner cancels?
-                            }
-                        }}
-                    />
-                ))}
+                    return (
+                        <div
+                            key={item.id || idx}
+                            className="absolute top-0 left-0 w-full transition-all duration-500 ease-out"
+                            style={{
+                                transform: `translateY(${offset}px) scale(${scale})`,
+                                zIndex: zIndex,
+                                opacity: Math.max(0, 1 - (idx * 0.2)), // Fade out lower items
+                                pointerEvents: isTop ? 'auto' : 'none', // Only top interactive? Or allows click to swap?
+                                // User said: "New lies under (visible)". "Only my deal... can be closed".
+                                // If I can't interact with what's under, then 'none' is good.
+                            }}
+                        >
+                            <FeedCardItem
+                                cardWrapper={item}
+                                me={me}
+                                roomId={roomId}
+                                isMyTurn={isMyTurn}
+                                onDismiss={() => {
+                                    if (item.source === 'CURRENT') {
+                                        if (previewCard && !state.currentCard) onDismissPreview?.();
+                                        else socket.emit('end_turn', { roomId });
+                                    } else {
+                                        onDismissMarket?.();
+                                    }
+                                }}
+                            />
+                        </div>
+                    );
+                })}
             </div>
         </div>
     );
