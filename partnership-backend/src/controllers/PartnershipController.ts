@@ -329,9 +329,18 @@ export class PartnershipController {
                 }
             }
 
+            // Map Frontend Tariff Names to Backend AvatarTypes
+            const TARIFF_MAP: Record<string, AvatarType> = {
+                'PLAYER': AvatarType.BASIC,
+                'MASTER': AvatarType.ADVANCED,
+                'PARTNER': AvatarType.PREMIUM
+            };
+
+            const mappedType = TARIFF_MAP[type] || type as AvatarType;
+
             const result = await MatrixService.purchaseAvatar(
                 new mongoose.Types.ObjectId(targetUserId),
-                type
+                mappedType
             );
 
             if (!result.success) {
