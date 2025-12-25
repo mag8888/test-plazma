@@ -51,7 +51,7 @@ export default function SchedulePage() {
                             players: g.participants?.length || 0,
                             max: g.maxPlayers,
                             price: g.price,
-                            hostId: g.hostId?._id || g.hostId,
+                            hostId: (g.hostId?._id || g.hostId)?.toString(),
                             hostTelegramId: g.hostId?.telegram_id,
                             rawIso: g.startTime,
                             isJoined: g.participants?.some((p: any) => (p.userId?._id || p.userId) === user?.id),
