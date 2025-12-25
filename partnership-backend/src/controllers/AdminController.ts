@@ -396,7 +396,7 @@ export class AdminController {
     // Add Avatar (Admin Gift)
     static async addAvatar(req: ExpressRequest, res: ExpressResponse) {
         try {
-            const { userId, type } = req.body;
+            const { userId, type, deductBalance } = req.body;
             const secret = req.headers['x-admin-secret'] as string;
             const adminName = secret.split(':')[0] || 'Unknown Admin';
 
@@ -423,23 +423,41 @@ export class AdminController {
             const newAvatar = new Avatar({
                 owner: userId,
                 type,
-                cost: 0, // Free
+                cost: deductBalance ? config.cost : 0, // Cost is real if deducted
                 subscriptionExpires,
                 level: 0,
                 isActive: true
             });
 
-            // Place in matrix using MatrixService logic (but without payment)
-            // Import MatrixService dynamically or ensure it is imported
+            // Import Services
             const { MatrixService } = require('../services/MatrixService');
+            const { WalletService, Currency } = require('../services/WalletService');
+
+            // Handle Balance Deduction (Simulate Real Purchase)
+            if (deductBalance) {
+                const userBalance = user.greenBalance || 0;
+                if (userBalance < config.cost) {
+                    return res.status(400).json({ error: `Insufficient Green Balance. Required: ${config.cost}, Available: ${userBalance}` });
+                }
+
+                // Deduct Balance
+                await WalletService.charge(user.id, Currency.GREEN, config.cost, `Admin Purchase: ${type} Avatar`);
+            }
+
+            // Place in matrix
             const { parent } = await MatrixService.placeAvatar(newAvatar, user.referrer);
+
+            // Distribute Bonuses if purchased
+            if (deductBalance) {
+                await MatrixService.distributeBonus(user.id, newAvatar._id, type, config.cost, parent);
+            }
 
             // Log Admin Action
             await AdminLog.create({
                 adminName,
-                action: AdminActionType.BALANCE_CHANGE, // Or create new AVATAR_GIFT type
+                action: AdminActionType.BALANCE_CHANGE,
                 targetUser: user._id,
-                details: `Gifted ACTIVE ${type} avatar. Parent: ${parent ? parent._id : 'None'}`
+                details: `Gifted ACTIVE ${type} avatar. Parent: ${parent ? parent._id : 'None'}. Deducted: ${deductBalance || false}`
             });
 
             res.json({ success: true, avatar: newAvatar });
