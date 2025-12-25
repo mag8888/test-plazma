@@ -29,6 +29,7 @@ async function bootstrap() {
 
   const app = express();
   app.use(express.json());
+  app.use(express.urlencoded({ extended: true })); // Required for AdminJS login form
 
   await setupAdminPanel(app);
 
