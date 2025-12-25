@@ -325,12 +325,16 @@ export class AdminController {
                 try {
                     // Find the CORRECT referrer by username or telegram_id
                     const cleanRef = user.referredBy.trim();
-                    const correctReferrer = await User.findOne({
-                        $or: [
-                            { username: new RegExp(`^${cleanRef}$`, 'i') },
-                            { telegram_id: !isNaN(Number(cleanRef)) ? Number(cleanRef) : null }
-                        ]
-                    });
+                    const conditions: any[] = [
+                        { username: new RegExp(`^${cleanRef}$`, 'i') }
+                    ];
+
+                    const numRef = Number(cleanRef);
+                    if (!isNaN(numRef)) {
+                        conditions.push({ telegram_id: numRef });
+                    }
+
+                    const correctReferrer = await User.findOne({ $or: conditions });
 
                     // Logic:
                     // 1. If currently no referrer, but we found one -> Link it (Update)
