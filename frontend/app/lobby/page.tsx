@@ -15,6 +15,7 @@ interface Room {
     status: string;
     timer: number;
     creatorId: string; // Added for Delete Permission
+    creatorUsername?: string; // Added for display
 }
 
 import { useTelegram } from '../../components/TelegramProvider';
@@ -458,7 +459,20 @@ export default function Lobby() {
                                     <div key={room.id} className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 hover:border-slate-600 hover:shadow-xl transition-all group flex flex-col justify-between h-[180px]">
                                         <div>
                                             <div className="flex justify-between items-start mb-2">
-                                                <h3 className="font-bold text-lg text-white group-hover:text-blue-400 transition-colors line-clamp-1">{room.name}</h3>
+                                                <div className="flex-1">
+                                                    <h3 className="font-bold text-lg text-white group-hover:text-blue-400 transition-colors line-clamp-1">{room.name}</h3>
+                                                    {room.creatorUsername && (
+                                                        <a
+                                                            href={`https://t.me/${room.creatorUsername}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-xs text-slate-500 hover:text-blue-400 transition-colors inline-flex items-center gap-1 mt-1"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            👤 @{room.creatorUsername}
+                                                        </a>
+                                                    )}
+                                                </div>
                                                 {room.status === 'playing' && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-1 rounded font-bold uppercase">Идет игра</span>}
                                             </div>
                                             <div className="flex gap-2 mb-4">

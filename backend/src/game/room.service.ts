@@ -300,7 +300,23 @@ export class RoomService {
 
     async getRooms(): Promise<any[]> {
         const rooms = await RoomModel.find({ status: { $in: ['waiting', 'playing'] } }).sort({ createdAt: -1 }).lean();
-        return rooms.map(r => this.sanitizeRoom(r));
+
+        // Lookup creator usernames
+        const enrichedRooms = await Promise.all(rooms.map(async (r) => {
+            let creatorUsername = '';
+            try {
+                if (mongoose.Types.ObjectId.isValid(r.creatorId)) {
+                    const creator = await UserModel.findById(r.creatorId).select('username');
+                    creatorUsername = creator?.username || '';
+                }
+            } catch (e) {
+                console.error('Failed to fetch creator username:', e);
+            }
+
+            return this.sanitizeRoom({ ...r, creatorUsername });
+        }));
+
+        return enrichedRooms;
     }
 
     async getMyRooms(userId: string): Promise<any[]> {
