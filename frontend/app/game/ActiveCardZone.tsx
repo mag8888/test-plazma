@@ -595,16 +595,7 @@ export const ActiveCardZone = ({
 
     const feedItems = [...currentCard, ...marketCards];
 
-    // Show Dice if rolling (Overlay or Top Item?)
-    if (showDice && isMyTurn) {
-        return (
-            <div className="w-full h-full flex flex-col items-center justify-center bg-slate-900/50 rounded-xl relative overflow-hidden group">
-                <div className="absolute inset-0 bg-emerald-500/10 animate-pulse"></div>
-                <div className="text-8xl filter drop-shadow-[0_0_15px_rgba(16,185,129,0.5)] animate-bounce relative z-10">🎲</div>
-                {diceValue && <div className="text-5xl font-black text-white mt-4">{diceValue}</div>}
-            </div>
-        );
-    }
+    const feedItems = [...currentCard, ...marketCards];
 
     if (feedItems.length === 0) {
         return (
