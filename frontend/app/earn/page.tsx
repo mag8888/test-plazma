@@ -56,14 +56,23 @@ export default function EarnPage() {
             const rawTelegramId = webApp.initDataUnsafe?.user?.id;
             const partnershipId = rawTelegramId ? rawTelegramId.toString() : (user.telegram_id || user.id).toString();
 
+            console.log('💰 [Earn Page] Starting partnership flow...', {
+                rawTelegramId,
+                partnershipId,
+                username: user.username,
+                hasInitData: !!webApp.initData
+            });
+
             // 1. REORDER: Login First to ensure user exists in Partner DB
             partnershipApi.login(partnershipId, user.username)
                 .then(dbUser => {
+                    console.log('✅ [Earn Page] Partnership login success:', dbUser);
                     setPartnershipUser(dbUser);
                     console.log("Partnership Login Success. Fetching stats and attempting sync...");
 
                     // Always fetch stats first to get balances
                     return partnershipApi.getStats(dbUser._id).then(stats => {
+                        console.log('📊 [Earn Page] Stats fetched:', stats);
                         setPartnershipUser({ ...dbUser, ...stats });
 
                         // Then attempt sync
@@ -73,6 +82,7 @@ export default function EarnPage() {
                                 if (syncRes.success && syncRes.synced > 0) {
                                     // Refresh stats again if sync moved money
                                     return partnershipApi.getStats(dbUser._id).then(updated => {
+                                        console.log('📊 [Earn Page] Stats re-fetched after sync:', updated);
                                         setPartnershipUser((prev: any) => ({ ...prev, ...updated }));
                                     });
                                 } else {
@@ -87,9 +97,15 @@ export default function EarnPage() {
                     });
                 })
                 .catch(err => {
-                    console.error("Partnership flow failed", err);
+                    console.error("❌ [Earn Page] Partnership flow failed:", err);
                     setPartnershipError(err?.message || "Unknown Error");
                 });
+        } else {
+            console.log('⚠️ [Earn Page] Skipping partnership flow - missing user or initData', {
+                hasUser: !!user,
+                hasWebApp: !!webApp,
+                hasInitData: !!webApp?.initData
+            });
         }
     }, [user, webApp]);
 
