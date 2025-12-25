@@ -621,25 +621,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
     // Duplicates removed - these are now handled via engineRef or were redefined at the top level
 
-    // Card Reveal Delay Logic
-    const [canShowCard, setCanShowCard] = useState(false);
-
-    // Reset or Start Timer when turn events change
-    useEffect(() => {
-        // If we are moving or rolling, hide card
-        if (state.phase === 'ROLL' || isAnimatingMove) {
-            setCanShowCard(false);
-        } else {
-            // If movement stopped, wait 1s then show
-            // Only if we actually have a card to show or are in a relevant phase
-            if (!isAnimatingMove && (state.currentCard || state.phase.includes('DECISION') || state.phase.includes('CHOICE'))) {
-                const timer = setTimeout(() => {
-                    setCanShowCard(true);
-                }, 1000); // 1.0s delay as requested
-                return () => clearTimeout(timer);
-            }
-        }
-    }, [state.phase, isAnimatingMove, state.currentCard]);
+    // Card Reveal Logic moved lower to access isAnimatingMove
 
     const handleBuyStock = () => {
         socket.emit('buy_asset', { roomId, quantity: stockQty });
@@ -657,1002 +639,1023 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     };
 
     const handleTransferFunds = (toId: string, amount: number) => {
-        sfx.play('transfer'); // ... existing logic
+        sfx.play('transfer');
+        socket.emit('transfer_funds', { roomId: state.roomId, toId, amount });
     };
-    socket.emit('transfer_funds', { roomId: state.roomId, toId, amount });
-};
-const handleLoan = (amount: number) => socket.emit('take_loan', { roomId, amount });
-const handleRepay = (amount: number) => socket.emit('repay_loan', { roomId, amount });
-const handleEndTurn = () => socket.emit('end_turn', { roomId });
+    const handleLoan = (amount: number) => socket.emit('take_loan', { roomId, amount });
+    const handleRepay = (amount: number) => socket.emit('repay_loan', { roomId, amount });
+    const handleEndTurn = () => socket.emit('end_turn', { roomId });
 
-const handleSendChat = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!chatMessage.trim()) return;
-    socket.emit('chat_message', { roomId, message: chatMessage });
-    setChatMessage('');
-};
+    const handleSendChat = (e?: React.FormEvent) => {
+        e?.preventDefault();
+        if (!chatMessage.trim()) return;
+        socket.emit('chat_message', { roomId, message: chatMessage });
+        setChatMessage('');
+    };
 
-const handleTransferAsset = (toId: string, quantity?: number) => {
-    if (!transferAssetItem) return;
-    socket.emit('transfer_asset', { roomId, toPlayerId: toId, assetIndex: transferAssetItem.index, quantity });
-    setTransferAssetItem(null);
-};
+    const handleTransferAsset = (toId: string, quantity?: number) => {
+        if (!transferAssetItem) return;
+        socket.emit('transfer_asset', { roomId, toPlayerId: toId, assetIndex: transferAssetItem.index, quantity });
+        setTransferAssetItem(null);
+    };
 
-const handleDismissCard = () => {
-    socket.emit('dismiss_card', { roomId });
-};
+    const handleDismissCard = () => {
+        socket.emit('dismiss_card', { roomId });
+    };
 
-const handleExit = () => {
-    if (window.confirm("Вы уверены, что хотите выйти? Если вы организатор, комната будет удалена.")) {
-        socket.emit('leave_room', { roomId });
-        router.push('/lobby');
-    }
-};
+    const handleExit = () => {
+        if (window.confirm("Вы уверены, что хотите выйти? Если вы организатор, комната будет удалена.")) {
+            socket.emit('leave_room', { roomId });
+            router.push('/lobby');
+        }
+    };
 
-const handleEnterFastTrack = () => {
-    socket.emit('enter_fast_track', { roomId, userId: me.id });
-};
+    const handleEnterFastTrack = () => {
+        socket.emit('enter_fast_track', { roomId, userId: me.id });
+    };
 
-const handleEndGame = () => {
-    if (window.confirm("Вы уверены, что хотите принудительно завершить игру и подсчитать рейтинги?")) {
-        socket.emit('host_end_game', { roomId, userId: me.userId || me.id });
-    }
-};
+    const handleEndGame = () => {
+        if (window.confirm("Вы уверены, что хотите принудительно завершить игру и подсчитать рейтинги?")) {
+            socket.emit('host_end_game', { roomId, userId: me.userId || me.id });
+        }
+    };
 
-const handleKickPlayer = (playerId: string) => {
-    if (!window.confirm("Вы действительно хотите удалить этого игрока из игры?")) return;
-    socket.emit('kick_player', { roomId, playerId, userId: me.userId || me.id });
-};
+    const handleKickPlayer = (playerId: string) => {
+        if (!window.confirm("Вы действительно хотите удалить этого игрока из игры?")) return;
+        socket.emit('kick_player', { roomId, playerId, userId: me.userId || me.id });
+    };
 
-const handleForceSkip = () => {
-    if (!window.confirm("Принудительно завершить ход текущего игрока?")) return;
-    socket.emit('host_skip_turn', { roomId, userId: me.userId || me.id });
-};
+    const handleForceSkip = () => {
+        if (!window.confirm("Принудительно завершить ход текущего игрока?")) return;
+        socket.emit('host_skip_turn', { roomId, userId: me.userId || me.id });
+    };
 
-const me = state.players.find((p: any) => p.id === socket.id || (userId && p.userId === userId)) || initialState.players[0];
-const isMyTurn = state.players[state.currentPlayerIndex]?.id === me?.id;
-const currentTurnPlayer = state.players[state.currentPlayerIndex];
-const currentPlayer = currentTurnPlayer; // Alias for existing code
-const showExitButton = !me.isFastTrack;
+    const me = state.players.find((p: any) => p.id === socket.id || (userId && p.userId === userId)) || initialState.players[0];
+    const isMyTurn = state.players[state.currentPlayerIndex]?.id === me?.id;
+    const currentTurnPlayer = state.players[state.currentPlayerIndex];
+    const currentPlayer = currentTurnPlayer; // Alias for existing code
+    const showExitButton = !me.isFastTrack;
 
-// Calculate total asset yield
-const totalAssetYield = me.assets?.reduce((sum: number, a: any) => sum + (a.cashflow || 0), 0) || 0;
+    // Calculate total asset yield
+    const totalAssetYield = me.assets?.reduce((sum: number, a: any) => sum + (a.cashflow || 0), 0) || 0;
 
-if (!currentTurnPlayer) return <div>Loading...</div>; // Safety check
+    if (!currentTurnPlayer) return <div>Loading...</div>; // Safety check
 
-// Animation State for Visualizer
-const [animatingPos, setAnimatingPos] = useState<Record<string, number>>({});
+    // Animation State for Visualizer
+    const [animatingPos, setAnimatingPos] = useState<Record<string, number>>({});
 
-useEffect(() => {
-    if (!state.players) return;
-    const newPosMap: Record<string, number> = {};
-    state.players.forEach((p: any) => {
-        newPosMap[p.id] = animatingPos[p.id] ?? p.position;
-    });
-    setAnimatingPos(prev => ({ ...prev, ...newPosMap }));
-}, [state.players]);
-
-useEffect(() => {
-    const interval = setInterval(() => {
-        setAnimatingPos(prev => {
-            const next = { ...prev };
-            let changed = false;
-
-            state.players.forEach((p: PlayerState) => {
-                const currentDisplayPos = prev[p.id] ?? p.position;
-
-                if (currentDisplayPos !== p.position) {
-                    const max = p.isFastTrack ? 48 : 24;
-                    // Move one step forward
-                    // NOTE: This handles forward movement. If a player was reset back (e.g. 5 -> 0), 
-                    // they will walk 5->6...->23->0. This is usually desired visual effect.
-                    next[p.id] = (currentDisplayPos + 1) % max;
-                    changed = true;
-                }
-            });
-
-            return changed ? next : prev;
+    useEffect(() => {
+        if (!state.players) return;
+        const newPosMap: Record<string, number> = {};
+        state.players.forEach((p: any) => {
+            newPosMap[p.id] = animatingPos[p.id] ?? p.position;
         });
-    }, 500);
+        setAnimatingPos(prev => ({ ...prev, ...newPosMap }));
+    }, [state.players]);
 
-    return () => clearInterval(interval);
-}, [state.players]);
+    useEffect(() => {
+        const interval = setInterval(() => {
+            setAnimatingPos(prev => {
+                const next = { ...prev };
+                let changed = false;
 
-// Format MM:SS
-const formatTime = (seconds: number) => {
-    const m = Math.floor(seconds / 60);
-    const s = seconds % 60;
-    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} `;
-};
+                state.players.forEach((p: PlayerState) => {
+                    const currentDisplayPos = prev[p.id] ?? p.position;
 
-return (
-    <div className="h-[100dvh] max-h-[100dvh] bg-[#0f172a] text-white font-sans flex flex-col overflow-hidden relative">
+                    if (currentDisplayPos !== p.position) {
+                        const max = p.isFastTrack ? 48 : 24;
+                        // Move one step forward
+                        // NOTE: This handles forward movement. If a player was reset back (e.g. 5 -> 0), 
+                        // they will walk 5->6...->23->0. This is usually desired visual effect.
+                        next[p.id] = (currentDisplayPos + 1) % max;
+                        changed = true;
+                    }
+                });
 
-        {/* PLAYER ACTION MENU (Skip, Kick, Gift) */}
-        {selectedPlayerForMenu && (
-            <div className="absolute inset-0 z-[150] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedPlayerForMenu(null)}>
-                <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative" onClick={e => e.stopPropagation()}>
-                    <button onClick={() => setSelectedPlayerForMenu(null)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">✕</button>
+                return changed ? next : prev;
+            });
+        }, 500);
 
-                    <div className="flex items-center gap-4 mb-6">
-                        <div className={`w-16 h-16 rounded-full border-2 border-slate-600 shadow-lg flex items-center justify-center text-2xl bg-gradient-to-br overflow-hidden ${getAvatarColor(selectedPlayerForMenu.id)}`}>
-                            {selectedPlayerForMenu.photo_url ? (
-                                <img src={selectedPlayerForMenu.photo_url} alt={selectedPlayerForMenu.name} className="w-full h-full object-cover" />
-                            ) : getInitials(selectedPlayerForMenu.name)}
+        return () => clearInterval(interval);
+    }, [state.players]);
+    // Check if any player is currently animating (visual position != logical position)
+    const isAnimatingMove = state.players.some((p: any) =>
+        (animatingPos[p.id] !== undefined && animatingPos[p.id] !== p.position)
+    );
+
+    // Card Reveal Delay Logic
+    const [canShowCard, setCanShowCard] = useState(false);
+
+    useEffect(() => {
+        // If we are moving or rolling, hide card
+        if (state.phase === 'ROLL' || isAnimatingMove) {
+            setCanShowCard(false);
+        } else {
+            // If movement stopped, wait 1s then show
+            // Only if we actually have a card to show or are in a relevant phase
+            if (!isAnimatingMove && (state.currentCard || state.phase.includes('DECISION') || state.phase.includes('CHOICE'))) {
+                const timer = setTimeout(() => {
+                    setCanShowCard(true);
+                }, 1000); // 1.0s delay as requested
+                return () => clearTimeout(timer);
+            }
+        }
+    }, [state.phase, isAnimatingMove, state.currentCard]);
+
+    const formatTime = (seconds: number) => {
+        const m = Math.floor(seconds / 60);
+        const s = seconds % 60;
+        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} `;
+    };
+
+    return (
+        <div className="h-[100dvh] max-h-[100dvh] bg-[#0f172a] text-white font-sans flex flex-col overflow-hidden relative">
+
+            {/* PLAYER ACTION MENU (Skip, Kick, Gift) */}
+            {selectedPlayerForMenu && (
+                <div className="absolute inset-0 z-[150] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={() => setSelectedPlayerForMenu(null)}>
+                    <div className="bg-[#1e293b] w-full max-w-sm p-6 rounded-3xl border border-slate-700 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+                        <button onClick={() => setSelectedPlayerForMenu(null)} className="absolute top-4 right-4 text-slate-500 hover:text-white transition-colors">✕</button>
+
+                        <div className="flex items-center gap-4 mb-6">
+                            <div className={`w-16 h-16 rounded-full border-2 border-slate-600 shadow-lg flex items-center justify-center text-2xl bg-gradient-to-br overflow-hidden ${getAvatarColor(selectedPlayerForMenu.id)}`}>
+                                {selectedPlayerForMenu.photo_url ? (
+                                    <img src={selectedPlayerForMenu.photo_url} alt={selectedPlayerForMenu.name} className="w-full h-full object-cover" />
+                                ) : getInitials(selectedPlayerForMenu.name)}
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-white max-w-[180px] break-words leading-tight">{selectedPlayerForMenu.name}</h3>
+                                <div className="text-sm text-emerald-400 font-mono mt-1">${selectedPlayerForMenu.cash?.toLocaleString()}</div>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="text-xl font-bold text-white max-w-[180px] break-words leading-tight">{selectedPlayerForMenu.name}</h3>
-                            <div className="text-sm text-emerald-400 font-mono mt-1">${selectedPlayerForMenu.cash?.toLocaleString()}</div>
-                        </div>
-                    </div>
 
-                    <div className="space-y-3">
-                        {/* GIFT ACTION (Available to everyone) */}
-                        {selectedPlayerForMenu.id !== me.id ? (
-                            <button
-                                onClick={() => {
-                                    setBankRecipientId(selectedPlayerForMenu.id);
-                                    setSelectedPlayerForMenu(null);
-                                    setShowBank(true);
-                                }}
-                                className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-widest text-sm shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02]"
-                            >
-                                <span>🎁</span> Подарить
-                            </button>
-                        ) : (
-                            <div className="text-center text-xs text-slate-500 italic py-2">Это ваш профиль</div>
-                        )}
+                        <div className="space-y-3">
+                            {/* GIFT ACTION (Available to everyone) */}
+                            {selectedPlayerForMenu.id !== me.id ? (
+                                <button
+                                    onClick={() => {
+                                        setBankRecipientId(selectedPlayerForMenu.id);
+                                        setSelectedPlayerForMenu(null);
+                                        setShowBank(true);
+                                    }}
+                                    className="w-full py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold uppercase tracking-widest text-sm shadow-lg shadow-emerald-900/20 flex items-center justify-center gap-3 transition-all transform hover:scale-[1.02]"
+                                >
+                                    <span>🎁</span> Подарить
+                                </button>
+                            ) : (
+                                <div className="text-center text-xs text-slate-500 italic py-2">Это ваш профиль</div>
+                            )}
 
-                        {/* HOST ACTIONS */}
-                        {isHost && selectedPlayerForMenu.id !== me.id && (
-                            <>
-                                <div className="h-px bg-slate-700/50 my-2"></div>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <button
-                                        onClick={() => {
-                                            setAdminAction({ type: 'SKIP', player: selectedPlayerForMenu });
-                                            setSelectedPlayerForMenu(null);
-                                        }}
-                                        className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors"
-                                    >
-                                        🚫 Пропустить
-                                    </button>
-                                    <button
-                                        onClick={() => {
-                                            setAdminAction({ type: 'KICK', player: selectedPlayerForMenu });
-                                            setSelectedPlayerForMenu(null);
-                                        }}
-                                        className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600/50 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors"
-                                    >
-                                        👢 Kick
-                                    </button>
-                                    {isHost && (
+                            {/* HOST ACTIONS */}
+                            {isHost && selectedPlayerForMenu.id !== me.id && (
+                                <>
+                                    <div className="h-px bg-slate-700/50 my-2"></div>
+                                    <div className="grid grid-cols-2 gap-3">
                                         <button
                                             onClick={() => {
-                                                setAdminAction({ type: 'GIFT', player: selectedPlayerForMenu });
+                                                setAdminAction({ type: 'SKIP', player: selectedPlayerForMenu });
                                                 setSelectedPlayerForMenu(null);
                                             }}
-                                            className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors col-span-2"
+                                            className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors"
                                         >
-                                            💵 Подарить деньги
+                                            🚫 Пропустить
                                         </button>
-                                    )}
-                                </div>
-                            </>
-                        )}
+                                        <button
+                                            onClick={() => {
+                                                setAdminAction({ type: 'KICK', player: selectedPlayerForMenu });
+                                                setSelectedPlayerForMenu(null);
+                                            }}
+                                            className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600/50 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors"
+                                        >
+                                            👢 Kick
+                                        </button>
+                                        {isHost && (
+                                            <button
+                                                onClick={() => {
+                                                    setAdminAction({ type: 'GIFT', player: selectedPlayerForMenu });
+                                                    setSelectedPlayerForMenu(null);
+                                                }}
+                                                className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors col-span-2"
+                                            >
+                                                💵 Подарить деньги
+                                            </button>
+                                        )}
+                                    </div>
+                                </>
+                            )}
+                        </div>
                     </div>
                 </div>
-            </div>
-        )}
+            )}
 
 
 
-        {showRankings && (
-            <RankingsModal
-                rankings={rankings}
-                onExit={() => {
-                    setShowRankings(false); // Maybe leave?
-                    router.push('/lobby');
-                }}
-            />
-        )}
+            {showRankings && (
+                <RankingsModal
+                    rankings={rankings}
+                    onExit={() => {
+                        setShowRankings(false); // Maybe leave?
+                        router.push('/lobby');
+                    }}
+                />
+            )}
 
 
 
-        {/* 📱 MOBILE MENU OVERLAY */}
-        {
-            showMobileMenu && (
-                <div className="lg:hidden absolute inset-0 z-[60] bg-[#0f172a]/95 backdrop-blur-xl p-4 flex flex-col gap-4 overflow-y-auto animate-in slide-in-from-left duration-300">
-                    {/* Profile Section */}
-                    <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg relative">
-                        {/* CLOSE BUTTON */}
-                        <button
-                            onClick={() => setShowMobileMenu(false)}
-                            className="absolute top-4 right-4 p-2 -mr-2 -mt-2 text-slate-500 hover:text-white transition-colors disabled:opacity-50"
-                        >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
-                                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-                            </svg>
-                        </button>
+            {/* 📱 MOBILE MENU OVERLAY */}
+            {
+                showMobileMenu && (
+                    <div className="lg:hidden absolute inset-0 z-[60] bg-[#0f172a]/95 backdrop-blur-xl p-4 flex flex-col gap-4 overflow-y-auto animate-in slide-in-from-left duration-300">
+                        {/* Profile Section */}
+                        <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg relative">
+                            {/* CLOSE BUTTON */}
+                            <button
+                                onClick={() => setShowMobileMenu(false)}
+                                className="absolute top-4 right-4 p-2 -mr-2 -mt-2 text-slate-500 hover:text-white transition-colors disabled:opacity-50"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" className="w-6 h-6">
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
 
-                        <div className="flex items-center gap-4 mb-4">
-                            <span className="text-4xl">👷</span>
-                            <div>
-                                <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Профессия</span>
-                                <div className="text-xl font-bold text-white">{me.professionName || 'Выбор...'}</div>
+                            <div className="flex items-center gap-4 mb-4">
+                                <span className="text-4xl">👷</span>
+                                <div>
+                                    <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Профессия</span>
+                                    <div className="text-xl font-bold text-white">{me.professionName || 'Выбор...'}</div>
+                                </div>
                             </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-3 mb-4">
-                            <div className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800">
-                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс</div>
-                                <div className="font-mono text-xl text-green-400 font-bold">${me.cash?.toLocaleString()}</div>
+                            <div className="grid grid-cols-2 gap-3 mb-4">
+                                <div className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800">
+                                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс</div>
+                                    <div className="font-mono text-xl text-green-400 font-bold">${me.cash?.toLocaleString()}</div>
+                                </div>
+                                <div className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800">
+                                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит</div>
+                                    <div className="font-mono text-xl text-red-400 font-bold">${me.loanDebt?.toLocaleString()}</div>
+                                </div>
                             </div>
-                            <div className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800">
-                                <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит</div>
-                                <div className="font-mono text-xl text-red-400 font-bold">${me.loanDebt?.toLocaleString()}</div>
-                            </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-3 pb-3 border-b border-slate-800/50 mb-3">
-                            <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Пассивный доход</div>
-                                <div className="font-mono text-green-400 font-medium">+${me.passiveIncome?.toLocaleString() || 0}</div>
+                            <div className="grid grid-cols-2 gap-3 pb-3 border-b border-slate-800/50 mb-3">
+                                <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
+                                    <div className="text-[9px] text-slate-500 uppercase tracking-wider">Пассивный доход</div>
+                                    <div className="font-mono text-green-400 font-medium">+${me.passiveIncome?.toLocaleString() || 0}</div>
+                                </div>
+                                <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
+                                    <div className="text-[9px] text-slate-500 uppercase tracking-wider">Денежный поток</div>
+                                    <div className="font-mono text-green-400 font-medium">+${me.cashflow?.toLocaleString()}</div>
+                                </div>
                             </div>
-                            <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Денежный поток</div>
-                                <div className="font-mono text-green-400 font-medium">+${me.cashflow?.toLocaleString()}</div>
-                            </div>
-                        </div>
 
-                        <div className="grid grid-cols-2 gap-3">
-                            <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Доход</div>
-                                <div className="font-mono text-slate-300 font-medium">${me.income?.toLocaleString()}</div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
+                                    <div className="text-[9px] text-slate-500 uppercase tracking-wider">Доход</div>
+                                    <div className="font-mono text-slate-300 font-medium">${me.income?.toLocaleString()}</div>
+                                </div>
+                                <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
+                                    <div className="text-[9px] text-slate-500 uppercase tracking-wider">Расходы</div>
+                                    <div className="font-mono text-slate-300 font-medium">${me.expenses?.toLocaleString()}</div>
+                                </div>
                             </div>
-                            <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
-                                <div className="text-[9px] text-slate-500 uppercase tracking-wider">Расходы</div>
-                                <div className="font-mono text-slate-300 font-medium">${me.expenses?.toLocaleString()}</div>
-                            </div>
-                        </div>
 
-                        {/* Payday / Cashflow Status Bar */}
-                        <div className="bg-[#0B0E14]/50 p-4 rounded-xl border border-slate-800 border-l-4 border-l-green-500 mb-4 shadow-lg relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 w-16 h-16 bg-green-500/10 rounded-full blur-xl -mr-8 -mt-8"></div>
-                            <div className="flex justify-between items-center relative z-10">
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-0.5">PAYDAY (Денежный поток)</span>
-                                    <div className="text-2xl font-mono text-green-400 font-bold tracking-tight">
-                                        +${(me.cashflow || 0).toLocaleString()} <span className="text-xs text-slate-500 font-normal">/мес</span>
+                            {/* Payday / Cashflow Status Bar */}
+                            <div className="bg-[#0B0E14]/50 p-4 rounded-xl border border-slate-800 border-l-4 border-l-green-500 mb-4 shadow-lg relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-16 h-16 bg-green-500/10 rounded-full blur-xl -mr-8 -mt-8"></div>
+                                <div className="flex justify-between items-center relative z-10">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-0.5">PAYDAY (Денежный поток)</span>
+                                        <div className="text-2xl font-mono text-green-400 font-bold tracking-tight">
+                                            +${(me.cashflow || 0).toLocaleString()} <span className="text-xs text-slate-500 font-normal">/мес</span>
+                                        </div>
                                     </div>
+                                    <div className="text-3xl filter drop-shadow-md group-hover:scale-110 transition-transform">💰</div>
                                 </div>
-                                <div className="text-3xl filter drop-shadow-md group-hover:scale-110 transition-transform">💰</div>
-                            </div>
-                            <div className="w-full bg-slate-800/50 h-1.5 mt-3 rounded-full overflow-hidden">
-                                {/* Progress visual: ratio of passive to expenses? or just filled */}
-                                {me.isFastTrack ? (
-                                    // FAST TRACK PROGRESS
-                                    <>
-                                        <div className="w-full bg-slate-800/50 h-1.5 mt-3 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-purple-600 to-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]"
-                                                style={{ width: `${Math.min(100, (me.cashflow / 50000) * 100)}%` }} // Rough estimate if no start captured
-                                            ></div>
-                                        </div>
-                                        <div className="flex justify-between items-center mt-1">
-                                            <span className="text-[9px] text-slate-500">Цель: +$50,000 (Нужно еще)</span>
-                                            <span className="text-[9px] text-pink-400 font-bold">
-                                                ${Math.max(0, 50000 - (me.passiveIncome - (me.fastTrackStartIncome || 0))).toLocaleString()}
-                                            </span>
-                                        </div>
-                                    </>
-                                ) : (
-                                    // RAT RACE PROGRESS
-                                    <>
-                                        <div className="w-full bg-slate-800/50 h-1.5 mt-3 rounded-full overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-green-600 to-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-                                                style={{ width: `${Math.min(100, (me.passiveIncome / Math.max(1, me.expenses)) * 100)}%` }}
-                                            ></div>
-                                        </div>
-                                        <div className="flex justify-between items-center mt-1">
-                                            <span className="text-[9px] text-slate-500">Финансовая свобода</span>
-                                            <span className="text-[9px] text-green-400 font-bold">{Math.floor((me.passiveIncome / Math.max(1, me.expenses)) * 100)}%</span>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Assets Section */}
-                        <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
-                            <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2">
-                                <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
-                                <span className="font-mono text-green-400">+${totalAssetYield}</span>
-                            </h3>
-                            {me.assets?.length > 0 ? (
-                                <div className="space-y-2">
-                                    {me.assets.map((a: any, i: number) => (
-                                        <div
-                                            key={i}
-                                            onClick={() => setTransferAssetItem({ item: a, index: i })}
-                                            className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 cursor-pointer hover:border-slate-500 active:scale-[0.98] transition-all"
-                                        >
-                                            <div className="flex flex-col">
-                                                <span className="text-slate-300 font-medium">
-                                                    {a.title}
-                                                </span>
-                                                {a.quantity > 0 && (
-                                                    <div className="flex gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
-                                                        <span className="bg-slate-800 px-1.5 rounded">{a.quantity} шт</span>
-                                                        {a.cost && <span className="text-slate-500">Позиция: ${(a.cost * a.quantity).toLocaleString()}</span>}
-                                                    </div>
-                                                )}
-                                                <span className="font-mono text-green-400 font-bold text-[10px]">+$ {a.cashflow}</span>
+                                <div className="w-full bg-slate-800/50 h-1.5 mt-3 rounded-full overflow-hidden">
+                                    {/* Progress visual: ratio of passive to expenses? or just filled */}
+                                    {me.isFastTrack ? (
+                                        // FAST TRACK PROGRESS
+                                        <>
+                                            <div className="w-full bg-slate-800/50 h-1.5 mt-3 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-purple-600 to-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]"
+                                                    style={{ width: `${Math.min(100, (me.cashflow / 50000) * 100)}%` }} // Rough estimate if no start captured
+                                                ></div>
                                             </div>
-                                            <button
-                                                onClick={() => setTransferAssetItem({ item: a, index: i })}
-                                                className="ml-2 p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors text-slate-500 hover:text-blue-400"
-                                                title="Передать актив"
-                                            >
-                                                ➡️
-                                            </button>
-                                        </div>
-                                    ))}
+                                            <div className="flex justify-between items-center mt-1">
+                                                <span className="text-[9px] text-slate-500">Цель: +$50,000 (Нужно еще)</span>
+                                                <span className="text-[9px] text-pink-400 font-bold">
+                                                    ${Math.max(0, 50000 - (me.passiveIncome - (me.fastTrackStartIncome || 0))).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        // RAT RACE PROGRESS
+                                        <>
+                                            <div className="w-full bg-slate-800/50 h-1.5 mt-3 rounded-full overflow-hidden">
+                                                <div
+                                                    className="h-full bg-gradient-to-r from-green-600 to-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
+                                                    style={{ width: `${Math.min(100, (me.passiveIncome / Math.max(1, me.expenses)) * 100)}%` }}
+                                                ></div>
+                                            </div>
+                                            <div className="flex justify-between items-center mt-1">
+                                                <span className="text-[9px] text-slate-500">Финансовая свобода</span>
+                                                <span className="text-[9px] text-green-400 font-bold">{Math.floor((me.passiveIncome / Math.max(1, me.expenses)) * 100)}%</span>
+                                            </div>
+                                        </>
+                                    )}
                                 </div>
-                            ) : <div className="text-xs text-slate-600 text-center py-4 italic">Нет активов</div>}
-                        </div>
+                            </div>
 
-                        {/* Players List Section */}
-                        <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
-                            <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
-                                <span>👥</span> Игроки
-                            </h3>
-                            <div className="space-y-2">
-                                {state.players.map((p: any) => (
-                                    <div
-                                        key={p.id}
-                                        onClick={() => {
-                                            console.log("Player clicked:", p.name, p.id);
-                                            setSelectedPlayerForMenu(p);
-                                        }}
-                                        className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer hover:border-slate-500 active:scale-[0.98]
+                            {/* Assets Section */}
+                            <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
+                                <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2">
+                                    <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
+                                    <span className="font-mono text-green-400">+${totalAssetYield}</span>
+                                </h3>
+                                {me.assets?.length > 0 ? (
+                                    <div className="space-y-2">
+                                        {me.assets.map((a: any, i: number) => (
+                                            <div
+                                                key={i}
+                                                onClick={() => setTransferAssetItem({ item: a, index: i })}
+                                                className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 cursor-pointer hover:border-slate-500 active:scale-[0.98] transition-all"
+                                            >
+                                                <div className="flex flex-col">
+                                                    <span className="text-slate-300 font-medium">
+                                                        {a.title}
+                                                    </span>
+                                                    {a.quantity > 0 && (
+                                                        <div className="flex gap-2 text-[10px] text-slate-400 font-mono mt-0.5">
+                                                            <span className="bg-slate-800 px-1.5 rounded">{a.quantity} шт</span>
+                                                            {a.cost && <span className="text-slate-500">Позиция: ${(a.cost * a.quantity).toLocaleString()}</span>}
+                                                        </div>
+                                                    )}
+                                                    <span className="font-mono text-green-400 font-bold text-[10px]">+$ {a.cashflow}</span>
+                                                </div>
+                                                <button
+                                                    onClick={() => setTransferAssetItem({ item: a, index: i })}
+                                                    className="ml-2 p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors text-slate-500 hover:text-blue-400"
+                                                    title="Передать актив"
+                                                >
+                                                    ➡️
+                                                </button>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : <div className="text-xs text-slate-600 text-center py-4 italic">Нет активов</div>}
+                            </div>
+
+                            {/* Players List Section */}
+                            <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
+                                <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
+                                    <span>👥</span> Игроки
+                                </h3>
+                                <div className="space-y-2">
+                                    {state.players.map((p: any) => (
+                                        <div
+                                            key={p.id}
+                                            onClick={() => {
+                                                console.log("Player clicked:", p.name, p.id);
+                                                setSelectedPlayerForMenu(p);
+                                            }}
+                                            className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer hover:border-slate-500 active:scale-[0.98]
                                             ${p.id === currentPlayer.id ? 'bg-slate-800/80 border-blue-500/50 shadow-lg shadow-blue-900/10' : 'bg-slate-900/30 border-slate-800/50'} 
                                             ${p.hasWon ? 'ring-2 ring-yellow-500' : ''}
                                             ${p.isBankrupted ? 'opacity-50 grayscale' : ''}
                                         `}
-                                    >
-                                        <div className={`text-lg w-10 h-10 flex items-center justify-center rounded-full border-2 border-amber-500/20 shadow-[0_0_15px_rgba(251,191,36,0.1)] text-white font-bold bg-gradient-to-br relative ${getAvatarColor(p.id)}`}>
-                                            {p.photo_url ? (
-                                                <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                getInitials(p.name)
-                                            )}
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <div className="flex justify-between items-center mb-1">
-                                                <div className="text-sm font-bold text-slate-200 truncate flex items-center gap-2">
-                                                    {p.name}
-                                                    {(p.skippedTurns || 0) > 0 && <span className="text-[10px] bg-red-900/50 text-red-200 px-1.5 py-0.5 rounded border border-red-500/30" title="Пропуск хода">⛔ {p.skippedTurns}</span>}
-                                                </div>
-                                                {p.id === currentPlayer.id && (
-                                                    <div className="flex items-center gap-2">
-                                                        <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Ходит</span>
-                                                    </div>
+                                        >
+                                            <div className={`text-lg w-10 h-10 flex items-center justify-center rounded-full border-2 border-amber-500/20 shadow-[0_0_15px_rgba(251,191,36,0.1)] text-white font-bold bg-gradient-to-br relative ${getAvatarColor(p.id)}`}>
+                                                {p.photo_url ? (
+                                                    <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    getInitials(p.name)
                                                 )}
                                             </div>
-                                            <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
-                                                <span>${p.cash?.toLocaleString()}</span>
-                                                {p.loanDebt > 0 && <span className="text-red-400">-${p.loanDebt?.toLocaleString()}</span>}
+                                            <div className="flex-1 min-w-0">
+                                                <div className="flex justify-between items-center mb-1">
+                                                    <div className="text-sm font-bold text-slate-200 truncate flex items-center gap-2">
+                                                        {p.name}
+                                                        {(p.skippedTurns || 0) > 0 && <span className="text-[10px] bg-red-900/50 text-red-200 px-1.5 py-0.5 rounded border border-red-500/30" title="Пропуск хода">⛔ {p.skippedTurns}</span>}
+                                                    </div>
+                                                    {p.id === currentPlayer.id && (
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Ходит</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div className="flex items-center gap-2 text-xs font-mono text-slate-500">
+                                                    <span>${p.cash?.toLocaleString()}</span>
+                                                    {p.loanDebt > 0 && <span className="text-red-400">-${p.loanDebt?.toLocaleString()}</span>}
+                                                </div>
+                                            </div>
+
+                                            {/* Host Hint */}
+                                            {isHost && (
+                                                <div className="text-slate-600">⋮</div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+
+                            {/* Logs Section (Mobile) */}
+                            <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
+                                <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
+                                    <span>📝</span> Лог событий
+                                </h3>
+                                <div className="bg-[#0B0E14]/30 rounded-xl border border-slate-800/50 p-3 overflow-y-auto font-mono text-[9px] space-y-2 custom-scrollbar h-[150px]">
+                                    {state.log?.slice().reverse().map((entry: string, i: number) => (
+                                        <div key={i} className="text-slate-400 border-b border-slate-800/50 pb-2 last:border-0 leading-relaxed">
+                                            <span className="text-slate-600 mr-2">#{state.log.length - i}</span>
+                                            {entry}
+                                        </div>
+                                    ))}
+                                </div>
+
+                                {/* Chat Input */}
+                                <form onSubmit={handleSendChat} className="mt-2 flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={chatMessage}
+                                        onChange={(e) => setChatMessage(e.target.value)}
+                                        placeholder="Сообщение..."
+                                        className="flex-1 bg-slate-900/50 border border-slate-700/50 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50 transition-colors"
+                                    />
+                                    <button
+                                        type="submit"
+                                        disabled={!chatMessage.trim()}
+                                        className="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-xl px-3 py-2 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        ➤
+                                    </button>
+                                </form>
+                            </div>
+
+                            {/* Rules Button in Menu */}
+                            <button
+                                onClick={() => setShowRules(true)}
+                                className="w-full py-4 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 font-bold uppercase tracking-widest text-sm hover:bg-violet-500/20 active:bg-violet-500/30 transition-all flex items-center justify-center gap-3"
+                            >
+                                <span>📜</span> Правила
+                            </button>
+
+                            {/* Sound Settings in Mobile Menu */}
+                            <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg mb-4">
+                                <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
+                                    <span>🔊</span> Звук
+                                </h3>
+                                <div className="flex items-center gap-4">
+                                    <button onClick={toggleMute} className="p-2 bg-slate-800 rounded-lg text-white">
+                                        {isMuted ? '🔇' : '🔊'}
+                                    </button>
+                                    <input
+                                        type="range"
+                                        min="0"
+                                        max="1"
+                                        step="0.1"
+                                        value={volume}
+                                        onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
+                                        className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                    />
+                                </div>
+                            </div>
+
+                            {/* NEW: MOBILE SETTINGS ACTIONS */}
+                            <div className="flex flex-col gap-2 mt-4 pb-8">
+                                <button
+                                    onClick={() => {
+                                        setShowMobileMenu(false);
+                                        setForceLandscape(!forceLandscape);
+                                    }}
+                                    className="w-full py-4 rounded-xl bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 font-bold flex items-center justify-center gap-3 transition-colors uppercase tracking-widest text-xs"
+                                >
+                                    <span className="text-xl">🔄</span> Перевернуть экран
+                                </button>
+
+                                <button
+                                    onClick={() => {
+                                        setShowMobileMenu(false);
+                                        setShowMenuModal(true);
+                                    }}
+                                    className="w-full py-4 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                                >
+                                    <span>⚙️</span> Полные Настройки
+                                </button>
+                            </div>
+
+                            {/* Exit Button in Menu */}
+                            <button
+                                onClick={handleExit}
+                                className="w-full py-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 font-bold uppercase tracking-widest text-sm hover:bg-red-500/20 active:bg-red-500/30 transition-all flex items-center justify-center gap-3"
+                            >
+                                <span>🚪</span> Выйти из игры
+                            </button>
+
+                            {/* Spacer for bottom nav */}
+                            <div className="h-20"></div>
+                        </div>
+                    </div>
+                )
+            }
+
+
+
+
+
+
+
+            {/* MAIN GRID */}
+            {/* MAIN LAYOUT CONTAINER - FLEXBOX for Aspect Ratio Control */}
+            <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-full overflow-hidden justify-start lg:justify-center items-center">
+
+                {/* 📱 MOBILE TOP ZONE (Cards + Stats) */}
+                <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-20 max-h-[30vh] overflow-y-auto">
+
+                    {/* 1. Status Row (Top Priority) */}
+                    <div className="flex items-center justify-between px-1 bg-slate-800/50 p-2 rounded-xl mb-1">
+                        <div className="flex items-center gap-2">
+                            <div className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></div>
+                            <div className="flex flex-col">
+                                <span className="text-[9px] text-slate-400 uppercase font-bold leading-none">Ход</span>
+                                <span className="font-bold text-white text-sm max-w-[150px] truncate leading-tight">{currentPlayer?.name}</span>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <span className={`font-mono font-black text-2xl ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
+                                {formatTime(timeLeft)}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* 2. Stats Grid */}
+                    <div className="grid grid-cols-3 gap-2">
+                        <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
+                            <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс</span>
+                            <span className="text-sm font-black text-green-400 font-mono tracking-tight">${me.cash?.toLocaleString()}</span>
+                        </div>
+                        <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
+                            <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Выплата</span>
+                            <span className="text-sm font-black text-green-400 font-mono tracking-tight">+${(me.cashflow || 0).toLocaleString()}</span>
+                        </div>
+                        <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
+                            <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Кредит</span>
+                            <span className="text-sm font-black text-red-400 font-mono tracking-tight">-${me.loanDebt?.toLocaleString()}</span>
+                        </div>
+                    </div>
+                </div>
+
+                {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
+                <div className="hidden lg:flex flex-col gap-4 h-full overflow-hidden w-[350px] pt-0 shrink-0">
+
+                    {/* 1. PROFILE PANEL (TOP) */}
+                    <div className="bg-[#1e293b] rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex flex-col gap-4 relative overflow-hidden group shrink-0">
+                        {/* Glow effect */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500"></div>
+
+                        {/* Header: Profession + Payday */}
+                        <div className="flex justify-between items-start relative z-10">
+                            <div className="flex items-center gap-3">
+                                <span className="text-3xl filter drop-shadow-md">👷</span>
+                                <div>
+                                    <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Профессия</span>
+                                    <div className="text-lg font-bold text-white leading-tight tracking-tight max-w-[140px] truncate" title={me.professionName}>{me.professionName || 'Выбор...'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Payday Bar */}
+                        <div className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800/80 relative overflow-hidden">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-[9px] text-blue-400 uppercase font-bold tracking-wider">PAYDAY</span>
+                                <span className="font-mono text-green-400 font-bold text-lg leading-none">+${(me.cashflow || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+                                    style={{ width: '100%' }} // Always full for Cashflow? Or progress?
+                                ></div>
+                            </div>
+                        </div>
+
+                        {/* Stats Grid: Cash & Credit */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group/btn relative">
+                                <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
+                                <div className="font-mono text-xl text-green-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left relative">
+                                    <AnimatedNumber value={me.cash || 0} />
+                                    <CashChangeIndicator currentCash={me.cash || 0} />
+                                </div>
+                            </button>
+                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group/btn">
+                                <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит 💳</div>
+                                <div className="font-mono text-xl text-red-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left">
+                                    ${me.loanDebt?.toLocaleString()}
+                                </div>
+                            </button>
+                        </div>
+
+                        {/* Income/Expense Mini Grid */}
+                        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/50">
+                            <div className="flex justify-between items-center">
+                                <span className="text-[9px] text-slate-500 uppercase font-bold">Доход</span>
+                                <span className="font-mono text-slate-300 font-bold">${me.income?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[9px] text-slate-500 uppercase font-bold">Расходы</span>
+                                <span className="font-mono text-slate-400 font-bold">${me.expenses?.toLocaleString()}</span>
+                            </div>
+                        </div>
+
+                        {/* Menu Button (Integrated) */}
+                        <button
+                            onClick={() => setShowMenuModal(true)}
+                            className="bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-colors mt-auto border border-slate-700"
+                        >
+                            <span>⚙️</span> Меню
+                        </button>
+                    </div>
+
+                    {/* 2. ASSETS PANEL (BOTTOM, Fills Remaining) */}
+                    <div className="bg-[#151b2b] rounded-3xl p-5 border border-slate-800 shadow-lg flex flex-col min-h-0 flex-1 relative overflow-hidden">
+                        <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2 flex-shrink-0">
+                            <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
+                            <span className="font-mono text-green-400 bg-green-900/20 px-2 py-0.5 rounded-lg">+${totalAssetYield}</span>
+                        </h3>
+
+                        {me.assets?.length > 0 ? (
+                            <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1 -mr-2">
+                                {me.assets.map((a: any, i: number) => (
+                                    <div
+                                        key={i}
+                                        onClick={() => setTransferAssetItem({ item: a, index: i })}
+                                        className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-500 active:scale-[0.98] transition-all cursor-pointer group"
+                                    >
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-slate-200 font-bold text-sm leading-tight">
+                                                {a.title}
+                                            </span>
+                                            <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                                                {a.quantity > 0 && <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">{a.quantity} шт</span>}
+                                                {a.cost && <span>Pos: ${(a.cost * a.quantity).toLocaleString()}</span>}
                                             </div>
                                         </div>
-
-                                        {/* Host Hint */}
-                                        {isHost && (
-                                            <div className="text-slate-600">⋮</div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Logs Section (Mobile) */}
-                        <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
-                            <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
-                                <span>📝</span> Лог событий
-                            </h3>
-                            <div className="bg-[#0B0E14]/30 rounded-xl border border-slate-800/50 p-3 overflow-y-auto font-mono text-[9px] space-y-2 custom-scrollbar h-[150px]">
-                                {state.log?.slice().reverse().map((entry: string, i: number) => (
-                                    <div key={i} className="text-slate-400 border-b border-slate-800/50 pb-2 last:border-0 leading-relaxed">
-                                        <span className="text-slate-600 mr-2">#{state.log.length - i}</span>
-                                        {entry}
-                                    </div>
-                                ))}
-                            </div>
-
-                            {/* Chat Input */}
-                            <form onSubmit={handleSendChat} className="mt-2 flex gap-2">
-                                <input
-                                    type="text"
-                                    value={chatMessage}
-                                    onChange={(e) => setChatMessage(e.target.value)}
-                                    placeholder="Сообщение..."
-                                    className="flex-1 bg-slate-900/50 border border-slate-700/50 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500/50 transition-colors"
-                                />
-                                <button
-                                    type="submit"
-                                    disabled={!chatMessage.trim()}
-                                    className="bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-xl px-3 py-2 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    ➤
-                                </button>
-                            </form>
-                        </div>
-
-                        {/* Rules Button in Menu */}
-                        <button
-                            onClick={() => setShowRules(true)}
-                            className="w-full py-4 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 font-bold uppercase tracking-widest text-sm hover:bg-violet-500/20 active:bg-violet-500/30 transition-all flex items-center justify-center gap-3"
-                        >
-                            <span>📜</span> Правила
-                        </button>
-
-                        {/* Sound Settings in Mobile Menu */}
-                        <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg mb-4">
-                            <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center gap-2">
-                                <span>🔊</span> Звук
-                            </h3>
-                            <div className="flex items-center gap-4">
-                                <button onClick={toggleMute} className="p-2 bg-slate-800 rounded-lg text-white">
-                                    {isMuted ? '🔇' : '🔊'}
-                                </button>
-                                <input
-                                    type="range"
-                                    min="0"
-                                    max="1"
-                                    step="0.1"
-                                    value={volume}
-                                    onChange={(e) => handleVolumeChange(parseFloat(e.target.value))}
-                                    className="flex-1 h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                                />
-                            </div>
-                        </div>
-
-                        {/* NEW: MOBILE SETTINGS ACTIONS */}
-                        <div className="flex flex-col gap-2 mt-4 pb-8">
-                            <button
-                                onClick={() => {
-                                    setShowMobileMenu(false);
-                                    setForceLandscape(!forceLandscape);
-                                }}
-                                className="w-full py-4 rounded-xl bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 font-bold flex items-center justify-center gap-3 transition-colors uppercase tracking-widest text-xs"
-                            >
-                                <span className="text-xl">🔄</span> Перевернуть экран
-                            </button>
-
-                            <button
-                                onClick={() => {
-                                    setShowMobileMenu(false);
-                                    setShowMenuModal(true);
-                                }}
-                                className="w-full py-4 rounded-xl bg-slate-800 border border-slate-700 text-slate-300 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2"
-                            >
-                                <span>⚙️</span> Полные Настройки
-                            </button>
-                        </div>
-
-                        {/* Exit Button in Menu */}
-                        <button
-                            onClick={handleExit}
-                            className="w-full py-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 font-bold uppercase tracking-widest text-sm hover:bg-red-500/20 active:bg-red-500/30 transition-all flex items-center justify-center gap-3"
-                        >
-                            <span>🚪</span> Выйти из игры
-                        </button>
-
-                        {/* Spacer for bottom nav */}
-                        <div className="h-20"></div>
-                    </div>
-                </div>
-            )
-        }
-
-
-
-
-
-
-
-        {/* MAIN GRID */}
-        {/* MAIN LAYOUT CONTAINER - FLEXBOX for Aspect Ratio Control */}
-        <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-full overflow-hidden justify-start lg:justify-center items-center">
-
-            {/* 📱 MOBILE TOP ZONE (Cards + Stats) */}
-            <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-20 max-h-[30vh] overflow-y-auto">
-
-                {/* 1. Status Row (Top Priority) */}
-                <div className="flex items-center justify-between px-1 bg-slate-800/50 p-2 rounded-xl mb-1">
-                    <div className="flex items-center gap-2">
-                        <div className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></div>
-                        <div className="flex flex-col">
-                            <span className="text-[9px] text-slate-400 uppercase font-bold leading-none">Ход</span>
-                            <span className="font-bold text-white text-sm max-w-[150px] truncate leading-tight">{currentPlayer?.name}</span>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <span className={`font-mono font-black text-2xl ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
-                            {formatTime(timeLeft)}
-                        </span>
-                    </div>
-                </div>
-
-                {/* 2. Stats Grid */}
-                <div className="grid grid-cols-3 gap-2">
-                    <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
-                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс</span>
-                        <span className="text-sm font-black text-green-400 font-mono tracking-tight">${me.cash?.toLocaleString()}</span>
-                    </div>
-                    <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
-                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Выплата</span>
-                        <span className="text-sm font-black text-green-400 font-mono tracking-tight">+${(me.cashflow || 0).toLocaleString()}</span>
-                    </div>
-                    <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
-                        <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Кредит</span>
-                        <span className="text-sm font-black text-red-400 font-mono tracking-tight">-${me.loanDebt?.toLocaleString()}</span>
-                    </div>
-                </div>
-            </div>
-
-            {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
-            <div className="hidden lg:flex flex-col gap-4 h-full overflow-hidden w-[350px] pt-0 shrink-0">
-
-                {/* 1. PROFILE PANEL (TOP) */}
-                <div className="bg-[#1e293b] rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex flex-col gap-4 relative overflow-hidden group shrink-0">
-                    {/* Glow effect */}
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500"></div>
-
-                    {/* Header: Profession + Payday */}
-                    <div className="flex justify-between items-start relative z-10">
-                        <div className="flex items-center gap-3">
-                            <span className="text-3xl filter drop-shadow-md">👷</span>
-                            <div>
-                                <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Профессия</span>
-                                <div className="text-lg font-bold text-white leading-tight tracking-tight max-w-[140px] truncate" title={me.professionName}>{me.professionName || 'Выбор...'}</div>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Payday Bar */}
-                    <div className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800/80 relative overflow-hidden">
-                        <div className="flex justify-between items-center mb-2">
-                            <span className="text-[9px] text-blue-400 uppercase font-bold tracking-wider">PAYDAY</span>
-                            <span className="font-mono text-green-400 font-bold text-lg leading-none">+${(me.cashflow || 0).toLocaleString()}</span>
-                        </div>
-                        <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                            <div
-                                className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
-                                style={{ width: '100%' }} // Always full for Cashflow? Or progress?
-                            ></div>
-                        </div>
-                    </div>
-
-                    {/* Stats Grid: Cash & Credit */}
-                    <div className="grid grid-cols-2 gap-3">
-                        <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group/btn relative">
-                            <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
-                            <div className="font-mono text-xl text-green-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left relative">
-                                <AnimatedNumber value={me.cash || 0} />
-                                <CashChangeIndicator currentCash={me.cash || 0} />
-                            </div>
-                        </button>
-                        <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group/btn">
-                            <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит 💳</div>
-                            <div className="font-mono text-xl text-red-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left">
-                                ${me.loanDebt?.toLocaleString()}
-                            </div>
-                        </button>
-                    </div>
-
-                    {/* Income/Expense Mini Grid */}
-                    <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/50">
-                        <div className="flex justify-between items-center">
-                            <span className="text-[9px] text-slate-500 uppercase font-bold">Доход</span>
-                            <span className="font-mono text-slate-300 font-bold">${me.income?.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-[9px] text-slate-500 uppercase font-bold">Расходы</span>
-                            <span className="font-mono text-slate-400 font-bold">${me.expenses?.toLocaleString()}</span>
-                        </div>
-                    </div>
-
-                    {/* Menu Button (Integrated) */}
-                    <button
-                        onClick={() => setShowMenuModal(true)}
-                        className="bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-colors mt-auto border border-slate-700"
-                    >
-                        <span>⚙️</span> Меню
-                    </button>
-                </div>
-
-                {/* 2. ASSETS PANEL (BOTTOM, Fills Remaining) */}
-                <div className="bg-[#151b2b] rounded-3xl p-5 border border-slate-800 shadow-lg flex flex-col min-h-0 flex-1 relative overflow-hidden">
-                    <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2 flex-shrink-0">
-                        <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
-                        <span className="font-mono text-green-400 bg-green-900/20 px-2 py-0.5 rounded-lg">+${totalAssetYield}</span>
-                    </h3>
-
-                    {me.assets?.length > 0 ? (
-                        <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1 -mr-2">
-                            {me.assets.map((a: any, i: number) => (
-                                <div
-                                    key={i}
-                                    onClick={() => setTransferAssetItem({ item: a, index: i })}
-                                    className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-500 active:scale-[0.98] transition-all cursor-pointer group"
-                                >
-                                    <div className="flex flex-col gap-1">
-                                        <span className="text-slate-200 font-bold text-sm leading-tight">
-                                            {a.title}
-                                        </span>
-                                        <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                                            {a.quantity > 0 && <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">{a.quantity} шт</span>}
-                                            {a.cost && <span>Pos: ${(a.cost * a.quantity).toLocaleString()}</span>}
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span className="font-mono text-green-400 font-black text-xs">+${a.cashflow}</span>
+                                            <button
+                                                className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
+                                                title="Передать актив"
+                                            >
+                                                Передать
+                                            </button>
                                         </div>
                                     </div>
-                                    <div className="flex flex-col items-end gap-1">
-                                        <span className="font-mono text-green-400 font-black text-xs">+${a.cashflow}</span>
-                                        <button
-                                            className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
-                                            title="Передать актив"
-                                        >
-                                            Передать
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    ) : (
-                        <div className="flex-1 flex flex-col items-center justify-center text-slate-600 italic gap-2 opacity-50">
-                            <span className="text-3xl grayscale">📉</span>
-                            <span className="text-xs">Нет активов</span>
-                        </div>
-                    )}
-                </div>
-
-            </div>
-
-            {/* CENTER BOARD (Strict Aspect Square) */}
-            <div className={`${forceLandscape ? 'w-auto h-full' : 'w-full max-w-[95vw] mx-auto lg:max-w-none lg:w-auto lg:h-full'} aspect-square flex-shrink-0 relative bg-[#0f172a] overflow-hidden flex flex-col rounded-3xl border border-slate-800/50 shadow-2xl max-h-full`}>
-                <div className="flex-1 relative overflow-hidden p-4 flex items-center justify-center">
-                    <BoardVisualizer
-                        board={state.board}
-                        players={state.players}
-                        animatingPos={animatingPos}
-                        currentPlayerId={currentPlayer.id}
-                        zoom={zoom}
-                        onSquareClick={(sq: any) => setSquareInfo(sq)}
-                        showExitButton={showExitButton}
-                        onExitClick={() => {
-                            if (me.isFastTrack) {
-                                setShowFastTrackInfo(true);
-                            } else {
-                                setShowFastTrackModal(true);
-                            }
-                        }}
-                    />
-
-                    {/* ActiveCardZone Overlay - Center */}
-                    <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-8">
-                        <div className="pointer-events-auto w-full max-w-md">
-                            <ActiveCardZone
-                                state={state}
-                                isMyTurn={isMyTurn}
-                                me={me}
-                                roomId={roomId}
-                                onDismissMarket={handleDismissCard}
-                                onMarketCardClick={(card) => setSquareInfo({
-                                    type: 'MARKET',
-                                    card: card.card,
-                                    title: card.card.title,
-                                    description: card.card.description
-                                })}
-                            />
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* RIGHT SIDEBAR (Redesigned) - Flex Column */}
-            <div className="hidden lg:flex flex-col w-[350px] h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4">
-
-                {/* 1. TURN INFO & TIMER */}
-                <div className="bg-[#151b2b] rounded-3xl p-6 border border-slate-800 shadow-lg flex items-center justify-between shrink-0">
-                    <div className="flex flex-col">
-                        <div className="flex items-center gap-2 mb-1">
-                            <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
-                            <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">ХОД ИГРОКА</span>
-                        </div>
-                        <div className="text-xl font-black text-white leading-none truncate max-w-[180px]">{currentPlayer.name}</div>
-                    </div>
-                    <div className={`text-4xl font-mono font-black ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-slate-200'}`}>
-                        {formatTime(timeLeft)}
-                    </div>
-                </div>
-
-                {/* 2. GAME CONTROLS GRID (Dice & Skip) */}
-                <div className="grid grid-cols-2 gap-3 shrink-0 h-[100px]">
-                    {/* ROLL BUTTON (Left, Big) */}
-                    <button
-                        onClick={() => handleRoll()}
-                        disabled={!isMyTurn || state.phase !== 'ROLL' || isRollingRef.current}
-                        className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative overflow-hidden group
-                                ${isMyTurn && state.phase === 'ROLL' && !isRollingRef.current
-                                ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500/50 text-white hover:scale-[1.02] active:scale-95'
-                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
-                    >
-                        <span className="text-3xl group-hover:rotate-12 transition-transform">🎲</span>
-                        <span className="text-[10px] font-black uppercase tracking-widest">Бросить</span>
-                        {/* Dice Value Overlay */}
-                        {showDice && diceValue && (
-                            <div className="absolute inset-0 bg-emerald-600 flex items-center justify-center z-10 animate-in fade-in zoom-in duration-200">
-                                <span className="text-4xl font-black">{diceValue}</span>
+                                ))}
+                            </div>
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center text-slate-600 italic gap-2 opacity-50">
+                                <span className="text-3xl grayscale">📉</span>
+                                <span className="text-xs">Нет активов</span>
                             </div>
                         )}
-                    </button>
+                    </div>
 
-                    {/* SKIP / NEXT BUTTON (Right, Big) */}
-                    <button
-                        onClick={handleEndTurn}
-                        disabled={!isMyTurn || (state.phase === 'ROLL') || isAnimating}
-                        className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl
-                                 ${isMyTurn && state.phase !== 'ROLL' && !isAnimating
-                                ? 'bg-blue-600 hover:bg-blue-500 border-blue-500/50 text-white hover:scale-[1.02] active:scale-95'
-                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
-                    >
-                        <span className="text-3xl">⏭</span>
-                        <span className="text-[10px] font-black uppercase tracking-widest">Далее</span>
-                    </button>
                 </div>
 
-                {/* 3. PLAYERS GRID (Small Cards) */}
-                <div className="grid grid-cols-2 gap-2 shrink-0 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
-                    {state.players.filter((p: any) => p.id !== me.id).map((p: any) => {
-                        const isCurrent = p.id === currentPlayer.id;
-                        return (
-                            <div
-                                key={p.id}
-                                onClick={() => setSelectedPlayerForMenu(p)}
-                                className={`bg-[#1e293b] rounded-2xl p-2.5 border flex items-center gap-3 cursor-pointer hover:border-slate-500 transition-all
+                {/* CENTER BOARD (Strict Aspect Square) */}
+                <div className={`${forceLandscape ? 'w-auto h-full' : 'w-full max-w-[95vw] mx-auto lg:max-w-none lg:w-auto lg:h-full'} aspect-square flex-shrink-0 relative bg-[#0f172a] overflow-hidden flex flex-col rounded-3xl border border-slate-800/50 shadow-2xl max-h-full`}>
+                    <div className="flex-1 relative overflow-hidden p-4 flex items-center justify-center">
+                        <BoardVisualizer
+                            board={state.board}
+                            players={state.players}
+                            animatingPos={animatingPos}
+                            currentPlayerId={currentPlayer.id}
+                            zoom={zoom}
+                            onSquareClick={(sq: any) => setSquareInfo(sq)}
+                            showExitButton={showExitButton}
+                            onExitClick={() => {
+                                if (me.isFastTrack) {
+                                    setShowFastTrackInfo(true);
+                                } else {
+                                    setShowFastTrackModal(true);
+                                }
+                            }}
+                        />
+
+                        {/* ActiveCardZone Overlay - Center */}
+                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-8">
+                            <div className="pointer-events-auto w-full max-w-md">
+                                <ActiveCardZone
+                                    state={state}
+                                    isMyTurn={isMyTurn}
+                                    me={me}
+                                    roomId={roomId}
+                                    onDismissMarket={handleDismissCard}
+                                    onMarketCardClick={(card) => setSquareInfo({
+                                        type: 'MARKET',
+                                        card: card.card,
+                                        title: card.card.title,
+                                        description: card.card.description
+                                    })}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* RIGHT SIDEBAR (Redesigned) - Flex Column */}
+                <div className="hidden lg:flex flex-col w-[350px] h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4">
+
+                    {/* 1. TURN INFO & TIMER */}
+                    <div className="bg-[#151b2b] rounded-3xl p-6 border border-slate-800 shadow-lg flex items-center justify-between shrink-0">
+                        <div className="flex flex-col">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
+                                <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">ХОД ИГРОКА</span>
+                            </div>
+                            <div className="text-xl font-black text-white leading-none truncate max-w-[180px]">{currentPlayer.name}</div>
+                        </div>
+                        <div className={`text-4xl font-mono font-black ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-slate-200'}`}>
+                            {formatTime(timeLeft)}
+                        </div>
+                    </div>
+
+                    {/* 2. GAME CONTROLS GRID (Dice & Skip) */}
+                    <div className="grid grid-cols-2 gap-3 shrink-0 h-[100px]">
+                        {/* ROLL BUTTON (Left, Big) */}
+                        <button
+                            onClick={() => handleRoll()}
+                            disabled={!isMyTurn || state.phase !== 'ROLL' || isRollingRef.current}
+                            className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative overflow-hidden group
+                                ${isMyTurn && state.phase === 'ROLL' && !isRollingRef.current
+                                    ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500/50 text-white hover:scale-[1.02] active:scale-95'
+                                    : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
+                        >
+                            <span className="text-3xl group-hover:rotate-12 transition-transform">🎲</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">Бросить</span>
+                            {/* Dice Value Overlay */}
+                            {showDice && diceValue && (
+                                <div className="absolute inset-0 bg-emerald-600 flex items-center justify-center z-10 animate-in fade-in zoom-in duration-200">
+                                    <span className="text-4xl font-black">{diceValue}</span>
+                                </div>
+                            )}
+                        </button>
+
+                        {/* SKIP / NEXT BUTTON (Right, Big) */}
+                        <button
+                            onClick={handleEndTurn}
+                            disabled={!isMyTurn || (state.phase === 'ROLL') || isAnimating}
+                            className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl
+                                 ${isMyTurn && state.phase !== 'ROLL' && !isAnimating
+                                    ? 'bg-blue-600 hover:bg-blue-500 border-blue-500/50 text-white hover:scale-[1.02] active:scale-95'
+                                    : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
+                        >
+                            <span className="text-3xl">⏭</span>
+                            <span className="text-[10px] font-black uppercase tracking-widest">Далее</span>
+                        </button>
+                    </div>
+
+                    {/* 3. PLAYERS GRID (Small Cards) */}
+                    <div className="grid grid-cols-2 gap-2 shrink-0 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
+                        {state.players.filter((p: any) => p.id !== me.id).map((p: any) => {
+                            const isCurrent = p.id === currentPlayer.id;
+                            return (
+                                <div
+                                    key={p.id}
+                                    onClick={() => setSelectedPlayerForMenu(p)}
+                                    className={`bg-[#1e293b] rounded-2xl p-2.5 border flex items-center gap-3 cursor-pointer hover:border-slate-500 transition-all
                                         ${isCurrent ? 'border-green-500 ring-1 ring-green-500/20 shadow-lg shadow-green-900/10' : 'border-slate-700/50'}
                                     `}
-                            >
-                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0 ${getAvatarColor(p.id)}`}>
-                                    {p.photo_url ? <img src={p.photo_url} className="w-full h-full rounded-full object-cover" /> : getInitials(p.name)}
+                                >
+                                    <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0 ${getAvatarColor(p.id)}`}>
+                                        {p.photo_url ? <img src={p.photo_url} className="w-full h-full rounded-full object-cover" /> : getInitials(p.name)}
+                                    </div>
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="text-xs font-bold text-slate-200 truncate">{p.name}</span>
+                                        <span className="text-[10px] text-green-400 font-mono">${p.cash?.toLocaleString()}</span>
+                                    </div>
                                 </div>
-                                <div className="flex flex-col min-w-0">
-                                    <span className="text-xs font-bold text-slate-200 truncate">{p.name}</span>
-                                    <span className="text-[10px] text-green-400 font-mono">${p.cash?.toLocaleString()}</span>
-                                </div>
-                            </div>
-                        );
-                    })}
-                    {/* Placeholder for "Myself" if I want to see me in list? Probably duplicate. User asked for "Players" grid. */}
-                    <div
-                        className="bg-[#1e293b]/50 rounded-2xl p-2.5 border border-slate-700/30 flex items-center justify-center gap-2 text-slate-500 italic text-[10px] cursor-help"
-                        title="Это вы"
-                    >
-                        <span className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs">👤</span>
-                        <span>Вы (Баланс выше)</span>
-                    </div>
-                </div>
-
-                {/* 4. CHAT (Fills remaining) */}
-                <div className="flex-1 bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden flex flex-col shadow-inner relative">
-                    <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-[#1e293b] to-transparent z-10 pointer-events-none"></div>
-
-                    <div className="flex-1 overflow-hidden relative">
-                        <TextChat
-                            roomId={roomId}
-                            socket={socket}
-                            messages={state.chat || []}
-                            currentUser={me}
-                            className="w-full h-full"
-                        />
+                            );
+                        })}
+                        {/* Placeholder for "Myself" if I want to see me in list? Probably duplicate. User asked for "Players" grid. */}
+                        <div
+                            className="bg-[#1e293b]/50 rounded-2xl p-2.5 border border-slate-700/30 flex items-center justify-center gap-2 text-slate-500 italic text-[10px] cursor-help"
+                            title="Это вы"
+                        >
+                            <span className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs">👤</span>
+                            <span>Вы (Баланс выше)</span>
+                        </div>
                     </div>
 
-                    {/* Chat Input Area Inside TextChat Usually, but if TextChat handles it, good. 
+                    {/* 4. CHAT (Fills remaining) */}
+                    <div className="flex-1 bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden flex flex-col shadow-inner relative">
+                        <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-[#1e293b] to-transparent z-10 pointer-events-none"></div>
+
+                        <div className="flex-1 overflow-hidden relative">
+                            <TextChat
+                                roomId={roomId}
+                                socket={socket}
+                                messages={state.chat || []}
+                                currentUser={me}
+                                className="w-full h-full"
+                            />
+                        </div>
+
+                        {/* Chat Input Area Inside TextChat Usually, but if TextChat handles it, good. 
                             Wait, TextChat typically has input. 
                             Let's check TextChat usage previously.
                             It was just <TextChat ... />. 
                             So it should be self-contained. 
                         */}
+                    </div>
+
                 </div>
 
             </div>
 
-        </div>
 
 
-
-        {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */}
-        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-slate-900/90 backdrop-blur-xl border-t border-slate-700/50 z-50 flex gap-3 pb-8">
-            {/* Roll Logic */}
-            {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
-                <div className="flex gap-2 flex-1 h-16">
-                    <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                        <span className="text-xl">🎲</span>
-                        <span>1</span>
-                    </button>
-                    <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                        <span className="text-xl">🎲🎲</span>
-                        <span>2</span>
-                    </button>
-                    {me.isFastTrack && (
-                        <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                            <span className="text-xl">🎲×3</span>
-                            <span>3</span>
+            {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */}
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-slate-900/90 backdrop-blur-xl border-t border-slate-700/50 z-50 flex gap-3 pb-8">
+                {/* Roll Logic */}
+                {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+                    <div className="flex gap-2 flex-1 h-16">
+                        <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                            <span className="text-xl">🎲</span>
+                            <span>1</span>
                         </button>
-                    )}
-                </div>
-            ) : (
-                <button
-                    onClick={() => handleRoll()}
-                    disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
-                    className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+                        <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                            <span className="text-xl">🎲🎲</span>
+                            <span>2</span>
+                        </button>
+                        {me.isFastTrack && (
+                            <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                <span className="text-xl">🎲×3</span>
+                                <span>3</span>
+                            </button>
+                        )}
+                    </div>
+                ) : (
+                    <button
+                        onClick={() => handleRoll()}
+                        disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
+                        className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
                             ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
-                            ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
+                                ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
+                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                    >
+                        {hasRolled ? (
+                            <div className="flex items-center gap-2">
+                                <span className="text-2xl font-black">{diceValue}</span>
+                                <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
+                            </div>
+                        ) : (
+                            <>
+                                <span className="text-2xl">🎲</span>
+                                <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
+                            </>
+                        )}
+                    </button>
+                )}
+
+                <button
+                    onClick={handleEndTurn}
+                    disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
+                    className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+                        ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
+                            ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
                             : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
                 >
-                    {hasRolled ? (
-                        <div className="flex items-center gap-2">
-                            <span className="text-2xl font-black">{diceValue}</span>
-                            <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
-                        </div>
-                    ) : (
-                        <>
-                            <span className="text-2xl">🎲</span>
-                            <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
-                        </>
-                    )}
+                    <span className="text-2xl">➡</span>
+                    <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
                 </button>
-            )}
 
-            <button
-                onClick={handleEndTurn}
-                disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
-                className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
-                        ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
-                        ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
-                        : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-            >
-                <span className="text-2xl">➡</span>
-                <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
-            </button>
+                {/* Fast Track Button (Mobile) */}
+                {me.canEnterFastTrack && isMyTurn && (
+                    <button
+                        onClick={() => setShowFastTrackModal(true)}
+                        className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
+                    >
+                        🚀
+                    </button>
+                )}
 
-            {/* Fast Track Button (Mobile) */}
-            {me.canEnterFastTrack && isMyTurn && (
+                {/* BANK BUTTON (Mobile) */}
                 <button
-                    onClick={() => setShowFastTrackModal(true)}
-                    className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
+                    onClick={() => setShowBank(true)}
+                    className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors"
                 >
-                    🚀
+                    🏦
                 </button>
-            )}
 
-            {/* BANK BUTTON (Mobile) */}
-            <button
-                onClick={() => setShowBank(true)}
-                className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors"
-            >
-                🏦
-            </button>
+                {/* MENU TOGGLE */}
+                <button
+                    onClick={() => setShowMobileMenu(true)}
+                    className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center text-2xl"
+                >
+                    🍔
+                </button>
+            </div>
 
-            {/* MENU TOGGLE */}
-            <button
-                onClick={() => setShowMobileMenu(true)}
-                className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center text-2xl"
-            >
-                🍔
-            </button>
-        </div>
+            {/* --- MODALS --- */}
+            <BankModal
+                isOpen={showBank}
+                onClose={() => { setShowBank(false); setBankRecipientId(''); }}
+                player={me}
+                roomId={roomId}
+                transactions={state.transactions || []}
+                players={state.players}
+                initialRecipientId={bankRecipientId}
+            />
 
-        {/* --- MODALS --- */}
-        <BankModal
-            isOpen={showBank}
-            onClose={() => { setShowBank(false); setBankRecipientId(''); }}
-            player={me}
-            roomId={roomId}
-            transactions={state.transactions || []}
-            players={state.players}
-            initialRecipientId={bankRecipientId}
-        />
+            {
+                showMenuModal && (
+                    <MenuModal
+                        onClose={() => setShowMenuModal(false)}
+                        onExit={handleExit}
+                        onEndGame={() => socket.emit('end_game_host', { roomId, userId })}
+                        toggleMute={toggleMute}
+                        isMuted={isMuted}
+                        volume={volume}
+                        deckCounts={state.deckCounts}
+                        greenBalance={partnershipUser?.greenBalance}
+                        setVolume={handleVolumeChange}
+                        onShowRules={() => setShowRules(true)}
+                        zoom={zoom}
+                        setZoom={setZoom}
+                        isHost={!!isHost}
+                        hasWinner={state.players.some((p: any) => p.hasWon)}
+                        onSkipTurn={handleForceSkip}
+                        onKickCurrent={() => handleKickPlayer(currentPlayer.id)}
+                        onToggleOrientation={() => setForceLandscape(!forceLandscape)}
+                        onCancelGame={() => {
+                            if (window.confirm("Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.")) {
+                                socket.emit('delete_room', { roomId, userId: me.userId || me.id });
+                            }
+                        }}
+                    />
+                )
+            }
 
-        {
-            showMenuModal && (
-                <MenuModal
-                    onClose={() => setShowMenuModal(false)}
-                    onExit={handleExit}
-                    onEndGame={() => socket.emit('end_game_host', { roomId, userId })}
-                    toggleMute={toggleMute}
-                    isMuted={isMuted}
-                    volume={volume}
-                    deckCounts={state.deckCounts}
-                    greenBalance={partnershipUser?.greenBalance}
-                    setVolume={handleVolumeChange}
-                    onShowRules={() => setShowRules(true)}
-                    zoom={zoom}
-                    setZoom={setZoom}
-                    isHost={!!isHost}
-                    hasWinner={state.players.some((p: any) => p.hasWon)}
-                    onSkipTurn={handleForceSkip}
-                    onKickCurrent={() => handleKickPlayer(currentPlayer.id)}
-                    onToggleOrientation={() => setForceLandscape(!forceLandscape)}
-                    onCancelGame={() => {
-                        if (window.confirm("Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.")) {
-                            socket.emit('delete_room', { roomId, userId: me.userId || me.id });
-                        }
-                    }}
-                />
-            )
-        }
+            {
+                showRules && (
+                    <RulesModal
+                        onClose={() => setShowRules(false)}
+                    />
+                )
+            }
 
-        {
-            showRules && (
-                <RulesModal
-                    onClose={() => setShowRules(false)}
-                />
-            )
-        }
+            {
+                showFastTrackModal && (
+                    <ExitToFastTrackModal
+                        onClose={() => setShowFastTrackModal(false)}
+                        player={me}
+                        onConfirm={handleEnterFastTrack}
+                    />
+                )
+            }
 
-        {
-            showFastTrackModal && (
-                <ExitToFastTrackModal
-                    onClose={() => setShowFastTrackModal(false)}
-                    player={me}
-                    onConfirm={handleEnterFastTrack}
-                />
-            )
-        }
+            {showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} player={me} />}
 
-        {showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} player={me} />}
+            {
+                transferAssetItem && (
+                    <TransferModal
+                        isOpen={true}
+                        onClose={() => setTransferAssetItem(null)}
+                        asset={transferAssetItem.item}
+                        players={state.players}
+                        myId={me.id}
+                        onTransfer={handleTransferAsset}
+                    />
+                )
+            }
 
-        {
-            transferAssetItem && (
-                <TransferModal
-                    isOpen={true}
-                    onClose={() => setTransferAssetItem(null)}
-                    asset={transferAssetItem.item}
-                    players={state.players}
-                    myId={me.id}
-                    onTransfer={handleTransferAsset}
-                />
-            )
-        }
-
-        {
-            adminAction && (
-                <AdminActionModal
-                    isOpen={!!adminAction}
-                    onClose={() => setAdminAction(null)}
-                    type={adminAction.type}
-                    targetPlayer={adminAction.player}
-                    onConfirm={(amount) => {
-                        if (adminAction.type === 'SKIP') {
-                            // Use 'userId' prop (Persistent ID) for permission check
-                            socket.emit('host_skip_turn', { roomId, userId }, (response: any) => {
-                                if (!response.success) {
-                                    alert(`Ошибка: ${response.error}`);
-                                }
-                            });
-                        } else if (adminAction.type === 'KICK') {
-                            handleKickPlayer(adminAction.player.id);
-                        } else if (adminAction.type === 'GIFT' && amount) {
-                            // Use 'userId' prop for Host Auth, and adminAction.player.id as target
-                            socket.emit('host_give_cash', { roomId, userId, targetPlayerId: adminAction.player.id, amount });
-                        }
-                        setAdminAction(null);
-                    }}
-                />
-            )
-        }
-    </div >
-);
+            {
+                adminAction && (
+                    <AdminActionModal
+                        isOpen={!!adminAction}
+                        onClose={() => setAdminAction(null)}
+                        type={adminAction.type}
+                        targetPlayer={adminAction.player}
+                        onConfirm={(amount) => {
+                            if (adminAction.type === 'SKIP') {
+                                // Use 'userId' prop (Persistent ID) for permission check
+                                socket.emit('host_skip_turn', { roomId, userId }, (response: any) => {
+                                    if (!response.success) {
+                                        alert(`Ошибка: ${response.error}`);
+                                    }
+                                });
+                            } else if (adminAction.type === 'KICK') {
+                                handleKickPlayer(adminAction.player.id);
+                            } else if (adminAction.type === 'GIFT' && amount) {
+                                // Use 'userId' prop for Host Auth, and adminAction.player.id as target
+                                socket.emit('host_give_cash', { roomId, userId, targetPlayerId: adminAction.player.id, amount });
+                            }
+                            setAdminAction(null);
+                        }}
+                    />
+                )
+            }
+        </div >
+    );
 }
