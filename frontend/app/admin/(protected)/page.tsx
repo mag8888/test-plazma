@@ -57,20 +57,23 @@ export default function AdminPage() {
 
     const createAvatar = async () => {
         if (!addAvatarUser) return;
-        if (!confirm(`Create active ${newAvatarType} avatar for ${addAvatarUser.username} WITHOUT charging?`)) return;
+
+        const actionText = deductBalance ? `PURCHASE active ${newAvatarType} avatar for ${addAvatarUser.username} (COST: check backend)` : `GIFT active ${newAvatarType} avatar for ${addAvatarUser.username}`;
+        if (!confirm(`${actionText}?\n\nThis will modify the matrix structure.`)) return;
 
         const res = await fetchWithAuth('/avatars/add', {
             method: 'POST',
             body: JSON.stringify({
                 userId: addAvatarUser._id,
                 type: newAvatarType,
-                deductBalance: false // Explicitly set to false for this admin action
+                deductBalance: deductBalance
             })
         });
 
         if (res.success) {
-            alert('Avatar created!');
+            alert('Avatar created successfully!');
             setAddAvatarUser(null);
+            setDeductBalance(false);
             searchUsers(page);
         } else {
             alert(res.error || 'Failed to create avatar');
@@ -718,6 +721,21 @@ export default function AdminPage() {
                                         PREMIUM
                                     </button>
                                 </div>
+                            </div>
+
+                            <div className="p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
+                                <label className="flex items-center gap-3 cursor-pointer">
+                                    <input
+                                        type="checkbox"
+                                        checked={deductBalance}
+                                        onChange={(e) => setDeductBalance(e.target.checked)}
+                                        className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-green-500 focus:ring-green-500"
+                                    />
+                                    <div className="flex flex-col">
+                                        <span className="font-bold text-yellow-500">Buy with Balance</span>
+                                        <span className="text-xs text-slate-400">Deduct balance & distribute referral commissions</span>
+                                    </div>
+                                </label>
                             </div>
 
                             <div className="flex gap-2">
