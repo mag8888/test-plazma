@@ -51,14 +51,24 @@ export default function EarnPage() {
 
         if (user) {
             // Determine the ID to use for Partnership Backend
+            // Partnership backend expects numeric Telegram ID, NOT MongoDB ObjectID
             const rawTelegramId = webApp?.initDataUnsafe?.user?.id;
-            const partnershipId = rawTelegramId ? rawTelegramId.toString() : (user.telegram_id || user.id).toString();
+            const telegramId = rawTelegramId || user.telegram_id;
+
+            if (!telegramId) {
+                console.error('❌ [Earn Page] No telegram_id available for partnership login');
+                return;
+            }
+
+            const partnershipId = telegramId.toString();
 
             console.log('💰 [Earn Page] Starting partnership flow...', {
                 rawTelegramId,
+                telegram_id: user.telegram_id,
                 partnershipId,
                 username: user.username,
-                hasInitData: !!webApp?.initData
+                hasInitData: !!webApp?.initData,
+                hasWebApp: !!webApp
             });
 
             // 1. REORDER: Login First to ensure user exists in Partner DB
