@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { CloudinaryService } from './cloudinary.service';
+import mongoose from 'mongoose';
 
 export class BackupService {
     private cloudinaryService: CloudinaryService;
