@@ -290,11 +290,12 @@ export class AdminController {
                 }
 
                 try {
-                    // Find the referrer by username or telegram_id
+                    // Find the referrer by username or telegram_id (Case Insensitive, Trimmed)
+                    const cleanRef = user.referredBy.trim();
                     const referrer = await User.findOne({
                         $or: [
-                            { username: user.referredBy },
-                            { telegram_id: !isNaN(Number(user.referredBy)) ? Number(user.referredBy) : null }
+                            { username: new RegExp(`^${cleanRef}$`, 'i') },
+                            { telegram_id: !isNaN(Number(cleanRef)) ? Number(cleanRef) : null }
                         ]
                     });
 
