@@ -212,7 +212,7 @@ export default function SchedulePage() {
 
                             <div onClick={(e) => e.stopPropagation()}>
                                 {/* Stop Propagation to prevent opening modal when clicking action buttons */}
-                                {(game.hostId === user?.id || game.hostTelegramId === user?.telegram_id || (user?.id && game.hostTelegramId == user.id)) ? (
+                                {game.hostId === user?.id ? (
                                     <button
                                         onClick={() => setEditingGame(game)}
                                         className="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 border border-slate-600"
