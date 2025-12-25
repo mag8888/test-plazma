@@ -222,10 +222,15 @@ export class PartnershipController {
 
                 let green = 0;
                 let yellow = 0;
+                let red = 0;
 
                 for (const tx of bonuses) {
                     if (tx.type === TransactionType.BONUS_GREEN) green += tx.amount;
                     if (tx.type === TransactionType.BONUS_YELLOW) yellow += tx.amount;
+                    // Check for Red Balance transactions (Currency 'balanceRed' or inferred)
+                    if (tx.currency === 'balanceRed' || (tx.type === 'ADMIN_ADJUSTMENT' && tx.amount > 0 && !tx.currency) /* fallback */) {
+                        if (tx.currency === 'balanceRed') red += tx.amount;
+                    }
                 }
 
                 result.push({
@@ -237,6 +242,7 @@ export class PartnershipController {
                     level: bestAvatar?.level || 0,
                     incomeGreen: green,
                     incomeYellow: yellow,
+                    incomeRed: red,
                     joinedAt: refUser.createdAt
                 });
             }

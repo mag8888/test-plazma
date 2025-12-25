@@ -8,6 +8,7 @@ import { ProgramDescription } from './ProgramDescription';
 import { BalanceModal } from './BalanceModal';
 import { PartnersModal } from './PartnersModal';
 import { AvatarPurchase } from './AvatarPurchase';
+import { RedBalanceModal } from './RedBalanceModal';
 
 export default function EarnPage() {
     const { webApp, user } = useTelegram();
@@ -20,6 +21,7 @@ export default function EarnPage() {
     const [showRefillModal, setShowRefillModal] = useState(false);
     const [showBalanceModal, setShowBalanceModal] = useState(false);
     const [showPartnersModal, setShowPartnersModal] = useState(false);
+    const [showRedBalanceModal, setShowRedBalanceModal] = useState(false);
 
     // Partners State
     const [partners, setPartners] = useState<any[]>([]);
@@ -316,11 +318,31 @@ export default function EarnPage() {
 
 
                 {/* Red Balance Card */}
-                <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 relative overflow-hidden">
+                <div
+                    onClick={async () => {
+                        if (!partnershipUser?._id) return;
+                        setLoadingPartners(true);
+                        setShowRedBalanceModal(true); // Open Modal immediately
+                        try {
+                            const data = await partnershipApi.getPartners(partnershipUser._id);
+                            setPartners(data);
+                        } catch (e) {
+                            console.error("Partners fetch error", e);
+                        } finally {
+                            setLoadingPartners(false);
+                        }
+                    }}
+                    className="bg-slate-800 p-4 rounded-xl border border-slate-700 relative overflow-hidden cursor-pointer hover:bg-slate-750 active:scale-95 transition-all group"
+                >
                     <div className="relative z-10">
-                        <TrendingUp className="text-red-500 mb-2" />
-                        <div className="text-xl font-bold text-red-400">{user?.balanceRed || 0} RED</div>
-                        <div className="text-xs text-slate-400">Доход (Игровой)</div>
+                        <TrendingUp className="text-red-500 mb-2 group-hover:scale-110 transition-transform" />
+                        <div className="text-xl font-bold text-red-400">
+                            {partnershipUser?.balanceRed !== undefined ? partnershipUser.balanceRed : (user?.balanceRed || 0)} RED
+                        </div>
+                        <div className="text-xs text-slate-400 flex items-center gap-1">
+                            Доход (Игровой)
+                            <span className="text-[8px] bg-red-900/30 text-red-300 px-1 rounded border border-red-500/20">INFO</span>
+                        </div>
                     </div>
                 </div>
 
@@ -352,6 +374,13 @@ export default function EarnPage() {
             <PartnersModal
                 isOpen={showPartnersModal}
                 onClose={() => setShowPartnersModal(false)}
+                partners={partners}
+                isLoading={loadingPartners}
+            />
+
+            <RedBalanceModal
+                isOpen={showRedBalanceModal}
+                onClose={() => setShowRedBalanceModal(false)}
                 partners={partners}
                 isLoading={loadingPartners}
             />
