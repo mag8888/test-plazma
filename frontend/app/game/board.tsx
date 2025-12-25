@@ -1125,107 +1125,119 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 </div>
 
                 {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
-                <div className="hidden lg:flex flex-col gap-2 h-full overflow-hidden flex-1 min-w-0 pt-0">
+                <div className="hidden lg:flex flex-col gap-4 h-full overflow-hidden w-[350px] pt-0 shrink-0">
 
-                    {/* Assets FIRST */}
-                    <div className="bg-[#151b2b] rounded-2xl p-5 border border-slate-800 shadow-lg flex flex-col min-h-0 relative overflow-hidden max-h-[40vh]">
+                    {/* 1. PROFILE PANEL (TOP) */}
+                    <div className="bg-[#1e293b] rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex flex-col gap-4 relative overflow-hidden group shrink-0">
+                        {/* Glow effect */}
+                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500"></div>
+
+                        {/* Header: Profession + Payday */}
+                        <div className="flex justify-between items-start relative z-10">
+                            <div className="flex items-center gap-3">
+                                <span className="text-3xl filter drop-shadow-md">👷</span>
+                                <div>
+                                    <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Профессия</span>
+                                    <div className="text-lg font-bold text-white leading-tight tracking-tight max-w-[140px] truncate" title={me.professionName}>{me.professionName || 'Выбор...'}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Payday Bar */}
+                        <div className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800/80 relative overflow-hidden">
+                            <div className="flex justify-between items-center mb-2">
+                                <span className="text-[9px] text-blue-400 uppercase font-bold tracking-wider">PAYDAY</span>
+                                <span className="font-mono text-green-400 font-bold text-lg leading-none">+${(me.cashflow || 0).toLocaleString()}</span>
+                            </div>
+                            <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                <div
+                                    className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+                                    style={{ width: '100%' }} // Always full for Cashflow? Or progress?
+                                ></div>
+                            </div>
+                        </div>
+
+                        {/* Stats Grid: Cash & Credit */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group/btn relative">
+                                <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
+                                <div className="font-mono text-xl text-green-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left relative">
+                                    ${me.cash?.toLocaleString()}
+                                    <CashChangeIndicator currentCash={me.cash} />
+                                </div>
+                            </button>
+                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group/btn">
+                                <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит 💳</div>
+                                <div className="font-mono text-xl text-red-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left">
+                                    ${me.loanDebt?.toLocaleString()}
+                                </div>
+                            </button>
+                        </div>
+
+                        {/* Income/Expense Mini Grid */}
+                        <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/50">
+                            <div className="flex justify-between items-center">
+                                <span className="text-[9px] text-slate-500 uppercase font-bold">Доход</span>
+                                <span className="font-mono text-slate-300 font-bold">${me.income?.toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <span className="text-[9px] text-slate-500 uppercase font-bold">Расходы</span>
+                                <span className="font-mono text-slate-400 font-bold">${me.expenses?.toLocaleString()}</span>
+                            </div>
+                        </div>
+
+                        {/* Menu Button (Integrated) */}
+                        <button
+                            onClick={() => setShowMenuModal(true)}
+                            className="bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-colors mt-auto border border-slate-700"
+                        >
+                            <span>⚙️</span> Меню
+                        </button>
+                    </div>
+
+                    {/* 2. ASSETS PANEL (BOTTOM, Fills Remaining) */}
+                    <div className="bg-[#151b2b] rounded-3xl p-5 border border-slate-800 shadow-lg flex flex-col min-h-0 flex-1 relative overflow-hidden">
                         <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2 flex-shrink-0">
                             <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
-                            <span className="font-mono text-green-400">+${totalAssetYield}</span>
+                            <span className="font-mono text-green-400 bg-green-900/20 px-2 py-0.5 rounded-lg">+${totalAssetYield}</span>
                         </h3>
+
                         {me.assets?.length > 0 ? (
-                            <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1">
+                            <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1 -mr-2">
                                 {me.assets.map((a: any, i: number) => (
                                     <div
                                         key={i}
                                         onClick={() => setTransferAssetItem({ item: a, index: i })}
                                         className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-500 active:scale-[0.98] transition-all cursor-pointer group"
                                     >
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-slate-300 font-medium">
+                                        <div className="flex flex-col gap-1">
+                                            <span className="text-slate-200 font-bold text-sm leading-tight">
                                                 {a.title}
-                                                <span className="text-slate-500 ml-1 text-[10px]">
-                                                    {a.quantity > 0 ? `(${a.quantity} шт)` : ''}
-                                                    {a.averageCost && ` • Avg: $${Math.round(a.averageCost).toLocaleString()}`}
-                                                </span>
                                             </span>
-                                            <span className="font-mono text-green-400 font-bold bg-green-900/10 px-1.5 py-0.5 rounded">+${a.cashflow}</span>
+                                            <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                                                {a.quantity > 0 && <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">{a.quantity} шт</span>}
+                                                {a.cost && <span>Pos: ${(a.cost * a.quantity).toLocaleString()}</span>}
+                                            </div>
                                         </div>
-                                        <button
-                                            className="opacity-0 group-hover:opacity-100 p-1.5 hover:bg-slate-700/50 rounded-lg transition-all text-slate-500 hover:text-blue-400"
-                                            title="Передать актив"
-                                        >
-                                            ➡️
-                                        </button>
+                                        <div className="flex flex-col items-end gap-1">
+                                            <span className="font-mono text-green-400 font-black text-xs">+${a.cashflow}</span>
+                                            <button
+                                                className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
+                                                title="Передать актив"
+                                            >
+                                                Передать
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>
-                        ) : <div className="text-xs text-slate-600 text-center py-4 italic">Нет активов</div>}
+                        ) : (
+                            <div className="flex-1 flex flex-col items-center justify-center text-slate-600 italic gap-2 opacity-50">
+                                <span className="text-3xl grayscale">📉</span>
+                                <span className="text-xs">Нет активов</span>
+                            </div>
+                        )}
                     </div>
-
-                    {/* Player Info SECOND */}
-                    <div className="bg-[#1e293b]/60 backdrop-blur-xl rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex-1 flex flex-col relative overflow-hidden group min-h-0">
-                        {/* Glow effect */}
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500"></div>
-                        <div className="flex justify-between items-center mb-4 relative">
-                            <div className="flex items-center gap-3">
-                                <span className="text-2xl filter drop-shadow-md">👷</span>
-                                <div>
-                                    <span className="text-[8px] text-slate-400 uppercase font-bold tracking-wider">Профессия</span>
-                                    <div className="text-base font-bold text-white leading-tight tracking-tight">{me.professionName || 'Выбор...'}</div>
-                                </div>
-                            </div>
-
-                            {/* Payday Header Badge */}
-                            <div className="flex flex-col items-end">
-                                <span className="text-[8px] text-blue-400 uppercase font-bold tracking-wider mb-0.5">Payday</span>
-                                <div className="text-xl font-black text-green-400 tracking-tight leading-none filter drop-shadow-lg">
-                                    +${(me.cashflow || 0).toLocaleString()}
-                                </div>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2 mb-3">
-                            {/* BALANCE */}
-                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-2 rounded-xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group relative">
-                                <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
-                                <div className="font-mono text-lg text-green-400 font-bold tracking-tight shadow-green-900/20 drop-shadow-sm group-hover:scale-105 transition-transform origin-left relative">
-                                    ${me.cash?.toLocaleString()}
-                                    <CashChangeIndicator currentCash={me.cash} />
-                                </div>
-                            </button>
-
-                            {/* CREDIT */}
-                            <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-2 rounded-xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group">
-                                <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит 💳</div>
-                                <div className="font-mono text-lg text-red-400 font-bold tracking-tight shadow-red-900/20 drop-shadow-sm group-hover:scale-105 transition-transform origin-left">${me.loanDebt?.toLocaleString()}</div>
-                            </button>
-                        </div>
-
-                        <div className="grid grid-cols-2 gap-2">
-                            <div className="bg-[#0B0E14]/30 p-2 rounded-lg border border-slate-800/50">
-                                <div className="text-[8px] text-slate-500 uppercase tracking-wider">Доход</div>
-                                <div className="font-mono text-sm text-slate-300 font-medium">${me.income?.toLocaleString()}</div>
-                            </div>
-                            <div className="bg-[#0B0E14]/30 p-2 rounded-lg border border-slate-800/50">
-                                <div className="text-[8px] text-slate-500 uppercase tracking-wider">Расходы</div>
-                                <div className="font-mono text-sm text-slate-300 font-medium">${me.expenses?.toLocaleString()}</div>
-                            </div>
-                        </div>
-                    </div>
-
-
-
-                    {/* HOST CONTROLS */}
-
-
-                    {/* MENU BUTTON (Moved to Left Sidebar Bottom) */}
-                    <button
-                        onClick={() => setShowMenuModal(true)}
-                        className="w-full py-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2 mt-auto border border-slate-700 shadow-lg transition-all"
-                    >
-                        <span>⚙️</span> МЕНЮ
-                    </button>
 
                 </div>
 
