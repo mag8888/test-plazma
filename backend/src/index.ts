@@ -188,7 +188,7 @@ app.get('/api/games', async (req, res) => {
         // Fetch games, populated with host info
         const games = await ScheduledGameModel.find(query)
             .sort(sort)
-            .populate('hostId', 'username first_name photo_url') // Get host details
+            .populate('hostId', 'username first_name photo_url telegram_id') // Get host details including telegram_id
             .limit(20);
 
         res.json(games);
