@@ -40,10 +40,11 @@ export const partnershipApi = {
     },
 
     subscribe: async (userId: string, tariff: string, referrerId?: string) => {
-        const res = await fetch(`${API_URL}/subscribe`, {
+        // Map tariff to type (frontend uses tariff names like 'PLAYER', 'MASTER' which match AvatarType)
+        const res = await fetch(`${API_URL}/avatars/purchase`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, tariff, referrerId })
+            body: JSON.stringify({ userId, type: tariff })
         });
         return res.json();
     },
