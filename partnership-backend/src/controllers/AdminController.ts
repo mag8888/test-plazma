@@ -98,30 +98,29 @@ export class AdminController {
 
             // 5. Sort
             let sortStage: any = { createdAt: -1 };
-            if (sortBy && order) {
-                const sortField = sortBy as string;
-                const dir = order === 'asc' ? 1 : -1;
-                const allowedFields = ['greenBalance', 'yellowBalance', 'balanceRed', 'rating', 'gamesPlayed', 'referralsCount', 'createdAt', 'avatarsCount']; // Added avatarsCount
-
-                if (allowedFields.includes(sortField)) {
-                    sortStage = { [sortField]: dir };
-                }
+            if (req.query.sortBy) {
+                const field = req.query.sortBy as string;
+                const order = req.query.order === 'asc' ? 1 : -1;
+                sortStage = { [field]: order };
             }
             pipeline.push({ $sort: sortStage });
 
-            // 6. Pagination with Facet
-            pipeline.push({
-                $facet: {
-                    metadata: [{ $count: "total" }],
-                    data: [{ $skip: skip }, { $limit: limit }]
-                }
+            // 6. Pagination
+            pipeline.push({ $skip: skip });
+            pipeline.push({ $limit: limit });
+
+            // Run Aggregation
+            const users = await User.aggregate(pipeline);
+
+            // Get total count (separate query for performance, or use $facet)
+            const total = await User.countDocuments(filter);
+
+            res.json({
+                users,
+                total,
+                page,
+                pages: Math.ceil(total / limit)
             });
-
-            const result = await User.aggregate(pipeline);
-            const totalCount = result[0]?.metadata[0]?.total || 0;
-            const users = result[0]?.data || [];
-
-            res.json({ users, totalCount });
         } catch (error: any) {
             console.error('getUsers error:', error);
             res.status(500).json({ error: error.message });
@@ -312,36 +311,39 @@ export class AdminController {
         try {
             const allUsers = await User.find({});
 
-            let updated = 0;
-            let skipped = 0;
-            let errors = 0;
+            let repaired = 0;
 
             for (const user of allUsers) {
-                // Skip if already has referrer ObjectId
-                if (user.referrer) {
-                    skipped++;
-                    continue;
-                }
-
                 // Skip if no referredBy string
                 if (!user.referredBy) {
                     continue;
                 }
 
                 try {
-                    // Find the referrer by username or telegram_id (Case Insensitive, Trimmed)
+                    // Find the CORRECT referrer by username or telegram_id
                     const cleanRef = user.referredBy.trim();
-                    const referrer = await User.findOne({
+                    const correctReferrer = await User.findOne({
                         $or: [
                             { username: new RegExp(`^${cleanRef}$`, 'i') },
                             { telegram_id: !isNaN(Number(cleanRef)) ? Number(cleanRef) : null }
                         ]
                     });
 
-                    if (referrer && referrer._id.toString() !== user._id.toString()) {
-                        user.referrer = referrer._id;
-                        await user.save();
-                        updated++;
+                    // Logic:
+                    // 1. If currently no referrer, but we found one -> Link it (Update)
+                    // 2. If currently has referrer, but it DOES NOT match the found one -> Fix it (Repair)
+
+                    if (correctReferrer && correctReferrer._id.toString() !== user._id.toString()) {
+                        const currentRefId = user.referrer?.toString();
+                        const correctRefId = correctReferrer._id.toString();
+
+                        if (currentRefId !== correctRefId) {
+                            user.referrer = correctReferrer._id;
+                            await user.save();
+
+                            if (currentRefId) repaired++;
+                            else updated++;
+                        }
                     }
                 } catch (err) {
                     errors++;
@@ -352,7 +354,8 @@ export class AdminController {
             res.json({
                 success: true,
                 updated,
-                skipped,
+                repaired,
+                skipped: 0,
                 errors,
                 totalUsers: allUsers.length
             });
