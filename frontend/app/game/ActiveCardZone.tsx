@@ -631,13 +631,11 @@ export const ActiveCardZone = ({
     }
 
     return (
-        <div className="relative w-full h-full perspective-[1000px]">
-            {/* Stack Container */}
-            <div className="w-full h-full relative">
+        <div className="relative w-full h-full perspective-[1000px] flex items-center justify-center">
+            {/* Stack Container - Centered */}
+            <div className="w-full relative flex items-center justify-center">
                 {feedItems.map((item: any, idx: number) => {
                     // Visual Stacking Logic
-                    // Top item (idx 0) is fully visible.
-                    // Subsequent items are pushed down/back.
                     const isTop = idx === 0;
                     const offset = idx * 15; // px down
                     const scale = 1 - (idx * 0.05); // shrink
@@ -646,30 +644,36 @@ export const ActiveCardZone = ({
                     return (
                         <div
                             key={item.id || idx}
-                            className="absolute top-0 left-0 w-full h-full transition-all duration-500 ease-out"
+                            className="absolute left-0 w-full transition-all duration-500 ease-out"
                             style={{
-                                transform: `translateY(${offset}px) scale(${scale})`,
+                                top: '50%',
+                                transform: `translateY(-50%) translateY(${offset}px) scale(${scale})`,
                                 zIndex: zIndex,
-                                opacity: Math.max(0, 1 - (idx * 0.2)), // Fade out lower items
-                                pointerEvents: isTop ? 'auto' : 'none', // Only top interactive? Or allows click to swap?
-                                // User said: "New lies under (visible)". "Only my deal... can be closed".
-                                // If I can't interact with what's under, then 'none' is good.
+                                opacity: Math.max(0, 1 - (idx * 0.2)),
+                                pointerEvents: isTop ? 'auto' : 'none',
                             }}
                         >
-                            <FeedCardItem
-                                cardWrapper={item}
-                                me={me}
-                                roomId={roomId}
-                                isMyTurn={isMyTurn}
-                                onDismiss={() => {
-                                    if (item.source === 'CURRENT') {
-                                        if (previewCard && !state.currentCard) onDismissPreview?.();
-                                        else socket.emit('end_turn', { roomId });
-                                    } else {
-                                        onDismissMarket?.();
-                                    }
-                                }}
-                            />
+                            {/* Inner Absolute Wrapper for exact positioning if needed, or just allow the card to be the div */}
+                            <div className="w-full shadow-2xl rounded-2xl overflow-hidden">
+                                <FeedCardItem
+                                    cardWrapper={item}
+                                    me={me}
+                                    roomId={roomId}
+                                    isMyTurn={isMyTurn}
+                                    onDismiss={() => {
+                                        console.log('Dismissing card:', item.id, item.source);
+                                        if (item.source === 'CURRENT') {
+                                            if (previewCard && !state.currentCard) {
+                                                if (onDismissPreview) onDismissPreview();
+                                            } else {
+                                                socket.emit('end_turn', { roomId });
+                                            }
+                                        } else {
+                                            if (onDismissMarket) onDismissMarket();
+                                        }
+                                    }}
+                                />
+                            </div>
                         </div>
                     );
                 })}

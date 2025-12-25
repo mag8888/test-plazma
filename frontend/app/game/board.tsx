@@ -93,7 +93,66 @@ const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
     );
 };
 
-// ... (existing interfaces)
+const AnimatedNumber = ({ value, className = '' }: { value: number, className?: string }) => {
+    const [displayValue, setDisplayValue] = useState(value);
+    const [isAnimating, setIsAnimating] = useState(false);
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+    useEffect(() => {
+        if (value !== displayValue) {
+            const diff = value - displayValue;
+            const isIncrease = diff > 0;
+
+            // 1. Play Sound if Increase
+            if (isIncrease) {
+                const audio = new Audio('/sounds/cash.mp3');
+                audio.volume = 0.6;
+                audio.play().catch(e => console.warn('Audio play failed', e));
+                setIsAnimating(true);
+            }
+
+            // 2. Count Up Logic
+            const steps = 20;
+            const duration = 1000; // 1s
+            const increment = diff / steps;
+            let currentStep = 0;
+
+            const animate = () => {
+                currentStep++;
+                if (currentStep <= steps) {
+                    setDisplayValue(prev => Math.floor(prev + increment));
+                    timeoutRef.current = setTimeout(animate, duration / steps);
+                } else {
+                    setDisplayValue(value);
+                    setIsAnimating(false);
+                }
+            };
+
+            animate();
+
+            // Clear Pulse after animation
+            // setIsAnimating handles the class
+        }
+        return () => {
+            if (timeoutRef.current) clearTimeout(timeoutRef.current);
+        };
+    }, [value]);
+
+    return (
+        <span className={`${className} ${isAnimating ? 'text-emerald-300 scale-110 transition-transform duration-200' : ''} inline-block`}>
+            ${displayValue.toLocaleString()}
+        </span>
+    );
+};
+
+// Start of Mobile Menus (Keeping existng Mobile Menu logic if it was here, or just ensuring I don't break imports)
+// Wait, I am inserting this BEFORE line 144. Checking context...
+// Line 144 was `const [showFastTrackInfo, setShowFastTrackInfo] = useState(false);`
+// I should insert this BEFORE the Board helper components or just inside the file scope, but outside GameBoard.
+// `CashChangeIndicator` is at line 69. I should place `AnimatedNumber` near it.
+
+// Let's target line 95 (End of CashChangeIndicator) to Insert `AnimatedNumber`.
+
 
 const getAvatarColor = (id: string) => {
     const colors = [
@@ -1162,8 +1221,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group/btn relative">
                                 <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
                                 <div className="font-mono text-xl text-green-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left relative">
-                                    ${me.cash?.toLocaleString()}
-                                    <CashChangeIndicator currentCash={me.cash} />
+                                    <AnimatedNumber value={me.cash || 0} />
+                                    <CashChangeIndicator currentCash={me.cash || 0} />
                                 </div>
                             </button>
                             <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group/btn">
