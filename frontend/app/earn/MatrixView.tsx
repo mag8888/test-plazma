@@ -155,6 +155,15 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
         };
     });
 
+    const TARIFF_COSTS: Record<string, number> = {
+        'PLAYER': 20,
+        'MASTER': 100,
+        'PARTNER': 1000
+    };
+
+    const cost = TARIFF_COSTS[avatarType] || 0;
+    const potentialBonus = cost * 0.5 * 3; // 3 slots * 50%
+
     return (
         <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">
             <div className="bg-slate-900/90 rounded-2xl border border-slate-700 max-w-5xl w-full max-h-[90vh] flex flex-col shadow-2xl">
@@ -191,88 +200,107 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
                             <div className="text-slate-500 text-sm">Загружаем структуру...</div>
                         </div>
                     ) : matrixData ? (
-                        <div className="space-y-12">
+                        <div className="space-y-4">
 
                             {/* ROOT - Level 0/1 */}
-                            <div className="flex flex-col items-center justify-center relative">
+                            <div className="flex flex-col items-center justify-center relative pb-8">
                                 <div className="text-xs text-slate-500 mb-2 font-mono uppercase tracking-widest">Мой Аватар</div>
                                 <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-2xl flex flex-col items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.2)] border-2 border-yellow-400/20 z-10 relative">
                                     <div className="text-3xl font-black text-white">{rootLevel}</div>
-                                    <div className="text-[9px] uppercase font-bold text-yellow-100 tracking-wider mt-1">Уровень</div>
+                                    <div className="text-[9px] font-bold text-yellow-100 uppercase tracking-widest">Уровень</div>
                                 </div>
-
-                                {/* Status Text */}
-                                <div className="mt-4 text-center max-w-md bg-slate-800/80 p-3 rounded-lg border border-slate-700">
-                                    <div className="text-white text-sm font-bold mb-1">
-                                        {rootLevel === 0 ? "Нужно заполнить 3 слота ниже" : `Уровень ${rootLevel} активен!`}
-                                    </div>
-                                    <div className="text-xs text-slate-400 leading-relaxed">
-                                        С каждого заполненного слота в 3-х ветках вы получаете <span className="text-yellow-400 font-bold">50% от стоимости</span> в накопление желтого бонуса для перехода на уровень выше.
-                                    </div>
-                                </div>
-
-                                {/* Connecting Line to Branches */}
-                                <div className="absolute top-full left-1/2 -translate-x-1/2 h-8 w-px bg-slate-700"></div>
                             </div>
 
+                            {/* Explainer / Level Objective */}
+                            <div className="max-w-md mx-auto bg-slate-800/50 rounded-xl p-4 border border-slate-700 relative overflow-hidden mb-8">
+                                <div className="relative z-10 text-center space-y-2">
+                                    <h3 className="font-bold text-white">Нужно заполнить 3 слота ниже</h3>
+                                    <p className="text-xs text-slate-400 leading-relaxed">
+                                        С каждого заполненного слота в 3-х ветках вы получаете <span className="text-yellow-400 font-bold">50% от стоимости</span> ($ {cost * 0.5}) в накопление желтого бонуса для перехода на уровень выше.
+                                        Также вы получаете <span className="text-green-400 font-bold">50% на вывод</span>.
+                                    </p>
+                                </div>
+                            </div>
 
-                            {/* 3 BRANCHES SECTION */}
-                            <div className="grid grid-cols-3 gap-4 pt-8 border-t border-slate-800/50 relative">
-                                {/* Horizontal connector line for branches */}
-                                <div className="absolute top-0 left-[16.66%] right-[16.66%] h-px bg-slate-700 -translate-y-[1px]"></div>
-                                {/* Center vertical connector from root */}
-                                <div className="absolute top-0 left-1/2 -translate-x-1/2 h-8 w-px bg-slate-700 -translate-y-full"></div>
+                            {/* BONUS INDICATORS */}
+                            <div className="flex justify-center items-center gap-12 pb-4 relative z-20">
+                                <div className="text-center">
+                                    <div className="text-2xl font-black text-yellow-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)]">
+                                        {potentialBonus}
+                                    </div>
+                                    <div className="text-[10px] text-yellow-400 uppercase tracking-widest font-bold">YELLOW</div>
+                                </div>
+                                <div className="h-8 w-px bg-slate-700"></div>
+                                <div className="text-center">
+                                    <div className="text-2xl font-black text-green-500 drop-shadow-[0_0_10px_rgba(34,197,94,0.5)]">
+                                        {potentialBonus}
+                                    </div>
+                                    <div className="text-[10px] text-green-400 uppercase tracking-widest font-bold">GREEN</div>
+                                </div>
+                            </div>
 
-                                {branches.map((branch, i) => (
-                                    <div key={i} className={`flex flex-col items-center relative pt-6 ${i !== 1 ? 'border-t-0' : ''}`}>
-                                        {/* Vertical connector to branch head */}
-                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-6 w-px bg-slate-700"></div>
+                            <div className="relative pt-4">
+                                {/* Connector Lines */}
+                                <div className="absolute top-0 left-1/2 -ml-px w-0.5 h-8 bg-gradient-to-b from-yellow-500 to-slate-700"></div>
+                                <div className="absolute top-8 left-[16%] right-[16%] h-px bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 opacity-50"></div>
 
-                                        {/* BRANCH HEAD (Ring 1) */}
-                                        <div className="mb-4 text-center">
-                                            <div className={`text-[10px] font-bold uppercase mb-2 ${branch.color.text}`}>Ветка {i + 1}</div>
-                                            {renderAvatarSlot(branch.avatar, branch.color, !branch.avatar)}
-                                            {
-                                                branch.avatar && (
-                                                    <div className="mt-1 text-[9px] text-slate-500">
-                                                        {branch.children.length}/3 заполнено
-                                                    </div>
-                                                )
-                                            }
-                                        </div>
+                                {/* Branches Container */}
+                                <div className="grid grid-cols-3 gap-2 pt-8 border-t border-slate-800/50 relative">
+                                    {/* Horizontal connector line for branches */}
+                                    <div className="absolute top-0 left-[16.66%] right-[16.66%] h-px bg-slate-700 -translate-y-[1px]"></div>
+                                    {/* Center vertical connector from root */}
+                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 h-8 w-px bg-slate-700 -translate-y-full"></div>
 
-                                        {/* Branch Children (Ring 2) */}
-                                        {branch.avatar && (
-                                            <div className="flex flex-col items-center w-full">
-                                                <div className="h-6 w-px bg-slate-700/50 mb-2"></div>
-                                                <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/50 w-full flex justify-center gap-3 relative">
-                                                    {/* "Yellow Accumulation" Visual */}
-                                                    <div className="absolute -top-3 bg-slate-900 border border-slate-700 text-[9px] text-yellow-500 px-2 py-0.5 rounded-full">
-                                                        Накопление
-                                                    </div>
+                                    {branches.map((branch, i) => (
+                                        <div key={i} className={`flex flex-col items-center relative pt-6 ${i !== 1 ? 'border-t-0' : ''}`}>
+                                            {/* Vertical connector to branch head */}
+                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 h-6 w-px bg-slate-700"></div>
 
-                                                    {/* 3 Slots for this Branch Head */}
-                                                    {Array.from({ length: 3 }).map((_, idx) => {
-                                                        const child = branch.children[idx] || null;
-                                                        return (
-                                                            <div key={idx}>
-                                                                {renderAvatarSlot(child, branch.color, !child)}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
+                                            {/* BRANCH HEAD (Ring 1) */}
+                                            <div className="mb-4 text-center">
+                                                <div className={`text-[10px] font-bold uppercase mb-2 ${branch.color.text}`}>Ветка {i + 1}</div>
+                                                {renderAvatarSlot(branch.avatar, branch.color, !branch.avatar)}
+                                                {
+                                                    branch.avatar && (
+                                                        <div className="mt-1 text-[9px] text-slate-500">
+                                                            {branch.children.length}/3 заполнено
+                                                        </div>
+                                                    )
+                                                }
                                             </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
 
-                        </div>
-                    ) : (
-                        <div className="text-center py-12 text-slate-500">Нет данных</div>
+                                            {/* Branch Children (Ring 2) */}
+                                            {branch.avatar && (
+                                                <div className="flex flex-col items-center w-full">
+                                                    <div className="h-6 w-px bg-slate-700/50 mb-2"></div>
+                                                    <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/50 w-full flex justify-center gap-3 relative">
+                                                        {/* "Yellow Accumulation" Visual */}
+                                                        <div className="absolute -top-3 bg-slate-900 border border-slate-700 text-[9px] text-yellow-500 px-2 py-0.5 rounded-full">
+                                                            Накопление
+                                                        </div>
+
+                                                        {/* 3 Slots for this Branch Head */}
+                                                        {Array.from({ length: 3 }).map((_, idx) => {
+                                                            const child = branch.children[idx] || null;
+                                                            return (
+                                                                <div key={idx}>
+                                                                    {renderAvatarSlot(child, branch.color, !child)}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+
+                            </div>
+                            ) : (
+                            <div className="text-center py-12 text-slate-500">Нет данных</div>
                     )}
-                </div>
+                        </div>
             </div>
-        </div>
-    );
+            </div>
+            );
 }
