@@ -1761,7 +1761,7 @@ export class BotService {
             const host = await UserModel.findById(game.hostId);
             if (host) {
                 this.bot?.sendMessage(host.telegram_id,
-                    `🆕 Игрок ${user.first_name} (@${user.username}) записался на игру (тип: ${isPaid ? 'PAID' : 'PROMO'}).`,
+                    `🆕 Игрок ${user.first_name} (@${user.username}) записался на игру (тип: ${isPaid ? 'PAID' : 'PROMO'}).\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`,
                     {
                         reply_markup: {
                             inline_keyboard: [[
