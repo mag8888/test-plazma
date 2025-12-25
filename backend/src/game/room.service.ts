@@ -187,6 +187,34 @@ export class RoomService {
             throw new Error("Unable to join room");
         }
 
+        // 3. POST-JOIN SAFETY CHECK (Fix Race Conditions)
+        // Ensure the assigned token is actually unique. If a race occurred, we might have pushed a duplicate.
+        const insertedPlayer = room.players.find((p: IPlayer) => p.userId === userId);
+        if (insertedPlayer) {
+            const myToken = insertedPlayer.token;
+            const duplicateCount = room.players.filter((p: IPlayer) => p.token === myToken).length;
+
+            if (duplicateCount > 1) {
+                console.log(`[JoinRoom] Race Condition detected! Token ${myToken} is duplicate. Fixing...`);
+
+                // Find truly free token
+                const currentTokens = room.players.map((p: IPlayer) => p.token);
+                // ALL_TOKENS logic again
+                const ALL_TOKENS = ['🦊', '🐱', '🐭', '🐹', '🐰', '🐻', '🐼', '🐨', '🐯', '🦁', '🐮', '🐷'];
+                const trulyFree = ALL_TOKENS.find(t => !currentTokens.includes(t)) || '🎲';
+
+                // Update the player's token atomically
+                await RoomModel.updateOne(
+                    { _id: roomId, "players.userId": userId },
+                    { $set: { "players.$.token": trulyFree } }
+                );
+
+                // Fetch again to return correct state
+                const fixedRoom = await RoomModel.findById(roomId);
+                if (fixedRoom) return this.sanitizeRoom(fixedRoom);
+            }
+        }
+
         return this.sanitizeRoom(room);
     }
 
