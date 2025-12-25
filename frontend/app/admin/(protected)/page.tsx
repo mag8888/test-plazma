@@ -394,7 +394,12 @@ export default function AdminPage() {
                             <div className="text-4xl font-bold text-white">{stats.totalUsers}</div>
                         </div>
                         <div
-                            onClick={() => setActiveTab('USERS')}
+                            onClick={() => {
+                                setActiveTab('USERS');
+                                setSortField('avatarsCount'); // Now supported by backend
+                                setSortOrder('desc');
+                                setTimeout(() => searchUsers(1), 0);
+                            }}
                             className="bg-slate-800 p-6 rounded-2xl border border-slate-700 cursor-pointer hover:scale-[1.02] transition-transform group"
                         >
                             <div className="text-slate-400 text-sm font-bold uppercase mb-2 group-hover:text-white transition-colors">Total Avatars</div>
