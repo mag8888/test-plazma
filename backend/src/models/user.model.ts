@@ -18,7 +18,8 @@ export interface IUser extends Document {
     authCodeExpires?: Date;
     createdAt: Date;
     wins: { type: Number, default: 0 };
-    rating: { type: Number, default: 100 };
+    gamesPlayed: { type: Number, default: 0 };
+    rating: { type: Number, default: 0 };
     isMaster?: { type: Boolean, default: false };
     masterExpiresAt?: Date;
 }
@@ -42,7 +43,8 @@ const UserSchema: Schema = new Schema({
     authCode: { type: String },
     authCodeExpires: { type: Date },
     wins: { type: Number, default: 0 },
-    rating: { type: Number, default: 100 },
+    gamesPlayed: { type: Number, default: 0 },
+    rating: { type: Number, default: 0 },
     isMaster: { type: Boolean, default: false },
     masterExpiresAt: { type: Date },
     preferences: {

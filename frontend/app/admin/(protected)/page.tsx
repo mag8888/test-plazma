@@ -445,6 +445,8 @@ return (
                                     <th className="p-4">Yellow Bal</th>
                                     <th className="p-4">Red Bal</th>
                                     <th className="p-4">Rating</th>
+                                    <th className="p-4">Games</th>
+                                    <th className="p-4">Invited</th>
                                     <th className="p-4">Avatars</th>
                                     <th className="p-4">Actions</th>
                                 </tr>
@@ -480,7 +482,9 @@ return (
                                         <td className="p-4 text-green-400 font-bold">${u.greenBalance}</td>
                                         <td className="p-4 text-yellow-400 font-bold">${u.yellowBalance}</td>
                                         <td className="p-4 text-red-400 font-bold">${u.balanceRed || 0}</td>
-                                        <td className="p-4 text-purple-400 font-bold">{u.rating || 100}</td>
+                                        <td className="p-4 text-purple-400 font-bold">{u.rating || 0}</td>
+                                        <td className="p-4 text-slate-300">{u.gamesPlayed || 0}</td>
+                                        <td className="p-4 text-slate-300">{u.referralsCount || 0}</td>
                                         <td className="p-4">
                                             {u.avatarCounts && u.avatarCounts.total > 0 ? (
                                                 <div className="flex gap-1 text-xs">
@@ -524,7 +528,7 @@ return (
                                     </tr>
                                 ))}
                                 {users.length === 0 && (
-                                    <tr><td colSpan={7} className="p-8 text-center text-slate-500">No users found</td></tr>
+                                    <tr><td colSpan={10} className="p-8 text-center text-slate-500">No users found</td></tr>
                                 )}
                             </tbody>
                         </table>

@@ -18,6 +18,7 @@ export interface IUser extends Document {
     // Game data
     rating: number;
     wins: number;
+    gamesPlayed: number;
     isMaster?: boolean;
     masterExpiresAt?: Date;
 
@@ -56,8 +57,9 @@ const UserSchema: Schema = new Schema({
     referralBalance: { type: Number, default: 0 },
 
     // Game data
-    rating: { type: Number, default: 100 },
+    rating: { type: Number, default: 0 },
     wins: { type: Number, default: 0 },
+    gamesPlayed: { type: Number, default: 0 },
     isMaster: { type: Boolean, default: false },
     masterExpiresAt: { type: Date },
 
