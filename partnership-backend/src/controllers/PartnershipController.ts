@@ -199,7 +199,17 @@ export class PartnershipController {
     static async getPartners(req: Request, res: Response) {
         try {
             const { userId } = req.params;
-            const user = await User.findById(userId);
+            let user;
+
+            // Robust Lookup: Handle both MongoID and Telegram ID
+            if (mongoose.Types.ObjectId.isValid(userId)) {
+                user = await User.findById(userId);
+            }
+
+            if (!user && !isNaN(Number(userId))) {
+                user = await User.findOne({ telegram_id: Number(userId) });
+            }
+
             if (!user) return res.status(404).json({ error: 'User not found' });
 
             // 1. Find direct referrals (Standard Relation)
