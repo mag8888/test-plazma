@@ -393,13 +393,38 @@ export default function AdminPage() {
                             <h2 className="text-xl font-bold mb-4">Users</h2>
                             <div className="text-4xl font-bold text-white">{stats.totalUsers}</div>
                         </div>
-                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
-                            <div className="text-slate-400 text-sm font-bold uppercase mb-2">Total Avatars</div>
-                            <div className="text-3xl font-bold text-blue-400">{stats.totalAvatars}</div>
+                        <div
+                            onClick={() => setActiveTab('USERS')}
+                            className="bg-slate-800 p-6 rounded-2xl border border-slate-700 cursor-pointer hover:scale-[1.02] transition-transform group"
+                        >
+                            <div className="text-slate-400 text-sm font-bold uppercase mb-2 group-hover:text-white transition-colors">Total Avatars</div>
+                            <div className="text-3xl font-bold text-white">{stats.totalAvatars}</div>
                         </div>
-                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
-                            <div className="text-slate-400 text-sm font-bold uppercase mb-2">Green Circulation</div>
-                            <div className="text-3xl font-bold text-green-400">{stats.totalGreen}</div>
+
+                        <div
+                            onClick={() => {
+                                setActiveTab('USERS');
+                                setSortField('greenBalance');
+                                setSortOrder('desc');
+                                setTimeout(() => searchUsers(1), 0); // Trigger search
+                            }}
+                            className="bg-slate-800 p-6 rounded-2xl border border-slate-700 cursor-pointer hover:scale-[1.02] transition-transform group"
+                        >
+                            <div className="text-slate-400 text-sm font-bold uppercase mb-2 group-hover:text-green-400 transition-colors">Green Circulation</div>
+                            <div className="text-3xl font-bold text-green-400">${stats.totalGreen.toLocaleString()}</div>
+                        </div>
+
+                        <div
+                            onClick={() => {
+                                setActiveTab('USERS');
+                                setSortField('yellowBalance');
+                                setSortOrder('desc');
+                                setTimeout(() => searchUsers(1), 0);
+                            }}
+                            className="bg-slate-800 p-6 rounded-2xl border border-slate-700 cursor-pointer hover:scale-[1.02] transition-transform group"
+                        >
+                            <div className="text-slate-400 text-sm font-bold uppercase mb-2 group-hover:text-yellow-400 transition-colors">Yellow Circulation</div>
+                            <div className="text-3xl font-bold text-yellow-400">${stats.totalYellow.toLocaleString()}</div>
                         </div>
                         <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
                             <h3 className="text-slate-400 text-sm font-medium mb-4 uppercase tracking-wider">Storage Stats</h3>
