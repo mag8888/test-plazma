@@ -50,6 +50,7 @@ export default function AdminPage() {
     // Add Avatar Modal
     const [addAvatarUser, setAddAvatarUser] = useState<any>(null);
     const [newAvatarType, setNewAvatarType] = useState('BASIC');
+    const [deductBalance, setDeductBalance] = useState(false); // New state for balance deduction
 
     const createAvatar = async () => {
         if (!addAvatarUser) return;
@@ -59,7 +60,8 @@ export default function AdminPage() {
             method: 'POST',
             body: JSON.stringify({
                 userId: addAvatarUser._id,
-                type: newAvatarType
+                type: newAvatarType,
+                deductBalance: false // Explicitly set to false for this admin action
             })
         });
 
@@ -72,7 +74,21 @@ export default function AdminPage() {
         }
     };
 
-    // ... (rest of code)
+    const handleSort = (field: string) => {
+        if (sortField === field) {
+            // Toggle order
+            setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+        } else {
+            // New field, default to desc (highest first)
+            setSortField(field);
+            setSortOrder('desc');
+        }
+    };
+
+    const renderSortArrow = (field: string) => {
+        if (sortField !== field) return null;
+        return sortOrder === 'asc' ? ' ↑' : ' ↓';
+    };
 
     const updateReferrer = async () => {
         if (!editReferrerUser) return;
@@ -135,7 +151,7 @@ export default function AdminPage() {
         if (activeTab === 'LOGS' && isAuthenticated) {
             fetchLogs();
         }
-    }, [activeTab, isAuthenticated]);
+    }, [activeTab, isAuthenticated, page, sortField, sortOrder]); // Added sortField and sortOrder to dependencies
 
     const login = () => {
         if (secret) {
@@ -174,16 +190,23 @@ export default function AdminPage() {
         return res.json();
     };
 
-    const searchUsers = async (p: number = 1, key: string = secret) => {
-        const res = await fetchWithAuth(`/users?query=${userQuery}&page=${p}`, {}, key);
-        if (res.users) {
-            setUsers(res.users);
-            setTotalPages(res.pages || 1);
-            setPage(res.page || 1);
-        } else {
-            console.warn('Unknown users format', res);
+    const searchUsers = useCallback(async (p: number = 1, key: string = secret) => {
+        setIsLoading(true);
+        try {
+            const res = await fetchWithAuth(`/users?query=${userQuery}&page=${p}&sortBy=${sortField}&order=${sortOrder}`, {}, key);
+            if (res.users) {
+                setUsers(res.users);
+                setTotalPages(res.pages || 1);
+                setPage(res.page || 1);
+            } else {
+                console.warn('Unknown users format', res);
+            }
+        } catch (e) {
+            console.error("Fetch users error", e);
+        } finally {
+            setIsLoading(false);
         }
-    };
+    }, [userQuery, sortField, sortOrder]); // Added sortField and sortOrder to dependencies
 
     const fetchStats = async (key: string = secret) => {
         try {
@@ -432,16 +455,16 @@ export default function AdminPage() {
                             <table className="w-full text-left">
                                 <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
                                     <tr>
-                                        <th className="p-4">User</th>
-                                        <th className="p-4">Referrer</th>
-                                        <th className="p-4">Green Bal</th>
-                                        <th className="p-4">Yellow Bal</th>
-                                        <th className="p-4">Red Bal</th>
-                                        <th className="p-4">Rating</th>
-                                        <th className="p-4">Games</th>
-                                        <th className="p-4">Invited</th>
-                                        <th className="p-4">Avatars</th>
-                                        <th className="p-4">Actions</th>
+                                        <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('createdAt')}>User {renderSortArrow('createdAt')}</th>
+                                        <th className="p-4 text-left">Referrer</th>
+                                        <th className="p-4 text-left cursor-pointer hover:text-green-400" onClick={() => handleSort('greenBalance')}>Green Bal {renderSortArrow('greenBalance')}</th>
+                                        <th className="p-4 text-left cursor-pointer hover:text-yellow-400" onClick={() => handleSort('yellowBalance')}>Yellow Bal {renderSortArrow('yellowBalance')}</th>
+                                        <th className="p-4 text-left cursor-pointer hover:text-red-400" onClick={() => handleSort('balanceRed')}>Red Bal {renderSortArrow('balanceRed')}</th>
+                                        <th className="p-4 text-left cursor-pointer hover:text-purple-400" onClick={() => handleSort('rating')}>Rating {renderSortArrow('rating')}</th>
+                                        <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('gamesPlayed')}>Games {renderSortArrow('gamesPlayed')}</th>
+                                        <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('referralsCount')}>Invited {renderSortArrow('referralsCount')}</th>
+                                        <th className="p-4 text-left">Avatars</th>
+                                        <th className="p-4 text-left">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-700">
