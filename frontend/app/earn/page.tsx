@@ -73,25 +73,29 @@ export default function EarnPage() {
                         console.log('📊 [Earn Page] Stats fetched:', stats);
                         setPartnershipUser({ ...dbUser, ...stats });
 
-                        // Then attempt sync
-                        return partnershipApi.syncLegacyBalance(webApp.initData)
-                            .then((syncRes) => {
-                                console.log("Sync Result:", syncRes);
-                                if (syncRes.success && syncRes.synced > 0) {
-                                    // Refresh stats again if sync moved money
-                                    return partnershipApi.getStats(dbUser._id).then(updated => {
-                                        console.log('📊 [Earn Page] Stats re-fetched after sync:', updated);
-                                        setPartnershipUser((prev: any) => ({ ...prev, ...updated }));
-                                    });
-                                } else {
-                                    // Just check legacy balance presence for UI
-                                    partnershipApi.getLegacyBalance(webApp!.initData).then(res => {
-                                        if (res.legacyBalance > 0) {
-                                            setPartnershipUser((prev: any) => ({ ...prev, pendingBalance: res.legacyBalance }));
-                                        }
-                                    });
-                                }
-                            });
+                        // Only attempt sync if we have initData (Telegram WebApp)
+                        if (webApp?.initData) {
+                            return partnershipApi.syncLegacyBalance(webApp.initData)
+                                .then((syncRes) => {
+                                    console.log("Sync Result:", syncRes);
+                                    if (syncRes.success && syncRes.synced > 0) {
+                                        // Refresh stats again if sync moved money
+                                        return partnershipApi.getStats(dbUser._id).then(updated => {
+                                            console.log('📊 [Earn Page] Stats re-fetched after sync:', updated);
+                                            setPartnershipUser((prev: any) => ({ ...prev, ...updated }));
+                                        });
+                                    } else {
+                                        // Just check legacy balance presence for UI
+                                        partnershipApi.getLegacyBalance(webApp.initData).then(res => {
+                                            if (res.legacyBalance > 0) {
+                                                setPartnershipUser((prev: any) => ({ ...prev, pendingBalance: res.legacyBalance }));
+                                            }
+                                        });
+                                    }
+                                });
+                        } else {
+                            console.log('ℹ️ [Earn Page] Skipping legacy sync - no initData (browser mode)');
+                        }
                     });
                 })
                 .catch(err => {
