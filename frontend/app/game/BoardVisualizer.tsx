@@ -253,7 +253,6 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
 
                 {/* 3. PLAYER TOKENS (ABSOLUTE OVERLAY) */}
                 <div className="absolute inset-0 pointer-events-none">
-                    {/* Used same inset as Inner Track to align coordinate systems */}
                     {players.map((p: any) => {
                         const posIndex = animatingPos[p.id] ?? p.position;
                         const isFT = p.isFastTrack;
@@ -264,11 +263,8 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                         const group = positionGroups[posIndex] || [];
                         if (group.length > 1) {
                             const idx = group.indexOf(p.id);
-                            // Spread tokens in a small circle
-                            const spread = 3.0; // Increased spread for larger tokens
-                            // Rotation offset to ensure they don't block center sticker too much
-                            const angleOffset = -Math.PI / 2;
-                            const angle = (idx / group.length) * 2 * Math.PI + angleOffset;
+                            const spread = 3.0;
+                            const angle = (idx / group.length) * 2 * Math.PI - Math.PI / 2;
                             offsetX = spread * Math.cos(angle);
                             offsetY = spread * Math.sin(angle);
                         }
@@ -276,14 +272,8 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                         let style: any = {};
 
                         if (isFT) {
-                            // Fast Track (Grid) - Needs to be relative to WHOLE BOARD (inset-0)
-                            // BUG FIX: engine.ts sends Local Index (0-47) for Fast Track position.
-                            // Previously logic assumed Global Index (24-71) and subtracted 24.
-                            // If we receive local index < 24, subtracting 24 made it negative? No, logic was `posIndex >= 24 ? posIndex - 24 : posIndex`.
-                            // If we receive Local 24 (Global 48), logic was `24 - 24 = 0`. This caused the "Fly to Start" bug.
-                            // Correction: Use posIndex directly as it is mapped 0-47 locally.
+                            // Fast Track Positioning
                             const ftIndex = posIndex;
-
                             let r = 0, c = 0;
                             if (ftIndex <= 12) { r = 13; c = 13 - ftIndex; }
                             else if (ftIndex <= 23) { r = 13 - (ftIndex - 12); c = 1; }
@@ -300,17 +290,14 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                 position: 'absolute'
                             };
                         } else {
-                            // Rat Race (Circular)
-                            // Radius 42 (matching getPosStyle) relative to inset-0 container
+                            // Rat Race Positioning
                             const totalSteps = 24;
                             const angleOffset = 90;
                             const angleDeg = (posIndex * (360 / totalSteps)) + angleOffset;
                             const angleRad = angleDeg * (Math.PI / 180);
-                            const radius = 31.92; // 42 * 0.76 (Inner Track is inset 12%, so 76% size)
-                            const offsetRadius = 31.92; // Match aligned radius
-
-                            const x = 50 + offsetRadius * Math.cos(angleRad);
-                            const y = 50 + offsetRadius * Math.sin(angleRad);
+                            const radius = 31.92;
+                            const x = 50 + radius * Math.cos(angleRad);
+                            const y = 50 + radius * Math.sin(angleRad);
                             style = {
                                 left: `${x + offsetX}%`,
                                 top: `${y + offsetY}%`,
@@ -327,10 +314,16 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                             >
                                 <div className={`
                                     w-[5cqw] h-[5cqw] rounded-full bg-slate-900 border-2 ${p.id === currentPlayerId ? 'border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-110' : 'border-slate-600 shadow-md'}
-                                    flex items-center justify-center text-[3.0cqw] relative
+                                    flex items-center justify-center relative overflow-hidden
                                 `}>
-                                    {p.token}
-                                    <div className="absolute -top-[1.5cqw] bg-slate-900/80 text-white text-[0.6cqw] px-[0.5cqw] py-[0.1cqw] rounded-full whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity">
+                                    {p.photo_url ? (
+                                        <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-[3.0cqw]">{p.token}</span>
+                                    )}
+
+                                    {/* Name Badge */}
+                                    <div className="absolute -top-[1.5cqw] bg-slate-900/80 text-white text-[0.6cqw] px-[0.5cqw] py-[0.1cqw] rounded-full whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity pointer-events-auto">
                                         {p.name}
                                     </div>
                                 </div>
