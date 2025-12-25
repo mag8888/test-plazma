@@ -4,6 +4,7 @@ import { Transaction, TransactionType } from '../models/Transaction';
 import { AdminLog, AdminActionType } from '../models/AdminLog';
 import { Avatar } from '../models/Avatar';
 import mongoose from 'mongoose';
+import { NotificationService } from '../services/NotificationService';
 
 // Use a simple env var for protection, fallback to a default for dev if needed
 const ADMIN_SECRET = process.env.ADMIN_SECRET || 'admin';
