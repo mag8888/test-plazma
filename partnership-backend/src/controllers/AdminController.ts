@@ -139,7 +139,7 @@ export class AdminController {
             // The MAIN 'RED' balance is actually stored in the Main Backend (Moneo), 
             // but here we might have duplicated it if we are syncing?
             // Checking User model...
-            // User.ts has: greenBalance, yellowBalance. 
+            // User.ts has: greenBalance and yellowBalance. 
             // It does NOT have redBalance (that's likely on main game backend).
             // However, the prompt asked to top up players.
             // If this is Partnership Backend, we can only update Partnership balances (Green/Yellow).
@@ -208,6 +208,13 @@ export class AdminController {
             }
 
             await user.save();
+
+            // Send Telegram Notification
+            if (user.telegram_id) {
+                const message = `💰 <b>Balance Update</b>: ${value > 0 ? '+' : ''}${value} ${type}\n📝 <b>Reason</b>: ${description || 'Admin Adjustment'}${bonusDescription ? `\nℹ️ <b>Note</b>: ${bonusDescription}` : ''}`;
+                NotificationService.sendTelegramMessage(user.telegram_id, message).catch(e => console.error('Failed to send admin notification', e));
+            }
+
             res.json({ success: true, user });
         } catch (error: any) {
             res.status(500).json({ error: error.message });

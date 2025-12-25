@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight, CreditCard, Trash2 } from 'lucide-react';
 import { partnershipApi } from '../../../lib/partnershipApi';
 import CardEditor from './CardEditor';
+import { MatrixView } from '../../earn/MatrixView';
+import AdminAvatarSelector from './components/AdminAvatarSelector';
 
 const API_URL = '/api/partnership'; // Use internal proxy for Monolith
 
@@ -30,6 +32,10 @@ export default function AdminPage() {
     const [totalPages, setTotalPages] = useState(1);
     const [sortField, setSortField] = useState('createdAt');
     const [sortOrder, setSortOrder] = useState('desc');
+
+    // Avatar Visualization
+    const [selectAvatarUser, setSelectAvatarUser] = useState<any>(null);
+    const [visualizeAvatar, setVisualizeAvatar] = useState<{ id: string, type: string } | null>(null);
 
     // Logs
     const [logs, setLogs] = useState<any[]>([]);

@@ -249,8 +249,6 @@ export class MatrixService {
                 referrerId = referrer._id;
                 const hasSubscription = await this.hasActiveSubscription(referrer._id);
 
-                import { NotificationService } from './NotificationService';
-
                 // ... existing code ...
 
                 if (hasSubscription) {
