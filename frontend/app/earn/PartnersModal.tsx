@@ -9,6 +9,7 @@ interface Partner {
     level: number;
     incomeGreen: number;
     incomeYellow: number;
+    incomeRed: number;
 }
 
 interface PartnersModalProps {
@@ -98,6 +99,13 @@ export const PartnersModal = ({ isOpen, onClose, partners, isLoading }: Partners
                                         <div className="flex items-center gap-1 text-yellow-400 font-bold text-xs bg-yellow-900/20 px-1.5 py-0.5 rounded border border-yellow-500/10">
                                             <span className="text-[10px] opacity-70">B:</span>
                                             +${p.incomeYellow.toLocaleString()}
+                                        </div>
+                                    )}
+                                    {/* Red Income (Only if > 0) */}
+                                    {p.incomeRed > 0 && (
+                                        <div className="flex items-center gap-1 text-red-400 font-bold text-xs bg-red-900/20 px-1.5 py-0.5 rounded border border-red-500/10">
+                                            <span className="text-[10px] opacity-70">R:</span>
+                                            +${p.incomeRed.toLocaleString()}
                                         </div>
                                     )}
                                 </div>

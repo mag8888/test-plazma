@@ -62,7 +62,7 @@ export class AdminController {
                     from: 'avatars',
                     let: { userId: '$_id' },
                     pipeline: [
-                        { $match: { $expr: { $and: [{ $eq: ['$owner', '$$userId'] }, { $eq: ['$isActive', true] }] } } }
+                        { $match: { $expr: { $eq: ['$owner', '$$userId'] } } }
                     ],
                     as: 'avatars'
                 }

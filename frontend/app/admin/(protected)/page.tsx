@@ -527,7 +527,7 @@ export default function AdminPage() {
                                         <th className="p-4 text-left cursor-pointer hover:text-purple-400" onClick={() => handleSort('rating')}>Rating {renderSortArrow('rating')}</th>
                                         <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('gamesPlayed')}>Games {renderSortArrow('gamesPlayed')}</th>
                                         <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('referralsCount')}>Invited {renderSortArrow('referralsCount')}</th>
-                                        <th className="p-4 text-left">Avatars</th>
+                                        <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('avatarsCount')}>Avatars {renderSortArrow('avatarsCount')}</th>
                                         <th className="p-4 text-left">Actions</th>
                                     </tr>
                                 </thead>

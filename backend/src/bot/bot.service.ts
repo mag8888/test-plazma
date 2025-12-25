@@ -658,6 +658,8 @@ export class BotService {
                 this.bot?.sendMessage(chatId, 'Отлично! Напишите менеджеру: @Arctur_888');
             } else if (data === 'partnership_info') {
                 await this.handlePartnership(chatId);
+            } else if (data === 'get_password') {
+                await this.handleGetPassword(chatId, userId);
             } else if (data === 'become_master') {
                 await this.handleBecomeMaster(chatId, userId);
             } else if (data.startsWith('join_game_')) {
@@ -977,7 +979,6 @@ export class BotService {
                 keyboard: [
                     [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
                     [{ text: '🤝 Получить клиентов' }],
-                    [{ text: '🔑 Получить пароль' }],
                     [{ text: '🌐 Сообщество' }, { text: 'ℹ️ О проекте' }]
                 ],
                 resize_keyboard: true
@@ -1204,7 +1205,8 @@ export class BotService {
             const keyboard = [
                 [{ text: '🚀 ЗАПУСТИТЬ В APP', web_app: { url: webAppUrl } }],
                 [{ text: '🌐 В браузере (Ссылка)', url: link }],
-                [{ text: '📅 Расписание игр', callback_data: 'view_schedule' }]
+                [{ text: '📅 Расписание игр', callback_data: 'view_schedule' }],
+                [{ text: '🔑 Получить пароль', callback_data: 'get_password' }]
             ];
 
             if (isMaster) {

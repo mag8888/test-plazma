@@ -308,6 +308,7 @@ export class PartnershipController {
      */
     static async purchaseAvatar(req: Request, res: Response) {
         try {
+            console.log('[PartnershipController] purchaseAvatar req.body:', req.body);
             const { userId, type } = req.body;
 
             if (!userId || !type) {
