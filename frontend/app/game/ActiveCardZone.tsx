@@ -646,7 +646,7 @@ export const ActiveCardZone = ({
                     return (
                         <div
                             key={item.id || idx}
-                            className="absolute top-0 left-0 w-full transition-all duration-500 ease-out"
+                            className="absolute top-0 left-0 w-full h-full transition-all duration-500 ease-out"
                             style={{
                                 transform: `translateY(${offset}px) scale(${scale})`,
                                 zIndex: zIndex,
