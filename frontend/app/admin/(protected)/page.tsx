@@ -80,6 +80,28 @@ export default function AdminPage() {
         }
     };
 
+    const handleCardClick = (type: string) => {
+        // Clear search to show full list for the selected category
+        setSearchQuery('');
+
+        if (type === 'AVATARS') {
+            setSortField('avatarsCount');
+            setSortOrder('desc');
+            setPage(1); // Reset page
+        } else if (type === 'GREEN') {
+            setSortField('greenBalance');
+            setSortOrder('desc');
+            setPage(1);
+        } else if (type === 'YELLOW') {
+            setSortField('yellowBalance');
+            setSortOrder('desc');
+            setPage(1);
+        }
+
+        // Switch to Users tab to visualize
+        setActiveTab('USERS');
+    };
+
     const handleSort = (field: string) => {
         if (sortField === field) {
             // Toggle order
