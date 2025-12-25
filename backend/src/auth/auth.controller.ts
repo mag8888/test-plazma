@@ -29,6 +29,7 @@ router.post('/login', async (req: Request, res: Response) => {
             token: "mock-jwt-token-for-" + user.id,
             user: {
                 id: user.id,
+                telegram_id: user.telegram_id,
                 username: user.username,
                 firstName: user.first_name,
                 isAdmin: user.isAdmin || false
@@ -61,6 +62,7 @@ router.post('/login/telegram', async (req: Request, res: Response) => {
             token: "mock-jwt-token-for-" + user.id,
             user: {
                 id: user.id,
+                telegram_id: user.telegram_id,
                 username: user.username,
                 first_name: user.first_name,
                 last_name: user.last_name,
