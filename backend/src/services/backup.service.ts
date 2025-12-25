@@ -24,18 +24,39 @@ export class BackupService {
     async performBackup() {
         console.log("⏳ Starting Database Backup...");
         try {
-            // Import Models Dynamically to avoid circular deps or init issues
-            const { UserModel } = await import('../models/user.model');
-            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
-            const { TransactionModel } = await import('../models/transaction.model');
+            // Use mongoose connection to get raw collections (avoids model import issues)
+            const db = mongoose.connection.db;
+            if (!db) {
+                console.error("❌ DB not connected. Skipping backup.");
+                return;
+            }
 
             // Define collections to backup
-            const backupData = {
+            const collections = [
+                'users',
+                'transactions',
+                'scheduled_games',
+                'reviews',
+                'avatars',
+                'avatarpurchases',
+                'leveltransitions'
+            ];
+
+            const backupData: any = {
                 timestamp: new Date().toISOString(),
-                users: await UserModel.find({}),
-                scheduled_games: await ScheduledGameModel.find({}),
-                transactions: await TransactionModel.find({})
+                collections: {}
             };
+
+            for (const colName of collections) {
+                try {
+                    const data = await db.collection(colName).find({}).toArray();
+                    backupData.collections[colName] = data;
+                    console.log(`📦 Backed up ${colName}: ${data.length} docs`);
+                } catch (e) {
+                    console.warn(`⚠️ Failed to backup collection ${colName}:`, e);
+                    backupData.collections[colName] = [];
+                }
+            }
 
             // Save to temp file
             const tempDir = path.join(__dirname, '../../temp_backups');

@@ -43,18 +43,20 @@ const restoreBackup = async (url: string) => {
     const response = await fetch(url);
     const data = await response.json();
 
-    if (!data.users) {
-        console.error("Invalid Backup Format");
+    const users = data.collections?.users || data.users;
+
+    if (!users) {
+        console.error("Invalid Backup Format: No 'users' or 'collections.users' found.");
         return;
     }
 
     // Restore Users
     const { UserModel } = await import('./models/user.model');
-    console.log(`Found ${data.users.length} users in backup.`);
-    console.log('Backup Users:', data.users.map((u: any) => u.username).join(', '));
+    console.log(`Found ${users.length} users in backup.`);
+    // console.log('Backup Users:', users.map((u: any) => u.username).join(', '));
 
     let restoredCount = 0;
-    for (const u of data.users) {
+    for (const u of users) {
         // Skip if user doesn't have a referrer in the backup
         // Or should we restore nulls too? 
         // User asked to "restore referrals".
@@ -70,7 +72,7 @@ const restoreBackup = async (url: string) => {
 
         // Only update if we have something to update
         if (Object.keys(updateData).length > 0) {
-            console.log(`Restoring ${u.username}: referrer=${u.referrer || 'N/A'}, referredBy=${u.referredBy || 'N/A'}`);
+            // console.log(`Restoring ${u.username}: referrer=${u.referrer || 'N/A'}, referredBy=${u.referredBy || 'N/A'}`);
             await UserModel.findOneAndUpdate(filter, { $set: updateData }, { upsert: false }); // Do not create new users, only patch existing
             restoredCount++;
         }
