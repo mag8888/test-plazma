@@ -1166,9 +1166,35 @@ export class BotService {
             const webAppUrl = 'https://moneo.up.railway.app';
             const magicLink = `${webAppUrl}/?auth=${code}`;
 
-            const message = `🔑 **Magic Ссылка для входа в браузере**\n\n` +
+            // Generate password if user doesn't have one
+            const { UserModel } = await import('../models/user.model');
+            const user = await UserModel.findOne({ telegram_id: telegramId });
+
+            if (!user) {
+                this.bot?.sendMessage(chatId, '❌ Пользователь не найден.');
+                return;
+            }
+
+            // Generate password if not exists
+            if (!user.password) {
+                const generatePassword = () => {
+                    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                    let password = '';
+                    for (let i = 0; i < 8; i++) {
+                        password += chars.charAt(Math.floor(Math.random() * chars.length));
+                    }
+                    return password;
+                };
+
+                user.password = generatePassword();
+                await user.save();
+            }
+
+            const message = `🔑 **Данные для входа в браузере**\n\n` +
                 `🌐 **Сайт:** ${webAppUrl}\n\n` +
-                `🔗 **Ваша постоянная ссылка:**\n${magicLink}\n\n` +
+                `👤 **Логин:** ${user.username}\n` +
+                `🔐 **Пароль:** \`${user.password}\`\n\n` +
+                `📋 **Или используйте постоянную ссылку:**\n${magicLink}\n\n` +
                 `💡 Просто откройте эту ссылку в любом браузере - вы будете автоматически авторизованы!\n` +
                 `Ссылка действительна 365 дней.`;
 
@@ -1176,14 +1202,15 @@ export class BotService {
                 parse_mode: 'Markdown',
                 reply_markup: {
                     inline_keyboard: [
-                        [{ text: '🌐 Открыть Magic Link', url: magicLink }]
+                        [{ text: '🌐 Открыть сайт', url: webAppUrl }],
+                        [{ text: '🔗 Открыть Magic Link', url: magicLink }]
                     ]
                 }
             });
 
         } catch (e) {
             console.error("Error in handleGetPassword:", e);
-            this.bot?.sendMessage(chatId, '❌ Ошибка генерации ссылки.');
+            this.bot?.sendMessage(chatId, '❌ Ошибка генерации данных.');
         }
     }
 
