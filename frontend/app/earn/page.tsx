@@ -562,10 +562,12 @@ export default function EarnPage() {
                             </button>
                             <button
                                 onClick={() => {
-                                    if (!webApp?.initData) return;
-                                    partnershipApi.syncLegacyBalance(webApp.initData)
-                                        .then(res => alert(JSON.stringify(res)))
-                                        .catch(err => alert("Sync Error: " + err.message));
+                                    // Only attempt sync if we have initData (Telegram WebApp)
+                                    if (webApp?.initData) {
+                                        return partnershipApi.syncLegacyBalance(webApp.initData)
+                                            .then(res => alert(JSON.stringify(res)))
+                                            .catch(err => alert("Sync Error: " + err.message));
+                                    }
                                 }}
                                 className="px-3 py-1 bg-blue-900/30 hover:bg-blue-900/50 text-blue-400 rounded border border-blue-900/50"
                             >
