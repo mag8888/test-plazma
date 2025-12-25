@@ -48,43 +48,82 @@ export class AdminController {
                 }
             }
 
-            // Sorting logic
-            let sortOptions: any = { createdAt: -1 };
-            if (sortBy && order) {
-                const sortField = sortBy as string;
-                const sortOrder = order === 'asc' ? 1 : -1;
+            // Aggregation Pipeline for Advanced Sorting (Avatars)
+            const pipeline: any[] = [];
 
-                // Allow sorting by these specific fields
-                const allowedFields = ['greenBalance', 'yellowBalance', 'balanceRed', 'rating', 'gamesPlayed', 'referralsCount', 'createdAt'];
-
-                if (allowedFields.includes(sortField)) {
-                    sortOptions = { [sortField]: sortOrder };
-                }
+            // 1. Match Filter
+            if (Object.keys(filter).length > 0) {
+                pipeline.push({ $match: filter });
             }
 
-            const users = await User.find(filter)
-                .populate('referrer', 'username')
-                .sort(sortOptions)
-                .skip(skip)
-                .limit(limit)
-                .lean();
+            // 2. Lookup Avatars to get Counts (Required for sorting by avatarsCount)
+            pipeline.push({
+                $lookup: {
+                    from: 'avatars',
+                    let: { userId: '$_id' },
+                    pipeline: [
+                        { $match: { $expr: { $and: [{ $eq: ['$owner', '$$userId'] }, { $eq: ['$isActive', true] }] } } }
+                    ],
+                    as: 'avatars'
+                }
+            });
 
-            const totalCount = await User.countDocuments(filter);
+            // 3. Add Computed Fields (Avatar Counts & details)
+            pipeline.push({
+                $addFields: {
+                    avatarsCount: { $size: '$avatars' },
+                    avatarCounts: {
+                        basic: { $size: { $filter: { input: '$avatars', as: 'a', cond: { $eq: ['$$a.type', 'BASIC'] } } } },
+                        advanced: { $size: { $filter: { input: '$avatars', as: 'a', cond: { $eq: ['$$a.type', 'ADVANCED'] } } } },
+                        premium: { $size: { $filter: { input: '$avatars', as: 'a', cond: { $eq: ['$$a.type', 'PREMIUM'] } } } },
+                        total: { $size: '$avatars' }
+                    }
+                }
+            });
 
-            // Add avatar counts for each user
-            const usersWithAvatars = await Promise.all(users.map(async (user) => {
-                const avatars = await Avatar.find({ owner: user._id, isActive: true });
-                const avatarCounts = {
-                    basic: avatars.filter(a => a.type === 'BASIC').length,
-                    advanced: avatars.filter(a => a.type === 'ADVANCED').length,
-                    premium: avatars.filter(a => a.type === 'PREMIUM').length,
-                    total: avatars.length
-                };
-                return { ...user, avatarCounts };
-            }));
+            // 4. Lookup Referrer (for display)
+            pipeline.push({
+                $lookup: {
+                    from: 'users',
+                    localField: 'referrer',
+                    foreignField: '_id',
+                    as: 'referrerData'
+                }
+            });
+            pipeline.push({
+                $addFields: {
+                    referrer: { $arrayElemAt: ['$referrerData', 0] } // Flatten to single object or null
+                }
+            });
 
-            res.json({ users: usersWithAvatars, totalCount });
+            // 5. Sort
+            let sortStage: any = { createdAt: -1 };
+            if (sortBy && order) {
+                const sortField = sortBy as string;
+                const dir = order === 'asc' ? 1 : -1;
+                const allowedFields = ['greenBalance', 'yellowBalance', 'balanceRed', 'rating', 'gamesPlayed', 'referralsCount', 'createdAt', 'avatarsCount']; // Added avatarsCount
+
+                if (allowedFields.includes(sortField)) {
+                    sortStage = { [sortField]: dir };
+                }
+            }
+            pipeline.push({ $sort: sortStage });
+
+            // 6. Pagination with Facet
+            pipeline.push({
+                $facet: {
+                    metadata: [{ $count: "total" }],
+                    data: [{ $skip: skip }, { $limit: limit }]
+                }
+            });
+
+            const result = await User.aggregate(pipeline);
+            const totalCount = result[0]?.metadata[0]?.total || 0;
+            const users = result[0]?.data || [];
+
+            res.json({ users, totalCount });
         } catch (error: any) {
+            console.error('getUsers error:', error);
             res.status(500).json({ error: error.message });
         }
     }
