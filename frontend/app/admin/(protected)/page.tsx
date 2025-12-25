@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight, CreditCard } from 'lucide-react';
+import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight, CreditCard, Trash2 } from 'lucide-react';
 import { partnershipApi } from '../../../lib/partnershipApi';
 import CardEditor from './CardEditor';
 
@@ -205,29 +205,47 @@ export default function AdminPage() {
     };
 
     const updateBalance = async () => {
-        if (!selectedUser || !amount || !reason) return alert('Amount and Reason are required');
+        if (!selectedUser || !amount) return alert('Amount is required');
 
-        const res = await fetchWithAuth('/balance/update', {
+        const val = Number(amount);
+        const finalAmount = operation === 'DEDUCT' ? -val : val;
+
+        const res = await fetchWithAuth('/balance', {
             method: 'POST',
             body: JSON.stringify({
                 userId: selectedUser._id,
-                amount: Number(amount),
+                amount: finalAmount,
                 type: balanceType,
-                operation,
                 description: reason,
-                bonusDescription
+                bonusDescription: bonusDescription
             })
         });
 
         if (res.success) {
             alert('Balance updated!');
-            setSelectedUser(null);
+            // Reset fields
             setAmount('');
             setReason('');
-            setBonusDescription(''); // Reset
+            setBonusDescription('');
+            setSelectedUser(null);
             searchUsers(page); // Refresh list
         } else {
             alert(res.error || 'Failed to update balance');
+        }
+    };
+
+    const handleResetRatings = async () => {
+        if (!confirm('⚠️ Are you sure you want to RESET ALL USER RATINGS TO 0? This cannot be undone.')) return;
+
+        const res = await fetchWithAuth('/reset-ratings', {
+            method: 'POST'
+        });
+
+        if (res.success) {
+            alert(res.message);
+            searchUsers(page);
+        } else {
+            alert(res.error || 'Failed to reset ratings');
         }
     };
 
@@ -292,27 +310,30 @@ export default function AdminPage() {
 
             <div className="max-w-6xl mx-auto p-4 py-8 space-y-8">
 
-                {/* GLOBAL STATS BANNER */}
-                {stats && (
-                    <div className="grid grid-cols-4 gap-4">
-                        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                            <div className="text-slate-400 text-xs uppercase font-bold">Total Users</div>
-                            <div className="text-2xl font-bold text-white">{stats.totalUsers}</div>
-                        </div>
-                        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                            <div className="text-slate-400 text-xs uppercase font-bold">Total Avatars</div>
-                            <div className="text-2xl font-bold text-purple-400">{stats.totalAvatars}</div>
-                        </div>
-                        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                            <div className="text-slate-400 text-xs uppercase font-bold">Total Green</div>
-                            <div className="text-2xl font-bold text-green-400">${stats.totalGreen.toLocaleString()}</div>
-                        </div>
-                        <div className="bg-slate-800 p-4 rounded-xl border border-slate-700">
-                            <div className="text-slate-400 text-xs uppercase font-bold">Total Yellow</div>
-                            <div className="text-2xl font-bold text-yellow-400">${stats.totalYellow.toLocaleString()}</div>
-                        </div>
+                {/* Dashboard Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                        <div className="text-slate-400 text-sm font-bold uppercase mb-2">Total Users</div>
+                        <div className="text-3xl font-bold text-white">{stats.totalUsers}</div>
                     </div>
-                )}
+                    <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                        <div className="text-slate-400 text-sm font-bold uppercase mb-2">Total Avatars</div>
+                        <div className="text-3xl font-bold text-blue-400">{stats.totalAvatars}</div>
+                    </div>
+                    <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                        <div className="text-slate-400 text-sm font-bold uppercase mb-2">Green Circulation</div>
+                        <div className="text-3xl font-bold text-green-400">{stats.totalGreen}</div>
+                    </div>
+                    <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 flex flex-col justify-between">
+                        <div className="text-slate-400 text-sm font-bold uppercase mb-2">Admin Tools</div>
+                        <button
+                            onClick={handleResetRatings}
+                            className="bg-red-900/30 text-red-500 border border-red-900/50 hover:bg-red-900/50 w-full py-2 rounded-lg font-bold transition flex items-center justify-center gap-2"
+                        >
+                            <Trash2 size={16} /> Reset All Ratings
+                        </button>
+                    </div>
+                </div>
 
                 {/* Rebuild Referrals Button (in STATS tab) */}
                 {activeTab === 'STATS' && (

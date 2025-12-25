@@ -444,4 +444,29 @@ export class AdminController {
             res.status(500).json({ error: error.message });
         }
     }
+
+    // Reset all ratings to 0
+    static async resetRatings(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const secret = req.headers['x-admin-secret'] as string;
+            const adminName = secret.split(':')[0] || 'Unknown Admin';
+
+            const result = await User.updateMany({}, { rating: 0 });
+
+            // Log action
+            await AdminLog.create({
+                adminName,
+                action: AdminActionType.BALANCE_CHANGE,
+                details: `Reset all user ratings to 0. Modified count: ${result.modifiedCount}`
+            });
+
+            res.json({
+                success: true,
+                message: `Reset ratings for ${result.modifiedCount} users to 0.`
+            });
+        } catch (error: any) {
+            console.error('resetRatings error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
