@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ChevronRight } from 'lucide-react';
+import { X, ExternalLink, Info } from 'lucide-react';
 
 interface Avatar {
     _id: string;
-    owner: any;
+    owner: { username: string };
     type: string;
     level: number;
     partners: string[];
     parent?: string;
-    isClosed?: boolean; // Level 5 closure flag
+    isClosed?: boolean;
 }
 
 interface MatrixViewProps {
@@ -23,7 +23,6 @@ interface MatrixViewProps {
 export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixViewProps) {
     const [matrixData, setMatrixData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [selectedAvatar, setSelectedAvatar] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen && avatarId) {
@@ -34,7 +33,6 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
     const loadMatrix = async () => {
         setLoading(true);
         try {
-            // Load avatar tree from backend
             const res = await fetch(`/api/partnership/avatars/matrix/${avatarId}`);
             const data = await res.json();
             setMatrixData(data);
@@ -45,47 +43,59 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
         }
     };
 
-    const renderLevel = (avatars: Avatar[], level: number) => {
-        if (!avatars || avatars.length === 0) return null;
+    const handleAvatarClick = (username: string) => {
+        if (username) {
+            window.open(`https://t.me/${username}`, '_blank');
+        }
+    };
 
-        const maxPerLevel = Math.pow(3, level - 1);
-        const filled = avatars.length;
-        const empty = maxPerLevel - filled;
+    const renderTier = (avatars: Avatar[], tierLevel: number) => {
+        // Tier 1 (Children) = 3 slots -> Completing this makes Root Level 1
+        // Tier 2 (Grandchildren) = 9 slots -> Completing this makes Root Level 2
+        // Max capacity = 3^tierLevel
+        const maxCapacity = Math.pow(3, tierLevel);
+        const filled = avatars ? avatars.length : 0;
+        const empty = maxCapacity - filled;
+
+        // Current Level Logic:
+        // Tier 1 corresponds to "Level 1 Requirement".
+        // Tier 2 corresponds to "Level 2 Requirement".
 
         return (
-            <div className="flex flex-col items-center mb-6">
-                <div className="text-xs text-slate-500 mb-2">Уровень {level} ({filled}/{maxPerLevel})</div>
-                <div className="flex flex-wrap justify-center gap-2">
-                    {avatars.map(avatar => (
+            <div className="mb-8 border-b border-slate-700/50 pb-6 last:border-0">
+                <div className="flex justify-between items-end mb-3">
+                    <div>
+                        <div className="text-sm font-bold text-slate-200">
+                            Кольцо {tierLevel} <span className="text-slate-500 font-normal">({filled}/{maxCapacity})</span>
+                        </div>
+                        <div className="text-[10px] text-slate-400">
+                            Заполните этот уровень, чтобы получить <span className="text-yellow-400 font-bold">Уровень {tierLevel}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                    {avatars && avatars.map(avatar => (
                         <div
                             key={avatar._id}
-                            onClick={() => setSelectedAvatar(avatar._id)}
-                            className={`w-12 h-12 rounded-lg flex items-center justify-center cursor-pointer hover:scale-110 transition-transform relative group ${avatar.isClosed ? 'bg-gradient-to-br from-green-600 to-emerald-600' : 'bg-gradient-to-br from-blue-600 to-indigo-600'
-                                }`}
+                            onClick={() => handleAvatarClick(avatar.owner?.username)}
+                            className="w-10 h-10 rounded-lg bg-indigo-600 hover:bg-indigo-500 cursor-pointer flex items-center justify-center relative group transition-transform hover:scale-105"
+                            title={`Click to open @${avatar.owner?.username}`}
                         >
-                            <div className="text-xs text-white font-bold">{avatar.level}</div>
-                            {avatar.partners && avatar.partners.length > 0 && (
-                                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full text-[8px] flex items-center justify-center text-white font-bold">
-                                    {avatar.partners.length}
-                                </div>
-                            )}
-                            {avatar.isClosed && (
-                                <div className="absolute -top-1 -right-1 text-xs">✓</div>
-                            )}
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full mb-2 hidden group-hover:block bg-slate-900 text-white text-xs p-2 rounded shadow-lg whitespace-nowrap z-10">
-                                <div>{avatar.owner?.username || 'Unknown'}</div>
-                                <div className="text-slate-400">Уровень {avatar.level} • {avatar.partners?.length || 0}/3</div>
+                            <span className="text-xs font-bold text-white">{avatar.level}</span>
+                            {/* Username Tooltip */}
+                            <div className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded border border-slate-700 pointer-events-none whitespace-nowrap z-10 transition-opacity">
+                                @{avatar.owner?.username || 'unknown'}
                             </div>
                         </div>
                     ))}
-                    {/* Empty slots */}
+                    {/* Empty Slots */}
                     {Array.from({ length: empty }).map((_, idx) => (
                         <div
                             key={`empty-${idx}`}
-                            className="w-12 h-12 bg-slate-800 border border-slate-700 border-dashed rounded-lg flex items-center justify-center opacity-30"
+                            className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 border-dashed flex items-center justify-center"
                         >
-                            <div className="text-xs text-slate-600">?</div>
+                            <div className="w-2 h-2 rounded-full bg-slate-700"></div>
                         </div>
                     ))}
                 </div>
@@ -95,62 +105,70 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
 
     if (!isOpen) return null;
 
+    const rootLevel = matrixData?.root?.level || 0;
+
     return (
-        <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
-            <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
-                <div className="sticky top-0 bg-slate-900 border-b border-slate-700 p-4 flex items-center justify-between z-10">
+        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+            <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl">
+                {/* Header */}
+                <div className="p-5 border-b border-slate-700 flex items-center justify-between bg-slate-800/50 rounded-t-2xl">
                     <div>
-                        <h2 className="text-xl font-bold text-white">Матрица аватара</h2>
-                        <div className="text-sm text-slate-400">{avatarType}</div>
+                        <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                            Матрица аватара
+                            <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/30">
+                                {avatarType}
+                            </span>
+                        </h2>
                     </div>
-                    <button
-                        onClick={onClose}
-                        className="w-8 h-8 bg-slate-800 hover:bg-red-600 rounded-lg flex items-center justify-center transition-colors"
-                    >
-                        <X className="w-5 h-5 text-white" />
+                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                        <X className="w-5 h-5 text-slate-400" />
                     </button>
                 </div>
 
-                <div className="p-6">
+                {/* Content */}
+                <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
                     {loading ? (
-                        <div className="text-center py-12 text-slate-400">Загрузка...</div>
+                        <div className="flex flex-col items-center justify-center py-12 space-y-4">
+                            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="text-slate-500 text-sm">Загружаем структуру...</div>
+                        </div>
                     ) : matrixData ? (
-                        <div>
-                            {/* Level 1: Root */}
-                            <div className="flex flex-col items-center mb-6">
-                                <div className="text-xs text-slate-500 mb-2">Ваш аватар</div>
-                                <div className="w-16 h-16 bg-gradient-to-br from-yellow-600 to-amber-600 rounded-xl flex items-center justify-center shadow-lg">
-                                    <div className="text-white font-bold">{matrixData.root?.level || 1}</div>
+                        <div className="space-y-8">
+
+                            {/* ROOT AVATAR STATUS */}
+                            <div className="flex items-center gap-6 bg-slate-800 p-6 rounded-xl border border-slate-700">
+                                <div className="w-20 h-20 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-2xl flex flex-col items-center justify-center shadow-lg transform rotate-3 border-2 border-yellow-400/20">
+                                    <div className="text-3xl font-black text-white">{rootLevel}</div>
+                                    <div className="text-[9px] uppercase font-bold text-yellow-100 tracking-wider mt-1">Уровень</div>
+                                </div>
+                                <div className="space-y-2">
+                                    <h3 className="text-lg font-bold text-white">Ваш текущий статус</h3>
+                                    <div className="text-sm text-slate-300 flex items-center gap-2">
+                                        <Info size={14} className="text-blue-400" />
+                                        {rootLevel === 0
+                                            ? "Заполните 1-е кольцо (3 партнера), чтобы получить Уровень 1."
+                                            : `Поздравляем! Вы достигли Уровня ${rootLevel}.`
+                                        }
+                                    </div>
+                                    <div className="text-xs text-slate-500">
+                                        Аватар без 3-х партнеров имеет 0 уровень.
+                                    </div>
                                 </div>
                             </div>
 
-                            {matrixData.level1 && renderLevel(matrixData.level1, 1)}
-                            {matrixData.level2 && renderLevel(matrixData.level2, 2)}
-                            {matrixData.level3 && renderLevel(matrixData.level3, 3)}
-                            {matrixData.level4 && renderLevel(matrixData.level4, 4)}
-                            {matrixData.level5 && renderLevel(matrixData.level5, 5)}
-
-                            {/* Stats */}
-                            <div className="mt-6 bg-slate-800/50 rounded-lg p-4 border border-slate-700">
-                                <div className="text-sm font-bold text-white mb-2">Статистика</div>
-                                <div className="grid grid-cols-3 gap-4 text-xs">
-                                    <div>
-                                        <div className="text-slate-400">Всего партнеров</div>
-                                        <div className="text-white font-bold">{matrixData.totalPartners || 0}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-slate-400">Уровень</div>
-                                        <div className="text-white font-bold">{matrixData.root?.level || 1}</div>
-                                    </div>
-                                    <div>
-                                        <div className="text-slate-400">Прямых партнеров</div>
-                                        <div className="text-white font-bold">{matrixData.root?.partners?.length || 0}</div>
-                                    </div>
-                                </div>
+                            {/* GRID TIERS */}
+                            <div>
+                                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Структура развития</h3>
+                                {renderTier(matrixData.level1, 1)} {/* 3 slots */}
+                                {renderTier(matrixData.level2, 2)} {/* 9 slots */}
+                                {renderTier(matrixData.level3, 3)} {/* 27 slots */}
+                                {renderTier(matrixData.level4, 4)} {/* 81 slots */}
+                                {renderTier(matrixData.level5, 5)} {/* 243 slots */}
                             </div>
+
                         </div>
                     ) : (
-                        <div className="text-center py-12 text-slate-400">Нет данных</div>
+                        <div className="text-center py-12 text-slate-500">Нет данных</div>
                     )}
                 </div>
             </div>
