@@ -70,11 +70,7 @@ app.use(express.json());
 // Proxy to Partnership Backend (Internal)
 // Frontend calls /api/partnership/user -> We forward to http://localhost:4000/api/user
 app.use('/api/partnership', async (req, res) => {
-    const PARTNERSHIP_URL = process.env.PARTNERSHIP_API_URL;
-    if (!PARTNERSHIP_URL) {
-        console.error('FATAL: PARTNERSHIP_API_URL not set');
-        return res.status(500).json({ error: 'Configuration Error' });
-    }
+    const PARTNERSHIP_URL = process.env.PARTNERSHIP_API_URL || 'http://127.0.0.1:4000/api';
     const url = `${PARTNERSHIP_URL}${req.url}`;
 
     // console.log(`Proxying ${req.method} ${req.originalUrl} -> ${url}`);
@@ -114,87 +110,13 @@ app.use('/api/partnership', async (req, res) => {
 });
 
 // Explicit Admin Route (Force Serve)
-app.get('/admin', (req, res) => {
-    // Check for admin.html or fall back to index.html
-    const adminFile = path.join(__dirname, '../../frontend/out/admin.html');
-    const indexFile = path.join(__dirname, '../../frontend/out/index.html');
+// ... Keep existing ...
 
-    if (fs.existsSync(adminFile)) {
-        res.sendFile(adminFile);
-    } else {
-        res.sendFile(indexFile);
-    }
-});
-
-app.use('/api/auth', AuthController);
-// Card Management API (Admin Only)
-import cardRoutes from './game/card.routes';
-app.use('/api/cards', cardRoutes);
-
-// --- RESTORE & BACKUP API START ---
-app.get('/api/admin/backups', async (req, res) => {
-    // Basic Auth Check
-    const secret = req.headers['x-admin-secret'];
-    const validSecrets = (process.env.ADMIN_SECRET || 'admin').split(',').map(s => s.trim());
-    if (!validSecrets.includes(secret as string)) return res.status(403).json({ error: 'Unauthorized' });
-
-    try {
-        const { CloudinaryService } = await import('./services/cloudinary.service');
-        const cloudinaryService = new CloudinaryService();
-        const files = await cloudinaryService.listFiles('moneo_backups');
-        res.json({ backups: files });
-    } catch (e: any) {
-        console.error("Backup List Error:", e);
-        res.status(500).json({ error: e.message });
-    }
-});
-
-app.post('/api/admin/restore', async (req, res) => {
-    // Basic Auth Check
-    const secret = req.headers['x-admin-secret'];
-    const validSecrets = (process.env.ADMIN_SECRET || 'admin').split(',').map(s => s.trim());
-    if (!validSecrets.includes(secret as string)) return res.status(403).json({ error: 'Unauthorized' });
-
-    const { url } = req.body;
-    if (!url) return res.status(400).json({ error: 'Missing backup URL' });
-
-    console.log(`[RESTORE] Starting restore from ${url}...`);
-    try {
-        // const fetch = (await import('node-fetch')).default || global.fetch; // REMOVED
-        const response = await fetch(url);
-        if (!response.ok) throw new Error(`Download failed: ${response.status}`);
-
-        const data = await response.json();
-        if (!data.users || !Array.isArray(data.users)) {
-            return res.status(400).json({ error: 'Invalid backup format: missing users array' });
-        }
-
-        const { UserModel } = await import('./models/user.model');
-
-        let restoredCount = 0;
-        for (const u of data.users) {
-            if (u.telegram_id) {
-                const filter = { telegram_id: u.telegram_id };
-                const update = { ...u };
-                delete update._id;
-                await UserModel.findOneAndUpdate(filter, { $set: update }, { upsert: true, new: true });
-                restoredCount++;
-            }
-        }
-
-        console.log(`[RESTORE] Restored ${restoredCount} users.`);
-        res.json({ success: true, restored: restoredCount, message: 'Restore complete' });
-
-    } catch (e: any) {
-        console.error("Restore Error:", e);
-        res.status(500).json({ error: e.message });
-    }
-});
-// --- RESTORE & BACKUP API END ---
-
-// (Variable declarations moved to top)
+// ...
 
 // Static File Serving
+// Serve Next.js Static Export
+app.use(express.static(path.join(__dirname, '../../frontend/out'), { extensions: ['html'] }));
 
 
 
