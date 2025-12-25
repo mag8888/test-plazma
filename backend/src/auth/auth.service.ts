@@ -134,6 +134,23 @@ export class AuthService {
                     if (changed) await user.save();
                 }
 
+                // SYNC BALANCES FROM PARTNERSHIP SERVICE
+                try {
+                    const { PartnershipClient } = await import('../services/partnership.client');
+                    const balances = await PartnershipClient.getBalances(user._id);
+
+                    user.greenBalance = balances.green;
+                    user.yellowBalance = balances.yellow;
+                    user.balanceRed = balances.red;
+                    user.referralBalance = balances.referral; // Legacy check
+
+                    await user.save();
+                    console.log(`[Auth] Synced balances for ${user.username}: Red=${balances.red}, Green=${balances.green}`);
+                } catch (syncError: any) {
+                    console.error(`[Auth] Balance sync failed for ${user.username}:`, syncError.message);
+                    // Don't fail login, just log error
+                }
+
                 return user;
             }
         }
