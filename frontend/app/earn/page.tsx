@@ -58,7 +58,7 @@ export default function EarnPage() {
                 rawTelegramId,
                 partnershipId,
                 username: user.username,
-                hasInitData: !!webApp.initData
+                hasInitData: !!webApp?.initData
             });
 
             // 1. REORDER: Login First to ensure user exists in Partner DB
@@ -85,7 +85,7 @@ export default function EarnPage() {
                                     });
                                 } else {
                                     // Just check legacy balance presence for UI
-                                    partnershipApi.getLegacyBalance(webApp.initData).then(res => {
+                                    partnershipApi.getLegacyBalance(webApp!.initData).then(res => {
                                         if (res.legacyBalance > 0) {
                                             setPartnershipUser((prev: any) => ({ ...prev, pendingBalance: res.legacyBalance }));
                                         }
