@@ -811,8 +811,6 @@ return (
                                     <button
                                         onClick={() => {
                                             setAdminAction({ type: 'SKIP', player: selectedPlayerForMenu });
-                                            // Don't close menu yet, or maybe close it? 
-                                            // Better to close menu so modal is focused.
                                             setSelectedPlayerForMenu(null);
                                         }}
                                         className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors"
@@ -826,7 +824,7 @@ return (
                                         }}
                                         className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600/50 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors"
                                     >
-                                        👢 Кикнуть
+                                        👢 Kick
                                     </button>
                                     {isHost && (
                                         <button
