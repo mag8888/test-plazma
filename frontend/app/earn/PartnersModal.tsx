@@ -70,7 +70,18 @@ export const PartnersModal = ({ isOpen, onClose, partners, isLoading }: Partners
                                             {p.first_name || p.username || 'Без имени'}
                                         </div>
                                         <div className="text-[10px] text-slate-500 flex items-center gap-1.5">
-                                            <span className="opacity-80">@{p.username || 'no_username'}</span>
+                                            {p.username ? (
+                                                <a
+                                                    href={`https://t.me/${p.username}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="opacity-80 hover:opacity-100 text-blue-400 hover:text-blue-300 transition-colors flex items-center gap-1"
+                                                >
+                                                    @{p.username}
+                                                </a>
+                                            ) : (
+                                                <span className="opacity-80">no_username</span>
+                                            )}
                                             {p.level > 0 && <span className="bg-slate-700 px-1 rounded text-slate-300">Lvl {p.level}</span>}
                                         </div>
                                     </div>
