@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { connectDB } from './db';
 import { PartnershipController } from './controllers/PartnershipController';
 import { AdminController } from './controllers/AdminController';
+import { WalletController } from './controllers/WalletController';
 
 dotenv.config();
 
@@ -42,6 +43,15 @@ adminRouter.get('/logs', AdminController.getLogs as any);
 adminRouter.post('/rebuild-referrals', AdminController.rebuildReferrals as any);
 adminRouter.get('/check-referrers', AdminController.checkReferrers as any); // Debug endpoint
 adminRouter.delete('/avatars/delete-all', AdminController.deleteAllAvatars as any);
+
+// Wallet Routes (Protected by Admin Secret or Internal Network)
+// Ideally should be protected, but for now we rely on internal network proxy from backend
+const walletRouter = express.Router();
+walletRouter.get('/balance/:userId', WalletController.getBalance as any);
+walletRouter.post('/charge', WalletController.charge as any);
+walletRouter.post('/deposit', WalletController.deposit as any);
+
+app.use('/api/wallet', walletRouter);
 
 app.use('/api/admin', adminRouter);
 

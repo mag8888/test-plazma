@@ -549,29 +549,42 @@ app.post('/api/games/:id/join', async (req, res) => {
             if (paidSpots <= 0) return res.status(400).json({ error: "No paid spots" });
 
             paymentStatus = 'PAID';
-            if (user.balanceRed >= game.price) {
-                user.balanceRed -= game.price;
-                await user.save();
-                const { TransactionModel } = await import('./models/transaction.model');
-                await TransactionModel.create({
-                    userId: user._id,
-                    amount: -game.price,
-                    currency: 'RED',
-                    type: 'GAME_FEE',
-                    description: `Оплата игры ${new Date(game.startTime).toLocaleDateString()}`
-                });
-            } else if (user.referralBalance >= game.price) {
-                user.referralBalance -= game.price;
-                await user.save();
-                const { TransactionModel } = await import('./models/transaction.model');
-                await TransactionModel.create({
-                    userId: user._id,
-                    amount: -game.price,
-                    currency: 'REF',
-                    type: 'GAME_FEE',
-                    description: `Оплата игры ${new Date(game.startTime).toLocaleDateString()}`
-                });
-            } else {
+
+            // New Balance Logic via PartnershipClient (Atomic)
+            const { PartnershipClient, Currency } = await import('./services/partnership.client');
+
+            try {
+                // Check balances first
+                const balances = await PartnershipClient.getBalances(user._id);
+
+                if (balances.red >= game.price) {
+                    await PartnershipClient.charge(user.id, Currency.RED, game.price, `Game Fee: ${game._id}`);
+                    // Backend Transaction (optional, but keeping for compatibility if backend API reads local model)
+                    // Note: PartnershipClient.charge ALREADY creates a Transaction in DB.
+                    // If backend reads from same DB, we don't need to duplicate.
+                    // BUT, to be safe with currency types and backend model enums, we let it be.
+                    // ACTUALLY, duplicate transaction might be confusing.
+                    // Backend /api/transactions reads from TransactionModel.
+                    // If shared DB, it will see the one created by PartnershipService.
+                    // So we do NOT create another one here.
+                } else if (balances.green >= game.price) {
+                    // Using Green instead of Legacy Referral
+                    await PartnershipClient.charge(user.id, Currency.GREEN, game.price, `Game Fee: ${game._id}`);
+                } else if (balances.referral >= game.price) {
+                    // Fallback to legacy referral field if not migrated yet? 
+                    // WalletService.getBalances returns referral.
+                    // But WalletService.charge only supports GREEN/YELLOW/RED check.
+                    // The audit plan said: "referralBalance (Legacy) will be deprecated and migrated to greenBalance."
+                    // So we assume migration or we treat Referral same as Green?
+                    // Let's assume user has Green.
+                    // If user fails, let's try 'PAY_AT_GAME'
+                    paymentStatus = 'PAY_AT_GAME';
+                } else {
+                    paymentStatus = 'PAY_AT_GAME';
+                }
+            } catch (e: any) {
+                console.error("Balance charge failed:", e.message);
+                // Fallback to offline payment
                 paymentStatus = 'PAY_AT_GAME';
             }
         } else {

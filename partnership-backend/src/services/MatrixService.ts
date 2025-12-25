@@ -3,6 +3,7 @@ import { User } from '../models/User';
 import { AvatarPurchase } from '../models/AvatarPurchase';
 import { Transaction, TransactionType } from '../models/Transaction';
 import { LevelTransition } from '../models/LevelTransition';
+import { WalletService, Currency } from './WalletService';
 import mongoose from 'mongoose';
 
 // Avatar costs and subscription periods
@@ -133,16 +134,14 @@ export class MatrixService {
         if (toLevel === 5) {
             const owner = await User.findById(avatar.owner);
             if (owner) {
-                owner.greenBalance = (owner.greenBalance || 0) + totalFromPartners;
-                await owner.save();
-
-                // Log transaction
-                await Transaction.create({
-                    user: owner._id,
-                    amount: totalFromPartners,
-                    type: TransactionType.AVATAR_BONUS,
-                    description: `Level 5 closure: ${totalFromPartners}$ from avatar matrix completion`
-                });
+                // Use WalletService for atomic/transactional deposit
+                await WalletService.deposit(
+                    owner._id,
+                    Currency.GREEN,
+                    totalFromPartners,
+                    `Level 5 closure: ${totalFromPartners}$ from avatar matrix completion`,
+                    TransactionType.AVATAR_BONUS
+                );
 
                 // Log level transition
                 await LevelTransition.create({
@@ -173,15 +172,13 @@ export class MatrixService {
         if (owner.referrer) {
             const referrer = await User.findById(owner.referrer);
             if (referrer && await this.hasActiveSubscription(referrer._id)) {
-                referrer.greenBalance = (referrer.greenBalance || 0) + referrerBonus;
-                await referrer.save();
-
-                await Transaction.create({
-                    user: referrer._id,
-                    amount: referrerBonus,
-                    type: TransactionType.AVATAR_BONUS,
-                    description: `Referral bonus: level ${toLevel} progression of ${owner.username}'s avatar`
-                });
+                await WalletService.deposit(
+                    referrer._id,
+                    Currency.GREEN,
+                    referrerBonus,
+                    `Referral bonus: level ${toLevel} progression of ${owner.username}'s avatar`,
+                    TransactionType.AVATAR_BONUS
+                );
             }
         }
 
@@ -233,16 +230,13 @@ export class MatrixService {
                 const hasSubscription = await this.hasActiveSubscription(referrer._id);
 
                 if (hasSubscription) {
-                    referrer.greenBalance = (referrer.greenBalance || 0) + halfCost;
-                    await referrer.save();
-
-                    // Log transaction
-                    await Transaction.create({
-                        user: referrer._id,
-                        amount: halfCost,
-                        type: TransactionType.AVATAR_BONUS,
-                        description: `Green bonus: ${type} avatar purchase by ${buyerUser.username}`
-                    });
+                    await WalletService.deposit(
+                        referrer._id,
+                        Currency.GREEN,
+                        halfCost,
+                        `Green bonus: ${type} avatar purchase by ${buyerUser.username}`,
+                        TransactionType.AVATAR_BONUS
+                    );
 
                     // Log in purchase record
                     await AvatarPurchase.create({
@@ -262,16 +256,13 @@ export class MatrixService {
         if (parentAvatar) {
             const parentOwner = await User.findById(parentAvatar.owner);
             if (parentOwner) {
-                parentOwner.yellowBalance = (parentOwner.yellowBalance || 0) + halfCost;
-                await parentOwner.save();
-
-                // Log transaction
-                await Transaction.create({
-                    user: parentOwner._id,
-                    amount: halfCost,
-                    type: TransactionType.AVATAR_BONUS,
-                    description: `Yellow bonus: ${type} avatar placed under yours`
-                });
+                await WalletService.deposit(
+                    parentOwner._id,
+                    Currency.YELLOW,
+                    halfCost,
+                    `Yellow bonus: ${type} avatar placed under yours`,
+                    TransactionType.AVATAR_BONUS
+                );
 
                 // Update purchase record
                 await AvatarPurchase.findOneAndUpdate(
@@ -308,14 +299,12 @@ export class MatrixService {
             }
         }
 
-        // Check balance
-        if ((user.greenBalance || 0) < config.cost) {
-            return { success: false, error: 'Insufficient green balance' };
+        // Charge balance
+        try {
+            await WalletService.charge(userId, Currency.GREEN, config.cost, `Purchase ${type} avatar`);
+        } catch (e: any) {
+            return { success: false, error: e.message };
         }
-
-        // Deduct cost
-        user.greenBalance = (user.greenBalance || 0) - config.cost;
-        await user.save();
 
         // Calculate subscription expiry
         let subscriptionExpires: Date | null = null;

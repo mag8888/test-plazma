@@ -30,8 +30,8 @@ const UserSchema: Schema = new Schema({
     last_name: { type: String },
     photo_url: { type: String },
     telegram_id: { type: Number, unique: true, sparse: true },
-    referralBalance: { type: Number, default: 0 }, // GREEN Balance (Real Money)
-    balanceRed: { type: Number, default: 0 },      // RED Balance (Game Only)
+    referralBalance: { type: Number, default: 0 }, // DEPRECATED - Migrated to Green Balance in Partnership Service
+    balanceRed: { type: Number, default: 0 },      // DEPRECATED - Managed by Partnership Service (Wallet)
     // Partnership Balances (Shared with Partnership Backend)
     greenBalance: { type: Number, default: 0 },
     yellowBalance: { type: Number, default: 0 },
