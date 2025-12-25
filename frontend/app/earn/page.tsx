@@ -49,11 +49,9 @@ export default function EarnPage() {
             })
             .catch(err => console.error("Stats fetch error", err));
 
-        if (user && webApp?.initData) {
+        if (user) {
             // Determine the ID to use for Partnership Backend
-            // CRITICAL: Use webApp.initDataUnsafe.user.id (Raw Telegram ID) if available.
-            // Backend User object has 'id' as MongoID, which causes mismatch.
-            const rawTelegramId = webApp.initDataUnsafe?.user?.id;
+            const rawTelegramId = webApp?.initDataUnsafe?.user?.id;
             const partnershipId = rawTelegramId ? rawTelegramId.toString() : (user.telegram_id || user.id).toString();
 
             console.log('💰 [Earn Page] Starting partnership flow...', {
