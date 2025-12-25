@@ -312,7 +312,7 @@ export default function EarnPage() {
                     className="bg-slate-800 p-4 rounded-xl border border-slate-700 cursor-pointer hover:bg-slate-750 active:scale-95 transition-all group"
                 >
                     <Users className="text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
-                    <div className="text-xl font-bold">{partnershipUser?.referralsCount || 0}</div>
+                    <div className="text-xl font-bold">{user?.referralsCount || 0}</div>
                     <div className="text-xs text-slate-400">Друзей</div>
                 </div>
 
