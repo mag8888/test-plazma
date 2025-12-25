@@ -89,34 +89,46 @@ export default function EarnPage() {
                     setPartnershipUser(dbUser);
                     console.log("Partnership Login Success. Fetching stats and attempting sync...");
 
-                    // Always fetch stats first to get balances
+                    // Always fetch stats to get balances
                     return partnershipApi.getStats(dbUser._id).then(stats => {
                         console.log('📊 [Earn Page] Stats fetched:', stats);
-                        setPartnershipUser({ ...dbUser, ...stats });
 
-                        // Only attempt sync if we have initData (Telegram WebApp)
-                        if (webApp?.initData) {
-                            return partnershipApi.syncLegacyBalance(webApp.initData)
-                                .then((syncRes) => {
-                                    console.log("Sync Result:", syncRes);
-                                    if (syncRes.success && syncRes.synced > 0) {
-                                        // Refresh stats again if sync moved money
-                                        return partnershipApi.getStats(dbUser._id).then(updated => {
-                                            console.log('📊 [Earn Page] Stats re-fetched after sync:', updated);
-                                            setPartnershipUser((prev: any) => ({ ...prev, ...updated }));
-                                        });
-                                    } else {
-                                        // Just check legacy balance presence for UI
-                                        partnershipApi.getLegacyBalance(webApp.initData).then(res => {
-                                            if (res.legacyBalance > 0) {
-                                                setPartnershipUser((prev: any) => ({ ...prev, pendingBalance: res.legacyBalance }));
+                        // Also fetch avatars to determine tariff
+                        return fetch(`${process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'https://moneo.up.railway.app/api/partnership'}/avatars/my-avatars/${dbUser._id}`)
+                            .then(res => res.json())
+                            .then(avatars => {
+                                console.log('🎭 [Earn Page] Avatars fetched:', avatars);
+                                setPartnershipUser({ ...dbUser, ...stats, avatars });
+
+                                // Only attempt sync if we have initData (Telegram WebApp)
+                                if (webApp?.initData) {
+                                    return partnershipApi.syncLegacyBalance(webApp.initData)
+                                        .then((syncRes) => {
+                                            console.log("Sync Result:", syncRes);
+                                            if (syncRes.success && syncRes.synced > 0) {
+                                                // Refresh stats again if sync moved money
+                                                return partnershipApi.getStats(dbUser._id).then(updated => {
+                                                    console.log('📊 [Earn Page] Stats re-fetched after sync:', updated);
+                                                    setPartnershipUser((prev: any) => ({ ...prev, ...updated }));
+                                                });
+                                            } else {
+                                                // Just check legacy balance presence for UI
+                                                partnershipApi.getLegacyBalance(webApp.initData).then(res => {
+                                                    if (res.legacyBalance > 0) {
+                                                        setPartnershipUser((prev: any) => ({ ...prev, pendingBalance: res.legacyBalance }));
+                                                    }
+                                                });
                                             }
                                         });
-                                    }
-                                });
-                        } else {
-                            console.log('ℹ️ [Earn Page] Skipping legacy sync - no initData (browser mode)');
-                        }
+                                } else {
+                                    console.log('ℹ️ [Earn Page] Skipping legacy sync - no initData (browser mode)');
+                                }
+                            })
+                            .catch(err => {
+                                console.error('❌ [Earn Page] Failed to fetch avatars:', err);
+                                // Still set user data even if avatars fail
+                                setPartnershipUser({ ...dbUser, ...stats, avatars: [] });
+                            });
                     });
                 })
                 .catch(err => {
