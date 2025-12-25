@@ -221,7 +221,13 @@ export default function AdminPage() {
         const val = Number(amount);
         const finalAmount = operation === 'DEDUCT' ? -val : val;
 
-        console.log('Sending balance update:', { selectedUser, amount, finalAmount, balanceType });
+        console.log('Sending balance update:', {
+            userId: selectedUser?._id, // Log ID explicitly
+            amount,
+            finalAmount,
+            balanceType,
+            fullUser: selectedUser
+        });
 
         const res = await fetchWithAuth('/balance', {
             method: 'POST',
