@@ -168,8 +168,13 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
     const levelMultiplier = Math.pow(2, rootLevel); // Doubles each level
     const unitBonus = cost * 0.5 * levelMultiplier;
 
-    const actualBonus = unitBonus * activeSlots;
-    const potentialBonus = unitBonus * 3;
+    // Yellow = Accumulated for level upgrade (50% of each filled slot)
+    // Green = Already credited to balance (50% of each filled slot)
+    const yellowActual = unitBonus * activeSlots;  // What has accumulated
+    const yellowPotential = unitBonus * 3;  // What could accumulate (3 slots max)
+
+    const greenActual = unitBonus * activeSlots;  // What has been paid out
+    const greenPotential = unitBonus * 3;  // What could be paid out
 
     return (
         <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">
@@ -234,12 +239,12 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
                                 <div className="text-center flex flex-col items-center">
                                     {/* Actual */}
                                     <div className="text-3xl font-black text-yellow-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)] mb-1">
-                                        {actualBonus}
+                                        {yellowActual}
                                     </div>
                                     <div className="text-[10px] text-yellow-400 uppercase tracking-widest font-bold mb-2">YELLOW</div>
                                     {/* Potential */}
                                     <div className="text-xl font-bold text-yellow-500/30 border-t border-yellow-500/20 pt-1 border-dashed">
-                                        {potentialBonus}
+                                        {yellowPotential}
                                     </div>
                                 </div>
 
@@ -248,12 +253,12 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
                                 <div className="text-center flex flex-col items-center">
                                     {/* Actual */}
                                     <div className="text-3xl font-black text-green-500 drop-shadow-[0_0_10px_rgba(34,197,94,0.5)] mb-1">
-                                        {actualBonus}
+                                        {greenActual}
                                     </div>
                                     <div className="text-[10px] text-green-400 uppercase tracking-widest font-bold mb-2">GREEN</div>
                                     {/* Potential */}
                                     <div className="text-xl font-bold text-green-500/30 border-t border-green-500/20 pt-1 border-dashed">
-                                        {potentialBonus}
+                                        {greenPotential}
                                     </div>
                                 </div>
                             </div>
