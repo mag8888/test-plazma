@@ -139,7 +139,6 @@ function GameContent() {
                 if (me.dream && me.dream !== dreamRef.current) {
                     // Only sync dream if we haven't selected one? Or always? 
                     // Always sync for consistency.
-                    setToken(me.token); // Typo protection: mistakenly copied? No, this block is new.
                     setDream(me.dream);
                 }
             }
