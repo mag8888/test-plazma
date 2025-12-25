@@ -27,7 +27,7 @@ export class AdminController {
     // Search Users
     static async getUsers(req: ExpressRequest, res: ExpressResponse) {
         try {
-            const { query, page } = req.query;
+            const { query, page, sortBy, order } = req.query;
             const pageNum = Number(page) || 1;
             const limit = 50;
             const skip = (pageNum - 1) * limit;
@@ -48,9 +48,23 @@ export class AdminController {
                 }
             }
 
+            // Sorting logic
+            let sortOptions: any = { createdAt: -1 };
+            if (sortBy && order) {
+                const sortField = sortBy as string;
+                const sortOrder = order === 'asc' ? 1 : -1;
+
+                // Allow sorting by these specific fields
+                const allowedFields = ['greenBalance', 'yellowBalance', 'balanceRed', 'rating', 'gamesPlayed', 'referralsCount', 'createdAt'];
+
+                if (allowedFields.includes(sortField)) {
+                    sortOptions = { [sortField]: sortOrder };
+                }
+            }
+
             const users = await User.find(filter)
                 .populate('referrer', 'username')
-                .sort({ createdAt: -1 })
+                .sort(sortOptions)
                 .skip(skip)
                 .limit(limit)
                 .lean();
