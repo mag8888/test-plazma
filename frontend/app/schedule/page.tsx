@@ -52,6 +52,7 @@ export default function SchedulePage() {
                             max: g.maxPlayers,
                             price: g.price,
                             hostId: g.hostId?._id || g.hostId,
+                            hostTelegramId: g.hostId?.telegram_id,
                             rawIso: g.startTime,
                             isJoined: g.participants?.some((p: any) => (p.userId?._id || p.userId) === user?.id),
                             rawParticipants: g.participants // Pass full list for Modal
@@ -211,7 +212,7 @@ export default function SchedulePage() {
 
                             <div onClick={(e) => e.stopPropagation()}>
                                 {/* Stop Propagation to prevent opening modal when clicking action buttons */}
-                                {game.hostId === user?.id ? (
+                                {(game.hostId === user?.id || game.hostTelegramId === user?.telegram_id || (user?.id && game.hostTelegramId == user.id)) ? (
                                     <button
                                         onClick={() => setEditingGame(game)}
                                         className="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 border border-slate-600"
