@@ -202,8 +202,40 @@ export class PartnershipController {
             const user = await User.findById(userId);
             if (!user) return res.status(404).json({ error: 'User not found' });
 
-            // Find direct referrals
-            const referrals = await User.find({ referrer: user._id }).lean();
+            // 1. Find direct referrals (Standard Relation)
+            let referrals = await User.find({ referrer: user._id }).lean();
+
+            // 2. FALLBACK / SELF-REPAIR
+            // If we found fewer referrals than expected (based on user.referralsCount or just 0), try string matching.
+            // This fixes legacy data where `referrer` ObjectId is missing but `referredBy` string exists.
+            if (referrals.length < (user.referralsCount || 0)) {
+                console.log(`[Partners] Mismatch for ${user.username}: Found ${referrals.length} vs Expected ${user.referralsCount}. Trying fallback...`);
+
+                const fallbackReferrals = await User.find({
+                    referrer: { $exists: false }, // Only check unlinked users
+                    $or: [
+                        { referredBy: user.username },
+                        { referredBy: { $regex: new RegExp(`^${user.username}$`, 'i') } }, // Case insensitive
+                        { referredBy: String(user.telegram_id) },
+                        { referredBy: String(user._id) }
+                    ]
+                });
+
+                if (fallbackReferrals.length > 0) {
+                    console.log(`[Partners] Found ${fallbackReferrals.length} detached referrals. Reparing...`);
+                    // Async Repair
+                    Promise.all(fallbackReferrals.map(async (orphan) => {
+                        try {
+                            await User.updateOne({ _id: orphan._id }, { referrer: user._id });
+                        } catch (e) {
+                            console.error(`Failed to repair orphan ${orphan._id}`, e);
+                        }
+                    }));
+
+                    // Add to current result list
+                    referrals = [...referrals, ...fallbackReferrals.map(r => r.toObject())];
+                }
+            }
 
             // Aggregate stats for each referral
             const result = [];
