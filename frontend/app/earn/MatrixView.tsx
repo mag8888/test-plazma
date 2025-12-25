@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, ExternalLink, Info } from 'lucide-react';
+import { X, ExternalLink, Info, ArrowDown } from 'lucide-react';
 
 interface Avatar {
     _id: string;
@@ -19,6 +19,12 @@ interface MatrixViewProps {
     avatarId: string;
     avatarType: string;
 }
+
+const BRANCH_COLORS = [
+    { name: 'Cyan', bg: 'bg-cyan-500', border: 'border-cyan-500/30', text: 'text-cyan-400', glow: 'shadow-[0_0_15px_rgba(6,182,212,0.3)]' },
+    { name: 'Purple', bg: 'bg-purple-500', border: 'border-purple-500/30', text: 'text-purple-400', glow: 'shadow-[0_0_15px_rgba(168,85,247,0.3)]' },
+    { name: 'Pink', bg: 'bg-pink-500', border: 'border-pink-500/30', text: 'text-pink-400', glow: 'shadow-[0_0_15px_rgba(236,72,153,0.3)]' }
+];
 
 export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixViewProps) {
     const [matrixData, setMatrixData] = useState<any>(null);
@@ -49,55 +55,38 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
         }
     };
 
-    const renderTier = (avatars: Avatar[], tierLevel: number) => {
-        // Tier 1 (Children) = 3 slots -> Completing this makes Root Level 1
-        // Tier 2 (Grandchildren) = 9 slots -> Completing this makes Root Level 2
-        // Max capacity = 3^tierLevel
-        const maxCapacity = Math.pow(3, tierLevel);
-        const filled = avatars ? avatars.length : 0;
-        const empty = maxCapacity - filled;
+    // Helper to find children of a parent from the next level array
+    const getChildren = (parentId: string, nextLevelAvatars: Avatar[]) => {
+        return nextLevelAvatars?.filter(a => a.parent === parentId) || [];
+    };
 
-        // Current Level Logic:
-        // Tier 1 corresponds to "Level 1 Requirement".
-        // Tier 2 corresponds to "Level 2 Requirement".
-
-        return (
-            <div className="mb-8 border-b border-slate-700/50 pb-6 last:border-0">
-                <div className="flex justify-between items-end mb-3">
-                    <div>
-                        <div className="text-sm font-bold text-slate-200">
-                            Кольцо {tierLevel} <span className="text-slate-500 font-normal">({filled}/{maxCapacity})</span>
-                        </div>
-                        <div className="text-[10px] text-slate-400">
-                            Заполните этот уровень, чтобы получить <span className="text-yellow-400 font-bold">Уровень {tierLevel}</span>
-                        </div>
+    // Render a single avatar slot
+    const renderAvatarSlot = (avatar: Avatar | null, colorTheme: any, isPlaceholder = false) => {
+        if (isPlaceholder || !avatar) {
+            return (
+                <div className="flex flex-col items-center gap-1">
+                    <div className="w-10 h-10 rounded-lg bg-slate-800/80 border border-slate-700 border-dashed flex items-center justify-center">
+                        <div className="w-2 h-2 rounded-full bg-slate-700"></div>
                     </div>
                 </div>
+            );
+        }
 
-                <div className="flex flex-wrap gap-2">
-                    {avatars && avatars.map(avatar => (
-                        <div
-                            key={avatar._id}
-                            onClick={() => handleAvatarClick(avatar.owner?.username)}
-                            className="w-10 h-10 rounded-lg bg-indigo-600 hover:bg-indigo-500 cursor-pointer flex items-center justify-center relative group transition-transform hover:scale-105"
-                            title={`Click to open @${avatar.owner?.username}`}
-                        >
-                            <span className="text-xs font-bold text-white">{avatar.level}</span>
-                            {/* Username Tooltip */}
-                            <div className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded border border-slate-700 pointer-events-none whitespace-nowrap z-10 transition-opacity">
-                                @{avatar.owner?.username || 'unknown'}
-                            </div>
-                        </div>
-                    ))}
-                    {/* Empty Slots */}
-                    {Array.from({ length: empty }).map((_, idx) => (
-                        <div
-                            key={`empty-${idx}`}
-                            className="w-10 h-10 rounded-lg bg-slate-800/50 border border-slate-700 border-dashed flex items-center justify-center"
-                        >
-                            <div className="w-2 h-2 rounded-full bg-slate-700"></div>
-                        </div>
-                    ))}
+        return (
+            <div className="flex flex-col items-center gap-1 group relative">
+                <div
+                    onClick={() => handleAvatarClick(avatar.owner?.username)}
+                    className={`w-10 h-10 rounded-lg ${colorTheme.bg} cursor-pointer flex items-center justify-center relative transition-transform hover:scale-110 z-10`}
+                >
+                    <span className="text-xs font-bold text-white">{avatar.level}</span>
+                    {/* Tooltip */}
+                    <div className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded border border-slate-700 pointer-events-none whitespace-nowrap z-20 transition-opacity">
+                        @{avatar.owner?.username || 'unknown'}
+                    </div>
+                </div>
+                {/* Bonus Indicator */}
+                <div className="text-[9px] text-yellow-500/80 font-mono opacity-60 group-hover:opacity-100 transition-opacity">
+                    +50%🟡
                 </div>
             </div>
         );
@@ -106,10 +95,26 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
     if (!isOpen) return null;
 
     const rootLevel = matrixData?.root?.level || 0;
+    const level1Avatars = matrixData?.level1 || [];
+    const level2Avatars = matrixData?.level2 || [];
+
+    // Construct the 3 Branches
+    // We expect up to 3 avatars in Level 1.
+    // If fewer, we show placeholders.
+    const branches = Array.from({ length: 3 }).map((_, i) => {
+        const branchAvatar = level1Avatars[i] || null;
+        const children = branchAvatar ? getChildren(branchAvatar._id, level2Avatars) : [];
+        return {
+            id: i,
+            avatar: branchAvatar,
+            children: children,
+            color: BRANCH_COLORS[i]
+        };
+    });
 
     return (
-        <div className="fixed inset-0 bg-black/90 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
-            <div className="bg-slate-900 rounded-2xl border border-slate-700 max-w-4xl w-full max-h-[85vh] flex flex-col shadow-2xl">
+        <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+            <div className="bg-slate-900/90 rounded-2xl border border-slate-700 max-w-5xl w-full max-h-[90vh] flex flex-col shadow-2xl">
                 {/* Header */}
                 <div className="p-5 border-b border-slate-700 flex items-center justify-between bg-slate-800/50 rounded-t-2xl">
                     <div>
@@ -133,37 +138,80 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
                             <div className="text-slate-500 text-sm">Загружаем структуру...</div>
                         </div>
                     ) : matrixData ? (
-                        <div className="space-y-8">
+                        <div className="space-y-12">
 
-                            {/* ROOT AVATAR STATUS */}
-                            <div className="flex items-center gap-6 bg-slate-800 p-6 rounded-xl border border-slate-700">
-                                <div className="w-20 h-20 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-2xl flex flex-col items-center justify-center shadow-lg transform rotate-3 border-2 border-yellow-400/20">
+                            {/* ROOT - Level 0/1 */}
+                            <div className="flex flex-col items-center justify-center relative">
+                                <div className="text-xs text-slate-500 mb-2 font-mono uppercase tracking-widest">Мой Аватар</div>
+                                <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-2xl flex flex-col items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.2)] border-2 border-yellow-400/20 z-10 relative">
                                     <div className="text-3xl font-black text-white">{rootLevel}</div>
                                     <div className="text-[9px] uppercase font-bold text-yellow-100 tracking-wider mt-1">Уровень</div>
                                 </div>
-                                <div className="space-y-2">
-                                    <h3 className="text-lg font-bold text-white">Ваш текущий статус</h3>
-                                    <div className="text-sm text-slate-300 flex items-center gap-2">
-                                        <Info size={14} className="text-blue-400" />
-                                        {rootLevel === 0
-                                            ? "Заполните 1-е кольцо (3 партнера), чтобы получить Уровень 1."
-                                            : `Поздравляем! Вы достигли Уровня ${rootLevel}.`
-                                        }
+
+                                {/* Status Text */}
+                                <div className="mt-4 text-center max-w-md bg-slate-800/80 p-3 rounded-lg border border-slate-700">
+                                    <div className="text-white text-sm font-bold mb-1">
+                                        {rootLevel === 0 ? "Нужно заполнить 3 слота ниже" : `Уровень ${rootLevel} активен!`}
                                     </div>
-                                    <div className="text-xs text-slate-500">
-                                        Аватар без 3-х партнеров имеет 0 уровень.
+                                    <div className="text-xs text-slate-400 leading-relaxed">
+                                        С каждого заполненного слота в 3-х ветках вы получаете <span className="text-yellow-400 font-bold">50% от стоимости</span> в накопление желтого бонуса для перехода на уровень выше.
                                     </div>
                                 </div>
+
+                                {/* Connecting Line to Branches */}
+                                <div className="absolute top-full left-1/2 -translate-x-1/2 h-8 w-px bg-slate-700"></div>
                             </div>
 
-                            {/* GRID TIERS */}
-                            <div>
-                                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-widest mb-6">Структура развития</h3>
-                                {renderTier(matrixData.level1, 1)} {/* 3 slots */}
-                                {renderTier(matrixData.level2, 2)} {/* 9 slots */}
-                                {renderTier(matrixData.level3, 3)} {/* 27 slots */}
-                                {renderTier(matrixData.level4, 4)} {/* 81 slots */}
-                                {renderTier(matrixData.level5, 5)} {/* 243 slots */}
+
+                            {/* 3 BRANCHES SECTION */}
+                            <div className="grid grid-cols-3 gap-4 pt-8 border-t border-slate-800/50 relative">
+                                {/* Horizontal connector line for branches */}
+                                <div className="absolute top-0 left-[16.66%] right-[16.66%] h-px bg-slate-700 -translate-y-[1px]"></div>
+                                {/* Center vertical connector from root */}
+                                <div className="absolute top-0 left-1/2 -translate-x-1/2 h-8 w-px bg-slate-700 -translate-y-full"></div>
+
+                                {branches.map((branch, i) => (
+                                    <div key={i} className={`flex flex-col items-center relative pt-6 ${i !== 1 ? 'border-t-0' : ''}`}>
+                                        {/* Vertical connector to branch head */}
+                                        <div className="absolute top-0 left-1/2 -translate-x-1/2 h-6 w-px bg-slate-700"></div>
+
+                                        {/* BRANCH HEAD (Ring 1) */}
+                                        <div className="mb-4 text-center">
+                                            <div className={`text-[10px] font-bold uppercase mb-2 ${branch.color.text}`}>Ветка {i + 1}</div>
+                                            {renderAvatarSlot(branch.avatar, branch.color, !branch.avatar)}
+                                            {
+                                                branch.avatar && (
+                                                    <div className="mt-1 text-[9px] text-slate-500">
+                                                        {branch.children.length}/3 заполнено
+                                                    </div>
+                                                )
+                                            }
+                                        </div>
+
+                                        {/* Branch Children (Ring 2) */}
+                                        {branch.avatar && (
+                                            <div className="flex flex-col items-center w-full">
+                                                <div className="h-6 w-px bg-slate-700/50 mb-2"></div>
+                                                <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/50 w-full flex justify-center gap-3 relative">
+                                                    {/* "Yellow Accumulation" Visual */}
+                                                    <div className="absolute -top-3 bg-slate-900 border border-slate-700 text-[9px] text-yellow-500 px-2 py-0.5 rounded-full">
+                                                        Накопление
+                                                    </div>
+
+                                                    {/* 3 Slots for this Branch Head */}
+                                                    {Array.from({ length: 3 }).map((_, idx) => {
+                                                        const child = branch.children[idx] || null;
+                                                        return (
+                                                            <div key={idx}>
+                                                                {renderAvatarSlot(child, branch.color, !child)}
+                                                            </div>
+                                                        );
+                                                    })}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ))}
                             </div>
 
                         </div>
