@@ -95,14 +95,17 @@ router.post('/magic-login', async (req: Request, res: Response) => {
 
         return res.json({
             token: "mock-jwt-token-for-" + user.id, // In prod use JWT
+            message: 'Login successful',
             user: {
-                id: user.id,
+                id: user._id.toString(),
+                telegram_id: user.telegram_id,
                 username: user.username,
                 first_name: user.first_name,
                 last_name: user.last_name,
                 photo_url: user.photo_url,
-                referralBalance: user.referralBalance || 0,
-                balanceRed: user.balanceRed || 0,
+                rating: user.rating,
+                gamesPlayed: user.gamesPlayed,
+                wins: user.wins,
                 referralsCount: user.referralsCount || 0,
                 isMaster: user.isMaster || false
             }
