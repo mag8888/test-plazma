@@ -296,11 +296,12 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
                                 </div>
 
                             </div>
-                            ) : (
-                            <div className="text-center py-12 text-slate-500">Нет данных</div>
-                    )}
                         </div>
+                    ) : (
+                        <div className="text-center py-12 text-slate-500">Нет данных</div>
+                    )}
+                </div>
             </div>
-            </div>
-            );
+        </div>
+    );
 }
