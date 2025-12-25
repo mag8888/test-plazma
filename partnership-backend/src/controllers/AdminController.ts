@@ -377,6 +377,17 @@ export class AdminController {
                 details: `Deleted all avatars. Count: ${result.deletedCount}`
             });
 
+            res.json({
+                success: true,
+                deletedCount: result.deletedCount,
+                message: `Deleted ${result.deletedCount} avatars`
+            });
+        } catch (error: any) {
+            console.error('deleteAllAvatars error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
     // Add Avatar (Admin Gift)
     static async addAvatar(req: ExpressRequest, res: ExpressResponse) {
         try {
