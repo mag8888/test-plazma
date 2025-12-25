@@ -10,12 +10,14 @@ export class NotificationService {
      */
     static async sendTelegramMessage(chatId: number | string, text: string) {
         if (!TOKEN) {
-            console.warn('[NotificationService] No TELEGRAM_BOT_TOKEN found. Skipping message.');
+            console.warn('[NotificationService] ⚠️ No TELEGRAM_BOT_TOKEN found. Skipping message.');
             return;
         }
 
         try {
             const url = `https://api.telegram.org/bot${TOKEN}/sendMessage`;
+            console.log(`[NotificationService] Sending message to ${chatId}...`);
+
             const response = await fetch(url, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -28,9 +30,9 @@ export class NotificationService {
 
             if (!response.ok) {
                 const errText = await response.text();
-                console.error(`[NotificationService] Error sending message to ${chatId}: ${errText}`);
+                console.error(`[NotificationService] ❌ Error sending message to ${chatId}: ${errText}`);
             } else {
-                // console.log(`[NotificationService] Sent message to ${chatId}`);
+                console.log(`[NotificationService] ✅ Sent message to ${chatId}`);
             }
         } catch (e) {
             console.error('[NotificationService] Network error sending message:', e);
