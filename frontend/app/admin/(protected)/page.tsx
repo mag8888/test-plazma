@@ -82,7 +82,7 @@ export default function AdminPage() {
 
     const handleCardClick = (type: string) => {
         // Clear search to show full list for the selected category
-        setSearchQuery('');
+        setUserQuery('');
 
         if (type === 'AVATARS') {
             setSortField('avatarsCount');

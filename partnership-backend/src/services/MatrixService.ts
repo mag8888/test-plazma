@@ -4,6 +4,7 @@ import { AvatarPurchase } from '../models/AvatarPurchase';
 import { Transaction, TransactionType } from '../models/Transaction';
 import { LevelTransition } from '../models/LevelTransition';
 import { WalletService, Currency } from './WalletService';
+import { NotificationService } from './NotificationService';
 import mongoose from 'mongoose';
 
 // Avatar costs and subscription periods
@@ -248,6 +249,10 @@ export class MatrixService {
                 referrerId = referrer._id;
                 const hasSubscription = await this.hasActiveSubscription(referrer._id);
 
+                import { NotificationService } from './NotificationService';
+
+                // ... existing code ...
+
                 if (hasSubscription) {
                     await WalletService.deposit(
                         referrer._id,
@@ -257,6 +262,13 @@ export class MatrixService {
                         TransactionType.AVATAR_BONUS
                     );
                     referrerBonusSent = halfCost;
+
+                    // Send Telegram Notification
+                    if (referrer.telegram_id) {
+                        // Non-blocking notification
+                        NotificationService.sendIncomeNotification(referrer.telegram_id, halfCost, buyerUser.username || 'Unknown').catch(e => console.error('Failed to send notification', e));
+                    }
+
                 } else {
                     console.log(`[DistributeBonus] Referrer ${referrer.username} has no subscription. Skipping bonus.`);
                 }
