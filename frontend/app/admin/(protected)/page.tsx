@@ -365,8 +365,33 @@ export default function AdminPage() {
                 {stats && (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
                         <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
-                            <div className="text-slate-400 text-sm font-bold uppercase mb-2">Total Users</div>
-                            <div className="text-3xl font-bold text-white">{stats.totalUsers}</div>
+                            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                <Users className="text-blue-400" />
+                                Action Center
+                            </h2>
+                            <div className="grid grid-cols-2 gap-4">
+                                <button
+                                    onClick={async () => {
+                                        if (!confirm('Rebuild all referral links based on "referredBy" field? This may take a while.')) return;
+                                        const res = await fetchWithAuth('/rebuild-referrals', { method: 'POST' });
+                                        if (res.success) {
+                                            alert(`Rebuild Complete!\nUpdated: ${res.updated}\nSkipped: ${res.skipped}\nErrors: ${res.errors}`);
+                                        } else {
+                                            alert('Error: ' + res.error);
+                                        }
+                                    }}
+                                    className="bg-blue-900/50 hover:bg-blue-900/70 text-blue-300 p-4 rounded-xl border border-blue-700/50 flex flex-col items-center gap-2 transition"
+                                >
+                                    <Users size={24} />
+                                    <span className="font-bold">Sync Referrals</span>
+                                    <span className="text-[10px] opacity-70">Link broken referrals</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                            <h2 className="text-xl font-bold mb-4">Users</h2>
+                            <div className="text-4xl font-bold text-white">{stats.totalUsers}</div>
                         </div>
                         <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
                             <div className="text-slate-400 text-sm font-bold uppercase mb-2">Total Avatars</div>
