@@ -209,6 +209,7 @@ export class AdminController {
             }
 
             // Notification for Green Deposit
+            console.log(`[AdminController] Checking notification: Type=${type}, Value=${value}, TID=${user.telegram_id}`);
             if (type === 'GREEN' && value > 0 && user.telegram_id) {
                 NotificationService.sendTelegramMessage(
                     user.telegram_id,
