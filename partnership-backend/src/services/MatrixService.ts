@@ -250,6 +250,24 @@ export class MatrixService {
                     });
                 }
             }
+        } else {
+            // COMPANY ACCOUNT FALLBACK
+            // If user has no referrer, the 50% Green Balance goes to Company Account
+            const COMPANY_ACCOUNT_ID = process.env.COMPANY_ACCOUNT_ID;
+            if (COMPANY_ACCOUNT_ID) {
+                try {
+                    await WalletService.deposit(
+                        COMPANY_ACCOUNT_ID,
+                        Currency.GREEN,
+                        halfCost,
+                        `Green bonus (Company Fallback): ${type} avatar purchase by ${buyerUser.username}`,
+                        TransactionType.AVATAR_BONUS
+                    );
+                    // We could log this as a purchase record too, but with referrerId = companyId
+                } catch (e) {
+                    console.error(`Failed to deposit to Company Account (${COMPANY_ACCOUNT_ID}):`, e);
+                }
+            }
         }
 
         // Yellow bonus to parent avatar owner
