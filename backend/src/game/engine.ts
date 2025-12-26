@@ -1318,13 +1318,14 @@ export class GameEngine {
     transferAsset(fromPlayerId: string, toPlayerId: string, assetIndex: number, quantity: number = 1) {
         console.log('[TransferAsset] Called with:', { fromPlayerId, toPlayerId, assetIndex, quantity });
 
-        const fromPlayer = this.state.players.find(p => p.id === fromPlayerId);
-        const toPlayer = this.state.players.find(p => p.id === toPlayerId);
+        // Find players by userId (not id which is socket.id)
+        const fromPlayer = this.state.players.find(p => p.userId === fromPlayerId);
+        const toPlayer = this.state.players.find(p => p.userId === toPlayerId);
 
         console.log('[TransferAsset] Found players:', {
-            fromPlayer: fromPlayer ? `${fromPlayer.name} (${fromPlayer.id})` : 'NOT FOUND',
-            toPlayer: toPlayer ? `${toPlayer.name} (${toPlayer.id})` : 'NOT FOUND',
-            allPlayerIds: this.state.players.map(p => ({ id: p.id, name: p.name }))
+            fromPlayer: fromPlayer ? `${fromPlayer.name} (${fromPlayer.userId})` : 'NOT FOUND',
+            toPlayer: toPlayer ? `${toPlayer.name} (${toPlayer.userId})` : 'NOT FOUND',
+            allPlayerUserIds: this.state.players.map(p => ({ userId: p.userId, name: p.name }))
         });
 
         if (!fromPlayer || !toPlayer) {
