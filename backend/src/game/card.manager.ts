@@ -215,6 +215,13 @@ export class CardManager {
             this.bigDeals = this.shuffle(templates.big.map(c => ({ ...c })));
             this.marketDeck = this.shuffle(templates.market.map(c => ({ ...c })));
             this.expenseDeck = this.shuffle(templates.expense.map(c => ({ ...c })));
+
+            // Log shuffle results
+            console.log(`[CardManager] Shuffled DB Templates:`);
+            console.log(`  Small Deals: ${this.smallDeals.length} cards. First 3: ${this.smallDeals.slice(0, 3).map(c => c.title).join(', ')}`);
+            console.log(`  Big Deals: ${this.bigDeals.length} cards. First 3: ${this.bigDeals.slice(0, 3).map(c => c.title).join(', ')}`);
+            console.log(`  Market: ${this.marketDeck.length} cards. First 3: ${this.marketDeck.slice(0, 3).map(c => c.title).join(', ')}`);
+            console.log(`  Expense: ${this.expenseDeck.length} cards. First 3: ${this.expenseDeck.slice(0, 3).map(c => c.title).join(', ')}`);
         } else {
             // Legacy / Fallback (Global ID Generation)
             let globalCounter = 1;
@@ -231,6 +238,27 @@ export class CardManager {
             this.marketDeck = prepareDeck([...MARKET_CARDS], 'Market');
             this.expenseDeck = prepareDeck([...EXPENSE_CARDS], 'Expense');
         }
+    }
+
+    // Manual Reshuffle Method for host/admin
+    reshuffleAllDecks() {
+        console.log('[CardManager] Manual Reshuffle initiated');
+
+        // Combine active deck + discard, then reshuffle
+        this.smallDeals = this.shuffle([...this.smallDeals, ...this.smallDealsDiscard]);
+        this.smallDealsDiscard = [];
+
+        this.bigDeals = this.shuffle([...this.bigDeals, ...this.bigDealsDiscard]);
+        this.bigDealsDiscard = [];
+
+        this.marketDeck = this.shuffle([...this.marketDeck, ...this.marketDeckDiscard]);
+        this.marketDeckDiscard = [];
+
+        this.expenseDeck = this.shuffle([...this.expenseDeck, ...this.expenseDeckDiscard]);
+        this.expenseDeckDiscard = [];
+
+        console.log('[CardManager] All decks reshuffled');
+        console.log(`  Small: ${this.smallDeals.length}, Big: ${this.bigDeals.length}, Market: ${this.marketDeck.length}, Expense: ${this.expenseDeck.length}`);
     }
 
     drawSmallDeal(): Card | undefined {

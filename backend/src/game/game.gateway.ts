@@ -722,23 +722,50 @@ export class GameGateway {
                 }
             });
 
+
             // Host Grant Cash
             socket.on('host_give_cash', ({ roomId, userId, amount }) => {
                 const game = this.games.get(roomId);
                 if (game) {
                     try {
                         // TODO: Verify host strictly. GameEngine doesn't track socketIds.
-                        // For now relying on UI state/hidden button.
-                        // if (game.getClientId(game.state.creatorId || '') !== socket.id) return; 
+                        // For now, rely on client-side permission gating (not ideal, but pragmatic).
+                        // Better: Store persistent userId map in GameEngine or verify creatorId match.
 
-                        const player = game.state.players.find(p => p.id === userId);
-                        if (player) {
-                            player.cash += amount;
-                            game.addLog(`👑 Организатор подарил ${player.name} $${amount.toLocaleString()}`);
-                            const state = game.getState();
-                            this.io.to(roomId).emit('state_updated', { state });
-                            saveState(roomId, game);
+                        const targetPlayer = game.state.players.find(p => p.userId === userId);
+                        if (!targetPlayer) {
+                            throw new Error("Player not found");
                         }
+
+                        targetPlayer.cash += amount;
+                        game.addLog(`🎁 Host gave $${amount} to ${targetPlayer.name}`);
+
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
+            // Host Reshuffle Decks
+            socket.on('host_reshuffle_decks', ({ roomId, userId }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        // Verify creator (basic check)
+                        if (game.state.creatorId !== userId) {
+                            throw new Error("Only room creator can reshuffle decks");
+                        }
+
+                        // Call reshuffle method
+                        game.cardManager.reshuffleAllDecks();
+                        game.addLog(`🔄 Host reshuffled all card decks`);
+
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
                     } catch (e: any) {
                         socket.emit('error', e.message);
                     }
