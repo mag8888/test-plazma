@@ -192,7 +192,7 @@ export const MARKET_CARDS: Card[] = [
     { title: 'Покупатель жилья', targetTitle: 'Комната в пригороде', offerPrice: 12000, description: 'Старое жилье идет под снос. Предлагают $12,000 за комнату.', type: 'MARKET', id: 'mkt_1' },
 
     // BITCOIN SCAM
-    { title: 'Скам на криптобирже', targetTitle: 'Bitcoin', offerPrice: 0, description: 'Биржа рухнула. Все ваши BTC сгорают (Цена $0).', type: 'MARKET', id: 'mkt_btc_scam' },
+    { title: 'Скам на криптобирже', targetTitle: 'Bitcoin', offerPrice: 0, description: '🔥 Биржа рухнула! ВСЕ BTC СГОРАЮТ! (Цена $0)', type: 'MARKET', id: 'mkt_btc_scam' },
 ];
 
 export class CardManager {
