@@ -608,10 +608,24 @@ export const ActiveCardZone = ({
                         для бонусов на 3 хода.
                     </p>
                     <div className="flex gap-2 w-full mt-auto">
-                        <button onClick={() => socket.emit('donate_charity', { roomId })} className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('[Charity] Donate clicked');
+                                socket.emit('donate_charity', { roomId });
+                            }}
+                            className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
+                        >
                             Да (${(Math.max(0, me.income * 0.1)).toLocaleString()})
                         </button>
-                        <button onClick={() => socket.emit('skip_charity', { roomId })} className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider">
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                console.log('[Charity] Skip clicked');
+                                socket.emit('skip_charity', { roomId });
+                            }}
+                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
+                        >
                             Нет
                         </button>
                     </div>
