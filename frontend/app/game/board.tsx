@@ -253,7 +253,27 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     // Auto-open modal when a new card appears
     useEffect(() => {
         if (state.currentCard) {
-            setIsCardModalOpen(true);
+            // User Request: Delay Expense/Market cards by 1s (to see token stop)
+            const type = state.currentCard.type || '';
+            const isDelayedType = type.includes('EXPENSE') || type === 'DOODAD' || type.includes('MARKET');
+
+            if (isDelayedType) {
+                // Reset first creates effect of "appearing" later?
+                // Actually ActiveCardZone might already show it if we don't block it.
+                // We need to ensure `canShowCard` (passed to ActiveCardZone) uses this state.
+                // Currently `canShowCard` isn't used to HIDE the card content in ActiveCardZone completely? 
+                // Let's check: ActiveCardZone uses `canShowCard={canShowCard}`.
+                // In board.tsx: `const canShowCard = isCardModalOpen || forceShow;` (I need to verify this variable existence)
+                // Wait, I saw `canShowCard={canShowCard}` in the props passed to ActiveCardZone in previous view.
+
+                setIsCardModalOpen(false); // Hide initially
+                const timer = setTimeout(() => {
+                    setIsCardModalOpen(true);
+                }, 1000);
+                return () => clearTimeout(timer);
+            } else {
+                setIsCardModalOpen(true);
+            }
         }
     }, [state.currentCard]);
 
@@ -778,13 +798,18 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
         if (state.phase === 'ROLL' || isAnimatingMove) {
             setCanShowCard(false);
         } else {
-            // If movement stopped, wait 1s then show
-            // Only if we actually have a card to show or are in a relevant phase
-            if (!isAnimatingMove && (state.currentCard || state.phase.includes('DECISION') || state.phase.includes('CHOICE'))) {
+            // User Request: Delay Expense/Market cards by 1s AFTER animation stops
+            const type = state.currentCard?.type || '';
+            const isDelayedType = type.includes('EXPENSE') || type === 'DOODAD' || type.includes('MARKET');
+
+            if (isDelayedType && !canShowCard) { // prevent loop if already true
                 const timer = setTimeout(() => {
                     setCanShowCard(true);
-                }, 1000); // 1.0s delay as requested
+                }, 1000); // 1s delay
                 return () => clearTimeout(timer);
+            } else if (!isDelayedType) {
+                // Immediate show for other types (or if already shown)
+                setCanShowCard(true);
             }
         }
     }, [state.phase, isAnimatingMove, state.currentCard]);

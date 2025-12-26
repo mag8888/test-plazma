@@ -427,7 +427,7 @@ const FeedCardItem = ({
                                                     const val = Number(e.target.value);
                                                     if (val >= 1 && val <= maxVal) setStockQty(val);
                                                 }}
-                                                className="w-16 bg-transparent text-center font-black text-xl outline-none text-white font-mono"
+                                                className="w-24 bg-transparent text-center font-black text-xl outline-none text-white font-mono no-spinner"
                                             />
                                             <span className="text-[8px] text-slate-500 uppercase tracking-widest font-bold">Количество</span>
                                         </div>
