@@ -35,29 +35,48 @@ export default function SchedulePage() {
                     console.log('🗓️ [Schedule] Games fetched:', data.length, 'games');
 
                     const formatted = data.map((g: any) => {
-                        const dateObj = new Date(g.startTime);
-                        // MSK Time
-                        const mskTime = dateObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
-                        const mskDate = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' });
-                        const localTime = dateObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-                        const isDifferent = mskTime !== localTime;
+                        try {
+                            const dateObj = new Date(g.startTime);
+                            // MSK Time
+                            const mskTime = dateObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow' });
+                            const mskDate = dateObj.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Europe/Moscow' });
+                            const localTime = dateObj.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
+                            const isDifferent = mskTime !== localTime;
 
-                        return {
-                            id: g._id,
-                            time: mskTime,
-                            date: mskDate,
-                            localTime: isDifferent ? localTime : null,
-                            master: g.hostId?.username || g.hostId?.first_name || 'Master',
-                            players: g.participants?.length || 0,
-                            max: g.maxPlayers,
-                            price: g.price,
-                            hostId: (g.hostId?._id || g.hostId)?.toString(),
-                            hostTelegramId: g.hostId?.telegram_id,
-                            rawIso: g.startTime,
-                            isJoined: g.participants?.some((p: any) => (p.userId?._id || p.userId) === user?.id),
-                            rawParticipants: g.participants // Pass full list for Modal
-                        };
-                    });
+                            // Defensive Host Resolution
+                            const hostObj = g.hostId;
+                            const hostName = hostObj?.username || hostObj?.first_name || 'Master';
+                            const hostIdStr = (hostObj?._id || hostObj)?.toString() || '';
+                            const hostTgId = hostObj?.telegram_id;
+
+                            // Defensive Participant Check
+                            const participants = Array.isArray(g.participants) ? g.participants : [];
+                            const isJoined = participants.some((p: any) => {
+                                const pId = (p.userId?._id || p.userId)?.toString();
+                                const uId = (user?._id || user?.id)?.toString();
+                                return pId && uId && pId === uId;
+                            });
+
+                            return {
+                                id: g._id,
+                                time: mskTime,
+                                date: mskDate,
+                                localTime: isDifferent ? localTime : null,
+                                master: hostName,
+                                players: participants.length || 0,
+                                max: g.maxPlayers,
+                                price: g.price,
+                                hostId: hostIdStr,
+                                hostTelegramId: hostTgId,
+                                rawIso: g.startTime,
+                                isJoined: isJoined,
+                                rawParticipants: participants
+                            };
+                        } catch (err) {
+                            console.error('⚠️ [Schedule] Error formatting game:', err, g);
+                            return null;
+                        }
+                    }).filter(Boolean);
                     setGames(formatted);
                 } else {
                     console.error('🗓️ [Schedule] Fetch failed with status:', res.status);

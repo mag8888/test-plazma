@@ -55,7 +55,7 @@ export default function ParticipantsModal({ game, onClose }: ParticipantsModalPr
                 <div className="flex-1 overflow-y-auto p-4 space-y-3">
                     {participants.map((p: any, i: number) => (
                         <div key={i} className="flex items-center gap-3 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
-                            {(p.userId?.photo_url || p.photo_url) ? (
+                            {(typeof p.userId === 'object' && (p.userId?.photo_url || p.photo_url)) ? (
                                 <img src={p.userId?.photo_url || p.photo_url} className="w-10 h-10 rounded-full" />
                             ) : (
                                 <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center">
@@ -64,7 +64,13 @@ export default function ParticipantsModal({ game, onClose }: ParticipantsModalPr
                             )}
                             <div>
                                 <div className="font-bold text-sm">
-                                    {(p.userId?.username || p.username) ? `@${p.userId?.username || p.username}` : (p.userId?.first_name || p.firstName || 'User')}
+                                    {/* Defensive Name Display */}
+                                    {(() => {
+                                        const userObj = typeof p.userId === 'object' ? p.userId : null;
+                                        const username = userObj?.username || p.username;
+                                        const firstName = userObj?.first_name || p.firstName || 'User';
+                                        return username ? `@${username}` : firstName;
+                                    })()}
                                 </div>
                                 <div className="text-xs text-slate-400">
                                     {p.type === 'PROMO' ? '🎫 Promo' : '💰 Paid'}
