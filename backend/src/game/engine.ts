@@ -1417,6 +1417,30 @@ export class GameEngine {
     }
 
     dismissCard() {
+        const currentPlayer = this.state.players[this.state.currentPlayerIndex];
+
+        // Auto-deduct Expense if not paid
+        if (this.state.currentCard && this.state.currentCard.type === 'EXPENSE' && currentPlayer) {
+            const expenseCost = this.state.currentCard.cost || 0;
+
+            // If player hasn't paid (we're dismissing), force payment
+            if (expenseCost > 0) {
+                // Check if player can afford
+                if (currentPlayer.cash >= expenseCost) {
+                    currentPlayer.cash -= expenseCost;
+                    this.addLog(`💸 ${currentPlayer.name} paid expense: ${this.state.currentCard.title} (-$${expenseCost})`);
+                } else {
+                    // Auto-take loan if can't afford
+                    const loanAmount = Math.ceil((expenseCost - currentPlayer.cash) / 1000) * 1000;
+                    currentPlayer.loanDebt += loanAmount;
+                    currentPlayer.cash += loanAmount;
+                    this.addLog(`💳 ${currentPlayer.name} took loan $${loanAmount} for expense`);
+                    currentPlayer.cash -= expenseCost;
+                    this.addLog(`💸 ${currentPlayer.name} paid expense: ${this.state.currentCard.title} (-$${expenseCost})`);
+                }
+            }
+        }
+
         // Discard the card before clearing it (Only if NOT persistent)
         if (this.state.currentCard) {
             const isPersistent = this.state.activeMarketCards?.some(ac => ac.card.title === this.state.currentCard?.title && ac.expiresAt > Date.now());

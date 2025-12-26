@@ -1342,6 +1342,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                             </span>
                                             <div className="flex items-center gap-2 text-[10px] text-slate-500">
                                                 {a.quantity > 0 && <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">{a.quantity} шт</span>}
+                                                {a.symbol && a.averageCost && <span className="text-blue-400">Ср: ${a.averageCost.toFixed(2)}</span>}
                                                 {a.cost && <span>Pos: ${(a.cost * a.quantity).toLocaleString()}</span>}
                                             </div>
                                         </div>
