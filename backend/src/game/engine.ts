@@ -1048,7 +1048,7 @@ export class GameEngine {
 
             if (card) {
                 this.state.currentCard = card;
-                this.state.phase = 'MARKET_EFFECT';
+                this.addLog(`🏪 MARKET: ${card.title} - ${card.description}`);
                 if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
 
                 const activeCard = {
