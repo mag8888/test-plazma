@@ -725,7 +725,15 @@ export class GameGateway {
                 const game = this.games.get(roomId);
                 if (game) {
                     try {
-                        game.transferDeal(socket.id, targetPlayerId, cardId);
+                        // Find from player by socket.id
+                        const fromPlayer = game.state.players.find(p => p.id === socket.id);
+                        if (!fromPlayer || !fromPlayer.userId) {
+                            console.error(`[transfer_deal] Cannot find player with socket.id ${socket.id}`);
+                            socket.emit('error', 'Player not found');
+                            return;
+                        }
+
+                        game.transferDeal(fromPlayer.userId, targetPlayerId, cardId);
                         const state = game.getState();
                         this.io.to(roomId).emit('state_updated', { state });
                         saveState(roomId, game);
