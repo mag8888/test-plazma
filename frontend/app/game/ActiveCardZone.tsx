@@ -87,7 +87,7 @@ const FeedCardItem = ({
 
     const isOffer = source === 'MARKET';
     const isStock = !!card.symbol;
-    const ownedStock = me.assets?.find((a: any) => a.symbol === card.symbol);
+    const ownedStock = me?.assets?.find((a: any) => a.symbol === card.symbol);
     const ownedQty = ownedStock ? ownedStock.quantity : 0;
 
     // Owner Logic
@@ -108,9 +108,9 @@ const FeedCardItem = ({
     const price = card.cost || card.price || 0;
 
     // Credit Logic
-    const maxNewLoan = Math.max(0, Math.floor((me.cashflow || 0) / 100) * 1000);
-    const availableLoan = Math.max(0, maxNewLoan - (me.loanDebt || 0));
-    const maxBuyCash = Math.floor(me.cash / (price || 1));
+    const maxNewLoan = Math.max(0, Math.floor((me?.cashflow || 0) / 100) * 1000);
+    const availableLoan = Math.max(0, maxNewLoan - (me?.loanDebt || 0));
+    const maxBuyCash = Math.floor((me?.cash || 0) / (price || 1));
     const maxBuyCredit = Math.floor(availableLoan / (price || 1));
 
     // ... (keeping existing calc code if needed, but easier to just insert `isOwner` check near render)
@@ -132,7 +132,7 @@ const FeedCardItem = ({
         : ownedQty;
 
     const total = price * stockQty;
-    const loanNeeded = Math.max(0, total - me.cash);
+    const loanNeeded = Math.max(0, total - (me?.cash || 0));
 
     // Ensure default is reasonable
     useEffect(() => {
@@ -628,7 +628,7 @@ export const ActiveCardZone = ({
                     {/* SMALL DEAL BUTTON */}
                     <button
                         onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })}
-                        disabled={me.cash < 500}
+                        disabled={(me?.cash || 0) < 500}
                         className="group relative w-full flex-1 bg-gradient-to-r from-emerald-900/80 to-teal-900/80 hover:from-emerald-800 hover:to-teal-800 border border-emerald-500/30 rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-4 overflow-hidden disabled:opacity-50 disabled:grayscale"
                     >
                         <div className="absolute inset-0 bg-[url('/images/pattern-money.png')] opacity-10 mix-blend-overlay"></div>
@@ -645,7 +645,7 @@ export const ActiveCardZone = ({
                     {/* BIG DEAL BUTTON */}
                     <button
                         onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })}
-                        disabled={me.cash < 6000}
+                        disabled={(me?.cash || 0) < 6000}
                         className="group relative w-full flex-1 bg-gradient-to-r from-purple-900/80 to-indigo-900/80 hover:from-purple-800 hover:to-indigo-800 border border-purple-500/30 rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-4 overflow-hidden disabled:opacity-50 disabled:grayscale"
                     >
                         <div className="absolute inset-0 bg-[url('/images/pattern-money.png')] opacity-10 mix-blend-overlay"></div>
@@ -684,7 +684,7 @@ export const ActiveCardZone = ({
                     <div className="text-3xl mb-2">❤️</div>
                     <h2 className="text-sm font-bold text-white mb-2">Благотворительность</h2>
                     <p className="text-slate-400 text-[10px] mb-4 leading-relaxed">
-                        Пожертвуйте <span className="text-pink-400 font-bold">{me.isFastTrack ? '$100k' : '10%'}</span> <br />
+                        Пожертвуйте <span className="text-pink-400 font-bold">{me?.isFastTrack ? '$100k' : '10%'}</span> <br />
                         для бонусов на 3 хода.
                     </p>
                     <div className="flex gap-2 w-full mt-auto">
@@ -696,7 +696,7 @@ export const ActiveCardZone = ({
                             }}
                             className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
                         >
-                            Да (${(Math.max(0, me.income * 0.1)).toLocaleString()})
+                            Да (${(Math.max(0, (me?.income || 0) * 0.1)).toLocaleString()})
                         </button>
                         <button
                             onClick={(e) => {

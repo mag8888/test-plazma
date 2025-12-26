@@ -65,6 +65,7 @@ import { FastTrackInfoModal } from './FastTrackInfoModal';
 import { AdminActionModal, AdminActionType } from './AdminActionModal';
 import { ActiveCardZone } from './ActiveCardZone';
 import { PlayerCard } from './PlayerCard';
+import { SquareInfoModal } from './SquareInfoModal';
 
 // Helper for Cash Animation
 const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
@@ -671,13 +672,13 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
     const handleEnterFastTrack = () => {
         if (!me) return;
-        socket.emit('enter_fast_track', { roomId, userId: me.id });
+        socket.emit('enter_fast_track', { roomId, userId: me?.id });
     };
 
     const handleEndGame = () => {
         if (!me) return;
         if (window.confirm("Вы уверены, что хотите принудительно завершить игру и подсчитать рейтинги?")) {
-            socket.emit('host_end_game', { roomId, userId: me.userId || me.id });
+            socket.emit('host_end_game', { roomId, userId: me?.userId || me?.id });
         }
     };
 
@@ -690,7 +691,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     const handleForceSkip = () => {
         if (!me) return;
         if (!window.confirm("Принудительно завершить ход текущего игрока?")) return;
-        socket.emit('host_skip_turn', { roomId, userId: me.userId || me.id });
+        socket.emit('host_skip_turn', { roomId, userId: me?.userId || me?.id });
     };
 
     // Correctly identify local player
@@ -817,7 +818,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                         <div className="space-y-3">
                             {/* GIFT ACTION (Available to everyone) */}
-                            {selectedPlayerForMenu.id !== me.id ? (
+                            {selectedPlayerForMenu.id !== me?.id ? (
                                 <button
                                     onClick={() => {
                                         setBankRecipientId(selectedPlayerForMenu.id);
@@ -833,7 +834,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             )}
 
                             {/* HOST ACTIONS */}
-                            {isHost && selectedPlayerForMenu.id !== me.id && (
+                            {isHost && selectedPlayerForMenu.id !== me?.id && (
                                 <>
                                     <div className="h-px bg-slate-700/50 my-2"></div>
                                     <div className="grid grid-cols-2 gap-3">
@@ -1293,13 +1294,6 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             </div>
                         </div>
 
-                        {/* Menu Button (Integrated) */}
-                        <button
-                            onClick={() => setShowMenuModal(true)}
-                            className="bg-slate-800 hover:bg-slate-700 text-slate-300 py-3 rounded-xl font-bold text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-colors mt-auto border border-slate-700"
-                        >
-                            <span>⚙️</span> Меню
-                        </button>
                     </div>
 
                     {/* 2. ASSETS PANEL (BOTTOM, Fills Remaining) */}
@@ -1345,6 +1339,15 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             </div>
                         )}
                     </div>
+
+                    {/* 3. MENU BUTTON (Fixed Bottom Sidebar) */}
+                    <button
+                        onClick={() => setShowMenuModal(true)}
+                        className="bg-[#1e293b] hover:bg-slate-700 text-slate-300 py-4 rounded-3xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-all border border-slate-700/50 shadow-lg hover:shadow-xl hover:border-slate-600 group shrink-0"
+                    >
+                        <span className="text-xl group-hover:rotate-90 transition-transform duration-500">⚙️</span>
+                        <span>Меню Игры</span>
+                    </button>
 
                 </div>
 
@@ -1444,7 +1447,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                     {/* 3. PLAYERS GRID (Small Cards) */}
                     <div className="grid grid-cols-2 gap-2 shrink-0 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
-                        {state.players.filter((p: any) => p.id !== me.id).map((p: any) => {
+                        {state.players.filter((p: any) => p.id !== me?.id).map((p: any) => {
                             const isCurrent = p.id === currentPlayer.id;
                             return (
                                 <div
@@ -1697,6 +1700,15 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     />
                 )
             }
+
+            {squareInfo && (
+                <SquareInfoModal
+                    square={squareInfo}
+                    onClose={() => setSquareInfo(null)}
+                    player={me}
+                    roomId={roomId}
+                />
+            )}
 
             {
                 adminAction && (
