@@ -890,6 +890,25 @@ export class BotService {
                 await this.handleKickPlayer(chatId, gameId, targetUserId);
             } else if (data === 'start_transfer') {
                 this.handleTransferStart(chatId);
+            } else if (data.startsWith('broadcast_category_')) {
+                // Category selection
+                const category = data.replace('broadcast_category_', '');
+                await this.executeBroadcast(chatId, category);
+            } else if (data.startsWith('broadcast_confirm_')) {
+                // Confirm and send
+                const category = data.replace('broadcast_confirm_', '');
+                this.bot?.editMessageText("📤 Отправка...", {
+                    chat_id: chatId,
+                    message_id: query.message?.message_id
+                });
+                await this.sendBroadcast(chatId);
+            } else if (data === 'broadcast_cancel') {
+                // Cancel broadcast
+                this.broadcastStates.delete(chatId);
+                this.bot?.editMessageText("❌ Рассылка отменена.", {
+                    chat_id: chatId,
+                    message_id: query.message?.message_id
+                });
             } else if (data.startsWith('announce_game_')) {
                 const gameId = data.replace('announce_game_', '');
                 this.masterStates.set(chatId, { state: 'WAITING_ANNOUNCEMENT_TEXT', gameId: gameId });
@@ -2059,6 +2078,138 @@ export class BotService {
             }
         } catch (e) {
             console.error("Reminder Error:", e);
+        }
+    }
+
+    // Broadcast Helper Methods
+    showCategorySelection(chatId: number) {
+        this.bot?.sendMessage(chatId, "📢 **Выберите категорию получателей:**", {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '📢 Всем пользователям', callback_data: 'broadcast_category_all' }],
+                    [{ text: '🎭 С аватарами', callback_data: 'broadcast_category_avatars' }],
+                    [{ text: '💰 С балансом', callback_data: 'broadcast_category_balance' }],
+                    [{ text: '✅ Выбрать вручную', callback_data: 'broadcast_category_custom' }]
+                ]
+            }
+        });
+    }
+
+    async executeBroadcast(chatId: number, category: string) {
+        const state = this.broadcastStates.get(chatId);
+        if (!state || !state.text) {
+            this.bot?.sendMessage(chatId, "❌ Ошибка: текст не найден.");
+            return;
+        }
+
+        try {
+            const { UserModel } = await import('../models/user.model');
+            let users: any[] = [];
+
+            // Filter users by category
+            switch (category) {
+                case 'all':
+                    users = await UserModel.find({});
+                    break;
+                case 'avatars':
+                    // Users with avatars (has partnership balance or avatar data)
+                    users = await UserModel.find({
+                        $or: [
+                            { hasAvatar: true },
+                            { partnershipBalance: { $gt: 0 } }
+                        ]
+                    });
+                    break;
+                case 'balance':
+                    // Users with any balance
+                    users = await UserModel.find({
+                        $or: [
+                            { referralBalance: { $gt: 0 } },
+                            { balanceRed: { $gt: 0 } }
+                        ]
+                    });
+                    break;
+                case 'custom':
+                    // TODO: Implement custom selection UI
+                    this.bot?.sendMessage(chatId, "⚠️ Ручной выбор пока не реализован. Используйте другие категории.");
+                    return;
+                default:
+                    this.bot?.sendMessage(chatId, "❌ Неизвестная категория.");
+                    return;
+            }
+
+            // Confirm before sending
+            this.bot?.sendMessage(chatId, `📊 Найдено получателей: ${users.length}\\n\\nОтправить рассылку?`, {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: '✅ Отправить', callback_data: `broadcast_confirm_${category}` },
+                            { text: '❌ Отменить', callback_data: 'broadcast_cancel' }
+                        ]
+                    ]
+                }
+            });
+
+            // Store users temporarily
+            state.category = category as any;
+            state.selectedUsers = users.map(u => u._id.toString());
+
+        } catch (e) {
+            console.error("Broadcast error:", e);
+            this.bot?.sendMessage(chatId, "❌ Ошибка при подготовке рассылки.");
+        }
+    }
+
+    async sendBroadcast(chatId: number) {
+        const state = this.broadcastStates.get(chatId);
+        if (!state || !state.text || !state.selectedUsers) {
+            this.bot?.sendMessage(chatId, "❌ Ошибка: данные рассылки не найдены.");
+            return;
+        }
+
+        try {
+            const { UserModel } = await import('../models/user.model');
+            let sent = 0;
+            let failed = 0;
+
+            this.bot?.sendMessage(chatId, "📤 Отправка началась...");
+
+            for (const userId of state.selectedUsers) {
+                try {
+                    const user = await UserModel.findById(userId);
+                    if (!user || !user.telegram_id) {
+                        failed++;
+                        continue;
+                    }
+
+                    // Send with photo if present
+                    if (state.photoId) {
+                        await this.bot?.sendPhoto(user.telegram_id, state.photoId, {
+                            caption: state.text,
+                            parse_mode: 'Markdown'
+                        });
+                    } else {
+                        await this.bot?.sendMessage(user.telegram_id, state.text, {
+                            parse_mode: 'Markdown'
+                        });
+                    }
+
+                    sent++;
+                    // Small delay to avoid rate limits
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                } catch (e) {
+                    failed++;
+                    console.error(`Failed to send to ${userId}:`, e);
+                }
+            }
+
+            this.bot?.sendMessage(chatId, `✅ **Рассылка завершена!**\\n\\n📤 Отправлено: ${sent}\\n❌ Ошибок: ${failed}`);
+            this.broadcastStates.delete(chatId);
+
+        } catch (e) {
+            console.error("Send broadcast error:", e);
+            this.bot?.sendMessage(chatId, "❌ Ошибка при отправке рассылки.");
         }
     }
 }
