@@ -106,10 +106,10 @@ const FeedCardItem = ({
     // Ensure default is reasonable
     useEffect(() => {
         // Safe to run effect here as it's top level
-        if (step === 'TRANSACTION' && transactionMode === 'BUY' && isStock && stockQty === 1 && maxVal > 1) {
+        if (viewMode === 'TRANSACTION' && transactionMode === 'BUY' && isStock && stockQty === 1 && maxVal > 1) {
             // Optional: Don't auto-set, let user decide
         }
-    }, [step, transactionMode, isStock, stockQty, maxVal]);
+    }, [viewMode, transactionMode, isStock, stockQty, maxVal]);
 
     // Generate card number if not present
     const getCardNumber = () => {
