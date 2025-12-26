@@ -191,7 +191,7 @@ export default function CardEditor({ secret }: CardEditorProps) {
                                 const data = await res.json();
                                 if (data.success) {
                                     alert(`Cards reloaded!\nSmall: ${data.counts.small}\nBig: ${data.counts.big}\nMarket: ${data.counts.market}\nExpense: ${data.counts.expense}`);
-                                    fetchCards(selectedType); // Refresh current view
+                                    fetchCards(selectedType);
                                 } else {
                                     alert('Failed to reload cards: ' + data.error);
                                 }
@@ -203,6 +203,30 @@ export default function CardEditor({ secret }: CardEditorProps) {
                         className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition"
                     >
                         <RotateCcw size={18} /> Reload from DB
+                    </button>
+                    <button
+                        onClick={async () => {
+                            if (!confirm('⚠️ RUN MIGRATION? This will DELETE all cards and re-insert 148 cards from code. Continue?')) return;
+                            try {
+                                const res = await fetch('/api/admin/migrate-cards', {
+                                    method: 'POST',
+                                    headers: { 'x-admin-secret': secret }
+                                });
+                                const data = await res.json();
+                                if (data.success) {
+                                    alert(`Migration completed!\nDeleted: ${data.counts.deleted}\nInserted: ${data.counts.inserted}\n\nBreakdown:\nExpense: ${data.counts.breakdown.expense}\nSmall: ${data.counts.breakdown.small}\nBig: ${data.counts.breakdown.big}\nMarket: ${data.counts.breakdown.market}`);
+                                    fetchCards(selectedType);
+                                } else {
+                                    alert('Migration failed: ' + data.error);
+                                }
+                            } catch (e) {
+                                console.error('Migration failed:', e);
+                                alert('Network error during migration');
+                            }
+                        }}
+                        className="bg-red-600 hover:bg-red-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition"
+                    >
+                        <RotateCcw size={18} /> Run Migration
                     </button>
                 </div>
             </div>

@@ -1172,7 +1172,7 @@ const bootstrap = async () => {
         // Admin endpoint to reload cards (useful after migration)
         app.post('/api/admin/reload-cards', async (req, res) => {
             try {
-                const { DbCardManager } = await import('./game/db.card.manager'); // Ensure DbCardManager is available
+                const { DbCardManager } = await import('./game/db.card.manager');
                 await DbCardManager.getInstance().reload();
                 const templates = DbCardManager.getInstance().getTemplates();
                 res.json({
@@ -1186,6 +1186,60 @@ const bootstrap = async () => {
                     }
                 });
             } catch (error: any) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+
+        // Admin endpoint to run migration on production
+        app.post('/api/admin/migrate-cards', async (req, res) => {
+            try {
+                const { EXPENSE_CARDS, SMALL_DEALS, BIG_DEALS, MARKET_CARDS } = await import('./game/card.manager');
+                const { CardModel } = await import('./models/card.model');
+
+                // Delete existing cards
+                const deleted = await CardModel.deleteMany({});
+                console.log(`🗑️ Deleted ${deleted.deletedCount} existing cards`);
+
+                // Prepare cards with unique IDs
+                const expenseCards = EXPENSE_CARDS.map((c, idx) => ({ ...c, displayId: idx + 1 }));
+                const smallDeals = SMALL_DEALS.map((c, idx) => ({
+                    ...c,
+                    id: c.id.startsWith('DEAL_SMALL') ? `${c.id}_${idx}_${Date.now()}` : c.id,
+                    displayId: idx + 1
+                }));
+                const bigDeals = BIG_DEALS.map((c, idx) => ({
+                    ...c,
+                    id: c.id.startsWith('DEAL_BIG') ? `${c.id}_${idx}_${Date.now()}` : c.id,
+                    displayId: idx + 1
+                }));
+                const marketCards = MARKET_CARDS.map((c, idx) => ({ ...c, displayId: idx + 1 }));
+
+                const allCards = [...expenseCards, ...smallDeals, ...bigDeals, ...marketCards];
+
+                // Insert all cards
+                const inserted = await CardModel.insertMany(allCards);
+                console.log(`✅ Inserted ${inserted.length} cards`);
+
+                // Reload DbCardManager
+                const { DbCardManager } = await import('./game/db.card.manager');
+                await DbCardManager.getInstance().reload();
+
+                res.json({
+                    success: true,
+                    message: 'Migration completed successfully',
+                    counts: {
+                        deleted: deleted.deletedCount,
+                        inserted: inserted.length,
+                        breakdown: {
+                            expense: expenseCards.length,
+                            small: smallDeals.length,
+                            big: bigDeals.length,
+                            market: marketCards.length
+                        }
+                    }
+                });
+            } catch (error: any) {
+                console.error('Migration failed:', error);
                 res.status(500).json({ success: false, error: error.message });
             }
         });
