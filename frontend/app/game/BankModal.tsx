@@ -85,9 +85,9 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                                 <h2 className="text-2xl font-black text-white tracking-wide uppercase">Банк</h2>
                             </div>
                             <button
-                                onClick={() => window.location.reload()}
+                                onClick={() => socket.emit('request_state', { roomId })}
                                 className="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center text-slate-400 hover:bg-slate-700 hover:text-white transition-all active:rotate-180 duration-300"
-                                title="Обновить"
+                                title="Обновить баланс"
                             >
                                 🔄
                             </button>
