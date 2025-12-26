@@ -431,7 +431,8 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
                                             </button>
                                         </div>
                                     </div>
-                                ))
+                                );
+                            })
                         )}
                     </div>
                 )}
