@@ -71,6 +71,13 @@ export class DbCardManager {
         this.initialized = true;
     }
 
+    // Force reload cards from DB (useful after migration)
+    async reload() {
+        console.log('🔄 DbCardManager: Force reloading cards from database...');
+        this.initialized = false;
+        await this.init();
+    }
+
     private async seedCards() {
         await this.seedDeck(EXPENSE_CARDS, 'EXPENSE');
         await this.seedDeck(SMALL_DEALS, 'DEAL_SMALL');

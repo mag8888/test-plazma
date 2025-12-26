@@ -1160,6 +1160,36 @@ const bootstrap = async () => {
 
         // 2. Bot Service
         try {
+            console.log('📦 Initializing Card Manager (DB Mode)...');
+            const { DbCardManager } = await import('./game/db.card.manager'); // Re-import if not already in scope
+            await DbCardManager.getInstance().init();
+            console.log('✅ Card Manager Ready (DB).');
+        } catch (err) {
+            console.error('Card Manager failed to initialize', err);
+            process.exit(1);
+        }
+
+        // Admin endpoint to reload cards (useful after migration)
+        app.post('/api/admin/reload-cards', async (req, res) => {
+            try {
+                const { DbCardManager } = await import('./game/db.card.manager'); // Ensure DbCardManager is available
+                await DbCardManager.getInstance().reload();
+                const templates = DbCardManager.getInstance().getTemplates();
+                res.json({
+                    success: true,
+                    message: 'Cards reloaded from database',
+                    counts: {
+                        small: templates.smallDeals.length,
+                        big: templates.bigDeals.length,
+                        market: templates.marketDeck.length,
+                        expense: templates.expenseDeck.length
+                    }
+                });
+            } catch (error: any) {
+                res.status(500).json({ success: false, error: error.message });
+            }
+        });
+        try {
             console.log('Initializing Bot Service...');
             botService = new BotService();
             botStatus = 'active';
