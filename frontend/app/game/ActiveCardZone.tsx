@@ -362,7 +362,7 @@ const FeedCardItem = ({
                     // Transaction View inside Card
                     <div className="bg-slate-900/40 p-1.5 rounded-lg border border-white/5 flex-1 flex flex-col">
                         <div className="flex items-center justify-between mb-1 pb-1 border-b border-white/5 h-6">
-                            <button onClick={() => setViewMode('DETAILS')} className="text-slate-400 hover:text-white text-[9px] uppercase font-bold flex items-center gap-1 h-full px-1 hover:bg-white/5 rounded">← Назад</button>
+                            <button onClick={(e) => { e.stopPropagation(); setViewMode('DETAILS'); }} className="text-slate-400 hover:text-white text-[9px] uppercase font-bold flex items-center gap-1 h-full px-1 hover:bg-white/5 rounded">← Назад</button>
                             <div className={`text-[9px] font-bold uppercase ${transactionMode === 'BUY' ? 'text-green-400' : 'text-blue-400'}`}>
                                 {transactionMode === 'BUY' ? 'Покупка' : 'Продажа'}
                             </div>
@@ -375,7 +375,7 @@ const FeedCardItem = ({
                                 <>
                                     <div className="flex items-center gap-2 justify-between">
                                         <button
-                                            onClick={() => setStockQty(Math.max(1, stockQty - 1))}
+                                            onClick={(e) => { e.stopPropagation(); setStockQty(Math.max(1, stockQty - 1)); }}
                                             className="w-8 h-8 bg-slate-700 hover:bg-slate-600 rounded-lg flex items-center justify-center text-lg font-bold transition-colors"
                                         >-</button>
 
@@ -383,6 +383,7 @@ const FeedCardItem = ({
                                             <input
                                                 type="number"
                                                 value={stockQty}
+                                                onClick={(e) => e.stopPropagation()}
                                                 onChange={(e) => {
                                                     const val = Number(e.target.value);
                                                     if (val >= 1 && val <= maxVal) setStockQty(val);
@@ -393,7 +394,7 @@ const FeedCardItem = ({
                                         </div>
 
                                         <button
-                                            onClick={() => setStockQty(Math.min(maxVal, stockQty + 1))}
+                                            onClick={(e) => { e.stopPropagation(); setStockQty(Math.min(maxVal, stockQty + 1)); }}
                                             className="w-8 h-8 bg-slate-700 hover:bg-slate-600 rounded-lg flex items-center justify-center text-lg font-bold transition-colors"
                                         >+</button>
                                     </div>
@@ -405,6 +406,7 @@ const FeedCardItem = ({
                                                 min="1"
                                                 max={maxVal}
                                                 value={stockQty}
+                                                onClick={(e) => e.stopPropagation()}
                                                 onChange={(e) => setStockQty(Number(e.target.value))}
                                                 className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-500"
                                             />
@@ -442,13 +444,17 @@ const FeedCardItem = ({
                         </div>
 
                         <button
-                            onClick={() => {
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                console.log(`[Transaction] Button Clicked. Mode: ${transactionMode}, Qty: ${stockQty}`);
                                 if (transactionMode === 'BUY') {
                                     if (loanNeeded > 0) {
+                                        console.log('[Transaction] Loan Needed');
                                         const amount = Math.ceil(loanNeeded / 1000) * 1000;
                                         setPendingLoan({ amount, quantity: stockQty });
                                         setShowLoanConfirm(true);
                                     } else {
+                                        console.log('[Transaction] Direct Buy');
                                         socket.emit('buy_asset', { roomId, quantity: stockQty });
                                         // Switch to RESULT view for feedback
                                         setViewMode('RESULT');
@@ -462,6 +468,7 @@ const FeedCardItem = ({
                                     }
                                 } else {
                                     // MARKET SELL or STOCK SELL
+                                    console.log('[Transaction] Selling');
                                     if (card.type === 'MARKET') {
                                         socket.emit('sell_asset', { roomId });
                                     } else {
