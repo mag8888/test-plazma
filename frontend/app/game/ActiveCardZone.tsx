@@ -530,10 +530,9 @@ const FeedCardItem = ({
                                 }
                             }}
                             className={`w-full py-2.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg transition-transform active:scale-[0.98]
-                                ${loanNeeded > 0 ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white' : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white'}
-                            `}
+                                ${transactionMode === 'SELL' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white' : loanNeeded > 0 ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white' : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white'}\n                            `}
                         >
-                            {loanNeeded > 0 ? '💰 Кредит и Купить' : (transactionMode === 'SELL' ? '💵 Продать' : '✅ Подтвердить')}
+                            {transactionMode === 'SELL' ? '💵 Продать' : loanNeeded > 0 ? '💰 Кредит и Купить' : '✅ Подтвердить'}
                         </button>
                     </div>
                 )}

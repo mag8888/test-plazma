@@ -1513,6 +1513,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 socket={socket}
                                 messages={state.chat || []}
                                 currentUser={me}
+                                gameLogs={state.log || []}
                                 className="w-full h-full"
                             />
                         </div>

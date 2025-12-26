@@ -15,10 +15,11 @@ interface TextChatProps {
     socket: Socket | null;
     messages: ChatMessage[];
     currentUser: any;
+    gameLogs?: string[];
     className?: string;
 }
 
-export const TextChat: React.FC<TextChatProps> = ({ roomId, socket, messages = [], currentUser, className = '' }) => {
+export const TextChat: React.FC<TextChatProps> = ({ roomId, socket, messages = [], currentUser, gameLogs = [], className = '' }) => {
     const [newMessage, setNewMessage] = useState('');
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
@@ -90,6 +91,21 @@ export const TextChat: React.FC<TextChatProps> = ({ roomId, socket, messages = [
                         </div>
                     );
                 })}
+
+                {/* Game Event Logs */}
+                {gameLogs.slice(-10).map((logEntry: string, idx: number) => (
+                    <div key={`log-${idx}`} className="flex gap-2 items-start opacity-70">
+                        <div className="flex-shrink-0 w-6 h-6 rounded-full bg-green-900/30 border border-green-700/50 flex items-center justify-center text-xs">
+                            🎮
+                        </div>
+                        <div className="flex-1">
+                            <div className="px-3 py-1.5 rounded-xl text-xs bg-slate-800/50 text-green-400/90 border border-green-900/30">
+                                {logEntry}
+                            </div>
+                            <div className="text-[8px] text-slate-600 mt-0.5 px-1">Игровое событие</div>
+                        </div>
+                    </div>
+                ))}
                 <div ref={messagesEndRef} />
             </div>
 
