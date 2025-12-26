@@ -755,7 +755,16 @@ export const ActiveCardZone = ({
         ? [{ card: state.currentCard || previewCard, source: 'CURRENT', id: (state.currentCard || previewCard).id || 'curr' }]
         : [];
 
-    const feedItems = [...currentCard, ...marketCards].filter((item: any) => !locallyDismissedIds.includes(item.id));
+    const feedItems = [...currentCard, ...marketCards]
+        .filter((item: any) => !locallyDismissedIds.includes(item.id))
+        .sort((a, b) => {
+            // Prioritize MY owned cards (Deal Transfer recipients)
+            const amIOwnerA = a.sourcePlayerId === me?.id;
+            const amIOwnerB = b.sourcePlayerId === me?.id;
+            if (amIOwnerA && !amIOwnerB) return -1;
+            if (!amIOwnerA && amIOwnerB) return 1;
+            return 0;
+        });
 
     if (feedItems.length === 0) {
         return null; // Clean center
