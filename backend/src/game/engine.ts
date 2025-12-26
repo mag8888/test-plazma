@@ -1042,21 +1042,28 @@ export class GameEngine {
             // Prompt for Small/Big Deal.
             this.state.phase = 'OPPORTUNITY_CHOICE';
         } else if (square.type === 'MARKET') {
-            // Draw Market Card immediately
+            // Draw Market Card
             const card = this.cardManager.drawMarket();
+            console.log('[Market] Drew market card:', card ? card.title : 'NONE AVAILABLE');
+
             if (card) {
                 this.state.currentCard = card;
-                this.addLog(`🏪 MARKET: ${card.title} - ${card.description}`);
-
-                // Add to Persistent Active Cards (2 Mins)
+                this.state.phase = 'MARKET_EFFECT';
                 if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
-                this.state.activeMarketCards.push({
-                    id: uuidv4(),
-                    card: card,
-                    expiresAt: Date.now() + 2 * 60 * 1000,
-                    sourcePlayerId: player.id
-                });
 
+                const activeCard = {
+                    id: `market_${Date.now()}`,
+                    card,
+                    sourcePlayerId: player.id,
+                    expiresAt: Date.now() + 60000 // 60s
+                };
+
+                this.state.activeMarketCards.push(activeCard);
+                console.log('[Market] Added to activeMarketCards:', {
+                    cardTitle: card.title,
+                    expiresAt: new Date(activeCard.expiresAt).toISOString(),
+                    totalActiveCards: this.state.activeMarketCards.length
+                });
                 this.state.phase = 'ACTION';
             } else {
                 this.addLog(`🏪 MARKET: No cards left.`);
@@ -1309,10 +1316,21 @@ export class GameEngine {
     }
 
     transferAsset(fromPlayerId: string, toPlayerId: string, assetIndex: number, quantity: number = 1) {
+        console.log('[TransferAsset] Called with:', { fromPlayerId, toPlayerId, assetIndex, quantity });
+
         const fromPlayer = this.state.players.find(p => p.id === fromPlayerId);
         const toPlayer = this.state.players.find(p => p.id === toPlayerId);
 
-        if (!fromPlayer || !toPlayer) return;
+        console.log('[TransferAsset] Found players:', {
+            fromPlayer: fromPlayer ? `${fromPlayer.name} (${fromPlayer.id})` : 'NOT FOUND',
+            toPlayer: toPlayer ? `${toPlayer.name} (${toPlayer.id})` : 'NOT FOUND',
+            allPlayerIds: this.state.players.map(p => ({ id: p.id, name: p.name }))
+        });
+
+        if (!fromPlayer || !toPlayer) {
+            console.error('[TransferAsset] Player not found! Aborting.');
+            return;
+        }
         if (assetIndex < 0 || assetIndex >= fromPlayer.assets.length) return;
 
         const asset = fromPlayer.assets[assetIndex];
