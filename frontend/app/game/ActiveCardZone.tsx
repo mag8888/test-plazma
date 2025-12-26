@@ -717,18 +717,22 @@ export const ActiveCardZone = ({
                                     isMyTurn={isMyTurn}
                                     onDismiss={() => {
                                         console.log('Dismissing card:', item.id, item.source);
-                                        // CRITICAL FIX: Only dismiss globally if it's My Turn and MY Active Card event.
-                                        // For Market/Feed cards, ALWAYS dismiss locally to avoid closing for others.
-                                        if (item.source === 'CURRENT') {
-                                            if (previewCard && !state.currentCard) {
-                                                if (onDismissPreview) onDismissPreview();
-                                            } else {
-                                                socket.emit('end_turn', { roomId });
-                                            }
-                                        } else {
-                                            // Local Dismissal Only
-                                            setLocallyDismissedIds(prev => [...prev, item.id]);
+
+                                        // 1. Preview Mode (Local)
+                                        if (previewCard && !state.currentCard && item.source === 'CURRENT') {
+                                            if (onDismissPreview) onDismissPreview();
+                                            return;
                                         }
+
+                                        // 2. Active Player Logic (Global - Ends Turn)
+                                        if (item.source === 'CURRENT' && isMyTurn) {
+                                            socket.emit('end_turn', { roomId });
+                                            return;
+                                        }
+
+                                        // 3. Passive/Observer Mode (Local Only)
+                                        // Applies to Market Cards OR Active Card when not my turn (viewing others)
+                                        setLocallyDismissedIds(prev => [...prev, item.id]);
                                     }}
                                 />
                             </div>
