@@ -280,140 +280,139 @@ export default function CardEditor({ secret }: CardEditorProps) {
                                 </button>
                             </div>
                         </div>
+                    ))}
+                </div>
+            )
+            }
+
+            {/* Edit/Create Modal */}
+            {
+                editingCard && (
+                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
+                        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-2xl space-y-4 my-8">
+                            <h2 className="text-2xl font-bold text-white">{isCreating ? 'Create New Card' : 'Edit Card'}</h2>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Card Number *</label>
+                                    <input
+                                        type="text"
+                                        placeholder="e.g. SD-001, BD-025"
+                                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                                        value={editingCard.cardNumber || ''}
+                                        onChange={(e) => setEditingCard({ ...editingCard, cardNumber: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Cost</label>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                                        value={editingCard.cost || ''}
+                                        onChange={(e) => setEditingCard({ ...editingCard, cost: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Title</label>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                                        value={editingCard.title}
+                                        onChange={(e) => setEditingCard({ ...editingCard, title: e.target.value })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Current Value</label>
+                                    <input
+                                        type="number"
+                                        placeholder="Current price/state"
+                                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                                        value={editingCard.currentValue || ''}
+                                        onChange={(e) => setEditingCard({ ...editingCard, currentValue: Number(e.target.value) })}
+                                    />
+                                </div>
+                            </div>
+
+                            <div>
+                                <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Description</label>
+                                <textarea
+                                    className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none h-24 resize-none"
+                                    value={editingCard.description}
+                                    onChange={(e) => setEditingCard({ ...editingCard, description: e.target.value })}
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Cashflow</label>
+                                    <input
+                                        type="number"
+                                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                                        value={editingCard.cashflow || ''}
+                                        onChange={(e) => setEditingCard({ ...editingCard, cashflow: Number(e.target.value) })}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Symbol</label>
+                                    <input
+                                        type="text"
+                                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                                        value={editingCard.symbol || ''}
+                                        onChange={(e) => setEditingCard({ ...editingCard, symbol: e.target.value })}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Market Card Specific Fields */}
+                            {selectedType === 'market' && (
+                                <div className="grid grid-cols-2 gap-4 p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl">
+                                    <div>
+                                        <label className="text-xs text-purple-400 uppercase font-bold block mb-2">Target Card Number</label>
+                                        <input
+                                            type="text"
+                                            placeholder="e.g. SD-001"
+                                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-purple-500/50 focus:border-purple-400 outline-none"
+                                            value={editingCard.targetCardNumber || ''}
+                                            onChange={(e) => setEditingCard({ ...editingCard, targetCardNumber: e.target.value })}
+                                        />
+                                        <p className="text-xs text-purple-400 mt-1">Which card does this market card affect?</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs text-purple-400 uppercase font-bold block mb-2">Offer Price</label>
+                                        <input
+                                            type="number"
+                                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-purple-500/50 focus:border-purple-400 outline-none"
+                                            value={editingCard.offerPrice || ''}
+                                            onChange={(e) => setEditingCard({ ...editingCard, offerPrice: Number(e.target.value) })}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="flex gap-2 justify-end pt-4">
+                                <button
+                                    onClick={() => {
+                                        setEditingCard(null);
+                                        setIsCreating(false);
+                                    }}
+                                    className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-xl font-bold transition"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => handleSave(editingCard)}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold transition"
+                                >
+                                    {isCreating ? 'Create' : 'Save'}
+                                </button>
+                            </div>
                         </div>
-            ))}
-        </div>
-    )
-}
-
-{/* Edit/Create Modal */ }
-{
-    editingCard && (
-        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
-            <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-2xl space-y-4 my-8">
-                <h2 className="text-2xl font-bold text-white">{isCreating ? 'Create New Card' : 'Edit Card'}</h2>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Card Number *</label>
-                        <input
-                            type="text"
-                            placeholder="e.g. SD-001, BD-025"
-                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                            value={editingCard.cardNumber || ''}
-                            onChange={(e) => setEditingCard({ ...editingCard, cardNumber: e.target.value })}
-                        />
                     </div>
-                    <div>
-                        <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Cost</label>
-                        <input
-                            type="number"
-                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                            value={editingCard.cost || ''}
-                            onChange={(e) => setEditingCard({ ...editingCard, cost: Number(e.target.value) })}
-                        />
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Title</label>
-                        <input
-                            type="text"
-                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                            value={editingCard.title}
-                            onChange={(e) => setEditingCard({ ...editingCard, title: e.target.value })}
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Current Value</label>
-                        <input
-                            type="number"
-                            placeholder="Current price/state"
-                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                            value={editingCard.currentValue || ''}
-                            onChange={(e) => setEditingCard({ ...editingCard, currentValue: Number(e.target.value) })}
-                        />
-                    </div>
-                </div>
-
-                <div>
-                    <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Description</label>
-                    <textarea
-                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none h-24 resize-none"
-                        value={editingCard.description}
-                        onChange={(e) => setEditingCard({ ...editingCard, description: e.target.value })}
-                    />
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Cashflow</label>
-                        <input
-                            type="number"
-                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                            value={editingCard.cashflow || ''}
-                            onChange={(e) => setEditingCard({ ...editingCard, cashflow: Number(e.target.value) })}
-                        />
-                    </div>
-                    <div>
-                        <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Symbol</label>
-                        <input
-                            type="text"
-                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                            value={editingCard.symbol || ''}
-                            onChange={(e) => setEditingCard({ ...editingCard, symbol: e.target.value })}
-                        />
-                    </div>
-                </div>
-
-                {/* Market Card Specific Fields */}
-                {selectedType === 'market' && (
-                    <div className="grid grid-cols-2 gap-4 p-4 bg-purple-900/20 border border-purple-500/30 rounded-xl">
-                        <div>
-                            <label className="text-xs text-purple-400 uppercase font-bold block mb-2">Target Card Number</label>
-                            <input
-                                type="text"
-                                placeholder="e.g. SD-001"
-                                className="w-full bg-slate-950 text-white p-3 rounded-xl border border-purple-500/50 focus:border-purple-400 outline-none"
-                                value={editingCard.targetCardNumber || ''}
-                                onChange={(e) => setEditingCard({ ...editingCard, targetCardNumber: e.target.value })}
-                            />
-                            <p className="text-xs text-purple-400 mt-1">Which card does this market card affect?</p>
-                        </div>
-                        <div>
-                            <label className="text-xs text-purple-400 uppercase font-bold block mb-2">Offer Price</label>
-                            <input
-                                type="number"
-                                className="w-full bg-slate-950 text-white p-3 rounded-xl border border-purple-500/50 focus:border-purple-400 outline-none"
-                                value={editingCard.offerPrice || ''}
-                                onChange={(e) => setEditingCard({ ...editingCard, offerPrice: Number(e.target.value) })}
-                            />
-                        </div>
-                    </div>
-                )}
-
-                <div className="flex gap-2 justify-end pt-4">
-                    <button
-                        onClick={() => {
-                            setEditingCard(null);
-                            setIsCreating(false);
-                        }}
-                        className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-3 rounded-xl font-bold transition"
-                    >
-                        Cancel
-                    </button>
-                    <button
-                        onClick={() => handleSave(editingCard)}
-                        className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-xl font-bold transition"
-                    >
-                        {isCreating ? 'Create' : 'Save'}
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
-}
+                )
+            }
         </div >
     );
 }
