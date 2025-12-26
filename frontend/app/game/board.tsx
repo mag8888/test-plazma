@@ -1350,7 +1350,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                 {/* CENTER BOARD (Strict Aspect Square) */}
                 <div className={`${forceLandscape ? 'w-auto h-full' : 'w-full lg:max-w-none lg:w-auto lg:h-full'} aspect-square flex-shrink-0 relative bg-[#0f172a] overflow-hidden flex flex-col lg:rounded-3xl lg:border border-slate-800/50 shadow-2xl max-h-full`}>
-                    <div className="flex-1 relative overflow-hidden p-4 flex items-center justify-center">
+                    <div className="flex-1 relative overflow-hidden p-0 lg:p-4 flex items-center justify-center">
                         <BoardVisualizer
                             board={state.board}
                             players={state.players}
@@ -1503,86 +1503,127 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
 
             {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */}
-            <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 bg-slate-900/90 backdrop-blur-xl border-t border-slate-700/50 z-50 flex gap-3 pb-8">
-                {/* Roll Logic */}
-                {me.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
-                    <div className="flex gap-2 flex-1 h-16">
-                        <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                            <span className="text-xl">🎲</span>
-                            <span>1</span>
-                        </button>
-                        <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                            <span className="text-xl">🎲🎲</span>
-                            <span>2</span>
-                        </button>
-                        {me.isFastTrack && (
-                            <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                <span className="text-xl">🎲×3</span>
-                                <span>3</span>
+            <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pt-2 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 z-50 flex flex-col gap-3 pb-8">
+
+                {/* 1. MINI PLAYERS STRIP */}
+                <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-1 pb-2">
+                    {state.players.map((p: any) => {
+                        const isCurrent = p.id === currentPlayer?.id;
+                        const isMe = p.id === me?.id;
+                        return (
+                            <div
+                                key={p.id}
+                                className={`flex items-center gap-2 p-1.5 pr-3 rounded-full border shrink-0 transition-all ${isCurrent
+                                    ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
+                                    : 'bg-slate-800/50 border-slate-700'
+                                    }`}
+                            >
+                                <div className="relative">
+                                    <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-700 relative">
+                                        {(p.avatar || p.photo_url) ? (
+                                            <img src={p.avatar || p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-xs font-bold">{p.name?.[0]}</div>
+                                        )}
+                                    </div>
+                                    {isCurrent && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className={`text-[10px] font-bold leading-none ${isCurrent ? 'text-white' : 'text-slate-400'}`}>
+                                        {isMe ? 'Вы' : p.name}
+                                    </span>
+                                    <span className="text-[10px] font-mono text-green-400 leading-none">
+                                        ${(p.cash || 0).toLocaleString()}
+                                    </span>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+
+                {/* 2. MAIN CONTROLS */}
+                <div className="flex gap-3">
+                    {/* Roll Logic */}
+                    {(me?.charityTurns || 0) > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+                        <div className="flex gap-2 flex-1 h-16">
+                            <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                <span className="text-xl">🎲</span>
+                                <span>1</span>
                             </button>
-                        )}
-                    </div>
-                ) : (
-                    <button
-                        onClick={() => handleRoll()}
-                        disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
-                        className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+                            <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                <span className="text-xl">🎲🎲</span>
+                                <span>2</span>
+                            </button>
+                            {(me?.isFastTrack) && (
+                                <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                    <span className="text-xl">🎲×3</span>
+                                    <span>3</span>
+                                </button>
+                            )}
+                        </div>
+                    ) : (
+                        <button
+                            onClick={() => handleRoll()}
+                            disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
+                            className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
                             ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
-                                ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
+                                    ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
+                                    : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                        >
+                            {hasRolled ? (
+                                <div className="flex items-center gap-2">
+                                    <span className="text-2xl font-black">{diceValue}</span>
+                                    <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
+                                </div>
+                            ) : (
+                                <>
+                                    <span className="text-2xl">🎲</span>
+                                    <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
+                                </>
+                            )}
+                        </button>
+                    )}
+
+                    <button
+                        onClick={handleEndTurn}
+                        disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
+                        className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+                        ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
+                                ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
                                 : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
                     >
-                        {hasRolled ? (
-                            <div className="flex items-center gap-2">
-                                <span className="text-2xl font-black">{diceValue}</span>
-                                <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
-                            </div>
-                        ) : (
-                            <>
-                                <span className="text-2xl">🎲</span>
-                                <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
-                            </>
-                        )}
+                        <span className="text-2xl">➡</span>
+                        <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
                     </button>
-                )}
 
-                <button
-                    onClick={handleEndTurn}
-                    disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
-                    className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
-                        ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
-                            ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
-                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-                >
-                    <span className="text-2xl">➡</span>
-                    <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
-                </button>
+                    {/* Fast Track Button (Mobile) */}
+                    {me?.canEnterFastTrack && isMyTurn && (
+                        <button
+                            onClick={() => setShowFastTrackModal(true)}
+                            className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
+                        >
+                            🚀
+                        </button>
+                    )}
 
-                {/* Fast Track Button (Mobile) */}
-                {me.canEnterFastTrack && isMyTurn && (
+                    {/* BANK BUTTON (Mobile) */}
                     <button
-                        onClick={() => setShowFastTrackModal(true)}
-                        className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
+                        onClick={() => setShowBank(true)}
+                        className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors"
                     >
-                        🚀
+                        🏦
                     </button>
-                )}
 
-                {/* BANK BUTTON (Mobile) */}
-                <button
-                    onClick={() => setShowBank(true)}
-                    className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors"
-                >
-                    🏦
-                </button>
-
-                {/* MENU TOGGLE */}
-                <button
-                    onClick={() => setShowMobileMenu(true)}
-                    className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center text-2xl"
-                >
-                    🍔
-                </button>
+                    {/* MENU TOGGLE */}
+                    <button
+                        onClick={() => setShowMobileMenu(true)}
+                        className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center text-2xl"
+                    >
+                        🍔
+                    </button>
+                </div>
             </div>
+
 
             {/* --- MODALS --- */}
             <BankModal
@@ -1617,7 +1658,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         onToggleOrientation={() => setForceLandscape(!forceLandscape)}
                         onCancelGame={() => {
                             if (window.confirm("Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.")) {
-                                socket.emit('delete_room', { roomId, userId: me.userId || me.id });
+                                socket.emit('delete_room', { roomId, userId: me?.userId || me?.id });
                             }
                         }}
                     />
@@ -1651,7 +1692,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         onClose={() => setTransferAssetItem(null)}
                         asset={transferAssetItem.item}
                         players={state.players}
-                        myId={me.id}
+                        myId={me?.id}
                         onTransfer={handleTransferAsset}
                     />
                 )

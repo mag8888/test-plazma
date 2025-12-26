@@ -22,12 +22,14 @@ const FeedCardItem = ({
     me,
     roomId,
     isMyTurn,
+    players,
     onDismiss
 }: {
     cardWrapper: any,
     me: any,
     roomId: string,
     isMyTurn: boolean,
+    players?: any[],
     onDismiss: () => void
 }) => {
     const card = cardWrapper.card || cardWrapper; // Handle wrapper or direct card
@@ -39,6 +41,7 @@ const FeedCardItem = ({
     const [transactionMode, setTransactionMode] = useState<'BUY' | 'SELL'>('BUY');
     const [showLoanConfirm, setShowLoanConfirm] = useState(false);
     const [pendingLoan, setPendingLoan] = useState<{ amount: number; quantity: number } | null>(null);
+    const [showTransfer, setShowTransfer] = useState(false);
 
     // MLM Detection
     const isMLM = card.title?.toLowerCase().includes('network') || card.title?.toLowerCase().includes('сетевой') || card.description?.toLowerCase().includes('partners') || card.description?.toLowerCase().includes('партнер');
@@ -87,6 +90,20 @@ const FeedCardItem = ({
     const ownedStock = me.assets?.find((a: any) => a.symbol === card.symbol);
     const ownedQty = ownedStock ? ownedStock.quantity : 0;
 
+    // Owner Logic
+    const isOwner = cardWrapper.sourcePlayerId === me?.id;
+
+    // Auto-switch to TRANSACTION if owner
+    useEffect(() => {
+        if (isOwner && viewMode === 'DETAILS') {
+            // For stock/market, maybe stay details? For Deal, go to transaction.
+            // If it's a transfer, we want them to see the BUY button immediately.
+            if (!isStock || card.type === 'DEAL' || card.type === 'DEAL_SMALL' || card.type === 'DEAL_BIG') {
+                setViewMode('TRANSACTION');
+            }
+        }
+    }, [isOwner, viewMode, isStock, card.type]);
+
     // --- CALCULATIONS FOR TRANSACTION MODE (Must be top level) ---
     const price = card.cost || card.price || 0;
 
@@ -95,6 +112,20 @@ const FeedCardItem = ({
     const availableLoan = Math.max(0, maxNewLoan - (me.loanDebt || 0));
     const maxBuyCash = Math.floor(me.cash / (price || 1));
     const maxBuyCredit = Math.floor(availableLoan / (price || 1));
+
+    // ... (keeping existing calc code if needed, but easier to just insert `isOwner` check near render)
+
+    // Skip to render part
+    // ... 
+
+    // I need to be careful with replace_file_content context.
+    // I will use a targeted replace for the boolean check first.
+
+    // Actually, let's just insert isOwner definition near other consts.
+
+    // And update the condition check.
+
+
 
     const maxVal = transactionMode === 'BUY'
         ? (isStock ? Math.max(1, maxBuyCash + maxBuyCredit) : 1)
@@ -229,7 +260,7 @@ const FeedCardItem = ({
                         </div>
 
                         {/* Actions */}
-                        {isMyTurn && (
+                        {(isMyTurn || isOwner) && (
                             <div className="flex gap-2 mt-1 w-full">
                                 {card.type === 'EXPENSE' ? (
                                     <button
@@ -297,6 +328,14 @@ const FeedCardItem = ({
                                                 Продать
                                             </button>
                                         )}
+
+                                        <button
+                                            onClick={() => setShowTransfer(true)}
+                                            className="px-3 bg-cyan-700 hover:bg-cyan-600 text-cyan-200 font-bold py-2 rounded-lg text-xl flex items-center justify-center"
+                                            title="Передать сделку"
+                                        >
+                                            ➜
+                                        </button>
 
                                         <button
                                             onClick={() => onDismiss()}
@@ -508,6 +547,43 @@ const FeedCardItem = ({
                     setPendingLoan(null);
                 }}
             />
+            {/* Transfer Deal Overlay */}
+            {showTransfer && (
+                <div className="absolute inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-center p-4 animate-in fade-in zoom-in-95">
+                    <h3 className="text-white font-bold mb-4">Выберите получателя</h3>
+                    <div className="flex flex-col gap-2 w-full max-h-[300px] overflow-y-auto px-1">
+                        {players?.filter((p: any) => p.id !== me.id && !p.isBankrupted).map((p: any) => (
+                            <button
+                                key={p.id}
+                                onClick={() => {
+                                    socket.emit('transfer_deal', { roomId, targetPlayerId: p.id, cardId: card.id });
+                                    setShowTransfer(false);
+                                    onDismiss();
+                                }}
+                                className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl hover:bg-slate-700 transition active:scale-95 border border-slate-700 hover:border-blue-500/50"
+                            >
+                                <div className="w-8 h-8 rounded-full bg-slate-600 overflow-hidden relative shrink-0">
+                                    {(p.avatar || p.photo_url) ? (
+                                        <img src={p.avatar || p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white uppercase">{p.name?.[0]}</div>
+                                    )}
+                                </div>
+                                <span className="text-white font-bold text-sm text-left truncate">{p.name}</span>
+                            </button>
+                        ))}
+                        {(!players || players.filter((p: any) => p.id !== me.id).length === 0) && (
+                            <div className="text-slate-500 text-xs text-center py-4">Нет доступных игроков</div>
+                        )}
+                    </div>
+                    <button
+                        onClick={() => setShowTransfer(false)}
+                        className="mt-6 px-6 py-3 bg-slate-800 rounded-xl text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider transition-colors border border-slate-700"
+                    >
+                        Отмена
+                    </button>
+                </div>
+            )}
         </div>
     );
 };
@@ -715,6 +791,7 @@ export const ActiveCardZone = ({
                                     me={me}
                                     roomId={roomId}
                                     isMyTurn={isMyTurn}
+                                    players={state.players}
                                     onDismiss={() => {
                                         console.log('Dismissing card:', item.id, item.source);
 

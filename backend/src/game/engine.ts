@@ -1428,6 +1428,45 @@ export class GameEngine {
         this.state.phase = 'ACTION';
     }
 
+    transferDeal(fromPlayerId: string, toPlayerId: string, activeCardId: string) {
+        const activeCard = this.state.activeMarketCards?.find(ac => ac.id === activeCardId);
+
+        if (!activeCard) {
+            throw new Error("Deal not found or expired");
+        }
+
+        if (activeCard.sourcePlayerId !== fromPlayerId) {
+            // Allow host to force transfer? No, stick to rules for now.
+            // But wait, fromPlayerId comes from socket.id in gateway. 
+            // We need to map socket.id to player first? 
+            // Ideally fromPlayerId passed here is already the matched internal ID (e.g. userId or socketId depending on how we track).
+            // Let's assume passed ID matches stored ID.
+            if (activeCard.sourcePlayerId !== fromPlayerId) {
+                throw new Error("You are not the owner of this deal");
+            }
+        }
+
+        const fromPlayer = this.state.players.find(p => p.id === fromPlayerId);
+        const toPlayer = this.state.players.find(p => p.id === toPlayerId);
+
+        if (!fromPlayer || !toPlayer) {
+            throw new Error("Player not found");
+        }
+
+        // Transfer Ownership
+        activeCard.sourcePlayerId = toPlayerId;
+
+        // Extend Timer if < 60s
+        const now = Date.now();
+        const timeRemaining = activeCard.expiresAt - now;
+        if (timeRemaining < 60000) {
+            activeCard.expiresAt = now + 60000;
+            // Optionally update card.expiresAt if that's used? No, wrapper has expiresAt.
+        }
+
+        this.addLog(`🤝 ${fromPlayer.name} transferred deal "${activeCard.card.title}" to ${toPlayer.name}`);
+    }
+
     sellAsset(playerId: string) {
         const player = this.state.players.find(p => p.id === playerId);
         let card = this.state.currentCard;

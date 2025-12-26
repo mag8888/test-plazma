@@ -708,6 +708,20 @@ export class GameGateway {
                 }
             });
 
+            socket.on('transfer_deal', ({ roomId, targetPlayerId, cardId }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.transferDeal(socket.id, targetPlayerId, cardId);
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
             // Host Grant Cash
             socket.on('host_give_cash', ({ roomId, userId, amount }) => {
                 const game = this.games.get(roomId);
