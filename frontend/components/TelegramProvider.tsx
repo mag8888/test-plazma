@@ -185,7 +185,9 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                         return;
                     } else {
                         console.error("Telegram Auth failed", res.status);
-                        setUser(app?.initDataUnsafe?.user || { id: 123456789, first_name: 'Guest (Auth Failed)', username: 'guest_fallback', balanceRed: 1000, referralBalance: 50 });
+                        console.error("Telegram Auth failed", res.status);
+                        // Do not set guest fallback. Page.tsx will handle the login form.
+                        setUser(null);
                     }
                 } else if (cachedAuthCode) {
                     // Priority 4: Cached Magic Link code (fallback)
@@ -208,7 +210,9 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                     } else {
                         console.error("Cached Magic Login failed");
                         localStorage.removeItem('moneo_auth_code');
-                        setUser({ id: 123456789, first_name: 'Guest (Bad Link)', username: 'guest_link', balanceRed: 1000, referralBalance: 50 });
+                        console.error("Cached Magic Login failed");
+                        localStorage.removeItem('moneo_auth_code');
+                        setUser(null);
                     }
                 } else {
                     // No Auth - Check if inside Telegram but no initData (weird) OR standard browser
@@ -235,7 +239,7 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
 
             } catch (e) {
                 console.error("Login failed", e);
-                setUser({ id: 999999, first_name: 'Guest (Error)', username: 'guest_err', balanceRed: 1000, referralBalance: 50 });
+                setUser(null);
             } finally {
                 setIsReady(true);
             }
