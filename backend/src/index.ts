@@ -349,32 +349,25 @@ app.post('/api/admin/broadcast', async (req, res) => {
         return res.status(403).json({ error: 'Unauthorized' });
     }
 
-    const { message, filter } = req.body;
-    if (!message) return res.status(400).json({ error: 'Message required' });
+    const { message, recipients } = req.body;
+    if (!message || !recipients || !Array.isArray(recipients)) {
+        return res.status(400).json({ error: 'Message and recipients array required' });
+    }
 
     try {
-        const { UserModel } = await import('./models/user.model');
-        const query: any = { telegram_id: { $exists: true, $ne: null } };
-        // Apply filters if any
-        if (filter) {
-            if (filter.isMaster) query.isMaster = true;
-            // Add more filters as needed
-        }
-
-        const users = await UserModel.find(query).select('telegram_id username');
         let sentCount = 0;
         let failCount = 0;
 
-        // Send in batches to avoid spam limits
-        for (const user of users) {
+        // Send to each recipient using telegram_id
+        for (const telegramId of recipients) {
             try {
-                await botService?.bot?.sendMessage(user.telegram_id, message, { parse_mode: 'Markdown' });
+                await botService?.bot?.sendMessage(telegramId, message, { parse_mode: 'Markdown' });
                 sentCount++;
                 // Tiny delay to be safe
                 await new Promise(r => setTimeout(r, 50));
             } catch (e) {
                 failCount++;
-                console.error(`Failed to send to ${user.username}:`, e);
+                console.error(`Failed to send to ${telegramId}:`, e);
             }
         }
 
