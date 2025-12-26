@@ -679,18 +679,26 @@ export class GameGateway {
                 const game = this.games.get(roomId);
                 if (game) {
                     try {
-                        // CRITICAL FIX: Find userId from socket.id
+                        // CRITICAL FIX: Find userId from socket.id for BOTH players
                         const fromPlayer = game.state.players.find(p => p.id === socket.id);
                         if (!fromPlayer || !fromPlayer.userId) {
-                            console.error(`[transfer_asset] Cannot find player with socket.id ${socket.id}`);
+                            console.error(`[transfer_asset] Cannot find FROM player with socket.id ${socket.id}`);
                             socket.emit('error', 'Player not found in game');
                             return;
                         }
 
-                        const fromUserId = fromPlayer.userId;
-                        console.log(`[transfer_asset] Transfer from ${fromUserId} (socket: ${socket.id}) to ${toPlayerId}, asset ${assetIndex}`);
+                        const toPlayer = game.state.players.find(p => p.id === toPlayerId);
+                        if (!toPlayer || !toPlayer.userId) {
+                            console.error(`[transfer_asset] Cannot find TO player with id ${toPlayerId}`);
+                            socket.emit('error', 'Recipient not found in game');
+                            return;
+                        }
 
-                        game.transferAsset(fromUserId, toPlayerId, assetIndex, quantity);
+                        const fromUserId = fromPlayer.userId;
+                        const toUserId = toPlayer.userId;
+                        console.log(`[transfer_asset] Transfer from ${fromUserId} (socket: ${socket.id}) to ${toUserId} (socket: ${toPlayerId}), asset ${assetIndex}`);
+
+                        game.transferAsset(fromUserId, toUserId, assetIndex, quantity);
                         const state = game.getState();
                         this.io.to(roomId).emit('state_updated', { state });
                         saveState(roomId, game);
