@@ -218,16 +218,18 @@ export class CardManager {
         } else {
             // Legacy / Fallback (Global ID Generation)
             let globalCounter = 1;
-            const prepareDeck = (deck: Card[]) => {
+            const prepareDeck = (deck: Card[], deckName: string) => {
                 const distinctDeck = deck.map(c => ({ ...c }));
                 distinctDeck.forEach(c => c.displayId = globalCounter++);
-                return this.shuffle(distinctDeck);
+                const shuffled = this.shuffle(distinctDeck);
+                console.log(`[CardManager] Prepared & Shuffled ${deckName}: ${shuffled.length} cards. Top: ${shuffled[0]?.title}`);
+                return shuffled;
             };
 
-            this.smallDeals = prepareDeck([...SMALL_DEALS]);
-            this.bigDeals = prepareDeck([...BIG_DEALS]);
-            this.marketDeck = prepareDeck([...MARKET_CARDS]);
-            this.expenseDeck = prepareDeck([...EXPENSE_CARDS]);
+            this.smallDeals = prepareDeck([...SMALL_DEALS], 'Small Deals');
+            this.bigDeals = prepareDeck([...BIG_DEALS], 'Big Deals');
+            this.marketDeck = prepareDeck([...MARKET_CARDS], 'Market');
+            this.expenseDeck = prepareDeck([...EXPENSE_CARDS], 'Expense');
         }
     }
 

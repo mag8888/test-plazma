@@ -24,18 +24,29 @@ const FeedCardItem = ({
     isMyTurn,
     players,
     onDismiss
+    onDismiss,
+    state // Added state prop type
 }: {
     cardWrapper: any,
     me: any,
     roomId: string,
     isMyTurn: boolean,
     players?: any[],
-    onDismiss: () => void
+    onDismiss: () => void,
+    state: any // Added state prop type
 }) => {
     const card = cardWrapper.card || cardWrapper; // Handle wrapper or direct card
     const source = cardWrapper.source || 'CURRENT'; // 'MARKET' or 'CURRENT'
+    const [locallyDismissedIds, setLocallyDismissedIds] = useState<string[]>([]); // Added this state
 
+    // Clear locally dismissed IDs when turn changes to prevent hiding recurring cards (e.g. reshuffled expenses)
+    useEffect(() => {
+        setLocallyDismissedIds([]);
+    }, [state.currentPlayerIndex, state.phase]);
+
+    // Stack Logic (Visuals)
     const [stockQty, setStockQty] = useState(1);
+    const [stackCards, setStackCards] = useState<any[]>([]);
     const [viewMode, setViewMode] = useState<'DETAILS' | 'TRANSACTION' | 'RESULT' | 'MLM_ROLL'>('DETAILS');
     const [mlmRoll, setMlmRoll] = useState<number | null>(null);
     const [transactionMode, setTransactionMode] = useState<'BUY' | 'SELL'>('BUY');
