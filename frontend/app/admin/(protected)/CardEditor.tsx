@@ -239,17 +239,23 @@ export default function CardEditor({ secret }: CardEditorProps) {
                     {cards.map(card => (
                         <div
                             key={card.id}
-                            className="bg-slate-800 rounded-xl border border-slate-700 overflow-hidden hover:border-blue-500 transition group"
-                            style={{ height: '300px' }}
-                            className="bg-slate-800 p-4 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors"
+                            className="bg-slate-800 p-4 rounded-lg border border-slate-700 hover:border-slate-600 transition-colors group"
                         >
-                            <div className="flex items-start justify-between mb-2">
-                                <div className="flex items-center gap-2">
-                                    {card.displayId && (
-                                        <span className="px-2 py-0.5 bg-blue-600/20 border border-blue-500/30 rounded text-blue-300 text-xs font-mono font-bold">
-                                            #{card.displayId}
-                                        </span>
-                                    )}
+                            <div className="p-4 h-full flex flex-col">
+                                <div className="flex-1 overflow-hidden">
+                                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                                        {card.displayId && (
+                                            <span className="bg-blue-500/20 text-blue-400 text-xs font-bold px-2 py-0.5 rounded">
+                                                №{card.displayId}
+                                            </span>
+                                        )}
+                                        {card.cardNumber && (
+                                            <span className="bg-purple-500/20 text-purple-400 text-xs font-mono px-2 py-0.5 rounded">
+                                                {card.cardNumber}
+                                            </span>
+                                        )}
+                                    </div>
+                                    <h3 className="text-white font-bold text-sm mb-2 line-clamp-2">{card.title}</h3>
                                     {card.cashflow && <div className="text-green-400">+${card.cashflow}/mo</div>}
                                     {card.offerPrice && <div className="text-blue-400">Offer: ${card.offerPrice.toLocaleString()}</div>}
                                     {card.symbol && <div className="text-purple-400">Symbol: {card.symbol}</div>}
