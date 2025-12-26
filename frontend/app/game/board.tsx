@@ -1593,11 +1593,18 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         <button
                             onClick={() => handleRoll()}
                             disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
-                            className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+                            className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg relative overflow-hidden
                             ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
                                     ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
                                     : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
                         >
+                            {/* Dice Value Overlay - Mobile */}
+                            {showDice && diceValue && (
+                                <div className="absolute inset-0 bg-emerald-600 flex items-center justify-center z-20 animate-in fade-in zoom-in duration-200">
+                                    <span className="text-4xl font-black text-white">{diceValue}</span>
+                                </div>
+                            )}
+
                             {hasRolled ? (
                                 <div className="flex items-center gap-2">
                                     <span className="text-2xl font-black">{diceValue}</span>
