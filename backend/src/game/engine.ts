@@ -1212,25 +1212,15 @@ export class GameEngine {
 
         this.state.currentCard = card;
 
-        // Persist if it offers to buy something (SELL from player perspective)
+        // Persist if it offers to buy something
         if (card.offerPrice && card.offerPrice > 0) {
-            // CRITICAL FIX: Only show market sell offer if player owns the asset
-            const playerOwnsAsset = card.symbol
-                ? player.assets.some((a: any) => a.symbol === card.symbol)
-                : player.assets.some((a: any) => a.title === card.title || a.title === card.targetTitle);
-
-            if (playerOwnsAsset) {
-                if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
-                this.state.activeMarketCards.push({
-                    id: uuidv4(),
-                    card: card,
-                    expiresAt: Date.now() + 2 * 60 * 1000,
-                    sourcePlayerId: player.id
-                });
-                console.log(`[Market] Added sell offer for ${card.title} (player owns it)`);
-            } else {
-                console.log(`[Market] Skipped sell offer for ${card.title} (player doesn't own it)`);
-            }
+            if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
+            this.state.activeMarketCards.push({
+                id: uuidv4(),
+                card: card,
+                expiresAt: Date.now() + 2 * 60 * 1000,
+                sourcePlayerId: player.id
+            });
         }
 
         // Handle Mandatory Cards (Damages/Events)

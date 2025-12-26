@@ -98,6 +98,13 @@ const FeedCardItem = ({
     const isOffer = source === 'MARKET';
     const isStock = !!card.symbol;
     const ownedStock = me?.assets?.find((a: any) => a.symbol === card.symbol);
+
+    // Check if player owns the asset (for market sell offers)
+    const hasAsset = card.offerPrice && isOffer
+        ? (card.symbol
+            ? me?.assets?.some((a: any) => a.symbol === card.symbol)
+            : me?.assets?.some((a: any) => a.title === card.title || a.title === card.targetTitle))
+        : true; // Not a sell offer, always show
     const ownedQty = ownedStock ? ownedStock.quantity : 0;
 
     // Owner Logic
@@ -271,7 +278,17 @@ const FeedCardItem = ({
 
                         {/* Actions */}
                         {(isMyTurn || isOwner) && (
-                            <div className="flex gap-2 mt-1 w-full">
+                            <div className="flex gap-2 mt-1 w-full flex-col">
+                                {/* Asset Ownership Warning */}
+                                {card.offerPrice && isOffer && !hasAsset && (
+                                    <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-2 mb-2 animate-pulse">
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-lg">⚠️</span>
+                                            <span className="text-[10px] text-red-300 font-bold uppercase">У вас нет этого актива</span>
+                                        </div>
+                                    </div>
+                                )}
+
                                 {card.type === 'EXPENSE' ? (
                                     <button
                                         onClick={() => {
