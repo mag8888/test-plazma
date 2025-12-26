@@ -525,17 +525,14 @@ export const ActiveCardZone = ({
     onDismissPreview,
     canShowCard = true
 }: ActiveCardZoneProps) => {
+    // Local Dismissal State to prevent closing for everyone
+    const [locallyDismissedIds, setLocallyDismissedIds] = useState<string[]>([]);
+
     // Safety Guard
     if (!me) return null;
 
-    // PRE-CARD PHASES (Blocking)
-    // Respect Delay
-    // If we are strictly waiting for the reveal, show nothing for the active event (Choice/New Card).
-    // EXCEPT we want to allow existing Market Cards (feed) to show?
-    // The feed logic is at the bottom. The Early Returns block the feed.
-    // So if blocked, we should just SKIP the Early Returns.
-
     const showPhaseContent = canShowCard;
+
 
     // 1. OPPORTUNITY CHOICE
     if (showPhaseContent && state.phase === 'OPPORTUNITY_CHOICE' && isMyTurn) {
@@ -655,33 +652,11 @@ export const ActiveCardZone = ({
                 </div>
             );
         }
+
         if (state.phase === 'DOWNSIZED_DECISION') {
-            if (!isMyTurn) return <div className="flex flex-col items-center justify-center h-full text-slate-500 text-xs">📉 Принимает решение...</div>;
-            return (
-                <div className="flex flex-col h-full w-full relative p-3">
-                    <div className="flex items-center gap-2 mb-2 shrink-0 h-10">
-                        <div className="text-xl">📉</div>
-                        <div>
-                            <h2 className="text-sm font-bold text-white leading-tight">Увольнение!</h2>
-                            <div className="text-[9px] text-slate-400">Вы временно без работы</div>
-                        </div>
-                    </div>
-                    <div className="flex flex-col gap-2 w-full mt-auto">
-                        <button onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_1M' })} disabled={me.cash < me.expenses} className="w-full bg-slate-800 p-3 rounded-xl text-xs flex justify-between border border-slate-700">
-                            <span className="text-left text-[10px]">1 мес (Пропуск 2)</span>
-                            <span className="text-red-400 font-mono">${me.expenses.toLocaleString()}</span>
-                        </button>
-                        <button onClick={() => socket.emit('decision_downsized', { roomId, choice: 'PAY_2M' })} disabled={me.cash < me.expenses * 2} className="w-full bg-slate-800 p-3 rounded-xl text-xs flex justify-between border border-slate-700">
-                            <span className="text-left text-[10px]">2 мес (Играть)</span>
-                            <span className="text-red-400 font-mono">${(me.expenses * 2).toLocaleString()}</span>
-                        </button>
-                        <button onClick={() => { if (confirm('Банкротство?')) socket.emit('decision_downsized', { roomId, choice: 'BANKRUPT' }); }} className="text-red-500/70 text-[9px] mt-2 uppercase text-center">
-                            Объявить банкротство
-                        </button>
-                    </div>
-                </div>
-            );
+            return <FiredView roomId={roomId} me={me} isMyTurn={isMyTurn} socket={socket} />;
         }
+
     }
 
     // MAIN FEED LOGIC
@@ -704,7 +679,7 @@ export const ActiveCardZone = ({
         ? [{ card: state.currentCard || previewCard, source: 'CURRENT', id: (state.currentCard || previewCard).id || 'curr' }]
         : [];
 
-    const feedItems = [...currentCard, ...marketCards];
+    const feedItems = [...currentCard, ...marketCards].filter((item: any) => !locallyDismissedIds.includes(item.id));
 
     if (feedItems.length === 0) {
         return null; // Clean center
@@ -742,6 +717,8 @@ export const ActiveCardZone = ({
                                     isMyTurn={isMyTurn}
                                     onDismiss={() => {
                                         console.log('Dismissing card:', item.id, item.source);
+                                        // CRITICAL FIX: Only dismiss globally if it's My Turn and MY Active Card event.
+                                        // For Market/Feed cards, ALWAYS dismiss locally to avoid closing for others.
                                         if (item.source === 'CURRENT') {
                                             if (previewCard && !state.currentCard) {
                                                 if (onDismissPreview) onDismissPreview();
@@ -749,7 +726,8 @@ export const ActiveCardZone = ({
                                                 socket.emit('end_turn', { roomId });
                                             }
                                         } else {
-                                            if (onDismissMarket) onDismissMarket();
+                                            // Local Dismissal Only
+                                            setLocallyDismissedIds(prev => [...prev, item.id]);
                                         }
                                     }}
                                 />
@@ -757,6 +735,113 @@ export const ActiveCardZone = ({
                         </div>
                     );
                 })}
+            </div>
+        </div>
+    );
+};
+
+interface FiredViewProps {
+    roomId: string;
+    me: any;
+    isMyTurn: boolean;
+    socket: any;
+}
+
+const FiredView = ({ roomId, me, isMyTurn, socket }: FiredViewProps) => {
+    const [step, setStep] = useState<'CHOICE' | 'RESULT'>('CHOICE');
+    const [choice, setChoice] = useState<{ type: string, label: string } | null>(null);
+
+    // If not my turn, simply show waiting.
+    if (!isMyTurn) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
+                <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-2xl max-w-sm w-full text-center animate-pulse">
+                    <div className="text-4xl mb-4">📉</div>
+                    <h2 className="text-xl font-bold text-white mb-2">Увольнение</h2>
+                    <p className="text-slate-400 text-sm">Другой игрок принимает решение...</p>
+                </div>
+            </div>
+        );
+    }
+
+    const handleChoice = (type: 'PAY_1M' | 'PAY_2M' | 'BANKRUPT') => {
+        if (type === 'BANKRUPT') {
+            if (confirm('Вы уверены, что хотите объявить банкротство? Это сбросит ваши активы.')) {
+                socket.emit('decision_downsized', { roomId, choice: 'BANKRUPT' });
+            }
+            return;
+        }
+
+        const is2M = type === 'PAY_2M';
+        setChoice({
+            type,
+            label: is2M
+                ? 'Вы оплатили расходы за 2 месяца. Вы продолжаете игру!'
+                : 'Вы оплатили расходы за 1 месяц. Вы пропускаете 2 хода.'
+        });
+        setStep('RESULT');
+    };
+
+    const confirmPayment = () => {
+        if (choice) {
+            socket.emit('decision_downsized', { roomId, choice: choice.type });
+        }
+    };
+
+    if (step === 'RESULT') {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/90 backdrop-blur-md p-4">
+                <div className="bg-slate-800 p-8 rounded-3xl border border-pink-500/30 shadow-2xl max-w-md w-full text-center relative overflow-hidden animate-in fade-in zoom-in duration-300">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-purple-500"></div>
+                    <div className="text-6xl mb-6">✅</div>
+                    <h2 className="text-2xl font-bold text-white mb-4">Оплата прошла успешно</h2>
+                    <p className="text-slate-300 mb-8 text-lg leading-snug">{choice?.label}</p>
+                    <button onClick={confirmPayment} className="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-4 rounded-xl text-lg shadow-lg active:scale-95 transition-transform">
+                        Продолжить
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700 shadow-2xl max-w-md w-full relative">
+                <div className="text-center mb-6">
+                    <div className="text-5xl mb-2">📉</div>
+                    <h2 className="text-2xl font-bold text-white mb-1">Увольнение!</h2>
+                    <p className="text-slate-400 text-sm uppercase tracking-wider">Вы временно без работы</p>
+                </div>
+
+                <div className="bg-slate-700/50 p-4 rounded-xl mb-6 text-center border border-slate-600">
+                    <p className="text-slate-200 text-sm leading-relaxed">
+                        Для продолжения игры нужно оплатить ваши расходы
+                    </p>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                    <button
+                        onClick={() => handleChoice('PAY_1M')}
+                        disabled={(me?.cash || 0) < (me?.expenses || 0)}
+                        className="w-full bg-slate-700 hover:bg-slate-600 p-4 rounded-xl flex justify-between items-center group disabled:opacity-50 disabled:cursor-not-allowed transition-all border border-slate-600 hover:border-slate-500"
+                    >
+                        <span className="text-slate-200 font-medium">1 мес (Пропуск 2)</span>
+                        <span className="text-red-400 font-mono font-bold group-hover:text-red-300">${(me?.expenses || 0).toLocaleString()}</span>
+                    </button>
+
+                    <button
+                        onClick={() => handleChoice('PAY_2M')}
+                        disabled={(me?.cash || 0) < (me?.expenses || 0) * 2}
+                        className="w-full bg-slate-700 hover:bg-slate-600 p-4 rounded-xl flex justify-between items-center group disabled:opacity-50 disabled:cursor-not-allowed transition-all border border-slate-600 hover:border-slate-500"
+                    >
+                        <span className="text-slate-200 font-medium">2 мес (Играть)</span>
+                        <span className="text-red-400 font-mono font-bold group-hover:text-red-300">${((me?.expenses || 0) * 2).toLocaleString()}</span>
+                    </button>
+
+                    <button onClick={() => handleChoice('BANKRUPT')} className="text-red-500/70 text-xs mt-4 uppercase hover:text-red-400 transition-colors">
+                        Объявить банкротство
+                    </button>
+                </div>
             </div>
         </div>
     );
