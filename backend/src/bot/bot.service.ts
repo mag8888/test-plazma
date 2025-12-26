@@ -1,4 +1,20 @@
 import TelegramBot from 'node-telegram-bot-api';
+
+// Transfer State
+type TransferState = {
+    state: 'WAITING_USER' | 'WAITING_AMOUNT';
+    recipientId?: string;
+    targetUser?: any;
+};
+
+// Broadcast State
+type BroadcastState = {
+    state: 'WAITING_TEXT' | 'WAITING_PHOTO' | 'SELECTING_CATEGORY' | 'SELECTING_USERS';
+    text?: string;
+    photoId?: string;
+    category?: 'all' | 'avatars' | 'balance' | 'custom';
+    selectedUsers?: string[]; // User IDs for custom selection
+};
 import dotenv from 'dotenv';
 import { CloudinaryService } from '../services/cloudinary.service';
 
@@ -13,7 +29,8 @@ export class BotService {
     bot: TelegramBot | null = null;
     adminStates: Map<number, { state: string, targetUser?: any }> = new Map();
     masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_TIME' | 'WAITING_MAX' | 'WAITING_PROMO' | 'WAITING_ANNOUNCEMENT_TEXT' | 'WAITING_EDIT_TIME' | 'WAITING_EDIT_MAX' | 'WAITING_EDIT_PROMO' | 'WAITING_ADD_PLAYER', gameData?: any, gameId?: string }> = new Map();
-    transferStates: Map<number, { state: 'WAITING_USER' | 'WAITING_AMOUNT', targetUser?: any }> = new Map();
+    transferStates: Map<number, TransferState> = new Map();
+    broadcastStates: Map<number, BroadcastState> = new Map();
     participantStates: Map<number, { state: 'WAITING_POST_LINK', gameId: string }> = new Map();
     cloudinaryService: CloudinaryService;
 
@@ -158,6 +175,20 @@ export class BotService {
             if (!isAdmin) return;
             this.adminStates.set(chatId, { state: 'WAITING_FOR_SYNC_USER' });
             this.bot?.sendMessage(chatId, "Enter username or ID to force sync:");
+        });
+
+        // /broadcast command - Admin mass messaging
+        this.bot.onText(/\/broadcast/, async (msg) => {
+            const chatId = msg.chat.id;
+            const telegramId = msg.from?.id;
+            const isAdmin = process.env.ADMIN_IDS?.split(',').includes(String(telegramId));
+            if (!isAdmin) {
+                this.bot?.sendMessage(chatId, "⛔ Доступно только для админа.");
+                return;
+            }
+
+            this.broadcastStates.set(chatId, { state: 'WAITING_TEXT' });
+            this.bot?.sendMessage(chatId, "📢 **Рассылка**\\n\\nВведите текст сообщения:", { parse_mode: 'Markdown' });
         });
 
         // /start command (supports ?start=referrerId)
@@ -390,6 +421,21 @@ export class BotService {
                     this.bot?.sendMessage(chatId, `✅ Перевод $${amount} успешен!`);
                     this.bot?.sendMessage(receiver.telegram_id, `📥 Вам пришел перевод $${amount} от ${sender.username}`);
                     this.transferStates.delete(chatId);
+                    return;
+                }
+            }
+
+            // Broadcast State Handling
+            const broadcastState = this.broadcastStates.get(chatId);
+            if (broadcastState) {
+                if (broadcastState.state === 'WAITING_TEXT') {
+                    broadcastState.text = text;
+                    broadcastState.state = 'WAITING_PHOTO';
+                    this.bot?.sendMessage(chatId, "✅ Текст сохранен.\\n\\n📸 Отправьте фото (или /skip чтобы пропустить):");
+                    return;
+                } else if (broadcastState.state === 'WAITING_PHOTO' && text === '/skip') {
+                    broadcastState.state = 'SELECTING_CATEGORY';
+                    this.showCategorySelection(chatId);
                     return;
                 }
             }
