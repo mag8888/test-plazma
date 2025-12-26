@@ -1895,11 +1895,13 @@ export class BotService {
         } else {
             const joinRow = [];
             if (freeSpots > 0) joinRow.push({ text: 'Записаться (Free)', callback_data: `join_game_${game._id}` });
-            if (paidSpots > 0) {
-                joinRow.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
-                joinRow.push({ text: 'Записаться с оплатой мастеру', callback_data: `join_onsite_${game._id}` });
-            }
+            if (paidSpots > 0) joinRow.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
             if (joinRow.length > 0) rows.push(joinRow);
+
+            // On-site payment button on separate row
+            if (paidSpots > 0) {
+                rows.push([{ text: 'Записаться с оплатой мастеру', callback_data: `join_onsite_${game._id}` }]);
+            }
             // If both are present, they might still be too wide. Let's put them on separate rows if both strictly needed, 
             // but user image shows they fit 2 per row roughly, or maybe not.
             // "Записаться (Free)" is ~16 chars. "Записаться ($20)" is ~16 chars. Total 32. 
