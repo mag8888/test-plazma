@@ -9,7 +9,7 @@ export interface IScheduledGame extends Document {
     participants: {
         userId: string;
         username: string; // Cache for display
-        type: 'PROMO' | 'PAID';
+        type: 'PROMO' | 'PAID' | 'ONSITE';
         paymentStatus?: 'PAID' | 'PAY_AT_GAME';
         joinedAt: Date;
     }[];
@@ -29,7 +29,7 @@ const ScheduledGameSchema: Schema = new Schema({
         userId: { type: Schema.Types.ObjectId, ref: 'User' },
         firstName: { type: String },
         username: { type: String },
-        type: { type: String, enum: ['PROMO', 'PAID'] },
+        type: { type: String, enum: ['PROMO', 'PAID', 'ONSITE'] },
         paymentStatus: { type: String, enum: ['PAID', 'PAY_AT_GAME'], default: 'PAID' },
         joinedAt: { type: Date, default: Date.now },
         postLink: { type: String },
