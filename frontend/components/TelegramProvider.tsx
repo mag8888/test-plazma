@@ -38,9 +38,12 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
         const handleVisibilityChange = () => {
             if (document.visibilityState === 'visible') {
                 console.log("📱 App visible, checking socket connection...");
-                if (!socket.connected) {
-                    console.log("🔌 Socket disconnected, forcing reconnect...");
+                // Check if disconnected AND not currently trying to connect (active)
+                if (!socket.connected && !(socket as any).active) {
+                    console.log("🔌 Socket disconnected/inactive, forcing reconnect...");
                     socket.connect();
+                } else {
+                    console.log(`socket status: connected=${socket.connected}, active=${(socket as any).active}`);
                 }
             }
         };

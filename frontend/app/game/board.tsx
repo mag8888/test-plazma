@@ -8,6 +8,7 @@ import { BoardVisualizer } from './BoardVisualizer';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { TextChat } from './TextChat';
 import { sfx } from './SoundManager';
+import { Card } from './cards_data';
 import { partnershipApi } from '../../lib/partnershipApi';
 import { useTelegram } from '../../components/TelegramProvider';
 
@@ -105,9 +106,7 @@ const AnimatedNumber = ({ value, className = '' }: { value: number, className?: 
 
             // 1. Play Sound if Increase
             if (isIncrease) {
-                const audio = new Audio('/sounds/cash.mp3');
-                audio.volume = 0.6;
-                audio.play().catch(e => console.warn('Audio play failed', e));
+                sfx.play('cash');
                 setIsAnimating(true);
             }
 

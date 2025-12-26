@@ -38,7 +38,8 @@ class SoundManager {
             'victory': '/sounds/victory.wav',
             'stock': '/sounds/stock.wav',
             'transfer': '/sounds/transfer.wav',
-            'fasttrack': '/sounds/fasttrack.wav'
+            'fasttrack': '/sounds/fasttrack.wav',
+            'cash': '/sounds/cash.mp3'
         };
 
         for (const [key, path] of Object.entries(soundMap)) {

@@ -1,6 +1,7 @@
 import { IPlayer } from '../models/room.model';
 import { v4 as uuidv4 } from 'uuid';
 import { CardManager, Card } from './card.manager';
+import { DbCardManager } from './db.card.manager';
 import { PROFESSIONS } from './professions';
 
 export interface GameState {
@@ -224,8 +225,9 @@ export class GameEngine {
     botNextActionAt?: number; // Hook for Bot Pacing
 
     constructor(roomId: string, players: IPlayer[], creatorId?: string) {
-        // Init CardManager
-        this.cardManager = new CardManager();
+        // Init CardManager with DB Templates
+        const templates = DbCardManager.getInstance().getTemplates();
+        this.cardManager = new CardManager(templates);
         this.state = {
             roomId,
             creatorId,

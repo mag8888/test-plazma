@@ -1148,6 +1148,11 @@ const bootstrap = async () => {
             await connectDatabase();
             dbStatus = 'connected';
             console.log('Database Connected.');
+
+            // Initialize Card Manager (Sync with DB)
+            const { DbCardManager } = await import('./game/db.card.manager');
+            await DbCardManager.getInstance().init();
+
         } catch (dbErr) {
             console.error('DB Connection Failed (Handled):', dbErr);
             dbStatus = `failed: ${dbErr}`;

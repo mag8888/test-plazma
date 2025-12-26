@@ -208,21 +208,27 @@ export class CardManager {
     expenseDeck: Card[] = [...EXPENSE_CARDS];
     private expenseDeckDiscard: Card[] = [];
 
-    constructor() {
-        // Generate and Assign Global IDs sequentially (Stable IDs)
-        let globalCounter = 1;
-        // Helper: Assign then Shuffle
-        const prepareDeck = (deck: Card[]) => {
-            // IMPORTANT: Create copy of objects to avoid mutating shared constants
-            const distinctDeck = deck.map(c => ({ ...c }));
-            distinctDeck.forEach(c => c.displayId = globalCounter++);
-            return this.shuffle(distinctDeck);
-        };
+    constructor(templates?: { small: Card[], big: Card[], market: Card[], expense: Card[] }) {
+        if (templates) {
+            // Use provided templates (already have displayId from DB)
+            this.smallDeals = this.shuffle(templates.small.map(c => ({ ...c })));
+            this.bigDeals = this.shuffle(templates.big.map(c => ({ ...c })));
+            this.marketDeck = this.shuffle(templates.market.map(c => ({ ...c })));
+            this.expenseDeck = this.shuffle(templates.expense.map(c => ({ ...c })));
+        } else {
+            // Legacy / Fallback (Global ID Generation)
+            let globalCounter = 1;
+            const prepareDeck = (deck: Card[]) => {
+                const distinctDeck = deck.map(c => ({ ...c }));
+                distinctDeck.forEach(c => c.displayId = globalCounter++);
+                return this.shuffle(distinctDeck);
+            };
 
-        this.smallDeals = prepareDeck([...SMALL_DEALS]);
-        this.bigDeals = prepareDeck([...BIG_DEALS]);
-        this.marketDeck = prepareDeck([...MARKET_CARDS]);
-        this.expenseDeck = prepareDeck([...EXPENSE_CARDS]);
+            this.smallDeals = prepareDeck([...SMALL_DEALS]);
+            this.bigDeals = prepareDeck([...BIG_DEALS]);
+            this.marketDeck = prepareDeck([...MARKET_CARDS]);
+            this.expenseDeck = prepareDeck([...EXPENSE_CARDS]);
+        }
     }
 
     drawSmallDeal(): Card | undefined {
