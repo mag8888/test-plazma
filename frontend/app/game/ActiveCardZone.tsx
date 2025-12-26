@@ -499,6 +499,9 @@ const FeedCardItem = ({
                                 if (transactionMode === 'BUY') {
                                     if (loanNeeded > 0) {
                                         console.log('[Transaction] Loan Needed');
+                                        if (card.type === 'EXPENSE') {
+                                            alert('У вас недостаточно средств! (Требуется кредит)');
+                                        }
                                         const amount = Math.ceil(loanNeeded / 1000) * 1000;
                                         setPendingLoan({ amount, quantity: stockQty });
                                         setShowLoanConfirm(true);
