@@ -757,6 +757,18 @@ export const ActiveCardZone = ({
         }
 
         if (state.phase === 'DOWNSIZED_DECISION') {
+            // Only show to the player whose turn it is (the downsized player)
+            if (!isMyTurn) {
+                return (
+                    <div className="flex flex-col items-center justify-center h-full text-slate-500/80 animate-pulse bg-slate-900/40 rounded-2xl border border-slate-800/50">
+                        <div className="text-3xl mb-2 grayscale opacity-50">📉</div>
+                        <div className="text-center">
+                            <div className="text-xs font-bold text-slate-300 mb-1">{state.players[state.currentPlayerIndex]?.name}</div>
+                            <div className="text-[10px] uppercase font-bold tracking-widest opacity-70">решает об<br />увольнении</div>
+                        </div>
+                    </div>
+                );
+            }
             return <FiredView roomId={roomId} me={me} isMyTurn={isMyTurn} socket={socket} />;
         }
 
