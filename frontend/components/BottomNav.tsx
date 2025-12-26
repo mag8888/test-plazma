@@ -1,18 +1,19 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import { Home, Calendar, CircleDollarSign, User, Gamepad2 } from 'lucide-react';
 import { useTelegram } from './TelegramProvider';
 import { clsx } from 'clsx'; // Simple class utility if installed, or just template strings
 
 export const BottomNav = () => {
     const pathname = usePathname();
+    const searchParams = useSearchParams();
     const { webApp } = useTelegram();
 
     // Hide on Game Board to save space (only during active game with roomId)
     // Show in lobby
-    if (pathname === '/game' && typeof window !== 'undefined' && new URLSearchParams(window.location.search).has('id')) {
+    if (pathname === '/game' && searchParams.has('id')) {
         return null;
     }
 

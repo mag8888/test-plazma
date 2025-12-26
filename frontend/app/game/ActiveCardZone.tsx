@@ -583,7 +583,7 @@ export const ActiveCardZone = ({
     }
     // 2. CHARITY
     // 2. CHARITY CHOICE
-    if (state.phase === 'CHARITY_CHOICE') {
+    if (showPhaseContent && state.phase === 'CHARITY_CHOICE') {
         if (!isMyTurn) {
             return (
                 <div className="flex flex-col items-center justify-center h-full text-slate-500/80 animate-pulse bg-slate-900/40 rounded-2xl border border-slate-800/50">
@@ -618,7 +618,7 @@ export const ActiveCardZone = ({
         );
     }
     // 3. BABY / DOWNSIZED (Simplified for Feed-like? No, these are events)
-    if (['BABY_ROLL', 'DOWNSIZED_DECISION'].includes(state.phase)) {
+    if (showPhaseContent && ['BABY_ROLL', 'DOWNSIZED_DECISION'].includes(state.phase)) {
         // ... (Keep existing logic short or rewrite. I'll rewrite to be safe)
         if (state.phase === 'BABY_ROLL') {
             if (!isMyTurn) return <div className="flex flex-col items-center justify-center h-full text-slate-500 animate-pulse text-xs">👶 Ожидание броска...</div>;

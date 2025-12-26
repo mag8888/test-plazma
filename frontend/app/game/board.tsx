@@ -1170,7 +1170,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
             <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-full overflow-hidden justify-start lg:justify-center items-center">
 
                 {/* 📱 MOBILE TOP ZONE (Cards + Stats) */}
-                <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-20 max-h-[30vh] overflow-y-auto">
+                <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-40 max-h-[30vh] overflow-y-auto">
 
                     {/* 1. Status Row (Top Priority) */}
                     <div className="flex items-center justify-between px-1 bg-slate-800/50 p-2 rounded-xl mb-1">
@@ -1343,7 +1343,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         />
 
                         {/* ActiveCardZone Overlay - Center */}
-                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-8">
+                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-8 z-[60]">
                             <div className="pointer-events-auto w-full max-w-md">
                                 <ActiveCardZone
                                     state={state}
@@ -1357,6 +1357,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         title: card.card.title,
                                         description: card.card.description
                                     })}
+                                    canShowCard={canShowCard}
                                 />
                             </div>
                         </div>
