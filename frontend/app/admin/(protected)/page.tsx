@@ -7,6 +7,7 @@ import { partnershipApi } from '../../../lib/partnershipApi';
 import CardEditor from './CardEditor';
 import { MatrixView } from '../../earn/MatrixView';
 import AdminAvatarSelector from './components/AdminAvatarSelector';
+import BroadcastModal from '../BroadcastModal';
 
 const API_URL = '/api/partnership'; // Use internal proxy for Monolith
 
@@ -16,6 +17,7 @@ export default function AdminPage() {
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [activeTab, setActiveTab] = useState<'USERS' | 'STATS' | 'TREE' | 'LOGS' | 'CARDS'>('USERS');
+    const [showBroadcastModal, setShowBroadcastModal] = useState(false);
 
     // Stats
     const [stats, setStats] = useState<any>({
@@ -416,14 +418,14 @@ export default function AdminPage() {
                                 </button>
 
                                 <button
-                                    onClick={() => window.open('https://t.me/moneo_money_bot', '_blank')}
+                                    onClick={() => setShowBroadcastModal(true)}
                                     className="bg-purple-900/50 hover:bg-purple-900/70 text-purple-300 p-4 rounded-xl border border-purple-700/50 flex flex-col items-center gap-2 transition"
                                 >
                                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                                     </svg>
                                     <span className="font-bold">Рассылка</span>
-                                    <span className="text-[10px] opacity-70">Открыть бот</span>
+                                    <span className="text-[10px] opacity-70">Создать рассылку</span>
                                 </button>
                             </div>
                         </div>
@@ -874,6 +876,9 @@ export default function AdminPage() {
                     </div>
                 )
             }
+
+            {/* Broadcast Modal */}
+            <BroadcastModal isOpen={showBroadcastModal} onClose={() => setShowBroadcastModal(false)} />
         </div >
     );
 }
