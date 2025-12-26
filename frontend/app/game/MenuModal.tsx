@@ -192,11 +192,29 @@ export const MenuModal = ({
                                 </button>
                                 <button
                                     onClick={onKickCurrent}
-                                    className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600/50 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors"
+                                    className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600/50 rounded-xl py-3  font-bold text-[10px] uppercase transition-colors"
                                 >
                                     Кикнуть
                                 </button>
                             </div>
+
+                            {/* Reshuffle Button */}
+                            <button
+                                onClick={() => {
+                                    if (window.confirm('Перетасовать все колоды? (Все карты вернутся в колоды и перемешаются)')) {
+                                        const userId = localStorage.getItem('userId');
+                                        const socket = (window as any).socket;
+                                        const roomId = (window as any).currentRoomId;
+                                        if (socket && userId && roomId) {
+                                            socket.emit('host_reshuffle_decks', { roomId, userId });
+                                        }
+                                    }
+                                }}
+                                className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-[10px] uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                            >
+                                <span>🔄</span>
+                                <span>Перетасовать карты</span>
+                            </button>
                         </div>
                     )}
                 </div>
