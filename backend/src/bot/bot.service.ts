@@ -993,6 +993,18 @@ export class BotService {
         // Helper for Uploads
         const handleUpload = async (msg: any, type: 'image' | 'video' | 'raw' | 'auto' = 'auto') => {
             const chatId = msg.chat.id;
+
+            // Broadcast Photo Handling (Priority 1)
+            const broadcastState = this.broadcastStates.get(chatId);
+            if (broadcastState && broadcastState.state === 'WAITING_PHOTO' && msg.photo) {
+                const photo = msg.photo[msg.photo.length - 1];
+                broadcastState.photoId = photo.file_id;
+                broadcastState.state = 'SELECTING_CATEGORY';
+                this.bot?.sendMessage(chatId, "✅ Фото сохранено.");
+                this.showCategorySelection(chatId);
+                return;
+            }
+
             // Only process if user explicitly sent media to the bot directly (not in group unless mentioned?)
             // Assuming private chat mainly.
 
