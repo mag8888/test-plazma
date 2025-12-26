@@ -40,9 +40,13 @@ export default function BroadcastModal({ isOpen, onClose }: BroadcastModalProps)
     const handleCategorySelect = async (selectedCategory: Category) => {
         setCategory(selectedCategory);
 
-        // Fetch recipients for selected category
         try {
-            const response = await fetch(`/api/broadcast/recipients?category=${selectedCategory}`);
+            const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const response = await fetch(`${backendUrl}/api/admin/broadcast/recipients?category=${selectedCategory}`, {
+                headers: {
+                    'x-admin-secret': localStorage.getItem('admin_secret') || ''
+                }
+            });
             const data = await response.json();
 
             if (data.success) {
@@ -71,17 +75,19 @@ export default function BroadcastModal({ isOpen, onClose }: BroadcastModalProps)
         setSending(true);
 
         try {
-            const formData = new FormData();
-            formData.append('text', text);
-            formData.append('category', category);
-            formData.append('recipients', JSON.stringify(recipients.map(r => r.telegram_id)));
-            if (photo) {
-                formData.append('photo', photo);
-            }
+            const payload = {
+                message: text,
+                recipients: recipients.map(r => r.telegram_id)
+            };
 
-            const response = await fetch('/api/broadcast', {
+            const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const response = await fetch(`${backendUrl}/api/admin/broadcast`, {
                 method: 'POST',
-                body: formData,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-admin-secret': localStorage.getItem('admin_secret') || ''
+                },
+                body: JSON.stringify(payload),
             });
 
             const result = await response.json();
