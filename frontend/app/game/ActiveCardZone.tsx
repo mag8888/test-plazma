@@ -107,8 +107,9 @@ const FeedCardItem = ({
         : true; // Not a sell offer, always show
     const ownedQty = ownedStock ? ownedStock.quantity : 0;
 
-    // Owner Logic
-    const isOwner = cardWrapper.sourcePlayerId === me?.id;
+    // Owner Logic - Card creator OR anyone who owns the asset for market cards
+    const isOriginalOwner = cardWrapper.sourcePlayerId === me?.id;
+    const isOwner = isOffer && card.offerPrice ? hasAsset : isOriginalOwner;
 
     // Auto-switch to TRANSACTION if owner
     useEffect(() => {
