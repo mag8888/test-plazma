@@ -180,6 +180,30 @@ export default function CardEditor({ secret }: CardEditorProps) {
                     >
                         <RotateCcw size={18} /> Reset
                     </button>
+                    <button
+                        onClick={async () => {
+                            if (!confirm('Reload all cards from database? This will refresh the card templates.')) return;
+                            try {
+                                const res = await fetch('/api/admin/reload-cards', {
+                                    method: 'POST',
+                                    headers: { 'x-admin-secret': secret }
+                                });
+                                const data = await res.json();
+                                if (data.success) {
+                                    alert(`Cards reloaded!\nSmall: ${data.counts.small}\nBig: ${data.counts.big}\nMarket: ${data.counts.market}\nExpense: ${data.counts.expense}`);
+                                    fetchCards(selectedType); // Refresh current view
+                                } else {
+                                    alert('Failed to reload cards: ' + data.error);
+                                }
+                            } catch (e) {
+                                console.error('Failed to reload cards:', e);
+                                alert('Network error while reloading cards');
+                            }
+                        }}
+                        className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-bold flex items-center gap-2 transition"
+                    >
+                        <RotateCcw size={18} /> Reload from DB
+                    </button>
                 </div>
             </div>
 
