@@ -668,6 +668,9 @@ export class BotService {
             } else if (data.startsWith('join_paid_')) {
                 const gameId = data.replace('join_paid_', '');
                 await this.handleJoinGame(chatId, userId, gameId, true);
+            } else if (data.startsWith('join_onsite_')) {
+                const gameId = data.replace('join_onsite_', '');
+                await this.handleJoinGame(chatId, userId, gameId, false, true);
             } else if (data.startsWith('approve_link_')) {
                 // Format: approve_link_GAMEID_USERID
                 const parts = data.split('_');
@@ -1662,7 +1665,7 @@ export class BotService {
         } catch (e) { console.error(e); }
     }
 
-    async handleJoinGame(chatId: number, telegramId: number, gameId: string, isPaid?: boolean) {
+    async handleJoinGame(chatId: number, telegramId: number, gameId: string, isPaid?: boolean, isOnSite?: boolean) {
         try {
             const { ScheduledGameModel } = await import('../models/scheduled-game.model');
             const { UserModel } = await import('../models/user.model');
@@ -1683,7 +1686,50 @@ export class BotService {
 
             // Check Limits
             const promoCount = game.participants.filter((p: any) => p.type === 'PROMO').length;
-            const paidCount = game.participants.filter((p: any) => p.type === 'PAID').length;
+            const paidCount = game.participants.filter((p: any) => p.type === 'PAID' || p.type === 'ONSITE').length;
+
+            if (isOnSite) {
+                // On-site payment - no balance check, just register
+                if (paidCount >= (game.maxPlayers - game.promoSpots)) {
+                    this.bot?.sendMessage(chatId, "😔 Платные места закончились!");
+                    return;
+                }
+
+                game.participants.push({
+                    userId: user._id,
+                    username: user.username,
+                    firstName: user.first_name || 'Игрок',
+                    type: 'ONSITE',
+                    joinedAt: new Date(),
+                    isVerified: false // Requires master confirmation
+                });
+
+                await game.save();
+
+                this.bot?.sendMessage(chatId, `✅ Вы записаны с оплатой на месте!\\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}\\n\\n💰 Оплата $20 мастеру на игре.`, {
+                    reply_markup: {
+                        inline_keyboard: [[{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]]
+                    }
+                });
+
+                // Notify Master
+                const host = await UserModel.findById(game.hostId);
+                if (host) {
+                    this.bot?.sendMessage(host.telegram_id,
+                        `💵 ${user.first_name} (@${user.username}) записался с оплатой на месте\\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`,
+                        {
+                            reply_markup: {
+                                inline_keyboard: [[
+                                    { text: '✅ Подтвердить', callback_data: `confirm_player_${game._id}_${user._id}` },
+                                    { text: '❌ Отменить', callback_data: `reject_player_${game._id}_${user._id}` }
+                                ]]
+                            }
+                        }
+                    );
+                }
+
+                return;
+            }
 
             if (!isPaid) {
                 // Trying to join PROMO
@@ -1707,7 +1753,7 @@ export class BotService {
                 });
 
                 // Notify Success (No Link Request)
-                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PROMO)!\n\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`, {
+                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PROMO)!\\n\\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`, {
                     reply_markup: {
                         inline_keyboard: [
                             [{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]
@@ -1719,12 +1765,6 @@ export class BotService {
             } else {
                 // Joining PAID
                 if (paidCount >= (game.maxPlayers - game.promoSpots)) {
-                    // Check total cap strictly?
-                    // (Max - Promo) = Paid Spots.
-                    // Actually: Total < Max.
-                    // If Promo used 6/6. Paid used 2/2. Total 8. Full.
-                    // If Promo used 2/6. Paid used 2/2 ??
-                    // Usually Promo spots are RESERVED. So Paid spots are (Max - Promo).
                     this.bot?.sendMessage(chatId, "😔 Платные места тоже закончились!");
                     return;
                 }
@@ -1746,7 +1786,7 @@ export class BotService {
                 }
 
                 if (remainingCost > 0) {
-                    this.bot?.sendMessage(chatId, `❌ Недостаточно средств ($20). \n🔴 Red: $${user.balanceRed || 0}\n🟢 Green: $${user.referralBalance}`);
+                    this.bot?.sendMessage(chatId, `❌ Недостаточно средств ($20). \\n🔴 Red: $${user.balanceRed || 0}\\n🟢 Green: $${user.referralBalance}`);
                     return;
                 }
 
@@ -1765,7 +1805,7 @@ export class BotService {
             await game.save();
 
             if (isPaid) {
-                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PAID)!\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`, {
+                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PAID)!\\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`, {
                     reply_markup: {
                         inline_keyboard: [[{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]]
                     }
@@ -1778,7 +1818,7 @@ export class BotService {
             const host = await UserModel.findById(game.hostId);
             if (host) {
                 this.bot?.sendMessage(host.telegram_id,
-                    `🆕 Игрок ${user.first_name} (@${user.username}) записался на игру (тип: ${isPaid ? 'PAID' : 'PROMO'}).\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`,
+                    `🆕 Игрок ${user.first_name} (@${user.username}) записался на игру (тип: ${isPaid ? 'PAID' : 'PROMO'}).\\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`,
                     {
                         reply_markup: {
                             inline_keyboard: [[
@@ -1855,7 +1895,10 @@ export class BotService {
         } else {
             const joinRow = [];
             if (freeSpots > 0) joinRow.push({ text: 'Записаться (Free)', callback_data: `join_game_${game._id}` });
-            if (paidSpots > 0) joinRow.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
+            if (paidSpots > 0) {
+                joinRow.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
+                joinRow.push({ text: 'Записаться с оплатой мастеру', callback_data: `join_onsite_${game._id}` });
+            }
             if (joinRow.length > 0) rows.push(joinRow);
             // If both are present, they might still be too wide. Let's put them on separate rows if both strictly needed, 
             // but user image shows they fit 2 per row roughly, or maybe not.
