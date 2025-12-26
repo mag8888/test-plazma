@@ -671,33 +671,60 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     };
 
     const handleEnterFastTrack = () => {
+        if (!me) return;
         socket.emit('enter_fast_track', { roomId, userId: me.id });
     };
 
     const handleEndGame = () => {
+        if (!me) return;
         if (window.confirm("Вы уверены, что хотите принудительно завершить игру и подсчитать рейтинги?")) {
             socket.emit('host_end_game', { roomId, userId: me.userId || me.id });
         }
     };
 
     const handleKickPlayer = (playerId: string) => {
+        if (!me) return;
         if (!window.confirm("Вы действительно хотите удалить этого игрока из игры?")) return;
         socket.emit('kick_player', { roomId, playerId, userId: me.userId || me.id });
     };
 
     const handleForceSkip = () => {
+        if (!me) return;
         if (!window.confirm("Принудительно завершить ход текущего игрока?")) return;
         socket.emit('host_skip_turn', { roomId, userId: me.userId || me.id });
     };
 
-    const me = state.players.find((p: any) => p.id === socket.id || (userId && p.userId === userId)) || initialState.players[0];
-    const isMyTurn = state.players[state.currentPlayerIndex]?.id === me?.id;
+    // Correctly identify local player
+    // PRIORITY: Socket ID -> User ID -> Matching Name (fallback if strictly necessary, but risky)
+    const me = state.players.find((p: any) => p.id === socket.id || (userId && p.userId === userId));
+
+    // Debug logging for identity issues
+    useEffect(() => {
+        if (!me) {
+            console.warn('[Board] Failed to identify myself!', { socketId: socket.id, userId, players: state.players });
+        } else {
+            // console.log('[Board] Identified as:', me.name);
+        }
+    }, [me, state.players, userId]);
+
+    const isMyTurn = me && state.players[state.currentPlayerIndex]?.id === me.id;
     const currentTurnPlayer = state.players[state.currentPlayerIndex];
     const currentPlayer = currentTurnPlayer; // Alias for existing code
-    const showExitButton = !me.isFastTrack;
+    const showExitButton = me ? !me.isFastTrack : false;
+
+    // Handle "Spectator" or "Loading Identity" case
+    if (!me) {
+        // If we can't identify, we are either a spectator or loading.
+        // For now, allow rendering but with limited functionality (or fallback strictly for display?)
+        // Better to return a loading screen or show board as spectator.
+        // But user reported "seeing other assets", so likely just removing the fallback fixes it.
+        // We let it continue, `me` will be undefined.
+        // We MUST guard `me.assets` access below.
+    }
+
 
     // Calculate total asset yield
-    const totalAssetYield = me.assets?.reduce((sum: number, a: any) => sum + (a.cashflow || 0), 0) || 0;
+    const totalAssetYield = me?.assets?.reduce((sum: number, a: any) => sum + (a.cashflow || 0), 0) || 0;
 
     if (!currentTurnPlayer) return <div>Loading...</div>; // Safety check
 
@@ -1192,15 +1219,15 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     <div className="grid grid-cols-3 gap-2">
                         <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
                             <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс</span>
-                            <span className="text-sm font-black text-green-400 font-mono tracking-tight">${me.cash?.toLocaleString()}</span>
+                            <span className="text-sm font-black text-green-400 font-mono tracking-tight">${me?.cash?.toLocaleString() || 0}</span>
                         </div>
                         <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
                             <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Выплата</span>
-                            <span className="text-sm font-black text-green-400 font-mono tracking-tight">+${(me.cashflow || 0).toLocaleString()}</span>
+                            <span className="text-sm font-black text-green-400 font-mono tracking-tight">+${(me?.cashflow || 0).toLocaleString()}</span>
                         </div>
                         <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
                             <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Кредит</span>
-                            <span className="text-sm font-black text-red-400 font-mono tracking-tight">-${me.loanDebt?.toLocaleString()}</span>
+                            <span className="text-sm font-black text-red-400 font-mono tracking-tight">-${me?.loanDebt?.toLocaleString() || 0}</span>
                         </div>
                     </div>
                 </div>
@@ -1219,7 +1246,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 <span className="text-3xl filter drop-shadow-md">👷</span>
                                 <div>
                                     <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Профессия</span>
-                                    <div className="text-lg font-bold text-white leading-tight tracking-tight max-w-[140px] truncate" title={me.professionName}>{me.professionName || 'Выбор...'}</div>
+                                    <div className="text-lg font-bold text-white leading-tight tracking-tight max-w-[140px] truncate" title={me?.professionName || ''}>{me?.professionName || 'Загрузка...'}</div>
                                 </div>
                             </div>
                         </div>
@@ -1228,7 +1255,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         <div className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800/80 relative overflow-hidden">
                             <div className="flex justify-between items-center mb-2">
                                 <span className="text-[9px] text-blue-400 uppercase font-bold tracking-wider">PAYDAY</span>
-                                <span className="font-mono text-green-400 font-bold text-lg leading-none">+${(me.cashflow || 0).toLocaleString()}</span>
+                                <span className="font-mono text-green-400 font-bold text-lg leading-none">+${(me?.cashflow || 0).toLocaleString()}</span>
                             </div>
                             <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                                 <div
@@ -1243,14 +1270,14 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group/btn relative">
                                 <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
                                 <div className="font-mono text-xl text-green-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left relative">
-                                    <AnimatedNumber value={me.cash || 0} />
-                                    <CashChangeIndicator currentCash={me.cash || 0} />
+                                    <AnimatedNumber value={me?.cash || 0} />
+                                    <CashChangeIndicator currentCash={me?.cash || 0} />
                                 </div>
                             </button>
                             <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group/btn">
                                 <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит 💳</div>
                                 <div className="font-mono text-xl text-red-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left">
-                                    ${me.loanDebt?.toLocaleString()}
+                                    ${me?.loanDebt?.toLocaleString() || 0}
                                 </div>
                             </button>
                         </div>
@@ -1259,11 +1286,11 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/50">
                             <div className="flex justify-between items-center">
                                 <span className="text-[9px] text-slate-500 uppercase font-bold">Доход</span>
-                                <span className="font-mono text-slate-300 font-bold">${me.income?.toLocaleString()}</span>
+                                <span className="font-mono text-slate-300 font-bold">${me?.income?.toLocaleString() || 0}</span>
                             </div>
                             <div className="flex justify-between items-center">
                                 <span className="text-[9px] text-slate-500 uppercase font-bold">Расходы</span>
-                                <span className="font-mono text-slate-400 font-bold">${me.expenses?.toLocaleString()}</span>
+                                <span className="font-mono text-slate-400 font-bold">${me?.expenses?.toLocaleString() || 0}</span>
                             </div>
                         </div>
 
@@ -1283,7 +1310,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             <span className="font-mono text-green-400 bg-green-900/20 px-2 py-0.5 rounded-lg">+${totalAssetYield}</span>
                         </h3>
 
-                        {me.assets?.length > 0 ? (
+                        {me?.assets?.length > 0 ? (
                             <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1 -mr-2">
                                 {me.assets.map((a: any, i: number) => (
                                     <div
@@ -1334,7 +1361,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             onSquareClick={(sq: any) => setSquareInfo(sq)}
                             showExitButton={showExitButton}
                             onExitClick={() => {
-                                if (me.isFastTrack) {
+                                if (me?.isFastTrack) {
                                     setShowFastTrackInfo(true);
                                 } else {
                                     setShowFastTrackModal(true);

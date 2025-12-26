@@ -183,7 +183,7 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                     <div className="col-start-4 col-end-11 row-start-4 row-end-11 relative rounded-full bg-slate-950 border-4 border-slate-800/80 shadow-2xl flex flex-col items-center justify-center z-10 overflow-hidden pointer-events-auto">
                         <div className="absolute inset-0 opacity-20 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900 via-slate-900 to-black animate-pulse"></div>
                         <h1 className="text-[4cqw] lg:text-[6cqw] font-black bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent transform -skew-x-6 drop-shadow-2xl mb-4">MONEO</h1>
-                        <span className="text-[1cqw] text-slate-500 tracking-[0.4em] uppercase font-bold mt-1 mb-8">Energy of Money</span>
+
 
                         {/* EXIT BUTTON Built-in */}
                         {showExitButton && (

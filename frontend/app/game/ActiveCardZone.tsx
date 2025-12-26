@@ -518,6 +518,8 @@ export const ActiveCardZone = ({
     onDismissPreview,
     canShowCard = true
 }: ActiveCardZoneProps) => {
+    // Safety Guard
+    if (!me) return null;
 
     // PRE-CARD PHASES (Blocking)
     // Respect Delay
@@ -684,15 +686,7 @@ export const ActiveCardZone = ({
     const feedItems = [...currentCard, ...marketCards];
 
     if (feedItems.length === 0) {
-        return (
-            <div className="w-full h-full flex flex-col items-center justify-center text-slate-500/50">
-                <div className="text-4xl mb-2 opacity-50">🃏</div>
-                <div className="text-[10px] items-center text-center uppercase font-bold tracking-widest">
-                    <div>Нет активных</div>
-                    <div>карт</div>
-                </div>
-            </div>
-        );
+        return null; // Clean center
     }
 
     return (
