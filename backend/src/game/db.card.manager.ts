@@ -28,12 +28,22 @@ export class DbCardManager {
 
         try {
             const count = await CardModel.countDocuments();
+            console.log(`📊 Total cards in database: ${count}`);
+
             if (count === 0) {
                 console.log('⚠️ DB is empty. Seeding default cards...');
                 await this.seedCards();
             }
 
             const allCards = await CardModel.find({}).lean();
+            console.log(`📦 Fetched ${allCards.length} cards from database`);
+
+            // Debug: Check what types we have
+            const typeBreakdown: any = {};
+            allCards.forEach(c => {
+                typeBreakdown[c.type] = (typeBreakdown[c.type] || 0) + 1;
+            });
+            console.log('📋 Cards by type in fetched data:', typeBreakdown);
 
             // Map DB docs to Card interface (ensure _id -> id if needed, though we use 'id' field)
             const mapCard = (c: any): Card => {
