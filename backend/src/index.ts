@@ -385,6 +385,68 @@ app.post('/api/admin/broadcast', async (req, res) => {
     }
 });
 
+// Get Recipients by Category
+app.get('/api/admin/broadcast/recipients', async (req, res) => {
+    const secret = req.headers['x-admin-secret'];
+    const validSecrets = (process.env.ADMIN_SECRET || '').split(',').map(s => s.trim());
+    if (!validSecrets.includes(secret as string)) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    const category = req.query.category as string;
+    if (!category) return res.status(400).json({ error: 'Category required' });
+
+    try {
+        const { UserModel } = await import('./models/user.model');
+        let recipients: any[] = [];
+
+        switch (category) {
+            case 'all':
+                recipients = await UserModel.find({ telegram_id: { $exists: true, $ne: null } })
+                    .select('_id username first_name telegram_id');
+                break;
+            case 'avatars':
+                recipients = await UserModel.find({
+                    telegram_id: { $exists: true, $ne: null },
+                    $or: [
+                        { hasAvatar: true },
+                        { partnershipBalance: { $gt: 0 } }
+                    ]
+                }).select('_id username first_name telegram_id');
+                break;
+            case 'balance':
+                recipients = await UserModel.find({
+                    telegram_id: { $exists: true, $ne: null },
+                    $or: [
+                        { referralBalance: { $gt: 0 } },
+                        { balanceRed: { $gt: 0 } }
+                    ]
+                }).select('_id username first_name telegram_id');
+                break;
+            case 'custom':
+                // For now, return all users for custom selection
+                recipients = await UserModel.find({ telegram_id: { $exists: true, $ne: null } })
+                    .select('_id username first_name telegram_id');
+                break;
+            default:
+                return res.status(400).json({ error: 'Invalid category' });
+        }
+
+        res.json({
+            success: true,
+            recipients: recipients.map(r => ({
+                id: r._id.toString(),
+                username: r.username,
+                first_name: r.first_name,
+                telegram_id: r.telegram_id
+            }))
+        });
+    } catch (e: any) {
+        console.error("Recipients fetch error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // NEW: Campaign Management
 app.get('/api/admin/campaigns', async (req, res) => {
     const secret = req.headers['x-admin-secret'];
