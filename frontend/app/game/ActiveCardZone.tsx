@@ -808,11 +808,14 @@ export const ActiveCardZone = ({
             // Check if already dismissed
             if (locallyDismissedIds.includes(item.id)) return false;
 
-            // If canShowCard is false (not my turn), only show market sell offers that I can sell
+            // If canShowCard is false (not my turn), only show cards that I can sell
             if (!canShowCard) {
                 const card = item.card;
                 const isMarketSellOffer = item.source === 'MARKET' && card.offerPrice;
-                if (!isMarketSellOffer) return false;
+                const isStock = !!card.symbol;
+
+                // Only show if it's a market sell offer OR a stock
+                if (!isMarketSellOffer && !isStock) return false;
 
                 // Check if I own the asset
                 const iOwnAsset = card.symbol
