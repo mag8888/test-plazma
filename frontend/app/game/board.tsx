@@ -373,12 +373,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     useEffect(() => {
         if (state.lastEvent?.type === 'BABY_BORN') {
             sfx.play('baby');
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 },
-                colors: ['#FF69B4', '#87CEEB', '#FFD700', '#ffffff']
-            });
+            // Removed confetti as per user request
             setBabyNotification(`👶 Поздравляем! В семье ${state.lastEvent.payload?.player} пополнение!`);
 
             // Auto End Turn Logic (3s delay)

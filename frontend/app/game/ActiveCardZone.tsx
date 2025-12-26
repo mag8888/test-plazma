@@ -746,12 +746,19 @@ export const ActiveCardZone = ({
         if (state.phase === 'BABY_ROLL') {
             if (!isMyTurn) return <div className="flex flex-col items-center justify-center h-full text-slate-500 animate-pulse text-xs">👶 Ожидание броска...</div>;
             return (
-                <div className="flex flex-col h-full w-full relative p-3 items-center justify-center text-center">
-                    <div className="text-4xl mb-2 animate-bounce">👶</div>
-                    <h2 className="text-sm font-bold text-white mb-3">Пополнение в семье!</h2>
-                    <button onClick={() => socket.emit('roll_dice', { roomId })} className="w-full bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-xs uppercase shadow-lg">
-                        Бросить кубик
-                    </button>
+                <div className="flex flex-col h-full w-full relative bg-slate-900 rounded-2xl border border-slate-700/50 shadow-lg overflow-hidden">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-purple-500"></div>
+                    <div className="p-4 flex-1 flex flex-col items-center justify-center text-center">
+                        <div className="text-5xl mb-3 animate-bounce">👶</div>
+                        <h2 className="text-lg font-bold text-white mb-2">Пополнение в семье!</h2>
+                        <p className="text-slate-400 text-xs mb-6">Бросьте кубик чтобы узнать родился ли ребенок</p>
+                        <button
+                            onClick={() => socket.emit('roll_dice', { roomId })}
+                            className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl text-sm uppercase shadow-lg active:scale-95 transition-all"
+                        >
+                            🎲 Бросить кубик
+                        </button>
+                    </div>
                 </div>
             );
         }
