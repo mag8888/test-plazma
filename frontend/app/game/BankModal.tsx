@@ -79,9 +79,18 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                     </button>
 
                     <div className="mt-8 md:mt-8 relative z-10">
-                        <div className="flex items-center gap-3 mb-2">
-                            <span className="text-3xl">🏦</span>
-                            <h2 className="text-2xl font-black text-white tracking-wide uppercase">Банк</h2>
+                        <div className="flex items-center justify-between mb-2">
+                            <div className="flex items-center gap-3">
+                                <span className="text-3xl">🏦</span>
+                                <h2 className="text-2xl font-black text-white tracking-wide uppercase">Банк</h2>
+                            </div>
+                            <button
+                                onClick={() => window.location.reload()}
+                                className="w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center text-slate-400 hover:bg-slate-700 hover:text-white transition-all active:rotate-180 duration-300"
+                                title="Обновить"
+                            >
+                                🔄
+                            </button>
                         </div>
                         <div className="text-emerald-400 text-[10px] font-bold uppercase tracking-[0.2em] bg-emerald-950/50 inline-block px-3 py-1 rounded-full border border-emerald-900/50 shadow-[0_0_10px_rgba(16,185,129,0.2)]">Система активна</div>
                     </div>
