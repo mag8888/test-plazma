@@ -189,6 +189,7 @@ app.get('/api/games', async (req, res) => {
         const games = await ScheduledGameModel.find(query)
             .sort(sort)
             .populate('hostId', 'username first_name photo_url telegram_id') // Get host details including telegram_id
+            .populate('participants.userId', 'username first_name photo_url telegram_id') // Get participant details
             .limit(20);
 
         res.json(games);
