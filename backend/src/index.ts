@@ -1179,10 +1179,10 @@ const bootstrap = async () => {
                     success: true,
                     message: 'Cards reloaded from database',
                     counts: {
-                        small: templates.smallDeals.length,
-                        big: templates.bigDeals.length,
-                        market: templates.marketDeck.length,
-                        expense: templates.expenseDeck.length
+                        small: templates.small.length,
+                        big: templates.big.length,
+                        market: templates.market.length,
+                        expense: templates.expense.length
                     }
                 });
             } catch (error: any) {
