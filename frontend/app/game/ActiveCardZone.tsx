@@ -641,8 +641,7 @@ export const ActiveCardZone = ({
                     {/* SMALL DEAL BUTTON */}
                     <button
                         onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'SMALL' })}
-                        disabled={(me?.cash || 0) < 500}
-                        className="group relative w-full flex-1 bg-gradient-to-r from-emerald-900/80 to-teal-900/80 hover:from-emerald-800 hover:to-teal-800 border border-emerald-500/30 rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-4 overflow-hidden disabled:opacity-50 disabled:grayscale"
+                        className="group relative w-full flex-1 bg-gradient-to-r from-emerald-900/80 to-teal-900/80 hover:from-emerald-800 hover:to-teal-800 border border-emerald-500/30 rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-4 overflow-hidden"
                     >
                         <div className="absolute inset-0 bg-[url('/images/pattern-money.png')] opacity-10 mix-blend-overlay"></div>
                         <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(16,185,129,0.3)] group-hover:scale-110 transition-transform text-white">
@@ -658,8 +657,7 @@ export const ActiveCardZone = ({
                     {/* BIG DEAL BUTTON */}
                     <button
                         onClick={() => socket.emit('resolve_opportunity', { roomId, choice: 'BIG' })}
-                        disabled={(me?.cash || 0) < 6000}
-                        className="group relative w-full flex-1 bg-gradient-to-r from-purple-900/80 to-indigo-900/80 hover:from-purple-800 hover:to-indigo-800 border border-purple-500/30 rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-4 overflow-hidden disabled:opacity-50 disabled:grayscale"
+                        className="group relative w-full flex-1 bg-gradient-to-r from-purple-900/80 to-indigo-900/80 hover:from-purple-800 hover:to-indigo-800 border border-purple-500/30 rounded-2xl p-4 transition-all hover:scale-[1.02] active:scale-[0.98] shadow-lg flex items-center gap-4 overflow-hidden"
                     >
                         <div className="absolute inset-0 bg-[url('/images/pattern-money.png')] opacity-10 mix-blend-overlay"></div>
                         <div className="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center text-2xl shadow-[0_0_15px_rgba(168,85,247,0.3)] group-hover:scale-110 transition-transform text-white">
