@@ -768,10 +768,10 @@ export const ActiveCardZone = ({
             if (!isMyTurn) {
                 return (
                     <div className="flex flex-col items-center justify-center h-full text-slate-500/80 animate-pulse bg-slate-900/40 rounded-2xl border border-slate-800/50">
-                        <div className="text-3xl mb-2 grayscale opacity-50">📉</div>
+                        <div className="text-3xl mb-2 grayscale opacity-50">🤒</div>
                         <div className="text-center">
                             <div className="text-xs font-bold text-slate-300 mb-1">{state.players[state.currentPlayerIndex]?.name}</div>
-                            <div className="text-[10px] uppercase font-bold tracking-widest opacity-70">решает об<br />увольнении</div>
+                            <div className="text-[10px] uppercase font-bold tracking-widest opacity-70">решает о<br />болезни</div>
                         </div>
                     </div>
                 );
@@ -894,7 +894,7 @@ const FiredView = ({ roomId, me, isMyTurn, socket }: FiredViewProps) => {
             <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-sm">
                 <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 shadow-2xl max-w-sm w-full text-center animate-pulse">
                     <div className="text-4xl mb-4">📉</div>
-                    <h2 className="text-xl font-bold text-white mb-2">Увольнение</h2>
+                    <h2 className="text-xl font-bold text-white mb-2">Заболел</h2>
                     <p className="text-slate-400 text-sm">Другой игрок принимает решение...</p>
                 </div>
             </div>
@@ -945,9 +945,9 @@ const FiredView = ({ roomId, me, isMyTurn, socket }: FiredViewProps) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
             <div className="bg-slate-800 p-6 rounded-3xl border border-slate-700 shadow-2xl max-w-md w-full relative">
                 <div className="text-center mb-6">
-                    <div className="text-5xl mb-2">📉</div>
-                    <h2 className="text-2xl font-bold text-white mb-1">Увольнение!</h2>
-                    <p className="text-slate-400 text-sm uppercase tracking-wider">Вы временно без работы</p>
+                    <div className="text-5xl mb-2">🤒</div>
+                    <h2 className="text-2xl font-bold text-white mb-1">Заболел!</h2>
+                    <p className="text-slate-400 text-sm uppercase tracking-wider">Вы заболели</p>
                 </div>
 
                 <div className="bg-slate-700/50 p-4 rounded-xl mb-6 text-center border border-slate-600">

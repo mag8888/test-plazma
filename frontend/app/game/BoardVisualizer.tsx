@@ -21,7 +21,7 @@ const getSticker = (type: string, name: string) => {
         return '📉';
     }
 
-    if (type === 'DOWNSIZED') return '📉';
+    if (type === 'DOWNSIZED') return '🤒';
     if (type === 'BUSINESS') return '🏢';
     if (type === 'DREAM') return '✨';
     if (type === 'LOTTERY') return '🎰';

@@ -110,7 +110,7 @@ export const RAT_RACE_SQUARES: BoardSquare[] = [
     { index: 16, type: 'DEAL', name: 'Opportunity', description: 'Возможность: Малая или Крупная сделка.' },
     { index: 17, type: 'EXPENSE', name: 'Doodad', description: 'Трата: Ненужные расходы.' },
     { index: 18, type: 'DEAL', name: 'Opportunity', description: 'Возможность: Малая или Крупная сделка.' },
-    { index: 19, type: 'DOWNSIZED', name: 'Downsized', description: 'Увольнение: Пропуск 2 ходов и оплата расходов.' },
+    { index: 19, type: 'DOWNSIZED', name: 'Sick', description: 'Заболел: Пропуск 2 ходов и оплата расходов.' },
     { index: 20, type: 'DEAL', name: 'Opportunity', description: 'Возможность: Малая или Крупная сделка.' },
     { index: 21, type: 'PAYDAY', name: 'Payday', description: 'Деньги: Получите ваш месячный денежный поток.' },
     { index: 22, type: 'DEAL', name: 'Opportunity', description: 'Возможность: Малая или Крупная сделка.' },
@@ -1092,7 +1092,7 @@ export class GameEngine {
             // If cannot pay -> Bankrupt (Restart with loanLimit 50%)
 
             this.state.phase = 'DOWNSIZED_DECISION';
-            this.addLog(`📉 ${player.name} Downsized! Choose payment option.`);
+            this.addLog(`🤒 ${player.name} заболел! Выберите вариант оплаты.`);
         } else if (square.type === 'CHARITY') {
             this.state.phase = 'CHARITY_CHOICE';
             this.addLog(`❤️ Charity: Donate 10% of total income to roll extra dice?`);
