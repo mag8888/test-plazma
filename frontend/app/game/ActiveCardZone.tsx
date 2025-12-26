@@ -802,8 +802,28 @@ export const ActiveCardZone = ({
         ? [{ card: state.currentCard || previewCard, source: 'CURRENT', id: (state.currentCard || previewCard).id || 'curr' }]
         : [];
 
+    // Filter cards - market sell offers should always show to asset owners
     const feedItems = [...currentCard, ...marketCards]
-        .filter((item: any) => !locallyDismissedIds.includes(item.id))
+        .filter((item: any) => {
+            // Check if already dismissed
+            if (locallyDismissedIds.includes(item.id)) return false;
+
+            // If canShowCard is false (not my turn), only show market sell offers that I can sell
+            if (!canShowCard) {
+                const card = item.card;
+                const isMarketSellOffer = item.source === 'MARKET' && card.offerPrice;
+                if (!isMarketSellOffer) return false;
+
+                // Check if I own the asset
+                const iOwnAsset = card.symbol
+                    ? me?.assets?.some((a: any) => a.symbol === card.symbol)
+                    : me?.assets?.some((a: any) => a.title === card.title || a.title === card.targetTitle);
+
+                return iOwnAsset;
+            }
+
+            return true;
+        })
         .sort((a, b) => {
             // Prioritize MY owned cards (Deal Transfer recipients)
             const amIOwnerA = a.sourcePlayerId === me?.id;
