@@ -23,7 +23,6 @@ const FeedCardItem = ({
     roomId,
     isMyTurn,
     players,
-    onDismiss
     onDismiss,
     state // Added state prop type
 }: {
@@ -812,6 +811,7 @@ export const ActiveCardZone = ({
                                     roomId={roomId}
                                     isMyTurn={isMyTurn}
                                     players={state.players}
+                                    state={state}
                                     onDismiss={() => {
                                         console.log('Dismissing card:', item.id, item.source);
 
