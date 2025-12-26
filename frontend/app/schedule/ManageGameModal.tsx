@@ -369,62 +369,69 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
                             </div>
                         </div>
 
-                        {game?.participants?.length === 0 ? (
+                        {(!game?.participants || game.participants.length === 0) ? (
                             <div className="text-center text-slate-500 py-10">Нет участников</div>
                         ) : (
-                            game?.participants?.map((p: any) => (
-                                <div key={p.userId._id} className="bg-slate-800 rounded-xl p-3 flex justify-between items-center border border-slate-700">
-                                    <div
-                                        className="flex items-center gap-3 cursor-pointer active:scale-95 transition-transform"
-                                        onClick={() => handleShowProfile(p.userId)}
-                                    >
-                                        <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-400 overflow-hidden">
-                                            {p.userId.photo_url ? (
-                                                <img src={p.userId.photo_url} className="w-full h-full object-cover" />
-                                            ) : (
-                                                p.userId.first_name?.[0]
-                                            )}
-                                        </div>
-                                        <div>
-                                            <div className="font-bold text-sm text-blue-400 hover:underline">
-                                                {p.userId.first_name} {p.userId.username && <span className="text-slate-500 font-normal">@{p.userId.username}</span>}
-                                            </div>
-                                            <div className="text-xs text-slate-500 flex gap-2">
-                                                <span>{p.type === 'PAID' ? '💰 Paid' : '🎟 Free'}</span>
-                                                {p.isVerified && <span className="text-green-500">✅ Verif</span>}
-                                                {p.postLink && <span className="text-blue-500">🔗 Link</span>}
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        {/* Show Confirm button if Promo & Not Verified */}
-                                        {p.type === 'PROMO' && !p.isVerified && (
-                                            <button
-                                                onClick={() => handleConfirmPlayer(p.userId._id, p.userId.first_name)}
-                                                className="p-2 hover:bg-green-900/50 rounded-lg text-green-500 bg-green-900/20 border border-green-900/50"
-                                                title="Подтвердить"
-                                            >
-                                                <Check size={18} />
-                                            </button>
-                                        )}
+                            game.participants.map((p: any) => {
+                                const userObj = typeof p.userId === 'object' ? p.userId : null;
+                                const userIdStr = (userObj?._id || p.userId)?.toString();
+                                const photoUrl = userObj?.photo_url;
+                                const firstName = userObj?.first_name || 'User';
+                                const username = userObj?.username;
 
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); handleOpenDM(p.userId); }}
-                                            className="p-2 hover:bg-slate-700 rounded-lg text-blue-400"
-                                            title="Написать"
+                                return (
+                                    <div key={userIdStr || Math.random()} className="bg-slate-800 rounded-xl p-3 flex justify-between items-center border border-slate-700">
+                                        <div
+                                            className="flex items-center gap-3 cursor-pointer active:scale-95 transition-transform"
+                                            onClick={() => userObj && handleShowProfile(userObj)}
                                         >
-                                            <MessageSquare size={18} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleKick(p.userId._id, p.userId.first_name)}
-                                            className="p-2 hover:bg-red-900/50 rounded-lg text-red-500"
-                                            title="Исключить"
-                                        >
-                                            <Trash2 size={18} />
-                                        </button>
+                                            <div className="w-10 h-10 rounded-full bg-slate-700 flex items-center justify-center font-bold text-slate-400 overflow-hidden">
+                                                {photoUrl ? (
+                                                    <img src={photoUrl} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    firstName?.[0] || '?'
+                                                )}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-sm text-blue-400 hover:underline">
+                                                    {firstName} {username && <span className="text-slate-500 font-normal">@{username}</span>}
+                                                </div>
+                                                <div className="text-xs text-slate-500 flex gap-2">
+                                                    <span>{p.type === 'PAID' ? '💰 Paid' : '🎟 Free'}</span>
+                                                    {p.isVerified && <span className="text-green-500">✅ Verif</span>}
+                                                    {p.postLink && <span className="text-blue-500">🔗 Link</span>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            {/* Show Confirm button if Promo & Not Verified */}
+                                            {p.type === 'PROMO' && !p.isVerified && (
+                                                <button
+                                                    onClick={() => handleConfirmPlayer(p.userId._id, p.userId.first_name)}
+                                                    className="p-2 hover:bg-green-900/50 rounded-lg text-green-500 bg-green-900/20 border border-green-900/50"
+                                                    title="Подтвердить"
+                                                >
+                                                    <Check size={18} />
+                                                </button>
+                                            )}
+
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleOpenDM(p.userId); }}
+                                                className="p-2 hover:bg-slate-700 rounded-lg text-blue-400"
+                                                title="Написать"
+                                            >
+                                                <MessageSquare size={18} />
+                                            </button>
+                                            <button
+                                                onClick={() => handleKick(p.userId._id, p.userId.first_name)}
+                                                className="p-2 hover:bg-red-900/50 rounded-lg text-red-500"
+                                                title="Исключить"
+                                            >
+                                                <Trash2 size={18} />
+                                            </button>
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                ))
                         )}
                     </div>
                 )}
