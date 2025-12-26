@@ -673,7 +673,7 @@ export class GameGateway {
                     try {
                         // CRITICAL FIX: Find userId from socket.id
                         const fromPlayer = game.state.players.find(p => p.id === socket.id);
-                        if (!fromPlayer) {
+                        if (!fromPlayer || !fromPlayer.userId) {
                             console.error(`[transfer_asset] Cannot find player with socket.id ${socket.id}`);
                             socket.emit('error', 'Player not found in game');
                             return;
