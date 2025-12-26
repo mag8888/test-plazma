@@ -5,25 +5,33 @@ export async function POST(req: NextRequest) {
         const formData = await req.formData();
         const text = formData.get('text') as string;
         const category = formData.get('category') as string;
+        const recipientsJson = formData.get('recipients') as string;
         const photo = formData.get('photo') as File | null;
 
-        if (!text || !category) {
-            return NextResponse.json({ success: false, error: 'Missing text or category' }, { status: 400 });
+        if (!text || !category || !recipientsJson) {
+            return NextResponse.json({ success: false, error: 'Missing required fields' }, { status: 400 });
         }
 
+        const recipients = JSON.parse(recipientsJson);
+
         // Prepare the request to backend
-        const backendFormData = new FormData();
-        backendFormData.append('text', text);
-        backendFormData.append('category', category);
-        if (photo) {
-            backendFormData.append('photo', photo);
-        }
+        const payload = {
+            message: text,
+            recipients,
+            photoUrl: null // TODO: Upload photo if provided
+        };
 
         // Call backend broadcast API
         const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+        const adminSecret = process.env.ADMIN_SECRET || '';
+
         const response = await fetch(`${backendUrl}/api/admin/broadcast`, {
             method: 'POST',
-            body: backendFormData,
+            headers: {
+                'Content-Type': 'application/json',
+                'x-admin-secret': adminSecret
+            },
+            body: JSON.stringify(payload),
         });
 
         const result = await response.json();

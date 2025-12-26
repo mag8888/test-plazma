@@ -11,7 +11,13 @@ export async function GET(req: NextRequest) {
 
         // Call backend to get recipients list
         const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-        const response = await fetch(`${backendUrl}/api/admin/broadcast/recipients?category=${category}`);
+        const adminSecret = process.env.ADMIN_SECRET || '';
+
+        const response = await fetch(`${backendUrl}/api/admin/broadcast/recipients?category=${category}`, {
+            headers: {
+                'x-admin-secret': adminSecret
+            }
+        });
 
         const result = await response.json();
 
