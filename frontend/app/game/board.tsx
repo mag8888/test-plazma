@@ -571,29 +571,25 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
         socket.on('state_updated', (data) => {
             if (!isRollingRef.current) {
-                // Check for Payday or specific events in log?
-                // Hard to detect EXACT events without delta, but we can check if cashflow increased significantly?
-                // Better: rely on 'lastEvent' if available.
-                // Assuming `state.lastEvent` is reliable.
-
-                // My Turn Check
-                const oldIdx = state?.currentPlayerIndex;
-                const newIdx = data.state?.currentPlayerIndex;
-                const meInList = data.state?.players?.findIndex((p: any) => p.id === socket.id);
-
-                // If turn passed TO me
-                if (typeof oldIdx === 'number' && typeof newIdx === 'number' && oldIdx !== newIdx && newIdx === meInList) {
-                    sfx.play('turn');
-                }
-
-                if (data.state.lastEvent?.type === 'PAYDAY') {
-                    sfx.play('payday');
-                }
-                if (data.state.lastEvent?.type === 'DOWNSIZED') {
-                    sfx.play('fired');
-                }
-                if (data.state.lastEvent?.type === 'FAST_TRACK') sfx.play('fasttrack');
-                if (data.state.lastEvent?.type === 'STOCK') sfx.play('stock');
+                // SOUNDS DISABLED per user request - too many sound effects
+                // // My Turn Check
+                // const oldIdx = state?.currentPlayerIndex;
+                // const newIdx = data.state?.currentPlayerIndex;
+                // const meInList = data.state?.players?.findIndex((p: any) => p.id === socket.id);
+                // 
+                // // If turn passed TO me
+                // if (typeof oldIdx === 'number' && typeof newIdx === 'number' && oldIdx !== newIdx && newIdx === meInList) {
+                //     sfx.play('turn');
+                // }
+                //
+                // if (data.state.lastEvent?.type === 'PAYDAY') {
+                //     sfx.play('payday');
+                // }
+                // if (data.state.lastEvent?.type === 'DOWNSIZED') {
+                //     sfx.play('fired');
+                // }
+                // if (data.state.lastEvent?.type === 'FAST_TRACK') sfx.play('fasttrack');
+                // if (data.state.lastEvent?.type === 'STOCK') sfx.play('stock');
 
                 setState(data.state);
             }
