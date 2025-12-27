@@ -97,15 +97,13 @@ const FeedCardItem = ({
 
     const isOffer = source === 'MARKET';
     const isStock = !!card.symbol;
-    const ownedStock = me?.assets?.find((a: any) => a.symbol === card.symbol);
-
-    // Check if player owns the asset (for market sell offers)
-    const hasAsset = card.offerPrice && isOffer
-        ? (card.symbol
-            ? me?.assets?.some((a: any) => a.symbol === card.symbol)
-            : me?.assets?.some((a: any) => a.title === card.title || a.title === card.targetTitle))
-        : true; // Not a sell offer, always show
-    const ownedQty = ownedStock ? ownedStock.quantity : 0;
+    const ownedStock = me?.assets?.find((a: any) =>
+        (card.symbol && a.symbol === card.symbol) ||
+        (!card.symbol && (a.title === card.title || a.title === card.targetTitle))
+    );
+    // Use quantity or 1 for real estate if found
+    const ownedQty = ownedStock ? (ownedStock.quantity || 1) : 0;
+    const hasAsset = ownedQty > 0;
 
     // Owner Logic - Card creator OR anyone who owns the asset for market cards
     const isOriginalOwner = cardWrapper.sourcePlayerId === me?.id;
@@ -829,7 +827,7 @@ export const ActiveCardZone = ({
                     ? me?.assets?.some((a: any) => a.symbol === card.symbol)
                     : me?.assets?.some((a: any) => a.title === card.title || a.title === card.targetTitle);
 
-                return iOwnAsset;
+                return iOwnAsset || item.sourcePlayerId === me?.id;
             }
 
             return true;

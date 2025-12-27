@@ -760,31 +760,7 @@ export class GameGateway {
             });
 
 
-            // Host Grant Cash
-            socket.on('host_give_cash', ({ roomId, userId, amount }) => {
-                const game = this.games.get(roomId);
-                if (game) {
-                    try {
-                        // TODO: Verify host strictly. GameEngine doesn't track socketIds.
-                        // For now, rely on client-side permission gating (not ideal, but pragmatic).
-                        // Better: Store persistent userId map in GameEngine or verify creatorId match.
 
-                        const targetPlayer = game.state.players.find(p => p.userId === userId);
-                        if (!targetPlayer) {
-                            throw new Error("Player not found");
-                        }
-
-                        targetPlayer.cash += amount;
-                        game.addLog(`🎁 Host gave $${amount} to ${targetPlayer.name}`);
-
-                        const state = game.getState();
-                        this.io.to(roomId).emit('state_updated', { state });
-                        saveState(roomId, game);
-                    } catch (e: any) {
-                        socket.emit('error', e.message);
-                    }
-                }
-            });
 
             // Host Reshuffle Decks
             socket.on('host_reshuffle_decks', ({ roomId, userId }) => {
