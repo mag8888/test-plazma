@@ -567,4 +567,60 @@ export class AdminController {
         }
     }
 
+    /**
+     * Recalculate and activate all avatars - Admin tool for fixing broken states
+     */
+    static async recalculateAvatars(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const adminName = req.headers['x-admin-name'] as string || 'Unknown Admin';
+
+            // Get all avatars
+            const avatars = await Avatar.find({}).populate('owner');
+
+            let activated = 0;
+            let updated = 0;
+            const errors = [];
+
+            for (const avatar of avatars) {
+                try {
+                    let changed = false;
+
+                    // Ensure isActive is set
+                    if (avatar.isActive === undefined || avatar.isActive === null) {
+                        avatar.isActive = true;
+                        changed = true;
+                        activated++;
+                    }
+
+                    // Save if changed
+                    if (changed) {
+                        await avatar.save();
+                        updated++;
+                    }
+                } catch (err: any) {
+                    errors.push(`Avatar ${avatar._id}: ${err.message}`);
+                }
+            }
+
+            // Log Admin Action
+            await AdminLog.create({
+                adminName,
+                action: AdminActionType.BALANCE_CHANGE, // Reusing existing type
+                details: `Recalculated avatars. Total: ${avatars.length}, Activated: ${activated}, Updated: ${updated}, Errors: ${errors.length}`
+            });
+
+            res.json({
+                success: true,
+                total: avatars.length,
+                activated,
+                updated,
+                errors: errors.length > 0 ? errors : undefined
+            });
+
+        } catch (error: any) {
+            console.error('recalculateAvatars error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
 }

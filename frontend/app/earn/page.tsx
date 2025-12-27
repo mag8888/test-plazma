@@ -185,9 +185,16 @@ export default function EarnPage() {
                 if (webApp) webApp.showAlert('Успешно! Аватар активирован.');
                 else alert('Success!');
 
-                // Refresh User Data
-                const updatedUser = await partnershipApi.getStats(partnershipUser._id);
-                setPartnershipUser({ ...partnershipUser, ...updatedUser }); // Update balances
+                // Refresh User Data: Stats AND Avatars
+                const updatedStats = await partnershipApi.getStats(partnershipUser._id);
+
+                // Fetch updated avatars to refresh tariff display
+                const avatarsRes = await fetch(`${process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'https://moneo.up.railway.app/api/partnership'}/avatars/my-avatars/${partnershipUser._id}`);
+                const avatarsData = await avatarsRes.json();
+                const avatarsList = avatarsData.avatars || [];
+
+                // Update state with both stats and avatars
+                setPartnershipUser({ ...partnershipUser, ...updatedStats, avatars: avatarsList });
             } else {
                 if (webApp) webApp.showAlert(res.error || 'Ошибка покупки');
                 else alert(res.error || 'Error');
@@ -543,14 +550,21 @@ export default function EarnPage() {
             <div className="mt-8">
                 <AvatarPurchase
                     partnershipUser={partnershipUser}
-                    onPurchaseSuccess={() => {
-                        // Refresh user stats after purchase
+                    onPurchaseSuccess={async () => {
+                        // Refresh user stats AND avatars after purchase
                         if (partnershipUser?._id) {
-                            partnershipApi.getStats(partnershipUser._id)
-                                .then(updated => {
-                                    setPartnershipUser({ ...partnershipUser, ...updated });
-                                })
-                                .catch(err => console.error('Failed to refresh stats:', err));
+                            try {
+                                const updatedStats = await partnershipApi.getStats(partnershipUser._id);
+
+                                // Fetch updated avatars to refresh tariff display
+                                const avatarsRes = await fetch(`${process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'https://moneo.up.railway.app/api/partnership'}/avatars/my-avatars/${partnershipUser._id}`);
+                                const avatarsData = await avatarsRes.json();
+                                const avatarsList = avatarsData.avatars || [];
+
+                                setPartnershipUser({ ...partnershipUser, ...updatedStats, avatars: avatarsList });
+                            } catch (err) {
+                                console.error('Failed to refresh stats:', err);
+                            }
                         }
                     }}
                 />

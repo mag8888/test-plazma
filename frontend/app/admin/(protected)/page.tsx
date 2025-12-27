@@ -445,6 +445,30 @@ export default function AdminPage() {
                                     <span className="font-bold">Рассылка</span>
                                     <span className="text-[10px] opacity-70">Создать рассылку</span>
                                 </button>
+
+                                <button
+                                    onClick={async () => {
+                                        if (!confirm('Активировать все аватары и пересчитать тарифы?\n\nЭто установит isActive=true для всех аватаров.')) return;
+                                        setIsLoading(true);
+                                        try {
+                                            const res = await fetchWithAuth('/avatars/recalculate', { method: 'POST' });
+                                            if (res.success) {
+                                                alert(`Пересчет завершен!\nВсего аватаров: ${res.total}\nАктивировано: ${res.activated}\nОбновлено: ${res.updated}${res.errors ? `\nОшибок: ${res.errors.length}` : ''}`);
+                                            } else {
+                                                alert('Ошибка: ' + res.error);
+                                            }
+                                        } catch (e: any) {
+                                            alert('Ошибка сети: ' + e.message);
+                                        } finally {
+                                            setIsLoading(false);
+                                        }
+                                    }}
+                                    className="bg-green-900/50 hover:bg-green-900/70 text-green-300 p-4 rounded-xl border border-green-700/50 flex flex-col items-center gap-2 transition"
+                                >
+                                    <BarChart size={24} />
+                                    <span className="font-bold">Пересчитать</span>
+                                    <span className="text-[10px] opacity-70">Активировать тарифы</span>
+                                </button>
                             </div>
                         </div>
 
