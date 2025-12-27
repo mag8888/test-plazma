@@ -1733,8 +1733,10 @@ export class GameEngine {
                 card = match.card;
                 isMarketCard = true;
 
-                // CRITICAL: Only card owner can buy from market
-                if (match.sourcePlayerId !== player.id) {
+                // CRITICAL: Only card owner can buy from market (UNLESS it is a Market Offer)
+                const isMarketOffer = match.card.offerPrice && match.card.offerPrice > 0;
+
+                if (!isMarketOffer && match.sourcePlayerId !== player.id) {
                     this.addLog(`⚠️ ${player.name} не может купить чужую карточку!`);
                     throw new Error('Только владелец карточки может купить!');
                 }
