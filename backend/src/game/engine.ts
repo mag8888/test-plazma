@@ -1281,9 +1281,10 @@ export class GameEngine {
                 // We keep card.mandatory = true so UI knows to show "PAY" instead of "BUY".
                 this.state.phase = 'ACTION';
                 return;
+            } else {
                 // Show card even if cost is 0 so user knows what happened
                 card.cost = 0; // Explicitly set to 0
-                this.addLog(`😅 ${card.title}: No payment required (No property owned).`);
+                this.addLog(`😅 ${card.title}: Нет недвижимости. Вы ничего не платите.`);
 
                 // Keep card in state so UI shows it with "Pay $0" or "Ok"
                 this.state.phase = 'ACTION';
