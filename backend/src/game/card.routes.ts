@@ -9,6 +9,7 @@ class CardStore {
     private customBigDeals: Card[] = [];
     private customMarketCards: Card[] = [];
     private customExpenseCards: Card[] = [];
+    private initialized = false;
 
     getCards(type: string): Card[] {
         let cards: Card[] = [];
