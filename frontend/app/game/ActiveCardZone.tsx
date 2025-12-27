@@ -334,8 +334,8 @@ const FeedCardItem = ({
                                 ) : card.type === 'MARKET' ? (
                                     <>
                                         {/* Market Card Actions */}
-                                        {/* If it's a Stock, you can also BUY at this price */}
-                                        {isStock && (
+                                        {/* If it's a Stock, you can also BUY at this price - ONLY if you control the card */}
+                                        {isStock && canControl && (
                                             <button
                                                 onClick={() => {
                                                     setTransactionMode('BUY');
