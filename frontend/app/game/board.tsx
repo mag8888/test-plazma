@@ -1472,6 +1472,20 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             </button>
                         </div>
 
+                        {/* DESKTOP SKIP / PAUSE TOGGLE */}
+                        {!me?.isBankrupted && (
+                            <button
+                                onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
+                                className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0
+                                    ${me.isSkippingTurns
+                                        ? 'bg-yellow-600/90 hover:bg-yellow-500 text-white animate-pulse'
+                                        : 'bg-slate-800 hover:bg-indigo-600/50 border border-slate-700 text-slate-400 hover:text-white'}`}
+                            >
+                                <span className="text-sm">{me.isSkippingTurns ? '⏸' : '▶️'}</span>
+                                <span>{me.isSkippingTurns ? 'ПАУЗА (AFK)' : 'РЕЖИМ ИГРЫ'}</span>
+                            </button>
+                        )}
+
                         {/* 3. PLAYERS GRID (Small Cards) */}
                         <div className="grid grid-cols-2 gap-2 shrink-0 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
                             {state.players.filter((p: any) => p.id !== me?.id).map((p: any) => {
