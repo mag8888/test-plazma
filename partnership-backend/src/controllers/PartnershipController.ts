@@ -411,23 +411,14 @@ export class PartnershipController {
             const owner = rootAvatar.owner as any; // Type assertion for populated field
             const ownerId = owner._id || rootAvatar.owner;
 
-            // Get transactions related to this avatar (matrix earnings)
-            const transactions = await Transaction.find({
-                user: ownerId,
-                type: { $in: [TransactionType.BONUS_GREEN, TransactionType.BONUS_YELLOW, TransactionType.AVATAR_BONUS] }
+            // Calculate Green Earned: Sum of referral bonuses from children placed directly under this avatar
+            // We only count bonuses that went to the current owner (if they are the referrer)
+            const childPurchases = await mongoose.model('AvatarPurchase').find({
+                parentAvatarId: avatarId,
+                referrerId: ownerId
             });
 
-            // Sum up earnings by type
-            let greenEarned = 0;
-            let yellowEarned = 0;
-
-            for (const tx of transactions) {
-                if (tx.type === TransactionType.BONUS_GREEN || tx.type === TransactionType.AVATAR_BONUS) {
-                    greenEarned += tx.amount;
-                } else if (tx.type === TransactionType.BONUS_YELLOW) {
-                    yellowEarned += tx.amount;
-                }
-            }
+            const greenEarned = childPurchases.reduce((sum, p) => sum + (p.referrerBonus || 0), 0);
 
             // BFS to get 5 levels
             const tree: any = {
@@ -441,7 +432,7 @@ export class PartnershipController {
                 // Add earnings data
                 earnings: {
                     greenEarned: Math.round(greenEarned * 100) / 100,
-                    yellowEarned: Math.round(yellowEarned * 100) / 100,
+                    yellowEarned: rootAvatar.levelProgressionAccumulated || 0, // Use the actual accumulated value from the model
                     greenBalance: owner.greenBalance || 0,
                     yellowBalance: owner.yellowBalance || 0
                 }

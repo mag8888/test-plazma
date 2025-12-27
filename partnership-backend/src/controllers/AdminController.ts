@@ -128,6 +128,30 @@ export class AdminController {
         }
     }
 
+    // Get User Transactions
+    static async getUserTransactions(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const { userId } = req.params;
+            if (!userId) return res.status(400).json({ error: 'Missing userId' });
+
+            // Resolve User ID
+            let user;
+            if (userId.match(/^[0-9a-fA-F]{24}$/)) {
+                user = await User.findById(userId);
+            } else {
+                user = await User.findOne({ telegram_id: Number(userId) }) || await User.findOne({ username: userId });
+            }
+
+            if (!user) return res.status(404).json({ error: 'User not found' });
+
+            const transactions = await Transaction.find({ user: user._id }).sort({ createdAt: -1 }).limit(100);
+            res.json(transactions);
+        } catch (error: any) {
+            console.error('getUserTransactions error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
     // Update Balance
     static async updateBalance(req: ExpressRequest, res: ExpressResponse) {
         try {

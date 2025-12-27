@@ -63,6 +63,24 @@ export default function AdminPage() {
     const [newAvatarType, setNewAvatarType] = useState('BASIC');
     const [deductBalance, setDeductBalance] = useState(false); // New state for balance deduction
 
+    // History Modal
+    const [historyUser, setHistoryUser] = useState<any>(null);
+    const [userTransactions, setUserTransactions] = useState<any[]>([]);
+
+    const fetchTransactions = async (userId: string) => {
+        const res = await fetchWithAuth(`/users/${userId}/transactions`);
+        if (Array.isArray(res)) {
+            setUserTransactions(res);
+        } else {
+            alert('Failed to fetch transactions');
+        }
+    };
+
+    const handleViewHistory = (user: any) => {
+        setHistoryUser(user);
+        fetchTransactions(user._id);
+    };
+
     const createAvatar = async () => {
         if (!addAvatarUser) return;
 
@@ -877,8 +895,61 @@ export default function AdminPage() {
                 )
             }
 
+            {/* TRANSACTION HISTORY MODAL */}
+            {
+                historyUser && (
+                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-4xl space-y-6 max-h-[90vh] flex flex-col">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold text-white">Transaction History</h2>
+                                <button onClick={() => setHistoryUser(null)} className="text-slate-400 hover:text-white">✕</button>
+                            </div>
+                            <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{historyUser.username}</span></div>
+
+                            <div className="overflow-auto flex-1">
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-950 text-slate-400 text-xs uppercase sticky top-0">
+                                        <tr>
+                                            <th className="p-4">Date</th>
+                                            <th className="p-4">Type</th>
+                                            <th className="p-4">Amount</th>
+                                            <th className="p-4">Description</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-700">
+                                        {userTransactions.map((t: any) => (
+                                            <tr key={t._id} className="hover:bg-slate-800 transition text-sm">
+                                                <td className="p-4 text-slate-400 whitespace-nowrap">
+                                                    {new Date(t.createdAt).toLocaleString()}
+                                                </td>
+                                                <td className="p-4 text-white font-mono">
+                                                    {t.type}
+                                                </td>
+                                                <td className={`p-4 font-bold ${t.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                    {t.amount > 0 ? '+' : ''}{t.amount} {t.currency}
+                                                </td>
+                                                <td className="p-4 text-slate-300">
+                                                    {t.description}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {userTransactions.length === 0 && (
+                                            <tr><td colSpan={4} className="p-8 text-center text-slate-500">No transactions found</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="flex justify-end pt-4 border-t border-slate-800">
+                                <button onClick={() => setHistoryUser(null)} className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-xl font-bold transition">Close</button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
+
             {/* Broadcast Modal */}
             <BroadcastModal isOpen={showBroadcastModal} onClose={() => setShowBroadcastModal(false)} />
-        </div >
+        </div>
     );
 }
