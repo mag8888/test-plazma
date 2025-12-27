@@ -467,6 +467,16 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
         socket.emit('buy_asset', { roomId });
     };
 
+    // Auto-close Market Preview if card is removed (e.g. bought)
+    useEffect(() => {
+        if (squareInfo?.type === 'MARKET' && squareInfo.card) {
+            const exists = state.activeMarketCards?.some(mc => mc.card.id === squareInfo.card.id);
+            if (!exists) {
+                setSquareInfo(null);
+            }
+        }
+    }, [state.activeMarketCards, squareInfo]);
+
     // Timer Sync & Countdown Logic
     useEffect(() => {
         const updateTimer = () => {
