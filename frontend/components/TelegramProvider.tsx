@@ -114,15 +114,46 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                     }
                 }
 
-                // Check for explicit logout (only if NO auth param)
+                // Priority 2: Telegram InitData (Telegram Web App) - SUPERSEDES Logged Out state
+                // If user re-opens the app via Telegram, they expect to be logged in.
+                if (app?.initData) {
+                    console.log("🔑 Login via Telegram InitData");
+                    const res = await fetch(`${BACKEND_URL}/api/auth/telegram`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ initData: app.initData })
+                    });
+
+                    if (res.ok) {
+                        const data = await res.json();
+                        setUser(data.user);
+
+                        // Clear logout flag since we just successfully logged in
+                        localStorage.removeItem('moneo_is_logged_out');
+
+                        // Save to localStorage
+                        localStorage.setItem('moneo_user_auth', JSON.stringify({
+                            user: data.user,
+                            token: data.token
+                        }));
+                        setIsReady(true);
+                        return;
+                    } else {
+                        console.error("Telegram Auth failed", res.status);
+                        // Do not return, maybe stored auth works (unlikely if initData failed)
+                        // Or just fall through to 'No Auth'
+                    }
+                }
+
+                // Check for explicit logout (only if NO InitData triggered login)
                 const isLoggedOut = localStorage.getItem('moneo_is_logged_out');
                 if (isLoggedOut) {
-                    console.log("⛔ User explicitly logged out, ignoring all auth");
+                    console.log("⛔ User explicitly logged out, ignoring stored session.");
                     setIsReady(true);
                     return;
                 }
 
-                // Priority 2: Stored Authentication (for persistence)
+                // Priority 3: Stored Authentication (for persistence)
                 const storedUserAuth = localStorage.getItem('moneo_user_auth');
                 if (storedUserAuth) {
                     console.log("✅ Restoring session from localStorage");
@@ -164,33 +195,8 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                     }
                 }
 
-                // Priority 3: Telegram InitData (Telegram Web App)
-                if (app?.initData) {
-                    console.log("🔑 Login via Telegram InitData");
-                    const res = await fetch(`${BACKEND_URL}/api/auth/telegram`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ initData: app.initData })
-                    });
-
-                    if (res.ok) {
-                        const data = await res.json();
-                        setUser(data.user);
-                        // Save to localStorage
-                        localStorage.setItem('moneo_user_auth', JSON.stringify({
-                            user: data.user,
-                            token: data.token
-                        }));
-                        setIsReady(true);
-                        return;
-                    } else {
-                        console.error("Telegram Auth failed", res.status);
-                        console.error("Telegram Auth failed", res.status);
-                        // Do not set guest fallback. Page.tsx will handle the login form.
-                        setUser(null);
-                    }
-                } else if (cachedAuthCode) {
-                    // Priority 4: Cached Magic Link code (fallback)
+                // Priority 4: Cached Magic Link code (fallback)
+                if (cachedAuthCode) {
                     console.log("🔑 Attempting cached Magic Login");
 
                     const res = await fetch(`${BACKEND_URL}/api/auth/magic-login`, {
@@ -203,6 +209,8 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                         const data = await res.json();
                         setUser(data.user);
 
+                        localStorage.removeItem('moneo_is_logged_out');
+
                         localStorage.setItem('moneo_user_auth', JSON.stringify({
                             user: data.user,
                             token: data.token || cachedAuthCode
@@ -210,17 +218,16 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                     } else {
                         console.error("Cached Magic Login failed");
                         localStorage.removeItem('moneo_auth_code');
-                        console.error("Cached Magic Login failed");
-                        localStorage.removeItem('moneo_auth_code');
                         setUser(null);
                     }
                 } else {
                     // No Auth - Check if inside Telegram but no initData (weird) OR standard browser
 
-                    // Check if explicitly logged out
-                    const isLoggedOut = localStorage.getItem('moneo_is_logged_out');
+                    // Check if explicitly logged out (Redundant check but safe for logic flow)
+                    // const isLoggedOut = localStorage.getItem('moneo_is_logged_out'); // Already checked above
 
                     if (app?.initDataUnsafe?.user && !isLoggedOut) {
+                        // Fallback unsafe (rarely used if initData failed)
                         setUser(app.initDataUnsafe.user);
                     } else if (app?.initDataUnsafe?.user && isLoggedOut) {
                         console.log("🔒 User explicitly logged out. Ignoring Telegram auto-login.");
@@ -228,11 +235,8 @@ export const TelegramProvider = ({ children }: { children: ReactNode }) => {
                         // Standard Browser / Dev Mode
                         if (isLoggedOut === 'true') {
                             console.log("🔒 User explicitly logged out. Waiting for manual login.");
-                            // Do NOT set user, effectively leaving it null
                         } else {
                             console.log("ℹ️ No auth found. Waiting for user action.");
-                            // Do NOT auto-login as Dev/Guest anymore.
-                            // User must click "Enter as Guest" on Splash Screen.
                         }
                     }
                 }
