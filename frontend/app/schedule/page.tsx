@@ -243,7 +243,12 @@ export default function SchedulePage() {
                                         'isHost': game.hostId === user?.id || (game.hostTelegramId && game.hostTelegramId === user?.telegram_id)
                                     });
 
-                                    return (game.hostId === user?.id || (game.hostTelegramId && game.hostTelegramId === user?.telegram_id)) ? (
+                                    const isHost =
+                                        String(game.hostId) === String(user?.id) ||
+                                        String(game.hostId) === String(user?._id) ||
+                                        (game.hostTelegramId && String(game.hostTelegramId) === String(user?.telegram_id));
+
+                                    return isHost ? (
                                         <button
                                             onClick={() => setEditingGame(game)}
                                             className="w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 border border-slate-600"

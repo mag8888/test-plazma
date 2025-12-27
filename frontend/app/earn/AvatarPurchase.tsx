@@ -184,17 +184,20 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
                                             {avatar.hasActiveSubscription ? 'Активна' : 'Истекла'}
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => {
-                                            setSelectedAvatarId(avatar._id);
-                                            setSelectedAvatarType(avatarType.name);
-                                            setShowMatrix(true);
-                                        }}
-                                        className="p-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
-                                        title="Посмотреть матрицу"
-                                    >
-                                        <Eye className="w-4 h-4 text-white" />
-                                    </button>
+                                    <div onClick={() => { /* hidden temporarily */ }} className="opacity-0 w-0 h-0 overflow-hidden"></div>
+                                    {/* 
+                                        <button
+                                            onClick={() => {
+                                                setSelectedAvatarId(avatar._id);
+                                                setSelectedAvatarType(avatarType.name);
+                                                setShowMatrix(true);
+                                            }}
+                                            className="p-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
+                                            title="Посмотреть матрицу"
+                                        >
+                                            <Eye className="w-4 h-4 text-white" />
+                                        </button>
+                                        */}
                                 </div>
                             </div>
                         );

@@ -320,7 +320,7 @@ export class GameEngine {
         // It relies on the next loop tick for next step? Or we can chain actions?
         // Let's chain actions with minimal delay or just instant actions for V1.
 
-        console.log(`🤖 Bot ${player.name} is thinking... (Phase: ${this.state.phase})`);
+        console.log(`🤖 Bot ${player.name} думает... (Фаза: ${this.state.phase})`);
 
         if (this.state.phase === 'ROLL') {
             this.rollDice(); // Returns result, logs it
@@ -356,7 +356,7 @@ export class GameEngine {
                 if (shouldBuy) {
                     this.buyAsset(player.userId); // This ends turn usually or clears card
                 } else {
-                    this.addLog(`🤖 ${player.name} skips deal.`);
+                    this.addLog(`🤖 ${player.name} пропускает сделку.`);
                     this.endTurn();
                 }
             } else {
@@ -371,9 +371,9 @@ export class GameEngine {
                 // Donate
                 player.cash -= (player.income * 0.1);
                 player.charityTurns = 3;
-                this.addLog(`🤖 ${player.name} donated to charity.`);
+                this.addLog(`🤖 ${player.name} пожертвовал на благотворительность.`);
             } else {
-                this.addLog(`🤖 ${player.name} declines charity.`);
+                this.addLog(`🤖 ${player.name} отказался от благотворительности.`);
             }
             this.state.phase = 'ROLL';
             // End turn? Charity usually implies roll next? 
@@ -436,7 +436,7 @@ export class GameEngine {
                 }
             }
 
-            this.addLog(`🤖 ${player.name} chooses ${choice} Deal.`);
+            this.addLog(`🤖 ${player.name} выбирает ${choice === 'SMALL' ? 'МАЛУЮ' : 'КРУПНУЮ'} СДЕЛКУ.`);
             try {
                 this.drawDeal(player.id, choice);
             } catch (e) {
@@ -473,7 +473,7 @@ export class GameEngine {
             if (player.loanDebt === 0 && player.cash >= 200000) {
                 player.canEnterFastTrack = true;
                 if (!wasCanEnter) {
-                    this.addLog(`🚀 ${player.name} is ready for Fast Track! (Passive >= $10k, No Debt, $200k+)`);
+                    this.addLog(`🚀 ${player.name} готов к Скоростной Дорожке! (Пассив >= $10k, Нет долгов, $200k+)`);
                 }
             }
         }
@@ -498,8 +498,8 @@ export class GameEngine {
 
         if (won && !player.hasWon) {
             player.hasWon = true;
-            this.addLog(`🏆 ${player.name} HAS WON THE GAME! (+50k Flow, Dream, 2 Businesses)`);
-            this.addLog(`✨ CONGRATULATIONS! ✨`);
+            this.addLog(`🏆 ${player.name} ВЫИГРАЛ ИГРУ! (+50k Поток, Мечта, 2 Бизнеса)`);
+            this.addLog(`✨ ПОЗДРАВЛЯЕМ! ✨`);
         }
     }
 
@@ -557,8 +557,8 @@ export class GameEngine {
         player.assets = [];
         player.liabilities = [];
 
-        this.addLog(`🚀 ${player.name} ENTERED FAST TRACK! (Goal: +$50k Passive)`);
-        this.addLog(`💰 Start Bonus: +$${player.cashflow}`);
+        this.addLog(`🚀 ${player.name} ВЫШЕЛ НА СКОРОСТНУЮ ДОРОЖКУ! (Цель: +$50k Пассивного дохода)`);
+        this.addLog(`💰 Стартовый бонус: +$${player.cashflow}`);
 
         // Ensure Log Update
         // this.emitState(); // Handled by Gateway
@@ -574,7 +574,7 @@ export class GameEngine {
 
         if (player.skippedTurns > 0) {
             player.skippedTurns--;
-            this.addLog(`${player.name} skips turn (Remaining: ${player.skippedTurns})`);
+            this.addLog(`${player.name} пропускает ход (Осталось: ${player.skippedTurns})`);
             // Do NOT auto end turn. Let user click Next.
             this.state.phase = 'ACTION';
             return 0;
@@ -635,9 +635,9 @@ export class GameEngine {
 
         // Log the roll details
         if (values.length > 1) {
-            this.addLog(`${player.name} rolled ${values.join('+')} (= ${total})`);
+            this.addLog(`${player.name} выбросил ${values.join('+')} (= ${total})`);
         } else {
-            this.addLog(`${player.name} rolled ${total}`);
+            this.addLog(`${player.name} выбросил ${total}`);
         }
 
         console.log(`[Engine.rollDice] SUCCESS: ${player.name} rolled ${total}, Phase now: ${this.state.phase}`);
@@ -657,10 +657,10 @@ export class GameEngine {
             if (player.cash >= cost) {
                 player.cash -= cost;
                 player.skippedTurns = 2; // "пропустить 2 хода"
-                this.addLog(`📉 ${player.name} Paid 1 Month Expenses ($${cost}) & Skips 2 Turns.`);
+                this.addLog(`📉 ${player.name} Оплатил расходы за месяц ($${cost}) и пропускает 2 хода.`);
                 this.endTurn();
             } else {
-                this.addLog(`⚠️ Cannot Pay 1 Month ($${cost}). Insufficient funds.`);
+                this.addLog(`⚠️ Не может оплатить 1 месяц ($${cost}). Недостаточно средств.`);
             }
 
         } else if (decision === 'PAY_2M') {
@@ -669,11 +669,11 @@ export class GameEngine {
             if (player.cash >= cost) {
                 player.cash -= cost;
                 player.skippedTurns = 0; // "не пропускать ход"
-                this.addLog(`🛡️ ${player.name} Paid 2 Month Expenses ($${cost}) to avoid skipping turns!`);
+                this.addLog(`🛡️ ${player.name} Оплатил расходы за 2 месяца ($${cost}), чтобы не пропускать ходы!`);
                 this.state.phase = 'ACTION';
                 this.endTurn();
             } else {
-                this.addLog(`⚠️ Cannot Pay 2 Months ($${cost}). Insufficient funds.`);
+                this.addLog(`⚠️ Не может оплатить 2 месяца ($${cost}). Недостаточно средств.`);
             }
         } else if (decision === 'BANKRUPT') {
             this.bankruptPlayer(player);
@@ -726,7 +726,7 @@ export class GameEngine {
                 const square = this.getSquare(globalIndex);
                 if (square && square.type === 'PAYDAY' && i !== steps) {
                     player.cash += player.cashflow;
-                    this.addLog(`💰 ${player.name} passed Payday! +$${player.cashflow}`);
+                    this.addLog(`💰 ${player.name} прошел день расплаты! +$${player.cashflow}`);
                     this.recordTransaction({
                         from: 'Bank',
                         to: player.name,
@@ -742,7 +742,7 @@ export class GameEngine {
                 const square = this.getSquare(squareIndex);
                 if (square && square.type === 'PAYDAY' && i !== steps) {
                     player.cash += player.cashflow;
-                    this.addLog(`💰 ${player.name} passed Payday! +$${player.cashflow}`);
+                    this.addLog(`💰 ${player.name} прошел день расплаты! +$${player.cashflow}`);
                     this.recordTransaction({
                         from: 'Bank',
                         to: player.name,
@@ -769,7 +769,7 @@ export class GameEngine {
             this.handleFastTrackSquare(player, 24 + finalPos);
         } else {
             const square = this.getSquare(finalPos);
-            this.addLog(`${player.name} moved to ${square.name}`);
+            this.addLog(`${player.name} перешел на ${square.name}`);
             this.handleSquare(player, square);
         }
     }
@@ -789,7 +789,7 @@ export class GameEngine {
             square = position;
         }
 
-        this.addLog(`${player.name} landed on ${square.type}: ${square.name}`);
+        this.addLog(`${player.name} попал на ${square.type}: ${square.name}`);
 
         // WIN CONDITION:
         // 1. Passive Income +$50k
@@ -800,7 +800,7 @@ export class GameEngine {
         switch (square.type) {
             case 'PAYDAY':
                 player.cash += player.cashflow;
-                this.addLog(`💰 Fast Track Payday! +$${player.cashflow}`);
+                this.addLog(`💰 День расплаты (Скоростная Дорожка)! +$${player.cashflow}`);
                 break;
 
             case 'BUSINESS':
@@ -811,7 +811,7 @@ export class GameEngine {
 
                 if (isOwnedByMe) {
                     // 1. User cannot rebuy own business
-                    this.addLog(`🏢 You own ${square.name}. (Cannot rebuy)`);
+                    this.addLog(`🏢 Вы владеете ${square.name}. (Нельзя купить повторно)`);
                     this.state.phase = 'ACTION';
                     // Don't set currentCard so no "Buy" button appears.
                     // Maybe set phase to 'ACTION' or just let them end turn?
@@ -829,9 +829,9 @@ export class GameEngine {
                     const ownerName = this.state.players.find(p => p.id === square.ownerId)?.name || 'Unknown';
                     description = `⭐ BUYOUT from ${ownerName} (2x Price)`;
                     isBuyout = true;
-                    this.addLog(`⚔️ Hostile Takeover opportunity! Buy ${square.name} from ${ownerName} for $${cost}?`);
+                    this.addLog(`⚔️ Возможность поглощения! Купить ${square.name} у ${ownerName} за $${cost}?`);
                 } else {
-                    this.addLog(`Found ${square.type}: ${square.name}. Cost $${square.cost}`);
+                    this.addLog(`Найдено ${square.type}: ${square.name}. Стоимость $${square.cost}`);
                 }
 
                 // Construct a temporary card for the UI action
@@ -865,7 +865,7 @@ export class GameEngine {
             case 'CHARITY':
                 // Prompt for Donation
                 this.state.phase = 'CHARITY_CHOICE';
-                this.addLog(`❤️ Charity Opportunity! Donate to gain dice bonus.`);
+                this.addLog(`❤️ Благотворительность! Пожертвуйте, чтобы получить бонус к кубикам.`);
                 break;
 
             case 'STOCK_EXCHANGE':
@@ -879,9 +879,9 @@ export class GameEngine {
                 const roll = Math.floor(Math.random() * 6) + 1;
                 if (roll >= 5) {
                     player.cash += 500000;
-                    this.addLog(`📈 Stock Exchange: Rolled ${roll}! You gain $500,000!`);
+                    this.addLog(`📈 Биржа: Выпало ${roll}! Вы получаете $500,000!`);
                 } else {
-                    this.addLog(`📉 Stock Exchange: Rolled ${roll}. No profit.`);
+                    this.addLog(`📉 Биржа: Выпало ${roll}. Нет прибыли.`);
                 }
                 // End Turn immediately? Or allow other actions?
                 // Usually end turn.
@@ -898,7 +898,7 @@ export class GameEngine {
 
                 const randomSquare = eligibleSquares[Math.floor(Math.random() * eligibleSquares.length)];
 
-                this.addLog(`🎰 LOTTERY: Rolled... ${randomSquare.name}!`);
+                this.addLog(`🎰 ЛОТЕРЕЯ: Выпало... ${randomSquare.name}!`);
 
                 // Recursively handle the new square
                 // Pass the square object directly
@@ -917,7 +917,7 @@ export class GameEngine {
         if (index === -1) return;
 
         const player = this.state.players[index];
-        this.addLog(`🚫 ${player.name} kicked by Host.`);
+        this.addLog(`🚫 ${player.name} кикнут Хостом.`);
 
         // Remove player
         this.state.players.splice(index, 1);
@@ -941,7 +941,7 @@ export class GameEngine {
             this.state.turnExpiresAt = Date.now() + (this.state.currentTurnTime * 1000);
 
             const nextPlayer = this.state.players[this.state.currentPlayerIndex];
-            this.addLog(`🎲 Turn passed to ${nextPlayer.name}`);
+            this.addLog(`🎲 Ход переходит к ${nextPlayer.name}`);
         }
         // If index > current, no change needed to index
     }
@@ -999,10 +999,10 @@ export class GameEngine {
 
         if (square.action === 'AUDIT' || square.action === 'DIVORCE') {
             player.cash = Math.floor(player.cash * 0.5);
-            this.addLog(`📉 ${square.name}: Lost 50% of cash!`);
+            this.addLog(`📉 ${square.name}: Потеряно 50% наличных!`);
         } else if (square.action === 'THEFT') {
             player.cash = 0;
-            this.addLog(`🕵️ ${square.name}: Lost ALL cash!`);
+            this.addLog(`🕵️ ${square.name}: Потеряны ВСЕ наличные!`);
         } else if (square.action === 'FIRE') {
             // Lose business with MIN income
             if (player.assets.length > 0) {
@@ -1013,10 +1013,10 @@ export class GameEngine {
                     player.passiveIncome -= lostAsset.cashflow;
                     player.income -= lostAsset.cashflow;
                     player.cashflow -= lostAsset.cashflow;
-                    this.addLog(`🔥 ${square.name}: Lost ${lostAsset.title} (Flow: $${lostAsset.cashflow})`);
+                    this.addLog(`🔥 ${square.name}: Потерян ${lostAsset.title} (Поток: $${lostAsset.cashflow})`);
                 }
             } else {
-                this.addLog(`🔥 ${square.name}: No assets to lose.`);
+                this.addLog(`🔥 ${square.name}: Нет активов для потери.`);
             }
         } else if (square.action === 'RAID') {
             // Lose business with MAX income
@@ -1028,10 +1028,10 @@ export class GameEngine {
                     player.passiveIncome -= lostAsset.cashflow;
                     player.income -= lostAsset.cashflow;
                     player.cashflow -= lostAsset.cashflow;
-                    this.addLog(`👮 ${square.name}: Lost ${lostAsset.title} (Flow: $${lostAsset.cashflow})`);
+                    this.addLog(`👮 ${square.name}: Потерян ${lostAsset.title} (Поток: $${lostAsset.cashflow})`);
                 }
             } else {
-                this.addLog(`👮 ${square.name}: No assets to lose.`);
+                this.addLog(`👮 ${square.name}: Нет активов для потери.`);
             }
         }
     }
@@ -1041,7 +1041,7 @@ export class GameEngine {
         // Payday, Baby, etc. will remain ACTION.
         this.state.phase = 'ACTION';
 
-        this.addLog(`${player.name} landed on ${square.type}`);
+        this.addLog(`${player.name} попал на ${square.type}`);
 
         if (square.type === 'PAYDAY') {
             // Payday on landing (Indices 6, 12, 18...). Index 0 is usually handled by lap logic (newPos >= 24).
@@ -1051,7 +1051,7 @@ export class GameEngine {
             // Simplest fix: Pay if square.index !== 0. Index 0 is paid by "Passing Payday" log.
             if (square.index !== 0) {
                 player.cash += player.cashflow;
-                this.addLog(`Checking Day! +$${player.cashflow}`);
+                this.addLog(`День расплаты! +$${player.cashflow}`);
                 this.recordTransaction({
                     from: 'Bank',
                     to: player.name,
@@ -1061,7 +1061,7 @@ export class GameEngine {
                 });
                 this.state.lastEvent = { type: 'PAYDAY', payload: { player: player.name, amount: player.cashflow } };
             } else {
-                this.addLog(`Entered Payday (Start)!`);
+                this.addLog(`Start!`);
             }
             this.checkFastTrackCondition(player);
         } else if (square.type === 'DEAL') {
@@ -1092,20 +1092,20 @@ export class GameEngine {
                 });
                 this.state.phase = 'ACTION';
             } else {
-                this.addLog(`🏪 MARKET: No cards left.`);
+                this.addLog(`🏪 РЫНОК: Карты закончились.`);
             }
         } else if (square.type === 'EXPENSE') {
             const card = this.cardManager.drawExpense();
             this.state.currentCard = card;
             // Removed automatic deduction. Now handled via buyAsset (Mandatory Pay)
-            this.addLog(`💸 Expense: ${card.title} ($${card.cost})`);
+            this.addLog(`💸 Трата: ${card.title} ($${card.cost})`);
             this.state.phase = 'ACTION';
         } else if (square.type === 'BABY') {
             if (player.childrenCount >= 3) {
-                this.addLog(`${player.name} already has max children.`);
+                this.addLog(`${player.name} уже имеет максимум детей.`);
                 this.state.phase = 'ACTION';
             } else {
-                this.addLog(`👶 ${player.name} landed on Baby! Roll to see if it's born (1-4).`);
+                this.addLog(`👶 ${player.name} попал на Ребенка! Бросьте кубик (1-4).`);
                 this.state.phase = 'BABY_ROLL';
             }
             return;
@@ -1121,7 +1121,7 @@ export class GameEngine {
             this.addLog(`🤒 ${player.name} заболел! Выберите вариант оплаты.`);
         } else if (square.type === 'CHARITY') {
             this.state.phase = 'CHARITY_CHOICE';
-            this.addLog(`❤️ Charity: Donate 10% of total income to roll extra dice?`);
+            this.addLog(`❤️ Благотворительность: Пожертвуйте 10% от общего дохода ради 2 кубиков?`);
         }
     }
 
@@ -1147,7 +1147,7 @@ export class GameEngine {
             this.addLog(`Selected ${type} deal: ${card.title}`);
             this.state.phase = 'ACTION';
         } else {
-            this.addLog(`No ${type} deals left!`);
+            this.addLog(`Нет ${type === 'SMALL' ? 'МАЛЫХ' : 'КРУПНЫХ'} сделок!`);
             this.state.phase = 'ACTION';
         }
     }
@@ -1158,17 +1158,17 @@ export class GameEngine {
         if (!player) return;
 
         if (amount <= 0 || amount % 1000 !== 0) {
-            this.addLog(`${player.name} failed to take loan: Amount must be a multiple of 1000.`);
+            this.addLog(`${player.name} не удалось взять кредит: Сумма должна быть кратна 1000.`);
             return;
         }
 
         if (player.isBankrupted) {
-            this.addLog(`${player.name} cannot take loans (Bankrupt).`);
+            this.addLog(`${player.name} не может брать кредиты (Банкрот).`);
             return;
         }
 
         if (player.isFastTrack) {
-            this.addLog(`${player.name} cannot take loans on Fast Track!`);
+            this.addLog(`${player.name} не может брать кредиты на Скоростной Дорожке!`);
             return;
         }
 
@@ -1188,7 +1188,7 @@ export class GameEngine {
         // Yes: Effective Borrowable Cashflow = Player.Cashflow * LimitFactor.
 
         if ((player.cashflow * limitFactor) - interest < 0) {
-            this.addLog(`${player.name} failed to take loan: Insufficient Cashflow (Limit Factor: ${limitFactor * 100}%).`);
+            this.addLog(`${player.name} не удалось взять кредит: Недостаточный денежный поток (Лимит: ${limitFactor * 100}%).`);
             return;
         }
 
@@ -1215,7 +1215,7 @@ export class GameEngine {
             type: 'LOAN'
         });
 
-        this.addLog(`${player.name} took loan $${amount}. Expenses +$${interest}/mo`);
+        this.addLog(`${player.name} взял кредит $${amount}. Расходы +$${interest}/мес`);
     }
 
     resolveOpportunity(size: 'SMALL' | 'BIG') {
@@ -1231,7 +1231,7 @@ export class GameEngine {
         }
 
         if (!card) {
-            this.addLog(`${player.name} wanted ${size} deal, but deck is empty!`);
+            this.addLog(`${player.name} хотел ${size === 'SMALL' ? 'МАЛУЮ' : 'КРУПНУЮ'} сделку, но колода пуста!`);
             this.state.phase = 'ACTION';
             return;
         }
@@ -1281,16 +1281,24 @@ export class GameEngine {
                 // We keep card.mandatory = true so UI knows to show "PAY" instead of "BUY".
                 this.state.phase = 'ACTION';
                 return;
-            } else {
-                // Cost is 0 (e.g. no property for Roof Leak), so we auto-resolve.
-                this.addLog(`😅 ${card.title}: No payment required.`);
-                this.state.currentCard = undefined;
+                // Show card even if cost is 0 so user knows what happened
+                card.cost = 0; // Explicitly set to 0
+                this.addLog(`😅 ${card.title}: No payment required (No property owned).`);
+
+                // Keep card in state so UI shows it with "Pay $0" or "Ok"
                 this.state.phase = 'ACTION';
                 return;
             }
         }
 
-        this.addLog(`${player.name} chose ${size} DEAL: ${card.title}`);
+        const details = [];
+        if (card.cost) details.push(`Cost: $${card.cost}`);
+        if (card.cashflow) details.push(`Flow: $${card.cashflow}`);
+        if (card.downPayment) details.push(`Down: $${card.downPayment}`);
+        if ((card as any).rule) details.push(`Rule: ${(card as any).rule}`); // Cast to any to avoid TS error
+
+        const detailsStr = details.length > 0 ? ` (${details.join(', ')})` : '';
+        this.addLog(`${player.name} chose ${size} DEAL: ${card.title}${detailsStr}`);
         this.state.phase = 'ACTION'; // Back to action phase to buy/pass
     }
 
@@ -1335,7 +1343,7 @@ export class GameEngine {
             type: 'REPAY'
         });
 
-        this.addLog(`${player.name} repaid loan $${amount}. Expenses -$${interest}/mo`);
+        this.addLog(`${player.name} погасил кредит $${amount}. Расходы -$${interest}/мес`);
 
         // Check Fast Track after repaying loan (might free up cashflow condition)
         this.checkFastTrackCondition(player);
@@ -1451,7 +1459,8 @@ export class GameEngine {
         this.checkFastTrackCondition(toPlayer);
 
         // 8. Log and Record
-        this.addLog(`🤝 ${fromPlayer.name} transferred ${quantity}x ${asset.title} to ${toPlayer.name}`);
+        const cashflowStr = asset.cashflow ? ` (Поток: $${asset.cashflow})` : '';
+        this.addLog(`🤝 ${fromPlayer.name} передал ${quantity}x ${asset.title}${cashflowStr} игроку ${toPlayer.name}`);
         this.recordTransaction({
             from: fromPlayer.name,
             to: toPlayer.name,
@@ -1479,7 +1488,7 @@ export class GameEngine {
                     const loanAmount = Math.ceil((expenseCost - currentPlayer.cash) / 1000) * 1000;
                     currentPlayer.loanDebt += loanAmount;
                     currentPlayer.cash += loanAmount;
-                    this.addLog(`💳 ${currentPlayer.name} took loan $${loanAmount} for expense`);
+                    this.addLog(`💳 ${currentPlayer.name} взял кредит $${loanAmount} на оплату расходов`);
                     currentPlayer.cash -= expenseCost;
                     this.addLog(`💸 ${currentPlayer.name} paid expense: ${this.state.currentCard.title} (-$${expenseCost})`);
                 }
@@ -1527,7 +1536,13 @@ export class GameEngine {
             activeCard.expiresAt = now + 60000;
         }
 
-        this.addLog(`🤝 ${fromPlayer.name} transferred deal "${activeCard.card.title}" to ${toPlayer.name}`);
+        const card = activeCard.card;
+        const details = [];
+        if (card.cost) details.push(`Cost: $${card.cost}`);
+        if (card.cashflow) details.push(`Flow: $${card.cashflow}`);
+
+        const detailsStr = details.length > 0 ? ` [${details.join(', ')}]` : '';
+        this.addLog(`🤝 ${fromPlayer.name} передал сделку "${card.title}"${detailsStr} игроку ${toPlayer.name}`);
     }
 
     sellAsset(playerId: string) {
@@ -1566,7 +1581,7 @@ export class GameEngine {
             assetIndex = player.assets.findIndex(a => a.title.includes(card.targetTitle || ''));
         }
         if (assetIndex === -1) {
-            this.addLog(`${player.name} cannot sell: Don't own ${card.targetTitle}`);
+            this.addLog(`${player.name} не может продать: Не владеет ${card.targetTitle}`);
             return;
         }
 

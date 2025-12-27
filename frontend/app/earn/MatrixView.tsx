@@ -279,21 +279,18 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
                                     </div>
                                 </div>
 
-                                <div className="absolute top-8 left-[16%] right-[16%] h-px bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 opacity-50"></div>
+                                {/* <div className="absolute top-8 left-[16%] right-[16%] h-px bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 opacity-50"></div> */}
 
-                                {/* Branches Container */}
+                                {/* Branches Container - HIDDEN TEMPORARILY */}
+                                {/* 
                                 <div className="grid grid-cols-3 gap-2 pt-8 border-t border-slate-800/50 relative">
-                                    {/* Horizontal connector line for branches */}
                                     <div className="absolute top-0 left-[16.66%] right-[16.66%] h-px bg-slate-700 -translate-y-[1px]"></div>
-                                    {/* Center vertical connector from root */}
                                     <div className="absolute top-0 left-1/2 -translate-x-1/2 h-8 w-px bg-slate-700 -translate-y-full"></div>
 
                                     {branches.map((branch, i) => (
                                         <div key={i} className={`flex flex-col items-center relative pt-6 ${i !== 1 ? 'border-t-0' : ''}`}>
-                                            {/* Vertical connector to branch head */}
                                             <div className="absolute top-0 left-1/2 -translate-x-1/2 h-6 w-px bg-slate-700"></div>
 
-                                            {/* BRANCH HEAD (Ring 1) */}
                                             <div className="mb-4 text-center">
                                                 <div className={`text-[10px] font-bold uppercase mb-2 ${branch.color.text}`}>Ветка {i + 1}</div>
                                                 {renderAvatarSlot(branch.avatar, branch.color, !branch.avatar)}
@@ -306,17 +303,14 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
                                                 }
                                             </div>
 
-                                            {/* Branch Children (Ring 2) */}
                                             {branch.avatar && (
                                                 <div className="flex flex-col items-center w-full">
                                                     <div className="h-6 w-px bg-slate-700/50 mb-2"></div>
                                                     <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/50 w-full flex justify-center gap-3 relative">
-                                                        {/* "Yellow Accumulation" Visual */}
                                                         <div className="absolute -top-3 bg-slate-900 border border-slate-700 text-[9px] text-yellow-500 px-2 py-0.5 rounded-full">
                                                             Накопление
                                                         </div>
 
-                                                        {/* 3 Slots for this Branch Head */}
                                                         {Array.from({ length: 3 }).map((_, idx) => {
                                                             const child = branch.children[idx] || null;
                                                             return (
@@ -331,6 +325,7 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
                                         </div>
                                     ))}
                                 </div>
+                                */}
 
                             </div>
                         </div>
