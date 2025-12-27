@@ -1995,6 +1995,13 @@ export class GameEngine {
         if (this.state.currentCard?.id === card.id) {
             this.state.currentCard = undefined;
             this.state.phase = 'ACTION';
+        } else if (isMarketCard) {
+            // CRITICAL FIX: If we bought a Deal/Business from Market, it must be removed!
+            // Stocks are handled earlier. This block is for unique assets.
+            this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
+            // Optionally discard if needed, but asset is already created.
+            // this.cardManager.discard(card); // Only if we want to recycle it immediately? 
+            // Better to just remove from active interactions.
         }
         // Don't remove from activeMarketCards - let cleanup handle it when all players dismiss (except private cards)
 
