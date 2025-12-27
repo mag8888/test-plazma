@@ -408,10 +408,19 @@ const FeedCardItem = ({
                     </div>
                 ) : viewMode === 'RESULT' ? (
                     <div className="bg-slate-900/40 p-3 rounded-lg border border-white/5 flex-1 flex flex-col items-center justify-center text-center animate-in zoom-in-95">
-                        <div className="text-4xl mb-4 animate-pulse">🎉</div>
-                        <h3 className="text-sm font-bold text-white mb-2">Сделка Совершена!</h3>
+                        <div className="text-4xl mb-4 animate-pulse">
+                            {card.type === 'EXPENSE' ? '💸' : '🎉'}
+                        </div>
+                        <h3 className="text-sm font-bold text-white mb-2">
+                            {transactionMode === 'SELL' ? 'Продано!' : card.type === 'EXPENSE' ? 'Оплачено!' : 'Успешно!'}
+                        </h3>
                         <p className="text-[10px] text-slate-300 mb-6 max-w-[200px] italic">
-                            "Друг попросил в долг, а потом раскрутился и подарил вам долю в компании!"
+                            {transactionMode === 'SELL'
+                                ? `Вы успешно продали ${card.title}`
+                                : card.type === 'EXPENSE'
+                                    ? `Вы оплатили: ${card.title}`
+                                    : `Вы приобрели: ${card.title}`
+                            }
                         </p>
                         <div className="text-[9px] text-slate-500 font-mono mb-4">
                             Закрытие через {formatTime(Math.max(0, timeLeft))}
@@ -501,14 +510,41 @@ const FeedCardItem = ({
                                 </div>
                             </div>
                             {loanNeeded > 0 && transactionMode === 'BUY' && (
-                                <div className="flex justify-between items-center bg-yellow-500/10 p-1.5 rounded border border-yellow-500/20 mt-1">
-                                    <span className="text-[9px] text-yellow-500 font-bold uppercase">Требуется Кредит</span>
-                                    <span className="font-mono font-bold text-yellow-400 text-[10px]">${(Math.ceil(loanNeeded / 1000) * 1000).toLocaleString()}</span>
+                                <div className="flex flex-col gap-1 mt-1">
+                                    <div className="flex justify-between items-center bg-yellow-500/10 p-1.5 rounded border border-yellow-500/20">
+                                        <span className="text-[9px] text-yellow-500 font-bold uppercase">Требуется Кредит</span>
+                                        <span className="font-mono font-bold text-yellow-400 text-[10px]">${(Math.ceil(loanNeeded / 1000) * 1000).toLocaleString()}</span>
+                                    </div>
+                                    {/* Loan Limit Warning */
+                                        (() => {
+                                            const maxLoan = Math.max(0, Math.floor((me?.cashflow || 0) / 100) * 1000);
+                                            const loanAmount = Math.ceil(loanNeeded / 1000) * 1000;
+                                            const isOverLimit = loanAmount > maxLoan;
+
+                                            // If over limit and NOT Fast Track (Fast Track has no bank loans usually?)
+                                            // Actually BankModal says fast track has no loans. 
+                                            if (isOverLimit && !me?.isFastTrack) {
+                                                return (
+                                                    <div className="bg-red-500/10 p-1.5 rounded border border-red-500/20 flex flex-col items-center text-center">
+                                                        <span className="text-[8px] text-red-400 font-bold uppercase mb-0.5">Лимит превышен</span>
+                                                        <span className="text-[9px] text-red-300">
+                                                            Макс. кредит: <span className="font-mono font-bold text-white">${maxLoan.toLocaleString()}</span>
+                                                        </span>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
                                 </div>
                             )}
                         </div>
 
                         <button
+                            disabled={(() => {
+                                const maxLoan = Math.max(0, Math.floor((me?.cashflow || 0) / 100) * 1000);
+                                const loanAmount = Math.ceil(loanNeeded / 1000) * 1000;
+                                return transactionMode === 'BUY' && loanNeeded > 0 && loanAmount > maxLoan && !me?.isFastTrack;
+                            })()}
                             onClick={(e) => {
                                 e.stopPropagation();
                                 console.log(`[Transaction] Button Clicked. Mode: ${transactionMode}, Qty: ${stockQty}`);
@@ -545,7 +581,7 @@ const FeedCardItem = ({
                                     onDismiss(); // Sell is instant usually
                                 }
                             }}
-                            className={`w-full py-2.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg transition-transform active:scale-[0.98]
+                            className={`w-full py-2.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg transition-transform active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:pointer-events-none
                                 ${transactionMode === 'SELL' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white' : loanNeeded > 0 ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white' : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white'}\n                            `}
                         >
                             {transactionMode === 'SELL' ? '💵 Продать' : loanNeeded > 0 ? '💰 Кредит и Купить' : '✅ Подтвердить'}
@@ -813,6 +849,9 @@ export const ActiveCardZone = ({
             // Check if already dismissed
             if (locallyDismissedIds.includes(item.id)) return false;
 
+            // ALWAYS show cards that belong to me (e.g. transferred deals)
+            if (item.sourcePlayerId === me?.id) return true;
+
             // If canShowCard is false (not my turn), only show cards that I can sell
             if (!canShowCard) {
                 const card = item.card;
@@ -827,7 +866,7 @@ export const ActiveCardZone = ({
                     ? me?.assets?.some((a: any) => a.symbol === card.symbol)
                     : me?.assets?.some((a: any) => a.title === card.title || a.title === card.targetTitle);
 
-                return iOwnAsset || item.sourcePlayerId === me?.id;
+                return iOwnAsset;
             }
 
             return true;

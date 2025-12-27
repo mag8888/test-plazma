@@ -1474,8 +1474,8 @@ export class GameEngine {
     dismissCard() {
         const currentPlayer = this.state.players[this.state.currentPlayerIndex];
 
-        // Auto-deduct Expense if not paid
-        if (this.state.currentCard && this.state.currentCard.type === 'EXPENSE' && currentPlayer) {
+        // Auto-deduct Expense or Mandatory Card if not paid
+        if (this.state.currentCard && (this.state.currentCard.type === 'EXPENSE' || this.state.currentCard.mandatory) && currentPlayer) {
             const expenseCost = this.state.currentCard.cost || 0;
 
             // If player hasn't paid (we're dismissing), force payment
@@ -1508,7 +1508,24 @@ export class GameEngine {
     }
 
     transferDeal(fromUserId: string, toPlayerId: string, activeCardId: string) {
-        const activeCard = this.state.activeMarketCards?.find(ac => ac.id === activeCardId);
+        let activeCard = this.state.activeMarketCards?.find(ac => ac.id === activeCardId);
+
+        // CHECK IF IT IS CURRENT CARD (Transient Deal)
+        if (!activeCard && this.state.currentCard && this.state.currentCard.id === activeCardId) {
+            // It is the current card. We need to "keep" it by moving to activeMarketCards
+            activeCard = {
+                id: this.state.currentCard.id,
+                card: this.state.currentCard,
+                sourcePlayerId: this.state.players[this.state.currentPlayerIndex].id, // Current player is owner
+                expiresAt: Date.now() + 60000 // 1 minute to decide
+            };
+            if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
+            this.state.activeMarketCards.push(activeCard);
+
+            // Clear current card since it's now "on the market" (transferred)
+            this.state.currentCard = undefined;
+            this.state.phase = 'ACTION';
+        }
 
         if (!activeCard) {
             throw new Error("Deal not found or expired");

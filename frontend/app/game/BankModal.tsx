@@ -60,7 +60,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
 
     return (
         <div className="fixed inset-0 z-[2000] flex items-center justify-center bg-black/60 backdrop-blur-md p-2 md:p-4 animate-in fade-in duration-300">
-            <div className="bg-[#1e293b]/90 backdrop-blur-2xl w-full max-w-4xl rounded-3xl border border-slate-700/50 shadow-[0_0_50px_rgba(30,41,59,0.5)] flex flex-col md:flex-row h-[90vh] md:h-auto md:max-h-[90vh] overflow-y-auto md:overflow-hidden relative group custom-scrollbar">
+            <div className="bg-[#1e293b]/90 backdrop-blur-2xl w-full max-w-4xl rounded-3xl border border-slate-700/50 shadow-[0_0_50px_rgba(30,41,59,0.5)] flex flex-col md:flex-row h-[90vh] md:h-auto md:max-h-[90vh] overflow-y-auto overflow-x-hidden md:overflow-hidden relative group custom-scrollbar">
                 {/* Background Glow */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
