@@ -272,7 +272,7 @@ const FeedCardItem = ({
                                 <p className="text-[10px] text-slate-300 leading-relaxed">
                                     {card.description}
                                 </p>
-                                <div className="mt-2 flex flex-wrap gap-2">
+                                <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {card.cashflow !== undefined && card.cashflow !== 0 && (
                                         <div className="text-[9px] px-1.5 py-0.5 rounded bg-green-900/30 border border-green-500/30 text-green-300 font-mono flex items-center gap-1">
                                             <span>Cashflow:</span> <b>{card.cashflow > 0 ? '+' : ''}${card.cashflow}</b>
@@ -285,7 +285,7 @@ const FeedCardItem = ({
                                     )}
                                     {/* Market Card: Show asset ownership status */}
                                     {card.type === 'MARKET' && (
-                                        <div className={`text-[9px] px-1.5 py-0.5 rounded font-mono flex items-center gap-1 ${ownedQty > 0
+                                        <div className={`text-[9px] px-1.5 py-0.5 rounded font-mono flex items-center gap-1 sm:col-span-2 ${ownedQty > 0
                                             ? 'bg-green-900/30 border border-green-500/30 text-green-300'
                                             : 'bg-red-900/30 border border-red-500/30 text-red-300'
                                             }`}>
@@ -302,7 +302,7 @@ const FeedCardItem = ({
 
                         {/* Actions */}
                         {(isMyTurn || isOwner || canControl) && (
-                            <div className="flex gap-2 mt-1 w-full flex-col">
+                            <div className="grid grid-cols-1 gap-2 mt-1 w-full">
                                 {/* Asset Ownership Warning */}
                                 {card.offerPrice && isOffer && !hasAsset && (
                                     <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-2 mb-2 animate-pulse">
