@@ -1408,6 +1408,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         description: card.card.description
                                     })}
                                     canShowCard={canShowCard}
+                                    previewCard={squareInfo}
+                                    onDismissPreview={() => setSquareInfo(null)}
                                 />
                             </div>
                         </div>
@@ -1730,14 +1732,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 )
             }
 
-            {squareInfo && (
-                <SquareInfoModal
-                    square={squareInfo}
-                    onClose={() => setSquareInfo(null)}
-                    player={me}
-                    roomId={roomId}
-                />
-            )}
+
 
             {
                 adminAction && (

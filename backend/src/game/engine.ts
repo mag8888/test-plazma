@@ -1691,7 +1691,7 @@ export class GameEngine {
 
         // Restriction: Only current player can buy the deal on the table
         if (player.id !== currentPlayer.id) {
-            this.addLog(`⚠️ ${player.name} tried to buy out of turn!`);
+            this.addLog(`⚠️ ${player.name} попытался купить вне очереди!`);
             return;
         }
 
@@ -1788,7 +1788,7 @@ export class GameEngine {
             card.cashflow = totalCashflow;
             card.title = `${card.title} (${partners} Partners)`;
 
-            this.addLog(`🎲 Rolled ${partners}! Recruited ${partners} partners.`);
+            this.addLog(`🎲 Выпало ${partners}! Привлечено ${partners} партнеров.`);
             mlmResult = { mlmRoll: partners, mlmCashflow: totalCashflow };
         } else if (card.subtype === 'CHARITY_ROLL') {
             // "Friend teaches wisdom": 2 dice for 3 turns.
@@ -1884,7 +1884,7 @@ export class GameEngine {
             player.liabilities.push({ name: `Mortgage (${card.title})`, value: mortgage });
         }
 
-        this.addLog(`${player.name} bought ${card.title}. Passive Income +$${card.cashflow || 0}`);
+        this.addLog(`${player.name} купил ${card.title}. Пассивный доход +$${card.cashflow || 0}`);
 
         // Clear card so it isn't discarded in endTurn
         this.state.currentCard = undefined;

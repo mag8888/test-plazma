@@ -621,7 +621,7 @@ export class GameGateway {
                                 roll: result.mlmRoll,
                                 state,
                                 type: 'MLM',
-                                message: `Recruited ${result.mlmRoll} Partners! +$${result.mlmCashflow}/mo`
+                                message: `Привлечено ${result.mlmRoll} партнеров! +$${result.mlmCashflow}/мес`
                             });
                         }
                         this.io.to(roomId).emit('state_updated', { state });
