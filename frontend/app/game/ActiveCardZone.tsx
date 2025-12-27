@@ -915,7 +915,12 @@ export const ActiveCardZone = ({
     // Actually, if duplicate, we might just show one.
 
     const currentCard = displayCard && (!isDuplicate || source === 'PREVIEW')
-        ? [{ card: displayCard, source: source, id: displayCard.id || 'info_card' }]
+        ? [{
+            card: displayCard,
+            source: source,
+            id: displayCard.id || 'info_card',
+            sourcePlayerId: source === 'CURRENT' ? me?.id : undefined // Current card belongs to current player
+        }]
         : [];
 
     // Filter cards - market sell offers should always show to asset owners
