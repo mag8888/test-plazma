@@ -106,10 +106,10 @@ const AnimatedNumber = ({ value, className = '' }: { value: number, className?: 
             const isIncrease = diff > 0;
 
             // 1. Play Sound if Increase
-            if (isIncrease) {
-                sfx.play('cash');
-                setIsAnimating(true);
-            }
+            // if (isIncrease) {
+            //     sfx.play('cash');
+            //     setIsAnimating(true);
+            // }
 
             // 2. Count Up Logic
             const steps = 20;
@@ -645,12 +645,12 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     };
 
     const handleResolveOpportunity = (choice: string) => {
-        if (choice === 'buy') sfx.play('stock');
+        // if (choice === 'buy') sfx.play('stock');
         socket.emit('resolve_opportunity', { roomId: state.roomId, choice });
     };
 
     const handleTransferFunds = (toId: string, amount: number) => {
-        sfx.play('transfer');
+        // sfx.play('transfer');
         socket.emit('transfer_funds', { roomId: state.roomId, toId, amount });
     };
     const handleLoan = (amount: number) => socket.emit('take_loan', { roomId, amount });
