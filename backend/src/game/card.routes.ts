@@ -11,6 +11,19 @@ class CardStore {
     private customExpenseCards: Card[] = [];
     private initialized = false;
 
+    private initDisplayIds() {
+        if (this.initialized) return;
+
+        let globalCounter = 1;
+        // Assign displayIds to all defaults globally
+        this.customSmallDeals = [...SMALL_DEALS].map(c => ({ ...c, displayId: globalCounter++ }));
+        this.customBigDeals = [...BIG_DEALS].map(c => ({ ...c, displayId: globalCounter++ }));
+        this.customMarketCards = [...MARKET_CARDS].map(c => ({ ...c, displayId: globalCounter++ }));
+        this.customExpenseCards = [...EXPENSE_CARDS].map(c => ({ ...c, displayId: globalCounter++ }));
+
+        this.initialized = true;
+    }
+
     getCards(type: string): Card[] {
         let cards: Card[] = [];
         switch (type) {
