@@ -1956,7 +1956,7 @@ export class GameEngine {
         // EXCEPT for private cards (MLM, CHARITY_ROLL) which should only be visible to buyer
         const isPrivateCard = card.subtype === 'MLM_ROLL' || card.subtype === 'CHARITY_ROLL';
 
-        if (this.state.currentCard?.id === card.id && !isPrivateCard) {
+        if (this.state.currentCard?.id === card.id && !isPrivateCard && (card.assetType === 'STOCK' || card.symbol)) {
             // Check if it's already in activeMarketCards
             const alreadyInMarket = this.state.activeMarketCards?.some(mc => mc.card.id === card.id);
             if (!alreadyInMarket) {
