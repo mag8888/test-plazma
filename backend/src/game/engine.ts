@@ -1106,8 +1106,9 @@ export class GameEngine {
                 this.addLog(`${player.name} уже имеет максимум детей.`);
                 this.state.phase = 'ACTION';
             } else {
-                this.addLog(`👶 ${player.name} попал на Ребенка! Бросьте кубик (1-4).`);
-                this.state.phase = 'BABY_ROLL';
+                this.addLog(`👶 ${player.name} попал на Ребенка! Бросаем кубик...`);
+                // Auto-roll for baby immediately
+                this.rollForBaby();
             }
             return;
         } else if (square.type === 'DOWNSIZED') {
@@ -2399,11 +2400,11 @@ export class GameEngine {
             // "3 разово выплачивается 5000$"
             player.cash += 5000;
 
-            this.addLog(`👶 Baby Born! (Roll: ${roll}). +$5000 Gift. Expenses +$${childExpense}/mo`);
-            this.state.lastEvent = { type: 'BABY_BORN', payload: { player: player.name } };
+            this.addLog(`🎉 Поздравляем! Родился ребёнок! (Кубик: ${roll}). Подарок +$5000. Расходы +$${childExpense}/мес`);
+            this.state.lastEvent = { type: 'BABY_BORN', payload: { player: player.name, roll } };
         } else {
-            this.addLog(`No Baby (Roll: ${roll}). Better luck next time!`);
-            this.state.lastEvent = { type: 'BABY_MISSED', payload: { player: player.name } };
+            this.addLog(`Возможно в следующий раз (Кубик: ${roll}).`);
+            this.state.lastEvent = { type: 'BABY_MISSED', payload: { player: player.name, roll } };
         }
 
         this.state.phase = 'ACTION'; // Enable Next
