@@ -603,6 +603,10 @@ const FeedCardItem = ({
 
                         <button
                             disabled={(() => {
+                                // CRITICAL: Only card owner can buy (except when selling)
+                                if (transactionMode === 'BUY' && !canControl) return true;
+
+                                // Check loan limit
                                 const maxLoan = Math.max(0, Math.floor((me?.cashflow || 0) / 100) * 1000);
                                 const loanAmount = Math.ceil(loanNeeded / 1000) * 1000;
                                 return transactionMode === 'BUY' && loanNeeded > 0 && loanAmount > maxLoan && !me?.isFastTrack;
