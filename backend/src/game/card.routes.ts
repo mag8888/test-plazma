@@ -11,13 +11,18 @@ class CardStore {
     private customExpenseCards: Card[] = [];
 
     getCards(type: string): Card[] {
+        let cards: Card[] = [];
         switch (type) {
-            case 'small': return this.customSmallDeals.length > 0 ? this.customSmallDeals : [...SMALL_DEALS];
-            case 'big': return this.customBigDeals.length > 0 ? this.customBigDeals : [...BIG_DEALS];
-            case 'market': return this.customMarketCards.length > 0 ? this.customMarketCards : [...MARKET_CARDS];
-            case 'expense': return this.customExpenseCards.length > 0 ? this.customExpenseCards : [...EXPENSE_CARDS];
+            case 'small': cards = this.customSmallDeals.length > 0 ? this.customSmallDeals : [...SMALL_DEALS]; break;
+            case 'big': cards = this.customBigDeals.length > 0 ? this.customBigDeals : [...BIG_DEALS]; break;
+            case 'market': cards = this.customMarketCards.length > 0 ? this.customMarketCards : [...MARKET_CARDS]; break;
+            case 'expense': cards = this.customExpenseCards.length > 0 ? this.customExpenseCards : [...EXPENSE_CARDS]; break;
             default: return [];
         }
+
+        // Assign displayId if not present (for default cards)
+        cards = cards.map((c, i) => c.displayId ? c : { ...c, displayId: i + 1 });
+        return cards;
     }
 
     setCards(type: string, cards: Card[]) {
