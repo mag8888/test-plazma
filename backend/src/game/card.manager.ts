@@ -108,13 +108,13 @@ export const SMALL_DEALS: Card[] = [
         assetType: 'STOCK'
     }, 'DEAL_SMALL'),
 
-    ...expand(5, { title: 'Комната в пригороде', cost: 8000, cashflow: 250, description: 'Сдача в аренду. ROI ~35%.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
+    ...expand(3, { title: 'Комната в пригороде', cost: 8000, cashflow: 250, description: 'Сдача в аренду. ROI ~35%.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
     ...expand(2, { title: 'Студия маникюра', cost: 7000, cashflow: 200, description: 'Студия маникюра на 1 место.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
     ...expand(2, { title: 'Кофейня', cost: 3500, cashflow: 100, description: 'Небольшая кофейня.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
     ...expand(2, { title: 'Партнёрство в автомастерской', cost: 12000, cashflow: 350, description: 'Доля в бизнесе.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
     ...expand(2, { title: 'Участок земли 20га', cost: 5000, cashflow: 0, description: 'Земля без дохода.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
     ...expand(1, { title: 'Покупка дрона', cost: 1500, cashflow: 50, description: 'Дрон для съёмок.', assetType: 'OTHER' }, 'DEAL_SMALL'),
-    ...expand(5, { title: 'Флипинг студии', cost: 1500, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
+    ...expand(3, { title: 'Флипинг студии', cost: 1500, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
 
     // Partner Business Cards (Roll for partners)
     ...expand(2, { title: 'Бизнес: MONEO', cost: 1000, cashflow: 0, description: 'MONEO. Кол-во партнеров = Бросок кубика. ($500/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
