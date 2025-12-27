@@ -84,8 +84,8 @@ function GameContent() {
 
         setMyUserId(userId);
 
-        const joinGame = () => {
-            console.log("Joining room...", { roomId, playerName: prefName, userId });
+        const joinGame = (retries = 0) => {
+            console.log(`Joining room... (Attempt ${retries + 1})`, { roomId, playerName: prefName, userId });
             socket.emit('join_room', {
                 roomId,
                 playerName: prefName,
@@ -95,10 +95,20 @@ function GameContent() {
             }, (response: any) => {
                 if (!response.success) {
                     console.error("Join failed:", response.error);
+
+                    // Retry logic for "Room not found" or other transient errors
+                    if (retries < 3) {
+                        console.log(`Retrying join in 1s... (${retries + 1}/3)`);
+                        setTimeout(() => joinGame(retries + 1), 1000);
+                        return;
+                    }
+
                     setError(response.error);
                     if (response.error === "Room not found") {
-                        setTimeout(() => router.push('/lobby'), 1500);
+                        setTimeout(() => router.push('/lobby'), 3000); // 3s delay before kick
                     }
+                } else {
+                    setError(''); // Clear error on success
                 }
             });
         };
