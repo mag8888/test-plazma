@@ -1393,8 +1393,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         />
 
                         {/* ActiveCardZone Overlay - Center */}
-                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center px-4 py-2 z-[60]">
-                            <div className="pointer-events-auto w-full max-w-2xl mx-auto">
+                        <div className="absolute inset-0 pointer-events-none flex items-center justify-center px-6 py-2 z-[60]">
+                            <div className="pointer-events-auto w-full max-w-xl mx-auto">
                                 <ActiveCardZone
                                     state={state}
                                     isMyTurn={isMyTurn}
