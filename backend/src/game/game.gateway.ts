@@ -609,11 +609,11 @@ export class GameGateway {
                 }
             });
 
-            socket.on('buy_asset', ({ roomId, quantity }) => {
+            socket.on('buy_asset', ({ roomId, quantity, cardId }) => {
                 const game = this.games.get(roomId);
                 if (game) {
                     try {
-                        const result: any = game.buyAsset(socket.id, quantity);
+                        const result: any = game.buyAsset(socket.id, quantity, cardId);
                         const state = game.getState();
 
                         if (result && result.mlmRoll) {

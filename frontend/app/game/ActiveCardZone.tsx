@@ -110,6 +110,8 @@ const FeedCardItem = ({
     // Owner Logic - Card creator OR anyone who owns the asset for market cards
     const isOriginalOwner = cardWrapper.sourcePlayerId === me?.id;
     const isOwner = isOffer && card.offerPrice ? hasAsset : isOriginalOwner;
+    // Can Control: My Turn OR I am the owner of this Market Card (e.g. transferred to me)
+    const canControl = canShowCard || (source === 'MARKET' && isOriginalOwner);
 
     // Auto-switch to TRANSACTION if owner
     useEffect(() => {
@@ -254,39 +256,49 @@ const FeedCardItem = ({
 
                 {viewMode === 'DETAILS' ? (
                     <>
-                        <div className="bg-slate-800/30 p-2 rounded-lg border border-slate-700/30 flex-1 overflow-y-auto custom-scrollbar">
-                            <p className="text-[10px] text-slate-300 leading-relaxed">
-                                {card.description}
-                            </p>
-                            <div className="mt-2 flex flex-wrap gap-2">
-                                {card.cashflow !== 0 && (
-                                    <div className="text-[9px] px-1.5 py-0.5 rounded bg-green-900/30 border border-green-500/30 text-green-300 font-mono flex items-center gap-1">
-                                        <span>Cashflow:</span> <b>+${card.cashflow}</b>
-                                    </div>
-                                )}
-                                {card.roi && (
-                                    <div className="text-[9px] px-1.5 py-0.5 rounded bg-blue-900/30 border border-blue-500/30 text-blue-300 font-mono">
-                                        ROI: {card.roi}%
-                                    </div>
-                                )}
-                                {/* Market Card: Show asset ownership status */}
-                                {card.type === 'MARKET' && (
-                                    <div className={`text-[9px] px-1.5 py-0.5 rounded font-mono flex items-center gap-1 ${ownedQty > 0
-                                        ? 'bg-green-900/30 border border-green-500/30 text-green-300'
-                                        : 'bg-red-900/30 border border-red-500/30 text-red-300'
-                                        }`}>
-                                        {ownedQty > 0 ? (
-                                            <><span>✓</span> <b>У вас есть ({ownedQty} шт)</b></>
-                                        ) : (
-                                            <><span>✕</span> <b>У вас нет такого актива</b></>
-                                        )}
-                                    </div>
-                                )}
+                        {card.type === 'PAYDAY' ? (
+                            <div className="bg-slate-800/30 p-4 rounded-lg border border-slate-700/30 flex-1 flex flex-col items-center justify-center text-center animate-in zoom-in-95">
+                                <span className="text-xs text-slate-400 mb-2 uppercase tracking-widest font-bold">Ваш денежный поток</span>
+                                <div className="text-5xl font-black text-green-400 tracking-tighter drop-shadow-lg mb-2">
+                                    +${me?.cashflow?.toLocaleString() || 0}
+                                </div>
+                                <span className="text-[10px] text-slate-500">Зачислен на баланс</span>
                             </div>
-                        </div>
+                        ) : (
+                            <div className="bg-slate-800/30 p-2 rounded-lg border border-slate-700/30 flex-1 overflow-y-auto custom-scrollbar">
+                                <p className="text-[10px] text-slate-300 leading-relaxed">
+                                    {card.description}
+                                </p>
+                                <div className="mt-2 flex flex-wrap gap-2">
+                                    {card.cashflow !== undefined && card.cashflow !== 0 && (
+                                        <div className="text-[9px] px-1.5 py-0.5 rounded bg-green-900/30 border border-green-500/30 text-green-300 font-mono flex items-center gap-1">
+                                            <span>Cashflow:</span> <b>{card.cashflow > 0 ? '+' : ''}${card.cashflow}</b>
+                                        </div>
+                                    )}
+                                    {card.roi && (
+                                        <div className="text-[9px] px-1.5 py-0.5 rounded bg-blue-900/30 border border-blue-500/30 text-blue-300 font-mono">
+                                            ROI: {card.roi}%
+                                        </div>
+                                    )}
+                                    {/* Market Card: Show asset ownership status */}
+                                    {card.type === 'MARKET' && (
+                                        <div className={`text-[9px] px-1.5 py-0.5 rounded font-mono flex items-center gap-1 ${ownedQty > 0
+                                            ? 'bg-green-900/30 border border-green-500/30 text-green-300'
+                                            : 'bg-red-900/30 border border-red-500/30 text-red-300'
+                                            }`}>
+                                            {ownedQty > 0 ? (
+                                                <><span>✓</span> <b>У вас есть ({ownedQty} шт)</b></>
+                                            ) : (
+                                                <><span>✕</span> <b>У вас нет такого актива</b></>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
 
                         {/* Actions */}
-                        {(isMyTurn || isOwner) && (
+                        {(isMyTurn || isOwner || canControl) && (
                             <div className="flex gap-2 mt-1 w-full flex-col">
                                 {/* Asset Ownership Warning */}
                                 {card.offerPrice && isOffer && !hasAsset && (
@@ -298,7 +310,14 @@ const FeedCardItem = ({
                                     </div>
                                 )}
 
-                                {card.type === 'EXPENSE' ? (
+                                {card.type === 'PAYDAY' ? (
+                                    <button
+                                        onClick={onDismiss}
+                                        className="w-full bg-red-600 hover:bg-red-500 text-white font-bold py-3 rounded-xl text-lg uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                    >
+                                        OK
+                                    </button>
+                                ) : card.type === 'EXPENSE' ? (
                                     <button
                                         onClick={() => {
                                             setTransactionMode('BUY');
@@ -351,8 +370,8 @@ const FeedCardItem = ({
                                 ) : (
                                     /* Standard Deal Actions */
                                     <>
-                                        {/* Buy Button - Only for Drawer */}
-                                        {canShowCard && (
+                                        {/* Buy Button - Only for Drawer OR Transferred Owner */}
+                                        {canControl && (
                                             <button
                                                 onClick={() => {
                                                     if (isMLM) {
@@ -385,8 +404,8 @@ const FeedCardItem = ({
                                             </button>
                                         )}
 
-                                        {/* Transfer Button - Only for Drawer */}
-                                        {canShowCard && (
+                                        {/* Transfer Button - Only for Drawer or Owner */}
+                                        {canControl && (
                                             <button
                                                 onClick={() => setShowTransfer(true)}
                                                 className="px-3 bg-cyan-700 hover:bg-cyan-600 text-cyan-200 font-bold py-2 rounded-lg text-xl flex items-center justify-center"
@@ -396,8 +415,8 @@ const FeedCardItem = ({
                                             </button>
                                         )}
 
-                                        {/* Dismiss Button - Only for Drawer */}
-                                        {canShowCard && (
+                                        {/* Dismiss Button - Only for Drawer or Owner */}
+                                        {canControl && (
                                             <button
                                                 onClick={() => onDismiss()}
                                                 className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider"
@@ -599,7 +618,7 @@ const FeedCardItem = ({
                                         setShowLoanConfirm(true);
                                     } else {
                                         console.log('[Transaction] Direct Buy');
-                                        socket.emit('buy_asset', { roomId, quantity: stockQty });
+                                        socket.emit('buy_asset', { roomId, quantity: stockQty, cardId: card.id });
                                         // Switch to RESULT view for feedback
                                         setViewMode('RESULT');
                                         setTimeLeft(10); // 10s countdown
@@ -641,7 +660,7 @@ const FeedCardItem = ({
                 onConfirm={() => {
                     if (pendingLoan) {
                         socket.emit('take_loan', { roomId, amount: pendingLoan.amount });
-                        setTimeout(() => socket.emit('buy_asset', { roomId, quantity: pendingLoan.quantity }), 500);
+                        setTimeout(() => socket.emit('buy_asset', { roomId, quantity: pendingLoan.quantity, cardId: card.id }), 500);
                     }
                     setShowLoanConfirm(false);
                     setPendingLoan(null);

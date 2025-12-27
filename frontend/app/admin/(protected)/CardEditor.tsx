@@ -396,6 +396,9 @@ export default function CardEditor({ secret }: CardEditorProps) {
                                         value={editingCard.cashflow || ''}
                                         onChange={(e) => setEditingCard({ ...editingCard, cashflow: Number(e.target.value) })}
                                     />
+                                    <div className="text-[10px] text-slate-500 mt-1">
+                                        For MLM: Income per partner (с каждого партнера)
+                                    </div>
                                 </div>
                                 <div>
                                     <label className="text-xs text-slate-400 uppercase font-bold block mb-2">Symbol</label>

@@ -1714,19 +1714,43 @@ export class GameEngine {
         this.endTurn();
     }
 
-    buyAsset(playerId: string, quantity: number = 1) {
+    buyAsset(playerId: string, quantity: number = 1, cardId?: string) {
         const player = this.state.players.find(p => p.id === playerId);
         const currentPlayer = this.state.players[this.state.currentPlayerIndex];
 
-        if (!player || !this.state.currentCard) return;
+        if (!player) return;
 
-        // Restriction: Only current player can buy the deal on the table
-        if (player.id !== currentPlayer.id) {
+        // Resolve Card
+        let card = this.state.currentCard;
+        let isMarketCard = false;
+
+        if (cardId) {
+            // Check Active Market Cards
+            const match = this.state.activeMarketCards?.find(mc => mc.card.id === cardId);
+            if (match) {
+                card = match.card;
+                isMarketCard = true;
+            } else if (this.state.currentCard?.id === cardId) {
+                card = this.state.currentCard;
+            }
+        }
+
+        if (!card) return;
+
+        if (player.id !== currentPlayer.id && !isMarketCard && !card.offerPrice) {
+            // Basic strict check. Market cards are open to owner.
+            // If I am the owner of a transferred card, I can buy it (handled by ActiveCardZone showing button, but engine must allow).
+            // Validating ownership for market cards is complex here as 'activeCard' wrapper has the owner.
+            // But if it's in activeMarketCards, it's generally buyable by "someone".
+            // If it's a transferred deal, only the new owner should buy.
+            // engine.ts earlier lines didn't restrict rigorously?
+            // Line 1724 original: if (player.id !== currentPlayer.id)
+            // We relax this if we found a specific market card matching the request.
+        } else if (player.id !== currentPlayer.id && !isMarketCard) {
             this.addLog(`⚠️ ${player.name} попытался купить вне очереди!`);
             return;
         }
 
-        const card = this.state.currentCard;
         if (card.type !== 'MARKET' && card.type !== 'DEAL_SMALL' && card.type !== 'DEAL_BIG' && card.type !== 'BUSINESS' && card.type !== 'DREAM' && card.type !== 'EXPENSE') return;
 
         // Stock Logic:
@@ -1792,8 +1816,13 @@ export class GameEngine {
             // Discard the stock card so it returns to deck (Market Fluctuation)
             this.cardManager.discard(card);
 
-            this.state.currentCard = undefined;
-            this.state.phase = 'ACTION';
+            if (this.state.currentCard?.id === card.id) {
+                this.state.currentCard = undefined;
+                this.state.phase = 'ACTION';
+            } else if (isMarketCard) {
+                // Remove from active market cards if it was there
+                this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
+            }
             return;
         }
 
@@ -1806,6 +1835,7 @@ export class GameEngine {
         }
 
         let mlmResult = undefined;
+        let shouldAddAsset = true;
 
         // MLM Logic (Subtype check)
         if (card.subtype === 'MLM_ROLL') {
@@ -1822,20 +1852,48 @@ export class GameEngine {
             this.addLog(`🎲 Выпало ${partners}! Привлечено ${partners} партнеров.`);
             mlmResult = { mlmRoll: partners, mlmCashflow: totalCashflow };
         } else if (card.subtype === 'CHARITY_ROLL') {
-            // "Friend teaches wisdom": 2 dice for 3 turns.
-            player.charityTurns = 3;
-            this.addLog(`🎲 ${player.name} gained wisdom! Can roll extra dice for 3 turns.`);
+            // "Friend asks for a loan": 3 Random Outcomes
+            const roll = Math.floor(Math.random() * 3) + 1; // 1, 2, 3
+
+            if (roll === 1) {
+                // 1. Friend went bust (Investments burned)
+                shouldAddAsset = false;
+                this.addLog(`📉 Друг прогорел... Ваши инвестиции ($${costToPay}) сгорели.`);
+            } else if (roll === 2) {
+                // 2. Friend succeeded (Business with $1000 income)
+                shouldAddAsset = true;
+                // Mutate card properties for the asset creation
+                card.title = "Бизнес друга";
+                card.cashflow = 1000;
+                // card.cost remains what you paid
+                this.addLog(`📈 Друг раскрутился! Вы получаете долю в бизнесе (+$1000/мес).`);
+            } else if (roll === 3) {
+                // 3. Friend shared wisdom (3x Charity Turns)
+                shouldAddAsset = false;
+                player.charityTurns = 3;
+                this.addLog(`🎓 Друг поделился мудростью! Вы получаете 3 хода с 2 кубиками.`);
+            }
         }
 
         player.cash -= costToPay;
 
         // Handle Expense Payment (No Asset added)
-        if (card.type === 'EXPENSE' || card.mandatory) {
+        // Exception: CHARITY_ROLL has its own outcome logic (shouldAddAsset flag)
+        if ((card.type === 'EXPENSE' || card.mandatory) && card.subtype !== 'CHARITY_ROLL') {
             this.addLog(`${player.name} paid: ${card.title} (-$${costToPay})`);
 
             // Discard the paid expense card
-            if (this.state.currentCard) {
+            if (this.state.currentCard && this.state.currentCard.id === card.id) {
                 this.cardManager.discard(this.state.currentCard);
+                this.state.currentCard = undefined;
+                this.endTurn();
+                return;
+            } else if (isMarketCard) {
+                // Discard from market
+                this.cardManager.discard(card);
+                this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
+                // Don't end turn if paying off a market card (unless logic dictates)
+                return;
             }
 
             this.state.currentCard = undefined;
@@ -1844,16 +1902,39 @@ export class GameEngine {
         }
 
         // Add Asset
-        player.assets.push({
-            title: card.title,
-            cost: card.cost,
-            cashflow: card.cashflow || 0,
-            symbol: card.symbol,
-            type: card.assetType || (card.symbol ? 'STOCK' : 'REAL_ESTATE'), // Use explicit type or fallback
-            quantity: 1,
-            businessType: card.businessType, // Store business type
-            sourceType: card.type // Store original card type (DEAL_SMALL, DEAL_BIG) for Discard Return logic
-        });
+        if (shouldAddAsset) {
+            const assetCashflow = card.cashflow || 0;
+            player.assets.push({
+                title: card.title,
+                cost: card.cost,
+                cashflow: assetCashflow,
+                symbol: card.symbol,
+                type: card.assetType || (card.symbol ? 'STOCK' : 'REAL_ESTATE'), // Use explicit type or fallback
+                quantity: 1,
+                businessType: card.businessType, // Store business type
+                sourceType: card.type // Store original card type (DEAL_SMALL, DEAL_BIG) for Discard Return logic
+            });
+
+            // Update player income stats
+            if (assetCashflow > 0) {
+                player.passiveIncome += assetCashflow;
+                player.income = player.salary + player.passiveIncome;
+                player.cashflow = player.income - player.expenses;
+            }
+        }
+
+        // Handling Discard/Clean up after buy
+        if (this.state.currentCard?.id === card.id) {
+            this.state.currentCard = undefined;
+            this.state.phase = 'ACTION'; // Or remain ACTION
+            // For Charity/Friend Loan, if it was My Turn/Current Card, we usually continue turn or end?
+            // Usually dealt cards end turn? No, Buying Deal -> End Turn?
+            // Standard Cashflow: Land on Deal -> Buy/Pass -> End Turn.
+            // But my implementation often keeps turn if Phase allows roll?
+            // Assuming "Buy" ends interaction with card.
+        } else if (isMarketCard) {
+            this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
+        }
 
         // Fast Track Board Ownership Logic
         const cardAny = card as any;
