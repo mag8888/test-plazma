@@ -24,7 +24,8 @@ const FeedCardItem = ({
     isMyTurn,
     players,
     onDismiss,
-    state // Added state prop type
+    state,
+    canShowCard
 }: {
     cardWrapper: any,
     me: any,
@@ -32,7 +33,8 @@ const FeedCardItem = ({
     isMyTurn: boolean,
     players?: any[],
     onDismiss: () => void,
-    state: any // Added state prop type
+    state: any,
+    canShowCard: boolean
 }) => {
     const card = cardWrapper.card || cardWrapper; // Handle wrapper or direct card
     const source = cardWrapper.source || 'CURRENT'; // 'MARKET' or 'CURRENT'
@@ -242,6 +244,14 @@ const FeedCardItem = ({
             <div className="p-3 flex flex-col gap-2 flex-1">
                 <CardHeader />
 
+                {/* DEBUG LOGGING */}
+                {(() => {
+                    if (isStock && ownedQty > 0) {
+                        console.log(`[CardDebug] ID: ${card.id}, Type: ${card.type}, Stock: ${isStock}, Qty: ${ownedQty}, Mode: ${viewMode}, CanSeeButtons: true`);
+                    }
+                    return null;
+                })()}
+
                 {viewMode === 'DETAILS' ? (
                     <>
                         <div className="bg-slate-800/30 p-2 rounded-lg border border-slate-700/30 flex-1 overflow-y-auto custom-scrollbar">
@@ -302,6 +312,22 @@ const FeedCardItem = ({
                                 ) : card.type === 'MARKET' ? (
                                     <>
                                         {/* Market Card Actions */}
+                                        {/* If it's a Stock, you can also BUY at this price */}
+                                        {isStock && (
+                                            <button
+                                                onClick={() => {
+                                                    setTransactionMode('BUY');
+                                                    const price = card.offerPrice || card.cost || card.price || 0;
+                                                    const maxBuy = price > 0 ? Math.floor(me.cash / price) : 1;
+                                                    setStockQty(1);
+                                                    setViewMode('TRANSACTION');
+                                                }}
+                                                className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                            >
+                                                Купить
+                                            </button>
+                                        )}
+
                                         {ownedQty > 0 ? (
                                             <button
                                                 onClick={() => {
@@ -325,23 +351,27 @@ const FeedCardItem = ({
                                 ) : (
                                     /* Standard Deal Actions */
                                     <>
-                                        <button
-                                            onClick={() => {
-                                                if (isMLM) {
-                                                    setViewMode('MLM_ROLL');
-                                                } else {
-                                                    setTransactionMode('BUY');
-                                                    const price = card.cost || card.price || 0;
-                                                    const maxBuy = price > 0 ? Math.floor(me.cash / price) : 1;
-                                                    setStockQty(isStock && maxBuy > 0 ? maxBuy : 1);
-                                                    setViewMode('TRANSACTION');
-                                                }
-                                            }}
-                                            className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
-                                        >
-                                            {isMLM ? '🎲 Бросить' : 'Купить'}
-                                        </button>
+                                        {/* Buy Button - Only for Drawer */}
+                                        {canShowCard && (
+                                            <button
+                                                onClick={() => {
+                                                    if (isMLM) {
+                                                        setViewMode('MLM_ROLL');
+                                                    } else {
+                                                        setTransactionMode('BUY');
+                                                        const price = card.cost || card.price || 0;
+                                                        const maxBuy = price > 0 ? Math.floor(me.cash / price) : 1;
+                                                        setStockQty(isStock && maxBuy > 0 ? maxBuy : 1);
+                                                        setViewMode('TRANSACTION');
+                                                    }
+                                                }}
+                                                className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                            >
+                                                {isMLM ? '🎲 Бросить' : 'Купить'}
+                                            </button>
+                                        )}
 
+                                        {/* Sell Button - Open to everyone who owns the asset */}
                                         {isStock && ownedQty > 0 && (
                                             <button
                                                 onClick={() => {
@@ -355,20 +385,26 @@ const FeedCardItem = ({
                                             </button>
                                         )}
 
-                                        <button
-                                            onClick={() => setShowTransfer(true)}
-                                            className="px-3 bg-cyan-700 hover:bg-cyan-600 text-cyan-200 font-bold py-2 rounded-lg text-xl flex items-center justify-center"
-                                            title="Передать сделку"
-                                        >
-                                            ➜
-                                        </button>
+                                        {/* Transfer Button - Only for Drawer */}
+                                        {canShowCard && (
+                                            <button
+                                                onClick={() => setShowTransfer(true)}
+                                                className="px-3 bg-cyan-700 hover:bg-cyan-600 text-cyan-200 font-bold py-2 rounded-lg text-xl flex items-center justify-center"
+                                                title="Передать сделку"
+                                            >
+                                                ➜
+                                            </button>
+                                        )}
 
-                                        <button
-                                            onClick={() => onDismiss()}
-                                            className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider"
-                                        >
-                                            {isOffer ? 'Закрыть' : 'Отказаться'}
-                                        </button>
+                                        {/* Dismiss Button - Only for Drawer */}
+                                        {canShowCard && (
+                                            <button
+                                                onClick={() => onDismiss()}
+                                                className="flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider"
+                                            >
+                                                {isOffer ? 'Закрыть' : 'Отказаться'}
+                                            </button>
+                                        )}
                                     </>
                                 )}
                             </div>
@@ -434,7 +470,11 @@ const FeedCardItem = ({
                     </div>
                 ) : (
                     // Transaction View inside Card
-                    <div className="bg-slate-900/40 p-1.5 rounded-lg border border-white/5 flex-1 flex flex-col">
+                    <div
+                        onClick={(e) => e.stopPropagation()}
+                        onTouchStart={(e) => e.stopPropagation()}
+                        className="bg-slate-900/40 p-1.5 rounded-lg border border-white/5 flex-1 flex flex-col"
+                    >
                         <div className="flex items-center justify-between mb-1 pb-1 border-b border-white/5 h-6">
                             <button onClick={(e) => { e.stopPropagation(); setViewMode('DETAILS'); }} className="text-slate-400 hover:text-white text-[9px] uppercase font-bold flex items-center gap-1 h-full px-1 hover:bg-white/5 rounded">← Назад</button>
                             <div className={`text-[9px] font-bold uppercase ${transactionMode === 'BUY' ? 'text-green-400' : 'text-blue-400'}`}>
@@ -916,6 +956,7 @@ export const ActiveCardZone = ({
                                     isMyTurn={isMyTurn}
                                     players={state.players}
                                     state={state}
+                                    canShowCard={canShowCard}
                                     onDismiss={() => {
                                         console.log('Dismissing card:', item.id, item.source);
 

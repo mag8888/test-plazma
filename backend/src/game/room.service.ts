@@ -114,7 +114,10 @@ export class RoomService {
         // But for race condition of "Adding", the $push is key.
 
         const roomCheck = await RoomModel.findById(roomId);
-        if (!roomCheck) throw new Error("Room not found");
+        if (!roomCheck) {
+            console.error(`[RoomService] Join failed - Room not found: ${roomId}`);
+            throw new Error("Room not found");
+        }
         if (roomCheck.password && roomCheck.password !== password) throw new Error("Invalid password");
 
         // Allow rejoin if player is already in the list

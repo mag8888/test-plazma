@@ -105,7 +105,9 @@ function GameContent() {
 
                     setError(response.error);
                     if (response.error === "Room not found") {
-                        setTimeout(() => router.push('/lobby'), 3000); // 3s delay before kick
+                        console.error("Room not found error received for ID:", roomId);
+                        // Disable auto-kick for debugging
+                        // setTimeout(() => router.push('/lobby'), 3000); 
                     }
                 } else {
                     setError(''); // Clear error on success
