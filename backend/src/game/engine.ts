@@ -1817,11 +1817,24 @@ export class GameEngine {
             // Discard the stock card so it returns to deck (Market Fluctuation)
             this.cardManager.discard(card);
 
+            // Keep card visible for other players - move to activeMarketCards if it's currentCard
             if (this.state.currentCard?.id === card.id) {
+                // Check if it's already in activeMarketCards
+                const alreadyInMarket = this.state.activeMarketCards?.some(mc => mc.card.id === card.id);
+                if (!alreadyInMarket) {
+                    // Move to activeMarketCards so it stays visible
+                    if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
+                    this.state.activeMarketCards.push({
+                        id: `market_${card.id}_${Date.now()}`,
+                        card: this.state.currentCard,
+                        expiresAt: Date.now() + 120000, // 2 min
+                        sourcePlayerId: this.state.players[this.state.currentPlayerIndex].id,
+                        dismissedBy: []
+                    });
+                }
                 this.state.currentCard = undefined;
                 this.state.phase = 'ACTION';
             }
-            // Don't remove from activeMarketCards - let cleanup handle it when all players dismiss
             // Cards stay visible to other players who might want to sell
 
             return;
@@ -1925,9 +1938,23 @@ export class GameEngine {
         }
 
         // Handling Discard/Clean up after buy
+        // Keep card visible for other players - move to activeMarketCards if it's currentCard
         if (this.state.currentCard?.id === card.id) {
+            // Check if it's already in activeMarketCards
+            const alreadyInMarket = this.state.activeMarketCards?.some(mc => mc.card.id === card.id);
+            if (!alreadyInMarket) {
+                // Move to activeMarketCards so it stays visible
+                if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
+                this.state.activeMarketCards.push({
+                    id: `market_${card.id}_${Date.now()}`,
+                    card: this.state.currentCard,
+                    expiresAt: Date.now() + 120000, // 2 min
+                    sourcePlayerId: this.state.players[this.state.currentPlayerIndex].id,
+                    dismissedBy: []
+                });
+            }
             this.state.currentCard = undefined;
-            this.state.phase = 'ACTION'; // Or remain ACTION
+            this.state.phase = 'ACTION';
         }
         // Don't remove from activeMarketCards - let cleanup handle it when all players dismiss
 
