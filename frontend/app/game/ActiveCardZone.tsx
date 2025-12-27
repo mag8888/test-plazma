@@ -733,6 +733,12 @@ export const ActiveCardZone = ({
     // Local Dismissal State to prevent closing for everyone
     const [locallyDismissedIds, setLocallyDismissedIds] = useState<string[]>([]);
 
+    // Clear dismissed IDs only when turn changes (not on every state update)
+    const currentPlayerIndex = state.currentPlayerIndex;
+    useEffect(() => {
+        setLocallyDismissedIds([]);
+    }, [currentPlayerIndex]);
+
     // Safety Guard
     if (!me) return null;
 
