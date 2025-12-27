@@ -1818,7 +1818,10 @@ export class GameEngine {
             this.cardManager.discard(card);
 
             // Keep card visible for other players - move to activeMarketCards if it's currentCard
-            if (this.state.currentCard?.id === card.id) {
+            // EXCEPT for private cards (MLM, CHARITY_ROLL) which should only be visible to buyer
+            const isPrivateCard = card.subtype === 'MLM_ROLL' || card.subtype === 'CHARITY_ROLL';
+
+            if (this.state.currentCard?.id === card.id && !isPrivateCard) {
                 // Check if it's already in activeMarketCards
                 const alreadyInMarket = this.state.activeMarketCards?.some(mc => mc.card.id === card.id);
                 if (!alreadyInMarket) {
@@ -1832,10 +1835,14 @@ export class GameEngine {
                         dismissedBy: []
                     });
                 }
+            }
+
+            // Clear currentCard (for all cards including private ones)
+            if (this.state.currentCard?.id === card.id) {
                 this.state.currentCard = undefined;
                 this.state.phase = 'ACTION';
             }
-            // Cards stay visible to other players who might want to sell
+            // Cards stay visible to other players who might want to sell (except private cards)
 
             return;
         }
@@ -1939,7 +1946,10 @@ export class GameEngine {
 
         // Handling Discard/Clean up after buy
         // Keep card visible for other players - move to activeMarketCards if it's currentCard
-        if (this.state.currentCard?.id === card.id) {
+        // EXCEPT for private cards (MLM, CHARITY_ROLL) which should only be visible to buyer
+        const isPrivateCard = card.subtype === 'MLM_ROLL' || card.subtype === 'CHARITY_ROLL';
+
+        if (this.state.currentCard?.id === card.id && !isPrivateCard) {
             // Check if it's already in activeMarketCards
             const alreadyInMarket = this.state.activeMarketCards?.some(mc => mc.card.id === card.id);
             if (!alreadyInMarket) {
@@ -1953,10 +1963,14 @@ export class GameEngine {
                     dismissedBy: []
                 });
             }
+        }
+
+        // Clear currentCard (for all cards including private ones)
+        if (this.state.currentCard?.id === card.id) {
             this.state.currentCard = undefined;
             this.state.phase = 'ACTION';
         }
-        // Don't remove from activeMarketCards - let cleanup handle it when all players dismiss
+        // Don't remove from activeMarketCards - let cleanup handle it when all players dismiss (except private cards)
 
 
         // Fast Track Board Ownership Logic
