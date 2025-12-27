@@ -115,12 +115,18 @@ const FeedCardItem = ({
     const isOwner = isOffer && card.offerPrice ? hasAsset : isOriginalOwner;
 
     // Can Control Logic:
-    // - For CURRENT card (my turn): canShowCard (it's my turn and I drew it)
-    // - For MARKET cards: ONLY isOriginalOwner (only the owner can buy/transfer/dismiss)
-    const canControl = source === 'MARKET' ? isOriginalOwner : canShowCard;
+    // - For CURRENT card (new draw): ONLY currrent turn player
+    // - For MARKET cards (transferred/offers): ONLY the specific owner (sourcePlayerId)
+    // - Bystanders cannot control (Buy) but can Sell if they own the stock
+    const canControl = source === 'MARKET' ? (cardWrapper.sourcePlayerId === me?.id) : isMyTurn;
 
     // Auto-switch to TRANSACTION if owner
     useEffect(() => {
+        // If Bystander owns asset (stock) and can't buy, default to SELL
+        if (!canControl && hasAsset && isStock) {
+            setTransactionMode('SELL');
+        }
+
         if (isOwner && viewMode === 'DETAILS') {
             // For stock, stay in DETAILS to allow Buy/Sell choice.
             // For other Deals (Real Estate), go to transaction (Buy).
@@ -128,7 +134,7 @@ const FeedCardItem = ({
                 setViewMode('TRANSACTION');
             }
         }
-    }, [isOwner, viewMode, isStock, card.type]);
+    }, [isOwner, viewMode, isStock, card.type, canControl, hasAsset]);
 
     // --- CALCULATIONS FOR TRANSACTION MODE (Must be top level) ---
     const price = card.cost || card.price || 0;
