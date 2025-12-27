@@ -602,11 +602,11 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
         socket.on('turn_ended', (data) => {
             isRollingRef.current = false;
 
-            // My Turn Check
-            const meInList = data.state?.players?.findIndex((p: any) => p.id === socket.id);
-            if (data.state?.currentPlayerIndex === meInList) {
-                sfx.play('turn');
-            }
+            // My Turn Check - SOUND DISABLED per user request
+            // const meInList = data.state?.players?.findIndex((p: any) => p.id === socket.id);
+            // if (data.state?.currentPlayerIndex === meInList) {
+            //     sfx.play('turn');
+            // }
 
             setState(data.state);
             setSquareInfo(null);
