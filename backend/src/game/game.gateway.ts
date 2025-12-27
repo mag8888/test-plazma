@@ -679,7 +679,7 @@ export class GameGateway {
                 const game = this.games.get(roomId);
                 if (game) {
                     try {
-                        const player = game.getState().players.find(p => p.socketId === socket.id);
+                        const player = game.getState().players.find(p => p.id === socket.id);
                         if (player) {
                             game.dismissMarketCard(player.id, cardId);
                             const state = game.getState();
