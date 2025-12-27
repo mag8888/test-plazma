@@ -255,13 +255,55 @@ export default function CardEditor({ secret }: CardEditorProps) {
                                             </span>
                                         )}
                                     </div>
-                                    <h3 className="text-white font-bold text-sm mb-2 line-clamp-2">{card.title}</h3>
-                                    {card.cashflow && <div className="text-green-400">+${card.cashflow}/mo</div>}
-                                    {card.offerPrice && <div className="text-blue-400">Offer: ${card.offerPrice.toLocaleString()}</div>}
-                                    {card.symbol && <div className="text-purple-400">Symbol: {card.symbol}</div>}
-                                    {card.targetCardNumber && (
-                                        <div className="text-purple-400 font-bold">→ Affects: #{card.targetCardNumber}</div>
+                                    <h3 className="text-white font-bold text-sm mb-1 line-clamp-2" title={card.title}>{card.title}</h3>
+                                    {card.description && (
+                                        <p className="text-slate-400 text-xs mb-2 line-clamp-2" title={card.description}>
+                                            {card.description}
+                                        </p>
                                     )}
+
+                                    <div className="space-y-1 text-xs">
+                                        {/* Financials */}
+                                        {card.cost !== undefined && (
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-500">Price/Cost:</span>
+                                                <span className="text-white font-bold">${card.cost.toLocaleString()}</span>
+                                            </div>
+                                        )}
+                                        {card.downPayment !== undefined && (
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-500">Down Pay:</span>
+                                                <span className="text-white font-bold">${card.downPayment.toLocaleString()}</span>
+                                            </div>
+                                        )}
+                                        {card.liability !== undefined && (
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-500">Liability:</span>
+                                                <span className="text-red-400 font-bold">-${card.liability.toLocaleString()}</span>
+                                            </div>
+                                        )}
+                                        {card.cashflow !== undefined && (
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-500">Cashflow:</span>
+                                                <span className={`font-bold ${card.cashflow >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                                    {card.cashflow >= 0 ? '+' : ''}${card.cashflow.toLocaleString()}
+                                                </span>
+                                            </div>
+                                        )}
+                                        {card.roi !== undefined && (
+                                            <div className="flex justify-between">
+                                                <span className="text-slate-500">ROI:</span>
+                                                <span className="text-yellow-400 font-bold">{card.roi}%</span>
+                                            </div>
+                                        )}
+
+                                        {/* Stock / Market */}
+                                        {card.offerPrice !== undefined && <div className="text-blue-400 font-bold">Offer: ${card.offerPrice.toLocaleString()}</div>}
+                                        {card.symbol && <div className="text-purple-400 font-mono">Sym: {card.symbol}</div>}
+                                        {card.targetCardNumber && (
+                                            <div className="text-purple-400 font-bold text-[10px] mt-1">Target: {card.targetCardNumber}</div>
+                                        )}
+                                    </div>
                                 </div>
                             </div>
                             {/* Actions */}

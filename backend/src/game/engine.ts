@@ -1499,7 +1499,21 @@ export class GameEngine {
         // Discard the card before clearing it (Only if NOT persistent)
         if (this.state.currentCard) {
             const isPersistent = this.state.activeMarketCards?.some(ac => ac.card.title === this.state.currentCard?.title && ac.expiresAt > Date.now());
-            if (!isPersistent) {
+
+            // USER REQUEST FIX: Stock Deals should persist for 2 minutes for everyone
+            const isStockDeal = (this.state.currentCard.type === 'DEAL_SMALL' || this.state.currentCard.type === 'DEAL_BIG') && this.state.currentCard.symbol;
+
+            if (isStockDeal && !isPersistent) {
+                // Move to Active Market Cards
+                if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
+                this.state.activeMarketCards.push({
+                    id: `${this.state.currentCard.id}_mkt_${Date.now()}`,
+                    card: this.state.currentCard,
+                    sourcePlayerId: currentPlayer.id,
+                    expiresAt: Date.now() + 120000 // 2 Minutes
+                });
+                this.addLog(`📢 ${this.state.currentCard.title} доступна всем 2 минуты!`);
+            } else if (!isPersistent) {
                 this.cardManager.discard(this.state.currentCard);
             }
         }
