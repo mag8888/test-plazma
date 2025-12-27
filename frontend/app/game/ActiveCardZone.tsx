@@ -40,10 +40,13 @@ const FeedCardItem = ({
     const source = cardWrapper.source || 'CURRENT'; // 'MARKET' or 'CURRENT'
     const [locallyDismissedIds, setLocallyDismissedIds] = useState<string[]>([]); // Added this state
 
+    // Guard Clause: Prevent crash if state is undefined (e.g. during fast track transition)
+    if (!state) return null;
+
     // Clear locally dismissed IDs when turn changes to prevent hiding recurring cards (e.g. reshuffled expenses)
     useEffect(() => {
         setLocallyDismissedIds([]);
-    }, [state.currentPlayerIndex, state.phase]);
+    }, [state?.currentPlayerIndex, state?.phase]);
 
     // Stack Logic (Visuals)
     const [stockQty, setStockQty] = useState(1);
@@ -734,6 +737,9 @@ export const ActiveCardZone = ({
     onDismissPreview,
     canShowCard = true
 }: ActiveCardZoneProps) => {
+    // Safety Guards
+    if (!state || !me) return null;
+
     // Local Dismissal State to prevent closing for everyone
     const [locallyDismissedIds, setLocallyDismissedIds] = useState<string[]>([]);
 
@@ -742,9 +748,6 @@ export const ActiveCardZone = ({
     useEffect(() => {
         setLocallyDismissedIds([]);
     }, [currentPlayerIndex]);
-
-    // Safety Guard
-    if (!me) return null;
 
     const showPhaseContent = canShowCard;
 
