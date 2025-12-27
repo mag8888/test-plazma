@@ -1421,7 +1421,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                             title: card.card.title,
                                             description: card.card.description
                                         })}
-                                        canShowCard={canShowCard}
+                                        // Fix Animation Sync: Don't show card while animating move or rolling dice
+                                        canShowCard={canShowCard && !isAnimating && !showDice}
                                         previewCard={squareInfo}
                                         onDismissPreview={() => setSquareInfo(null)}
                                     />

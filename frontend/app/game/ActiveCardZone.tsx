@@ -115,10 +115,13 @@ const FeedCardItem = ({
     const isOwner = isOffer && card.offerPrice ? hasAsset : isOriginalOwner;
 
     // Can Control Logic:
-    // - For CURRENT card (new draw): ONLY currrent turn player
-    // - For MARKET cards (transferred/offers): ONLY the specific owner (sourcePlayerId)
-    // - Bystanders cannot control (Buy) but can Sell if they own the stock
-    const canControl = source === 'MARKET' ? (cardWrapper.sourcePlayerId === me?.id) : isMyTurn;
+    // - MARKET OFFER (offerPrice exists): Anyone can buy (control)
+    // - PRIVATE/TRANSFERRED (no offerPrice): Only owner (sourcePlayerId)
+    // - CURRENT (New Draw): Only turn player
+    const isMarketOffer = source === 'MARKET' && card.offerPrice > 0;
+    const canControl = source === 'MARKET'
+        ? (isMarketOffer ? true : cardWrapper.sourcePlayerId === me?.id)
+        : isMyTurn;
 
     // Auto-switch to TRANSACTION if owner
     useEffect(() => {
@@ -518,6 +521,30 @@ const FeedCardItem = ({
                             {/* Hide quantity controls if MLM (Locked by roll) or Expense (Qty 1) */}
                             {(isStock && !isMLM || (!card.offerPrice && !isMLM && maxVal > 1)) && (
                                 <>
+                                    {/* Transaction Mode Toggle (Only if owning stock) */}
+                                    {hasAsset && (
+                                        <div className="flex bg-slate-800/80 p-1 rounded-lg mb-3">
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setTransactionMode('BUY'); }}
+                                                disabled={!canControl} // Bystander cannot switch to BUY
+                                                className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all
+                                                    ${transactionMode === 'BUY' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-300'}
+                                                    ${!canControl ? 'opacity-50 cursor-not-allowed' : ''}
+                                                `}
+                                            >
+                                                Купить
+                                            </button>
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setTransactionMode('SELL'); }}
+                                                className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all
+                                                    ${transactionMode === 'SELL' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-300'}
+                                                `}
+                                            >
+                                                Продать
+                                            </button>
+                                        </div>
+                                    )}
+
                                     <div className="flex items-center gap-2 justify-between">
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setStockQty(Math.max(1, stockQty - 1)); }}
