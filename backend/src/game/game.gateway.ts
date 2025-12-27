@@ -279,6 +279,21 @@ export class GameGateway {
                 }
             });
 
+            // Toggle Skip Turns (Sandbox Mode)
+            socket.on('toggle_skip_turns', ({ roomId, userId }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.toggleSkipTurns(userId);
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
             // Host Skip Turn (Force End Turn)
             socket.on('host_skip_turn', async (data, callback) => {
                 try {

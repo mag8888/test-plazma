@@ -77,6 +77,7 @@ export interface PlayerState extends IPlayer {
     fastTrackStartIncome?: number;
     hasWon?: boolean;
     loanLimitFactor?: number; // 0.5 if bankrupted previously
+    isSkippingTurns?: boolean; // Sandbox mode for winners
 }
 
 export interface BoardSquare {
@@ -501,7 +502,21 @@ export class GameEngine {
             player.hasWon = true;
             this.addLog(`🏆 ${player.name} ВЫИГРАЛ ИГРУ! (+50k Поток, Мечта, 2 Бизнеса)`);
             this.addLog(`✨ ПОЗДРАВЛЯЕМ! ✨`);
+            // Default to NOT skipping turns (Sandbox Mode active)
+            player.isSkippingTurns = false;
         }
+    }
+
+    toggleSkipTurns(userId: string) {
+        const player = this.state.players.find(p => p.userId === userId || p.id === userId);
+        if (!player) return;
+        if (!player.hasWon) {
+            this.addLog(`⚠️ ${player.name} can't toggle skip (not a winner).`);
+            return;
+        }
+
+        player.isSkippingTurns = !player.isSkippingTurns;
+        this.addLog(`${player.name} ${player.isSkippingTurns ? 'paused playing ⏸' : 'resumed playing ▶️'}`);
     }
 
     public enterFastTrack(userId: string) {
@@ -2277,10 +2292,11 @@ export class GameEngine {
             this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % totalPlayers;
             const nextPlayer = this.state.players[this.state.currentPlayerIndex];
 
-            // 1. Bankrupted or Won -> SKIP PERMANENTLY
-            if (nextPlayer.isBankrupted || nextPlayer.hasWon) {
-                // Log only once per full cycle to avoid spam? Or just log.
-                // this.addLog(`⏩ Skipping ${nextPlayer.name} (${nextPlayer.isBankrupted ? 'Bankrupted' : 'Finished'})`);
+            // 1. Bankrupted -> SKIP PERMANENTLY
+            // Winner -> Only skip if they explicitly chose to skip (Sandbox Mode)
+            if (nextPlayer.isBankrupted || (nextPlayer.hasWon && nextPlayer.isSkippingTurns)) {
+                // Log only if skipping winner
+                // if (nextPlayer.hasWon) this.addLog(`⏩ Skipping winner ${nextPlayer.name}`);
                 attempts++;
                 continue;
             }
