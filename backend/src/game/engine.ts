@@ -1732,6 +1732,12 @@ export class GameEngine {
             if (match) {
                 card = match.card;
                 isMarketCard = true;
+
+                // CRITICAL: Only card owner can buy from market
+                if (match.sourcePlayerId !== player.id) {
+                    this.addLog(`⚠️ ${player.name} не может купить чужую карточку!`);
+                    throw new Error('Только владелец карточки может купить!');
+                }
             } else if (this.state.currentCard?.id === cardId) {
                 card = this.state.currentCard;
             }
