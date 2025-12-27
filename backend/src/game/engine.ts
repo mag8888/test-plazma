@@ -1108,7 +1108,7 @@ export class GameEngine {
             } else {
                 this.addLog(`👶 ${player.name} попал на Ребенка! Бросаем кубик...`);
                 // Auto-roll for baby immediately
-                this.rollForBaby();
+                this.resolveBabyRoll();
             }
             return;
         } else if (square.type === 'DOWNSIZED') {
