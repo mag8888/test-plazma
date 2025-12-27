@@ -35,6 +35,7 @@ export interface ActiveCard {
     card: Card;
     expiresAt: number;
     sourcePlayerId: string;
+    dismissedBy?: string[]; // Player IDs who dismissed this card
 }
 
 export interface ChatMessage {
@@ -1819,10 +1820,10 @@ export class GameEngine {
             if (this.state.currentCard?.id === card.id) {
                 this.state.currentCard = undefined;
                 this.state.phase = 'ACTION';
-            } else if (isMarketCard) {
-                // Remove from active market cards if it was there
-                this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
             }
+            // Don't remove from activeMarketCards - let cleanup handle it when all players dismiss
+            // Cards stay visible to other players who might want to sell
+
             return;
         }
 
@@ -1927,14 +1928,9 @@ export class GameEngine {
         if (this.state.currentCard?.id === card.id) {
             this.state.currentCard = undefined;
             this.state.phase = 'ACTION'; // Or remain ACTION
-            // For Charity/Friend Loan, if it was My Turn/Current Card, we usually continue turn or end?
-            // Usually dealt cards end turn? No, Buying Deal -> End Turn?
-            // Standard Cashflow: Land on Deal -> Buy/Pass -> End Turn.
-            // But my implementation often keeps turn if Phase allows roll?
-            // Assuming "Buy" ends interaction with card.
-        } else if (isMarketCard) {
-            this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
         }
+        // Don't remove from activeMarketCards - let cleanup handle it when all players dismiss
+
 
         // Fast Track Board Ownership Logic
         const cardAny = card as any;
@@ -2145,6 +2141,54 @@ export class GameEngine {
             return true;
         }
         return false;
+    }
+
+    /**
+     * Cleanup market cards that are expired or dismissed by all players
+     */
+    cleanupMarketCards() {
+        if (!this.state.activeMarketCards) return;
+
+        const now = Date.now();
+        const activePlayers = this.state.players.filter(p => !p.isBankrupted && !p.hasWon);
+
+        this.state.activeMarketCards = this.state.activeMarketCards.filter(mc => {
+            // Remove if expired
+            if (mc.expiresAt < now) {
+                this.cardManager.discard(mc.card);
+                return false;
+            }
+
+            // Remove if all active players dismissed it
+            if (mc.dismissedBy && activePlayers.length > 0) {
+                const allDismissed = activePlayers.every(p => mc.dismissedBy?.includes(p.id));
+                if (allDismissed) {
+                    this.cardManager.discard(mc.card);
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+
+    /**
+     * Dismiss a market card for a specific player
+     */
+    dismissMarketCard(playerId: string, cardId: string) {
+        const marketCard = this.state.activeMarketCards?.find(mc => mc.card.id === cardId || mc.id === cardId);
+        if (!marketCard) return;
+
+        if (!marketCard.dismissedBy) {
+            marketCard.dismissedBy = [];
+        }
+
+        if (!marketCard.dismissedBy.includes(playerId)) {
+            marketCard.dismissedBy.push(playerId);
+            this.addLog(`${this.state.players.find(p => p.id === playerId)?.name} закрыл карточку`);
+        }
+
+        this.cleanupMarketCards();
     }
 
     endTurn() {

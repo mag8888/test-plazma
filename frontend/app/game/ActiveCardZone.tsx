@@ -637,7 +637,10 @@ const FeedCardItem = ({
                                     } else {
                                         socket.emit('sell_stock', { roomId, quantity: stockQty });
                                     }
-                                    onDismiss(); // Sell is instant usually
+
+                                    // Switch to RESULT view like Buy does - don't auto-dismiss
+                                    setViewMode('RESULT');
+                                    setTimeLeft(10); // 10s countdown
                                 }
                             }}
                             className={`w-full py-2.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg transition-transform active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:pointer-events-none
@@ -991,8 +994,15 @@ export const ActiveCardZone = ({
                                             return;
                                         }
 
-                                        // 3. Passive/Observer Mode (Local Only)
-                                        // Applies to Market Cards OR Active Card when not my turn (viewing others)
+                                        // 3. Market Card Dismissal (Server-side per-player tracking)
+                                        if (item.source === 'MARKET') {
+                                            socket.emit('dismiss_market_card', { roomId, cardId: item.card.id });
+                                            // Also dismiss locally for immediate feedback
+                                            setLocallyDismissedIds(prev => [...prev, item.id]);
+                                            return;
+                                        }
+
+                                        // 4. Passive/Observer Mode (Local Only for current card)
                                         setLocallyDismissedIds(prev => [...prev, item.id]);
                                     }}
                                 />

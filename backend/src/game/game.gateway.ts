@@ -675,6 +675,23 @@ export class GameGateway {
             });
 
 
+            socket.on('dismiss_market_card', ({ roomId, cardId }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        const player = game.getState().players.find(p => p.socketId === socket.id);
+                        if (player) {
+                            game.dismissMarketCard(player.id, cardId);
+                            const state = game.getState();
+                            this.io.to(roomId).emit('state_updated', { state });
+                            saveState(roomId, game);
+                        }
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
             socket.on('transfer_asset', ({ roomId, toPlayerId, assetIndex, quantity }) => {
                 const game = this.games.get(roomId);
                 if (game) {
