@@ -110,8 +110,11 @@ const FeedCardItem = ({
     // Owner Logic - Card creator OR anyone who owns the asset for market cards
     const isOriginalOwner = cardWrapper.sourcePlayerId === me?.id;
     const isOwner = isOffer && card.offerPrice ? hasAsset : isOriginalOwner;
-    // Can Control: My Turn OR I am the owner of this Market Card (e.g. transferred to me)
-    const canControl = canShowCard || (source === 'MARKET' && isOriginalOwner);
+
+    // Can Control Logic:
+    // - For CURRENT card (my turn): canShowCard (it's my turn and I drew it)
+    // - For MARKET cards: ONLY isOriginalOwner (only the owner can buy/transfer/dismiss)
+    const canControl = source === 'MARKET' ? isOriginalOwner : canShowCard;
 
     // Auto-switch to TRANSACTION if owner
     useEffect(() => {
