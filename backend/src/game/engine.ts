@@ -420,6 +420,32 @@ export class GameEngine {
             return;
         }
 
+        if (this.state.phase === 'OPPORTUNITY_CHOICE') {
+            let choice: 'SMALL' | 'BIG' = 'SMALL';
+
+            if (isHard) {
+                // Hard Bot Strategy: Go Big if we have cash buffer
+                // Cost of Big Deals usually 6k-30k+
+                if (player.cash >= 5000) {
+                    choice = 'BIG';
+                }
+            } else {
+                // Easy Bot: Mostly Small
+                if (player.cash >= 10000 && Math.random() > 0.8) {
+                    choice = 'BIG';
+                }
+            }
+
+            this.addLog(`🤖 ${player.name} chooses ${choice} Deal.`);
+            try {
+                this.drawDeal(player.id, choice);
+            } catch (e) {
+                console.error("Bot failed to draw deal:", e);
+                this.endTurn();
+            }
+            return;
+        }
+
         // Catch all
         this.endTurn();
     }
