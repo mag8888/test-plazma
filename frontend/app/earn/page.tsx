@@ -556,8 +556,8 @@ export default function EarnPage() {
                             try {
                                 const updatedStats = await partnershipApi.getStats(partnershipUser._id);
 
-                                // Fetch updated avatars to refresh tariff display
-                                const avatarsRes = await fetch(`${process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'https://moneo.up.railway.app/api/partnership'}/avatars/my-avatars/${partnershipUser._id}`);
+                                // Fetch updated avatars to refresh tariff display (use proxy route)
+                                const avatarsRes = await fetch(`/api/partnership/avatars/my-avatars/${partnershipUser._id}`);
                                 const avatarsData = await avatarsRes.json();
                                 const avatarsList = avatarsData.avatars || [];
 
