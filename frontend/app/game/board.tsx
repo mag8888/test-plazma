@@ -1644,6 +1644,20 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             </button>
                         )}
 
+                        {/* Win Sandbox Toggle (Skip/Play) */}
+                        {me?.hasWon && (
+                            <button
+                                onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
+                                className={`w-16 h-16 rounded-xl border flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-all shadow-lg
+                                    ${me.isSkippingTurns
+                                        ? 'bg-yellow-600 border-yellow-500 text-white animate-pulse'
+                                        : 'bg-indigo-600 border-indigo-500 text-white'}`}
+                            >
+                                <span className="text-xl">{me.isSkippingTurns ? '⏸' : '▶️'}</span>
+                                <span>{me.isSkippingTurns ? 'Пауза' : 'Играть'}</span>
+                            </button>
+                        )}
+
                         {/* BANK BUTTON (Mobile) */}
                         <button
                             onClick={() => setShowBank(true)}
