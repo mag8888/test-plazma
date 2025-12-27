@@ -246,7 +246,7 @@ const FeedCardItem = ({
                 card.cost > 0 && !card.symbol ? 'from-red-500 to-rose-600' : 'from-blue-500 to-indigo-500'
                 }`}></div>
 
-            <div className="p-3 flex flex-col gap-2 flex-1">
+            <div className="p-4 flex flex-col gap-2 flex-1 overflow-x-hidden">
                 <CardHeader />
 
                 {/* DEBUG LOGGING */}
