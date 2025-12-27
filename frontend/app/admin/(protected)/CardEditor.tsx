@@ -245,7 +245,7 @@ export default function CardEditor({ secret }: CardEditorProps) {
                                 <div className="flex-1 overflow-hidden">
                                     <div className="flex items-center gap-2 mb-2 flex-wrap">
                                         {card.displayId && (
-                                            <span className="bg-blue-500/20 text-blue-400 text-xs font-bold px-2 py-0.5 rounded">
+                                            <span className="bg-blue-500/30 text-blue-300 text-sm font-bold px-2.5 py-1 rounded border border-blue-400/30">
                                                 №{card.displayId}
                                             </span>
                                         )}
@@ -306,8 +306,8 @@ export default function CardEditor({ secret }: CardEditorProps) {
                                     </div>
                                 </div>
                             </div>
-                            {/* Actions */}
-                            <div className="flex gap-2 mt-4 opacity-0 group-hover:opacity-100 transition">
+                            {/* Actions - Always visible now */}
+                            <div className="flex gap-2 mt-4">
                                 <button
                                     onClick={() => setEditingCard(card)}
                                     className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1 transition"
