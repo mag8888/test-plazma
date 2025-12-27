@@ -252,7 +252,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
     // Auto-open modal when a new card appears
     useEffect(() => {
-        if (state.currentCard) {
+        if (state?.currentCard) {
             // User Request: Delay Expense/Market cards by 1s (to see token stop)
             const type = state.currentCard.type || '';
             const isDelayedType = type.includes('EXPENSE') || type === 'DOODAD' || type.includes('MARKET');
@@ -275,7 +275,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 setIsCardModalOpen(true);
             }
         }
-    }, [state.currentCard]);
+    }, [state?.currentCard]);
 
     // Host Menu State
     const [selectedPlayerForMenu, setSelectedPlayerForMenu] = useState<PlayerState | null>(null);
@@ -803,15 +803,24 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 setCanShowCard(true);
             }
         }
-    }, [state.phase, isAnimatingMove, state.currentCard]);
+    }
+    }, [state?.phase, isAnimatingMove, state?.currentCard]);
 
-    const formatTime = (seconds: number) => {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} `;
-    };
+const formatTime = (seconds: number) => {
+    const m = Math.floor(seconds / 60);
+    const s = seconds % 60;
+    return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} `;
+};
 
-    return (
+return (
+    !state ? (
+        <div className="h-[100dvh] w-full bg-[#0f172a] flex items-center justify-center text-white">
+            <div className="flex flex-col items-center gap-4">
+                <span className="text-4xl animate-spin">🎲</span>
+                <span className="text-sm font-bold uppercase tracking-widest text-slate-400">Loading Game State...</span>
+            </div>
+        </div>
+    ) : (
         <div className="h-[100dvh] max-h-[100dvh] bg-[#0f172a] text-white font-sans flex flex-col overflow-hidden relative">
 
             {/* PLAYER ACTION MENU (Skip, Kick, Gift) */}
@@ -1756,6 +1765,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     />
                 )
             }
-        </div >
-    );
+        </div>
+    )
+);
 }
