@@ -510,8 +510,10 @@ export class GameEngine {
     toggleSkipTurns(userId: string) {
         const player = this.state.players.find(p => p.userId === userId || p.id === userId);
         if (!player) return;
-        if (!player.hasWon) {
-            this.addLog(`⚠️ ${player.name} can't toggle skip (not a winner).`);
+
+        // Allow anyone (except bankrupted) to toggle
+        if (player.isBankrupted) {
+            this.addLog(`⚠️ ${player.name} can't toggle skip (Bankrupted).`);
             return;
         }
 

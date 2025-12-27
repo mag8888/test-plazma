@@ -1644,8 +1644,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             </button>
                         )}
 
-                        {/* Win Sandbox Toggle (Skip/Play) */}
-                        {me?.hasWon && (
+                        {/* Sandbox Toggle (Skip/Play) - Available to ALL active players (AFK Mode) */}
+                        {!me?.isBankrupted && (
                             <button
                                 onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
                                 className={`w-16 h-16 rounded-xl border flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-all shadow-lg
