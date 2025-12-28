@@ -168,6 +168,16 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
                                     sq.ownerId && (() => {
                                         const owner = players.find((p: any) => p.id === sq.ownerId);
                                         if (!owner) return null;
+
+                                        if (owner.photo_url) {
+                                            return (
+                                                <div className="absolute -bottom-[0.4cqw] -right-[0.4cqw] w-[2cqw] h-[2cqw] rounded-full border border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)] overflow-hidden z-20 bg-slate-900" title={`Владелец: ${owner.name}`}>
+                                                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                                                    <img src={owner.photo_url} alt={owner.token} className="w-full h-full object-cover" />
+                                                </div>
+                                            );
+                                        }
+
                                         return (
                                             <div className="absolute -bottom-[0.4cqw] -right-[0.4cqw] w-[2cqw] h-[2cqw] bg-slate-900/90 rounded-full border border-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)] flex items-center justify-center text-[1.2cqw] z-20" title={`Владелец: ${owner.name}`}>
                                                 {owner.token}

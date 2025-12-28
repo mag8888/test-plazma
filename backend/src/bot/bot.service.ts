@@ -232,6 +232,38 @@ export class BotService {
             });
         });
 
+        // Handle Photos
+        this.bot.on('photo', async (msg) => {
+            const chatId = msg.chat.id;
+            const photoState = this.photoUploadStates.get(chatId);
+
+            if (photoState && photoState.state === 'WAITING_PHOTO') {
+                const photo = msg.photo![msg.photo!.length - 1]; // Get highest resolution
+                try {
+                    const fileLink = await this.bot?.getFileLink(photo.file_id);
+                    if (fileLink) {
+                        await this.bot?.sendMessage(chatId, "⏳ Обработка фото...", { disable_notification: true });
+                        const imageUrl = await this.cloudinaryService.uploadImage(fileLink);
+
+                        const { UserModel } = await import('../models/user.model');
+                        const user = await UserModel.findOne({ telegram_id: chatId });
+
+                        if (user) {
+                            user.photo_url = imageUrl;
+                            await user.save();
+                            await this.bot?.sendMessage(chatId, "✅ Фото профиля обновлено!");
+                        } else {
+                            await this.bot?.sendMessage(chatId, "❌ Пользователь не найден.");
+                        }
+                    }
+                } catch (e) {
+                    console.error("Photo upload error:", e);
+                    await this.bot?.sendMessage(chatId, "❌ Ошибка загрузки. Попробуйте еще раз.");
+                }
+                this.photoUploadStates.delete(chatId);
+            }
+        });
+
         // Handle text messages (Menu Buttons)
         this.bot.on('message', async (msg) => {
             const chatId = msg.chat.id;
