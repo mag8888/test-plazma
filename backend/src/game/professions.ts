@@ -20,7 +20,7 @@ export const PROFESSIONS: Profession[] = [
         name: 'Entrepreneur',
         salary: 10000,
         savings: 2000,
-        perChildCost: 640,// Guessing similar to Doctor? Card doesn't show. High income = high child cost usually.
+        perChildCost: 400,
         expenses: 6200,
         taxes: 1300,
         otherExpenses: 1500,
