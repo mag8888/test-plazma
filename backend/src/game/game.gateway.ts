@@ -445,6 +445,33 @@ export class GameGateway {
                 }
             });
 
+            // Admin: Toggle Pause
+            socket.on('admin_toggle_pause', async (data, callback) => {
+                try {
+                    const { roomId, userId } = data;
+                    const game = this.games.get(roomId);
+                    if (!game) return callback({ success: false, error: "Game not found" });
+
+                    // Verify Host
+                    const room = await this.roomService.getRoom(roomId);
+                    if (!room || room.creatorId !== userId) {
+                        return callback({ success: false, error: "Only host can pause game" });
+                    }
+
+                    game.togglePause();
+                    const state = game.getState();
+
+                    // Emit to everyone
+                    this.io.to(roomId).emit('state_updated', { state });
+                    this.saveState(roomId, game);
+
+                    callback({ success: true, isPaused: state.isPaused });
+                } catch (e: any) {
+                    console.error("Pause Toggle Error:", e);
+                    callback({ success: false, error: e.message });
+                }
+            });
+
             // Delete Room (Host)
             socket.on('delete_room', async (data, callback) => {
                 try {
@@ -956,6 +983,21 @@ export class GameGateway {
                     }
 
                     this.saveState(roomId, game);
+                }
+            });
+
+            // Player Give Cash (Social Gifting)
+            socket.on('player_give_cash', ({ roomId, toPlayerId, amount }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.giftCash(socket.id, toPlayerId, amount);
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
                 }
             });
 

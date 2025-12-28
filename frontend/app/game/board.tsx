@@ -66,6 +66,7 @@ import { AdminActionModal, AdminActionType } from './AdminActionModal';
 import { ActiveCardZone } from './ActiveCardZone';
 import { PlayerCard } from './PlayerCard';
 import { SquareInfoModal } from './SquareInfoModal';
+import CongratulateModal from './CongratulateModal';
 
 // Helper for Cash Animation
 const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
@@ -250,6 +251,9 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     // Card Modal Visibility (Local Override)
     const [isCardModalOpen, setIsCardModalOpen] = useState(true);
 
+    // Congratulate Modal State
+    const [congratulateData, setCongratulateData] = useState<{ isOpen: boolean, targetName: string, targetId: string } | null>(null);
+
     // Auto-open modal when a new card appears
     useEffect(() => {
         if (state?.currentCard) {
@@ -373,18 +377,27 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     useEffect(() => {
         if (state.lastEvent?.type === 'BABY_BORN') {
             sfx.play('baby');
-            // Removed confetti as per user request
             setBabyNotification(`👶 Поздравляем! В семье ${state.lastEvent.payload?.player} пополнение!`);
 
-            // Auto End Turn Logic (3s delay)
             const currentPlayer = state.players[state.currentPlayerIndex];
-            if (currentPlayer?.id === socket.id) {
+            const isMe = currentPlayer?.id === socket.id || (userId && currentPlayer?.userId === userId);
+
+            if (!isMe) {
+                // Show Congratulate Modal for others
+                setCongratulateData({
+                    isOpen: true,
+                    targetName: state.lastEvent.payload?.player,
+                    targetId: state.lastEvent.payload?.playerId
+                });
+                // Hide notification after 3s but keep modal
+                setTimeout(() => setBabyNotification(null), 3000);
+            } else {
+                // I am the parent
+                // Auto End Turn Logic (4s delay to allow sound/visual to finish)
                 setTimeout(() => {
                     setBabyNotification(null);
                     socket.emit('end_turn', { roomId });
-                }, 3000);
-            } else {
-                setTimeout(() => setBabyNotification(null), 3000);
+                }, 4000);
             }
 
         } else if (state.lastEvent?.type === 'BABY_MISSED') {
@@ -528,8 +541,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
             setShowDice(true);
             setIsAnimating(true);
 
-            const DICE_DURATION = 2000;
-            const BUFFER = 1200;
+            const DICE_DURATION = 3000; // User Request: 3 seconds
+            const POST_MOVE_WAIT = 2000; // User Request: 2 seconds wait on last cell
 
             const moveDuration = (data.roll || 0) * 500;
 
@@ -537,10 +550,12 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 setShowDice(false);
                 isRollingRef.current = false;
 
+                // Start Move
                 setTimeout(() => {
                     setState(data.state);
                 }, 500);
 
+                // End Move + Wait
                 setTimeout(() => {
                     const currentPlayer = data.state.players[data.state.currentPlayerIndex];
                     if (!currentPlayer) return;
@@ -549,24 +564,22 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     // Check if player is on fast track for square finding
                     let square;
                     if (currentPlayer.isFastTrack) {
-                        square = data.state.board[24 + squareIndex]; // Logic? Backend sends global pos?
-                        // Actually engine handles pos. If isFastTrack, position is relative to Outer Track?
-                        // Visualizer handles mapping.
-                        // For popup info, we might need logic.
-                        // But Fast Track squares are simple usually.
+                        square = data.state.board[24 + squareIndex];
                     } else {
                         square = data.state.board.find((s: any) => s.index === squareIndex);
                     }
 
                     // Show popup only if phase allows
-                    // Adjusted for Fast Track compat (might need tweaking)
-                    if (square && !['roll_dice'].includes(data.state.phase)) {
+                    const isMe = currentPlayer?.id === socket.id || (typeof window !== 'undefined' && currentPlayer?.userId === userId);
+
+                    if (isMe && square && !['roll_dice'].includes(data.state.phase)) {
+                        // Don't show generic info for interactive squares that have their own UI
                         if (!['EXPENSE', 'MARKET', 'CHARITY', 'DEAL'].includes(square.type)) {
                             setSquareInfo(square);
                         }
                     }
-                    setIsAnimating(false);
-                }, moveDuration + BUFFER);
+                    setIsAnimating(false); // Allow cards to show now
+                }, moveDuration + POST_MOVE_WAIT); // Wait for move + 2s
             }, DICE_DURATION);
         });
 
@@ -713,6 +726,11 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
         if (!me) return;
         if (!window.confirm("Принудительно завершить ход текущего игрока?")) return;
         socket.emit('host_skip_turn', { roomId, userId: me?.userId || me?.id });
+    };
+
+    const handleTogglePause = () => {
+        if (!me) return;
+        socket.emit('admin_toggle_pause', { roomId, userId: me?.userId || me?.id });
     };
 
     // Correctly identify local player
@@ -1203,6 +1221,20 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                     >
                                         <span>⚙️</span> Полные Настройки
                                     </button>
+
+                                    {isHost && (
+                                        <button
+                                            onClick={() => {
+                                                setShowMobileMenu(false);
+                                                handleTogglePause();
+                                            }}
+                                            className={`w-full py-4 rounded-xl font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2
+                                                ${state.isPaused ? 'bg-blue-600 text-white' : 'bg-slate-800 border border-slate-700 text-slate-300'}`}
+                                        >
+                                            <span>{state.isPaused ? '▶️' : '⏸'}</span>
+                                            <span>{state.isPaused ? 'RESUME GAME' : 'PAUSE GAME'}</span>
+                                        </button>
+                                    )}
                                 </div>
 
                                 {/* Exit Button in Menu */}
@@ -1497,6 +1529,20 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             </button>
                         )}
 
+                        {/* HOST PAUSE CONTROL */}
+                        {isHost && (
+                            <button
+                                onClick={handleTogglePause}
+                                className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0 mb-2
+                                    ${state.isPaused
+                                        ? 'bg-blue-600 hover:bg-blue-500 text-white animate-pulse'
+                                        : 'bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white'}`}
+                            >
+                                <span className="text-sm">{state.isPaused ? '▶️' : '⏸'}</span>
+                                <span>{state.isPaused ? 'RESUME GAME' : 'PAUSE GAME'}</span>
+                            </button>
+                        )}
+
                         {/* 3. PLAYERS GRID (Small Cards) */}
                         <div className="grid grid-cols-2 gap-2 shrink-0 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
                             {state.players.filter((p: any) => p.id !== me?.id).map((p: any) => {
@@ -1552,257 +1598,291 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         */}
                         </div>
 
-                    </div>
+                        {state.isPaused && (
+                            <div className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-in fade-in duration-300">
+                                <div className="bg-[#1e293b] p-8 rounded-3xl border border-slate-700 shadow-2xl flex flex-col items-center max-w-md w-full text-center">
+                                    <div className="text-6xl mb-4 animate-bounce">⏸</div>
+                                    <h2 className="text-2xl font-black text-white uppercase tracking-widest mb-2">Game Paused</h2>
+                                    <p className="text-slate-400 mb-8">Игра приостановлена администратором. Пожалуйста, ожидайте.</p>
 
-                </div>
-
-
-
-                {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */}
-                <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pt-2 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 z-50 flex flex-col gap-3 pb-8">
-
-                    {/* 1. MINI PLAYERS STRIP */}
-                    <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-1 pb-2">
-                        {state.players.map((p: any) => {
-                            const isCurrent = p.id === currentPlayer?.id;
-                            const isMe = p.id === me?.id;
-                            return (
-                                <div
-                                    key={p.id}
-                                    className={`flex items-center gap-2 p-1.5 pr-3 rounded-full border shrink-0 transition-all ${isCurrent
-                                        ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
-                                        : 'bg-slate-800/50 border-slate-700'
-                                        }`}
-                                >
-                                    <div className="relative">
-                                        <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-700 relative">
-                                            {(p.avatar || p.photo_url) ? (
-                                                <img src={p.avatar || p.photo_url} alt={p.name} className="w-full h-full object-cover" />
-                                            ) : (
-                                                <div className="w-full h-full flex items-center justify-center text-xs font-bold">{p.name?.[0]}</div>
-                                            )}
-                                        </div>
-                                        {isCurrent && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>}
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className={`text-[10px] font-bold leading-none ${isCurrent ? 'text-white' : 'text-slate-400'}`}>
-                                            {isMe ? 'Вы' : p.name}
-                                        </span>
-                                        <span className="text-[10px] font-mono text-green-400 leading-none">
-                                            ${(p.cash || 0).toLocaleString()}
-                                        </span>
-                                    </div>
+                                    {isHost && (
+                                        <button
+                                            onClick={handleTogglePause}
+                                            className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+                                        >
+                                            ▶️ Resume Game
+                                        </button>
+                                    )}
                                 </div>
-                            );
-                        })}
+                            </div>
+                        )}
                     </div>
 
-                    {/* 2. MAIN CONTROLS */}
-                    <div className="flex gap-3">
-                        {/* Roll Logic */}
-                        {(me?.charityTurns || 0) > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
-                            <div className="flex gap-2 flex-1 h-16">
-                                <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                    <span className="text-xl">🎲</span>
-                                    <span>1</span>
-                                </button>
-                                <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                    <span className="text-xl">🎲🎲</span>
-                                    <span>2</span>
-                                </button>
-                                {(me?.isFastTrack) && (
-                                    <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                        <span className="text-xl">🎲×3</span>
-                                        <span>3</span>
+
+
+                    {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */}
+                    <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pt-2 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 z-50 flex flex-col gap-3 pb-8">
+
+                        {/* 1. MINI PLAYERS STRIP */}
+                        <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-1 pb-2">
+                            {state.players.map((p: any) => {
+                                const isCurrent = p.id === currentPlayer?.id;
+                                const isMe = p.id === me?.id;
+                                return (
+                                    <div
+                                        key={p.id}
+                                        className={`flex items-center gap-2 p-1.5 pr-3 rounded-full border shrink-0 transition-all ${isCurrent
+                                            ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
+                                            : 'bg-slate-800/50 border-slate-700'
+                                            }`}
+                                    >
+                                        <div className="relative">
+                                            <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-700 relative">
+                                                {(p.avatar || p.photo_url) ? (
+                                                    <img src={p.avatar || p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <div className="w-full h-full flex items-center justify-center text-xs font-bold">{p.name?.[0]}</div>
+                                                )}
+                                            </div>
+                                            {isCurrent && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>}
+                                        </div>
+                                        <div className="flex flex-col">
+                                            <span className={`text-[10px] font-bold leading-none ${isCurrent ? 'text-white' : 'text-slate-400'}`}>
+                                                {isMe ? 'Вы' : p.name}
+                                            </span>
+                                            <span className="text-[10px] font-mono text-green-400 leading-none">
+                                                ${(p.cash || 0).toLocaleString()}
+                                            </span>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                        </div>
+
+                        {/* 2. MAIN CONTROLS */}
+                        <div className="flex gap-3">
+                            {/* Roll Logic */}
+                            {(me?.charityTurns || 0) > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+                                <div className="flex gap-2 flex-1 h-16">
+                                    <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                        <span className="text-xl">🎲</span>
+                                        <span>1</span>
                                     </button>
-                                )}
-                            </div>
-                        ) : (
-                            <button
-                                onClick={() => handleRoll()}
-                                disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
-                                className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg relative overflow-hidden
+                                    <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                        <span className="text-xl">🎲🎲</span>
+                                        <span>2</span>
+                                    </button>
+                                    {(me?.isFastTrack) && (
+                                        <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                            <span className="text-xl">🎲×3</span>
+                                            <span>3</span>
+                                        </button>
+                                    )}
+                                </div>
+                            ) : (
+                                <button
+                                    onClick={() => handleRoll()}
+                                    disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
+                                    className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg relative overflow-hidden
                             ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
-                                        ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
+                                            ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
+                                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                                >
+                                    {/* Dice Value Overlay - Mobile */}
+                                    {showDice && diceValue && (
+                                        <div className="absolute inset-0 bg-emerald-600 flex items-center justify-center z-20 animate-in fade-in zoom-in duration-200">
+                                            <span className="text-4xl font-black text-white">{diceValue}</span>
+                                        </div>
+                                    )}
+
+                                    {hasRolled ? (
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-2xl font-black">{diceValue}</span>
+                                            <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
+                                        </div>
+                                    ) : (
+                                        <>
+                                            <span className="text-2xl">🎲</span>
+                                            <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
+
+                            <button
+                                onClick={handleEndTurn}
+                                disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
+                                className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+                        ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
+                                        ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
                                         : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
                             >
-                                {/* Dice Value Overlay - Mobile */}
-                                {showDice && diceValue && (
-                                    <div className="absolute inset-0 bg-emerald-600 flex items-center justify-center z-20 animate-in fade-in zoom-in duration-200">
-                                        <span className="text-4xl font-black text-white">{diceValue}</span>
-                                    </div>
-                                )}
-
-                                {hasRolled ? (
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-2xl font-black">{diceValue}</span>
-                                        <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
-                                    </div>
-                                ) : (
-                                    <>
-                                        <span className="text-2xl">🎲</span>
-                                        <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
-                                    </>
-                                )}
+                                <span className="text-2xl">➡</span>
+                                <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
                             </button>
-                        )}
 
-                        <button
-                            onClick={handleEndTurn}
-                            disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
-                            className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
-                        ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
-                                    ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
-                                    : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-                        >
-                            <span className="text-2xl">➡</span>
-                            <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
-                        </button>
+                            {/* Fast Track Button (Mobile) */}
+                            {me?.canEnterFastTrack && isMyTurn && (
+                                <button
+                                    onClick={() => setShowFastTrackModal(true)}
+                                    className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
+                                >
+                                    🚀
+                                </button>
+                            )}
 
-                        {/* Fast Track Button (Mobile) */}
-                        {me?.canEnterFastTrack && isMyTurn && (
-                            <button
-                                onClick={() => setShowFastTrackModal(true)}
-                                className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
-                            >
-                                🚀
-                            </button>
-                        )}
-
-                        {/* Sandbox Toggle (Skip/Play) - Available to ALL active players (AFK Mode) */}
-                        {!me?.isBankrupted && (
-                            <button
-                                onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
-                                className={`w-16 h-16 rounded-xl border flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-all shadow-lg
+                            {/* Sandbox Toggle (Skip/Play) - Available to ALL active players (AFK Mode) */}
+                            {!me?.isBankrupted && (
+                                <button
+                                    onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
+                                    className={`w-16 h-16 rounded-xl border flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-all shadow-lg
                                     ${me.isSkippingTurns
-                                        ? 'bg-yellow-600 border-yellow-500 text-white animate-pulse'
-                                        : 'bg-indigo-600 border-indigo-500 text-white'}`}
+                                            ? 'bg-yellow-600 border-yellow-500 text-white animate-pulse'
+                                            : 'bg-indigo-600 border-indigo-500 text-white'}`}
+                                >
+                                    <span className="text-xl">{me.isSkippingTurns ? '⏸' : '▶️'}</span>
+                                    <span>{me.isSkippingTurns ? 'Пауза' : 'Играть'}</span>
+                                </button>
+                            )}
+
+                            {/* BANK BUTTON (Mobile) */}
+                            <button
+                                onClick={() => setShowBank(true)}
+                                className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors"
                             >
-                                <span className="text-xl">{me.isSkippingTurns ? '⏸' : '▶️'}</span>
-                                <span>{me.isSkippingTurns ? 'Пауза' : 'Играть'}</span>
+                                🏦
                             </button>
-                        )}
 
-                        {/* BANK BUTTON (Mobile) */}
-                        <button
-                            onClick={() => setShowBank(true)}
-                            className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors"
-                        >
-                            🏦
-                        </button>
-
-                        {/* MENU TOGGLE */}
-                        <button
-                            onClick={() => setShowMobileMenu(true)}
-                            className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center text-2xl"
-                        >
-                            🍔
-                        </button>
+                            {/* MENU TOGGLE */}
+                            <button
+                                onClick={() => setShowMobileMenu(true)}
+                                className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center text-2xl"
+                            >
+                                🍔
+                            </button>
+                        </div>
                     </div>
+
+
+                    {/* --- MODALS --- */}
+                    <BankModal
+                        isOpen={showBank}
+                        onClose={() => { setShowBank(false); setBankRecipientId(''); }}
+                        player={me}
+                        roomId={roomId}
+                        transactions={state.transactions || []}
+                        players={state.players}
+                        initialRecipientId={bankRecipientId}
+                    />
+
+                    {
+                        showMenuModal && (
+                            <MenuModal
+                                onClose={() => setShowMenuModal(false)}
+                                onExit={handleExit}
+                                onEndGame={() => socket.emit('end_game_host', { roomId, userId })}
+                                toggleMute={toggleMute}
+                                isMuted={isMuted}
+                                volume={volume}
+                                deckCounts={state.deckCounts}
+                                greenBalance={partnershipUser?.greenBalance}
+                                setVolume={handleVolumeChange}
+                                onShowRules={() => setShowRules(true)}
+                                zoom={zoom}
+                                setZoom={setZoom}
+                                isHost={!!isHost}
+                                hasWinner={state.players.some((p: any) => p.hasWon)}
+                                onSkipTurn={handleForceSkip}
+                                onKickCurrent={() => handleKickPlayer(currentPlayer.id)}
+                                onToggleOrientation={() => setForceLandscape(!forceLandscape)}
+                                onCancelGame={() => {
+                                    if (window.confirm("Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.")) {
+                                        socket.emit('delete_room', { roomId, userId: me?.userId || me?.id });
+                                    }
+                                }}
+                            />
+                        )
+                    }
+
+                    {
+                        showRules && (
+                            <RulesModal
+                                onClose={() => setShowRules(false)}
+                            />
+                        )
+                    }
+
+                    {
+                        showFastTrackModal && (
+                            <ExitToFastTrackModal
+                                onClose={() => setShowFastTrackModal(false)}
+                                player={me}
+                                onConfirm={handleEnterFastTrack}
+                            />
+                        )
+                    }
+
+                    {showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} player={me} />}
+
+                    {
+                        transferAssetItem && (
+                            <TransferModal
+                                isOpen={true}
+                                onClose={() => setTransferAssetItem(null)}
+                                asset={transferAssetItem.item}
+                                players={state.players}
+                                myId={me?.id}
+                                onTransfer={handleTransferAsset}
+                            />
+                        )
+                    }
+
+
+
+                    {
+                        adminAction && (
+                            <AdminActionModal
+                                isOpen={!!adminAction}
+                                onClose={() => setAdminAction(null)}
+                                type={adminAction.type}
+                                targetPlayer={adminAction.player}
+                                onConfirm={(amount) => {
+                                    if (adminAction.type === 'SKIP') {
+                                        // Use 'userId' prop (Persistent ID) for permission check
+                                        socket.emit('host_skip_turn', { roomId, userId }, (response: any) => {
+                                            if (!response.success) {
+                                                alert(`Ошибка: ${response.error}`);
+                                            }
+                                        });
+                                    } else if (adminAction.type === 'KICK') {
+                                        handleKickPlayer(adminAction.player.id);
+                                    } else if (adminAction.type === 'GIFT' && amount) {
+                                        // Use 'userId' prop for Host Auth, and adminAction.player.id as target
+                                        socket.emit('host_give_cash', { roomId, userId, targetPlayerId: adminAction.player.id, amount }, (response: any) => {
+                                            if (!response?.success) {
+                                                console.error('Gift failed:', response?.error);
+                                            }
+                                        });
+                                    }
+                                    setAdminAction(null);
+                                }}
+                            />
+                        )
+                    }
+                    {
+                        congratulateData && (
+                            <CongratulateModal
+                                isOpen={congratulateData.isOpen}
+                                onClose={() => setCongratulateData(null)}
+                                targetPlayerName={congratulateData.targetName}
+                                targetPlayerId={congratulateData.targetId}
+                                me={state.players.find((p: any) => p.id === socket.id) || state.players[0]}
+                                roomId={roomId}
+                                socket={socket}
+                            />
+                        )
+                    }
                 </div>
-
-
-                {/* --- MODALS --- */}
-                <BankModal
-                    isOpen={showBank}
-                    onClose={() => { setShowBank(false); setBankRecipientId(''); }}
-                    player={me}
-                    roomId={roomId}
-                    transactions={state.transactions || []}
-                    players={state.players}
-                    initialRecipientId={bankRecipientId}
-                />
-
-                {
-                    showMenuModal && (
-                        <MenuModal
-                            onClose={() => setShowMenuModal(false)}
-                            onExit={handleExit}
-                            onEndGame={() => socket.emit('end_game_host', { roomId, userId })}
-                            toggleMute={toggleMute}
-                            isMuted={isMuted}
-                            volume={volume}
-                            deckCounts={state.deckCounts}
-                            greenBalance={partnershipUser?.greenBalance}
-                            setVolume={handleVolumeChange}
-                            onShowRules={() => setShowRules(true)}
-                            zoom={zoom}
-                            setZoom={setZoom}
-                            isHost={!!isHost}
-                            hasWinner={state.players.some((p: any) => p.hasWon)}
-                            onSkipTurn={handleForceSkip}
-                            onKickCurrent={() => handleKickPlayer(currentPlayer.id)}
-                            onToggleOrientation={() => setForceLandscape(!forceLandscape)}
-                            onCancelGame={() => {
-                                if (window.confirm("Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.")) {
-                                    socket.emit('delete_room', { roomId, userId: me?.userId || me?.id });
-                                }
-                            }}
-                        />
-                    )
-                }
-
-                {
-                    showRules && (
-                        <RulesModal
-                            onClose={() => setShowRules(false)}
-                        />
-                    )
-                }
-
-                {
-                    showFastTrackModal && (
-                        <ExitToFastTrackModal
-                            onClose={() => setShowFastTrackModal(false)}
-                            player={me}
-                            onConfirm={handleEnterFastTrack}
-                        />
-                    )
-                }
-
-                {showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} player={me} />}
-
-                {
-                    transferAssetItem && (
-                        <TransferModal
-                            isOpen={true}
-                            onClose={() => setTransferAssetItem(null)}
-                            asset={transferAssetItem.item}
-                            players={state.players}
-                            myId={me?.id}
-                            onTransfer={handleTransferAsset}
-                        />
-                    )
-                }
-
-
-
-                {
-                    adminAction && (
-                        <AdminActionModal
-                            isOpen={!!adminAction}
-                            onClose={() => setAdminAction(null)}
-                            type={adminAction.type}
-                            targetPlayer={adminAction.player}
-                            onConfirm={(amount) => {
-                                if (adminAction.type === 'SKIP') {
-                                    // Use 'userId' prop (Persistent ID) for permission check
-                                    socket.emit('host_skip_turn', { roomId, userId }, (response: any) => {
-                                        if (!response.success) {
-                                            alert(`Ошибка: ${response.error}`);
-                                        }
-                                    });
-                                } else if (adminAction.type === 'KICK') {
-                                    handleKickPlayer(adminAction.player.id);
-                                } else if (adminAction.type === 'GIFT' && amount) {
-                                    // Use 'userId' prop for Host Auth, and adminAction.player.id as target
-                                    socket.emit('host_give_cash', { roomId, userId, targetPlayerId: adminAction.player.id, amount });
-                                }
-                                setAdminAction(null);
-                            }}
-                        />
-                    )
-                }
             </div>
         )
     );

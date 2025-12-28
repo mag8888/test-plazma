@@ -13,6 +13,9 @@ interface ExitToFastTrackModalProps {
 }
 
 export const ExitToFastTrackModal: React.FC<ExitToFastTrackModalProps> = ({ onClose, player, onConfirm }) => {
+    // Guard: Prevent crash if player is undefined
+    if (!player) return null;
+
     // Requirements
     const reqLoan = player.loanDebt <= 0;
     // Backend Rule: Passive Income >= 10,000 (User Request)

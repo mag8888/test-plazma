@@ -130,6 +130,12 @@ const FeedCardItem = ({
             setTransactionMode('SELL');
         }
 
+        /* 
+           DISABLE AUTO-SWITCH TO TRANSACTION
+           User Request: Add "Transfer" button to all deals. 
+           Transfer button is in DETAILS view. Auto-switching hides it.
+           We stay in DETAILS, user can click "Buy" to go to TRANSACTION.
+        
         if (isOwner && viewMode === 'DETAILS') {
             // For stock, stay in DETAILS to allow Buy/Sell choice.
             // For other Deals (Real Estate), go to transaction (Buy).
@@ -137,6 +143,7 @@ const FeedCardItem = ({
                 setViewMode('TRANSACTION');
             }
         }
+        */
     }, [isOwner, viewMode, isStock, card.type, canControl, hasAsset]);
 
     // --- CALCULATIONS FOR TRANSACTION MODE (Must be top level) ---
@@ -236,17 +243,19 @@ const FeedCardItem = ({
                         </div>
                     </div>
                 ) : null}
-                {/* Close Button */}
-                <button
-                    onClick={(e) => {
-                        e.stopPropagation();
-                        onDismiss();
-                    }}
-                    className="w-6 h-6 rounded-lg bg-slate-700/50 hover:bg-red-600/80 text-slate-400 hover:text-white flex items-center justify-center transition-all text-sm font-bold"
-                    title="Закрыть"
-                >
-                    ✕
-                </button>
+                {/* Close Button - Hide for Expenses (Mandatory) */}
+                {card.type !== 'EXPENSE' && (
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onDismiss();
+                        }}
+                        className="w-6 h-6 rounded-lg bg-slate-700/50 hover:bg-red-600/80 text-slate-400 hover:text-white flex items-center justify-center transition-all text-sm font-bold"
+                        title="Закрыть"
+                    >
+                        ✕
+                    </button>
+                )}
             </div>
         </div>
     );
@@ -596,6 +605,16 @@ const FeedCardItem = ({
                         </div>
 
                         <div className="bg-slate-800/50 p-2 rounded-lg border border-slate-700/50 mb-2 space-y-1">
+                            {/* Passive Income Display */}
+                            {card.cashflow !== undefined && card.cashflow !== 0 && (
+                                <div className="flex justify-between items-center text-[10px]">
+                                    <span className="text-slate-400 uppercase font-bold">Пассивный доход</span>
+                                    <span className="text-emerald-400 font-mono font-bold">
+                                        +${((card.cashflow) * (isStock || isMLM ? stockQty : 1)).toLocaleString()}
+                                    </span>
+                                </div>
+                            )}
+                            {(card.cashflow !== undefined && card.cashflow !== 0) && <div className="h-px bg-slate-700/50"></div>}
                             <div className="flex justify-between items-center text-[10px]">
                                 <span className="text-slate-400 uppercase font-bold">Цена {isMLM ? 'за партнера' : 'за шт.'}</span>
                                 <span className="text-white font-mono">${(card.offerPrice || price).toLocaleString()}</span>
@@ -912,9 +931,29 @@ export const ActiveCardZone = ({
         // ... (Keep existing logic short or rewrite. I'll rewrite to be safe)
         if (state.phase === 'BABY_ROLL') {
             if (!isMyTurn) return <div className="flex flex-col items-center justify-center h-full text-slate-500 animate-pulse text-xs">👶 Ожидание броска...</div>;
+
+            // Auto-Roll Logic
+            const [timeLeft, setTimeLeft] = useState(30);
+
+            useEffect(() => {
+                if (timeLeft <= 0) {
+                    // Auto Roll
+                    fetch(`/api/rooms/${roomId}/baby/roll`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' }
+                    }).catch(e => socket.emit('roll_dice', { roomId }));
+                    return;
+                }
+                const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+                return () => clearInterval(timer);
+            }, [timeLeft, roomId, socket]);
+
             return (
                 <div className="flex flex-col h-full w-full relative bg-slate-900 rounded-2xl border border-slate-700/50 shadow-lg overflow-hidden">
                     <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-purple-500"></div>
+                    <div className="absolute top-2 right-2 text-[10px] text-slate-500 font-mono">
+                        AUTO: {timeLeft}s
+                    </div>
                     <div className="p-4 flex-1 flex flex-col items-center justify-center text-center">
                         <div className="text-5xl mb-3 animate-bounce">👶</div>
                         <h2 className="text-lg font-bold text-white mb-2">Пополнение в семье!</h2>
@@ -922,7 +961,6 @@ export const ActiveCardZone = ({
                         <button
                             onClick={async () => {
                                 try {
-                                    // Use new API endpoint for Baby Roll
                                     const res = await fetch(`/api/rooms/${roomId}/baby/roll`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' }
@@ -930,7 +968,6 @@ export const ActiveCardZone = ({
                                     if (!res.ok) throw new Error('Failed to roll');
                                 } catch (e) {
                                     console.error(e);
-                                    // Fallback or alert?
                                     socket.emit('roll_dice', { roomId });
                                 }
                             }}
@@ -996,8 +1033,11 @@ export const ActiveCardZone = ({
     // Filter cards - market sell offers should always show to asset owners
     const feedItems = [...currentCard, ...marketCards]
         .filter((item: any) => {
-            // Check if already dismissed
+            // Check if already dismissed LOCALLY
             if (locallyDismissedIds.includes(item.id)) return false;
+
+            // Check if already dismissed SERVER-SIDE
+            if (item.dismissedBy && me?.id && item.dismissedBy.includes(me.id)) return false;
 
             // ALWAYS show cards that belong to me (e.g. transferred deals)
             if (item.sourcePlayerId === me?.id) return true;

@@ -39,7 +39,7 @@ class SoundManager {
             'stock': '/sounds/stock.wav',
             'transfer': '/sounds/transfer.wav',
             'fasttrack': '/sounds/fasttrack.wav',
-            'cash': '/sounds/cash.mp3'
+            'cash': '/sounds/payday.mp3'
         };
 
         for (const [key, path] of Object.entries(soundMap)) {
