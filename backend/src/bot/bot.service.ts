@@ -527,24 +527,32 @@ export class BotService {
                         return;
                     }
 
-                    let count = 0;
+                    // Build recipient list with usernames
+                    const recipients: string[] = [];
                     for (const p of game.participants) {
                         const user = await UserModel.findById(p.userId);
                         if (user) {
-                            this.bot?.sendMessage(user.telegram_id, `📢 **Сообщение от организатора:**\n\n${text}`, { parse_mode: 'Markdown' });
-                            count++;
+                            const displayName = user.username ? `@${user.username}` : user.first_name;
+                            recipients.push(`• ${displayName}`);
                         }
                     }
 
+                    // Show preview with recipient list
+                    const recipientList = recipients.length > 0 ? recipients.join('\n') : 'Нет участников';
+                    const previewMessage = `📋 **Сообщение будет отправлено:**\n\n${recipientList}\n\n**Текст:**\n${text}\n\n✅ Отправить?`;
 
-                    // Send copy to Master
-                    const host = await UserModel.findById(game.hostId);
-                    if (host) {
-                        this.bot?.sendMessage(host.telegram_id, `📢 **(Копия) Сообщение от организатора:**\n\n${text}`, { parse_mode: 'Markdown' });
-                    }
+                    this.bot?.sendMessage(chatId, previewMessage, {
+                        parse_mode: 'Markdown',
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: '✅ Отправить всем', callback_data: `confirm_announce_${gameId}` },
+                                { text: '❌ Отменить', callback_data: 'cancel_announce' }
+                            ]]
+                        }
+                    });
 
-                    this.bot?.sendMessage(chatId, `✅ Сообщение отправлено ${count} участникам.`);
-                    this.masterStates.delete(chatId);
+                    // Save message text in state for confirmation
+                    this.masterStates.set(chatId, { state: 'WAITING_ANNOUNCEMENT_TEXT', gameId, gameData: { text } });
                     return;
                 } else if (masterState.state === 'WAITING_EDIT_TIME') {
                     const gameId = masterState.gameId;
@@ -928,6 +936,53 @@ export class BotService {
                 const gameId = data.replace('announce_game_', '');
                 this.masterStates.set(chatId, { state: 'WAITING_ANNOUNCEMENT_TEXT', gameId: gameId });
                 this.bot?.sendMessage(chatId, "📢 Введите текст сообщения, которое будет отправлено всем участникам этой игры (или /cancel):");
+            } else if (data.startsWith('confirm_announce_')) {
+                // Send announcement after confirmation
+                const gameId = data.replace('confirm_announce_', '');
+                const masterState = this.masterStates.get(chatId);
+
+                if (!masterState || !masterState.gameData?.text) {
+                    this.bot?.answerCallbackQuery(query.id, { text: 'Ошибка: текст сообщения не найден' });
+                    return;
+                }
+
+                const text = masterState.gameData.text;
+                const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                const { UserModel } = await import('../models/user.model');
+
+                const game = await ScheduledGameModel.findById(gameId);
+                if (!game) {
+                    this.bot?.answerCallbackQuery(query.id, { text: 'Игра не найдена' });
+                    return;
+                }
+
+                let count = 0;
+                for (const p of game.participants) {
+                    const user = await UserModel.findById(p.userId);
+                    if (user) {
+                        this.bot?.sendMessage(user.telegram_id, `📢 **Сообщение от организатора:**\n\n${text}`, { parse_mode: 'Markdown' });
+                        count++;
+                    }
+                }
+
+                // Send copy to Master
+                const host = await UserModel.findById(game.hostId);
+                if (host) {
+                    this.bot?.sendMessage(host.telegram_id, `📢 **(Копия) Сообщение от организатора:**\n\n${text}`, { parse_mode: 'Markdown' });
+                }
+
+                this.bot?.editMessageText(`✅ Сообщение отправлено ${count} участникам.`, {
+                    chat_id: chatId,
+                    message_id: query.message?.message_id
+                });
+
+                this.masterStates.delete(chatId);
+            } else if (data === 'cancel_announce') {
+                this.masterStates.delete(chatId);
+                this.bot?.editMessageText("❌ Отправка отменена.", {
+                    chat_id: chatId,
+                    message_id: query.message?.message_id
+                });
             } else if (data.startsWith('leave_game_')) {
                 const gameId = data.replace('leave_game_', '');
                 const { ScheduledGameModel } = await import('../models/scheduled-game.model');
