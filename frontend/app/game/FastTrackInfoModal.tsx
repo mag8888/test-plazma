@@ -23,10 +23,16 @@ export const FastTrackInfoModal = ({ onClose, player }: FastTrackInfoModalProps)
                 <div className="space-y-6 text-left">
                     <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700/50 flex items-center gap-4 group hover:border-pink-500/50 transition-colors">
                         <div className="text-4xl group-hover:scale-110 transition-transform">✨</div>
-                        <div>
+                        <div className="flex-1">
                             <div className="text-pink-400 font-bold uppercase text-xs tracking-wider mb-1">Способ 1</div>
                             <div className="text-white font-bold leading-tight">Купить свою <span className="text-pink-400">МЕЧТУ</span></div>
                             <div className="text-slate-400 text-xs mt-1">Попадите на розовую клетку с вашей мечтой и купите её.</div>
+                            {player?.dream && (
+                                <div className="mt-2 bg-pink-900/30 border border-pink-500/30 px-3 py-1.5 rounded-lg">
+                                    <div className="text-[9px] text-pink-400 uppercase font-bold tracking-wide">Ваша мечта:</div>
+                                    <div className="text-white font-bold text-sm">{player.dream}</div>
+                                </div>
+                            )}
                         </div>
                     </div>
 

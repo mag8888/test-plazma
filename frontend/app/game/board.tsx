@@ -62,6 +62,7 @@ import { RankingsModal } from './RankingsModal';
 import { MenuModal } from './MenuModal';
 import { ExitToFastTrackModal } from './ExitToFastTrackModal';
 import { FastTrackInfoModal } from './FastTrackInfoModal';
+import { VictoryModal } from './VictoryModal';
 import { AdminActionModal, AdminActionType } from './AdminActionModal';
 import { ActiveCardZone } from './ActiveCardZone';
 import { PlayerCard } from './PlayerCard';
@@ -257,6 +258,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
     // Congratulate Modal State
     const [congratulateData, setCongratulateData] = useState<{ isOpen: boolean, targetName: string, targetId: string } | null>(null);
+    const [showVictory, setShowVictory] = useState(false);
+    const [victoryPlayer, setVictoryPlayer] = useState<any>(null);
 
     // Auto-open modal when a new card appears
     useEffect(() => {
@@ -619,6 +622,14 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 // if (data.state.lastEvent?.type === 'STOCK') sfx.play('stock');
 
                 setState(data.state);
+
+                // Check if current player just won
+                const currentMe = data.state.players.find((p: any) => p.id === socket.id);
+                const previousMe = state?.players?.find((p: any) => p.id === socket.id);
+                if (currentMe?.hasWon && !previousMe?.hasWon) {
+                    setVictoryPlayer(currentMe);
+                    setShowVictory(true);
+                }
             }
         });
 
@@ -1899,6 +1910,14 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             />
                         )
                     }
+
+                    {/* Victory Modal */}
+                    {showVictory && victoryPlayer && (
+                        <VictoryModal
+                            player={victoryPlayer}
+                            onClose={() => setShowVictory(false)}
+                        />
+                    )}
                 </div>
             </div>
         )
