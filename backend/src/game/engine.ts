@@ -318,6 +318,12 @@ export class GameEngine {
         // This is safer to ensure expenses don't drift (e.g. child added but expense missed)
         const prof = PROFESSIONS.find(p => p.name === player.professionName);
         if (prof) {
+            // Sync Child Cost
+            if (player.childCost !== prof.perChildCost) {
+                player.childCost = prof.perChildCost;
+            }
+            player.salary = prof.salary;
+            player.income = player.salary + player.passiveIncome;
             // Determine expenses components
             const taxes = prof.taxes || 0;
             const otherExpenses = prof.otherExpenses || 0;
