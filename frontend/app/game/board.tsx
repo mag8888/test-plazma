@@ -208,6 +208,10 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     // Partnership Data
     const [partnershipUser, setPartnershipUser] = useState<any>(null);
 
+    // Ref for tracking previous cash to play sound
+    const prevCashRef = useRef<number | undefined>(undefined);
+
+
 
 
     // Chat State
