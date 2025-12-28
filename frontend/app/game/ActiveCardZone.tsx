@@ -341,7 +341,7 @@ const FeedCardItem = ({
                                     >
                                         OK
                                     </button>
-                                ) : card.type === 'EXPENSE' ? (
+                                ) : (card.type === 'EXPENSE' || card.type === 'LOSS') ? (
                                     <button
                                         onClick={onDismiss}
                                         className="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-3 rounded-xl text-lg uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
