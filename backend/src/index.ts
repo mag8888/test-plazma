@@ -140,6 +140,7 @@ app.get('/game/:id', (req, res) => {
 app.post('/api/rooms/:roomId/baby/roll', (req, res) => {
     try {
         const { roomId } = req.params;
+        if (!gameGateway) throw new Error("Game Service not ready");
         const result = gameGateway.handleBabyRoll(roomId);
         res.json({ success: true, ...result });
     } catch (e: any) {
@@ -156,6 +157,7 @@ app.post('/api/rooms/:roomId/deal/transfer', (req, res) => {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
+        if (!gameGateway) throw new Error("Game Service not ready");
         const result = gameGateway.handleTransferDeal(roomId, fromUserId, targetPlayerId, cardId);
         res.json({ success: true, ...result });
     } catch (e: any) {
