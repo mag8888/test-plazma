@@ -491,10 +491,10 @@ const FeedCardItem = ({
                         </h3>
                         <p className="text-[10px] text-slate-300 mb-6 max-w-[200px] italic">
                             {transactionMode === 'SELL'
-                                ? `Вы успешно продали ${card.title}`
+                                ? `Вы успешно продали ${card.title || card.symbol || 'актив'}`
                                 : card.type === 'EXPENSE'
-                                    ? `Вы оплатили: ${card.title}`
-                                    : `Вы приобрели: ${card.title}`
+                                    ? `Вы оплатили: ${card.title || 'расход'}`
+                                    : `Вы приобрели: ${card.title || card.symbol || 'актив'}`
                             }
                         </p>
                         <div className="text-[9px] text-slate-500 font-mono mb-4">
