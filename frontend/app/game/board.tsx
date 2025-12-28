@@ -202,6 +202,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     const router = useRouter();
     const [state, setState] = useState(initialState);
     const [showBank, setShowBank] = useState(false);
+    const [showRules, setShowRules] = useState(false);
     const [showExpenseBreakdown, setShowExpenseBreakdown] = useState(false);
     const [showTransfer, setShowTransfer] = useState(false);
     const [transferAssetItem, setTransferAssetItem] = useState<{ item: any, index: number } | null>(null);
