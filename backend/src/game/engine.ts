@@ -2016,6 +2016,18 @@ export class GameEngine {
 
         // Add Asset
         if (shouldAddAsset) {
+            // Prevent duplicate ownership of Fast Track businesses
+            const cardAny = card as any;
+            if (cardAny.targetSquareIndex !== undefined) {
+                const alreadyOwned = player.assets.some(a => a.title === card.title);
+                if (alreadyOwned) {
+                    this.addLog(`❌ ${player.name} уже владеет ${card.title}!`);
+                    this.state.currentCard = undefined;
+                    this.state.phase = 'ACTION';
+                    return;
+                }
+            }
+
             const assetCashflow = card.cashflow || 0;
             player.assets.push({
                 title: card.title,
