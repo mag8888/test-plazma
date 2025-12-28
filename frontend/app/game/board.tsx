@@ -53,9 +53,22 @@ interface PlayerState {
     isBankrupted?: boolean;
     canEnterFastTrack?: boolean;
     hasWon?: boolean;
+    expenseBreakdown?: {
+        taxes: number;
+        homeMortgage: number;
+        schoolLoanPayment: number;
+        carLoanPayment: number;
+        creditCardPayment: number;
+        retailPayment: number;
+        otherExpenses: number;
+        childExpenses: number;
+        bankLoanPayment: number;
+        liabilityExpenses?: number;
+    };
 }
 
 import { BankModal } from './BankModal';
+import { ExpenseBreakdownModal } from './ExpenseBreakdownModal';
 import { TransferModal } from './TransferModal';
 import { RulesModal } from './RulesModal';
 import { RankingsModal } from './RankingsModal';
@@ -189,7 +202,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     const router = useRouter();
     const [state, setState] = useState(initialState);
     const [showBank, setShowBank] = useState(false);
-    const [showRules, setShowRules] = useState(false);
+    const [showExpenseBreakdown, setShowExpenseBreakdown] = useState(false);
+    const [showTransfer, setShowTransfer] = useState(false);
     const [transferAssetItem, setTransferAssetItem] = useState<{ item: any, index: number } | null>(null);
     const [adminAction, setAdminAction] = useState<{ type: AdminActionType; player: any } | null>(null);
     const [stockQty, setStockQty] = useState(1);
@@ -994,11 +1008,11 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3 mb-4">
-                                    <div className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800">
+                                    <div onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800">
                                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс</div>
                                         <div className="font-mono text-xl text-green-400 font-bold">${me.cash?.toLocaleString()}</div>
                                     </div>
-                                    <div className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800">
+                                    <div onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800">
                                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит</div>
                                         <div className="font-mono text-xl text-red-400 font-bold">${me.loanDebt?.toLocaleString()}</div>
                                     </div>
@@ -1027,7 +1041,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 </div>
 
                                 {/* Payday / Cashflow Status Bar */}
-                                <div className="bg-[#0B0E14]/50 p-4 rounded-xl border border-slate-800 border-l-4 border-l-green-500 mb-4 shadow-lg relative overflow-hidden group">
+                                <div className="bg-[#0B0E14]/50 p-4 rounded-xl border border-l-4 border-l-green-500 mb-4 shadow-lg relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 w-16 h-16 bg-green-500/10 rounded-full blur-xl -mr-8 -mt-8"></div>
                                     <div className="flex justify-between items-center relative z-10">
                                         <div className="flex flex-col">
@@ -1383,7 +1397,15 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                     <span className="font-mono text-slate-300 font-bold">${me?.income?.toLocaleString() || 0}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
-                                    <span className="text-[9px] text-slate-500 uppercase font-bold">Расходы</span>
+                                    <div className="flex items-center gap-1">
+                                        <button
+                                            onClick={() => setShowExpenseBreakdown(true)}
+                                            className="w-4 h-4 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-[10px] text-slate-300 transition-colors"
+                                        >
+                                            ?
+                                        </button>
+                                        <span className="text-[9px] text-slate-500 uppercase font-bold">Расходы</span>
+                                    </div>
                                     <span className="font-mono text-slate-400 font-bold">${me?.expenses?.toLocaleString() || 0}</span>
                                 </div>
                             </div>
@@ -1739,7 +1761,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                             <button
                                 onClick={handleEndTurn}
-                                disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
+                                disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard || hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
                                 className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
                         ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
                                         ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
@@ -1839,6 +1861,14 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             />
                         )
                     }
+
+                    {showExpenseBreakdown && (
+                        <ExpenseBreakdownModal
+                            breakdown={me?.expenseBreakdown}
+                            totalExpenses={me?.expenses || 0}
+                            onClose={() => setShowExpenseBreakdown(false)}
+                        />
+                    )}
 
                     {
                         showFastTrackModal && (
