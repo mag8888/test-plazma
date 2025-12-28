@@ -135,6 +135,34 @@ app.get('/game/:id', (req, res) => {
     res.redirect(`/game?id=${id}`);
 });
 
+// --- NEW GAME ENDPOINTS ---
+
+app.post('/api/rooms/:roomId/baby/roll', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const result = gameGateway.handleBabyRoll(roomId);
+        res.json({ success: true, ...result });
+    } catch (e: any) {
+        res.status(400).json({ error: e.message });
+    }
+});
+
+app.post('/api/rooms/:roomId/deal/transfer', (req, res) => {
+    try {
+        const { roomId } = req.params;
+        const { fromUserId, targetPlayerId, cardId } = req.body;
+
+        if (!fromUserId || !targetPlayerId || !cardId) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
+
+        const result = gameGateway.handleTransferDeal(roomId, fromUserId, targetPlayerId, cardId);
+        res.json({ success: true, ...result });
+    } catch (e: any) {
+        res.status(400).json({ error: e.message });
+    }
+});
+
 import { AuthService } from './auth/auth.service';
 
 const authService = new AuthService();

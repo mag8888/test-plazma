@@ -71,12 +71,12 @@ export const SMALL_DEALS: Card[] = [
     ...expand(2, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 30, description: 'Цена $30. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
     { id: 'sd_tsla_40', title: 'Акции: Tesla', symbol: 'TSLA', cost: 40, description: 'Цена $40. Колебания $5-$40.', assetType: 'STOCK', type: 'DEAL_SMALL' },
 
-    // Microsoft (Copy of TSLA structure)
-    { id: 'sd_msft_5', title: 'Акции: Microsoft', symbol: 'MSFT', cost: 5, description: 'Цена $5. Колебания $5-$40.', assetType: 'STOCK', type: 'DEAL_SMALL' },
-    ...expand(2, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 10, description: 'Цена $10. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 20, description: 'Цена $20. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Акции: Microsoft', symbol: 'MSFT', cost: 30, description: 'Цена $30. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
-    { id: 'sd_msft_40', title: 'Акции: Microsoft', symbol: 'MSFT', cost: 40, description: 'Цена $40. Колебания $5-$40.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    // TON Token (5 карточек)
+    { id: 'small_006', title: 'TON Token ($1)', cost: 1, cashflow: 0, description: 'TON Token (криптовалюта)', type: 'DEAL_SMALL', assetType: 'STOCK', maxQuantity: 100000, symbol: 'TON' },
+    { id: 'small_007', title: 'TON Token ($2)', cost: 2, cashflow: 0, description: 'TON Token (криптовалюта)', type: 'DEAL_SMALL', assetType: 'STOCK', maxQuantity: 100000, symbol: 'TON' },
+    { id: 'small_008', title: 'TON Token ($3)', cost: 3, cashflow: 0, description: 'TON Token (криптовалюта)', type: 'DEAL_SMALL', assetType: 'STOCK', maxQuantity: 100000, symbol: 'TON' },
+    { id: 'small_009', title: 'TON Token ($5)', cost: 5, cashflow: 0, description: 'TON Token (криптовалюта)', type: 'DEAL_SMALL', assetType: 'STOCK', maxQuantity: 100000, symbol: 'TON' },
+    { id: 'small_010', title: 'TON Token ($10)', cost: 10, cashflow: 0, description: 'TON Token (криптовалюта)', type: 'DEAL_SMALL', assetType: 'STOCK', maxQuantity: 100000, symbol: 'TON' },
 
     // Bitcoin (Small Deal Entry Point)
     { id: 'sd_btc_4k', title: 'Bitcoin', symbol: 'BTC', cost: 4000, description: 'Криптовалюта на дне. Цена $4,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },

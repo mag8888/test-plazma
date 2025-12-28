@@ -48,6 +48,43 @@ export class GameGateway {
         this.roomService.saveGameState(roomId, state).catch(err => console.error("Persist Error:", err));
     }
 
+    public handleBabyRoll(roomId: string) {
+        const game = this.games.get(roomId);
+        if (!game) throw new Error("Game not found");
+
+        if (game.getState().phase !== 'BABY_ROLL') {
+            throw new Error("Not in baby roll phase");
+        }
+
+        const result: any = game.resolveBabyRoll();
+        const state = game.getState();
+        const message = result.total <= 4 ? "Baby Born! +$5000" : "No Baby.";
+
+        this.io.to(roomId).emit('dice_rolled', {
+            roll: result.total || result,
+            diceValues: result.values || [result],
+            state,
+            message
+        });
+        this.saveState(roomId, game);
+        return { result, state, message };
+    }
+
+    public handleTransferDeal(roomId: string, fromUserId: string, targetPlayerId: string, cardId: string) {
+        const game = this.games.get(roomId);
+        if (!game) throw new Error("Game not found");
+
+        // Validate fromUser is actually in the game (optional but good)
+        // const fromPlayer = game.state.players.find(p => p.userId === fromUserId);
+        // if (!fromPlayer) throw new Error("Player not found");
+
+        game.transferDeal(fromUserId, targetPlayerId, cardId);
+        const state = game.getState();
+        this.io.to(roomId).emit('state_updated', { state });
+        this.saveState(roomId, game);
+        return { state };
+    }
+
     initEvents() {
         // Game Loop for Timers (Every 1s)
         setInterval(() => {

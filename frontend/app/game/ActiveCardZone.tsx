@@ -724,10 +724,31 @@ const FeedCardItem = ({
                         {players?.filter((p: any) => p.id !== me.id && !p.isBankrupted).map((p: any) => (
                             <button
                                 key={p.id}
-                                onClick={() => {
-                                    socket.emit('transfer_deal', { roomId, targetPlayerId: p.id, cardId: card.id });
-                                    setShowTransfer(false);
-                                    onDismiss();
+                                onClick={async () => {
+                                    try {
+                                        // Use new API endpoint
+                                        const res = await fetch(`/api/rooms/${roomId}/deal/transfer`, {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({
+                                                fromUserId: me.id,
+                                                targetPlayerId: p.id,
+                                                cardId: card.id
+                                            })
+                                        });
+
+                                        if (!res.ok) {
+                                            const err = await res.json();
+                                            alert(err.error || 'Transfer failed');
+                                            return;
+                                        }
+
+                                        setShowTransfer(false);
+                                        onDismiss();
+                                    } catch (e) {
+                                        console.error(e);
+                                        alert('Network error');
+                                    }
                                 }}
                                 className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl hover:bg-slate-700 transition active:scale-95 border border-slate-700 hover:border-blue-500/50"
                             >
@@ -899,7 +920,20 @@ export const ActiveCardZone = ({
                         <h2 className="text-lg font-bold text-white mb-2">Пополнение в семье!</h2>
                         <p className="text-slate-400 text-xs mb-6">Бросьте кубик чтобы узнать родился ли ребенок</p>
                         <button
-                            onClick={() => socket.emit('roll_dice', { roomId })}
+                            onClick={async () => {
+                                try {
+                                    // Use new API endpoint for Baby Roll
+                                    const res = await fetch(`/api/rooms/${roomId}/baby/roll`, {
+                                        method: 'POST',
+                                        headers: { 'Content-Type': 'application/json' }
+                                    });
+                                    if (!res.ok) throw new Error('Failed to roll');
+                                } catch (e) {
+                                    console.error(e);
+                                    // Fallback or alert?
+                                    socket.emit('roll_dice', { roomId });
+                                }
+                            }}
                             className="w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl text-sm uppercase shadow-lg active:scale-95 transition-all"
                         >
                             🎲 Бросить кубик
