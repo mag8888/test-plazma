@@ -894,30 +894,90 @@ export const ActiveCardZone = ({
                     <h2 className="text-sm font-bold text-white mb-2">Благотворительность</h2>
                     <p className="text-slate-400 text-[10px] mb-4 leading-relaxed">
                         Пожертвуйте <span className="text-pink-400 font-bold">{me?.isFastTrack ? '$100k' : '10%'}</span> <br />
-                        для бонусов на 3 хода.
+                        {me?.isFastTrack
+                            ? 'Выберите количество кубиков на 3 хода.'
+                            : 'для выбора 1 или 2 кубиков на 3 хода.'
+                        }
                     </p>
-                    <div className="flex gap-2 w-full mt-auto">
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                console.log('[Charity] Donate clicked');
-                                socket.emit('donate_charity', { roomId });
-                            }}
-                            className="flex-1 bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
-                        >
-                            Да (${(Math.max(0, (me?.income || 0) * 0.1)).toLocaleString()})
-                        </button>
-                        <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                console.log('[Charity] Skip clicked');
-                                socket.emit('skip_charity', { roomId });
-                            }}
-                            className="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
-                        >
-                            Нет
-                        </button>
-                    </div>
+
+                    {/* Fast Track: Show 1, 2, 3 dice options */}
+                    {me?.isFastTrack ? (
+                        <div className="w-full space-y-2">
+                            <div className="grid grid-cols-3 gap-2 mb-3">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        socket.emit('donate_charity', { roomId, diceCount: 1 });
+                                    }}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
+                                >
+                                    🎲 x1
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        socket.emit('donate_charity', { roomId, diceCount: 2 });
+                                    }}
+                                    className="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
+                                >
+                                    🎲 x2
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        socket.emit('donate_charity', { roomId, diceCount: 3 });
+                                    }}
+                                    className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
+                                >
+                                    🎲 x3
+                                </button>
+                            </div>
+                            <div className="text-[9px] text-slate-500 mb-2">Стоимость: $100,000</div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    socket.emit('skip_charity', { roomId });
+                                }}
+                                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
+                            >
+                                Отказаться
+                            </button>
+                        </div>
+                    ) : (
+                        /* Rat Race: 1 or 2 dice */
+                        <div className="w-full space-y-2">
+                            <div className="grid grid-cols-2 gap-2 mb-2">
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        socket.emit('donate_charity', { roomId, diceCount: 1 });
+                                    }}
+                                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
+                                >
+                                    🎲 x1
+                                </button>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        socket.emit('donate_charity', { roomId, diceCount: 2 });
+                                    }}
+                                    className="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
+                                >
+                                    🎲 x2
+                                </button>
+                            </div>
+                            <div className="text-[9px] text-slate-500 mb-2">Стоимость: ${(Math.max(0, (me?.income || 0) * 0.1)).toLocaleString()}</div>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    socket.emit('skip_charity', { roomId });
+                                }}
+                                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
+                            >
+                                Отказаться
+                            </button>
+                        </div>
+                    )}
                 </div>
             </div>
         );
