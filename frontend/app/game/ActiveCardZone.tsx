@@ -343,14 +343,10 @@ const FeedCardItem = ({
                                     </button>
                                 ) : card.type === 'EXPENSE' ? (
                                     <button
-                                        onClick={() => {
-                                            setTransactionMode('BUY');
-                                            setStockQty(1);
-                                            setViewMode('TRANSACTION');
-                                        }}
-                                        className="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                        onClick={onDismiss}
+                                        className="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-3 rounded-xl text-lg uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
                                     >
-                                        Оплатить
+                                        OK
                                     </button>
                                 ) : card.type === 'MARKET' ? (
                                     <>
