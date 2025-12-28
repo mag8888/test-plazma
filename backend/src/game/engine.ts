@@ -1882,7 +1882,7 @@ export class GameEngine {
                 const additionalIncome = (card.cashflow || 0) * quantity;
                 existingStock.cashflow = (existingStock.cashflow || 0) + additionalIncome;
 
-                player.passiveIncome += additionalIncome;
+                this.recalculateFinancials(player);
                 this.addLog(`📈 Bought ${quantity} more ${card.symbol}. Avg Cost: $${Math.round(newAvg)}`);
 
             } else {
@@ -1896,151 +1896,24 @@ export class GameEngine {
                     quantity: quantity,
                     sourceType: card.type
                 });
-                player.passiveIncome += (card.cashflow || 0) * quantity;
-                this.addLog(`📈 Bought ${quantity} x ${card.symbol} at $${costPerShare}`);
-            }
-
-            player.income = player.salary + player.passiveIncome;
-            player.cashflow = player.income - player.expenses;
-
-            this.addLog(`${player.name} bought ${quantity} ${card.symbol} @ $${card.cost}.`);
-
-            // Discard the stock card so it returns to deck (Market Fluctuation)
-            this.cardManager.discard(card);
-
-            // Keep card visible for other players - move to activeMarketCards if it's currentCard
-            // EXCEPT for private cards (MLM, CHARITY_ROLL) which should only be visible to buyer
-            const isPrivateCard = card.subtype === 'MLM_ROLL' || card.subtype === 'CHARITY_ROLL';
-
-            if (this.state.currentCard?.id === card.id && !isPrivateCard) {
-                // Check if it's already in activeMarketCards
-                const alreadyInMarket = this.state.activeMarketCards?.some(mc => mc.card.id === card.id);
-                if (!alreadyInMarket) {
-                    // Move to activeMarketCards so it stays visible
-                    if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
-                    this.state.activeMarketCards.push({
-                        id: `market_${card.id}_${Date.now()}`,
-                        card: this.state.currentCard,
-                        expiresAt: Date.now() + 120000, // 2 min
-                        sourcePlayerId: this.state.players[this.state.currentPlayerIndex].id,
-                        dismissedBy: []
-                    });
-                }
-            }
-
-            // Clear currentCard (for all cards including private ones)
-            if (this.state.currentCard?.id === card.id) {
-                this.state.currentCard = undefined;
-                this.state.phase = 'ACTION';
-            }
-            // Cards stay visible to other players who might want to sell (except private cards)
-
-            return;
-        }
-
-        // Real Estate / Business Logic (Quantity always 1)
-        const costToPay = card.downPayment !== undefined ? card.downPayment : (card.cost || 0);
-
-        if (player.cash < costToPay) {
-            this.addLog(`${player.name} cannot afford ${card.title} ($${costToPay})`);
-            return;
-        }
-
-        let mlmResult = undefined;
-        let shouldAddAsset = true;
-
-        // MLM Logic (Subtype check)
-        if (card.subtype === 'MLM_ROLL') {
-            // Roll dice to determine partners
-            const partners = Math.floor(Math.random() * 6) + 1; // 1-6
-            // Calculate cashflow
-            const cashflowPerPartner = (card.cost || 0) * 0.5;
-            const totalCashflow = partners * cashflowPerPartner;
-
-            // Modify card/asset properties for this transaction
-            card.cashflow = totalCashflow;
-            card.title = `${card.title} (${partners} Partners)`;
-
-            this.addLog(`🎲 Выпало ${partners}! Привлечено ${partners} партнеров.`);
-            mlmResult = { mlmRoll: partners, mlmCashflow: totalCashflow };
-        } else if (card.subtype === 'CHARITY_ROLL') {
-            // "Friend asks for a loan": 3 Random Outcomes
-            const roll = Math.floor(Math.random() * 3) + 1; // 1, 2, 3
-
-            if (roll === 1) {
-                // 1. Friend went bust (Investments burned)
-                shouldAddAsset = false;
-                this.addLog(`📉 Друг прогорел... Ваши инвестиции ($${costToPay}) сгорели.`);
-            } else if (roll === 2) {
-                // 2. Friend succeeded (Business with $1000 income)
-                shouldAddAsset = true;
-                // Mutate card properties for the asset creation
-                card.title = "Бизнес друга";
-                card.cashflow = 1000;
-                // card.cost remains what you paid
-                this.addLog(`📈 Друг раскрутился! Вы получаете долю в бизнесе (+$1000/мес).`);
-            } else if (roll === 3) {
-                // 3. Friend shared wisdom (3x Charity Turns)
-                shouldAddAsset = false;
-                player.charityTurns = 3;
-                this.addLog(`🎓 Друг поделился мудростью! Вы получаете 3 хода с 2 кубиками.`);
-            }
-        }
-
-        player.cash -= costToPay;
-
-        // Handle Expense Payment (No Asset added)
-        // Exception: CHARITY_ROLL has its own outcome logic (shouldAddAsset flag)
-        if ((card.type === 'EXPENSE' || card.mandatory) && card.subtype !== 'CHARITY_ROLL') {
-            this.addLog(`${player.name} paid: ${card.title} (-$${costToPay})`);
-
-            // Discard the paid expense card
-            if (this.state.currentCard && this.state.currentCard.id === card.id) {
-                this.cardManager.discard(this.state.currentCard);
-                this.state.currentCard = undefined;
-                this.endTurn();
-                return;
-            } else if (isMarketCard) {
-                // Discard from market
-                this.cardManager.discard(card);
-                this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
-                // Don't end turn if paying off a market card (unless logic dictates)
-                return;
-            }
-
-            this.state.currentCard = undefined;
-            this.endTurn();
-            return;
-        }
-
-        // Add Asset
-        if (shouldAddAsset) {
-            const assetCashflow = card.cashflow || 0;
-            player.assets.push({
-                title: card.title,
-                cost: card.cost,
-                cashflow: assetCashflow,
-                symbol: card.symbol,
-                type: card.assetType || (card.symbol ? 'STOCK' : 'REAL_ESTATE'), // Use explicit type or fallback
-                quantity: 1,
-                businessType: card.businessType, // Store business type
-                sourceType: card.type // Store original card type (DEAL_SMALL, DEAL_BIG) for Discard Return logic
             });
-
-            // Update player income stats
-            if (assetCashflow > 0) {
-                player.passiveIncome += assetCashflow;
-                player.income = player.salary + player.passiveIncome;
-                player.cashflow = player.income - player.expenses;
-            }
+            this.recalculateFinancials(player);
+            this.addLog(`📈 Bought ${quantity} x ${card.symbol} at $${costPerShare}`);
         }
 
-        // Handling Discard/Clean up after buy
+        player.income = player.salary + player.passiveIncome;
+        player.cashflow = player.income - player.expenses;
+
+        this.addLog(`${player.name} bought ${quantity} ${card.symbol} @ $${card.cost}.`);
+
+        // Discard the stock card so it returns to deck (Market Fluctuation)
+        this.cardManager.discard(card);
+
         // Keep card visible for other players - move to activeMarketCards if it's currentCard
         // EXCEPT for private cards (MLM, CHARITY_ROLL) which should only be visible to buyer
         const isPrivateCard = card.subtype === 'MLM_ROLL' || card.subtype === 'CHARITY_ROLL';
 
-        if (this.state.currentCard?.id === card.id && !isPrivateCard && (card.assetType === 'STOCK' || card.symbol)) {
+        if (this.state.currentCard?.id === card.id && !isPrivateCard) {
             // Check if it's already in activeMarketCards
             const alreadyInMarket = this.state.activeMarketCards?.some(mc => mc.card.id === card.id);
             if (!alreadyInMarket) {
@@ -2060,539 +1933,667 @@ export class GameEngine {
         if (this.state.currentCard?.id === card.id) {
             this.state.currentCard = undefined;
             this.state.phase = 'ACTION';
-        } else if (isMarketCard) {
-            // CRITICAL FIX: If we bought a Deal/Business from Market, it must be removed!
-            // Stocks are handled earlier. This block is for unique assets.
-            this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
-            // Optionally discard if needed, but asset is already created.
-            // this.cardManager.discard(card); // Only if we want to recycle it immediately? 
-            // Better to just remove from active interactions.
         }
-        // Don't remove from activeMarketCards - let cleanup handle it when all players dismiss (except private cards)
+        // Cards stay visible to other players who might want to sell (except private cards)
+
+        return;
+    }
+
+    // Real Estate / Business Logic (Quantity always 1)
+    const costToPay = card.downPayment !== undefined ? card.downPayment : (card.cost || 0);
+
+    if(player.cash <costToPay) {
+        this.addLog(`${player.name} cannot afford ${card.title} ($${costToPay})`);
+        return;
+    }
+
+        let mlmResult = undefined;
+let shouldAddAsset = true;
+
+// MLM Logic (Subtype check)
+if (card.subtype === 'MLM_ROLL') {
+    // Roll dice to determine partners
+    const partners = Math.floor(Math.random() * 6) + 1; // 1-6
+    // Calculate cashflow
+    const cashflowPerPartner = (card.cost || 0) * 0.5;
+    const totalCashflow = partners * cashflowPerPartner;
+
+    // Modify card/asset properties for this transaction
+    card.cashflow = totalCashflow;
+    card.title = `${card.title} (${partners} Partners)`;
+
+    this.addLog(`🎲 Выпало ${partners}! Привлечено ${partners} партнеров.`);
+    mlmResult = { mlmRoll: partners, mlmCashflow: totalCashflow };
+} else if (card.subtype === 'CHARITY_ROLL') {
+    // "Friend asks for a loan": 3 Random Outcomes
+    const roll = Math.floor(Math.random() * 3) + 1; // 1, 2, 3
+
+    if (roll === 1) {
+        // 1. Friend went bust (Investments burned)
+        shouldAddAsset = false;
+        this.addLog(`📉 Друг прогорел... Ваши инвестиции ($${costToPay}) сгорели.`);
+    } else if (roll === 2) {
+        // 2. Friend succeeded (Business with $1000 income)
+        shouldAddAsset = true;
+        // Mutate card properties for the asset creation
+        card.title = "Бизнес друга";
+        card.cashflow = 1000;
+        // card.cost remains what you paid
+        this.addLog(`📈 Друг раскрутился! Вы получаете долю в бизнесе (+$1000/мес).`);
+    } else if (roll === 3) {
+        // 3. Friend shared wisdom (3x Charity Turns)
+        shouldAddAsset = false;
+        player.charityTurns = 3;
+        this.addLog(`🎓 Друг поделился мудростью! Вы получаете 3 хода с 2 кубиками.`);
+    }
+}
+
+player.cash -= costToPay;
+
+// Handle Expense Payment (No Asset added)
+// Exception: CHARITY_ROLL has its own outcome logic (shouldAddAsset flag)
+if ((card.type === 'EXPENSE' || card.mandatory) && card.subtype !== 'CHARITY_ROLL') {
+    this.addLog(`${player.name} paid: ${card.title} (-$${costToPay})`);
+
+    // Discard the paid expense card
+    if (this.state.currentCard && this.state.currentCard.id === card.id) {
+        this.cardManager.discard(this.state.currentCard);
+        this.state.currentCard = undefined;
+        this.endTurn();
+        return;
+    } else if (isMarketCard) {
+        // Discard from market
+        this.cardManager.discard(card);
+        this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
+        // Don't end turn if paying off a market card (unless logic dictates)
+        return;
+    }
+
+    this.state.currentCard = undefined;
+    this.endTurn();
+    return;
+}
+
+// Add Asset
+if (shouldAddAsset) {
+    const assetCashflow = card.cashflow || 0;
+    player.assets.push({
+        title: card.title,
+        cost: card.cost,
+        cashflow: assetCashflow,
+        symbol: card.symbol,
+        type: card.assetType || (card.symbol ? 'STOCK' : 'REAL_ESTATE'), // Use explicit type or fallback
+        quantity: 1,
+        businessType: card.businessType, // Store business type
+        sourceType: card.type // Store original card type (DEAL_SMALL, DEAL_BIG) for Discard Return logic
+    });
+
+    // Update player income stats
+    if (assetCashflow > 0) {
+        player.passiveIncome += assetCashflow;
+        player.income = player.salary + player.passiveIncome;
+        player.cashflow = player.income - player.expenses;
+    }
+}
+
+// Handling Discard/Clean up after buy
+// Keep card visible for other players - move to activeMarketCards if it's currentCard
+// EXCEPT for private cards (MLM, CHARITY_ROLL) which should only be visible to buyer
+const isPrivateCard = card.subtype === 'MLM_ROLL' || card.subtype === 'CHARITY_ROLL';
+
+if (this.state.currentCard?.id === card.id && !isPrivateCard && (card.assetType === 'STOCK' || card.symbol)) {
+    // Check if it's already in activeMarketCards
+    const alreadyInMarket = this.state.activeMarketCards?.some(mc => mc.card.id === card.id);
+    if (!alreadyInMarket) {
+        // Move to activeMarketCards so it stays visible
+        if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
+        this.state.activeMarketCards.push({
+            id: `market_${card.id}_${Date.now()}`,
+            card: this.state.currentCard,
+            expiresAt: Date.now() + 120000, // 2 min
+            sourcePlayerId: this.state.players[this.state.currentPlayerIndex].id,
+            dismissedBy: []
+        });
+    }
+}
+
+// Clear currentCard (for all cards including private ones)
+if (this.state.currentCard?.id === card.id) {
+    this.state.currentCard = undefined;
+    this.state.phase = 'ACTION';
+} else if (isMarketCard) {
+    // CRITICAL FIX: If we bought a Deal/Business from Market, it must be removed!
+    // Stocks are handled earlier. This block is for unique assets.
+    this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
+    // Optionally discard if needed, but asset is already created.
+    // this.cardManager.discard(card); // Only if we want to recycle it immediately? 
+    // Better to just remove from active interactions.
+}
+// Don't remove from activeMarketCards - let cleanup handle it when all players dismiss (except private cards)
 
 
-        // Fast Track Board Ownership Logic
-        const cardAny = card as any;
-        if (cardAny.targetSquareIndex !== undefined) {
-            const sqIndex = cardAny.targetSquareIndex;
-            // Ensure global index is correct?
-            // Since handleFastTrackSquare set it from `square.index`, checking if it's correct.
-            // Usually yes.
+// Fast Track Board Ownership Logic
+const cardAny = card as any;
+if (cardAny.targetSquareIndex !== undefined) {
+    const sqIndex = cardAny.targetSquareIndex;
+    // Ensure global index is correct?
+    // Since handleFastTrackSquare set it from `square.index`, checking if it's correct.
+    // Usually yes.
 
-            // Check if it was a Buyout
-            if (cardAny.isBuyout && cardAny.ownerId) {
-                const prevOwner = this.state.players.find(p => p.id === cardAny.ownerId);
-                if (prevOwner) {
-                    // Pay Previous Owner
-                    prevOwner.cash += (card.cost || 0);
-                    this.addLog(`💸 ${player.name} paid $${card.cost} to ${prevOwner.name} for ${card.title}`);
+    // Check if it was a Buyout
+    if (cardAny.isBuyout && cardAny.ownerId) {
+        const prevOwner = this.state.players.find(p => p.id === cardAny.ownerId);
+        if (prevOwner) {
+            // Pay Previous Owner
+            prevOwner.cash += (card.cost || 0);
+            this.addLog(`💸 ${player.name} paid $${card.cost} to ${prevOwner.name} for ${card.title}`);
 
-                    // Remove Asset from Previous Owner
-                    // Need to find asset by Title? Or by Square Index if tracked?
-                    // Currently Assets don't store Square Index explicitly.
-                    // But Title should be unique enough for FT businesses?
-                    // "Moneo Corp", "Yoga Center"...
-                    const assetIdx = prevOwner.assets.findIndex(a => a.title === card.title);
-                    if (assetIdx !== -1) {
-                        const removed = prevOwner.assets[assetIdx];
-                        prevOwner.assets.splice(assetIdx, 1);
+            // Remove Asset from Previous Owner
+            // Need to find asset by Title? Or by Square Index if tracked?
+            // Currently Assets don't store Square Index explicitly.
+            // But Title should be unique enough for FT businesses?
+            // "Moneo Corp", "Yoga Center"...
+            const assetIdx = prevOwner.assets.findIndex(a => a.title === card.title);
+            if (assetIdx !== -1) {
+                const removed = prevOwner.assets[assetIdx];
+                prevOwner.assets.splice(assetIdx, 1);
 
-                        // Recalc Previous Owner Stats
-                        if (removed.cashflow) {
-                            prevOwner.passiveIncome -= removed.cashflow;
-                            prevOwner.income = prevOwner.salary + prevOwner.passiveIncome;
-                            prevOwner.cashflow = prevOwner.income - prevOwner.expenses;
-                        }
-                    }
+                // Recalc Previous Owner Stats
+                if (removed.cashflow) {
+                    prevOwner.passiveIncome -= removed.cashflow;
+                    prevOwner.income = prevOwner.salary + prevOwner.passiveIncome;
+                    prevOwner.cashflow = prevOwner.income - prevOwner.expenses;
                 }
             }
-
-            // Set New Owner on Board
-            // We need to mutate the board in state
-            // We need to find the square in FULL_BOARD logic.
-            // If `this.state.board` is the source of truth, we update it there.
-            // `sqIndex` came from `square.index` on the board.
-            const boardSq = this.state.board.find(b => b.index === sqIndex);
-            if (boardSq) {
-                boardSq.ownerId = player.id;
-            }
         }
-
-        // Update Stats
-        this.recalculateFinancials(player);
-        // if (card.cashflow) {
-        //     player.passiveIncome += card.cashflow;
-        //     player.income = player.salary + player.passiveIncome;
-        //     player.cashflow = player.income - player.expenses;
-        // }
-
-        // Add Liability (Mortgage) if downpayment was used
-        if (card.downPayment !== undefined && (card.cost || 0) > card.downPayment) {
-            const mortgage = (card.cost || 0) - card.downPayment;
-            player.liabilities.push({ name: `Mortgage (${card.title})`, value: mortgage });
-        }
-
-        this.addLog(`${player.name} купил ${card.title}. Пассивный доход +$${card.cashflow || 0}`);
-
-        // Clear card so it isn't discarded in endTurn
-        this.state.currentCard = undefined;
-
-        this.checkFastTrackCondition(player);
-        this.checkWinCondition(player);
-        // Do NOT end turn. Allow player to continue actions.
-        this.state.phase = 'ACTION';
-
-        return mlmResult;
     }
 
-    giftCash(fromPlayerId: string, toPlayerId: string, amount: number) {
-        const fromPlayer = this.state.players.find(p => p.id === fromPlayerId);
-        const toPlayer = this.state.players.find(p => p.id === toPlayerId);
+    // Set New Owner on Board
+    // We need to mutate the board in state
+    // We need to find the square in FULL_BOARD logic.
+    // If `this.state.board` is the source of truth, we update it there.
+    // `sqIndex` came from `square.index` on the board.
+    const boardSq = this.state.board.find(b => b.index === sqIndex);
+    if (boardSq) {
+        boardSq.ownerId = player.id;
+    }
+}
 
-        if (!fromPlayer || !toPlayer) throw new Error("Player not found");
-        if (amount <= 0) throw new Error("Invalid amount");
-        if (fromPlayer.cash < amount) throw new Error("Insufficient funds");
+// Update Stats
+this.recalculateFinancials(player);
+// if (card.cashflow) {
+//     player.passiveIncome += card.cashflow;
+//     player.income = player.salary + player.passiveIncome;
+//     player.cashflow = player.income - player.expenses;
+// }
 
-        fromPlayer.cash -= amount;
-        toPlayer.cash += amount;
+// Add Liability (Mortgage) if downpayment was used
+if (card.downPayment !== undefined && (card.cost || 0) > card.downPayment) {
+    const mortgage = (card.cost || 0) - card.downPayment;
+    player.liabilities.push({ name: `Mortgage (${card.title})`, value: mortgage });
+}
 
-        this.recordTransaction({
-            from: fromPlayer.name,
-            to: toPlayer.name,
-            amount: amount,
-            description: 'Gift for Baby 👶',
-            type: 'PAYDAY'
-        });
+this.addLog(`${player.name} купил ${card.title}. Пассивный доход +$${card.cashflow || 0}`);
 
-        this.addLog(`🎁 ${fromPlayer.name} подарил $${amount.toLocaleString()} игроку ${toPlayer.name}`);
+// Clear card so it isn't discarded in endTurn
+this.state.currentCard = undefined;
 
-        // Check Fast Track for recipient
-        this.checkFastTrackCondition(toPlayer);
+this.checkFastTrackCondition(player);
+this.checkWinCondition(player);
+// Do NOT end turn. Allow player to continue actions.
+this.state.phase = 'ACTION';
+
+return mlmResult;
     }
 
-    giveCash(playerId: string, amount: number) {
-        const player = this.state.players.find(p => p.id === playerId);
-        if (!player) return;
-        if (amount <= 0) return;
+giftCash(fromPlayerId: string, toPlayerId: string, amount: number) {
+    const fromPlayer = this.state.players.find(p => p.id === fromPlayerId);
+    const toPlayer = this.state.players.find(p => p.id === toPlayerId);
 
-        player.cash += amount;
-        this.addLog(`🎁 Host gave $${amount.toLocaleString()} to ${player.name}`);
+    if (!fromPlayer || !toPlayer) throw new Error("Player not found");
+    if (amount <= 0) throw new Error("Invalid amount");
+    if (fromPlayer.cash < amount) throw new Error("Insufficient funds");
 
-        this.recordTransaction({
-            from: 'Host',
-            to: player.name,
-            amount: amount,
-            description: 'Gift from Host',
-            type: 'PAYDAY' // Green positive visual
-        });
+    fromPlayer.cash -= amount;
+    toPlayer.cash += amount;
 
-        this.checkFastTrackCondition(player);
+    this.recordTransaction({
+        from: fromPlayer.name,
+        to: toPlayer.name,
+        amount: amount,
+        description: 'Gift for Baby 👶',
+        type: 'PAYDAY'
+    });
+
+    this.addLog(`🎁 ${fromPlayer.name} подарил $${amount.toLocaleString()} игроку ${toPlayer.name}`);
+
+    // Check Fast Track for recipient
+    this.checkFastTrackCondition(toPlayer);
+}
+
+giveCash(playerId: string, amount: number) {
+    const player = this.state.players.find(p => p.id === playerId);
+    if (!player) return;
+    if (amount <= 0) return;
+
+    player.cash += amount;
+    this.addLog(`🎁 Host gave $${amount.toLocaleString()} to ${player.name}`);
+
+    this.recordTransaction({
+        from: 'Host',
+        to: player.name,
+        amount: amount,
+        description: 'Gift from Host',
+        type: 'PAYDAY' // Green positive visual
+    });
+
+    this.checkFastTrackCondition(player);
+}
+
+sellStock(playerId: string, quantity: number) {
+    const player = this.state.players.find(p => p.id === playerId);
+    const card = this.state.currentCard;
+
+    if (!player || !card) return;
+    if (!card.symbol) return; // Must be stock card
+
+    // Find stock in assets
+    const stockIndex = player.assets.findIndex(a => a.symbol === card.symbol);
+    if (stockIndex === -1) return;
+    const stock = player.assets[stockIndex];
+
+    if ((stock.quantity || 0) < quantity) {
+        this.addLog(`${player.name} cannot sell ${quantity} ${stock.symbol}: Only have ${stock.quantity}`);
+        return;
     }
 
-    sellStock(playerId: string, quantity: number) {
-        const player = this.state.players.find(p => p.id === playerId);
-        const card = this.state.currentCard;
+    const price = card.cost || 0; // Current price is usually defined in card.cost for Stock Cards
+    const saleTotal = price * quantity;
 
-        if (!player || !card) return;
-        if (!card.symbol) return; // Must be stock card
+    player.cash += saleTotal;
 
-        // Find stock in assets
-        const stockIndex = player.assets.findIndex(a => a.symbol === card.symbol);
-        if (stockIndex === -1) return;
-        const stock = player.assets[stockIndex];
+    // Update Asset
+    stock.quantity -= quantity;
 
-        if ((stock.quantity || 0) < quantity) {
-            this.addLog(`${player.name} cannot sell ${quantity} ${stock.symbol}: Only have ${stock.quantity}`);
-            return;
-        }
+    // Reduce Cashflow (assuming proportional) - Actually Recalc handles it cleaner
+    this.recalculateFinancials(player);
 
-        const price = card.cost || 0; // Current price is usually defined in card.cost for Stock Cards
-        const saleTotal = price * quantity;
+    // if (stock.cashflow) {
+    //     const cashflowPerShare = stock.cashflow / (stock.quantity + quantity);
+    //     const lostCashflow = cashflowPerShare * quantity;
+    //     stock.cashflow -= lostCashflow;
+    //     player.passiveIncome -= lostCashflow;
+    //     player.income = player.salary + player.passiveIncome;
+    //     player.cashflow = player.income - player.expenses;
+    // }
 
-        player.cash += saleTotal;
-
-        // Update Asset
-        stock.quantity -= quantity;
-
-        // Reduce Cashflow (assuming proportional) - Actually Recalc handles it cleaner
-        this.recalculateFinancials(player);
-
-        // if (stock.cashflow) {
-        //     const cashflowPerShare = stock.cashflow / (stock.quantity + quantity);
-        //     const lostCashflow = cashflowPerShare * quantity;
-        //     stock.cashflow -= lostCashflow;
-        //     player.passiveIncome -= lostCashflow;
-        //     player.income = player.salary + player.passiveIncome;
-        //     player.cashflow = player.income - player.expenses;
-        // }
-
-        if (stock.quantity <= 0) {
-            player.assets.splice(stockIndex, 1);
-        }
-
-        this.addLog(`📈 ${player.name} sold ${quantity} ${card.symbol} @ $${price} for $${saleTotal}`);
-
-        // Do NOT end turn. Selling stock is an open market action.
-        this.checkFastTrackCondition(player);
+    if (stock.quantity <= 0) {
+        player.assets.splice(stockIndex, 1);
     }
 
-    transferFunds(fromId: string, toId: string, amount: number) {
-        const fromPlayer = this.state.players.find(p => p.id === fromId);
-        const toPlayer = this.state.players.find(p => p.id === toId);
+    this.addLog(`📈 ${player.name} sold ${quantity} ${card.symbol} @ $${price} for $${saleTotal}`);
 
-        if (!fromPlayer || !toPlayer) return;
-        if (fromPlayer.cash < amount) {
-            this.addLog(`${fromPlayer.name} failed transfer: Insufficient funds.`);
-            return;
-        }
+    // Do NOT end turn. Selling stock is an open market action.
+    this.checkFastTrackCondition(player);
+}
 
-        fromPlayer.cash -= amount;
-        toPlayer.cash += amount;
+transferFunds(fromId: string, toId: string, amount: number) {
+    const fromPlayer = this.state.players.find(p => p.id === fromId);
+    const toPlayer = this.state.players.find(p => p.id === toId);
 
-        this.recordTransaction({
-            from: fromPlayer.name,
-            to: toPlayer.name,
-            amount,
-            description: 'Transfer',
-            type: 'TRANSFER'
-        });
-
-        this.addLog(`${fromPlayer.name} transferred $${amount} to ${toPlayer.name}`);
+    if (!fromPlayer || !toPlayer) return;
+    if (fromPlayer.cash < amount) {
+        this.addLog(`${fromPlayer.name} failed transfer: Insufficient funds.`);
+        return;
     }
+
+    fromPlayer.cash -= amount;
+    toPlayer.cash += amount;
+
+    this.recordTransaction({
+        from: fromPlayer.name,
+        to: toPlayer.name,
+        amount,
+        description: 'Transfer',
+        type: 'TRANSFER'
+    });
+
+    this.addLog(`${fromPlayer.name} transferred $${amount} to ${toPlayer.name}`);
+}
 
     private recordTransaction(t: Omit<Transaction, 'id' | 'timestamp'>) {
-        this.state.transactions.unshift({
-            id: Math.random().toString(36).substr(2, 9),
-            timestamp: Date.now(),
-            ...t
-        });
-        // Keep last 50 transactions
-        if (this.state.transactions.length > 50) this.state.transactions.pop();
-    }
+    this.state.transactions.unshift({
+        id: Math.random().toString(36).substr(2, 9),
+        timestamp: Date.now(),
+        ...t
+    });
+    // Keep last 50 transactions
+    if (this.state.transactions.length > 50) this.state.transactions.pop();
+}
 
-    checkTurnTimeout(): boolean {
-        if (this.state.isPaused) return false;
+checkTurnTimeout(): boolean {
+    if (this.state.isPaused) return false;
 
-        // Bot Logic Hook
-        const player = this.state.players[this.state.currentPlayerIndex];
-        if (player && player.userId && player.userId.startsWith('bot_')) {
-            // Check if we should move
-            const now = Date.now();
-            // Default 2 second delay between bot actions
-            if (!this.botNextActionAt) this.botNextActionAt = now + 2000;
+    // Bot Logic Hook
+    const player = this.state.players[this.state.currentPlayerIndex];
+    if (player && player.userId && player.userId.startsWith('bot_')) {
+        // Check if we should move
+        const now = Date.now();
+        // Default 2 second delay between bot actions
+        if (!this.botNextActionAt) this.botNextActionAt = now + 2000;
 
-            if (now >= this.botNextActionAt) {
-                this.makeBotMove();
-                this.botNextActionAt = now + 2500; // Schedule next move
-                return true; // Use return true to signal state change? 
-                // Actually makeBotMove changes state, but Gateway uses return value to know if it should emit 'turn_ended'.
-                // 'turn_ended' event usually just sends state.
-                // If bot moves, we definitely strictly want to update state.
-                // But checkTurnTimeout caller (Gateway) emits 'turn_ended' ONLY if true returned.
-                // 'turn_ended' prompt might be confusing if it wasn't a timeout.
-                // Gateway line 58: `this.io.to(roomId).emit('turn_ended', { state: game.getState() });`
-                // It's just a state sync labeled 'turn_ended'.
-                // So returning true is fine to force sync.
-            }
-            return false;
-        } else {
-            // Reset bot timer when human turn
-            this.botNextActionAt = 0;
-        }
-
-        // Return true if state changed (turn ended)
-        if (this.state.turnExpiresAt && Date.now() > this.state.turnExpiresAt) {
-            if (player) {
-                this.addLog(`⌛ Turn timeout for ${player.name}`);
-            }
-            this.endTurn();
-            return true;
+        if (now >= this.botNextActionAt) {
+            this.makeBotMove();
+            this.botNextActionAt = now + 2500; // Schedule next move
+            return true; // Use return true to signal state change? 
+            // Actually makeBotMove changes state, but Gateway uses return value to know if it should emit 'turn_ended'.
+            // 'turn_ended' event usually just sends state.
+            // If bot moves, we definitely strictly want to update state.
+            // But checkTurnTimeout caller (Gateway) emits 'turn_ended' ONLY if true returned.
+            // 'turn_ended' prompt might be confusing if it wasn't a timeout.
+            // Gateway line 58: `this.io.to(roomId).emit('turn_ended', { state: game.getState() });`
+            // It's just a state sync labeled 'turn_ended'.
+            // So returning true is fine to force sync.
         }
         return false;
+    } else {
+        // Reset bot timer when human turn
+        this.botNextActionAt = 0;
     }
 
-    /**
-     * Cleanup market cards that are expired or dismissed by all players
-     */
-    cleanupMarketCards() {
-        if (!this.state.activeMarketCards) return;
+    // Return true if state changed (turn ended)
+    if (this.state.turnExpiresAt && Date.now() > this.state.turnExpiresAt) {
+        if (player) {
+            this.addLog(`⌛ Turn timeout for ${player.name}`);
+        }
+        this.endTurn();
+        return true;
+    }
+    return false;
+}
 
-        const now = Date.now();
-        const activePlayers = this.state.players.filter(p => !p.isBankrupted && !p.hasWon);
+/**
+ * Cleanup market cards that are expired or dismissed by all players
+ */
+cleanupMarketCards() {
+    if (!this.state.activeMarketCards) return;
 
-        this.state.activeMarketCards = this.state.activeMarketCards.filter(mc => {
-            // Remove if expired
-            if (mc.expiresAt < now) {
+    const now = Date.now();
+    const activePlayers = this.state.players.filter(p => !p.isBankrupted && !p.hasWon);
+
+    this.state.activeMarketCards = this.state.activeMarketCards.filter(mc => {
+        // Remove if expired
+        if (mc.expiresAt < now) {
+            this.cardManager.discard(mc.card);
+            return false;
+        }
+
+        // Remove if all active players dismissed it
+        if (mc.dismissedBy && activePlayers.length > 0) {
+            const allDismissed = activePlayers.every(p => mc.dismissedBy?.includes(p.id));
+            if (allDismissed) {
                 this.cardManager.discard(mc.card);
                 return false;
             }
+        }
 
-            // Remove if all active players dismissed it
-            if (mc.dismissedBy && activePlayers.length > 0) {
-                const allDismissed = activePlayers.every(p => mc.dismissedBy?.includes(p.id));
-                if (allDismissed) {
-                    this.cardManager.discard(mc.card);
-                    return false;
-                }
-            }
+        return true;
+    });
+}
 
-            return true;
-        });
+/**
+ * Dismiss a market card for a specific player
+ */
+dismissMarketCard(playerId: string, cardId: string) {
+    const marketCard = this.state.activeMarketCards?.find(mc => mc.card.id === cardId || mc.id === cardId);
+    if (!marketCard) return;
+
+    if (!marketCard.dismissedBy) {
+        marketCard.dismissedBy = [];
     }
 
-    /**
-     * Dismiss a market card for a specific player
-     */
-    dismissMarketCard(playerId: string, cardId: string) {
-        const marketCard = this.state.activeMarketCards?.find(mc => mc.card.id === cardId || mc.id === cardId);
-        if (!marketCard) return;
-
-        if (!marketCard.dismissedBy) {
-            marketCard.dismissedBy = [];
-        }
-
-        if (!marketCard.dismissedBy.includes(playerId)) {
-            marketCard.dismissedBy.push(playerId);
-            this.addLog(`${this.state.players.find(p => p.id === playerId)?.name} закрыл карточку`);
-        }
-
-        this.cleanupMarketCards();
+    if (!marketCard.dismissedBy.includes(playerId)) {
+        marketCard.dismissedBy.push(playerId);
+        this.addLog(`${this.state.players.find(p => p.id === playerId)?.name} закрыл карточку`);
     }
 
-    endTurn() {
-        // 1. Clean up expired Active Cards
-        if (this.state.activeMarketCards) {
-            // Find expired ones to discard properly
-            const expired = this.state.activeMarketCards.filter(ac => ac.expiresAt <= Date.now());
-            // Remove expired from list
-            this.state.activeMarketCards = this.state.activeMarketCards.filter(ac => ac.expiresAt > Date.now());
+    this.cleanupMarketCards();
+}
 
-            // Discard them? We should discard if they are not in currentCard.
-            // But simplest is: when they leave 'activeMarketCards', we discard them?
-            // Actually, if we didn't discard in dismissCard, we must discard now.
-            for (const exp of expired) {
-                this.cardManager.discard(exp.card);
-            }
+endTurn() {
+    // 1. Clean up expired Active Cards
+    if (this.state.activeMarketCards) {
+        // Find expired ones to discard properly
+        const expired = this.state.activeMarketCards.filter(ac => ac.expiresAt <= Date.now());
+        // Remove expired from list
+        this.state.activeMarketCards = this.state.activeMarketCards.filter(ac => ac.expiresAt > Date.now());
+
+        // Discard them? We should discard if they are not in currentCard.
+        // But simplest is: when they leave 'activeMarketCards', we discard them?
+        // Actually, if we didn't discard in dismissCard, we must discard now.
+        for (const exp of expired) {
+            this.cardManager.discard(exp.card);
         }
-
-        // 2. Clear current card (Discard if not persistent)
-        if (this.state.currentCard) {
-            const isPersistent = this.state.activeMarketCards?.some(ac => ac.card.title === this.state.currentCard?.title);
-            if (!isPersistent) {
-                this.cardManager.discard(this.state.currentCard);
-            }
-            this.state.currentCard = undefined;
-        }
-
-        // Clear events
-        this.state.lastEvent = undefined;
-
-        let attempts = 0;
-        const totalPlayers = this.state.players.length;
-
-        // Safely iterate to find next valid player
-        while (attempts < totalPlayers * 2) { // Cap at 2 loops to prevent infinite freezes
-            this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % totalPlayers;
-            const nextPlayer = this.state.players[this.state.currentPlayerIndex];
-
-            // 1. Bankrupted -> SKIP PERMANENTLY
-            // Winner -> Only skip if they explicitly chose to skip (Sandbox Mode)
-            if (nextPlayer.isBankrupted || (nextPlayer.hasWon && nextPlayer.isSkippingTurns)) {
-                // Log only if skipping winner
-                // if (nextPlayer.hasWon) this.addLog(`⏩ Skipping winner ${nextPlayer.name}`);
-                attempts++;
-                continue;
-            }
-
-            // 2. Skipped Turns -> Decrement and Skip
-            if ((nextPlayer.skippedTurns || 0) > 0) {
-                nextPlayer.skippedTurns--;
-                this.addLog(`🚫 ${nextPlayer.name} skips turn (Remaining: ${nextPlayer.skippedTurns})`);
-                this.state.lastEvent = { type: 'TURN_SKIPPED', payload: { player: nextPlayer.name, remaining: nextPlayer.skippedTurns } };
-                attempts++;
-                continue;
-            }
-
-            // Valid player found
-            break;
-        }
-
-        this.state.phase = 'ROLL';
-        this.state.currentTurnTime = 120;
-        this.state.turnExpiresAt = Date.now() + 120000; // Reset timer 120s
-
-        const activePlayer = this.state.players[this.state.currentPlayerIndex];
-        // this.addLog(`Now it is ${activePlayer.name}'s turn.`);
     }
+
+    // 2. Clear current card (Discard if not persistent)
+    if (this.state.currentCard) {
+        const isPersistent = this.state.activeMarketCards?.some(ac => ac.card.title === this.state.currentCard?.title);
+        if (!isPersistent) {
+            this.cardManager.discard(this.state.currentCard);
+        }
+        this.state.currentCard = undefined;
+    }
+
+    // Clear events
+    this.state.lastEvent = undefined;
+
+    let attempts = 0;
+    const totalPlayers = this.state.players.length;
+
+    // Safely iterate to find next valid player
+    while (attempts < totalPlayers * 2) { // Cap at 2 loops to prevent infinite freezes
+        this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % totalPlayers;
+        const nextPlayer = this.state.players[this.state.currentPlayerIndex];
+
+        // 1. Bankrupted -> SKIP PERMANENTLY
+        // Winner -> Only skip if they explicitly chose to skip (Sandbox Mode)
+        if (nextPlayer.isBankrupted || (nextPlayer.hasWon && nextPlayer.isSkippingTurns)) {
+            // Log only if skipping winner
+            // if (nextPlayer.hasWon) this.addLog(`⏩ Skipping winner ${nextPlayer.name}`);
+            attempts++;
+            continue;
+        }
+
+        // 2. Skipped Turns -> Decrement and Skip
+        if ((nextPlayer.skippedTurns || 0) > 0) {
+            nextPlayer.skippedTurns--;
+            this.addLog(`🚫 ${nextPlayer.name} skips turn (Remaining: ${nextPlayer.skippedTurns})`);
+            this.state.lastEvent = { type: 'TURN_SKIPPED', payload: { player: nextPlayer.name, remaining: nextPlayer.skippedTurns } };
+            attempts++;
+            continue;
+        }
+
+        // Valid player found
+        break;
+    }
+
+    this.state.phase = 'ROLL';
+    this.state.currentTurnTime = 120;
+    this.state.turnExpiresAt = Date.now() + 120000; // Reset timer 120s
+
+    const activePlayer = this.state.players[this.state.currentPlayerIndex];
+    // this.addLog(`Now it is ${activePlayer.name}'s turn.`);
+}
 
     private forcePayment(player: PlayerState, amount: number, description: string) {
-        if (amount <= 0) return;
+    if (amount <= 0) return;
 
+    if (player.cash >= amount) {
+        player.cash -= amount;
+        this.addLog(`💸 ${player.name} paid $${amount} for ${description}`);
+        return;
+    }
+
+    // Insufficient Funds
+    const deficit = amount - player.cash;
+
+    // Max Loan Check: 
+    // Existing logic: Loan allowed if Cashflow - Interest >= 0.
+    // Interest = 10% of Loan.
+    // So Max Loan = Cashflow * 10
+    // But we must also support existing debt.
+    // Actually, `takeLoan` checks future state.
+    // `player.cashflow - interest < 0` where interest is NEW interest.
+    // So we just iterate taking 1000s until covered or failed.
+
+    // Calculate needed loan
+    const neededLoan = Math.ceil(deficit / 1000) * 1000;
+
+    // Dry run check
+    const potentialInterest = neededLoan * 0.1;
+
+    if (player.cashflow - potentialInterest >= 0 && !player.isBankrupted) {
+        // Auto Take Loan through public method to ensure strict logic
+        this.addLog(`⚠️ ${player.name} forcing loan $${neededLoan} for ${description}...`);
+
+        // We need to bypass "turn check" if any? No, takeLoan is open.
+        // But takeLoan uses `state.players.find...`. 
+        // Better to call internal logic or just `this.takeLoan`.
+        this.takeLoan(player.id, neededLoan);
+
+        // Verify if loan was taken (cash increased)
         if (player.cash >= amount) {
             player.cash -= amount;
-            this.addLog(`💸 ${player.name} paid $${amount} for ${description}`);
-            return;
-        }
-
-        // Insufficient Funds
-        const deficit = amount - player.cash;
-
-        // Max Loan Check: 
-        // Existing logic: Loan allowed if Cashflow - Interest >= 0.
-        // Interest = 10% of Loan.
-        // So Max Loan = Cashflow * 10
-        // But we must also support existing debt.
-        // Actually, `takeLoan` checks future state.
-        // `player.cashflow - interest < 0` where interest is NEW interest.
-        // So we just iterate taking 1000s until covered or failed.
-
-        // Calculate needed loan
-        const neededLoan = Math.ceil(deficit / 1000) * 1000;
-
-        // Dry run check
-        const potentialInterest = neededLoan * 0.1;
-
-        if (player.cashflow - potentialInterest >= 0 && !player.isBankrupted) {
-            // Auto Take Loan through public method to ensure strict logic
-            this.addLog(`⚠️ ${player.name} forcing loan $${neededLoan} for ${description}...`);
-
-            // We need to bypass "turn check" if any? No, takeLoan is open.
-            // But takeLoan uses `state.players.find...`. 
-            // Better to call internal logic or just `this.takeLoan`.
-            this.takeLoan(player.id, neededLoan);
-
-            // Verify if loan was taken (cash increased)
-            if (player.cash >= amount) {
-                player.cash -= amount;
-                this.addLog(`💸 Paid $${amount} after loan.`);
-            } else {
-                // Failed to take loan despite check? (Maybe block logic?)
-                this.bankruptPlayer(player);
-            }
+            this.addLog(`💸 Paid $${amount} after loan.`);
         } else {
-            // Cannot afford loan -> Bankrupt
+            // Failed to take loan despite check? (Maybe block logic?)
             this.bankruptPlayer(player);
         }
+    } else {
+        // Cannot afford loan -> Bankrupt
+        this.bankruptPlayer(player);
     }
+}
 
     private bankruptPlayer(player: PlayerState) {
-        this.addLog(`☠️ ${player.name} IS BANKRUPT! Restarting with penalty...`);
-        this.state.lastEvent = { type: 'BANKRUPTCY', payload: { player: player.name } };
+    this.addLog(`☠️ ${player.name} IS BANKRUPT! Restarting with penalty...`);
+    this.state.lastEvent = { type: 'BANKRUPTCY', payload: { player: player.name } };
 
-        // Reset Logic
-        // player.isBankrupted = true; // DO NOT set to true effectively removing them. Prompt says "начинает заново".
-        // "начинает заново но уже может брать кредит только 50% от суммы пай дай"
+    // Reset Logic
+    // player.isBankrupted = true; // DO NOT set to true effectively removing them. Prompt says "начинает заново".
+    // "начинает заново но уже может брать кредит только 50% от суммы пай дай"
 
-        // Reset finances
-        const profession = PROFESSIONS.find(p => p.name === player.professionName) || PROFESSIONS[0];
+    // Reset finances
+    const profession = PROFESSIONS.find(p => p.name === player.professionName) || PROFESSIONS[0];
 
-        player.cash = profession.savings;
-        player.income = profession.salary;
-        player.expenses = profession.expenses;
-        player.cashflow = profession.salary - profession.expenses;
-        player.passiveIncome = 0;
+    player.cash = profession.savings;
+    player.income = profession.salary;
+    player.expenses = profession.expenses;
+    player.cashflow = profession.salary - profession.expenses;
+    player.passiveIncome = 0;
 
-        player.assets = [];
-        // Restore initial liabilities
-        const liabilities = [];
-        if (profession.carLoan) liabilities.push({ name: 'Car Loan', value: profession.carLoan.cost, expense: profession.carLoan.payment });
-        if (profession.creditCard) liabilities.push({ name: 'Credit Card', value: profession.creditCard.cost, expense: profession.creditCard.payment });
-        if (profession.schoolLoan) liabilities.push({ name: 'School Loan', value: profession.schoolLoan.cost, expense: profession.schoolLoan.payment });
-        if (profession.mortgage) liabilities.push({ name: 'Mortgage', value: profession.mortgage.cost, expense: profession.mortgage.payment });
-        if (profession.retailDebt) liabilities.push({ name: 'Retail Debt', value: profession.retailDebt.cost, expense: profession.retailDebt.payment });
-        player.liabilities = liabilities;
+    player.assets = [];
+    // Restore initial liabilities
+    const liabilities = [];
+    if (profession.carLoan) liabilities.push({ name: 'Car Loan', value: profession.carLoan.cost, expense: profession.carLoan.payment });
+    if (profession.creditCard) liabilities.push({ name: 'Credit Card', value: profession.creditCard.cost, expense: profession.creditCard.payment });
+    if (profession.schoolLoan) liabilities.push({ name: 'School Loan', value: profession.schoolLoan.cost, expense: profession.schoolLoan.payment });
+    if (profession.mortgage) liabilities.push({ name: 'Mortgage', value: profession.mortgage.cost, expense: profession.mortgage.payment });
+    if (profession.retailDebt) liabilities.push({ name: 'Retail Debt', value: profession.retailDebt.cost, expense: profession.retailDebt.payment });
+    player.liabilities = liabilities;
 
-        player.loanDebt = 0;
-        player.position = 0;
-        player.isFastTrack = false;
-        player.childrenCount = 0;
-        player.charityTurns = 0;
-        player.skippedTurns = 0;
+    player.loanDebt = 0;
+    player.position = 0;
+    player.isFastTrack = false;
+    player.childrenCount = 0;
+    player.charityTurns = 0;
+    player.skippedTurns = 0;
 
-        // Penalty
-        player.loanLimitFactor = 0.5;
-        this.addLog(`ℹ️ ${player.name} restarted. Loan Limit reduced to 50%.`);
-    }
+    // Penalty
+    player.loanLimitFactor = 0.5;
+    this.addLog(`ℹ️ ${player.name} restarted. Loan Limit reduced to 50%.`);
+}
 
-    resolveBabyRoll(): number | { total: number, values: number[] } {
-        const player = this.state.players[this.state.currentPlayerIndex];
-        const roll = Math.floor(Math.random() * 6) + 1;
-        const rollResult = { total: roll, values: [roll] };
+resolveBabyRoll(): number | { total: number, values: number[] } {
+    const player = this.state.players[this.state.currentPlayerIndex];
+    const roll = Math.floor(Math.random() * 6) + 1;
+    const rollResult = { total: roll, values: [roll] };
 
-        // User Request: "If baby is born..." implies it's the expected happy path.
-        // Let's make it ALWAYS happen (100% chance) for now to ensure feature usage.
-        // Or if standard rules (roll > 4?): "1-3 nothing, 4-6 baby"? 
-        // Current code was "<= 4". So 66%. 
-        // Let's make it 100% success for this feature iteration as requested.
-        const success = true;
+    // User Request: "If baby is born..." implies it's the expected happy path.
+    // Let's make it ALWAYS happen (100% chance) for now to ensure feature usage.
+    // Or if standard rules (roll > 4?): "1-3 nothing, 4-6 baby"? 
+    // Current code was "<= 4". So 66%. 
+    // Let's make it 100% success for this feature iteration as requested.
+    const success = true;
 
-        if (success) {
-            if (player.childrenCount < 3) {
-                player.childrenCount++;
-                const childExpense = player.childCost; // Use player's specific child cost
-                player.expenses += childExpense;
-                player.cashflow = player.income - player.expenses;
+    if (success) {
+        if (player.childrenCount < 3) {
+            player.childrenCount++;
+            const childExpense = player.childCost; // Use player's specific child cost
+            player.expenses += childExpense;
+            player.cashflow = player.income - player.expenses;
 
-                // No cash gift from bank by default? Original code gave $5000.
-                // Keeping $5000 gift if it was there? Original had it.
-                // User didn't ask to remove it.
-                // "New expenses and joy".
-                // I'll keep the logic but rely on `childCost` property properly.
+            // No cash gift from bank by default? Original code gave $5000.
+            // Keeping $5000 gift if it was there? Original had it.
+            // User didn't ask to remove it.
+            // "New expenses and joy".
+            // I'll keep the logic but rely on `childCost` property properly.
 
-                this.addLog(`🎉 Поздравляем! Родился ребёнок! (Кубик: ${roll}). Расходы +$${childExpense}/мес`);
-                this.state.lastEvent = {
-                    type: 'BABY_BORN',
-                    payload: {
-                        player: player.name,
-                        playerId: player.id,
-                        roll,
-                        childCost: childExpense
-                    }
-                };
-            } else {
-                this.addLog(`👶 ${player.name} уже имеет 3 детей (Максимум).`);
-                this.state.lastEvent = { type: 'BABY_MISSED', payload: { player: player.name, roll, reason: 'MAX_CHILDREN' } };
-            }
+            this.addLog(`🎉 Поздравляем! Родился ребёнок! (Кубик: ${roll}). Расходы +$${childExpense}/мес`);
+            this.state.lastEvent = {
+                type: 'BABY_BORN',
+                payload: {
+                    player: player.name,
+                    playerId: player.id,
+                    roll,
+                    childCost: childExpense
+                }
+            };
+        } else {
+            this.addLog(`👶 ${player.name} уже имеет 3 детей (Максимум).`);
+            this.state.lastEvent = { type: 'BABY_MISSED', payload: { player: player.name, roll, reason: 'MAX_CHILDREN' } };
         }
-
-        this.state.phase = 'ACTION'; // Enable Next
-        return rollResult;
     }
+
+    this.state.phase = 'ACTION'; // Enable Next
+    return rollResult;
+}
 
     // Force End Game & Calculate Rankings
     public calculateFinalRankings() {
-        const sortedPlayers = [...this.state.players].sort((a, b) => {
-            // 1. Fast Track Priority
-            if (a.isFastTrack && !b.isFastTrack) return -1;
-            if (!a.isFastTrack && b.isFastTrack) return 1;
+    const sortedPlayers = [...this.state.players].sort((a, b) => {
+        // 1. Fast Track Priority
+        if (a.isFastTrack && !b.isFastTrack) return -1;
+        if (!a.isFastTrack && b.isFastTrack) return 1;
 
-            // 2. Passive Income
-            if (a.passiveIncome !== b.passiveIncome) {
-                return b.passiveIncome - a.passiveIncome;
-            }
-
-            // 3. Cash
-            return b.cash - a.cash;
-        });
-
-        this.state.rankings = sortedPlayers.map((p, index) => ({
-            name: p.name,
-            place: index + 1,
-            reason: p.isFastTrack ? 'Fast Track' : `Passive Income: $${p.passiveIncome}`
-        }));
-
-        if (sortedPlayers.length > 0) {
-            this.state.winner = sortedPlayers[0].name;
-            this.state.isGameEnded = true;
+        // 2. Passive Income
+        if (a.passiveIncome !== b.passiveIncome) {
+            return b.passiveIncome - a.passiveIncome;
         }
 
-        return this.state.rankings;
+        // 3. Cash
+        return b.cash - a.cash;
+    });
+
+    this.state.rankings = sortedPlayers.map((p, index) => ({
+        name: p.name,
+        place: index + 1,
+        reason: p.isFastTrack ? 'Fast Track' : `Passive Income: $${p.passiveIncome}`
+    }));
+
+    if (sortedPlayers.length > 0) {
+        this.state.winner = sortedPlayers[0].name;
+        this.state.isGameEnded = true;
     }
 
-    getState(): GameState {
-        return {
-            ...this.state,
-            deckCounts: this.cardManager.getDeckCounts()
-        };
-    }
+    return this.state.rankings;
+}
+
+getState(): GameState {
+    return {
+        ...this.state,
+        deckCounts: this.cardManager.getDeckCounts()
+    };
+}
 }

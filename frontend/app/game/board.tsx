@@ -746,6 +746,19 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
         }
     }, [me, state.players, userId]);
 
+    // Sound Effects for Money
+    useEffect(() => {
+        if (!me) return;
+        const prevCash = prevCashRef.current;
+        if (prevCash !== undefined && me.cash > prevCash) {
+            const diff = me.cash - prevCash;
+            if (diff > 0) {
+                sfx.play('payday');
+            }
+        }
+        prevCashRef.current = me.cash;
+    }, [me?.cash]);
+
     const isMyTurn = me && state.players[state.currentPlayerIndex]?.id === me.id;
     const currentTurnPlayer = state.players[state.currentPlayerIndex];
     const currentPlayer = currentTurnPlayer; // Alias for existing code
@@ -1521,11 +1534,11 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
                                 className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0
                                     ${me.isSkippingTurns
-                                        ? 'bg-yellow-600/90 hover:bg-yellow-500 text-white animate-pulse'
+                                        ? 'bg-blue-600 hover:bg-blue-500 text-white animate-pulse'
                                         : 'bg-slate-800 hover:bg-indigo-600/50 border border-slate-700 text-slate-400 hover:text-white'}`}
                             >
-                                <span className="text-sm">{me.isSkippingTurns ? '⏸' : '▶️'}</span>
-                                <span>{me.isSkippingTurns ? 'ПАУЗА (AFK)' : 'РЕЖИМ ИГРЫ'}</span>
+                                <span className="text-sm">{me.isSkippingTurns ? '▶️' : '⏸'}</span>
+                                <span>{me.isSkippingTurns ? 'ВЕРНУТЬСЯ В ИГРУ' : 'ОТОЙТИ (AFK)'}</span>
                             </button>
                         )}
 
