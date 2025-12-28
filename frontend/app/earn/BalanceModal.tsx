@@ -50,6 +50,7 @@ export function BalanceModal({ isOpen, onClose, balance, tariff, onTopUp }: Bala
     // Map Backend Types to UI Logic
     if (tariff === 'PLAYER' || tariff === 'BASIC') commissionRate = 0.5;
     if (tariff === 'MASTER' || tariff === 'ADVANCED') commissionRate = 0.4;
+    // Partner/Premium: 20% comm (80% payout)
     if (tariff === 'PARTNER' || tariff === 'PREMIUM') commissionRate = 0.2;
 
     const payoutRate = 1 - commissionRate;
@@ -132,12 +133,15 @@ export function BalanceModal({ isOpen, onClose, balance, tariff, onTopUp }: Bala
                             {/* Tariff Info */}
                             <div className="flex justify-between items-center bg-slate-700/50 p-3 rounded-xl border border-slate-700">
                                 <div className="text-xs text-slate-400">Ваш тариф:</div>
-                                <div className={`text-xs font-bold px-2 py-0.5 rounded border ${tariff === 'PARTNER' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-500/30' :
-                                    tariff === 'MASTER' ? 'bg-purple-900/30 text-purple-400 border-purple-500/30' :
-                                        tariff === 'PLAYER' ? 'bg-blue-900/30 text-blue-400 border-blue-500/30' :
+                                <div className={`text-xs font-bold px-2 py-0.5 rounded border ${tariff === 'PARTNER' || tariff === 'PREMIUM' ? 'bg-yellow-900/30 text-yellow-400 border-yellow-500/30' :
+                                    tariff === 'MASTER' || tariff === 'ADVANCED' ? 'bg-purple-900/30 text-purple-400 border-purple-500/30' :
+                                        tariff === 'PLAYER' || tariff === 'BASIC' ? 'bg-blue-900/30 text-blue-400 border-blue-500/30' :
                                             'bg-slate-600 text-slate-300 border-slate-500'
                                     }`}>
-                                    {tariff || 'GUEST'}
+                                    {tariff === 'BASIC' ? 'PLAYER' :
+                                        tariff === 'ADVANCED' ? 'MASTER' :
+                                            tariff === 'PREMIUM' ? 'PARTNER' :
+                                                (tariff || 'GUEST')}
                                 </div>
                             </div>
 

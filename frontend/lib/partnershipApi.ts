@@ -49,6 +49,11 @@ export const partnershipApi = {
         return res.json();
     },
 
+    async getMyAvatars(userId: string) {
+        const res = await fetch(`${API_URL}/avatars/my-avatars/${userId}`);
+        return res.json();
+    },
+
     withdraw: async (userId: string, amount: number) => {
         const res = await fetch(`${API_URL}/withdraw`, {
             method: 'POST',

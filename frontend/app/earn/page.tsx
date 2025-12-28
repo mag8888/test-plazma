@@ -94,8 +94,7 @@ export default function EarnPage() {
                         console.log('📊 [Earn Page] Stats fetched:', stats);
 
                         // Also fetch avatars to determine tariff
-                        return fetch(`${process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'https://moneo.up.railway.app/api/partnership'}/avatars/my-avatars/${dbUser._id}`)
-                            .then(res => res.json())
+                        return partnershipApi.getMyAvatars(dbUser._id)
                             .then(data => {
                                 // Backend returns { avatars: [...] }
                                 const avatarsList = data.avatars || [];
@@ -189,8 +188,7 @@ export default function EarnPage() {
                 const updatedStats = await partnershipApi.getStats(partnershipUser._id);
 
                 // Fetch updated avatars to refresh tariff display
-                const avatarsRes = await fetch(`${process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL || 'https://moneo.up.railway.app/api/partnership'}/avatars/my-avatars/${partnershipUser._id}`);
-                const avatarsData = await avatarsRes.json();
+                const avatarsData = await partnershipApi.getMyAvatars(partnershipUser._id);
                 const avatarsList = avatarsData.avatars || [];
 
                 // Update state with both stats and avatars
@@ -557,8 +555,7 @@ export default function EarnPage() {
                                 const updatedStats = await partnershipApi.getStats(partnershipUser._id);
 
                                 // Fetch updated avatars to refresh tariff display (use proxy route)
-                                const avatarsRes = await fetch(`/api/partnership/avatars/my-avatars/${partnershipUser._id}`);
-                                const avatarsData = await avatarsRes.json();
+                                const avatarsData = await partnershipApi.getMyAvatars(partnershipUser._id);
                                 const avatarsList = avatarsData.avatars || [];
 
                                 setPartnershipUser({ ...partnershipUser, ...updatedStats, avatars: avatarsList });
