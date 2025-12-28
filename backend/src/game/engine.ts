@@ -682,18 +682,18 @@ export class GameEngine {
         // Charity Bonus (Overrides default limitation if active)
         if (player.charityTurns > 0) {
             // Rat Race: Can roll 1 or 2.
-            // Fast Track: Can roll 1, 2, or 3? (User said 1-3)
-            // We trust the `diceCount` requested if within limits.
+            // Fast Track: Can roll 1, 2, or 3 - PERMANENT (no countdown)
             const maxDice = player.isFastTrack ? 3 : 2;
             if (diceCount >= 1 && diceCount <= maxDice) {
                 validCount = diceCount;
             } else {
-                // Fallback to max allowed if requested more/less weirdly
-                validCount = maxDice; // Or default? Let's assume UI sends correct. 
-                // If UI sends 1, validCount becomes 1.
+                validCount = maxDice;
                 if (diceCount > 0 && diceCount <= maxDice) validCount = diceCount;
             }
-            player.charityTurns--; // Use up a charity turn
+            // Only decrease charity turns for Rat Race, Fast Track is permanent
+            if (!player.isFastTrack) {
+                player.charityTurns--;
+            }
         } else {
             // Normal Rules
             // Rat Race: 1 Die (Fixed)
@@ -1784,7 +1784,7 @@ export class GameEngine {
         }
 
         player.cash -= amount;
-        player.charityTurns = 3; // 3 turns of extra dice
+        player.charityTurns = 999; // Permanent for Fast Track (large number)
         this.addLog(`❤️ ${player.name} donated $${amount}. Can now roll extra dice for 3 turns!`);
 
         this.state.phase = 'ROLL'; // Re-enable roll? No, Charity replaces turn action usually?
