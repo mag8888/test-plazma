@@ -552,7 +552,7 @@ export class GameEngine {
         // Win Condition: +50k Income OR (Buy Dream AND 2 Businesses)
         // User Screenshot shows they have +$54,000 but didn't win, implying OR logic was desired but AND was implemented.
         let won = false;
-        if (incomeGoalMet || (dreamBought && businessCount >= 2)) {
+        if (incomeGoalMet || dreamBought) {
             won = true;
         }
 
