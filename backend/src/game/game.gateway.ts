@@ -292,7 +292,7 @@ export class GameGateway {
                     if (game) {
                         game.removePlayer(playerId);
                         // If game ended due to lack of players?
-                        this.io.to(roomId).emit('game_state_update', game.getState());
+                        this.io.to(roomId).emit('game_state_update', { state: game.getState() });
                         this.saveState(roomId, game);
                     }
 
@@ -949,7 +949,8 @@ export class GameGateway {
                         game.state.chat.shift();
                     }
 
-                    this.io.to(roomId).emit('state_updated', game.getState());
+                    const state = game.getState();
+                    this.io.to(roomId).emit('state_updated', { state });
                     // Optional: Specific 'chat_update' if state is too big, but for now state_updated is fine
                     this.saveState(roomId, game);
                 }
