@@ -923,7 +923,8 @@ export class GameGateway {
                 const game = this.games.get(roomId);
                 if (game) {
                     game.enterFastTrack(userId || socket.id);
-                    this.io.to(roomId).emit('state_updated', game.getState());
+                    const state = game.getState();
+                    this.io.to(roomId).emit('state_updated', { state });
                     this.saveState(roomId, game);
                 }
             });
