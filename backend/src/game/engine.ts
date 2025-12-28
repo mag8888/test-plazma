@@ -1785,7 +1785,10 @@ export class GameEngine {
 
         player.cash -= amount;
         player.charityTurns = 999; // Permanent for Fast Track (large number)
-        this.addLog(`❤️ ${player.name} donated $${amount}. Can now roll extra dice for 3 turns!`);
+        const message = player.isFastTrack
+            ? `❤️ ${player.name} donated $${amount}. Can now choose 1-3 dice EVERY turn!`
+            : `❤️ ${player.name} donated $${amount}. Can now roll extra dice for 3 turns!`;
+        this.addLog(message);
 
         this.state.phase = 'ROLL'; // Re-enable roll? No, Charity replaces turn action usually?
         // Wait, rule: "Land on Charity -> Donate -> End Turn. Next turns you roll extra."
