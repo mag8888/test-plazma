@@ -2405,7 +2405,14 @@ endTurn() {
             continue;
         }
 
-        // 2. Skipped Turns -> Decrement and Skip
+        // 2. AFK Players (isSkippingTurns) -> AUTO-SKIP TURN
+        if (nextPlayer.isSkippingTurns) {
+            this.addLog(`⏸ ${nextPlayer.name} пропускает ход (AFK)`);
+            attempts++;
+            continue;
+        }
+
+        // 3. Skipped Turns -> Decrement and Skip
         if ((nextPlayer.skippedTurns || 0) > 0) {
             nextPlayer.skippedTurns--;
             this.addLog(`🚫 ${nextPlayer.name} skips turn (Remaining: ${nextPlayer.skippedTurns})`);
