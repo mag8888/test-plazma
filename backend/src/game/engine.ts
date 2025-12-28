@@ -349,22 +349,6 @@ export class GameEngine {
                 }
             });
 
-            // Bank Loan Interest Calculation (if not in liabilities list fully?)
-            // Usually Bank Loan is in liabilities, so loop above catches it. 
-            // BUT lines 319-320 imply it might be separate?
-            // "if (player.loanDebt > 0) liabilitiesExpense += Math.ceil(player.loanDebt * 0.1);"
-            // Let's verify if 'Bank Loan' is added to liabilities array upon loan taking.
-            // Yes, usually borrow() adds it. But recalculate logic might double count if we are not careful.
-            // Existing logic:
-            // "player.liabilities.forEach(l => { if (l.expense) liabilitiesExpense += l.expense; });"
-            // "if (player.loanDebt > 0) { liabilitiesExpense += Math.ceil(player.loanDebt * 0.1); }"
-            // This implies existing logic ADDS calculated interest ON TOP of liabilities list? 
-            // OR it assumes Bank Loan is NOT in liabilities list?
-            // Let's trust existing logic structure: Base (prof.expenses) + specific adds.
-            // Wait, prof.expenses includes taxes/mortgage/etc. 
-            // If I use prof.expenses, I don't need to sum individual parts UNLESS I want to replace totalExpenses calculation.
-            // The breakdown should MATCH `totalExpenses`.
-
             // Existing Logic:
             // totalExpenses = prof.expenses; (This is static base?)
             // totalExpenses += children
