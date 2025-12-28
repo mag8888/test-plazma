@@ -32,6 +32,7 @@ export class BotService {
     transferStates: Map<number, TransferState> = new Map();
     broadcastStates: Map<number, BroadcastState> = new Map();
     participantStates: Map<number, { state: 'WAITING_POST_LINK', gameId: string }> = new Map();
+    photoUploadStates: Map<number, { state: 'WAITING_PHOTO' }> = new Map();
     cloudinaryService: CloudinaryService;
 
     constructor() {
@@ -218,6 +219,19 @@ export class BotService {
             await this.sendMainMenu(chatId, welcomeText);
         });
 
+        // /upload_photo command
+        this.bot.onText(/\/upload_photo/, async (msg) => {
+            const chatId = msg.chat.id;
+            const telegramId = msg.from?.id;
+
+            if (!telegramId) return;
+
+            this.photoUploadStates.set(chatId, { state: 'WAITING_PHOTO' });
+            this.bot?.sendMessage(chatId, "📸 **Загрузка фото**\n\nОтправьте ваше фото, которое будет использоваться в игре как ваш аватар.\n\nДля отмены используйте /cancel", {
+                parse_mode: 'Markdown'
+            });
+        });
+
         // Handle text messages (Menu Buttons)
         this.bot.on('message', async (msg) => {
             const chatId = msg.chat.id;
@@ -229,6 +243,7 @@ export class BotService {
                 this.adminStates.delete(chatId);
                 this.transferStates.delete(chatId);
                 this.masterStates.delete(chatId);
+                this.photoUploadStates.delete(chatId);
                 this.bot?.sendMessage(chatId, "❌ Действие отменено. Главное меню.", {
                     reply_markup: { remove_keyboard: true }
                 });
