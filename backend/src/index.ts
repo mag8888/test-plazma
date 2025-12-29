@@ -31,6 +31,13 @@ declare global {
 const app = express();
 app.set('trust proxy', 1);
 
+// Enable CORS for all origins (or configure specific ones)
+app.use(cors({
+    origin: true, // Allow any origin
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+}));
+
 let dbStatus = 'pending';
 let botStatus = 'pending';
 let botService: any = null; // Changed type to any to support Proxy
