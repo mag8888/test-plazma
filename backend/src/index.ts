@@ -98,6 +98,10 @@ app.use('/api/partnership', async (req, res) => {
 
     const url = `${partnershipUrl}${req.url}`;
 
+    console.log(`[Proxy Debug] Incoming: ${req.url}`);
+    console.log(`[Proxy Debug] Base: ${partnershipUrl}`);
+    console.log(`[Proxy Debug] Target: ${url}`);
+
     // console.log(`Proxying ${req.method} ${req.originalUrl} -> ${url}`);
 
     try {
