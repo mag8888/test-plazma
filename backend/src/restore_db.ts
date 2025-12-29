@@ -39,45 +39,51 @@ const listBackups = async () => {
 };
 
 const restoreBackup = async (url: string) => {
-    console.log(`Restoring REFERRALS ONLY from: ${url}`);
+    console.log(`📥 Downloading Backup from: ${url}`);
     const response = await fetch(url);
     const data = await response.json();
 
-    const users = data.collections?.users || data.users;
-
-    if (!users) {
-        console.error("Invalid Backup Format: No 'users' or 'collections.users' found.");
+    if (!data.collections) {
+        console.error("❌ Invalid Backup Format: No 'collections' object found.");
         return;
     }
 
-    // Restore Users
-    const { UserModel } = await import('./models/user.model');
-    console.log(`Found ${users.length} users in backup.`);
-    // console.log('Backup Users:', users.map((u: any) => u.username).join(', '));
+    const db = mongoose.connection.db;
+    if (!db) {
+        console.error("❌ DB Connection lost.");
+        return;
+    }
 
-    let restoredCount = 0;
-    for (const u of users) {
-        // Skip if user doesn't have a referrer in the backup
-        // Or should we restore nulls too? 
-        // User asked to "restore referrals".
-        // Let's assume we want to restore the state of 'referrer' and 'referredBy'.
+    const collections = Object.keys(data.collections);
+    console.log(`📦 Found collections: ${collections.join(', ')}`);
 
-        // Upsert based on telegram_id or username
-        const filter = u.telegram_id ? { telegram_id: u.telegram_id } : { username: u.username };
+    for (const colName of collections) {
+        const docs = data.collections[colName];
+        if (!docs || docs.length === 0) {
+            console.log(`- ${colName}: No documents.`);
+            continue;
+        }
 
-        // SAFE UPDATE: Only touch referral fields
-        const updateData: any = {};
-        if (u.referrer) updateData.referrer = u.referrer;
-        if (u.referredBy) updateData.referredBy = u.referredBy;
+        console.log(`🔄 Restoring ${colName} (${docs.length} docs)...`);
 
-        // Only update if we have something to update
-        if (Object.keys(updateData).length > 0) {
-            // console.log(`Restoring ${u.username}: referrer=${u.referrer || 'N/A'}, referredBy=${u.referredBy || 'N/A'}`);
-            await UserModel.findOneAndUpdate(filter, { $set: updateData }, { upsert: false }); // Do not create new users, only patch existing
-            restoredCount++;
+        try {
+            // 1. Clear existing data in Dev
+            await db.collection(colName).deleteMany({});
+
+            // 2. Pre-process docs (fix Dates, ObjectIds if needed)
+            // JSON turns Dates to Strings. Mongoose/Driver might not auto-convert raw inserts.
+            // We'll trust the driver for valid formats or basic string insertion.
+            // Ideally we'd map _id to ObjectId, but strings usually work in Mongo if consistent.
+
+            // 3. Insert
+            await db.collection(colName).insertMany(docs);
+            console.log(`✅ ${colName}: Restored.`);
+        } catch (e) {
+            console.error(`❌ Failed to restore ${colName}:`, e);
         }
     }
-    console.log(`Referrals restored for ${restoredCount} users.`);
+
+    console.log('🎉 Full Restoration Complete!');
 };
 
 const run = async () => {
