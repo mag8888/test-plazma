@@ -1529,14 +1529,15 @@ app.get('/api/admin/restore-latest', async (req, res) => {
 });
 
 // SPA Fallback - Must be the last route
-if (req.path.startsWith('/api')) {
-    return res.status(404).json({ error: 'Not found' });
-}
-// API-Only Mode (Frontend is separate)
-res.status(200).json({
-    message: 'MONEO Game API Service',
-    status: 'running',
-    docs: 'https://github.com/mag8888/moneo'
-});
+app.get('*', (req, res) => {
+    if (req.path.startsWith('/api')) {
+        return res.status(404).json({ error: 'Not found' });
+    }
+    // API-Only Mode (Frontend is separate)
+    res.status(200).json({
+        message: 'MONEO Game API Service',
+        status: 'running',
+        docs: 'https://github.com/mag8888/moneo'
+    });
 });
 
