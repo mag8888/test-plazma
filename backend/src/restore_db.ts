@@ -86,6 +86,8 @@ const restoreBackup = async (url: string) => {
     console.log('🎉 Full Restoration Complete!');
 };
 
+export { listBackups, restoreBackup };
+
 const run = async () => {
     // connectDB moved to inside blocks that need it
     const args = process.argv.slice(2);
@@ -110,4 +112,7 @@ const run = async () => {
     process.exit(0);
 };
 
-run();
+// Only run if called directly
+if (require.main === module) {
+    run();
+}
