@@ -1299,7 +1299,8 @@ export class BotService {
                 return;
             }
 
-            const refLink = `https://t.me/MONEO_game_bot?start=${user.username}`;
+            const botName = process.env.BOT_USERNAME || 'MONEO_game_bot';
+            const refLink = `https://t.me/${botName}?start=${user.username}`;
             // Fallback if no username? Use ID? But user request said "username if available, else ID".
             // User schema requires unique username. Bot users usually have one, or we generated one.
 
