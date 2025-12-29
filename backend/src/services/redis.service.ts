@@ -1,0 +1,77 @@
+import Redis from 'ioredis';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+export class RedisService {
+    private publisher: Redis;
+    private subscriber: Redis;
+    private isConnected: boolean = false;
+
+    constructor() {
+        // Use REDIS_URL from env or fallback to localhost
+        const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+
+        console.log('[RedisService] Connecting to:', redisUrl);
+
+        this.publisher = new Redis(redisUrl, {
+            retryStrategy: (times) => {
+                const delay = Math.min(times * 50, 2000);
+                return delay;
+            }
+        });
+
+        this.subscriber = new Redis(redisUrl, {
+            retryStrategy: (times) => {
+                const delay = Math.min(times * 50, 2000);
+                return delay;
+            }
+        });
+
+        this.publisher.on('connect', () => {
+            console.log('[Redis] Publisher connected');
+            this.isConnected = true;
+        });
+
+        this.subscriber.on('connect', () => {
+            console.log('[Redis] Subscriber connected');
+        });
+
+        this.publisher.on('error', (err) => console.error('[Redis] Publisher Error:', err));
+        this.subscriber.on('error', (err) => console.error('[Redis] Subscriber Error:', err));
+    }
+
+    /**
+     * Publish an event to a specific channel
+     */
+    async publish(channel: string, message: any): Promise<number> {
+        if (!this.isConnected) {
+            // Optional: Buffer functionality or check connection
+            // For now, we trust auto-reconnect or fail gracefully
+        }
+        return this.publisher.publish(channel, JSON.stringify(message));
+    }
+
+    /**
+     * Subscribe to a channel with a callback
+     */
+    async subscribe(channel: string, callback: (message: any) => void) {
+        await this.subscriber.subscribe(channel);
+
+        this.subscriber.on('message', (chn, msg) => {
+            if (chn === channel) {
+                try {
+                    const parsed = JSON.parse(msg);
+                    callback(parsed);
+                } catch (e) {
+                    console.error('[Redis] Parse error:', e);
+                }
+            }
+        });
+    }
+
+    async quit() {
+        await this.publisher.quit();
+        await this.subscriber.quit();
+    }
+}

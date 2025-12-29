@@ -28,13 +28,42 @@ declare global {
 
 // (Code moved to after app init)
 
+const app = express();
+app.set('trust proxy', 1);
+
 let dbStatus = 'pending';
 let botStatus = 'pending';
-let botService: BotService | null = null;
+let botService: any = null; // Changed type to any to support Proxy
 let gameGateway: GameGateway | null = null;
 
-const app = express();
-app.set('trust proxy', 1); // Enable Trust Proxy for Railway LB
+const isGameServiceOnly = process.env.MICROSERVICE_MODE === 'game';
+
+async function initServices() {
+    await connectDatabase();
+
+    if (isGameServiceOnly) {
+        console.log('🚀 Running in Game Service Mode (Microservice)');
+        const { BotProxy } = await import('./services/bot.proxy');
+        botService = new BotProxy();
+        botStatus = 'proxy-active';
+    } else {
+        console.log('🤖 Running in Monolith Mode');
+        botService = new BotService();
+        botStatus = 'active';
+        global.bot = botService.bot;
+    }
+
+    // Initialize GameGateway
+    gameGateway = new GameGateway(io);
+}
+
+// Call init immediately (async) but don't block server startup logic definition
+initServices();
+
+// Remove old initialization variables that were here
+// let botService: BotService | null = null;
+// let gameGateway: GameGateway | null = null;
+
 
 // Health Check Endpoint (Critical for Debugging)
 app.get('/api/health', (req, res) => {

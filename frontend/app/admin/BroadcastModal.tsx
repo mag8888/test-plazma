@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { getBackendUrl } from '../../lib/config';
 import { X, Upload, Users, DollarSign, Award } from 'lucide-react';
 
 interface BroadcastModalProps {
@@ -41,7 +42,7 @@ export default function BroadcastModal({ isOpen, onClose }: BroadcastModalProps)
         setCategory(selectedCategory);
 
         try {
-            const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const backendUrl = getBackendUrl();
             const response = await fetch(`${backendUrl}/api/admin/broadcast/recipients?category=${selectedCategory}`, {
                 headers: {
                     'x-admin-secret': localStorage.getItem('admin_secret') || ''
