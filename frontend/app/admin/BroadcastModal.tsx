@@ -81,7 +81,7 @@ export default function BroadcastModal({ isOpen, onClose }: BroadcastModalProps)
                 recipients: recipients.map(r => r.telegram_id)
             };
 
-            const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+            const backendUrl = getBackendUrl();
             const response = await fetch(`${backendUrl}/api/admin/broadcast`, {
                 method: 'POST',
                 headers: {
