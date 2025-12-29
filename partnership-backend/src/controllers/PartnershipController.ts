@@ -70,33 +70,8 @@ export class PartnershipController {
     static async getStats(req: Request, res: Response) {
         try {
             const { userId } = req.params;
-            console.log(`[getStats] DEBUG: Looking for userId='${userId}'`);
-
-            // Check count to verify DB content
-            const totalUsers = await User.countDocuments({});
-            console.log(`[getStats] DEBUG: Total users in DB: ${totalUsers}`);
-
-            if (!mongoose.Types.ObjectId.isValid(userId)) {
-                console.log(`[getStats] ERROR: Invalid ObjectId: ${userId}`);
-                return res.status(400).json({ error: 'Invalid User ID' });
-            }
-
             const user = await User.findById(userId);
-            console.log(`[getStats] DEBUG: User found? ${!!user}`);
-
-            if (!user) {
-                // Try finding by telegram_id just in case ID is mixed up
-                if (!isNaN(Number(userId))) {
-                    console.log(`[getStats] DEBUG: Trying by telegram_id...`);
-                    const userByTg = await User.findOne({ telegram_id: userId });
-                    if (userByTg) {
-                        console.log(`[getStats] DEBUG: Found by TG ID! Redirecting logic.`);
-                        // Hack: assign to user var (need to change let/const above)
-                        // But for now just return error
-                    }
-                }
-                return res.status(404).json({ error: 'User not found' });
-            }
+            if (!user) return res.status(404).json({ error: 'User not found' });
 
             // Count avatars
             const avatarCount = await Avatar.countDocuments({ owner: userId });
@@ -220,6 +195,23 @@ export class PartnershipController {
             res.status(500).json({ error: error.message });
         }
     }
+
+    // Global Stats for Main Page
+    static async getGlobalStats(req: Request, res: Response) {
+        try {
+            const users = await User.countDocuments();
+            res.json({
+                users,
+                debug: {
+                    dbName: mongoose.connection.name,
+                    host: process.env.RAILWAY_SERVICE_NAME || 'local'
+                }
+            });
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
 
     static async getPartners(req: Request, res: Response) {
         try {

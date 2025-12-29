@@ -108,6 +108,16 @@ export const partnershipApi = {
         }
     },
 
+    async getGlobalStats() {
+        const res = await fetch(`${API_URL}/stats`);
+        return res.json();
+    },
+
+    async getPremiumCount() {
+        const res = await fetch(`${API_URL}/avatars/premium-count`);
+        return res.json();
+    },
+
     // Check Pending Legacy Balance
     async getLegacyBalance(initData: string) {
         const BACKEND_URL = getBackendUrl();

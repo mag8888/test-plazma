@@ -74,8 +74,7 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
 
     const loadPremiumCount = async () => {
         try {
-            const res = await fetch('/api/partnership/avatars/premium-count');
-            const data = await res.json();
+            const data = await partnershipApi.getPremiumCount();
             setPremiumCount(data);
         } catch (err) {
             console.error('Failed to load premium count:', err);

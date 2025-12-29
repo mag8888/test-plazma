@@ -49,8 +49,7 @@ export default function EarnPage() {
     const referralLink = `https://t.me/MONEO_game_bot?start=${user?.username || user?.id || 'unknown'}`;
 
     useEffect(() => {
-        fetch('/api/stats')
-            .then(res => res.json())
+        partnershipApi.getGlobalStats()
             .then(data => {
                 if (data.users) setTotalUsers(data.users);
                 if (data.debug) {
@@ -59,6 +58,7 @@ export default function EarnPage() {
                 }
             })
             .catch(err => console.error("Stats fetch error", err));
+
 
         if (user) {
             // Determine the ID to use for Partnership Backend
