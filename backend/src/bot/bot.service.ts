@@ -734,7 +734,7 @@ export class BotService {
                 this.bot?.sendMessage(chatId, "🚀 Открыть приложение MONEO:", {
                     reply_markup: {
                         inline_keyboard: [[
-                            { text: "📱 Открыть Mini App", web_app: { url: 'https://moneo.up.railway.app' } }
+                            { text: "📱 Открыть Mini App", web_app: { url: process.env.FRONTEND_URL || 'https://moneo.up.railway.app' } }
                         ]]
                     }
                 });
@@ -1346,7 +1346,7 @@ export class BotService {
 
             // Generate magic link code
             const code = await authService.createAuthCode(telegramId);
-            const webAppUrl = 'https://moneo.up.railway.app';
+            const webAppUrl = process.env.FRONTEND_URL || 'https://moneo.up.railway.app';
             const magicLink = `${webAppUrl}/?auth=${code}`;
 
             // Generate password if not exists
@@ -1395,7 +1395,7 @@ export class BotService {
             const user = await UserModel.findOne({ telegram_id: chatId });
 
             const code = await authService.createAuthCode(chatId);
-            const webAppUrl = 'https://moneo.up.railway.app';
+            const webAppUrl = process.env.FRONTEND_URL || 'https://moneo.up.railway.app';
             // WebApp Button (Internal)
             // Link (External Browser with Auth)
             const link = `${webAppUrl}/?auth=${code}`;
