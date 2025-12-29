@@ -87,8 +87,16 @@ app.use(express.json());
 // Proxy to Partnership Backend (Internal)
 // Frontend calls /api/partnership/user -> We forward to http://localhost:4000/api/user
 app.use('/api/partnership', async (req, res) => {
-    const PARTNERSHIP_URL = process.env.PARTNERSHIP_API_URL || 'http://127.0.0.1:4000/api';
-    const url = `${PARTNERSHIP_URL}${req.url}`;
+    let partnershipUrl = process.env.PARTNERSHIP_API_URL || 'http://127.0.0.1:4000/api';
+    // Remove trailing slash from base if present to avoid double slashes
+    partnershipUrl = partnershipUrl.replace(/\/$/, '');
+
+    // Ensure target ends with /api because Partnership Service routes start with /api
+    if (!partnershipUrl.endsWith('/api')) {
+        partnershipUrl += '/api';
+    }
+
+    const url = `${partnershipUrl}${req.url}`;
 
     // console.log(`Proxying ${req.method} ${req.originalUrl} -> ${url}`);
 
