@@ -1500,17 +1500,43 @@ app.get('/api/users/search', async (req, res) => {
 
 
 
-// SPA Fallback - Must be the last route
-// SPA Fallback - Must be the last route
-app.get('*', (req, res) => {
-    if (req.path.startsWith('/api')) {
-        return res.status(404).json({ error: 'Not found' });
+// Temporary Restore Endpoint (GET for Browser Access)
+app.get('/api/admin/restore-latest', async (req, res) => {
+    const secret = req.query.secret;
+    if (secret !== process.env.ADMIN_SECRET && secret !== 'temporary-restore-secret') {
+        return res.status(403).json({ error: 'Forbidden. Use ?secret=temporary-restore-secret' });
     }
-    // API-Only Mode (Frontend is separate)
-    res.status(200).json({
-        message: 'MONEO Game API Service',
-        status: 'running',
-        docs: 'https://github.com/mag8888/moneo'
-    });
+
+    try {
+        console.log('🔄 Triggering Remote Restore...');
+        const { listBackups, restoreBackup } = await import('./restore_db');
+
+        const backups = await listBackups();
+        if (backups.length === 0) {
+            return res.status(404).json({ error: 'No backups found' });
+        }
+
+        const latest = backups[0];
+        console.log(`🎯 Restoring: ${latest.secure_url}`);
+
+        await restoreBackup(latest.secure_url);
+
+        res.json({ success: true, message: `Restored backup from ${latest.created_at}`, url: latest.secure_url });
+    } catch (e: any) {
+        console.error("Restore Endpoint Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// SPA Fallback - Must be the last route
+if (req.path.startsWith('/api')) {
+    return res.status(404).json({ error: 'Not found' });
+}
+// API-Only Mode (Frontend is separate)
+res.status(200).json({
+    message: 'MONEO Game API Service',
+    status: 'running',
+    docs: 'https://github.com/mag8888/moneo'
+});
 });
 
