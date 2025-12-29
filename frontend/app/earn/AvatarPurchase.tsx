@@ -48,7 +48,8 @@ const AVATAR_TYPES = [
 ];
 
 export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPurchaseProps) {
-    const [myAvatars, setMyAvatars] = useState<any[]>([]);
+    // Initialize from props if available
+    const [myAvatars, setMyAvatars] = useState<any[]>(partnershipUser?.avatars || []);
     const [premiumCount, setPremiumCount] = useState({ count: 0, limit: 25, available: 25 });
     const [loading, setLoading] = useState(false);
     const [showMatrix, setShowMatrix] = useState(false);
@@ -57,15 +58,19 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
 
     useEffect(() => {
         if (partnershipUser?._id) {
-            loadMyAvatars();
+            // Update state if props change (e.g. after purchase in parent)
+            if (partnershipUser.avatars) {
+                setMyAvatars(partnershipUser.avatars);
+            } else {
+                loadMyAvatars();
+            }
             loadPremiumCount();
         }
     }, [partnershipUser]);
 
     const loadMyAvatars = async () => {
         try {
-            const res = await fetch(`/api/partnership/avatars/my-avatars/${partnershipUser._id}`);
-            const data = await res.json();
+            const data = await partnershipApi.getMyAvatars(partnershipUser._id);
             setMyAvatars(data.avatars || []);
         } catch (err) {
             console.error('Failed to load avatars:', err);
