@@ -57,6 +57,50 @@ const restoreBackup = async (url: string) => {
     const collections = Object.keys(data.collections);
     console.log(`📦 Found collections: ${collections.join(', ')}`);
 
+
+    // Helper to convert string IDs to ObjectIds
+    const convertObjectIds = (doc: any) => {
+        if (!doc) return doc;
+        if (typeof doc !== 'object') return doc;
+
+        // Convert _id if it's a valid 24-char hex string
+        if (doc._id && typeof doc._id === 'string' && /^[0-9a-fA-F]{24}$/.test(doc._id)) {
+            doc._id = new mongoose.Types.ObjectId(doc._id);
+        }
+
+        // Convert common reference fields
+        ['referrer', 'owner', 'user', 'parent', 'inviter'].forEach(field => {
+            if (doc[field] && typeof doc[field] === 'string' && /^[0-9a-fA-F]{24}$/.test(doc[field])) {
+                doc[field] = new mongoose.Types.ObjectId(doc[field]);
+            }
+        });
+
+        // Handle 'partners' array in Avatar
+        if (Array.isArray(doc.partners)) {
+            doc.partners = doc.partners.map((p: any) => {
+                if (typeof p === 'string' && /^[0-9a-fA-F]{24}$/.test(p)) {
+                    return new mongoose.Types.ObjectId(p);
+                }
+                return p;
+            });
+        }
+
+        // Convert timestamps provided as matching specific date strings if necessary, 
+        // but driver usually handles ISO strings somewhat okay? 
+        // Better to be safe: createdAt, updatedAt
+        ['createdAt', 'updatedAt', 'masterExpiresAt', 'subscriptionExpires'].forEach(field => {
+            if (doc[field] && typeof doc[field] === 'string') {
+                // Check if looks like date? 2024-....
+                const d = new Date(doc[field]);
+                if (!isNaN(d.getTime())) {
+                    doc[field] = d;
+                }
+            }
+        });
+
+        return doc;
+    };
+
     for (const colName of collections) {
         const docs = data.collections[colName];
         if (!docs || docs.length === 0) {
@@ -70,13 +114,11 @@ const restoreBackup = async (url: string) => {
             // 1. Clear existing data in Dev
             await db.collection(colName).deleteMany({});
 
-            // 2. Pre-process docs (fix Dates, ObjectIds if needed)
-            // JSON turns Dates to Strings. Mongoose/Driver might not auto-convert raw inserts.
-            // We'll trust the driver for valid formats or basic string insertion.
-            // Ideally we'd map _id to ObjectId, but strings usually work in Mongo if consistent.
+            // 2. Pre-process docs (fix Dates, ObjectIds)
+            const processedDocs = docs.map((d: any) => convertObjectIds(d));
 
             // 3. Insert
-            await db.collection(colName).insertMany(docs);
+            await db.collection(colName).insertMany(processedDocs);
             console.log(`✅ ${colName}: Restored.`);
         } catch (e) {
             console.error(`❌ Failed to restore ${colName}:`, e);
