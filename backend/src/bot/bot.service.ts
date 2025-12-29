@@ -232,6 +232,41 @@ export class BotService {
             });
         });
 
+        // /restore command - Admin only
+        this.bot.onText(/\/restore/, async (msg) => {
+            const chatId = msg.chat.id;
+            const telegramId = msg.from?.id;
+            const isAdmin = process.env.ADMIN_IDS?.split(',').includes(String(telegramId));
+
+            if (!isAdmin) {
+                this.bot?.sendMessage(chatId, "⛔ Access Denied.");
+                return;
+            }
+
+            this.bot?.sendMessage(chatId, "⏳ Starting Database Restoration...\nThis may take a minute.");
+
+            try {
+                // Dynamically import restore logic
+                const { listBackups, restoreBackup } = await import('../restore_db');
+
+                const backups = await listBackups();
+                if (backups.length === 0) {
+                    this.bot?.sendMessage(chatId, "❌ No backups found in Cloudinary.");
+                    return;
+                }
+
+                const latest = backups[0];
+                this.bot?.sendMessage(chatId, `📥 Found backup: ${latest.created_at}\nRestoring from: ${latest.secure_url}`);
+
+                await restoreBackup(latest.secure_url);
+
+                this.bot?.sendMessage(chatId, "✅ Full Database Restored Successfully!");
+            } catch (e: any) {
+                console.error("Restore Error:", e);
+                this.bot?.sendMessage(chatId, `❌ Restore Failed:\n${e.message}`);
+            }
+        });
+
         // Handle Photos
         this.bot.on('photo', async (msg) => {
             const chatId = msg.chat.id;
