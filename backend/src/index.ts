@@ -38,27 +38,8 @@ let gameGateway: GameGateway | null = null;
 
 const isGameServiceOnly = process.env.MICROSERVICE_MODE === 'game';
 
-async function initServices() {
-    await connectDatabase();
+// Services initialized in bootstrap()
 
-    if (isGameServiceOnly) {
-        console.log('🚀 Running in Game Service Mode (Microservice)');
-        const { BotProxy } = await import('./services/bot.proxy');
-        botService = new BotProxy();
-        botStatus = 'proxy-active';
-    } else {
-        console.log('🤖 Running in Monolith Mode');
-        botService = new BotService();
-        botStatus = 'active';
-        global.bot = botService.bot;
-    }
-
-    // Initialize GameGateway
-    gameGateway = new GameGateway(io);
-}
-
-// Call init immediately (async) but don't block server startup logic definition
-initServices();
 
 // Remove old initialization variables that were here
 // let botService: BotService | null = null;
@@ -1276,11 +1257,28 @@ const bootstrap = async () => {
         try {
             console.log('📦 Initializing Card Manager (DB Mode)...');
             const { DbCardManager } = await import('./game/db.card.manager'); // Re-import if not already in scope
-            await DbCardManager.getInstance().init();
             console.log('✅ Card Manager Ready (DB).');
         } catch (err) {
             console.error('Card Manager failed to initialize', err);
             process.exit(1);
+        }
+
+        // 3. Bot Service / Microservice Logic
+        try {
+            if (isGameServiceOnly) {
+                console.log('🚀 Running in Game Service Mode (Microservice)');
+                const { BotProxy } = await import('./services/bot.proxy');
+                botService = new BotProxy();
+                botStatus = 'proxy-active';
+            } else {
+                console.log('🤖 Running in Monolith Mode');
+                botService = new BotService();
+                botStatus = 'active';
+                global.bot = botService.bot;
+            }
+        } catch (botErr) {
+            console.error('Bot Init Failed:', botErr);
+            botStatus = `failed: ${botErr}`;
         }
 
         // Admin endpoint to reload cards (useful after migration)
@@ -1357,15 +1355,7 @@ const bootstrap = async () => {
                 res.status(500).json({ success: false, error: error.message });
             }
         });
-        try {
-            console.log('Initializing Bot Service...');
-            botService = new BotService();
-            botStatus = 'active';
-            console.log('Bot Service Active.');
-        } catch (botErr) {
-            console.error('Bot Init Failed:', botErr);
-            botStatus = `failed: ${botErr}`;
-        }
+
 
         // 3. Game Gateway
         try {
