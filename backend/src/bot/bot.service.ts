@@ -236,10 +236,16 @@ export class BotService {
         this.bot.onText(/\/restore/, async (msg) => {
             const chatId = msg.chat.id;
             const telegramId = msg.from?.id;
-            const isAdmin = process.env.ADMIN_IDS?.split(',').includes(String(telegramId));
+
+            const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => id.trim());
+            if (process.env.TELEGRAM_ADMIN_ID) {
+                adminIds.push(process.env.TELEGRAM_ADMIN_ID.trim());
+            }
+
+            const isAdmin = adminIds.includes(String(telegramId));
 
             if (!isAdmin) {
-                this.bot?.sendMessage(chatId, "⛔ Access Denied.");
+                this.bot?.sendMessage(chatId, `⛔ Access Denied. (Your ID: ${telegramId})`);
                 return;
             }
 
