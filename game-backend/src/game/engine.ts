@@ -2589,43 +2589,27 @@ export class GameEngine {
         const roll = Math.floor(Math.random() * 6) + 1;
         const rollResult = { total: roll, values: [roll] };
 
-        // User Request: "If baby is born..." implies it's the expected happy path.
-        // Let's make it ALWAYS happen (100% chance) for now to ensure feature usage.
-        // Or if standard rules (roll > 4?): "1-3 nothing, 4-6 baby"? 
-        // Current code was "<= 4". So 66%. 
-        // Let's make it 100% success for this feature iteration as requested.
-        const success = true;
+        // DISABLED: simplified logic as requested by User (Sound + Skip Turn Only)
+        // No child added, no expenses.
 
-        if (success) {
-            if (player.childrenCount < 3) {
-                player.childrenCount++;
-                const childExpense = player.childCost; // Use player's specific child cost
-                player.expenses += childExpense;
-                player.cashflow = player.income - player.expenses;
+        player.skippedTurns = 1;
+        this.addLog(`👶 ${player.name} : Попал на ребенка -> Пропуск хода!`);
 
-                // No cash gift from bank by default? Original code gave $5000.
-                // Keeping $5000 gift if it was there? Original had it.
-                // User didn't ask to remove it.
-                // "New expenses and joy".
-                // I'll keep the logic but rely on `childCost` property properly.
-
-                this.addLog(`🎉 Поздравляем! Родился ребёнок! (Кубик: ${roll}). Расходы +$${childExpense}/мес`);
-                this.state.lastEvent = {
-                    type: 'BABY_BORN',
-                    payload: {
-                        player: player.name,
-                        playerId: player.id,
-                        roll,
-                        childCost: childExpense
-                    }
-                };
-            } else {
-                this.addLog(`👶 ${player.name} уже имеет 3 детей (Максимум).`);
-                this.state.lastEvent = { type: 'BABY_MISSED', payload: { player: player.name, roll, reason: 'MAX_CHILDREN' } };
+        // Emit standard event so frontend plays sound (if configured)
+        this.state.lastEvent = {
+            type: 'BABY_BORN',
+            payload: {
+                player: player.name,
+                playerId: player.id,
+                roll,
+                childCost: 0
             }
-        }
+        };
 
-        this.state.phase = 'ACTION'; // Enable Next
+        this.state.phase = 'ACTION';
+        // Auto-End Turn to process the skip logic cleanly
+        this.endTurn();
+
         return rollResult;
     }
 
