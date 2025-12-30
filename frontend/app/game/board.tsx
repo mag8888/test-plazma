@@ -21,13 +21,13 @@ interface BoardProps {
 
 // ... (existing code top)
 
-// (At line 511, remove duplicate me/isMyTurn/currentPlayer if I moved them up? No, I only added `me` up top. But wait, `isMyTurn` etc depend on `me`.)
-// Actually, I should probably keep `me` at line 511 where it was, just Update it.
-// My previous tool call injected `me` at line 108? 
+// (At line 511, remove duplicate localPlayer/isMyTurn/currentPlayer if I moved them up? No, I only added `localPlayer` up top. But wait, `isMyTurn` etc depend on `localPlayer`.)
+// Actually, I should probably keep `localPlayer` at line 511 where it was, just Update it.
+// My previous tool call injected `localPlayer` at line 108? 
 // Let's Undo line 108 addition if possible or just remove it, and Update line 511 properly.
 // Wait, I can't undo. I will Update Line 511 to be empty (or just the new logic) and Remove the one at line 108 if it exists.
-// Actually, `me` is used in `useEffects`? No, it's used in Render.
-// Ideally `me` is derived near top is fine.
+// Actually, `localPlayer` is used in `useEffects`? No, it's used in Render.
+// Ideally `localPlayer` is derived near top is fine.
 // But `isMyTurn` etc are at 512.
 // Let's just update the ONE place it should be.
 // I will target the `BoardProps` specifically first to fix the build error.
@@ -458,7 +458,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
             setTurnNotification(`🚫 ${state.lastEvent.payload?.player} пропускает ход! (Осталось: ${state.lastEvent.payload?.remaining})`);
             setTimeout(() => setTurnNotification(null), 3000);
 
-            // Critical Fix: If opponent skipped and turn passed back to me, reset local rolled state
+            // Critical Fix: If opponent skipped and turn passed back to localPlayer, reset local rolled state
             if (state.players[state.currentPlayerIndex].id === socket.id) {
                 setHasRolled(false);
             }
@@ -622,7 +622,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                 // const newIdx = data.state?.currentPlayerIndex;
                 // const meInList = data.state?.players?.findIndex((p: any) => p.id === socket.id);
                 // 
-                // // If turn passed TO me
+                // // If turn passed TO localPlayer
                 // if (typeof oldIdx === 'number' && typeof newIdx === 'number' && oldIdx !== newIdx && newIdx === meInList) {
                 //     sfx.play('turn');
                 // }
@@ -735,78 +735,84 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
     };
 
     const handleEnterFastTrack = () => {
-        if (!me) return;
-        socket.emit('enter_fast_track', { roomId, userId: me?.id });
+        if (!localPlayer) return;
+        socket.emit('enter_fast_track', { roomId, userId: localPlayer?.id });
     };
 
     const handleEndGame = () => {
-        if (!me) return;
+        if (!localPlayer) return;
         if (window.confirm("Вы уверены, что хотите принудительно завершить игру и подсчитать рейтинги?")) {
-            socket.emit('host_end_game', { roomId, userId: me?.userId || me?.id });
+            socket.emit('host_end_game', { roomId, userId: localPlayer?.userId || localPlayer?.id });
         }
     };
 
     const handleKickPlayer = (playerId: string) => {
-        if (!me) return;
+        if (!localPlayer) return;
         if (!window.confirm("Вы действительно хотите удалить этого игрока из игры?")) return;
-        socket.emit('kick_player', { roomId, playerId, userId: me.userId || me.id });
+        socket.emit('kick_player', { roomId, playerId, userId: localPlayer.userId || localPlayer.id });
     };
 
     const handleForceSkip = () => {
-        if (!me) return;
+        if (!localPlayer) return;
         if (!window.confirm("Принудительно завершить ход текущего игрока?")) return;
-        socket.emit('host_skip_turn', { roomId, userId: me?.userId || me?.id });
+        socket.emit('host_skip_turn', { roomId, userId: localPlayer?.userId || localPlayer?.id });
     };
 
     const handleTogglePause = () => {
-        if (!me) return;
-        socket.emit('admin_toggle_pause', { roomId, userId: me?.userId || me?.id });
+        if (!localPlayer) return;
+        socket.emit('admin_toggle_pause', { roomId, userId: localPlayer?.userId || localPlayer?.id });
     };
 
     // Correctly identify local player
     // PRIORITY: Socket ID -> User ID -> Matching Name (fallback if strictly necessary, but risky)
-    const me = state.players.find((p: any) => p.id === socket.id || (userId && p.userId === userId));
+    const localPlayer = state.players.find((p: any) => p.id === socket.id || (userId && p.userId === userId));
 
     // Debug logging for identity issues
     useEffect(() => {
-        if (!me) {
+        if (!localPlayer) {
             console.warn('[Board] Failed to identify myself!', { socketId: socket.id, userId, players: state.players });
         } else {
-            // console.log('[Board] Identified as:', me.name);
+            // Debug Balance Jumping
+            console.log(`[Board] 👤 MY IDENTITY: ${localPlayer.name} ($${localPlayer.cash}) | 🎲 TURN: ${state.players[state.currentPlayerIndex]?.name}`);
+
+            if (localPlayer.id !== state.players[state.currentPlayerIndex]?.id && localPlayer.cash === state.players[state.currentPlayerIndex]?.cash) {
+                console.warn('[Board] ⚠️ SUSPICIOUS: My Balance matches Active Player Balance (coincidence?)');
+            }
         }
-    }, [me, state.players, userId]);
+    }, [localPlayer, state.players, userId, state.currentPlayerIndex]);
 
     // Sound Effects for Money
     useEffect(() => {
-        if (!me) return;
+        if (!localPlayer) return;
         const prevCash = prevCashRef.current;
-        if (prevCash !== undefined && me.cash > prevCash) {
-            const diff = me.cash - prevCash;
+        if (prevCash !== undefined && localPlayer.cash > prevCash) {
+            const diff = localPlayer.cash - prevCash;
             if (diff > 0) {
                 sfx.play('payday');
             }
         }
-        prevCashRef.current = me.cash;
-    }, [me?.cash]);
+        prevCashRef.current = localPlayer.cash;
+    }, [localPlayer?.cash]);
 
-    const isMyTurn = me && state.players[state.currentPlayerIndex]?.id === me.id;
+    const isMyTurn = localPlayer && state.players[state.currentPlayerIndex]?.id === localPlayer.id;
     const currentTurnPlayer = state.players[state.currentPlayerIndex];
     const currentPlayer = currentTurnPlayer; // Alias for existing code
-    const showExitButton = me ? !me.isFastTrack : false;
+    const showExitButton = localPlayer ? !localPlayer.isFastTrack : false;
 
     // Handle "Spectator" or "Loading Identity" case
-    if (!me) {
+    if (!localPlayer) {
         // If we can't identify, we are either a spectator or loading.
         // For now, allow rendering but with limited functionality (or fallback strictly for display?)
         // Better to return a loading screen or show board as spectator.
         // But user reported "seeing other assets", so likely just removing the fallback fixes it.
-        // We let it continue, `me` will be undefined.
-        // We MUST guard `me.assets` access below.
+        // We let it continue, `localPlayer` will be undefined.
+        // We MUST guard `localPlayer.assets` access below.
     }
 
 
     // Calculate total asset yield
-    const totalAssetYield = me?.assets?.reduce((sum: number, a: any) => sum + (a.cashflow || 0), 0) || 0;
+    // Calculate total asset yield
+    const totalAssetYield = localPlayer?.assets?.reduce((sum: number, a: any) => sum + (a.cashflow || 0), 0) || 0;
 
     if (!currentTurnPlayer) return <div>Loading...</div>; // Safety check
 
@@ -913,7 +919,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                             <div className="space-y-3">
                                 {/* GIFT ACTION (Available to everyone) */}
-                                {selectedPlayerForMenu.id !== me?.id ? (
+                                {selectedPlayerForMenu.id !== localPlayer?.id ? (
                                     <button
                                         onClick={() => {
                                             setBankRecipientId(selectedPlayerForMenu.id);
@@ -929,7 +935,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 )}
 
                                 {/* HOST ACTIONS */}
-                                {isHost && selectedPlayerForMenu.id !== me?.id && (
+                                {isHost && selectedPlayerForMenu.id !== localPlayer?.id && (
                                     <>
                                         <div className="h-px bg-slate-700/50 my-2"></div>
                                         <div className="grid grid-cols-2 gap-3">
@@ -1004,40 +1010,40 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                     <span className="text-4xl">👷</span>
                                     <div>
                                         <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Профессия</span>
-                                        <div className="text-xl font-bold text-white">{me.professionName || 'Выбор...'}</div>
+                                        <div className="text-xl font-bold text-white">{localPlayer.professionName || 'Выбор...'}</div>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3 mb-4">
                                     <div onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800">
                                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс</div>
-                                        <div className="font-mono text-xl text-green-400 font-bold">${me.cash?.toLocaleString()}</div>
+                                        <div className="font-mono text-xl text-green-400 font-bold">${localPlayer.cash?.toLocaleString()}</div>
                                     </div>
                                     <div onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800">
                                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит</div>
-                                        <div className="font-mono text-xl text-red-400 font-bold">${me.loanDebt?.toLocaleString()}</div>
+                                        <div className="font-mono text-xl text-red-400 font-bold">${localPlayer.loanDebt?.toLocaleString()}</div>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3 pb-3 border-b border-slate-800/50 mb-3">
                                     <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
                                         <div className="text-[9px] text-slate-500 uppercase tracking-wider">Пассивный доход</div>
-                                        <div className="font-mono text-green-400 font-medium">+${me.passiveIncome?.toLocaleString() || 0}</div>
+                                        <div className="font-mono text-green-400 font-medium">+${localPlayer.passiveIncome?.toLocaleString() || 0}</div>
                                     </div>
                                     <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
                                         <div className="text-[9px] text-slate-500 uppercase tracking-wider">Денежный поток</div>
-                                        <div className="font-mono text-green-400 font-medium">+${me.cashflow?.toLocaleString()}</div>
+                                        <div className="font-mono text-green-400 font-medium">+${localPlayer.cashflow?.toLocaleString()}</div>
                                     </div>
                                 </div>
 
                                 <div className="grid grid-cols-2 gap-3">
                                     <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
                                         <div className="text-[9px] text-slate-500 uppercase tracking-wider">Доход</div>
-                                        <div className="font-mono text-slate-300 font-medium">${me.income?.toLocaleString()}</div>
+                                        <div className="font-mono text-slate-300 font-medium">${localPlayer.income?.toLocaleString()}</div>
                                     </div>
                                     <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
                                         <div className="text-[9px] text-slate-500 uppercase tracking-wider">Расходы</div>
-                                        <div className="font-mono text-slate-300 font-medium">${me.expenses?.toLocaleString()}</div>
+                                        <div className="font-mono text-slate-300 font-medium">${localPlayer.expenses?.toLocaleString()}</div>
                                     </div>
                                 </div>
 
@@ -1048,26 +1054,26 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         <div className="flex flex-col">
                                             <span className="text-[10px] text-slate-500 uppercase font-black tracking-widest mb-0.5">PAYDAY (Денежный поток)</span>
                                             <div className="text-2xl font-mono text-green-400 font-bold tracking-tight">
-                                                +${(me.cashflow || 0).toLocaleString()} <span className="text-xs text-slate-500 font-normal">/мес</span>
+                                                +${(localPlayer.cashflow || 0).toLocaleString()} <span className="text-xs text-slate-500 font-normal">/мес</span>
                                             </div>
                                         </div>
                                         <div className="text-3xl filter drop-shadow-md group-hover:scale-110 transition-transform">💰</div>
                                     </div>
                                     <div className="w-full bg-slate-800/50 h-1.5 mt-3 rounded-full overflow-hidden">
                                         {/* Progress visual: ratio of passive to expenses? or just filled */}
-                                        {me.isFastTrack ? (
+                                        {localPlayer.isFastTrack ? (
                                             // FAST TRACK PROGRESS
                                             <>
                                                 <div className="w-full bg-slate-800/50 h-1.5 mt-3 rounded-full overflow-hidden">
                                                     <div
                                                         className="h-full bg-gradient-to-r from-purple-600 to-pink-500 shadow-[0_0_10px_rgba(236,72,153,0.5)]"
-                                                        style={{ width: `${Math.min(100, (me.cashflow / 50000) * 100)}%` }} // Rough estimate if no start captured
+                                                        style={{ width: `${Math.min(100, (localPlayer.cashflow / 50000) * 100)}%` }} // Rough estimate if no start captured
                                                     ></div>
                                                 </div>
                                                 <div className="flex justify-between items-center mt-1">
                                                     <span className="text-[9px] text-slate-500">Цель: +$50,000 (Нужно еще)</span>
                                                     <span className="text-[9px] text-pink-400 font-bold">
-                                                        ${Math.max(0, 50000 - (me.passiveIncome - (me.fastTrackStartIncome || 0))).toLocaleString()}
+                                                        ${Math.max(0, 50000 - (localPlayer.passiveIncome - (localPlayer.fastTrackStartIncome || 0))).toLocaleString()}
                                                     </span>
                                                 </div>
                                             </>
@@ -1077,12 +1083,12 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                                 <div className="w-full bg-slate-800/50 h-1.5 mt-3 rounded-full overflow-hidden">
                                                     <div
                                                         className="h-full bg-gradient-to-r from-green-600 to-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.5)]"
-                                                        style={{ width: `${Math.min(100, (me.passiveIncome / Math.max(1, me.expenses)) * 100)}%` }}
+                                                        style={{ width: `${Math.min(100, (localPlayer.passiveIncome / Math.max(1, localPlayer.expenses)) * 100)}%` }}
                                                     ></div>
                                                 </div>
                                                 <div className="flex justify-between items-center mt-1">
                                                     <span className="text-[9px] text-slate-500">Финансовая свобода</span>
-                                                    <span className="text-[9px] text-green-400 font-bold">{Math.floor((me.passiveIncome / Math.max(1, me.expenses)) * 100)}%</span>
+                                                    <span className="text-[9px] text-green-400 font-bold">{Math.floor((localPlayer.passiveIncome / Math.max(1, localPlayer.expenses)) * 100)}%</span>
                                                 </div>
                                             </>
                                         )}
@@ -1095,9 +1101,9 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
                                         <span className="font-mono text-green-400">+${totalAssetYield}</span>
                                     </h3>
-                                    {me.assets?.length > 0 ? (
+                                    {localPlayer.assets?.length > 0 ? (
                                         <div className="space-y-2">
-                                            {me.assets.map((a: any, i: number) => (
+                                            {localPlayer.assets.map((a: any, i: number) => (
                                                 <div
                                                     key={i}
                                                     onClick={() => setTransferAssetItem({ item: a, index: i })}
@@ -1328,15 +1334,15 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         <div className="grid grid-cols-3 gap-2">
                             <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
                                 <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс</span>
-                                <span className="text-sm font-black text-green-400 font-mono tracking-tight">${me?.cash?.toLocaleString() || 0}</span>
+                                <span className="text-sm font-black text-green-400 font-mono tracking-tight">${localPlayer?.cash?.toLocaleString() || 0}</span>
                             </div>
                             <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
                                 <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Выплата</span>
-                                <span className="text-sm font-black text-green-400 font-mono tracking-tight">+${(me?.cashflow || 0).toLocaleString()}</span>
+                                <span className="text-sm font-black text-green-400 font-mono tracking-tight">+${(localPlayer?.cashflow || 0).toLocaleString()}</span>
                             </div>
                             <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
                                 <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Кредит</span>
-                                <span className="text-sm font-black text-red-400 font-mono tracking-tight">-${me?.loanDebt?.toLocaleString() || 0}</span>
+                                <span className="text-sm font-black text-red-400 font-mono tracking-tight">-${localPlayer?.loanDebt?.toLocaleString() || 0}</span>
                             </div>
                         </div>
                     </div>
@@ -1355,7 +1361,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                     <span className="text-3xl filter drop-shadow-md">👷</span>
                                     <div>
                                         <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Профессия</span>
-                                        <div className="text-lg font-bold text-white leading-tight tracking-tight max-w-[140px] truncate" title={me?.professionName || ''}>{me?.professionName || 'Загрузка...'}</div>
+                                        <div className="text-lg font-bold text-white leading-tight tracking-tight max-w-[140px] truncate" title={localPlayer?.professionName || ''}>{localPlayer?.professionName || 'Загрузка...'}</div>
                                     </div>
                                 </div>
                             </div>
@@ -1364,7 +1370,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             <div className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800/80 relative overflow-hidden">
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="text-[9px] text-blue-400 uppercase font-bold tracking-wider">PAYDAY</span>
-                                    <span className="font-mono text-green-400 font-bold text-lg leading-none">+${(me?.cashflow || 0).toLocaleString()}</span>
+                                    <span className="font-mono text-green-400 font-bold text-lg leading-none">+${(localPlayer?.cashflow || 0).toLocaleString()}</span>
                                 </div>
                                 <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                                     <div
@@ -1379,14 +1385,14 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group/btn relative">
                                     <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
                                     <div className="font-mono text-xl text-green-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left relative">
-                                        <AnimatedNumber value={me?.cash || 0} />
-                                        <CashChangeIndicator currentCash={me?.cash || 0} />
+                                        <AnimatedNumber value={localPlayer?.cash || 0} />
+                                        <CashChangeIndicator currentCash={localPlayer?.cash || 0} />
                                     </div>
                                 </button>
                                 <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group/btn">
                                     <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит 💳</div>
                                     <div className="font-mono text-xl text-red-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left">
-                                        ${me?.loanDebt?.toLocaleString() || 0}
+                                        ${localPlayer?.loanDebt?.toLocaleString() || 0}
                                     </div>
                                 </button>
                             </div>
@@ -1395,7 +1401,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/50">
                                 <div className="flex justify-between items-center">
                                     <span className="text-[9px] text-slate-500 uppercase font-bold">Доход</span>
-                                    <span className="font-mono text-slate-300 font-bold">${me?.income?.toLocaleString() || 0}</span>
+                                    <span className="font-mono text-slate-300 font-bold">${localPlayer?.income?.toLocaleString() || 0}</span>
                                 </div>
                                 <div className="flex justify-between items-center">
                                     <div className="flex items-center gap-1">
@@ -1407,7 +1413,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         </button>
                                         <span className="text-[9px] text-slate-500 uppercase font-bold">Расходы</span>
                                     </div>
-                                    <span className="font-mono text-slate-400 font-bold">${me?.expenses?.toLocaleString() || 0}</span>
+                                    <span className="font-mono text-slate-400 font-bold">${localPlayer?.expenses?.toLocaleString() || 0}</span>
                                 </div>
                             </div>
 
@@ -1420,9 +1426,9 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 <span className="font-mono text-green-400 bg-green-900/20 px-2 py-0.5 rounded-lg">+${totalAssetYield}</span>
                             </h3>
 
-                            {me?.assets?.length > 0 ? (
+                            {localPlayer?.assets?.length > 0 ? (
                                 <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1 -mr-2">
-                                    {me.assets.map((a: any, i: number) => (
+                                    {localPlayer.assets.map((a: any, i: number) => (
                                         <div
                                             key={i}
                                             onClick={() => setTransferAssetItem({ item: a, index: i })}
@@ -1481,7 +1487,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 onSquareClick={(sq: any) => setSquareInfo(sq)}
                                 showExitButton={showExitButton}
                                 onExitClick={() => {
-                                    if (me?.isFastTrack) {
+                                    if (localPlayer?.isFastTrack) {
                                         setShowFastTrackInfo(true);
                                     } else {
                                         setShowFastTrackModal(true);
@@ -1495,7 +1501,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                     <ActiveCardZone
                                         state={state}
                                         isMyTurn={isMyTurn}
-                                        me={me}
+                                        localPlayer={localPlayer}
                                         roomId={roomId}
                                         onDismissMarket={handleDismissCard}
                                         onMarketCardClick={(card) => setSquareInfo({
@@ -1567,16 +1573,16 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         </div>
 
                         {/* DESKTOP SKIP / PAUSE TOGGLE */}
-                        {!me?.isBankrupted && (
+                        {!localPlayer?.isBankrupted && (
                             <button
                                 onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
                                 className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0
-                                    ${me.isSkippingTurns
+                                    ${localPlayer.isSkippingTurns
                                         ? 'bg-blue-600 hover:bg-blue-500 text-white animate-pulse'
                                         : 'bg-slate-800 hover:bg-indigo-600/50 border border-slate-700 text-slate-400 hover:text-white'}`}
                             >
-                                <span className="text-sm">{me.isSkippingTurns ? '▶️' : '⏸'}</span>
-                                <span>{me.isSkippingTurns ? 'ВЕРНУТЬСЯ В ИГРУ' : 'ОТОЙТИ (AFK)'}</span>
+                                <span className="text-sm">{localPlayer.isSkippingTurns ? '▶️' : '⏸'}</span>
+                                <span>{localPlayer.isSkippingTurns ? 'ВЕРНУТЬСЯ В ИГРУ' : 'ОТОЙТИ (AFK)'}</span>
                             </button>
                         )}
 
@@ -1596,7 +1602,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                         {/* 3. PLAYERS GRID (Small Cards) */}
                         <div className="grid grid-cols-2 gap-2 shrink-0 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
-                            {state.players.filter((p: any) => p.id !== me?.id).map((p: any) => {
+                            {state.players.filter((p: any) => p.id !== localPlayer?.id).map((p: any) => {
                                 const isCurrent = p.id === currentPlayer.id;
                                 return (
                                     <div
@@ -1616,7 +1622,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                     </div>
                                 );
                             })}
-                            {/* Placeholder for "Myself" if I want to see me in list? Probably duplicate. User asked for "Players" grid. */}
+                            {/* Placeholder for "Myself" if I want to see localPlayer in list? Probably duplicate. User asked for "Players" grid. */}
                             <div
                                 className="bg-[#1e293b]/50 rounded-2xl p-2.5 border border-slate-700/30 flex items-center justify-center gap-2 text-slate-500 italic text-[10px] cursor-help"
                                 title="Это вы"
@@ -1635,7 +1641,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                     roomId={roomId}
                                     socket={socket}
                                     messages={state.chat || []}
-                                    currentUser={me}
+                                    currentUser={localPlayer}
                                     gameLogs={state.log || []}
                                     className="w-full h-full"
                                 />
@@ -1678,7 +1684,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-1 pb-2">
                             {state.players.map((p: any) => {
                                 const isCurrent = p.id === currentPlayer?.id;
-                                const isMe = p.id === me?.id;
+                                const isMe = p.id === localPlayer?.id;
                                 return (
                                     <div
                                         key={p.id}
@@ -1713,7 +1719,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         {/* 2. MAIN CONTROLS */}
                         <div className="flex gap-3">
                             {/* Roll Logic */}
-                            {(me?.charityTurns || 0) > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+                            {(localPlayer?.charityTurns || 0) > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
                                 <div className="flex gap-2 flex-1 h-16">
                                     <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
                                         <span className="text-xl">🎲</span>
@@ -1723,7 +1729,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         <span className="text-xl">🎲🎲</span>
                                         <span>2</span>
                                     </button>
-                                    {(me?.isFastTrack) && (
+                                    {(localPlayer?.isFastTrack) && (
                                         <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
                                             <span className="text-xl">🎲×3</span>
                                             <span>3</span>
@@ -1773,7 +1779,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             </button>
 
                             {/* Fast Track Button (Mobile) */}
-                            {me?.canEnterFastTrack && isMyTurn && (
+                            {localPlayer?.canEnterFastTrack && isMyTurn && (
                                 <button
                                     onClick={() => setShowFastTrackModal(true)}
                                     className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
@@ -1783,16 +1789,16 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             )}
 
                             {/* Sandbox Toggle (Skip/Play) - Available to ALL active players (AFK Mode) */}
-                            {!me?.isBankrupted && (
+                            {!localPlayer?.isBankrupted && (
                                 <button
                                     onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
                                     className={`w-16 h-16 rounded-xl border flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-all shadow-lg
-                                    ${me.isSkippingTurns
+                                    ${localPlayer.isSkippingTurns
                                             ? 'bg-yellow-600 border-yellow-500 text-white animate-pulse'
                                             : 'bg-indigo-600 border-indigo-500 text-white'}`}
                                 >
-                                    <span className="text-xl">{me.isSkippingTurns ? '⏸' : '▶️'}</span>
-                                    <span>{me.isSkippingTurns ? 'Пауза' : 'Играть'}</span>
+                                    <span className="text-xl">{localPlayer.isSkippingTurns ? '⏸' : '▶️'}</span>
+                                    <span>{localPlayer.isSkippingTurns ? 'Пауза' : 'Играть'}</span>
                                 </button>
                             )}
 
@@ -1819,7 +1825,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                     <BankModal
                         isOpen={showBank}
                         onClose={() => { setShowBank(false); setBankRecipientId(''); }}
-                        player={me}
+                        player={localPlayer}
                         roomId={roomId}
                         transactions={state.transactions || []}
                         players={state.players}
@@ -1848,7 +1854,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 onToggleOrientation={() => setForceLandscape(!forceLandscape)}
                                 onCancelGame={() => {
                                     if (window.confirm("Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.")) {
-                                        socket.emit('delete_room', { roomId, userId: me?.userId || me?.id });
+                                        socket.emit('delete_room', { roomId, userId: localPlayer?.userId || localPlayer?.id });
                                     }
                                 }}
                             />
@@ -1865,8 +1871,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
 
                     {showExpenseBreakdown && (
                         <ExpenseBreakdownModal
-                            breakdown={me?.expenseBreakdown}
-                            totalExpenses={me?.expenses || 0}
+                            breakdown={localPlayer?.expenseBreakdown}
+                            totalExpenses={localPlayer?.expenses || 0}
                             onClose={() => setShowExpenseBreakdown(false)}
                         />
                     )}
@@ -1875,13 +1881,13 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         showFastTrackModal && (
                             <ExitToFastTrackModal
                                 onClose={() => setShowFastTrackModal(false)}
-                                player={me}
+                                player={localPlayer}
                                 onConfirm={handleEnterFastTrack}
                             />
                         )
                     }
 
-                    {showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} player={me} />}
+                    {showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} player={localPlayer} />}
 
                     {
                         transferAssetItem && (
@@ -1890,7 +1896,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 onClose={() => setTransferAssetItem(null)}
                                 asset={transferAssetItem.item}
                                 players={state.players}
-                                myId={me?.id}
+                                myId={localPlayer?.id}
                                 onTransfer={handleTransferAsset}
                             />
                         )
@@ -1935,7 +1941,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 onClose={() => setCongratulateData(null)}
                                 targetPlayerName={congratulateData.targetName}
                                 targetPlayerId={congratulateData.targetId}
-                                me={state.players.find((p: any) => p.id === socket.id) || state.players[0]}
+                                localPlayer={state.players.find((p: any) => p.id === socket.id) || state.players[0]}
                                 roomId={roomId}
                                 socket={socket}
                             />
