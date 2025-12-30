@@ -8,6 +8,7 @@ import dotenv from 'dotenv';
 import { createAdapter } from '@socket.io/redis-adapter';
 import { createClient } from 'redis';
 import { GameGateway } from './game/game.gateway';
+import { DbCardManager } from './game/db.card.manager';
 
 dotenv.config();
 
@@ -60,6 +61,9 @@ mongoose.connect(MONGO_URI as string)
 
         await setupRedis();
 
+        // Initialize Card Manager (Loads cards from DB or seeds defaults)
+        await DbCardManager.getInstance().init();
+
         // Initialize Game Gateway after DB and Redis
         gameGateway = new GameGateway(io);
         await gameGateway.initialize();
@@ -99,6 +103,20 @@ app.post('/api/rooms/:roomId/deal/transfer', (req, res) => {
         res.json({ success: true, ...result });
     } catch (e: any) {
         res.status(400).json({ error: e.message });
+    }
+});
+
+// Admin: Force Reload Cards
+app.post('/api/admin/cards/reload', async (req, res) => {
+    try {
+        const secret = req.headers['x-admin-secret'];
+        if (process.env.ADMIN_SECRET && secret !== process.env.ADMIN_SECRET) {
+            return res.status(403).json({ error: "Unauthorized" });
+        }
+        await DbCardManager.getInstance().reload();
+        res.json({ success: true, message: "Cards reloaded from DB" });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
     }
 });
 
