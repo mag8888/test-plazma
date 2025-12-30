@@ -63,6 +63,13 @@ export class DbCardManager {
                 market: this.marketDeckTemplate.length,
                 expense: this.expenseDeckTemplate.length
             });
+
+            // AUTO-REPAIR: If we have very few cards (e.g. < 5 Small Deals), assume DB is old/broken and Reset.
+            // Verified Hardcoded counts: Small (~40), Big (~20), Market (~20).
+            if (this.smallDealsTemplate.length < 10 || this.bigDealsTemplate.length < 5) {
+                console.warn('🚨 DETECTED BROKEN/OLD DATABASE (Low Card Counts). Auto-triggering FORCE RESEED...');
+                await this.forceReseed();
+            }
         } catch (e) {
             console.error('Failed to load cards from DB:', e);
             // Fallback to memory defaults if DB fails? 
