@@ -78,7 +78,6 @@ const UserSchema: Schema = new Schema({
         token: String,
         displayName: String
     }
-}
 }, { timestamps: true });
 
 // Indexes for High Performance

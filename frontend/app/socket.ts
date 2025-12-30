@@ -1,9 +1,9 @@
 "use client";
 
 import { io } from "socket.io-client";
-import { getBackendUrl } from "../lib/config";
+import { getBackendUrl, getGameServiceUrl } from "../lib/config";
 
-const SOCKET_URL = getBackendUrl();
+const SOCKET_URL = getGameServiceUrl();
 
 export const socket = io(SOCKET_URL, {
     autoConnect: true,

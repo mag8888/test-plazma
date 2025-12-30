@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { socket } from '../socket';
+import { getGameServiceUrl } from '../../lib/config';
 import { ConfirmModal } from './ConfirmModal';
 
 interface ActiveCardZoneProps {
@@ -742,7 +743,7 @@ const FeedCardItem = ({
                                 onClick={async () => {
                                     try {
                                         // Use new API endpoint
-                                        const res = await fetch(`/api/rooms/${roomId}/deal/transfer`, {
+                                        const res = await fetch(`${getGameServiceUrl()}/api/rooms/${roomId}/deal/transfer`, {
                                             method: 'POST',
                                             headers: { 'Content-Type': 'application/json' },
                                             body: JSON.stringify({
@@ -994,7 +995,7 @@ export const ActiveCardZone = ({
             useEffect(() => {
                 if (timeLeft <= 0) {
                     // Auto Roll
-                    fetch(`/api/rooms/${roomId}/baby/roll`, {
+                    fetch(`${getGameServiceUrl()}/api/rooms/${roomId}/baby/roll`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' }
                     }).catch(e => socket.emit('roll_dice', { roomId }));
@@ -1017,7 +1018,7 @@ export const ActiveCardZone = ({
                         <button
                             onClick={async () => {
                                 try {
-                                    const res = await fetch(`/api/rooms/${roomId}/baby/roll`, {
+                                    const res = await fetch(`${getGameServiceUrl()}/api/rooms/${roomId}/baby/roll`, {
                                         method: 'POST',
                                         headers: { 'Content-Type': 'application/json' }
                                     });

@@ -20,3 +20,23 @@ export const getBackendUrl = () => {
     console.error("Critical: Backend URL not configured. Set NEXT_PUBLIC_API_URL.");
     return '';
 };
+
+export const getGameServiceUrl = () => {
+    let url = (process.env.NEXT_PUBLIC_GAME_API_URL || '').trim();
+    if (url) {
+        if (!url.startsWith('http')) {
+            url = `https://${url}`;
+        }
+        return url.replace(/\/$/, '');
+    }
+
+    // Fallback: If no strict Game URL set, assume it might be on port 5001 locally
+    // or same origin if deployed with path routing (future).
+    // For now, let's default to localhost:5001 if hostname is localhost
+    if (typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')) {
+        return 'http://localhost:5001';
+    }
+
+    // Default to existing Backend URL if we assume legacy behavior or Same Origin proxy
+    return getBackendUrl();
+};

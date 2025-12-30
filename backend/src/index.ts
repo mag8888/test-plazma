@@ -1,11 +1,9 @@
 import express from 'express';
 import { createServer } from 'http';
-import { Server } from 'socket.io';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { BotService } from './bot/bot.service';
 import { AuthController } from './auth/auth.controller';
-import { GameGateway } from './game/game.gateway';
 import { connectDatabase } from './database';
 import path from 'path';
 import fs from 'fs';
@@ -41,7 +39,6 @@ app.use(cors({
 let dbStatus = 'pending';
 let botStatus = 'pending';
 let botService: any = null; // Changed type to any to support Proxy
-let gameGateway: GameGateway | null = null;
 
 const isGameServiceOnly = process.env.MICROSERVICE_MODE === 'game';
 
@@ -67,16 +64,8 @@ app.get('/api/health', (req, res) => {
 
 const httpServer = createServer(app);
 
-// Initialize Socket.io
-const io = new Server(httpServer, {
-    cors: {
-        origin: "*",
-        methods: ["GET", "POST"]
-    },
-    pingTimeout: 60000,
-    pingInterval: 25000,
-    transports: ['polling', 'websocket']
-});
+// Initialize Socket.io - REMOVED (Moved to Game Service)
+// const io = new Server(httpServer, { ... });
 
 app.use(express.json());
 
@@ -164,35 +153,7 @@ app.get('/game/:id', (req, res) => {
     res.redirect(`/game?id=${id}`);
 });
 
-// --- NEW GAME ENDPOINTS ---
-
-app.post('/api/rooms/:roomId/baby/roll', (req, res) => {
-    try {
-        const { roomId } = req.params;
-        if (!gameGateway) throw new Error("Game Service not ready");
-        const result = gameGateway.handleBabyRoll(roomId);
-        res.json({ success: true, ...result });
-    } catch (e: any) {
-        res.status(400).json({ error: e.message });
-    }
-});
-
-app.post('/api/rooms/:roomId/deal/transfer', (req, res) => {
-    try {
-        const { roomId } = req.params;
-        const { fromUserId, targetPlayerId, cardId } = req.body;
-
-        if (!fromUserId || !targetPlayerId || !cardId) {
-            return res.status(400).json({ error: "Missing required fields" });
-        }
-
-        if (!gameGateway) throw new Error("Game Service not ready");
-        const result = gameGateway.handleTransferDeal(roomId, fromUserId, targetPlayerId, cardId);
-        res.json({ success: true, ...result });
-    } catch (e: any) {
-        res.status(400).json({ error: e.message });
-    }
-});
+// --- NEW GAME ENDPOINTS (MOVED TO GAME SERVICE) ---
 
 import { AuthService } from './auth/auth.service';
 
@@ -1236,12 +1197,6 @@ app.get(/.*/, (req, res) => {
 
 const PORT = process.env.PORT || 3001;
 
-io.on('connection', (socket) => {
-    console.log('User connected:', socket.id);
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
-    });
-});
 
 const bootstrap = async () => {
     try {
@@ -1376,15 +1331,7 @@ const bootstrap = async () => {
         });
 
 
-        // 3. Game Gateway
-        try {
-            console.log('Initializing Game Gateway...');
-            gameGateway = new GameGateway(io);
-            await gameGateway.initialize();
-            console.log('Game Gateway Active.');
-        } catch (gwErr) {
-            console.error('Game Gateway Init Failed:', gwErr);
-        }
+        // 3. Game Gateway - REMOVED (Moved to Game Service)
 
         // 3.1 Backup Service
         try {
