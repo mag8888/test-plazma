@@ -30,4 +30,8 @@ const TransactionSchema: Schema = new Schema({
     createdAt: { type: Date, default: Date.now }
 });
 
+// Indexes for Performance
+TransactionSchema.index({ user: 1, createdAt: -1 }); // Fast history lookup
+TransactionSchema.index({ type: 1 }); // Admin stats filtering
+
 export const Transaction = mongoose.model<ITransaction>('Transaction', TransactionSchema);

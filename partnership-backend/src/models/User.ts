@@ -78,6 +78,11 @@ const UserSchema: Schema = new Schema({
         token: String,
         displayName: String
     }
+}
 }, { timestamps: true });
+
+// Indexes for High Performance
+UserSchema.index({ referrer: 1 }); // Critical for "Get Partners" queries
+UserSchema.index({ telegram_id: 1 }); // Ensure fast login lookups
 
 export const User = mongoose.model<IUser>('User', UserSchema);
