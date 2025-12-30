@@ -118,13 +118,13 @@ router.post('/login/telegram', async (req: Request, res: Response) => {
 router.post('/magic-login', async (req: Request, res: Response) => {
     try {
         const { code } = req.body;
-        console.log(`[MagicLogin] Attempting login with code: '${code}'`);
+        // console.log(`[MagicLogin] Attempting login with code: '${code}'`);
 
         if (!code) return res.status(400).json({ error: "Missing code" });
 
         const user = await authService.verifyAuthCode(code);
         if (!user) {
-            console.log(`[MagicLogin] Code '${code}' rejected: User not found or expired.`);
+            console.log(`[MagicLogin] Code rejected: User not found or expired.`);
             return res.status(401).json({ error: "Invalid or expired code" });
         }
         console.log(`[MagicLogin] Success for user: ${user.username} (${user.id})`);
