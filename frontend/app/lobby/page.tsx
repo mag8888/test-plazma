@@ -249,7 +249,7 @@ export default function Lobby() {
     if (!mounted || !user) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-500">Загрузка...</div>;
 
     return (
-        <div className="min-h-screen bg-[#0f172a] text-white p-4 lg:p-8 pb-32 font-sans">
+        <div className="min-h-screen bg-slate-900 text-white p-4 lg:p-8 pb-32 font-sans">
             <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-4 gap-8">
 
                 {/* 👈 LEFT COLUMN: Profile & Leaderboard */}

@@ -27,7 +27,7 @@ export default function HomePage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#0f172a] text-white font-sans relative overflow-hidden">
+        <div className="min-h-screen bg-slate-900 text-white font-sans relative overflow-hidden">
 
             {/* Background Ambience */}
             <div className="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
@@ -72,7 +72,7 @@ export default function HomePage() {
                     >
                         <div className="absolute inset-0 bg-white/20 rounded-[2rem] blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
 
-                        <div className="relative bg-[#0f172a]/40 backdrop-blur-sm rounded-[1.8rem] p-6 h-40 flex flex-col items-center justify-center border border-white/10 overflow-hidden">
+                        <div className="relative bg-slate-900/40 backdrop-blur-sm rounded-[1.8rem] p-6 h-40 flex flex-col items-center justify-center border border-white/10 overflow-hidden">
                             {/* Shine Effect */}
                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 translate-x-[-200%] group-hover:animate-shine"></div>
 
