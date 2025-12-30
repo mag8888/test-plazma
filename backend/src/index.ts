@@ -52,13 +52,27 @@ const isGameServiceOnly = process.env.MICROSERVICE_MODE === 'game';
 
 // Health Check Endpoint (Critical for Debugging)
 app.get('/api/health', (req, res) => {
+    // If bot service is supposed to be active (monolith mode), check it.
+    // If botService is null or bot is null, we might be in trouble.
+    const isBotActive = global.bot != null;
+
+    // In game-only mode (microservice), we don't care about bot here.
+    const isGameMode = process.env.MICROSERVICE_MODE === 'game';
+
     const health = {
-        status: 'ok',
+        status: (isBotActive || isGameMode) ? 'ok' : 'degraded',
         uptime: process.uptime(),
         db: mongoose.connection.readyState === 1 ? 'connected' : 'disconnected',
-        bot: global.bot ? 'active' : 'inactive',
-        version: '1.1.2-backup-list-fix' // Tracer
+        bot: isBotActive ? 'active' : 'inactive',
+        version: '1.2.0-microservices'
     };
+
+    if (!isGameMode && !isBotActive && process.uptime() > 60) {
+        // If monolith and no bot after 60s startup, consider it unhealthy
+        // Return 503 so Watchdog triggers alert
+        return res.status(503).json(health);
+    }
+
     res.status(200).json(health);
 });
 

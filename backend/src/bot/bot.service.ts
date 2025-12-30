@@ -1239,6 +1239,7 @@ export class BotService {
                     console.error("Failed to fetch/upload user photo:", e);
                 }
 
+                // First just prepare the user object, don't save or reward yet
                 user = new UserModel({
                     username,
                     first_name: firstName,
@@ -1248,51 +1249,55 @@ export class BotService {
                     photo_url: photoUrl
                 });
 
-                // Process Referral
+                let referrerToReward: any = null;
+
+                // Check Referral Code
                 if (referralCode) {
-                    // Start payload often comes as '12345' (referrer's telegramId or database Id?)
-                    // Let's assume it's username or ID.
-                    // If param is simple string, it's likely username or id.
-
-                    // Try to find referrer
-                    // We support referral by: @MONEO_game_bot?start=referrer_username
-                    // OR ?start=referrer_id
-
                     let referrer = await UserModel.findOne({ username: referralCode });
-                    if (!referrer) {
-                        // Try finding by telegram_id? (If referral code is number)
-                        if (!isNaN(Number(referralCode))) {
-                            referrer = await UserModel.findOne({ telegram_id: Number(referralCode) });
-                        }
+                    if (!referrer && !isNaN(Number(referralCode))) {
+                        referrer = await UserModel.findOne({ telegram_id: Number(referralCode) });
                     }
 
                     if (referrer && referrer._id.toString() !== user._id.toString()) {
                         user.referredBy = referrer.username;
+                        referrerToReward = referrer;
+                    }
+                }
 
-                        // Award Referrer (To Red Balance per request)
-                        referrer.balanceRed += 10;
-                        await referrer.save();
+                // 1. SAVE NEW USER FIRST (Atomic Constraint)
+                // If this fails (duplicate telegram_id), the code throws and skips reward.
+                await user.save();
+                console.log(`New user registered via bot: ${username}`);
+
+                // 2. AWARD REFERRER (Only if user save succeeded)
+                if (referrerToReward) {
+                    try {
+                        // Re-fetch to be safe or just modify? 
+                        // Better to atomically update inside transaction if possible, but simple increment is okay for now.
+                        // To avoid version error, ideally use findOneAndUpdate for atomic increment
+
+                        await UserModel.findByIdAndUpdate(referrerToReward._id, {
+                            $inc: { balanceRed: 10, referralsCount: 1 }
+                        });
 
                         // Log Transaction
                         const { TransactionModel } = await import('../models/transaction.model');
                         await TransactionModel.create({
-                            userId: referrer._id,
+                            userId: referrerToReward._id,
                             amount: 10,
                             currency: 'RED',
                             type: 'REFERRAL',
-                            description: 'Реферальный бонус',
+                            description: `Реферальный бонус за ${firstName}`,
                             relatedUserId: user._id
                         });
 
-                        referrer.referralsCount += 1;
-                        await referrer.save();
+                        this.bot?.sendMessage(referrerToReward.telegram_id!, `🎉 У вас новый реферал: ${firstName} (@${username})! Баланс +$10 (🔴 Red Balance).`);
 
-                        this.bot?.sendMessage(referrer.telegram_id!, `🎉 У вас новый реферал: ${firstName} (@${username})! Баланс +$10 (🔴 Red Balance).`);
+                    } catch (err) {
+                        console.error("Failed to process referral reward:", err);
+                        // Non-critical: User created, but bonus failed. Logs will show.
                     }
                 }
-
-                await user.save();
-                console.log(`New user registered via bot: ${username}`);
             } else {
                 // Update existing user photo if missing or changed (On every /start? Maybe expensive? Let's just do it.)
                 try {
