@@ -23,6 +23,9 @@ app.use((req, res, next) => {
 app.get('/', (req, res) => {
     res.send('Trinar Partnership Service API');
 });
+app.get('/health', (req, res) => {
+    res.status(200).send('OK');
+});
 
 // API Routes
 app.post('/api/user', PartnershipController.createUser as any);
