@@ -2607,8 +2607,9 @@ export class GameEngine {
         };
 
         this.state.phase = 'ACTION';
-        // Auto-End Turn to process the skip logic cleanly
-        this.endTurn();
+        // Auto-End Turn removed to allow Frontend to process Event/Sound.
+        // User must click 'End Turn'.
+        // this.endTurn();
 
         return rollResult;
     }
