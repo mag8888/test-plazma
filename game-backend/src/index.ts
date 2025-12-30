@@ -120,6 +120,21 @@ app.post('/api/admin/cards/reload', async (req, res) => {
     }
 });
 
+// Admin: Force Re-Seed (Destructive)
+app.post('/api/admin/cards/reseed', async (req, res) => {
+    try {
+        const secret = req.headers['x-admin-secret'];
+        if (process.env.ADMIN_SECRET && secret !== process.env.ADMIN_SECRET) {
+            return res.status(403).json({ error: "Unauthorized" });
+        }
+        await DbCardManager.getInstance().forceReseed();
+        res.json({ success: true, message: "Cards Force Re-Seeded from Code" });
+    } catch (e: any) {
+        console.error('Reseed failed:', e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 httpServer.listen(PORT, () => {
     console.log(`🚀 Game Server running on port ${PORT}`);
 });

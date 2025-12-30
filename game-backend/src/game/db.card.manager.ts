@@ -95,6 +95,21 @@ export class DbCardManager {
         await this.seedDeck(MARKET_CARDS, 'MARKET');
     }
 
+    // Force Reset and Reseed (Destructive)
+    async forceReseed() {
+        console.log('🔥 DbCardManager: Force Reseeding Cards (Destructive)...');
+        // 1. Delete All
+        await CardModel.deleteMany({});
+        console.log('🗑️ All existing cards deleted.');
+
+        // 2. Seed
+        await this.seedCards();
+        console.log('✅ Default cards seeded.');
+
+        // 3. Reload Memory
+        await this.reload();
+    }
+
     private async seedDeck(cards: Card[], type: string) {
         let counter = 1;
         const ops = cards.map(card => {
