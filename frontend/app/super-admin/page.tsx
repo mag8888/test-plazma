@@ -3,11 +3,11 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight, CreditCard, Trash2, Calendar, XCircle, RefreshCw } from 'lucide-react';
-import { partnershipApi } from '../../../lib/partnershipApi';
+import { partnershipApi } from '../../lib/partnershipApi';
 import CardEditor from './CardEditor';
 import { MatrixView } from '../../earn/MatrixView';
 import AdminAvatarSelector from './components/AdminAvatarSelector';
-import BroadcastModal from '../BroadcastModal';
+import BroadcastModal from './BroadcastModal';
 
 const ADMIN_PARTNERSHIP_URL = '/api/partnership';
 const GAME_API_URL = '/api'; // Direct game backend

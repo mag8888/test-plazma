@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-import { useTelegram } from '../../../components/TelegramProvider';
+import { useTelegram } from '../../components/TelegramProvider';
 
 export default function AdminProtectedLayout({
     children,
