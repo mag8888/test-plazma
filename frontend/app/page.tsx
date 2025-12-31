@@ -167,9 +167,12 @@ function HomeContent() {
       </div>
 
       <div className="mt-8 pb-4 opacity-50 hover:opacity-100 transition">
-        <a href="/super-admin/" className="text-slate-600 hover:text-white text-xs">
-          Admin Access
-        </a>
+        <button
+          onClick={() => window.location.href = '/super-admin/'}
+          className="text-slate-600 hover:text-white text-xs underline cursor-pointer"
+        >
+          SUPER ADMIN
+        </button>
       </div>
     </div>
   );
