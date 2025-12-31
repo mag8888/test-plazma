@@ -4,13 +4,16 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight, CreditCard, Trash2, Calendar, XCircle, RefreshCw } from 'lucide-react';
 import { partnershipApi } from '../../lib/partnershipApi';
+import { getBackendUrl, getGameServiceUrl } from '../../lib/config';
 import CardEditor from './CardEditor';
 import { MatrixView } from '../earn/MatrixView';
 import AdminAvatarSelector from './components/AdminAvatarSelector';
 import BroadcastModal from './BroadcastModal';
 
-const ADMIN_PARTNERSHIP_URL = '/api/partnership';
-const GAME_API_URL = '/api'; // Direct game backend
+// Dynamic URLs to prevent static build relative path issues
+// We use a function or lazy init, but since this is 'use client', we can just call the functions.
+const ADMIN_PARTNERSHIP_URL = `${getBackendUrl()}/api/partnership`;
+const GAME_API_URL = `${getGameServiceUrl()}/api`; // Direct game backend
 
 export default function AdminPage() {
     const router = useRouter();
