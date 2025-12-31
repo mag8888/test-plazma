@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  // output: 'export', // Disabled to allow Middleware
+  output: 'export',
   images: {
     unoptimized: true
   }
