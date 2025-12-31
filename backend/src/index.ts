@@ -412,6 +412,85 @@ app.post('/api/admin/broadcast', async (req, res) => {
     }
 });
 
+// Admin: Get All Games
+app.get('/api/admin/games', async (req, res) => {
+    const secret = req.headers['x-admin-secret'];
+    const validSecrets = (process.env.ADMIN_SECRET || '').split(',').map(s => s.trim());
+    if (!validSecrets.includes(secret as string)) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const { page = 1, limit = 20 } = req.query;
+
+        const games = await ScheduledGameModel.find()
+            .sort({ startTime: -1 })
+            .skip((Number(page) - 1) * Number(limit))
+            .limit(Number(limit))
+            .populate('hostId', 'username first_name telegram_id');
+
+        const total = await ScheduledGameModel.countDocuments();
+
+        res.json({
+            games,
+            total,
+            page: Number(page),
+            pages: Math.ceil(total / Number(limit))
+        });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+// Admin: Cancel/Delete Game
+app.delete('/api/admin/games/:id', async (req, res) => {
+    const secret = req.headers['x-admin-secret'];
+    const validSecrets = (process.env.ADMIN_SECRET || '').split(',').map(s => s.trim());
+    if (!validSecrets.includes(secret as string)) {
+        return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    try {
+        const { id } = req.params;
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+
+        const game = await ScheduledGameModel.findById(id);
+        if (!game) return res.status(404).json({ error: "Game not found" });
+
+        // Refund players if needed? 
+        // For now, simpler: just mark cancelled or delete.
+        // Let's UPDATE status to CANCELLED instead of hard delete to preserve history
+        game.status = 'CANCELLED';
+        await game.save();
+
+        // Notify players via bot
+        if (botService) {
+            const { UserModel } = await import('./models/user.model');
+            for (const p of game.participants) {
+                // Fetch user because participant might just be object structure (unless populated)
+                // Participant schema has userId
+                if (p.userId) {
+                    const u = await UserModel.findById(p.userId);
+                    if (u?.telegram_id) {
+                        botService.bot?.sendMessage(u.telegram_id, `⚠️ Игра ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК) была отменена администратором.`).catch(() => { });
+                    }
+                }
+            }
+            // Notify Host
+            const host = await UserModel.findById(game.hostId);
+            if (host?.telegram_id) {
+                botService.bot?.sendMessage(host.telegram_id, `⚠️ Ваша игра ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК) была отменена администратором.`).catch(() => { });
+            }
+        }
+
+        res.json({ success: true, message: "Game cancelled" });
+    } catch (e: any) {
+        console.error("Game cancel error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Get Recipients by Category
 app.get('/api/admin/broadcast/recipients', async (req, res) => {
     const secret = req.headers['x-admin-secret'];

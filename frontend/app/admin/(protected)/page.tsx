@@ -2,21 +2,22 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight, CreditCard, Trash2 } from 'lucide-react';
+import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight, CreditCard, Trash2, Calendar, XCircle, RefreshCw } from 'lucide-react';
 import { partnershipApi } from '../../../lib/partnershipApi';
 import CardEditor from './CardEditor';
 import { MatrixView } from '../../earn/MatrixView';
 import AdminAvatarSelector from './components/AdminAvatarSelector';
 import BroadcastModal from '../BroadcastModal';
 
-const API_URL = '/api/partnership'; // Use internal proxy for Monolith
+const ADMIN_PARTNERSHIP_URL = '/api/partnership';
+const GAME_API_URL = '/api'; // Direct game backend
 
 export default function AdminPage() {
     const router = useRouter();
     const [secret, setSecret] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState<'USERS' | 'STATS' | 'TREE' | 'LOGS' | 'CARDS'>('USERS');
+    const [activeTab, setActiveTab] = useState<'USERS' | 'STATS' | 'TREE' | 'LOGS' | 'CARDS' | 'GAMES'>('USERS');
     const [showBroadcastModal, setShowBroadcastModal] = useState(false);
 
     // Stats
@@ -34,6 +35,12 @@ export default function AdminPage() {
     const [totalPages, setTotalPages] = useState(1);
     const [sortField, setSortField] = useState('createdAt');
     const [sortOrder, setSortOrder] = useState('desc');
+
+    // Games
+    const [games, setGames] = useState<any[]>([]);
+    const [gamesPage, setGamesPage] = useState(1);
+    const [gamesTotalPages, setGamesTotalPages] = useState(1);
+    const [gamesLoading, setGamesLoading] = useState(false);
 
     // Avatar Visualization
     const [selectAvatarUser, setSelectAvatarUser] = useState<any>(null);
@@ -68,6 +75,34 @@ export default function AdminPage() {
     const [historyData, setHistoryData] = useState<any>(null);
     const [historyLoading, setHistoryLoading] = useState(false);
     const [historyTab, setHistoryTab] = useState<'TRANSACTIONS' | 'REFERRALS' | 'INVITER'>('TRANSACTIONS');
+
+    const fetchWithAuth = async (endpoint: string, options: any = {}, key: string = secret, baseUrl: string = ADMIN_PARTNERSHIP_URL) => {
+        // Fallback to localStorage to prevent stale closure issues with useCallback
+        const token = key || localStorage.getItem('admin_secret') || '';
+
+        const headers = {
+            'Content-Type': 'application/json',
+            'x-admin-secret': token,
+            ...options.headers
+        };
+
+        const separator = baseUrl === GAME_API_URL ? '/admin' : '/admin'; // Both use /admin prefix in their respective areas
+        const finalUrl = `${baseUrl}${separator}${endpoint}`;
+
+        const res = await fetch(finalUrl, {
+            ...options,
+            headers
+        });
+
+        if (res.status === 403) {
+            alert('Admin secret invalid or expired. Logging out.');
+            logout();
+            return { error: 'Unauthorized' };
+        }
+
+        return res.json();
+    };
+
 
     const handleViewHistory = async (user: any) => {
         setHistoryUser(user);
@@ -189,6 +224,41 @@ export default function AdminPage() {
         }
     };
 
+    const fetchGames = useCallback(async (p: number = 1, key: string = secret) => {
+        setGamesLoading(true);
+        try {
+            // Uses GAME_API_URL
+            const res = await fetchWithAuth(`/games?page=${p}&limit=20`, {}, key, GAME_API_URL);
+            if (res.games) {
+                setGames(res.games);
+                setGamesTotalPages(res.pages || 1);
+                setGamesPage(res.page || 1);
+            } else {
+                console.warn('Unknown games format', res);
+            }
+        } catch (e) {
+            console.error("Fetch games error", e);
+        } finally {
+            setGamesLoading(false);
+        }
+    }, []);
+
+    const cancelGame = async (gameId: string) => {
+        if (!confirm('Are you sure you want to CANCEL this game? Players will be notified.')) return;
+        try {
+            // Uses GAME_API_URL
+            const res = await fetchWithAuth(`/games/${gameId}`, { method: 'DELETE' }, secret, GAME_API_URL);
+            if (res.success) {
+                alert('Game cancelled successfully');
+                fetchGames(gamesPage);
+            } else {
+                alert('Failed to delete: ' + res.error);
+            }
+        } catch (e: any) {
+            alert('Error: ' + e.message);
+        }
+    };
+
     // Auto-login from storage
     useEffect(() => {
         const stored = localStorage.getItem('admin_secret');
@@ -211,7 +281,10 @@ export default function AdminPage() {
         if (activeTab === 'LOGS' && isAuthenticated) {
             fetchLogs();
         }
-    }, [activeTab, isAuthenticated, page, sortField, sortOrder]); // Added sortField and sortOrder to dependencies
+        if (activeTab === 'GAMES' && isAuthenticated) {
+            fetchGames(1);
+        }
+    }, [activeTab, isAuthenticated, page, sortField, sortOrder, fetchGames]);
 
     const login = () => {
         if (secret) {
@@ -229,29 +302,10 @@ export default function AdminPage() {
         // router.push('/admin/login'); // No need to redirect, just show login state
     };
 
-    const fetchWithAuth = async (endpoint: string, options: any = {}, key: string = secret) => {
-        // Fallback to localStorage to prevent stale closure issues with useCallback
-        const token = key || localStorage.getItem('admin_secret') || '';
 
-        const headers = {
-            'Content-Type': 'application/json',
-            'x-admin-secret': token,
-            ...options.headers
-        };
 
-        const res = await fetch(`${API_URL}/admin${endpoint}`, {
-            ...options,
-            headers
-        });
 
-        if (res.status === 403) {
-            alert('Admin secret invalid or expired. Logging out.');
-            logout();
-            return { error: 'Unauthorized' };
-        }
-
-        return res.json();
-    };
+    /* fetchWithAuth implementation moved up and refactored */
 
     const searchUsers = useCallback(async (p: number = 1, key: string = secret) => {
         setIsLoading(true);
@@ -407,6 +461,9 @@ export default function AdminPage() {
                         </button>
                         <button onClick={() => setActiveTab('CARDS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'CARDS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
                             <CreditCard size={18} /> Cards
+                        </button>
+                        <button onClick={() => setActiveTab('GAMES')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'GAMES' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
+                            <Calendar size={18} /> Games
                         </button>
                     </div>
                     <button onClick={logout} className="bg-red-900/30 hover:bg-red-900/50 text-red-400 px-4 py-1.5 rounded-lg text-xs font-bold transition border border-red-500/30">Выйти</button>
@@ -757,10 +814,100 @@ export default function AdminPage() {
                     </div>
                 )}
 
-                {/* CARDS TAB */}
-                {activeTab === 'CARDS' && (
-                    <CardEditor secret={secret} />
+                {/* GAMES TAB */}
+                {activeTab === 'GAMES' && (
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-white">Scheduled Games</h2>
+                            <button onClick={() => fetchGames(1)} className="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg transition">
+                                <RefreshCw size={20} />
+                            </button>
+                        </div>
+
+                        {gamesLoading && <div className="text-center text-slate-500 animate-pulse">Loading games...</div>}
+
+                        <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
+                                    <tr>
+                                        <th className="p-4">Time</th>
+                                        <th className="p-4">Host</th>
+                                        <th className="p-4">Status</th>
+                                        <th className="p-4">Players</th>
+                                        <th className="p-4">Price</th>
+                                        <th className="p-4">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-700">
+                                    {games.map(game => (
+                                        <tr key={game._id} className="hover:bg-slate-700/50 transition">
+                                            <td className="p-4 text-white">
+                                                <div className="font-bold">{new Date(game.startTime).toLocaleDateString()}</div>
+                                                <div className="text-xs text-slate-400">{new Date(game.startTime).toLocaleTimeString()}</div>
+                                            </td>
+                                            <td className="p-4 text-slate-300">
+                                                {game.hostId ? (
+                                                    <a href={`https://t.me/${game.hostId.username}`} target="_blank" className="hover:text-blue-400">
+                                                        {game.hostId.first_name} (@{game.hostId.username})
+                                                    </a>
+                                                ) : 'Unknown'}
+                                            </td>
+                                            <td className="p-4">
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${game.status === 'SCHEDULED' ? 'bg-green-900/30 text-green-400' :
+                                                    game.status === 'CANCELLED' ? 'bg-red-900/30 text-red-400' :
+                                                        'bg-slate-700 text-slate-400'
+                                                    }`}>
+                                                    {game.status}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-slate-300">
+                                                {game.participants?.length || 0} / {game.maxPlayers}
+                                            </td>
+                                            <td className="p-4 text-yellow-400 font-bold">
+                                                {game.price}
+                                            </td>
+                                            <td className="p-4">
+                                                {game.status === 'SCHEDULED' && (
+                                                    <button
+                                                        onClick={() => cancelGame(game._id)}
+                                                        className="bg-red-900/50 hover:bg-red-800 text-red-300 px-3 py-1.5 rounded-lg text-xs transition border border-red-500/30 flex items-center gap-1"
+                                                    >
+                                                        <XCircle size={14} /> Cancel
+                                                    </button>
+                                                )}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {games.length === 0 && !gamesLoading && (
+                                        <tr><td colSpan={6} className="p-8 text-center text-slate-500">No games found</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+
+                        {/* Pagination */}
+                        <div className="flex justify-between items-center text-slate-400 text-sm">
+                            <div>Page {gamesPage} of {gamesTotalPages}</div>
+                            <div className="flex gap-2">
+                                <button
+                                    disabled={gamesPage <= 1}
+                                    onClick={() => fetchGames(gamesPage - 1)}
+                                    className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <ChevronLeft size={20} />
+                                </button>
+                                <button
+                                    disabled={gamesPage >= gamesTotalPages}
+                                    onClick={() => fetchGames(gamesPage + 1)}
+                                    className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    <ChevronRight size={20} />
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 )}
+
 
             </div>
 
