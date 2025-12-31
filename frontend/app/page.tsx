@@ -2,6 +2,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useTelegram } from '../components/TelegramProvider';
 import { User, Lock, ArrowRight, Loader2, Send, Eye, EyeOff } from 'lucide-react';
 import { getBackendUrl } from '../lib/config';
@@ -163,6 +164,12 @@ function HomeContent() {
             <p className="text-slate-500 text-xs">{hasAuthParam ? 'Авторизация...' : 'Загрузка...'}</p>
           </div>
         )}
+      </div>
+
+      <div className="mt-8 pb-4 opacity-50 hover:opacity-100 transition">
+        <Link href="/super-admin" className="text-slate-600 hover:text-white text-xs">
+          Admin Access
+        </Link>
       </div>
     </div>
   );
