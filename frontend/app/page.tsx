@@ -167,9 +167,9 @@ function HomeContent() {
       </div>
 
       <div className="mt-8 pb-4 opacity-50 hover:opacity-100 transition">
-        <Link href="/super-admin" className="text-slate-600 hover:text-white text-xs">
+        <a href="/super-admin/" className="text-slate-600 hover:text-white text-xs">
           Admin Access
-        </Link>
+        </a>
       </div>
     </div>
   );
