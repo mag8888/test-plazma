@@ -128,7 +128,7 @@ export class AdminController {
         }
     }
 
-    // Get User Transactions
+    // Get User Transactions (Legacy)
     static async getUserTransactions(req: ExpressRequest, res: ExpressResponse) {
         try {
             const { userId } = req.params;
@@ -148,6 +148,59 @@ export class AdminController {
             res.json(transactions);
         } catch (error: any) {
             console.error('getUserTransactions error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    // Get Full User History (Transactions, Referrals, Inviter)
+    static async getUserHistory(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const { userId } = req.params;
+            if (!userId) return res.status(400).json({ error: 'Missing userId' });
+
+            // Resolve User ID
+            let user;
+            if (userId.match(/^[0-9a-fA-F]{24}$/)) {
+                user = await User.findById(userId);
+            } else {
+                user = await User.findOne({ telegram_id: Number(userId) }) || await User.findOne({ username: userId });
+            }
+
+            if (!user) return res.status(404).json({ error: 'User not found' });
+
+            // 1. Transactions
+            const transactions = await Transaction.find({ user: user._id }).sort({ createdAt: -1 }).limit(100);
+
+            // 2. Inviter (Referrer)
+            const inviter = await User.findById(user.referrer).select('username telegram_id photo_url greenBalance');
+
+            // 3. Referrals (Users invited by this user)
+            // Limit to 50 for performance, maybe add viewing all later
+            const referrals = await User.find({ referrer: user._id })
+                .select('username telegram_id photo_url greenBalance yellowBalance createdAt')
+                .sort({ createdAt: -1 })
+                .limit(50);
+
+            // 4. Counts
+            const referralsCount = await User.countDocuments({ referrer: user._id });
+
+            res.json({
+                user: {
+                    _id: user._id,
+                    username: user.username,
+                    telegram_id: user.telegram_id,
+                    greenBalance: user.greenBalance,
+                    yellowBalance: user.yellowBalance,
+                    balanceRed: user.balanceRed
+                },
+                transactions,
+                inviter,
+                referrals,
+                referralsCount
+            });
+
+        } catch (error: any) {
+            console.error('getUserHistory error:', error);
             res.status(500).json({ error: error.message });
         }
     }

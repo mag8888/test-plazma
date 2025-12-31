@@ -65,20 +65,26 @@ export default function AdminPage() {
 
     // History Modal
     const [historyUser, setHistoryUser] = useState<any>(null);
-    const [userTransactions, setUserTransactions] = useState<any[]>([]);
+    const [historyData, setHistoryData] = useState<any>(null);
+    const [historyLoading, setHistoryLoading] = useState(false);
+    const [historyTab, setHistoryTab] = useState<'TRANSACTIONS' | 'REFERRALS' | 'INVITER'>('TRANSACTIONS');
 
-    const fetchTransactions = async (userId: string) => {
-        const res = await fetchWithAuth(`/users/${userId}/transactions`);
-        if (Array.isArray(res)) {
-            setUserTransactions(res);
-        } else {
-            alert('Failed to fetch transactions');
-        }
-    };
-
-    const handleViewHistory = (user: any) => {
+    const handleViewHistory = async (user: any) => {
         setHistoryUser(user);
-        fetchTransactions(user._id);
+        setHistoryLoading(true);
+        setHistoryTab('TRANSACTIONS');
+        try {
+            const res = await fetchWithAuth(`/users/${user._id}/history`);
+            if (res && !res.error) {
+                setHistoryData(res);
+            } else {
+                alert('Failed to fetch history');
+            }
+        } catch (e) {
+            console.error(e);
+        } finally {
+            setHistoryLoading(false);
+        }
     };
 
     const createAvatar = async () => {
@@ -661,6 +667,12 @@ export default function AdminPage() {
                                             </td>
                                             <td className="p-4 flex gap-2 flex-wrap max-w-[200px]">
                                                 <button
+                                                    onClick={() => handleViewHistory(u)}
+                                                    className="bg-purple-600 hover:bg-purple-500 text-white px-2 py-1 rounded text-xs transition flex-1 border border-purple-500/30"
+                                                >
+                                                    History
+                                                </button>
+                                                <button
                                                     onClick={() => setSelectedUser(u)}
                                                     className="bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded text-xs transition flex-1"
                                                 >
@@ -751,6 +763,179 @@ export default function AdminPage() {
                 )}
 
             </div>
+
+            {/* HISTORY MODAL */}
+            {historyUser && (
+                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="bg-slate-900 border border-slate-700 w-full max-w-4xl h-[90vh] rounded-2xl flex flex-col shadow-2xl">
+                        {/* Header */}
+                        <div className="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-950 rounded-t-2xl">
+                            <div>
+                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                    <History className="text-purple-500" />
+                                    User History: {historyUser.username}
+                                </h2>
+                                <p className="text-xs text-slate-500 mt-1">ID: {historyUser.telegram_id}</p>
+                            </div>
+                            <button onClick={() => setHistoryUser(null)} className="text-slate-400 hover:text-white p-2">✕</button>
+                        </div>
+
+                        {/* Tabs */}
+                        <div className="flex border-b border-slate-700 bg-slate-900">
+                            <button
+                                onClick={() => setHistoryTab('TRANSACTIONS')}
+                                className={`flex-1 py-4 text-sm font-bold border-b-2 transition ${historyTab === 'TRANSACTIONS' ? 'border-purple-500 text-purple-400 bg-purple-900/10' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                            >
+                                💸 Transactions
+                            </button>
+                            <button
+                                onClick={() => setHistoryTab('REFERRALS')}
+                                className={`flex-1 py-4 text-sm font-bold border-b-2 transition ${historyTab === 'REFERRALS' ? 'border-blue-500 text-blue-400 bg-blue-900/10' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                            >
+                                👥 Referrals ({historyData?.referralsCount || 0})
+                            </button>
+                            <button
+                                onClick={() => setHistoryTab('INVITER')}
+                                className={`flex-1 py-4 text-sm font-bold border-b-2 transition ${historyTab === 'INVITER' ? 'border-green-500 text-green-400 bg-green-900/10' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                            >
+                                🔗 Inviter
+                            </button>
+                        </div>
+
+                        {/* Content */}
+                        <div className="flex-1 overflow-auto p-6 bg-slate-900">
+                            {historyLoading ? (
+                                <div className="flex justify-center items-center h-full text-slate-500 animate-pulse">Loading history...</div>
+                            ) : !historyData ? (
+                                <div className="text-center text-red-400">Failed to load data</div>
+                            ) : (
+                                <>
+                                    {/* TRANSACTIONS TAB */}
+                                    {historyTab === 'TRANSACTIONS' && (
+                                        <div className="space-y-4">
+                                            <div className="flex gap-4 mb-4">
+                                                <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex-1">
+                                                    <div className="text-xs text-slate-500 uppercase">Green Balance</div>
+                                                    <div className="text-2xl font-bold text-green-400">${historyData.user.greenBalance?.toLocaleString()}</div>
+                                                </div>
+                                                <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex-1">
+                                                    <div className="text-xs text-slate-500 uppercase">Yellow Balance</div>
+                                                    <div className="text-2xl font-bold text-yellow-400">${historyData.user.yellowBalance?.toLocaleString()}</div>
+                                                </div>
+                                            </div>
+
+                                            <table className="w-full text-left">
+                                                <thead className="text-xs text-slate-500 uppercase bg-slate-950">
+                                                    <tr>
+                                                        <th className="p-3">Date</th>
+                                                        <th className="p-3">Type</th>
+                                                        <th className="p-3">Amount</th>
+                                                        <th className="p-3">Description</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody className="divide-y divide-slate-800 text-sm">
+                                                    {historyData.transactions?.map((tx: any) => (
+                                                        <tr key={tx._id} className="hover:bg-slate-800/50">
+                                                            <td className="p-3 text-slate-400 whitespace-nowrap">
+                                                                {new Date(tx.createdAt).toLocaleString()}
+                                                            </td>
+                                                            <td className="p-3">
+                                                                <span className={`px-2 py-1 rounded text-xs font-bold ${tx.type.includes('BONUS') ? 'bg-green-900/30 text-green-400' :
+                                                                    tx.type === 'WITHDRAWAL' ? 'bg-red-900/30 text-red-400' :
+                                                                        'bg-slate-800 text-slate-300'
+                                                                    }`}>
+                                                                    {tx.type}
+                                                                </span>
+                                                            </td>
+                                                            <td className={`p-3 font-bold ${tx.amount > 0 ? (tx.currency === 'YELLOW' ? 'text-yellow-400' : 'text-green-400') : 'text-red-400'
+                                                                }`}>
+                                                                {tx.amount > 0 ? '+' : ''}{tx.amount} {tx.currency === 'YELLOW' ? 'Y' : '$'}
+                                                            </td>
+                                                            <td className="p-3 text-slate-300 max-w-xs truncate">
+                                                                {tx.description}
+                                                            </td>
+                                                        </tr>
+                                                    ))}
+                                                    {(!historyData.transactions || historyData.transactions.length === 0) && (
+                                                        <tr><td colSpan={4} className="p-8 text-center text-slate-600">No transactions found</td></tr>
+                                                    )}
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    )}
+
+                                    {/* REFERRALS TAB */}
+                                    {historyTab === 'REFERRALS' && (
+                                        <div>
+                                            <div className="bg-blue-900/20 border border-blue-500/20 p-4 rounded-xl mb-4 text-blue-300 text-sm">
+                                                Total Direct Referrals: <span className="font-bold text-white">{historyData.referralsCount}</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                                {historyData.referrals?.map((ref: any) => (
+                                                    <div key={ref._id} className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center gap-3">
+                                                        <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden flex-shrink-0">
+                                                            {ref.photo_url ? (
+                                                                <img src={ref.photo_url} alt={ref.username} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                <div className="w-full h-full flex items-center justify-center text-slate-500 font-bold">{ref.username?.[0] || '?'}</div>
+                                                            )}
+                                                        </div>
+                                                        <div className="overflow-hidden">
+                                                            <div className="font-bold text-white truncate">{ref.username || 'No Name'}</div>
+                                                            <div className="text-xs text-slate-500">ID: {ref.telegram_id}</div>
+                                                            <div className="text-xs text-green-400 mt-1">Bal: ${ref.greenBalance}</div>
+                                                        </div>
+                                                        <div className="ml-auto text-xs text-slate-600">
+                                                            {new Date(ref.createdAt).toLocaleDateString()}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                                {historyData.referrals?.length === 0 && (
+                                                    <div className="col-span-full text-center text-slate-500 p-8">No referrals yet</div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* INVITER TAB */}
+                                    {historyTab === 'INVITER' && (
+                                        <div className="max-w-md mx-auto mt-10">
+                                            {historyData.inviter ? (
+                                                <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 text-center space-y-4">
+                                                    <div className="w-24 h-24 rounded-full bg-slate-700 mx-auto overflow-hidden ring-4 ring-green-500/20">
+                                                        {historyData.inviter.photo_url ? (
+                                                            <img src={historyData.inviter.photo_url} alt="Inviter" className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-3xl text-slate-500 font-bold">
+                                                                {historyData.inviter.username?.[0] || '?'}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    <div>
+                                                        <div className="text-xs text-green-400 font-bold uppercase mb-1">Invited By</div>
+                                                        <h3 className="text-2xl font-bold text-white">{historyData.inviter.username || 'Unknown'}</h3>
+                                                        <div className="text-slate-400 font-mono text-sm mt-1">ID: {historyData.inviter.telegram_id}</div>
+                                                    </div>
+                                                    <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+                                                        <div className="text-xs text-slate-500">Inviter's Balance</div>
+                                                        <div className="text-xl font-bold text-green-400">${historyData.inviter.greenBalance}</div>
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 text-center border-dashed">
+                                                    <div className="text-5xl mb-4">👻</div>
+                                                    <h3 className="text-xl font-bold text-white">No Inviter</h3>
+                                                    <p className="text-slate-500 mt-2">This user joined directly or was seeded.</p>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* BALANCE MODAL */}
             {
@@ -919,58 +1104,7 @@ export default function AdminPage() {
                 )
             }
 
-            {/* TRANSACTION HISTORY MODAL */}
-            {
-                historyUser && (
-                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-                        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-4xl space-y-6 max-h-[90vh] flex flex-col">
-                            <div className="flex justify-between items-center">
-                                <h2 className="text-xl font-bold text-white">Transaction History</h2>
-                                <button onClick={() => setHistoryUser(null)} className="text-slate-400 hover:text-white">✕</button>
-                            </div>
-                            <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{historyUser.username}</span></div>
 
-                            <div className="overflow-auto flex-1">
-                                <table className="w-full text-left">
-                                    <thead className="bg-slate-950 text-slate-400 text-xs uppercase sticky top-0">
-                                        <tr>
-                                            <th className="p-4">Date</th>
-                                            <th className="p-4">Type</th>
-                                            <th className="p-4">Amount</th>
-                                            <th className="p-4">Description</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-slate-700">
-                                        {userTransactions.map((t: any) => (
-                                            <tr key={t._id} className="hover:bg-slate-800 transition text-sm">
-                                                <td className="p-4 text-slate-400 whitespace-nowrap">
-                                                    {new Date(t.createdAt).toLocaleString()}
-                                                </td>
-                                                <td className="p-4 text-white font-mono">
-                                                    {t.type}
-                                                </td>
-                                                <td className={`p-4 font-bold ${t.amount > 0 ? 'text-green-400' : 'text-red-400'}`}>
-                                                    {t.amount > 0 ? '+' : ''}{t.amount} {t.currency}
-                                                </td>
-                                                <td className="p-4 text-slate-300">
-                                                    {t.description}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                        {userTransactions.length === 0 && (
-                                            <tr><td colSpan={4} className="p-8 text-center text-slate-500">No transactions found</td></tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div className="flex justify-end pt-4 border-t border-slate-800">
-                                <button onClick={() => setHistoryUser(null)} className="bg-slate-800 hover:bg-slate-700 text-white px-6 py-2 rounded-xl font-bold transition">Close</button>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
 
             {/* Broadcast Modal */}
             <BroadcastModal isOpen={showBroadcastModal} onClose={() => setShowBroadcastModal(false)} />

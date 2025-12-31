@@ -47,6 +47,7 @@ const adminRouter = express.Router();
 adminRouter.use(AdminController.authenticate as any);
 adminRouter.get('/users', AdminController.getUsers as any);
 adminRouter.get('/users/:userId/transactions', AdminController.getUserTransactions as any);
+adminRouter.get('/users/:userId/history', AdminController.getUserHistory as any);
 adminRouter.post('/balance', AdminController.updateBalance as any);
 adminRouter.post('/referrer', AdminController.updateReferrer as any);
 adminRouter.get('/stats', AdminController.getGlobalStats as any);
