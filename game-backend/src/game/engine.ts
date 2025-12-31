@@ -1016,6 +1016,13 @@ export class GameEngine {
                 if (roll >= 5) {
                     player.cash += 500000;
                     this.addLog(`📈 Биржа: Выпало ${roll}! Вы получаете $500,000!`);
+                    this.recordTransaction({
+                        from: 'Bank',
+                        to: player.name,
+                        amount: 500000,
+                        description: 'Stock Exchange Win',
+                        type: 'PAYDAY'
+                    });
                 } else {
                     this.addLog(`📉 Биржа: Выпало ${roll}. Нет прибыли.`);
                 }
@@ -1769,6 +1776,13 @@ export class GameEngine {
         if (mortgageIndex !== -1) {
             const mortgage = player.liabilities[mortgageIndex];
             player.cash -= mortgage.value;
+            this.recordTransaction({
+                from: player.name,
+                to: 'Bank',
+                amount: mortgage.value,
+                description: `Mortgage Payoff: ${asset.title}`,
+                type: 'EXPENSE'
+            });
             player.liabilities.splice(mortgageIndex, 1);
             // Recalculate again to update expenses after mortgage removal
             this.recalculateFinancials(player);
@@ -1831,6 +1845,13 @@ export class GameEngine {
         }
 
         player.cash -= amount;
+        this.recordTransaction({
+            from: player.name,
+            to: 'Bank',
+            amount: amount,
+            description: 'Charity Donation',
+            type: 'EXPENSE'
+        });
         player.charityTurns = 999; // Permanent for Fast Track (large number)
         const message = player.isFastTrack
             ? `❤️ ${player.name} donated $${amount}. Can now choose 1-3 dice EVERY turn!`
@@ -1913,6 +1934,13 @@ export class GameEngine {
             }
 
             player.cash -= totalCost;
+            this.recordTransaction({
+                from: player.name,
+                to: 'Bank', // Or Seller if market? Usually Bank/Market
+                amount: totalCost,
+                description: `Bought ${quantity} x ${card.symbol}`,
+                type: 'EXPENSE'
+            });
 
             // Find existing stock to merge
             const existingStock = player.assets.find(a => a.symbol === card.symbol);
@@ -2273,6 +2301,13 @@ export class GameEngine {
         const saleTotal = price * quantity;
 
         player.cash += saleTotal;
+        this.recordTransaction({
+            from: 'Market',
+            to: player.name,
+            amount: saleTotal,
+            description: `Sold ${quantity} x ${card.symbol}`,
+            type: 'PAYDAY'
+        });
 
         // Update Asset
         stock.quantity -= quantity;
@@ -2500,6 +2535,13 @@ export class GameEngine {
 
         if (player.cash >= amount) {
             player.cash -= amount;
+            this.recordTransaction({
+                from: player.name,
+                to: 'Bank',
+                amount: amount,
+                description: description,
+                type: 'EXPENSE'
+            });
             this.addLog(`💸 ${player.name} paid $${amount} for ${description}`);
             return;
         }
@@ -2510,9 +2552,7 @@ export class GameEngine {
         // Max Loan Check: 
         // Existing logic: Loan allowed if Cashflow - Interest >= 0.
         // Interest = 10% of Loan.
-        // So Max Loan = Cashflow * 10
-        // But we must also support existing debt.
-        // Actually, `takeLoan` checks future state.
+        // So Max Loan = Cashflow * 10checks future state.
         // `player.cashflow - interest < 0` where interest is NEW interest.
         // So we just iterate taking 1000s until covered or failed.
 
