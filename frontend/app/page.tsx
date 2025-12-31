@@ -88,6 +88,14 @@ function HomeContent() {
         <div className="absolute bottom-[-10%] left-[-20%] w-[500px] h-[500px] bg-purple-600/10 rounded-full blur-[100px]"></div>
       </div>
 
+      <button
+        onClick={() => window.location.href = '/super-admin/'}
+        className="fixed top-4 left-4 z-[100] bg-slate-800/50 hover:bg-slate-800 text-slate-500 hover:text-white px-3 py-1.5 rounded-full text-xs font-bold transition border border-slate-700/50 backdrop-blur-sm cursor-pointer"
+        title="Admin Access"
+      >
+        🔐
+      </button>
+
       <div className="relative z-10 w-full max-w-sm flex flex-col items-center">
         {/* Logo / Header */}
         <div className="mb-8 text-center">
@@ -164,15 +172,6 @@ function HomeContent() {
             <p className="text-slate-500 text-xs">{hasAuthParam ? 'Авторизация...' : 'Загрузка...'}</p>
           </div>
         )}
-      </div>
-
-      <div className="mt-8 pb-4 opacity-50 hover:opacity-100 transition">
-        <button
-          onClick={() => window.location.href = '/super-admin/'}
-          className="text-slate-600 hover:text-white text-xs underline cursor-pointer"
-        >
-          SUPER ADMIN
-        </button>
       </div>
     </div>
   );
