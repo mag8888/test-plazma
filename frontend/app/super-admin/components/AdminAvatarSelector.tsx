@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { X, User, Crown, Star } from 'lucide-react';
-import { partnershipApi } from '../../../../lib/partnershipApi';
+import { partnershipApi } from '../../../lib/partnershipApi';
 
 interface AdminAvatarSelectorProps {
     userId: string;
