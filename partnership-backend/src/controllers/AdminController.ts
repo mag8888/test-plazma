@@ -35,7 +35,9 @@ export class AdminController {
 
             let filter = {};
             if (query) {
-                const q = query as string;
+                // Strip @ if present for username search
+                const q = (query as string).replace('@', '').trim();
+
                 // If numeric, search exact telegram_id OR username regex
                 if (/^\d+$/.test(q)) {
                     filter = {
