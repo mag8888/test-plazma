@@ -79,6 +79,9 @@ export default function AdminPage() {
     const [historyLoading, setHistoryLoading] = useState(false);
     const [historyTab, setHistoryTab] = useState<'TRANSACTIONS' | 'REFERRALS' | 'INVITER'>('TRANSACTIONS');
 
+    // Action Center Output
+    const [actionOutput, setActionOutput] = useState<string | null>(null);
+
     const fetchWithAuth = async (endpoint: string, options: any = {}, key: string = secret, baseUrl: string = ADMIN_PARTNERSHIP_URL) => {
         // Fallback to localStorage to prevent stale closure issues with useCallback
         const token = key || localStorage.getItem('admin_secret') || '';
@@ -474,63 +477,92 @@ export default function AdminPage() {
                 {/* Dashboard Cards */}
                 {stats && (
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 col-span-1 md:col-span-1 min-h-[300px] flex flex-col">
                             <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
                                 <Users className="text-blue-400" />
                                 Action Center
                             </h2>
-                            <div className="grid grid-cols-2 gap-4">
+
+                            {/* Action Buttons Grid */}
+                            <div className="grid grid-cols-2 gap-2 mb-4">
                                 <button
                                     onClick={async () => {
-                                        if (!confirm('Rebuild all referral links based on "referredBy" field? This may take a while.')) return;
+                                        if (!confirm('Rebuild all referral links? This links users based on the text "referredBy" field.')) return;
+                                        setActionOutput('Syncing referrals...');
                                         const res = await fetchWithAuth('/rebuild-referrals', { method: 'POST' });
                                         if (res.success) {
-                                            alert(`Rebuild Complete!\nUpdated: ${res.updated}\nSkipped: ${res.skipped}\nErrors: ${res.errors}`);
+                                            setActionOutput(`✅ Sync Complete!\nUpdated: ${res.updated}\nRepaired: ${res.repaired}\nErrors: ${res.errors}`);
+                                            searchUsers(page);
                                         } else {
-                                            alert('Error: ' + res.error);
+                                            setActionOutput('❌ Error: ' + res.error);
                                         }
                                     }}
-                                    className="bg-blue-900/50 hover:bg-blue-900/70 text-blue-300 p-4 rounded-xl border border-blue-700/50 flex flex-col items-center gap-2 transition"
+                                    className="bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 p-2 rounded-lg border border-blue-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
                                 >
-                                    <Users size={24} />
-                                    <span className="font-bold">Sync Referrals</span>
-                                    <span className="text-[10px] opacity-70">Link broken referrals</span>
+                                    <RefreshCw size={18} />
+                                    <span className="font-bold text-xs">Sync Refs</span>
                                 </button>
 
                                 <button
                                     onClick={() => setShowBroadcastModal(true)}
-                                    className="bg-purple-900/50 hover:bg-purple-900/70 text-purple-300 p-4 rounded-xl border border-purple-700/50 flex flex-col items-center gap-2 transition"
+                                    className="bg-purple-900/30 hover:bg-purple-900/50 text-purple-300 p-2 rounded-lg border border-purple-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
                                 >
-                                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
                                     </svg>
-                                    <span className="font-bold">Рассылка</span>
-                                    <span className="text-[10px] opacity-70">Создать рассылку</span>
+                                    <span className="font-bold text-xs">Broadcast</span>
                                 </button>
 
                                 <button
                                     onClick={async () => {
-                                        if (!confirm('Активировать все аватары и пересчитать тарифы?\n\nЭто установит isActive=true для всех аватаров.')) return;
-                                        setIsLoading(true);
+                                        if (!confirm('Activate all avatars and recalculate tariffs?')) return;
+                                        setActionOutput('Recalculating avatars...');
                                         try {
                                             const res = await fetchWithAuth('/avatars/recalculate', { method: 'POST' });
                                             if (res.success) {
-                                                alert(`Пересчет завершен!\nВсего аватаров: ${res.total}\nАктивировано: ${res.activated}\nОбновлено: ${res.updated}${res.errors ? `\nОшибок: ${res.errors.length}` : ''}`);
+                                                setActionOutput(`✅ Avatars Updated!\nTotal: ${res.total}\nActivated: ${res.activated}\nUpdated: ${res.updated}`);
+                                                fetchStats();
                                             } else {
-                                                alert('Ошибка: ' + res.error);
+                                                setActionOutput('❌ Error: ' + res.error);
                                             }
                                         } catch (e: any) {
-                                            alert('Ошибка сети: ' + e.message);
-                                        } finally {
-                                            setIsLoading(false);
+                                            setActionOutput('❌ Network Error: ' + e.message);
                                         }
                                     }}
-                                    className="bg-green-900/50 hover:bg-green-900/70 text-green-300 p-4 rounded-xl border border-green-700/50 flex flex-col items-center gap-2 transition"
+                                    className="bg-green-900/30 hover:bg-green-900/50 text-green-300 p-2 rounded-lg border border-green-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
                                 >
-                                    <BarChart size={24} />
-                                    <span className="font-bold">Пересчитать</span>
-                                    <span className="text-[10px] opacity-70">Активировать тарифы</span>
+                                    <BarChart size={18} />
+                                    <span className="font-bold text-xs">Recalculate</span>
                                 </button>
+
+                                <button
+                                    onClick={async () => {
+                                        if (!confirm('⚠️ RESET ALL RATINGS to 0?')) return;
+                                        setActionOutput('Resetting ratings...');
+                                        // handleResetRatings logic inline or call function but we need output
+                                        const res = await fetchWithAuth('/reset-ratings', { method: 'POST' });
+                                        if (res.success) {
+                                            setActionOutput(`✅ Ratings Reset!\n${res.message}`);
+                                            searchUsers(page);
+                                        } else {
+                                            setActionOutput('❌ Error: ' + res.error);
+                                        }
+                                    }}
+                                    className="bg-red-900/30 hover:bg-red-900/50 text-red-300 p-2 rounded-lg border border-red-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
+                                >
+                                    <Trash2 size={18} />
+                                    <span className="font-bold text-xs">Reset Rating</span>
+                                </button>
+                            </div>
+
+                            {/* Action Output Console */}
+                            <div className="flex-1 bg-slate-950 rounded-xl p-3 font-mono text-xs text-slate-300 overflow-y-auto border border-slate-900 shadow-inner">
+                                <div className="text-slate-500 mb-1 pointer-events-none select-none uppercase text-[10px] font-bold tracking-wider">Console Output</div>
+                                {actionOutput ? (
+                                    <div className="whitespace-pre-wrap animate-pulse-once">{actionOutput}</div>
+                                ) : (
+                                    <div className="text-slate-600 italic">Ready for commands...</div>
+                                )}
                             </div>
                         </div>
 
