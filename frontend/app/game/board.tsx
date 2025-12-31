@@ -1501,7 +1501,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                     <ActiveCardZone
                                         state={state}
                                         isMyTurn={isMyTurn}
-                                        localPlayer={localPlayer}
+                                        me={localPlayer}
                                         roomId={roomId}
                                         onDismissMarket={handleDismissCard}
                                         onMarketCardClick={(card) => setSquareInfo({
@@ -1941,7 +1941,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                 onClose={() => setCongratulateData(null)}
                                 targetPlayerName={congratulateData.targetName}
                                 targetPlayerId={congratulateData.targetId}
-                                localPlayer={state.players.find((p: any) => p.id === socket.id) || state.players[0]}
+                                me={state.players.find((p: any) => p.id === socket.id) || state.players[0]}
                                 roomId={roomId}
                                 socket={socket}
                             />
