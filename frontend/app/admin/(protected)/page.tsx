@@ -338,12 +338,8 @@ export default function AdminPage() {
 
     const fetchTree = async () => {
         if (!treeUserId) return;
-        // Not proxied through admin right now, tree is public? No, tree needs ID.
-        // Actually tree API is public /api/tree/:id
-        // But let's use the fetchWithAuth just in case or fetch directly
-        // The user wants tree in admin panel.
-        // Let's assume we can fetch public tree API.
-        const res = await fetch(`${API_URL}/tree/${treeUserId}`);
+        // Fetching tree from partnership service public endpoint
+        const res = await fetch(`${ADMIN_PARTNERSHIP_URL}/tree/${treeUserId}`);
         const data = await res.json();
         setTreeData(data);
     };
