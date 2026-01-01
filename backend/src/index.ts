@@ -834,8 +834,8 @@ app.post('/api/games/:id/join', async (req, res) => {
             const host = await UserModel.findById(game.hostId);
             if (host?.telegram_id) {
                 const t = type === 'PAID' ? '💰' : '🎟';
-                const status = isPromo ? '(Ожидает подтверждения)' : (paymentStatus === 'PAY_AT_GAME' ? '(Оплата на месте)' : '');
-                const link = (isPromo && repostLink) ? `\n🔗 Ссылка: ${repostLink}` : (isPromo ? '\n🔗 Ссылка: Не указана' : '');
+                const status = (type === 'PROMO') ? '(Ожидает подтверждения)' : (paymentStatus === 'PAY_AT_GAME' ? '(Оплата на месте)' : '');
+                const link = (type === 'PROMO' && repostLink) ? `\n🔗 Ссылка: ${repostLink}` : ((type === 'PROMO') ? '\n🔗 Ссылка: Не указана' : '');
 
                 botService.bot?.sendMessage(host.telegram_id,
                     `ℹ️ Новый игрок: ${t} ${user.first_name} (@${user.username}) записался на ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК). ${status}${link}`,
@@ -860,7 +860,7 @@ app.post('/api/games/:id/join', async (req, res) => {
                 });
 
                 let msg = `✅ Вы записались на игру: ${dateStr}\n\n`;
-                if (isPromo) {
+                if (type === 'PROMO') {
                     msg += `Ваша заявка (Промо) принята и ожидает подтверждения мастера.`;
                 } else if (paymentStatus === 'PAY_AT_GAME') {
                     msg += `Вы записаны. Оплата мастеру на месте.`;
