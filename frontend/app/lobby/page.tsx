@@ -403,15 +403,22 @@ function LobbyContent() {
                         <div className="bg-[#1e293b] p-6 rounded-3xl border border-slate-700 shadow-2xl animate-in slide-in-from-top-4 duration-300">
                             <h2 className="text-xl font-bold text-white mb-6">Новая комната</h2>
                             <div className="space-y-6">
-                                <div>
+                                <div className="relative">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2 block">Название</label>
                                     <input
                                         type="text"
+                                        autoFocus
                                         placeholder="Например: Битва Миллиардеров"
                                         value={newRoomName}
                                         onChange={(e) => setNewRoomName(e.target.value)}
                                         className="w-full bg-slate-900 border border-slate-700 focus:border-blue-500 rounded-xl px-5 py-4 text-white placeholder:text-slate-600 outline-none transition-all font-bold"
                                     />
+                                    {isTutorial && !newRoomName && (
+                                        <div className="absolute top-[-40px] right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg z-50 whitespace-nowrap">
+                                            1. Введите название 👇
+                                            <div className="absolute bottom-[-6px] right-4 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500"></div>
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div>

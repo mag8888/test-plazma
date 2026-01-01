@@ -334,7 +334,7 @@ export class RoomService {
     }
 
     async getRooms(): Promise<any[]> {
-        const rooms = await RoomModel.find({ status: { $in: ['waiting', 'playing'] } }).sort({ createdAt: -1 }).lean();
+        const rooms = await RoomModel.find({ status: { $in: ['waiting', 'playing'] }, isTraining: { $ne: true } }).sort({ createdAt: -1 }).lean();
 
         // Lookup creator usernames
         const enrichedRooms = await Promise.all(rooms.map(async (r) => {
