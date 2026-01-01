@@ -153,7 +153,8 @@ function LobbyContent() {
         }, (response: any) => {
             setIsSubmitting(false);
             if (response.success) {
-                router.push(`/game?id=${response.room.id}`);
+                const url = `/game?id=${response.room.id}${isTutorial ? '&tutorial=true' : ''}`;
+                router.push(url);
             } else {
                 // Check for "already in room" or similar errors
                 // We assume backend might send specific error or we check if user is in 'myRooms'

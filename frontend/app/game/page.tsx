@@ -47,6 +47,7 @@ export default function GameRoom() {
 function GameContent() {
     const searchParams = useSearchParams();
     const roomId = searchParams.get('id') as string;
+    const isTutorialOverride = searchParams.get('tutorial') === 'true';
     const router = useRouter();
     const { user } = useTelegram(); // Use Context
 
@@ -277,6 +278,9 @@ function GameContent() {
 
     if (!room) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Загрузка комнаты... {error && <span className="text-red-500 ml-2">{error}</span>}</div>;
 
+    const isRoomTraining = room?.isTraining ?? false;
+    const effectiveIsTraining = isRoomTraining || isTutorialOverride;
+
     if (room.status === 'playing') {
         const initialBoardState = gameState || {
             roomId,
@@ -287,7 +291,7 @@ function GameContent() {
             board: [],
             log: []
         };
-        return <GameBoard roomId={roomId} userId={myUserId} initialState={initialBoardState} isHost={isHost} isTutorial={room.isTraining} />;
+        return <GameBoard roomId={roomId} userId={myUserId} initialState={initialBoardState} isHost={isHost} isTutorial={effectiveIsTraining} />;
     }
 
     return (
@@ -307,7 +311,7 @@ function GameContent() {
                         <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
                             {room.name}
                         </h1>
-                        <span className="text-xs font-mono text-slate-500 uppercase tracking-widest pl-1">Room #{room.id} | T: {String(room.isTraining)}</span>
+                        <span className="text-xs font-mono text-slate-500 uppercase tracking-widest pl-1">Room #{room.id} | T: {String(effectiveIsTraining)}</span>
                     </div>
                 </header>
 
@@ -404,7 +408,7 @@ function GameContent() {
                                 <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500 blur-md"></div>
                                 <span className="relative flex items-center justify-center gap-3">
                                     🚀 ЗАПУСТИТЬ ИГРУ
-                                    {room.isTraining && room.players.length >= 2 && (
+                                    {effectiveIsTraining && room.players.length >= 2 && (
                                         <div className="absolute bottom-full mb-2 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg z-50 whitespace-nowrap pointer-events-none">
                                             4. Нажмите Старт 👇
                                             <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500"></div>
@@ -456,7 +460,7 @@ function GameContent() {
                                 <div className={`mb-8 p-4 rounded-3xl transition-all duration-500 ${token ? 'bg-purple-500/10 border border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.15)] animate-pulse-slow' : ''}`}>
                                     <label className={`text-xs uppercase font-bold mb-2 block tracking-wider transition-colors ${token ? 'text-purple-400' : 'text-slate-500'}`}>
                                         Ваша Мечта
-                                        {room.isTraining && !isReady && (
+                                        {effectiveIsTraining && !isReady && (
                                             <div className="absolute top-[-80px] right-0 z-[60]">
                                                 <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold px-4 py-3 rounded-xl animate-bounce shadow-lg shadow-emerald-900/40 relative max-w-[250px] text-center border border-emerald-400/50">
                                                     ✨ <span className="text-yellow-300">Выбор мечты очень важен!</span> Правильно выбранная мечта помогает выигрывать в игре и в жизни!
