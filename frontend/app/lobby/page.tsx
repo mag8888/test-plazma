@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { socket } from '../socket';
 import { RulesModal } from '../game/RulesModal';
@@ -20,7 +20,7 @@ interface Room {
 
 import { useTelegram } from '../../components/TelegramProvider';
 
-export default function Lobby() {
+function LobbyContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const isTutorial = searchParams.get('tutorial') === 'true';
@@ -606,5 +606,13 @@ export default function Lobby() {
                 </div>
             </div>
         </div>
+    );
+}
+
+export default function Lobby() {
+    return (
+        <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-500">Загрузка...</div>}>
+            <LobbyContent />
+        </Suspense>
     );
 }
