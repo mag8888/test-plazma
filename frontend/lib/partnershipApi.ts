@@ -118,6 +118,11 @@ export const partnershipApi = {
         return res.json();
     },
 
+    async getAvatarMatrix(avatarId: string) {
+        const res = await fetch(`${API_URL}/avatars/matrix/${avatarId}`);
+        return res.json();
+    },
+
     // Check Pending Legacy Balance
     async getLegacyBalance(initData: string) {
         const BACKEND_URL = getBackendUrl();

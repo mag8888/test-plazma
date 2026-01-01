@@ -18,6 +18,7 @@ interface MatrixViewProps {
     onClose: () => void;
     avatarId: string;
     avatarType: string;
+    fetcher?: (url: string) => Promise<any>;
 }
 
 const BRANCH_COLORS = [
@@ -26,7 +27,7 @@ const BRANCH_COLORS = [
     { name: 'Pink', bg: 'bg-pink-500', border: 'border-pink-500/30', text: 'text-pink-400', glow: 'shadow-[0_0_15px_rgba(236,72,153,0.3)]' }
 ];
 
-export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixViewProps) {
+export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: MatrixViewProps) {
     const [matrixData, setMatrixData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [currentViewId, setCurrentViewId] = useState(avatarId);
@@ -55,8 +56,16 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
     const loadMatrix = async (id: string) => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/partnership/avatars/matrix/${id}`);
-            const data = await res.json();
+            const endpoint = `/api/partnership/avatars/matrix/${id}`;
+            let data;
+
+            if (fetcher) {
+                data = await fetcher(endpoint);
+            } else {
+                const res = await fetch(endpoint);
+                data = await res.json();
+            }
+
             setMatrixData(data);
         } catch (err) {
             console.error('Failed to load matrix:', err);

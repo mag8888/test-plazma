@@ -108,13 +108,8 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
 
         setLoading(true);
         try {
-            const res = await fetch('/api/partnership/avatars/purchase', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ userId: partnershipUser._id, type })
-            });
-
-            const data = await res.json();
+            // Use API wrapper
+            const data = await partnershipApi.subscribe(partnershipUser._id, type);
 
             if (data.success) {
                 alert('✅ Аватар куплен!');
@@ -147,11 +142,6 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
                     {myAvatars.length} аватаров
                 </div>
             </div>
-
-            {/* Purchase Cards (Hidden as they are now in the top showcase) */}
-            {/* <div className="grid grid-cols-1 gap-4">
-                {AVATAR_TYPES.map(avatar => { ... })}
-            </div> */}
 
             {/* My Avatars List */}
             {myAvatars.length > 0 && (
@@ -188,20 +178,17 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
                                             {avatar.hasActiveSubscription ? 'Активна' : 'Истекла'}
                                         </div>
                                     </div>
-                                    <div onClick={() => { /* hidden temporarily */ }} className="opacity-0 w-0 h-0 overflow-hidden"></div>
-                                    {/* 
-                                        <button
-                                            onClick={() => {
-                                                setSelectedAvatarId(avatar._id);
-                                                setSelectedAvatarType(avatarType.name);
-                                                setShowMatrix(true);
-                                            }}
-                                            className="p-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors"
-                                            title="Посмотреть матрицу"
-                                        >
-                                            <Eye className="w-4 h-4 text-white" />
-                                        </button>
-                                        */}
+                                    <button
+                                        onClick={() => {
+                                            setSelectedAvatarId(avatar._id);
+                                            setSelectedAvatarType(avatarType.name);
+                                            setShowMatrix(true);
+                                        }}
+                                        className="p-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors ml-2"
+                                        title="Посмотреть матрицу"
+                                    >
+                                        <Eye className="w-4 h-4 text-white" />
+                                    </button>
                                 </div>
                             </div>
                         );
@@ -215,6 +202,12 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
                 onClose={() => setShowMatrix(false)}
                 avatarId={selectedAvatarId || ''}
                 avatarType={selectedAvatarType}
+                fetcher={(url) => {
+                    // Extract ID from url or just call api directly if we knew ID
+                    // MatrixView passes '/api/partnership/avatars/matrix/${id}'
+                    const id = url.split('/').pop() || '';
+                    return partnershipApi.getAvatarMatrix(id);
+                }}
             />
         </div>
     );

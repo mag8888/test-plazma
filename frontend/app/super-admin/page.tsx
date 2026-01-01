@@ -612,7 +612,27 @@ export default function AdminPage() {
                                                 setActionOutput('❌ Network Error: ' + e.message);
                                             }
                                         }}
-                                        className="bg-green-900/30 hover:bg-green-900/50 text-green-300 p-2 rounded-lg border border-green-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
+                                        fetcher={async (url) => {
+                                            // url is /api/partnership/avatars/matrix/{id}
+                                            // We want .../api/partnership/avatars/matrix/{id}
+                                            // fetchWithAuth forces /admin prefix, so we fetch manually here.
+
+                                            const endpointPath = url.replace('/api/partnership', '');
+                                            const finalUrl = `${ADMIN_PARTNERSHIP_URL}${endpointPath}`;
+
+                                            const headers = {
+                                                'Content-Type': 'application/json',
+                                                'x-admin-secret': secret || localStorage.getItem('admin_secret') || ''
+                                            };
+
+                                            const res = await fetch(finalUrl, { headers });
+                                            if (!res.ok) {
+                                                // Handle text/html error responses
+                                                const text = await res.text();
+                                                throw new Error(`Fetch failed: ${res.status} ${text.substring(0, 50)}`);
+                                            }
+                                            return res.json();
+                                        }} className="bg-green-900/30 hover:bg-green-900/50 text-green-300 p-2 rounded-lg border border-green-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
                                     >
                                         <BarChart size={18} />
                                         <span className="font-bold text-xs">Recalculate</span>
@@ -1444,6 +1464,23 @@ export default function AdminPage() {
                         onClose={() => setVisualizeAvatar(null)}
                         avatarId={visualizeAvatar.id}
                         avatarType={visualizeAvatar.type}
+                        fetcher={async (url) => {
+                            // Manual fetch to bypass /admin prefix and use correct backend URL
+                            const endpointPath = url.replace('/api/partnership', '');
+                            const finalUrl = `${ADMIN_PARTNERSHIP_URL}${endpointPath}`;
+
+                            const headers = {
+                                'Content-Type': 'application/json',
+                                'x-admin-secret': secret || localStorage.getItem('admin_secret') || ''
+                            };
+
+                            const res = await fetch(finalUrl, { headers });
+                            if (!res.ok) {
+                                const text = await res.text();
+                                throw new Error(`Fetch failed: ${res.status} ${text.substring(0, 50)}`);
+                            }
+                            return res.json();
+                        }}
                     />
                 )
             }
