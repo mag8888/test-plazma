@@ -654,30 +654,30 @@ export class AdminController {
         try {
             const adminName = req.headers['x-admin-name'] as string || 'Unknown Admin';
 
-            // Get all avatars
-            const avatars = await Avatar.find({}).populate('owner');
+            // Import Services
+            const { MatrixService } = require('../services/MatrixService');
+
+            // Get all active avatars
+            // Sort by level ascending? Not strictly necessary but maybe logical.
+            const avatars = await Avatar.find({ isActive: true }).sort({ level: 1 });
 
             let activated = 0;
             let updated = 0;
             const errors = [];
 
+            console.log(`[Admin] Starting recalculation for ${avatars.length} avatars...`);
+
             for (const avatar of avatars) {
                 try {
-                    let changed = false;
+                    // Trigger Level Check
+                    // This will handle 1/3-2/3 splits if eligible
+                    await MatrixService.checkLevelProgression(avatar);
 
-                    // Ensure isActive is set
-                    if (avatar.isActive === undefined || avatar.isActive === null) {
-                        avatar.isActive = true;
-                        changed = true;
-                        activated++;
-                    }
-
-                    // Save if changed
-                    if (changed) {
-                        await avatar.save();
-                        updated++;
-                    }
+                    // We don't easily know if it updated inside the service without return value,
+                    // but we can assume success if no error.
+                    updated++;
                 } catch (err: any) {
+                    console.error(`Recalc Error Avatar ${avatar._id}:`, err);
                     errors.push(`Avatar ${avatar._id}: ${err.message}`);
                 }
             }
