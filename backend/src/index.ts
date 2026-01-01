@@ -768,62 +768,61 @@ app.post('/api/games/:id/join', async (req, res) => {
 
         if (type === 'PROMO') {
             if (freeSpots <= 0) return res.status(400).json({ error: "No promo spots" });
-        } else if (type === 'PAID') {
-            if (paidSpots <= 0) return res.status(400).json({ error: "No paid spots" });
+        } else if (type === 'PAY_RED') {
+            if (paidSpots <= 0) return res.status(400).json({ error: "Нет платных мест" });
 
-            paymentStatus = 'PAID';
-
-            // New Balance Logic via PartnershipClient (Atomic)
             const { PartnershipClient, Currency } = await import('./services/partnership.client');
+            const balances = await PartnershipClient.getBalances(user.id);
+
+            if (balances.red < game.price) {
+                return res.status(400).json({ error: "Недостаточно средств на Красном счете" });
+            }
 
             try {
-                // Check balances first
-                const balances = await PartnershipClient.getBalances(user._id);
-
-                if (balances.red >= game.price) {
-                    await PartnershipClient.charge(user.id, Currency.RED, game.price, `Game Fee: ${game._id}`);
-                    // Backend Transaction (optional, but keeping for compatibility if backend API reads local model)
-                    // Note: PartnershipClient.charge ALREADY creates a Transaction in DB.
-                    // If backend reads from same DB, we don't need to duplicate.
-                    // BUT, to be safe with currency types and backend model enums, we let it be.
-                    // ACTUALLY, duplicate transaction might be confusing.
-                    // Backend /api/transactions reads from TransactionModel.
-                    // If shared DB, it will see the one created by PartnershipService.
-                    // So we do NOT create another one here.
-                } else if (balances.green >= game.price) {
-                    // Using Green instead of Legacy Referral
-                    await PartnershipClient.charge(user.id, Currency.GREEN, game.price, `Game Fee: ${game._id}`);
-                } else if (balances.referral >= game.price) {
-                    // Fallback to legacy referral field if not migrated yet? 
-                    // WalletService.getBalances returns referral.
-                    // But WalletService.charge only supports GREEN/YELLOW/RED check.
-                    // The audit plan said: "referralBalance (Legacy) will be deprecated and migrated to greenBalance."
-                    // So we assume migration or we treat Referral same as Green?
-                    // Let's assume user has Green.
-                    // If user fails, let's try 'PAY_AT_GAME'
-                    paymentStatus = 'PAY_AT_GAME';
-                } else {
-                    paymentStatus = 'PAY_AT_GAME';
-                }
-            } catch (e: any) {
-                console.error("Balance charge failed:", e.message);
-                // Fallback to offline payment
-                paymentStatus = 'PAY_AT_GAME';
+                await PartnershipClient.charge(user.id, Currency.RED, game.price, `Game Fee: ${game._id}`);
+                paymentStatus = 'PAID';
+            } catch (err) {
+                console.error("Red payment failed:", err);
+                return res.status(500).json({ error: "Ошибка списания средств" });
             }
+
+        } else if (type === 'PAY_GREEN') {
+            if (paidSpots <= 0) return res.status(400).json({ error: "Нет платных мест" });
+
+            const { PartnershipClient, Currency } = await import('./services/partnership.client');
+            const balances = await PartnershipClient.getBalances(user.id);
+
+            // Check green balance (Assuming getBalances returns normalized green)
+            if (balances.green < game.price) {
+                return res.status(400).json({ error: "Недостаточно средств на Зеленом счете" });
+            }
+
+            try {
+                await PartnershipClient.charge(user.id, Currency.GREEN, game.price, `Game Fee: ${game._id}`);
+                paymentStatus = 'PAID';
+            } catch (err) {
+                console.error("Green payment failed:", err);
+                return res.status(500).json({ error: "Ошибка списания средств" });
+            }
+
+        } else if (type === 'PAY_SPOT') {
+            if (paidSpots <= 0) return res.status(400).json({ error: "Нет платных мест" });
+            paymentStatus = 'PAY_AT_GAME';
         } else {
-            return res.status(400).json({ error: "Invalid type" });
+            return res.status(400).json({ error: "Invalid join type" });
         }
 
         // Add Participant
-        const isPromo = type === 'PROMO';
         game.participants.push({
             userId: user._id,
             username: user.username,
             firstName: user.first_name,
-            type: type,
+            type: type === 'PROMO' ? 'PROMO' : 'PAID', // Store broadly as PAID or PROMO for spot logic
+            // Ideally we should add paymentMethod to schema, but for now we won't break it. 
+            // relying on paymentStatus.
+            isVerified: false,
+            repostLink: repostLink || '',
             paymentStatus: paymentStatus,
-            repostLink: isPromo ? repostLink : undefined,
-            isVerified: !isPromo,
             joinedAt: new Date()
         });
 

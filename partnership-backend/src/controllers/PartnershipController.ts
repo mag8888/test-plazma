@@ -449,7 +449,7 @@ export class PartnershipController {
                 // Add earnings data
                 earnings: {
                     greenEarned: Math.round(greenEarned * 100) / 100,
-                    yellowEarned: rootAvatar.levelProgressionAccumulated || 0, // Use the actual accumulated value from the model
+                    yellowEarned: rootAvatar.yellowBalance || 0, // Using the new yellowBalance field
                     greenBalance: owner.greenBalance || 0,
                     yellowBalance: owner.yellowBalance || 0
                 }

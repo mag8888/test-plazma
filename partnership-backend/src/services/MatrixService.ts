@@ -16,9 +16,6 @@ const AVATAR_CONFIG = {
 
 const PREMIUM_AVATAR_LIMIT = 25;
 
-// Level progression yellow bonuses (per avatar reaching this level)
-const LEVEL_BONUSES = [50, 100, 200, 400, 800]; // Levels 0→1, 1→2, 2→3, 3→4, 4→5
-
 export class MatrixService {
 
     /**
@@ -47,26 +44,29 @@ export class MatrixService {
 
     /**
      * Find the "hungriest" parent avatar of the same type
-     * (avatar with fewest children, prioritizing lower levels)
+     * (Oldest active avatar with < 3 partners)
      */
     static async findHungryParent(type: AvatarType, excludeOwner?: mongoose.Types.ObjectId): Promise<IAvatar | null> {
         // Find all avatars of this type with less than 3 partners
+        // Sort by createdAt ASC (Oldest first) to fill from top/root down
         const candidates = await Avatar.find({
             type,
             isActive: true,
             owner: { $ne: excludeOwner },
             $expr: { $lt: [{ $size: "$partners" }, 3] }
-        }).populate('owner').sort({ level: 1, 'partners': 1 });
+        }).sort({ createdAt: 1 });
 
         if (candidates.length === 0) return null;
 
-        // Return the one with fewest partners (already sorted)
+        // Return the oldest one
         return candidates[0];
     }
 
     /**
      * Place avatar in matrix
-     * Priority: referrer's avatar of same type > hungry parent
+     * Priority: 
+     * 1. Referrer's avatar of same type (if not full)
+     * 2. Hungriest Parent (Oldest with space)
      */
     static async placeAvatar(
         newAvatar: IAvatar,
@@ -76,15 +76,16 @@ export class MatrixService {
 
         // Try to find referrer's avatar of same type
         if (referrerId) {
+            // Find Older Referrer Avatars first
             parentAvatar = await Avatar.findOne({
                 owner: referrerId,
                 type: newAvatar.type,
                 isActive: true,
                 $expr: { $lt: [{ $size: "$partners" }, 3] } // Has space
-            });
+            }).sort({ createdAt: 1 }); // If referrer has multiple, fill oldest
         }
 
-        // If no referrer avatar or it's full, find hungry parent
+        // If no referrer avatar or it's full, find hungry parent (Spillover)
         if (!parentAvatar) {
             parentAvatar = await this.findHungryParent(newAvatar.type, newAvatar.owner);
         }
@@ -94,11 +95,9 @@ export class MatrixService {
             newAvatar.parent = parentAvatar._id;
             newAvatar.level = 0; // Always start at level 0
 
+            // Add to parent
             parentAvatar.partners.push(newAvatar._id);
             await parentAvatar.save();
-
-            // Check if parent can level up now
-            await this.checkLevelProgression(parentAvatar);
         }
 
         await newAvatar.save();
@@ -106,125 +105,9 @@ export class MatrixService {
     }
 
     /**
-     * Calculate yellow bonus for a level transition
-     */
-    static calculateYellowBonus(fromLevel: number): number {
-        return LEVEL_BONUSES[fromLevel] || 0;
-    }
-
-    /**
-     * Check and trigger level progression for an avatar
-     * Called after adding a new partner
-     */
-    /**
-     * Check and trigger level progression for an avatar
-     * Called after adding a new partner
-     */
-    static async checkLevelProgression(avatar: IAvatar, depth: number = 0): Promise<void> {
-        // Prevent infinite recursion (limit to > 5 levels which is max tree height anyway)
-        if (depth > 10) {
-            console.error('Max recursion depth reached in checkLevelProgression', avatar._id);
-            return;
-        }
-
-        try {
-            // Count partners at avatar's current level
-            const partners = await Avatar.find({
-                _id: { $in: avatar.partners },
-                level: avatar.level
-            });
-
-            // Need exactly 3 partners of same level to progress
-            if (partners.length !== 3) return;
-
-            const fromLevel = avatar.level;
-            const toLevel = fromLevel + 1;
-            const yellowBonus = this.calculateYellowBonus(fromLevel);
-            const totalFromPartners = yellowBonus * 3;
-
-            // Level 5 special case: all to owner as green
-            if (toLevel === 5) {
-                const owner = await User.findById(avatar.owner);
-                if (owner) {
-                    // Use WalletService for atomic/transactional deposit
-                    await WalletService.deposit(
-                        owner._id,
-                        Currency.GREEN,
-                        totalFromPartners,
-                        `Level 5 closure: ${totalFromPartners}$ from avatar matrix completion`,
-                        TransactionType.AVATAR_BONUS
-                    );
-
-                    // Log level transition
-                    await LevelTransition.create({
-                        avatar: avatar._id,
-                        fromLevel,
-                        toLevel,
-                        yellowBonusSent: totalFromPartners,
-                        ownerPayout: totalFromPartners
-                    });
-                }
-
-                avatar.level = 5;
-                avatar.isClosed = true;
-                avatar.lastLevelUpAt = new Date();
-                await avatar.save();
-
-                return;
-            }
-
-            // Levels 0-4: distribute bonuses
-            const owner = await User.findById(avatar.owner);
-            if (!owner) return;
-
-            const referrerBonus = totalFromPartners / 3; // 1/3 to referrer
-            const progressionBonus = (totalFromPartners * 2) / 3; // 2/3 for progression
-
-            // Pay referrer if has subscription
-            if (owner.referrer) {
-                const referrer = await User.findById(owner.referrer);
-                if (referrer && await this.hasActiveSubscription(referrer._id)) {
-                    await WalletService.deposit(
-                        referrer._id,
-                        Currency.GREEN,
-                        referrerBonus,
-                        `Referral bonus: level ${toLevel} progression of ${owner.username}'s avatar`,
-                        TransactionType.AVATAR_BONUS
-                    );
-                }
-            }
-
-            // Accumulate progression bonus
-            avatar.levelProgressionAccumulated = (avatar.levelProgressionAccumulated || 0) + progressionBonus;
-            avatar.level = toLevel;
-            avatar.lastLevelUpAt = new Date();
-            await avatar.save();
-
-            // Log transition
-            await LevelTransition.create({
-                avatar: avatar._id,
-                fromLevel,
-                toLevel,
-                yellowBonusSent: totalFromPartners,
-                referrerBonus: owner.referrer ? referrerBonus : 0
-            });
-
-            // Recursively check if parent can now level up
-            if (avatar.parent) {
-                const parentAvatar = await Avatar.findById(avatar.parent);
-                if (parentAvatar) {
-                    await this.checkLevelProgression(parentAvatar, depth + 1);
-                }
-            }
-        } catch (error) {
-            console.error('Error in checkLevelProgression:', error);
-        }
-    }
-
-    /**
      * Distribute bonuses on avatar purchase
-     * 50% green to referrer (if has subscription)
-     * 50% yellow to parent avatar owner
+     * 50% green to direct inviter (User.referrer)
+     * 50% yellow to Matrix Parent Avatar (Accumulation)
      */
     static async distributeBonus(
         buyer: mongoose.Types.ObjectId,
@@ -233,23 +116,20 @@ export class MatrixService {
         cost: number,
         parentAvatar: IAvatar | null
     ): Promise<void> {
-        console.log(`[DistributeBonus] Buyer: ${buyer}, Avatar: ${avatarId}, Type: ${type}, Cost: ${cost}`);
-
         const buyerUser = await User.findById(buyer);
         if (!buyerUser) return;
 
         const halfCost = cost / 2;
         let referrerBonusSent = 0;
-        let referrerId = null;
+        let referrerId: mongoose.Types.ObjectId | null = null;
 
-        // 1. Green bonus to referrer (if exists and has subscription)
+        // 1. Green bonus to DIRECT Referrer (User who invited the buyer)
         if (buyerUser.referrer) {
             const referrer = await User.findById(buyerUser.referrer);
             if (referrer) {
                 referrerId = referrer._id;
+                // Only pay if referrer has active subscription (Any avatar)
                 const hasSubscription = await this.hasActiveSubscription(referrer._id);
-
-                // ... existing code ...
 
                 if (hasSubscription) {
                     await WalletService.deposit(
@@ -261,36 +141,37 @@ export class MatrixService {
                     );
                     referrerBonusSent = halfCost;
 
-                    // Send Telegram Notification
+                    // Notification
                     if (referrer.telegram_id) {
-                        // Non-blocking notification
-                        NotificationService.sendIncomeNotification(referrer.telegram_id, halfCost, buyerUser.username || 'Unknown').catch(e => console.error('Failed to send notification', e));
+                        NotificationService.sendIncomeNotification(referrer.telegram_id, halfCost, buyerUser.username || 'Unknown').catch(console.error);
                     }
-
-                } else {
-                    console.log(`[DistributeBonus] Referrer ${referrer.username} has no subscription. Skipping bonus.`);
-                }
-            }
-        } else {
-            // COMPANY ACCOUNT FALLBACK
-            // If user has no referrer, the 50% Green Balance goes to Company Account
-            const COMPANY_ACCOUNT_ID = process.env.COMPANY_ACCOUNT_ID;
-            if (COMPANY_ACCOUNT_ID) {
-                try {
-                    await WalletService.deposit(
-                        COMPANY_ACCOUNT_ID,
-                        Currency.GREEN,
-                        halfCost,
-                        `Green bonus (Company Fallback): ${type} avatar purchase by ${buyerUser.username}`,
-                        TransactionType.AVATAR_BONUS
-                    );
-                } catch (e) {
-                    console.error(`Failed to deposit to Company Account (${COMPANY_ACCOUNT_ID}):`, e);
                 }
             }
         }
 
-        // 2. Logging Purchase Record (Always create it to track purchase)
+        // 2. Yellow bonus to MATRIX Parent (Avatar accumulation)
+        let parentBonusSent = 0;
+        let parentOwnerId: mongoose.Types.ObjectId | null = null;
+
+        if (parentAvatar) {
+            const parentOwner = await User.findById(parentAvatar.owner);
+            if (parentOwner) {
+                parentOwnerId = parentOwner._id;
+
+                // Add to Avatar's Yellow Balance (Accumulation)
+                parentAvatar.yellowBalance = (parentAvatar.yellowBalance || 0) + halfCost;
+                await parentAvatar.save();
+                parentBonusSent = halfCost;
+
+                // Check Level Progression for Parent (Since verification is balance-driven + partner-driven)
+                // Actually, the trigger is usually strictly "3 partners", and the balance should match.
+                // 3 partners * 50% = 150% cost.
+                // Required for Level 0->1 is exactly 150% cost.
+                await this.checkLevelProgression(parentAvatar);
+            }
+        }
+
+        // 3. Log Purchase
         try {
             await AvatarPurchase.create({
                 buyer,
@@ -298,44 +179,140 @@ export class MatrixService {
                 type,
                 cost,
                 referrerBonus: referrerBonusSent,
-                referrerId: referrerId, // can be null
-                parentBonus: 0 // Will be updated below
+                referrerId: referrerId,
+                parentBonus: parentBonusSent,
+                parentAvatarId: parentAvatar?._id,
+                parentOwnerId: parentOwnerId
             });
-        } catch (e) {
-            console.error('[DistributeBonus] Failed to create AvatarPurchase record:', e);
-        }
-
-        // 3. Yellow bonus to parent avatar owner
-        if (parentAvatar) {
-            const parentOwner = await User.findById(parentAvatar.owner);
-            if (parentOwner) {
-                try {
-                    await WalletService.deposit(
-                        parentOwner._id,
-                        Currency.YELLOW,
-                        halfCost,
-                        `Yellow bonus: ${type} avatar placed under yours`,
-                        TransactionType.AVATAR_BONUS
-                    );
-
-                    // Update purchase record
-                    await AvatarPurchase.findOneAndUpdate(
-                        { avatarId },
-                        {
-                            parentBonus: halfCost,
-                            parentAvatarId: parentAvatar._id,
-                            parentOwnerId: parentOwner._id
-                        }
-                    );
-                } catch (e) {
-                    console.error('[DistributeBonus] Failed to distribute yellow bonus:', e);
-                }
-            }
-        }
+        } catch (e) { console.error(e); }
     }
 
     /**
-     * Purchase avatar
+     * Calculate required balance to transition FROM level
+     * Level 0->1: Cost/2 * 3
+     * Level 1->2: (PreviousKeep) * 3
+     */
+    static getRequiredBalanceForLevel(type: AvatarType, currentLevel: number): number {
+        const config = AVATAR_CONFIG[type];
+        const baseInput = config.cost / 2; // Initial Yellow Input ($50 for $100 avatar)
+
+        // Formula: Required = baseInput * 3 * (2^currentLevel)
+        // L0: 50 * 3 * 1 = 150
+        // L1: 50 * 3 * 2 = 300
+        // L2: 50 * 3 * 4 = 600
+        return baseInput * 3 * Math.pow(2, currentLevel);
+    }
+
+    /**
+     * Check and trigger level progression
+     * Triggered when Avatar receives funds/partners
+     */
+    static async checkLevelProgression(avatar: IAvatar, depth: number = 0): Promise<void> {
+        if (depth > 10) return; // Safety
+
+        // Requirement: 3 Partners (Implied by balance usually, but let's check strict count if we want)
+        // Actually, sometimes balance might come from elsewhere? No, closed system.
+        // But let's check partner count to be safe and consistent with "3 partners".
+        if (avatar.partners.length < 3) return; // Not full yet
+
+        const requiredBalance = this.getRequiredBalanceForLevel(avatar.type, avatar.level);
+
+        // Check funds
+        if (avatar.yellowBalance < requiredBalance) {
+            // Should not happen if logic is tight, but return if insufficient
+            return;
+        }
+
+        // Ready to Level Up
+        const totalPot = requiredBalance; // Use exact amount
+        const fromLevel = avatar.level;
+        const toLevel = fromLevel + 1;
+
+        // Level 5 Closure (4->5)
+        if (toLevel === 5) {
+            // All goes to Owner
+            const owner = await User.findById(avatar.owner);
+            if (owner) {
+                await WalletService.deposit(
+                    owner._id,
+                    Currency.GREEN,
+                    totalPot,
+                    `Level 5 Closure: Avatar ${avatar._id} completed matrix`,
+                    TransactionType.AVATAR_BONUS
+                );
+            }
+
+            avatar.level = 5;
+            avatar.isClosed = true;
+            avatar.yellowBalance -= totalPot; // Deduct used funds
+            avatar.lastLevelUpAt = new Date();
+            await avatar.save();
+            return;
+        }
+
+        // Standard Transition (0->1, 1->2, ... 3->4)
+        // Split: 1/3 Green to Inviter, 2/3 Yellow to Parent
+        const greenPart = totalPot / 3;
+        const yellowPart = (totalPot * 2) / 3;
+
+        const owner = await User.findById(avatar.owner);
+        if (!owner) return;
+
+        // 1. Green Bonus -> Inviter of the Avatar Owner
+        if (owner.referrer) {
+            const referrer = await User.findById(owner.referrer);
+            if (referrer) { // Check subscription?
+                const hasSub = await this.hasActiveSubscription(referrer._id);
+                if (hasSub) {
+                    await WalletService.deposit(
+                        referrer._id,
+                        Currency.GREEN,
+                        greenPart,
+                        `Referral Bonus: ${owner.username}'s avatar Level ${fromLevel}->${toLevel}`,
+                        TransactionType.AVATAR_BONUS
+                    );
+
+                    if (referrer.telegram_id) {
+                        NotificationService.sendIncomeNotification(referrer.telegram_id, greenPart, owner.username || 'Unknown').catch(console.error);
+                    }
+                }
+            }
+        }
+
+        // 2. Yellow Bonus -> Parent Avatar
+        if (avatar.parent) {
+            const parentAvatar = await Avatar.findById(avatar.parent);
+            if (parentAvatar) {
+                // Pass funds up
+                parentAvatar.yellowBalance = (parentAvatar.yellowBalance || 0) + yellowPart;
+                await parentAvatar.save();
+
+                // Check Parent Progression
+                await this.checkLevelProgression(parentAvatar, depth + 1);
+            }
+        }
+
+        // 3. Update Current Avatar
+        avatar.level = toLevel;
+        avatar.yellowBalance -= totalPot; // Deduct the pot consumed
+        avatar.lastLevelUpAt = new Date();
+        await avatar.save();
+
+        // Log
+        try {
+            await LevelTransition.create({
+                avatar: avatar._id,
+                fromLevel,
+                toLevel,
+                yellowBonusSent: yellowPart,
+                referrerBonus: greenPart
+            });
+        } catch (e) { console.error(e); }
+    }
+
+
+    /**
+     * Purchase avatar (Entry Point)
      */
     static async purchaseAvatar(
         userId: mongoose.Types.ObjectId,
@@ -344,46 +321,43 @@ export class MatrixService {
         const config = AVATAR_CONFIG[type];
         const user = await User.findById(userId);
 
-        if (!user) {
-            return { success: false, error: 'User not found' };
-        }
+        if (!user) return { success: false, error: 'User not found' };
 
         // Check premium limit
         if (type === AvatarType.PREMIUM) {
-            const canPurchase = await this.checkPremiumLimit();
-            if (!canPurchase) {
-                return { success: false, error: 'Premium avatar limit reached (25 max)' };
+            if (!(await this.checkPremiumLimit())) {
+                return { success: false, error: 'Premium avatar limit reached' };
             }
         }
 
-        // Charge balance
+        // Charge Wallet
         try {
             await WalletService.charge(userId, Currency.GREEN, config.cost, `Purchase ${type} avatar`);
         } catch (e: any) {
             return { success: false, error: e.message };
         }
 
-        // Calculate subscription expiry
+        // Create
         let subscriptionExpires: Date | null = null;
         if (config.subscriptionMonths) {
             subscriptionExpires = new Date();
             subscriptionExpires.setMonth(subscriptionExpires.getMonth() + config.subscriptionMonths);
         }
 
-        // Create avatar
         const newAvatar = new Avatar({
             owner: userId,
             type,
             cost: config.cost,
             subscriptionExpires,
-            level: 0, // Start at level 0
+            level: 0,
+            yellowBalance: 0,
             isActive: true
         });
 
-        // Place in matrix
+        // Place
         const { parent } = await this.placeAvatar(newAvatar, user.referrer);
 
-        // Distribute bonuses
+        // Distribute Initial Bonus
         await this.distributeBonus(userId, newAvatar._id, type, config.cost, parent);
 
         return { success: true, avatar: newAvatar };

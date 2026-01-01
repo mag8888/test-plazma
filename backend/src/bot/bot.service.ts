@@ -804,15 +804,39 @@ export class BotService {
                 await this.handleGetPassword(chatId, userId);
             } else if (data === 'become_master') {
                 await this.handleBecomeMaster(chatId, userId);
-            } else if (data.startsWith('join_game_')) {
-                const gameId = data.replace('join_game_', '');
-                await this.handleJoinGame(chatId, userId, gameId);
-            } else if (data.startsWith('join_paid_')) {
-                const gameId = data.replace('join_paid_', '');
-                await this.handleJoinGame(chatId, userId, gameId, true);
+            } else if (data.startsWith('join_options_')) {
+                const gameId = data.replace('join_options_', '');
+                await this.showJoinOptions(chatId, gameId);
+            } else if (data.startsWith('join_red_')) {
+                const gameId = data.replace('join_red_', '');
+                await this.handleJoinGame(chatId, userId, gameId, 'PAY_RED');
+            } else if (data.startsWith('join_green_')) {
+                const gameId = data.replace('join_green_', '');
+                await this.handleJoinGame(chatId, userId, gameId, 'PAY_GREEN');
             } else if (data.startsWith('join_onsite_')) {
                 const gameId = data.replace('join_onsite_', '');
-                await this.handleJoinGame(chatId, userId, gameId, false, true);
+                await this.handleJoinGame(chatId, userId, gameId, 'PAY_SPOT');
+            } else if (data.startsWith('join_promo_')) {
+                const gameId = data.replace('join_promo_', '');
+                await this.handleJoinGame(chatId, userId, gameId, 'PROMO');
+            } else if (data.startsWith('view_game_')) {
+                const gameId = data.replace('view_game_', '');
+                const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                const game = await ScheduledGameModel.findById(gameId);
+                if (game) {
+                    const card = await this.renderGameCard(game, userId);
+                    try {
+                        await this.bot?.editMessageText(card.text, {
+                            chat_id: chatId,
+                            message_id: query.message?.message_id,
+                            parse_mode: 'Markdown',
+                            reply_markup: card.reply_markup as any
+                        });
+                    } catch (e) {
+                        // Fallback if edit fails (e.g. too old)
+                        await this.bot?.sendMessage(chatId, card.text, { parse_mode: 'Markdown', reply_markup: card.reply_markup as any });
+                    }
+                }
             } else if (data.startsWith('approve_link_')) {
                 // Format: approve_link_GAMEID_USERID
                 const parts = data.split('_');
@@ -1891,7 +1915,7 @@ export class BotService {
         } catch (e) { console.error(e); }
     }
 
-    async handleJoinGame(chatId: number, telegramId: number, gameId: string, isPaid?: boolean, isOnSite?: boolean) {
+    async handleJoinGame(chatId: number, telegramId: number, gameId: string, type: 'PROMO' | 'PAY_RED' | 'PAY_GREEN' | 'PAY_SPOT') {
         try {
             const { ScheduledGameModel } = await import('../models/scheduled-game.model');
             const { UserModel } = await import('../models/user.model');
@@ -1912,139 +1936,96 @@ export class BotService {
 
             // Check Limits
             const promoCount = game.participants.filter((p: any) => p.type === 'PROMO').length;
-            const paidCount = game.participants.filter((p: any) => p.type === 'PAID' || p.type === 'ONSITE').length;
+            const paidCount = game.participants.filter((p: any) => p.type === 'PAID' || p.type === 'PAY_RED' || p.type === 'PAY_GREEN' || p.type === 'PAY_SPOT').length; // Simplify: just non-promo
 
-            if (isOnSite) {
-                // On-site payment - no balance check, just register
-                if (paidCount >= (game.maxPlayers - game.promoSpots)) {
+            // Actually, we store 'PAID' broadly or specific? 
+            // The backend update stored 'PAID' for all paid types, but maybe we should be consistent.
+            // Let's stick to what we decided: Backend stores `type: 'PAID'` but logic depends on input.
+            // Wait, backend update: `type: type === 'PROMO' ? 'PROMO' : 'PAID', ... paymentMethod: type`
+            // Bot should do same.
+
+            const freeSpots = game.promoSpots - promoCount;
+            const paidSpots = (game.maxPlayers - game.promoSpots) - paidCount;
+
+            let paymentStatus = 'PENDING';
+            let storedType = 'PAID';
+
+            if (type === 'PROMO') {
+                if (freeSpots <= 0) {
+                    this.bot?.sendMessage(chatId, "😔 Промо-места закончились.");
+                    return;
+                }
+                storedType = 'PROMO';
+                paymentStatus = 'PROMO'; // or n/a
+            } else {
+                // PAID TYPES
+                if (paidSpots <= 0) {
                     this.bot?.sendMessage(chatId, "😔 Платные места закончились!");
                     return;
                 }
 
-                game.participants.push({
-                    userId: user._id,
-                    username: user.username,
-                    firstName: user.first_name || 'Игрок',
-                    type: 'ONSITE',
-                    joinedAt: new Date(),
-                    isVerified: false // Requires master confirmation
-                });
-
-                await game.save();
-
-                this.bot?.sendMessage(chatId, `✅ Вы записаны с оплатой на месте!\\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}\\n\\n💰 Оплата $20 мастеру на игре.`, {
-                    reply_markup: {
-                        inline_keyboard: [[{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]]
+                if (type === 'PAY_SPOT') {
+                    paymentStatus = 'PAY_AT_GAME';
+                } else if (type === 'PAY_RED') {
+                    if (user.balanceRed >= 20) {
+                        user.balanceRed -= 20;
+                        await user.save();
+                        paymentStatus = 'PAID';
+                    } else {
+                        this.bot?.sendMessage(chatId, `❌ Недостаточно средств на Красном счете ($20).\nБаланс: $${user.balanceRed}`);
+                        return;
                     }
-                });
-
-                // Notify Master
-                const host = await UserModel.findById(game.hostId);
-                if (host) {
-                    this.bot?.sendMessage(host.telegram_id,
-                        `💵 ${user.first_name} (@${user.username}) записался с оплатой на месте\\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`,
-                        {
-                            reply_markup: {
-                                inline_keyboard: [[
-                                    { text: '✅ Подтвердить', callback_data: `confirm_player_${game._id}_${user._id}` },
-                                    { text: '❌ Отменить', callback_data: `reject_player_${game._id}_${user._id}` }
-                                ]]
-                            }
-                        }
-                    );
+                } else if (type === 'PAY_GREEN') {
+                    if (user.referralBalance >= 20) {
+                        user.referralBalance -= 20;
+                        await user.save();
+                        paymentStatus = 'PAID';
+                    } else {
+                        this.bot?.sendMessage(chatId, `❌ Недостаточно средств на Зеленом счете ($20).\nБаланс: $${user.referralBalance}`);
+                        return;
+                    }
                 }
-
-                return;
             }
 
-            if (!isPaid) {
-                // Trying to join PROMO
-                if (promoCount >= game.promoSpots) {
-                    this.bot?.sendMessage(chatId, "😔 Промо-места закончились. Вы можете записаться платно ($20).", {
-                        reply_markup: {
-                            inline_keyboard: [[{ text: 'Записаться платно ($20)', callback_data: `join_paid_${game._id}` }]]
-                        }
-                    });
-                    return;
-                }
+            game.participants.push({
+                userId: user._id,
+                username: user.username,
+                firstName: user.first_name || 'Игрок',
+                type: storedType,
+                paymentMethod: type, // Store specific method for reference
+                paymentStatus: paymentStatus,
+                joinedAt: new Date(),
+                isVerified: storedType === 'PAID' || type === 'PAY_SPOT' ? false : true // Spot needs verify? Or auto? Let's say Spot/Promo is verified? Actually paid is verified. Spot might need manual confirm?
+                // Let's standardise: 
+                // PAID (Red/Green) -> Auto Verified (Money taken)
+                // SPOT -> Not Verified (Needs Master to confirm cash?) -> Current logic said "Onsite... Requires master confirmation"
+                // PROMO -> Auto Verified (as per recent changes)
+            });
 
-                // Auto-verify PROMO users now (Link requirement removed)
-                game.participants.push({
-                    userId: user._id,
-                    username: user.username,
-                    firstName: user.first_name || 'Игрок',
-                    type: 'PROMO',
-                    joinedAt: new Date(),
-                    isVerified: true
-                });
-
-                // Notify Success (No Link Request)
-                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PROMO)!\\n\\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`, {
-                    reply_markup: {
-                        inline_keyboard: [
-                            [{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]
-                        ]
-                    }
-                });
-
-
-            } else {
-                // Joining PAID
-                if (paidCount >= (game.maxPlayers - game.promoSpots)) {
-                    this.bot?.sendMessage(chatId, "😔 Платные места тоже закончились!");
-                    return;
-                }
-
-                // Deduct Balance (Priority: Red, then Green)
-                let remainingCost = 20;
-
-                if (user.balanceRed >= remainingCost) {
-                    user.balanceRed -= remainingCost;
-                    remainingCost = 0;
-                } else {
-                    remainingCost -= (user.balanceRed || 0);
-                    user.balanceRed = 0;
-                    // Deduct rest from Green
-                    if (user.referralBalance >= remainingCost) {
-                        user.referralBalance -= remainingCost;
-                        remainingCost = 0;
-                    }
-                }
-
-                if (remainingCost > 0) {
-                    this.bot?.sendMessage(chatId, `❌ Недостаточно средств ($20). \\n🔴 Red: $${user.balanceRed || 0}\\n🟢 Green: $${user.referralBalance}`);
-                    return;
-                }
-
-                await user.save();
-
-                game.participants.push({
-                    userId: user._id,
-                    username: user.username,
-                    firstName: user.first_name || 'Игрок',
-                    type: 'PAID',
-                    joinedAt: new Date(),
-                    isVerified: true // Paid users auto-verified? Or assume no post needed.
-                });
-            }
+            // Adjust verification logic
+            const lastP = game.participants[game.participants.length - 1];
+            if (paymentStatus === 'PAID') lastP.isVerified = true;
+            if (storedType === 'PROMO') lastP.isVerified = true;
+            if (type === 'PAY_SPOT') lastP.isVerified = false;
 
             await game.save();
 
-            if (isPaid) {
-                this.bot?.sendMessage(chatId, `✅ Вы успешно записаны на игру (PAID)!\\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`, {
-                    reply_markup: {
-                        inline_keyboard: [[{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]]
-                    }
-                });
-            } else {
-                // Already sent message above
-            }
+            // Notify User
+            let msg = `✅ Вы записаны! (${type === 'PROMO' ? 'Promo' : type === 'PAY_SPOT' ? 'Оплата на месте' : 'Оплачено'})\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК)`;
+            if (type === 'PAY_SPOT') msg += `\n💰 Оплата $20 мастеру на игре.`;
+
+            this.bot?.sendMessage(chatId, msg, {
+                reply_markup: {
+                    inline_keyboard: [[{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]]
+                }
+            });
 
             // Notify Master
             const host = await UserModel.findById(game.hostId);
             if (host) {
+                const methodText = type === 'PROMO' ? 'Promo' : type === 'PAY_RED' ? 'Red Balance' : type === 'PAY_GREEN' ? 'Green Balance' : 'On Spot';
                 this.bot?.sendMessage(host.telegram_id,
-                    `🆕 Игрок ${user.first_name} (@${user.username}) записался на игру (тип: ${isPaid ? 'PAID' : 'PROMO'}).\\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`,
+                    `🆕 Игрок ${user.first_name} (@${user.username}) записался.\nТип: ${methodText}\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`,
                     {
                         reply_markup: {
                             inline_keyboard: [[
@@ -2060,6 +2041,40 @@ export class BotService {
             console.error("Join error:", e);
             this.bot?.sendMessage(chatId, "Ошибка записи на игру.");
         }
+    }
+
+    async showJoinOptions(chatId: number, gameId: string) {
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const game = await ScheduledGameModel.findById(gameId);
+            if (!game) return;
+
+            const promoCount = game.participants.filter((p: any) => p.type === 'PROMO').length;
+            const freeSpots = game.promoSpots - promoCount;
+
+            const keyboard = [];
+
+            // 1. Red Balance
+            keyboard.push([{ text: '1. Списать с баланса красный бонус ($20)', callback_data: `join_red_${game._id}` }]);
+
+            // 2. Green Balance
+            keyboard.push([{ text: '2. Списать с баланса зеленый бонус ($20)', callback_data: `join_green_${game._id}` }]);
+
+            // 3. On Spot
+            keyboard.push([{ text: '3. Оплатить на месте ($20)', callback_data: `join_onsite_${game._id}` }]);
+
+            // 4. Promo
+            if (freeSpots > 0) {
+                keyboard.push([{ text: '4. Промо (Бесплатно)', callback_data: `join_promo_${game._id}` }]);
+            }
+
+            keyboard.push([{ text: '🔙 Назад', callback_data: `view_game_${game._id}` }]); // Assuming view_game callback exists or just cancel
+
+            this.bot?.sendMessage(chatId, "👇 Выберите способ оплаты:", {
+                reply_markup: { inline_keyboard: keyboard }
+            });
+
+        } catch (e) { console.error(e); }
     }
 
 
@@ -2119,23 +2134,8 @@ export class BotService {
         if (isParticipant) {
             rows.push([{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]);
         } else {
-            const joinRow = [];
-            if (freeSpots > 0) joinRow.push({ text: 'Записаться (Free)', callback_data: `join_game_${game._id}` });
-            if (paidSpots > 0) joinRow.push({ text: 'Записаться ($20)', callback_data: `join_paid_${game._id}` });
-            if (joinRow.length > 0) rows.push(joinRow);
-
-            // On-site payment button on separate row
-            if (paidSpots > 0) {
-                rows.push([{ text: 'Записаться с оплатой мастеру', callback_data: `join_onsite_${game._id}` }]);
-            }
-            // If both are present, they might still be too wide. Let's put them on separate rows if both strictly needed, 
-            // but user image shows they fit 2 per row roughly, or maybe not.
-            // "Записаться (Free)" is ~16 chars. "Записаться ($20)" is ~16 chars. Total 32. 
-            // Mobile width is tricky. Let's separate them to be safe.
-            // Actually, let's keep logic: if both, try 2 per row? No, user complained. Vertical is safest.
-            // Wait, user image shows 4 buttons: Free, Paid, Time, Announce? No. 
-            // Image shows: "Za...ee)", "Za...0)", "Clock", "Mega...".
-            // So they were all in one row.
+            // Single Join Button triggers selection menu
+            rows.push([{ text: '📝 Записаться на игру', callback_data: `join_options_${game._id}` }]);
         }
 
         // Time button

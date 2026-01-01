@@ -17,7 +17,7 @@ export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModa
     const [repostLink, setRepostLink] = useState('');
 
     // Step 1: Join Game (Immediate)
-    const handleJoin = async (type: 'PROMO' | 'PAID') => {
+    const handleJoin = async (type: string) => {
         setLoading(true);
         try {
             const res = await fetch(`/api/games/${game.id}/join`, {
@@ -117,17 +117,49 @@ export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModa
                             </button>
 
                             <button
-                                onClick={() => handleJoin('PAID')}
+                                onClick={() => handleJoin('PAY_RED')}
                                 disabled={loading}
-                                className="w-full bg-blue-900/40 hover:bg-blue-900/60 border border-blue-500/30 disabled:opacity-50 p-4 rounded-xl flex items-center justify-between group transition-all active:scale-95"
+                                className="w-full bg-red-900/30 hover:bg-red-900/50 border border-red-500/30 disabled:opacity-50 p-3 rounded-xl flex items-center justify-between group transition-all active:scale-95"
                             >
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 bg-blue-800 rounded-lg text-blue-300">
-                                        <Wallet size={24} />
+                                    <div className="p-2 bg-red-800/50 rounded-lg text-red-300">
+                                        <Wallet size={20} />
                                     </div>
                                     <div className="text-left">
-                                        <div className="font-bold text-blue-200">Paid (${game.price})</div>
-                                        <div className="text-xs text-blue-400/70">Списание с баланса</div>
+                                        <div className="font-bold text-red-200">Красный баланс (${game.price})</div>
+                                        <div className="text-[10px] text-red-400/70 uppercase tracking-wide">Бонусный счет</div>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => handleJoin('PAY_GREEN')}
+                                disabled={loading}
+                                className="w-full bg-green-900/30 hover:bg-green-900/50 border border-green-500/30 disabled:opacity-50 p-3 rounded-xl flex items-center justify-between group transition-all active:scale-95"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-green-800/50 rounded-lg text-green-300">
+                                        <Wallet size={20} />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="font-bold text-green-200">Зеленый баланс (${game.price})</div>
+                                        <div className="text-[10px] text-green-400/70 uppercase tracking-wide">Основной счет</div>
+                                    </div>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={() => handleJoin('PAY_SPOT')}
+                                disabled={loading}
+                                className="w-full bg-slate-700/50 hover:bg-slate-700 border border-slate-600 disabled:opacity-50 p-3 rounded-xl flex items-center justify-between group transition-all active:scale-95"
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 bg-slate-600 rounded-lg text-slate-300">
+                                        <div className="w-5 h-5 flex items-center justify-center font-bold text-xs">$</div>
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="font-bold text-slate-200">Оплата на месте</div>
+                                        <div className="text-[10px] text-slate-400 uppercase tracking-wide">Наличные / Карта</div>
                                     </div>
                                 </div>
                             </button>

@@ -281,8 +281,8 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
 
                                 {/* <div className="absolute top-8 left-[16%] right-[16%] h-px bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 opacity-50"></div> */}
 
-                                {/* Branches Container - HIDDEN TEMPORARILY */}
-                                {/* 
+                                {/* Branches Container */}
+
                                 <div className="grid grid-cols-3 gap-2 pt-8 border-t border-slate-800/50 relative">
                                     <div className="absolute top-0 left-[16.66%] right-[16.66%] h-px bg-slate-700 -translate-y-[1px]"></div>
                                     <div className="absolute top-0 left-1/2 -translate-x-1/2 h-8 w-px bg-slate-700 -translate-y-full"></div>
@@ -325,7 +325,6 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType }: MatrixView
                                         </div>
                                     ))}
                                 </div>
-                                */}
 
                             </div>
                         </div>

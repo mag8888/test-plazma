@@ -17,7 +17,7 @@ export interface IAvatar extends Document {
     isActive: boolean;
 
     // Level progression tracking
-    levelProgressionAccumulated: number; // Yellow bonuses accumulated for next level
+    yellowBalance: number; // Accumulated funds for next level
     lastLevelUpAt?: Date; // Timestamp of last level transition
     isClosed: boolean; // True when level 5 reached
 
@@ -35,7 +35,7 @@ const AvatarSchema: Schema = new Schema({
     isActive: { type: Boolean, default: true },
 
     // Level progression
-    levelProgressionAccumulated: { type: Number, default: 0 },
+    yellowBalance: { type: Number, default: 0 }, // Accumulated funds for next level
     lastLevelUpAt: { type: Date },
     isClosed: { type: Boolean, default: false },
 
