@@ -27,6 +27,15 @@ interface Room {
     isTraining?: boolean;
 }
 
+const TutorialTip: React.FC<{ text: string, position?: string, arrow?: string }> = ({ text, position = "top-full mt-4", arrow = "top-[-6px] border-b-emerald-500 border-t-0" }) => (
+    <div className={`absolute ${position} left-1/2 -translate-x-1/2 z-[100] w-max max-w-[200px] pointer-events-none`}>
+        <div className="bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg shadow-emerald-900/40 relative text-center">
+            {text}
+            <div className={`absolute ${arrow} left-1/2 -translate-x-1/2 border-8 border-transparent`}></div>
+        </div>
+    </div>
+);
+
 export default function GameRoom() {
     return (
         <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Загрузка игры...</div>}>
@@ -436,13 +445,26 @@ function GameContent() {
                                                     <span className={`drop-shadow-lg ${isSelected ? 'animate-bounce-subtle' : ''}`}>{t}</span>
                                                     {isSelected && <div className="absolute -top-3 -right-3 w-8 h-8 flex items-center justify-center"><div className="absolute inset-0 bg-blue-500 rounded-full blur-[2px]"></div><div className="relative bg-blue-500 bg-gradient-to-br from-blue-400 to-indigo-600 text-white rounded-full w-7 h-7 flex items-center justify-center border-2 border-slate-900 shadow-xl"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg></div></div>}
                                                     {isTaken && <div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-[1px] bg-slate-500/50 rotate-45 transform scale-150"></div></div>}
+                                                    {room.isTraining && t === '🦊' && !isReady && (
+                                                        <TutorialTip text="Выберите фишку" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />
+                                                    )}
                                                 </button>
                                             );
                                         })}
                                     </div>
                                 </div>
                                 <div className={`mb-8 p-4 rounded-3xl transition-all duration-500 ${token ? 'bg-purple-500/10 border border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.15)] animate-pulse-slow' : ''}`}>
-                                    <label className={`text-xs uppercase font-bold mb-2 block tracking-wider transition-colors ${token ? 'text-purple-400' : 'text-slate-500'}`}>Ваша Мечта</label>
+                                    <label className={`text-xs uppercase font-bold mb-2 block tracking-wider transition-colors ${token ? 'text-purple-400' : 'text-slate-500'}`}>
+                                        Ваша Мечта
+                                        {room.isTraining && !isReady && (
+                                            <div className="absolute top-[-80px] right-0 z-[60]">
+                                                <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold px-4 py-3 rounded-xl animate-bounce shadow-lg shadow-emerald-900/40 relative max-w-[250px] text-center border border-emerald-400/50">
+                                                    ✨ <span className="text-yellow-300">Выбор мечты очень важен!</span> Правильно выбранная мечта помогает выигрывать в игре и в жизни!
+                                                    <div className="absolute bottom-[-6px] right-4 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-teal-600"></div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </label>
                                     <div className="relative">
                                         <select
                                             value={dream}
