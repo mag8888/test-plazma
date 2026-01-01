@@ -678,4 +678,28 @@ export class AdminController {
         }
     }
 
+    // Get Avatars for a User (Admin View)
+    static async getUserAvatars(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const { userId } = req.params;
+            if (!userId) return res.status(400).json({ error: 'Missing userId' });
+
+            let user;
+            if (userId.match(/^[0-9a-fA-F]{24}$/)) {
+                user = await User.findById(userId);
+            } else {
+                user = await User.findOne({ telegram_id: Number(userId) }) || await User.findOne({ username: userId });
+            }
+
+            if (!user) return res.status(404).json({ error: 'User not found' });
+
+            const avatars = await Avatar.find({ owner: user._id }).sort({ level: -1 });
+
+            res.json({ success: true, avatars });
+        } catch (error: any) {
+            console.error('getUserAvatars error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
 }

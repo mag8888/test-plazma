@@ -160,30 +160,21 @@ export default function AdminPage() {
         setLoadingAvatars(true);
         setAvatarsList([]);
         try {
-            // Public endpoint, so we construct URL based on backend config
-            // Assuming ADMIN_PARTNERSHIP_URL points to /api/partnership or root?
-            // Let's assume standard path /api/avatars/my-avatars/:id
-            // note: ADMIN_PARTNERSHIP_URL defined at top.
-            // If ADMIN_PARTNERSHIP_URL contains /api/partnership, we might need to strip or adjust.
-            // Let's try to use the admin generic fetch but targeting public route if possible or simple fetch.
+            // Updated to use the new Admin endpoint
+            const res = await fetchWithAuth(`/users/${user._id || user.telegram_id}/avatars`);
 
-            // Hack/Fix: Construct URL carefully.
-            const baseUrl = ADMIN_PARTNERSHIP_URL.replace('/api/partnership', '');
-            const res = await fetch(`${baseUrl}/api/avatars/my-avatars/${user._id || user.telegram_id}`);
-            const data = await res.json();
-
-            if (data.avatars) {
-                setAvatarsList(data.avatars);
-                if (data.avatars.length === 1) {
+            if (res.success && res.avatars) {
+                setAvatarsList(res.avatars);
+                if (res.avatars.length === 1) {
                     // Auto-select if only one
                     setVisualizeAvatar({
-                        id: data.avatars[0]._id,
-                        type: data.avatars[0].type
+                        id: res.avatars[0]._id,
+                        type: res.avatars[0].type
                     });
                     setSelectAvatarUser(null); // Close list modal if auto-opening
                 }
             } else {
-                alert('No avatars found or error fetching');
+                setAvatarsList([]); // Ensure empty
             }
         } catch (e) {
             console.error('Fetch avatars error', e);
@@ -862,577 +853,578 @@ export default function AdminPage() {
                                                 >
                                                     +Avatar
                                                 </button>
+                                            </button>
+                                            {u.avatarCounts && u.avatarCounts.total > 0 && (
                                                 <button
-                                                    onClick={() => setAddAvatarUser(u)}
-                                                    className="bg-green-900/50 hover:bg-green-800 text-green-300 px-2 py-1 rounded text-xs transition flex-1 border border-green-500/30"
+                                                    onClick={() => handleViewMatrix(u)}
+                                                    className="bg-blue-900/50 hover:bg-blue-800 text-blue-300 px-2 py-1 rounded text-xs transition flex-1 border border-blue-500/30"
                                                 >
-                                                    +Avatar
+                                                    Matrix
                                                 </button>
-                                                {u.avatarCounts && u.avatarCounts.total > 0 && (
-                                                    <button
-                                                        onClick={() => handleViewMatrix(u)}
-                                                        className="bg-blue-900/50 hover:bg-blue-800 text-blue-300 px-2 py-1 rounded text-xs transition flex-1 border border-blue-500/30"
-                                                    >
-                                                        Matrix
-                                                    </button>
-                                                )}
-                                            </td>
+                                            )}
+                                        </td>
                                         </tr>
                                     ))}
-                                    {users.length === 0 && (
-                                        <tr><td colSpan={10} className="p-8 text-center text-slate-500">No users found</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                {users.length === 0 && (
+                                    <tr><td colSpan={10} className="p-8 text-center text-slate-500">No users found</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
 
                         {/* Pagination */}
-                        <div className="flex justify-between items-center text-slate-400 text-sm">
-                            <div>Page {page} of {totalPages}</div>
-                            <div className="flex gap-2">
-                                <button
-                                    disabled={page <= 1}
-                                    onClick={() => searchUsers(page - 1)}
-                                    className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <ChevronLeft size={20} />
-                                </button>
-                                <button
-                                    disabled={page >= totalPages}
-                                    onClick={() => searchUsers(page + 1)}
-                                    className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <ChevronRight size={20} />
-                                </button>
-                            </div>
-                        </div>
-
+                <div className="flex justify-between items-center text-slate-400 text-sm">
+                    <div>Page {page} of {totalPages}</div>
+                    <div className="flex gap-2">
+                        <button
+                            disabled={page <= 1}
+                            onClick={() => searchUsers(page - 1)}
+                            className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <ChevronLeft size={20} />
+                        </button>
+                        <button
+                            disabled={page >= totalPages}
+                            onClick={() => searchUsers(page + 1)}
+                            className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            <ChevronRight size={20} />
+                        </button>
                     </div>
-                )}
-
-                {/* ... (TREE TAB - Keep existing) ... */}
-                {activeTab === 'TREE' && (
-                    <div className="space-y-4">
-                        <div className="flex gap-2">
-                            <input
-                                className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                                placeholder="Enter User ID for Tree View"
-                                value={treeUserId}
-                                onChange={(e) => setTreeUserId(e.target.value)}
-                            />
-                            <button onClick={fetchTree} className="bg-purple-600 hover:bg-purple-500 text-white px-6 rounded-xl font-bold transition">
-                                Load
-                            </button>
-                        </div>
-                        {treeData && (
-                            <div className="bg-slate-800 p-8 rounded-xl border border-slate-700 overflow-auto">
-                                <pre className="text-xs text-green-400 font-mono">
-                                    {JSON.stringify(treeData, null, 2)}
-                                </pre>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* GAMES TAB */}
-                {activeTab === 'GAMES' && (
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-white">Scheduled Games</h2>
-                            <button onClick={() => fetchGames(1)} className="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg transition">
-                                <RefreshCw size={20} />
-                            </button>
-                        </div>
-
-                        {gamesLoading && <div className="text-center text-slate-500 animate-pulse">Loading games...</div>}
-
-                        <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
-                                    <tr>
-                                        <th className="p-4">Time</th>
-                                        <th className="p-4">Host</th>
-                                        <th className="p-4">Status</th>
-                                        <th className="p-4">Players</th>
-                                        <th className="p-4">Price</th>
-                                        <th className="p-4">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-700">
-                                    {games.map(game => (
-                                        <tr key={game._id} className="hover:bg-slate-700/50 transition">
-                                            <td className="p-4 text-white">
-                                                <div className="font-bold">{new Date(game.startTime).toLocaleDateString()}</div>
-                                                <div className="text-xs text-slate-400">{new Date(game.startTime).toLocaleTimeString()}</div>
-                                            </td>
-                                            <td className="p-4 text-slate-300">
-                                                {game.hostId ? (
-                                                    <a href={`https://t.me/${game.hostId.username}`} target="_blank" className="hover:text-blue-400">
-                                                        {game.hostId.first_name} (@{game.hostId.username})
-                                                    </a>
-                                                ) : 'Unknown'}
-                                            </td>
-                                            <td className="p-4">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${game.status === 'SCHEDULED' ? 'bg-green-900/30 text-green-400' :
-                                                    game.status === 'CANCELLED' ? 'bg-red-900/30 text-red-400' :
-                                                        'bg-slate-700 text-slate-400'
-                                                    }`}>
-                                                    {game.status}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 text-slate-300">
-                                                {game.participants?.length || 0} / {game.maxPlayers}
-                                            </td>
-                                            <td className="p-4 text-yellow-400 font-bold">
-                                                {game.price}
-                                            </td>
-                                            <td className="p-4">
-                                                {game.status === 'SCHEDULED' && (
-                                                    <button
-                                                        onClick={() => cancelGame(game._id)}
-                                                        className="bg-red-900/50 hover:bg-red-800 text-red-300 px-3 py-1.5 rounded-lg text-xs transition border border-red-500/30 flex items-center gap-1"
-                                                    >
-                                                        <XCircle size={14} /> Cancel
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {games.length === 0 && !gamesLoading && (
-                                        <tr><td colSpan={6} className="p-8 text-center text-slate-500">No games found</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Pagination */}
-                        <div className="flex justify-between items-center text-slate-400 text-sm">
-                            <div>Page {gamesPage} of {gamesTotalPages}</div>
-                            <div className="flex gap-2">
-                                <button
-                                    disabled={gamesPage <= 1}
-                                    onClick={() => fetchGames(gamesPage - 1)}
-                                    className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <ChevronLeft size={20} />
-                                </button>
-                                <button
-                                    disabled={gamesPage >= gamesTotalPages}
-                                    onClick={() => fetchGames(gamesPage + 1)}
-                                    className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <ChevronRight size={20} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
+                </div>
 
             </div>
+                )}
 
-            {/* HISTORY MODAL */}
-            {historyUser && (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 border border-slate-700 w-full max-w-4xl h-[90vh] rounded-2xl flex flex-col shadow-2xl">
-                        {/* Header */}
-                        <div className="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-950 rounded-t-2xl">
-                            <div>
-                                <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                    <History className="text-purple-500" />
-                                    User History: {historyUser.username}
-                                </h2>
-                                <p className="text-xs text-slate-500 mt-1">ID: {historyUser.telegram_id}</p>
-                            </div>
-                            <button onClick={() => setHistoryUser(null)} className="text-slate-400 hover:text-white p-2">✕</button>
+            {/* ... (TREE TAB - Keep existing) ... */}
+            {activeTab === 'TREE' && (
+                <div className="space-y-4">
+                    <div className="flex gap-2">
+                        <input
+                            className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                            placeholder="Enter User ID for Tree View"
+                            value={treeUserId}
+                            onChange={(e) => setTreeUserId(e.target.value)}
+                        />
+                        <button onClick={fetchTree} className="bg-purple-600 hover:bg-purple-500 text-white px-6 rounded-xl font-bold transition">
+                            Load
+                        </button>
+                    </div>
+                    {treeData && (
+                        <div className="bg-slate-800 p-8 rounded-xl border border-slate-700 overflow-auto">
+                            <pre className="text-xs text-green-400 font-mono">
+                                {JSON.stringify(treeData, null, 2)}
+                            </pre>
                         </div>
+                    )}
+                </div>
+            )}
 
-                        {/* Tabs */}
-                        <div className="flex border-b border-slate-700 bg-slate-900">
-                            <button
-                                onClick={() => setHistoryTab('TRANSACTIONS')}
-                                className={`flex-1 py-4 text-sm font-bold border-b-2 transition ${historyTab === 'TRANSACTIONS' ? 'border-purple-500 text-purple-400 bg-purple-900/10' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
-                            >
-                                💸 Transactions
-                            </button>
-                            <button
-                                onClick={() => setHistoryTab('REFERRALS')}
-                                className={`flex-1 py-4 text-sm font-bold border-b-2 transition ${historyTab === 'REFERRALS' ? 'border-blue-500 text-blue-400 bg-blue-900/10' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
-                            >
-                                👥 Referrals ({historyData?.referralsCount || 0})
-                            </button>
-                            <button
-                                onClick={() => setHistoryTab('INVITER')}
-                                className={`flex-1 py-4 text-sm font-bold border-b-2 transition ${historyTab === 'INVITER' ? 'border-green-500 text-green-400 bg-green-900/10' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
-                            >
-                                🔗 Inviter
-                            </button>
-                        </div>
+            {/* GAMES TAB */}
+            {activeTab === 'GAMES' && (
+                <div className="space-y-4">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-xl font-bold text-white">Scheduled Games</h2>
+                        <button onClick={() => fetchGames(1)} className="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg transition">
+                            <RefreshCw size={20} />
+                        </button>
+                    </div>
 
-                        {/* Content */}
-                        <div className="flex-1 overflow-auto p-6 bg-slate-900">
-                            {historyLoading ? (
-                                <div className="flex justify-center items-center h-full text-slate-500 animate-pulse">Loading history...</div>
-                            ) : !historyData ? (
-                                <div className="text-center text-red-400">Failed to load data</div>
-                            ) : (
-                                <>
-                                    {/* TRANSACTIONS TAB */}
-                                    {historyTab === 'TRANSACTIONS' && (
-                                        <div className="space-y-4">
-                                            <div className="flex gap-4 mb-4">
-                                                <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex-1">
-                                                    <div className="text-xs text-slate-500 uppercase">Green Balance</div>
-                                                    <div className="text-2xl font-bold text-green-400">${historyData.user.greenBalance?.toLocaleString()}</div>
-                                                </div>
-                                                <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex-1">
-                                                    <div className="text-xs text-slate-500 uppercase">Yellow Balance</div>
-                                                    <div className="text-2xl font-bold text-yellow-400">${historyData.user.yellowBalance?.toLocaleString()}</div>
-                                                </div>
-                                            </div>
+                    {gamesLoading && <div className="text-center text-slate-500 animate-pulse">Loading games...</div>}
 
-                                            <table className="w-full text-left">
-                                                <thead className="text-xs text-slate-500 uppercase bg-slate-950">
-                                                    <tr>
-                                                        <th className="p-3">Date</th>
-                                                        <th className="p-3">Type</th>
-                                                        <th className="p-3">Amount</th>
-                                                        <th className="p-3">Description</th>
-                                                    </tr>
-                                                </thead>
-                                                <tbody className="divide-y divide-slate-800 text-sm">
-                                                    {historyData.transactions?.map((tx: any) => (
-                                                        <tr key={tx._id} className="hover:bg-slate-800/50">
-                                                            <td className="p-3 text-slate-400 whitespace-nowrap">
-                                                                {new Date(tx.createdAt).toLocaleString()}
-                                                            </td>
-                                                            <td className="p-3">
-                                                                <span className={`px-2 py-1 rounded text-xs font-bold ${tx.type.includes('BONUS') ? 'bg-green-900/30 text-green-400' :
-                                                                    tx.type === 'WITHDRAWAL' ? 'bg-red-900/30 text-red-400' :
-                                                                        'bg-slate-800 text-slate-300'
-                                                                    }`}>
-                                                                    {tx.type}
-                                                                </span>
-                                                            </td>
-                                                            <td className={`p-3 font-bold ${tx.amount > 0 ? (tx.currency === 'YELLOW' ? 'text-yellow-400' : 'text-green-400') : 'text-red-400'
-                                                                }`}>
-                                                                {tx.amount > 0 ? '+' : ''}{tx.amount} {tx.currency === 'YELLOW' ? 'Y' : '$'}
-                                                            </td>
-                                                            <td className="p-3 text-slate-300 max-w-xs truncate">
-                                                                {tx.description}
-                                                            </td>
-                                                        </tr>
-                                                    ))}
-                                                    {(!historyData.transactions || historyData.transactions.length === 0) && (
-                                                        <tr><td colSpan={4} className="p-8 text-center text-slate-600">No transactions found</td></tr>
-                                                    )}
-                                                </tbody>
-                                            </table>
-                                        </div>
-                                    )}
-
-                                    {/* REFERRALS TAB */}
-                                    {historyTab === 'REFERRALS' && (
-                                        <div>
-                                            <div className="bg-blue-900/20 border border-blue-500/20 p-4 rounded-xl mb-4 text-blue-300 text-sm">
-                                                Total Direct Referrals: <span className="font-bold text-white">{historyData.referralsCount}</span>
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                                {historyData.referrals?.map((ref: any) => (
-                                                    <div key={ref._id} className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center gap-3">
-                                                        <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden flex-shrink-0">
-                                                            {ref.photo_url ? (
-                                                                <img src={ref.photo_url} alt={ref.username} className="w-full h-full object-cover" />
-                                                            ) : (
-                                                                <div className="w-full h-full flex items-center justify-center text-slate-500 font-bold">{ref.username?.[0] || '?'}</div>
-                                                            )}
-                                                        </div>
-                                                        <div className="overflow-hidden">
-                                                            <div className="font-bold text-white truncate">{ref.username || 'No Name'}</div>
-                                                            <div className="text-xs text-slate-500">ID: {ref.telegram_id}</div>
-                                                            <div className="text-xs text-green-400 mt-1">Bal: ${ref.greenBalance}</div>
-                                                        </div>
-                                                        <div className="ml-auto text-xs text-slate-600">
-                                                            {new Date(ref.createdAt).toLocaleDateString()}
-                                                        </div>
-                                                    </div>
-                                                ))}
-                                                {historyData.referrals?.length === 0 && (
-                                                    <div className="col-span-full text-center text-slate-500 p-8">No referrals yet</div>
-                                                )}
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* INVITER TAB */}
-                                    {historyTab === 'INVITER' && (
-                                        <div className="max-w-md mx-auto mt-10">
-                                            {historyData.inviter ? (
-                                                <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 text-center space-y-4">
-                                                    <div className="w-24 h-24 rounded-full bg-slate-700 mx-auto overflow-hidden ring-4 ring-green-500/20">
-                                                        {historyData.inviter.photo_url ? (
-                                                            <img src={historyData.inviter.photo_url} alt="Inviter" className="w-full h-full object-cover" />
-                                                        ) : (
-                                                            <div className="w-full h-full flex items-center justify-center text-3xl text-slate-500 font-bold">
-                                                                {historyData.inviter.username?.[0] || '?'}
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div>
-                                                        <div className="text-xs text-green-400 font-bold uppercase mb-1">Invited By</div>
-                                                        <h3 className="text-2xl font-bold text-white">{historyData.inviter.username || 'Unknown'}</h3>
-                                                        <div className="text-slate-400 font-mono text-sm mt-1">ID: {historyData.inviter.telegram_id}</div>
-                                                    </div>
-                                                    <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700">
-                                                        <div className="text-xs text-slate-500">Inviter's Balance</div>
-                                                        <div className="text-xl font-bold text-green-400">${historyData.inviter.greenBalance}</div>
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 text-center border-dashed">
-                                                    <div className="text-5xl mb-4">👻</div>
-                                                    <h3 className="text-xl font-bold text-white">No Inviter</h3>
-                                                    <p className="text-slate-500 mt-2">This user joined directly or was seeded.</p>
-                                                </div>
+                    <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
+                        <table className="w-full text-left">
+                            <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
+                                <tr>
+                                    <th className="p-4">Time</th>
+                                    <th className="p-4">Host</th>
+                                    <th className="p-4">Status</th>
+                                    <th className="p-4">Players</th>
+                                    <th className="p-4">Price</th>
+                                    <th className="p-4">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-700">
+                                {games.map(game => (
+                                    <tr key={game._id} className="hover:bg-slate-700/50 transition">
+                                        <td className="p-4 text-white">
+                                            <div className="font-bold">{new Date(game.startTime).toLocaleDateString()}</div>
+                                            <div className="text-xs text-slate-400">{new Date(game.startTime).toLocaleTimeString()}</div>
+                                        </td>
+                                        <td className="p-4 text-slate-300">
+                                            {game.hostId ? (
+                                                <a href={`https://t.me/${game.hostId.username}`} target="_blank" className="hover:text-blue-400">
+                                                    {game.hostId.first_name} (@{game.hostId.username})
+                                                </a>
+                                            ) : 'Unknown'}
+                                        </td>
+                                        <td className="p-4">
+                                            <span className={`px-2 py-1 rounded text-xs font-bold ${game.status === 'SCHEDULED' ? 'bg-green-900/30 text-green-400' :
+                                                game.status === 'CANCELLED' ? 'bg-red-900/30 text-red-400' :
+                                                    'bg-slate-700 text-slate-400'
+                                                }`}>
+                                                {game.status}
+                                            </span>
+                                        </td>
+                                        <td className="p-4 text-slate-300">
+                                            {game.participants?.length || 0} / {game.maxPlayers}
+                                        </td>
+                                        <td className="p-4 text-yellow-400 font-bold">
+                                            {game.price}
+                                        </td>
+                                        <td className="p-4">
+                                            {game.status === 'SCHEDULED' && (
+                                                <button
+                                                    onClick={() => cancelGame(game._id)}
+                                                    className="bg-red-900/50 hover:bg-red-800 text-red-300 px-3 py-1.5 rounded-lg text-xs transition border border-red-500/30 flex items-center gap-1"
+                                                >
+                                                    <XCircle size={14} /> Cancel
+                                                </button>
                                             )}
-                                        </div>
-                                    )}
-                                </>
-                            )}
+                                        </td>
+                                    </tr>
+                                ))}
+                                {games.length === 0 && !gamesLoading && (
+                                    <tr><td colSpan={6} className="p-8 text-center text-slate-500">No games found</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    {/* Pagination */}
+                    <div className="flex justify-between items-center text-slate-400 text-sm">
+                        <div>Page {gamesPage} of {gamesTotalPages}</div>
+                        <div className="flex gap-2">
+                            <button
+                                disabled={gamesPage <= 1}
+                                onClick={() => fetchGames(gamesPage - 1)}
+                                className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <ChevronLeft size={20} />
+                            </button>
+                            <button
+                                disabled={gamesPage >= gamesTotalPages}
+                                onClick={() => fetchGames(gamesPage + 1)}
+                                className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <ChevronRight size={20} />
+                            </button>
                         </div>
                     </div>
                 </div>
             )}
 
-            {/* BALANCE MODAL */}
-            {
-                selectedUser && (
-                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-                        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-6">
-                            <h2 className="text-xl font-bold text-white">Manage Balance</h2>
-                            <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{selectedUser.username}</span></div>
-
-                            {/* Operation Toggle */}
-                            <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-xl">
-                                <button
-                                    onClick={() => setOperation('ADD')}
-                                    className={`py-2 rounded-lg text-sm font-bold transition ${operation === 'ADD' ? 'bg-green-600 text-white' : 'text-slate-500 hover:bg-slate-800'}`}
-                                >
-                                    Add (+)
-                                </button>
-                                <button
-                                    onClick={() => setOperation('DEDUCT')}
-                                    className={`py-2 rounded-lg text-sm font-bold transition ${operation === 'DEDUCT' ? 'bg-red-600 text-white' : 'text-slate-500 hover:bg-slate-800'}`}
-                                >
-                                    Deduct (-)
-                                </button>
-                            </div>
-
-                            <div className="grid grid-cols-4 gap-2">
-                                <div className="flex flex-col gap-1">
-                                    <button onClick={() => setBalanceType('GREEN')} className={`w-full py-2 rounded-xl text-sm font-bold border ${balanceType === 'GREEN' ? 'bg-green-900/50 border-green-500 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Green</button>
-                                    <div className="text-center text-green-500 font-bold">{selectedUser.greenBalance || 0}</div>
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <button onClick={() => setBalanceType('YELLOW')} className={`w-full py-2 rounded-xl text-sm font-bold border ${balanceType === 'YELLOW' ? 'bg-yellow-900/50 border-yellow-500 text-yellow-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Yellow</button>
-                                    <div className="text-center text-yellow-500 font-bold">{selectedUser.yellowBalance || 0}</div>
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <button onClick={() => setBalanceType('RED')} className={`w-full py-2 rounded-xl text-sm font-bold border ${balanceType === 'RED' ? 'bg-red-900/50 border-red-500 text-red-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Red</button>
-                                    <div className="text-center text-red-500 font-bold">{selectedUser.balanceRed || 0}</div>
-                                </div>
-                                <div className="flex flex-col gap-1">
-                                    <button onClick={() => setBalanceType('RATING')} className={`w-full py-2 rounded-xl text-sm font-bold border ${balanceType === 'RATING' ? 'bg-purple-900/50 border-purple-500 text-purple-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Rating</button>
-                                    <div className="text-center text-purple-500 font-bold">{selectedUser.rating || 0}</div>
-                                </div>
-                            </div>
-
-                            <input
-                                type="number"
-                                placeholder="Amount"
-                                className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                                value={amount}
-                                onChange={(e) => setAmount(e.target.value)}
-                            />
-
-                            <input
-                                type="text"
-                                placeholder="Bonus Description (Optional)"
-                                className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                                value={bonusDescription}
-                                onChange={(e) => setBonusDescription(e.target.value)}
-                            />
-
-                            <textarea
-                                placeholder="Reason (Mandatory)"
-                                className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none h-24 resize-none"
-                                value={reason}
-                                onChange={(e) => setReason(e.target.value)}
-                            />
-
-                            <div className="flex gap-2">
-                                <button onClick={() => setSelectedUser(null)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl font-bold transition">Cancel</button>
-                                <button onClick={updateBalance} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl font-bold transition">
-                                    {operation === 'ADD' ? 'Top Up' : 'Write Off'}
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* ADD AVATAR MODAL */}
-            {
-                addAvatarUser && (
-                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-                        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-6">
-                            <h2 className="text-xl font-bold text-white">Add Avatar (Admin)</h2>
-                            <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{addAvatarUser.username}</span></div>
-                            <div className="bg-red-900/20 text-red-400 text-xs p-3 rounded border border-red-500/20">
-                                Warning: This creates an active avatar directly in the matrix. No balance will be deducted.
-                            </div>
-
-                            <div className="space-y-2">
-                                <label className="text-xs text-slate-400 uppercase font-bold">Avatar Type</label>
-                                <div className="grid grid-cols-3 gap-2">
-                                    <button
-                                        onClick={() => setNewAvatarType('BASIC')}
-                                        className={`p-3 rounded-xl border font-bold text-sm transition ${newAvatarType === 'BASIC' ? 'bg-green-900/50 border-green-500 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
-                                    >
-                                        BASIC
-                                    </button>
-                                    <button
-                                        onClick={() => setNewAvatarType('ADVANCED')}
-                                        className={`p-3 rounded-xl border font-bold text-sm transition ${newAvatarType === 'ADVANCED' ? 'bg-blue-900/50 border-blue-500 text-blue-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
-                                    >
-                                        ADVANCED
-                                    </button>
-                                    <button
-                                        onClick={() => setNewAvatarType('PREMIUM')}
-                                        className={`p-3 rounded-xl border font-bold text-sm transition ${newAvatarType === 'PREMIUM' ? 'bg-yellow-900/50 border-yellow-500 text-yellow-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
-                                    >
-                                        PREMIUM
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
-                                <label className="flex items-center gap-3 cursor-pointer">
-                                    <input
-                                        type="checkbox"
-                                        checked={deductBalance}
-                                        onChange={(e) => setDeductBalance(e.target.checked)}
-                                        className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-green-500 focus:ring-green-500"
-                                    />
-                                    <div className="flex flex-col">
-                                        <span className="font-bold text-yellow-500">Buy with Balance</span>
-                                        <span className="text-xs text-slate-400">Deduct balance & distribute referral commissions</span>
-                                    </div>
-                                </label>
-                            </div>
-
-                            <div className="flex gap-2">
-                                <button onClick={() => setAddAvatarUser(null)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl font-bold transition">Cancel</button>
-                                <button onClick={createAvatar} className="flex-1 bg-green-600 hover:bg-green-500 text-white p-3 rounded-xl font-bold transition shadow-lg shadow-green-500/20">
-                                    Create Avatar
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-
-            {/* EDIT REFERRER MODAL */}
-            {
-                editReferrerUser && (
-                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-                        <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-6">
-                            <h2 className="text-xl font-bold text-white">Edit Referrer</h2>
-                            <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{editReferrerUser.username}</span></div>
-                            <div className="text-slate-500 text-xs">Current: {editReferrerUser.referrer ? (editReferrerUser.referrer.username || editReferrerUser.referrer) : 'None'}</div>
-
-                            <input
-                                type="text"
-                                placeholder="Enter new referrer Username or Telegram ID"
-                                className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                                value={newReferrer}
-                                onChange={(e) => setNewReferrer(e.target.value)}
-                            />
-                            <div className="text-xs text-yellow-500">
-                                Leave empty to remove referrer.
-                            </div>
-
-                            <div className="flex gap-2">
-                                <button onClick={() => setEditReferrerUser(null)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl font-bold transition">Cancel</button>
-                                <button onClick={updateReferrer} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl font-bold transition">Save</button>
-                            </div>
-                        </div>
-                    </div>
-                )
-            }
-
-
-
-            {/* Broadcast Modal */}
-            <BroadcastModal isOpen={showBroadcastModal} onClose={() => setShowBroadcastModal(false)} />
-
-            {/* AVATAR LIST MODAL */}
-            {selectAvatarUser && (
-                <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-                    <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-4 max-h-[80vh] flex flex-col">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-white">Select Avatar</h2>
-                            <button onClick={() => setSelectAvatarUser(null)} className="text-slate-400 hover:text-white">✕</button>
-                        </div>
-                        <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{selectAvatarUser.username}</span></div>
-
-                        <div className="flex-1 overflow-y-auto space-y-2 pr-2">
-                            {loadingAvatars ? (
-                                <div className="text-center text-slate-500 py-4">Loading avatars...</div>
-                            ) : avatarsList.length === 0 ? (
-                                <div className="text-center text-slate-500 py-4">No avatars found</div>
-                            ) : (
-                                avatarsList.map((av: any) => (
-                                    <div
-                                        key={av._id}
-                                        onClick={() => {
-                                            setVisualizeAvatar({ id: av._id, type: av.type });
-                                            setSelectAvatarUser(null);
-                                        }}
-                                        className="bg-slate-800 p-4 rounded-xl border border-slate-700 hover:bg-slate-700 cursor-pointer transition flex items-center justify-between group"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm
-                                                ${av.type === 'BASIC' ? 'bg-green-900/30 text-green-400' :
-                                                    av.type === 'ADVANCED' ? 'bg-blue-900/30 text-blue-400' : 'bg-yellow-900/30 text-yellow-400'}`}>
-                                                {av.level}
-                                            </div>
-                                            <div>
-                                                <div className="font-bold text-white">{av.type}</div>
-                                                <div className="text-xs text-slate-500">ID: ...{av._id.slice(-6)}</div>
-                                            </div>
-                                        </div>
-                                        <div className="text-slate-400 group-hover:text-white transition">
-                                            ➔
-                                        </div>
-                                    </div>
-                                ))
-                            )}
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* MATRIX VISUALIZATION MODAL */}
-            {visualizeAvatar && (
-                <MatrixView
-                    isOpen={!!visualizeAvatar}
-                    onClose={() => setVisualizeAvatar(null)}
-                    avatarId={visualizeAvatar.id}
-                    avatarType={visualizeAvatar.type}
-                />
-            )}
 
         </div>
+
+            {/* HISTORY MODAL */ }
+    {
+        historyUser && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                <div className="bg-slate-900 border border-slate-700 w-full max-w-4xl h-[90vh] rounded-2xl flex flex-col shadow-2xl">
+                    {/* Header */}
+                    <div className="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-950 rounded-t-2xl">
+                        <div>
+                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                <History className="text-purple-500" />
+                                User History: {historyUser.username}
+                            </h2>
+                            <p className="text-xs text-slate-500 mt-1">ID: {historyUser.telegram_id}</p>
+                        </div>
+                        <button onClick={() => setHistoryUser(null)} className="text-slate-400 hover:text-white p-2">✕</button>
+                    </div>
+
+                    {/* Tabs */}
+                    <div className="flex border-b border-slate-700 bg-slate-900">
+                        <button
+                            onClick={() => setHistoryTab('TRANSACTIONS')}
+                            className={`flex-1 py-4 text-sm font-bold border-b-2 transition ${historyTab === 'TRANSACTIONS' ? 'border-purple-500 text-purple-400 bg-purple-900/10' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                        >
+                            💸 Transactions
+                        </button>
+                        <button
+                            onClick={() => setHistoryTab('REFERRALS')}
+                            className={`flex-1 py-4 text-sm font-bold border-b-2 transition ${historyTab === 'REFERRALS' ? 'border-blue-500 text-blue-400 bg-blue-900/10' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                        >
+                            👥 Referrals ({historyData?.referralsCount || 0})
+                        </button>
+                        <button
+                            onClick={() => setHistoryTab('INVITER')}
+                            className={`flex-1 py-4 text-sm font-bold border-b-2 transition ${historyTab === 'INVITER' ? 'border-green-500 text-green-400 bg-green-900/10' : 'border-transparent text-slate-500 hover:text-slate-300'}`}
+                        >
+                            🔗 Inviter
+                        </button>
+                    </div>
+
+                    {/* Content */}
+                    <div className="flex-1 overflow-auto p-6 bg-slate-900">
+                        {historyLoading ? (
+                            <div className="flex justify-center items-center h-full text-slate-500 animate-pulse">Loading history...</div>
+                        ) : !historyData ? (
+                            <div className="text-center text-red-400">Failed to load data</div>
+                        ) : (
+                            <>
+                                {/* TRANSACTIONS TAB */}
+                                {historyTab === 'TRANSACTIONS' && (
+                                    <div className="space-y-4">
+                                        <div className="flex gap-4 mb-4">
+                                            <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex-1">
+                                                <div className="text-xs text-slate-500 uppercase">Green Balance</div>
+                                                <div className="text-2xl font-bold text-green-400">${historyData.user.greenBalance?.toLocaleString()}</div>
+                                            </div>
+                                            <div className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex-1">
+                                                <div className="text-xs text-slate-500 uppercase">Yellow Balance</div>
+                                                <div className="text-2xl font-bold text-yellow-400">${historyData.user.yellowBalance?.toLocaleString()}</div>
+                                            </div>
+                                        </div>
+
+                                        <table className="w-full text-left">
+                                            <thead className="text-xs text-slate-500 uppercase bg-slate-950">
+                                                <tr>
+                                                    <th className="p-3">Date</th>
+                                                    <th className="p-3">Type</th>
+                                                    <th className="p-3">Amount</th>
+                                                    <th className="p-3">Description</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody className="divide-y divide-slate-800 text-sm">
+                                                {historyData.transactions?.map((tx: any) => (
+                                                    <tr key={tx._id} className="hover:bg-slate-800/50">
+                                                        <td className="p-3 text-slate-400 whitespace-nowrap">
+                                                            {new Date(tx.createdAt).toLocaleString()}
+                                                        </td>
+                                                        <td className="p-3">
+                                                            <span className={`px-2 py-1 rounded text-xs font-bold ${tx.type.includes('BONUS') ? 'bg-green-900/30 text-green-400' :
+                                                                tx.type === 'WITHDRAWAL' ? 'bg-red-900/30 text-red-400' :
+                                                                    'bg-slate-800 text-slate-300'
+                                                                }`}>
+                                                                {tx.type}
+                                                            </span>
+                                                        </td>
+                                                        <td className={`p-3 font-bold ${tx.amount > 0 ? (tx.currency === 'YELLOW' ? 'text-yellow-400' : 'text-green-400') : 'text-red-400'
+                                                            }`}>
+                                                            {tx.amount > 0 ? '+' : ''}{tx.amount} {tx.currency === 'YELLOW' ? 'Y' : '$'}
+                                                        </td>
+                                                        <td className="p-3 text-slate-300 max-w-xs truncate">
+                                                            {tx.description}
+                                                        </td>
+                                                    </tr>
+                                                ))}
+                                                {(!historyData.transactions || historyData.transactions.length === 0) && (
+                                                    <tr><td colSpan={4} className="p-8 text-center text-slate-600">No transactions found</td></tr>
+                                                )}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                )}
+
+                                {/* REFERRALS TAB */}
+                                {historyTab === 'REFERRALS' && (
+                                    <div>
+                                        <div className="bg-blue-900/20 border border-blue-500/20 p-4 rounded-xl mb-4 text-blue-300 text-sm">
+                                            Total Direct Referrals: <span className="font-bold text-white">{historyData.referralsCount}</span>
+                                        </div>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                            {historyData.referrals?.map((ref: any) => (
+                                                <div key={ref._id} className="bg-slate-800 p-4 rounded-xl border border-slate-700 flex items-center gap-3">
+                                                    <div className="w-10 h-10 rounded-full bg-slate-700 overflow-hidden flex-shrink-0">
+                                                        {ref.photo_url ? (
+                                                            <img src={ref.photo_url} alt={ref.username} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-full h-full flex items-center justify-center text-slate-500 font-bold">{ref.username?.[0] || '?'}</div>
+                                                        )}
+                                                    </div>
+                                                    <div className="overflow-hidden">
+                                                        <div className="font-bold text-white truncate">{ref.username || 'No Name'}</div>
+                                                        <div className="text-xs text-slate-500">ID: {ref.telegram_id}</div>
+                                                        <div className="text-xs text-green-400 mt-1">Bal: ${ref.greenBalance}</div>
+                                                    </div>
+                                                    <div className="ml-auto text-xs text-slate-600">
+                                                        {new Date(ref.createdAt).toLocaleDateString()}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                            {historyData.referrals?.length === 0 && (
+                                                <div className="col-span-full text-center text-slate-500 p-8">No referrals yet</div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* INVITER TAB */}
+                                {historyTab === 'INVITER' && (
+                                    <div className="max-w-md mx-auto mt-10">
+                                        {historyData.inviter ? (
+                                            <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 text-center space-y-4">
+                                                <div className="w-24 h-24 rounded-full bg-slate-700 mx-auto overflow-hidden ring-4 ring-green-500/20">
+                                                    {historyData.inviter.photo_url ? (
+                                                        <img src={historyData.inviter.photo_url} alt="Inviter" className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-3xl text-slate-500 font-bold">
+                                                            {historyData.inviter.username?.[0] || '?'}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                <div>
+                                                    <div className="text-xs text-green-400 font-bold uppercase mb-1">Invited By</div>
+                                                    <h3 className="text-2xl font-bold text-white">{historyData.inviter.username || 'Unknown'}</h3>
+                                                    <div className="text-slate-400 font-mono text-sm mt-1">ID: {historyData.inviter.telegram_id}</div>
+                                                </div>
+                                                <div className="bg-slate-900/50 p-4 rounded-xl border border-slate-700">
+                                                    <div className="text-xs text-slate-500">Inviter's Balance</div>
+                                                    <div className="text-xl font-bold text-green-400">${historyData.inviter.greenBalance}</div>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="bg-slate-800 p-8 rounded-2xl border border-slate-700 text-center border-dashed">
+                                                <div className="text-5xl mb-4">👻</div>
+                                                <h3 className="text-xl font-bold text-white">No Inviter</h3>
+                                                <p className="text-slate-500 mt-2">This user joined directly or was seeded.</p>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+                            </>
+                        )}
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    {/* BALANCE MODAL */ }
+    {
+        selectedUser && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-6">
+                    <h2 className="text-xl font-bold text-white">Manage Balance</h2>
+                    <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{selectedUser.username}</span></div>
+
+                    {/* Operation Toggle */}
+                    <div className="grid grid-cols-2 gap-2 bg-slate-950 p-1 rounded-xl">
+                        <button
+                            onClick={() => setOperation('ADD')}
+                            className={`py-2 rounded-lg text-sm font-bold transition ${operation === 'ADD' ? 'bg-green-600 text-white' : 'text-slate-500 hover:bg-slate-800'}`}
+                        >
+                            Add (+)
+                        </button>
+                        <button
+                            onClick={() => setOperation('DEDUCT')}
+                            className={`py-2 rounded-lg text-sm font-bold transition ${operation === 'DEDUCT' ? 'bg-red-600 text-white' : 'text-slate-500 hover:bg-slate-800'}`}
+                        >
+                            Deduct (-)
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-4 gap-2">
+                        <div className="flex flex-col gap-1">
+                            <button onClick={() => setBalanceType('GREEN')} className={`w-full py-2 rounded-xl text-sm font-bold border ${balanceType === 'GREEN' ? 'bg-green-900/50 border-green-500 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Green</button>
+                            <div className="text-center text-green-500 font-bold">{selectedUser.greenBalance || 0}</div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <button onClick={() => setBalanceType('YELLOW')} className={`w-full py-2 rounded-xl text-sm font-bold border ${balanceType === 'YELLOW' ? 'bg-yellow-900/50 border-yellow-500 text-yellow-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Yellow</button>
+                            <div className="text-center text-yellow-500 font-bold">{selectedUser.yellowBalance || 0}</div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <button onClick={() => setBalanceType('RED')} className={`w-full py-2 rounded-xl text-sm font-bold border ${balanceType === 'RED' ? 'bg-red-900/50 border-red-500 text-red-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Red</button>
+                            <div className="text-center text-red-500 font-bold">{selectedUser.balanceRed || 0}</div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                            <button onClick={() => setBalanceType('RATING')} className={`w-full py-2 rounded-xl text-sm font-bold border ${balanceType === 'RATING' ? 'bg-purple-900/50 border-purple-500 text-purple-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}>Rating</button>
+                            <div className="text-center text-purple-500 font-bold">{selectedUser.rating || 0}</div>
+                        </div>
+                    </div>
+
+                    <input
+                        type="number"
+                        placeholder="Amount"
+                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                        value={amount}
+                        onChange={(e) => setAmount(e.target.value)}
+                    />
+
+                    <input
+                        type="text"
+                        placeholder="Bonus Description (Optional)"
+                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                        value={bonusDescription}
+                        onChange={(e) => setBonusDescription(e.target.value)}
+                    />
+
+                    <textarea
+                        placeholder="Reason (Mandatory)"
+                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none h-24 resize-none"
+                        value={reason}
+                        onChange={(e) => setReason(e.target.value)}
+                    />
+
+                    <div className="flex gap-2">
+                        <button onClick={() => setSelectedUser(null)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl font-bold transition">Cancel</button>
+                        <button onClick={updateBalance} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl font-bold transition">
+                            {operation === 'ADD' ? 'Top Up' : 'Write Off'}
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    {/* ADD AVATAR MODAL */ }
+    {
+        addAvatarUser && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-6">
+                    <h2 className="text-xl font-bold text-white">Add Avatar (Admin)</h2>
+                    <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{addAvatarUser.username}</span></div>
+                    <div className="bg-red-900/20 text-red-400 text-xs p-3 rounded border border-red-500/20">
+                        Warning: This creates an active avatar directly in the matrix. No balance will be deducted.
+                    </div>
+
+                    <div className="space-y-2">
+                        <label className="text-xs text-slate-400 uppercase font-bold">Avatar Type</label>
+                        <div className="grid grid-cols-3 gap-2">
+                            <button
+                                onClick={() => setNewAvatarType('BASIC')}
+                                className={`p-3 rounded-xl border font-bold text-sm transition ${newAvatarType === 'BASIC' ? 'bg-green-900/50 border-green-500 text-green-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
+                            >
+                                BASIC
+                            </button>
+                            <button
+                                onClick={() => setNewAvatarType('ADVANCED')}
+                                className={`p-3 rounded-xl border font-bold text-sm transition ${newAvatarType === 'ADVANCED' ? 'bg-blue-900/50 border-blue-500 text-blue-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
+                            >
+                                ADVANCED
+                            </button>
+                            <button
+                                onClick={() => setNewAvatarType('PREMIUM')}
+                                className={`p-3 rounded-xl border font-bold text-sm transition ${newAvatarType === 'PREMIUM' ? 'bg-yellow-900/50 border-yellow-500 text-yellow-400' : 'bg-slate-800 border-slate-700 text-slate-500'}`}
+                            >
+                                PREMIUM
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="p-4 bg-yellow-900/20 border border-yellow-500/30 rounded-lg">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                            <input
+                                type="checkbox"
+                                checked={deductBalance}
+                                onChange={(e) => setDeductBalance(e.target.checked)}
+                                className="w-5 h-5 rounded border-slate-600 bg-slate-800 text-green-500 focus:ring-green-500"
+                            />
+                            <div className="flex flex-col">
+                                <span className="font-bold text-yellow-500">Buy with Balance</span>
+                                <span className="text-xs text-slate-400">Deduct balance & distribute referral commissions</span>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div className="flex gap-2">
+                        <button onClick={() => setAddAvatarUser(null)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl font-bold transition">Cancel</button>
+                        <button onClick={createAvatar} className="flex-1 bg-green-600 hover:bg-green-500 text-white p-3 rounded-xl font-bold transition shadow-lg shadow-green-500/20">
+                            Create Avatar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    {/* EDIT REFERRER MODAL */ }
+    {
+        editReferrerUser && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-6">
+                    <h2 className="text-xl font-bold text-white">Edit Referrer</h2>
+                    <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{editReferrerUser.username}</span></div>
+                    <div className="text-slate-500 text-xs">Current: {editReferrerUser.referrer ? (editReferrerUser.referrer.username || editReferrerUser.referrer) : 'None'}</div>
+
+                    <input
+                        type="text"
+                        placeholder="Enter new referrer Username or Telegram ID"
+                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                        value={newReferrer}
+                        onChange={(e) => setNewReferrer(e.target.value)}
+                    />
+                    <div className="text-xs text-yellow-500">
+                        Leave empty to remove referrer.
+                    </div>
+
+                    <div className="flex gap-2">
+                        <button onClick={() => setEditReferrerUser(null)} className="flex-1 bg-slate-800 hover:bg-slate-700 text-white p-3 rounded-xl font-bold transition">Cancel</button>
+                        <button onClick={updateReferrer} className="flex-1 bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl font-bold transition">Save</button>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+
+
+    {/* Broadcast Modal */ }
+    <BroadcastModal isOpen={showBroadcastModal} onClose={() => setShowBroadcastModal(false)} />
+
+    {/* AVATAR LIST MODAL */ }
+    {
+        selectAvatarUser && (
+            <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-4 max-h-[80vh] flex flex-col">
+                    <div className="flex justify-between items-center">
+                        <h2 className="text-xl font-bold text-white">Select Avatar</h2>
+                        <button onClick={() => setSelectAvatarUser(null)} className="text-slate-400 hover:text-white">✕</button>
+                    </div>
+                    <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{selectAvatarUser.username}</span></div>
+
+                    <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+                        {loadingAvatars ? (
+                            <div className="text-center text-slate-500 py-4">Loading avatars...</div>
+                        ) : avatarsList.length === 0 ? (
+                            <div className="text-center text-slate-500 py-4">No avatars found</div>
+                        ) : (
+                            avatarsList.map((av: any) => (
+                                <div
+                                    key={av._id}
+                                    onClick={() => {
+                                        setVisualizeAvatar({ id: av._id, type: av.type });
+                                        setSelectAvatarUser(null);
+                                    }}
+                                    className="bg-slate-800 p-4 rounded-xl border border-slate-700 hover:bg-slate-700 cursor-pointer transition flex items-center justify-between group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold text-sm
+                                                ${av.type === 'BASIC' ? 'bg-green-900/30 text-green-400' :
+                                                av.type === 'ADVANCED' ? 'bg-blue-900/30 text-blue-400' : 'bg-yellow-900/30 text-yellow-400'}`}>
+                                            {av.level}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-white">{av.type}</div>
+                                            <div className="text-xs text-slate-500">ID: ...{av._id.slice(-6)}</div>
+                                        </div>
+                                    </div>
+                                    <div className="text-slate-400 group-hover:text-white transition">
+                                        ➔
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
+    {/* MATRIX VISUALIZATION MODAL */ }
+    {
+        visualizeAvatar && (
+            <MatrixView
+                isOpen={!!visualizeAvatar}
+                onClose={() => setVisualizeAvatar(null)}
+                avatarId={visualizeAvatar.id}
+                avatarType={visualizeAvatar.type}
+            />
+        )
+    }
+
+        </div >
     );
 }
