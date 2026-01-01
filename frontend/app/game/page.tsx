@@ -418,9 +418,7 @@ function GameContent() {
                     {/* RIGHT COLUMN: Settings */}
                     <div className="lg:col-span-7">
                         <div className="bg-slate-900/60 backdrop-blur-xl rounded-3xl p-8 border border-white/10 shadow-2xl h-full flex flex-col relative">
-                            <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
-                                <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2"></div>
-                            </div>
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/10 rounded-full blur-[80px] pointer-events-none -translate-y-1/2 translate-x-1/2"></div>
                             <div className="mb-8 relative z-10">
                                 <h3 className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-slate-400 mb-2">Настройка персонажа</h3>
                                 <p className="text-slate-400 text-sm">Выберите фишку и определите свою мечту</p>
