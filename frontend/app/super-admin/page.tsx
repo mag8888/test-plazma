@@ -1094,9 +1094,10 @@ export default function AdminPage() {
                                                                     {new Date(tx.createdAt).toLocaleString()}
                                                                 </td>
                                                                 <td className="p-3">
-                                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${tx.type.includes('BONUS') ? 'bg-green-900/30 text-green-400' :
-                                                                        tx.type === 'WITHDRAWAL' ? 'bg-red-900/30 text-red-400' :
-                                                                            'bg-slate-800 text-slate-300'
+                                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${tx.type.includes('BONUS') ?
+                                                                            (tx.currency === 'YELLOW' || tx.description?.toLowerCase().includes('yellow') ? 'bg-yellow-900/30 text-yellow-400' : 'bg-green-900/30 text-green-400') :
+                                                                            tx.type === 'WITHDRAWAL' ? 'bg-red-900/30 text-red-400' :
+                                                                                'bg-slate-800 text-slate-300'
                                                                         }`}>
                                                                         {tx.type}
                                                                     </span>
@@ -1105,7 +1106,15 @@ export default function AdminPage() {
                                                                     }`}>
                                                                     {tx.amount > 0 ? '+' : ''}{tx.amount} {tx.currency === 'YELLOW' ? 'Y' : '$'}
                                                                 </td>
-                                                                <td className="p-3 text-slate-300 max-w-xs truncate">
+                                                                <td
+                                                                    className="p-3 text-slate-300 max-w-xs truncate cursor-pointer hover:text-white"
+                                                                    onClick={() => alert(`Transaction Details:\n\nType: ${tx.type}\nAmount: ${tx.amount} ${tx.currency}\nDate: ${new Date(tx.createdAt).toLocaleString()}\n\nDescription: ${tx.description}\nID: ${tx._id}`)}
+                                                                >
+                                                                    {tx.currency === 'YELLOW' ? (
+                                                                        <span className="text-yellow-400 font-bold mr-1">●</span>
+                                                                    ) : tx.currency === 'GREEN' || tx.type.includes('BONUS') ? (
+                                                                        <span className="text-green-400 font-bold mr-1">●</span>
+                                                                    ) : null}
                                                                     {tx.description}
                                                                 </td>
                                                             </tr>

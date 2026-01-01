@@ -169,6 +169,17 @@ export class MatrixService {
                 // Required for Level 0->1 is exactly 150% cost.
                 await this.checkLevelProgression(parentAvatar);
             }
+
+            // Log Transaction for Matrix Parent (Yellow Bonus)
+            if (parentOwnerId) {
+                await Transaction.create({
+                    user: parentOwnerId,
+                    amount: halfCost,
+                    currency: 'YELLOW',
+                    type: TransactionType.AVATAR_BONUS,
+                    description: `Yellow bonus: ${type} avatar placed under yours by ${buyerUser.username}`
+                });
+            }
         }
 
         // 3. Log Purchase
