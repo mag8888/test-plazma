@@ -166,8 +166,11 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
 
     const TARIFF_COSTS: Record<string, number> = {
         'PLAYER': 20,
+        'BASIC': 20,
         'MASTER': 100,
-        'PARTNER': 1000
+        'ADVANCED': 100,
+        'PARTNER': 1000,
+        'PREMIUM': 1000
     };
 
     const cost = TARIFF_COSTS[avatarType] || 0;
