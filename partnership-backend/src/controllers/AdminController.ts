@@ -310,23 +310,25 @@ export class AdminController {
             const totalUsers = await User.countDocuments();
             const totalAvatars = await Avatar.countDocuments();
 
-            // Aggregations for balances
+            // Aggregations for User balances
             const balanceStats = await User.aggregate([
                 {
                     $group: {
                         _id: null,
                         totalGreen: { $sum: "$greenBalance" },
-                        totalYellow: { $sum: "$yellowBalance" }
+                        // users might still have legacy yellow balance
+                        totalUserYellow: { $sum: "$yellowBalance" }
                     }
                 }
             ]);
 
-            // Avatar Breakdown
+            // Aggregations for Avatar Matrix Liquidity (Yellow Balance) & Levels
             const avatarStats = await Avatar.aggregate([
                 {
                     $group: {
                         _id: "$level",
-                        count: { $sum: 1 }
+                        count: { $sum: 1 },
+                        matrixLiquidity: { $sum: "$yellowBalance" }
                     }
                 },
                 { $sort: { _id: 1 } }
@@ -334,8 +336,11 @@ export class AdminController {
 
             // Transform into object { "0": 30, "1": 5 }
             const levels: any = {};
+            let totalMatrixLiquidity = 0;
+
             avatarStats.forEach(s => {
                 levels[s._id] = s.count;
+                totalMatrixLiquidity += s.matrixLiquidity || 0;
             });
 
             res.json({
@@ -343,7 +348,9 @@ export class AdminController {
                 totalAvatars,
                 levels, // Breakdown by level
                 totalGreen: balanceStats[0]?.totalGreen || 0,
-                totalYellow: balanceStats[0]?.totalYellow || 0,
+                // Combine User Legacy Yellow + Active Matrix Yellow for total view, or separate
+                totalYellow: (balanceStats[0]?.totalUserYellow || 0) + totalMatrixLiquidity,
+                matrixLiquidity: totalMatrixLiquidity,
                 debug: {
                     dbName: mongoose.connection.db?.databaseName,
                     host: mongoose.connection.host
