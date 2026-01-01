@@ -15,7 +15,18 @@ interface ActiveCardZoneProps {
     previewCard?: any;
     onDismissPreview?: () => void;
     canShowCard?: boolean;
+    isTutorial?: boolean;
+    tutorialStep?: number;
 }
+
+const TutorialTip: React.FC<{ text: string, position?: string, arrow?: string }> = ({ text, position = "top-full mt-4", arrow = "top-[-6px] border-b-emerald-500 border-t-0" }) => (
+    <div className={`absolute ${position} left-1/2 -translate-x-1/2 z-[100] w-max max-w-[200px] pointer-events-none`}>
+        <div className="bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg shadow-emerald-900/40 relative text-center">
+            {text}
+            <div className={`absolute ${arrow} left-1/2 -translate-x-1/2 border-8 border-transparent`}></div>
+        </div>
+    </div>
+);
 
 // Helper specific to Feed Item
 const FeedCardItem = ({
@@ -26,7 +37,9 @@ const FeedCardItem = ({
     players,
     onDismiss,
     state,
-    canShowCard
+    canShowCard,
+    isTutorial,
+    tutorialStep
 }: {
     cardWrapper: any,
     me: any,
@@ -35,7 +48,9 @@ const FeedCardItem = ({
     players?: any[],
     onDismiss: () => void,
     state: any,
-    canShowCard: boolean
+    canShowCard: boolean,
+    isTutorial?: boolean,
+    tutorialStep?: number
 }) => {
     const card = cardWrapper.card || cardWrapper; // Handle wrapper or direct card
     const source = cardWrapper.source || 'CURRENT'; // 'MARKET' or 'CURRENT'
@@ -378,6 +393,7 @@ const FeedCardItem = ({
                                                 className="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
                                             >
                                                 Продать
+                                                {isTutorial && tutorialStep === 2 && <TutorialTip text="2. Продайте акции!" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
                                             </button>
                                         ) : null}
 
@@ -408,6 +424,7 @@ const FeedCardItem = ({
                                                 className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
                                             >
                                                 {isMLM ? '🎲 Бросить' : 'Купить'}
+                                                {isTutorial && tutorialStep === 1 && <TutorialTip text="1. Купите акции!" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
                                             </button>
                                         )}
 
@@ -454,6 +471,7 @@ const FeedCardItem = ({
                             <div className="grid grid-cols-2 gap-2 mt-1">
                                 <button onClick={() => { socket.emit('draw_deal', { roomId, type: 'SMALL' }); onDismiss(); }} disabled={me.cash < 500} className="bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white font-bold py-2 rounded-xl text-[10px] uppercase">
                                     Малая (до $5k)
+                                    {isTutorial && tutorialStep === 0 && <TutorialTip text="Выберите малую сделку" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
                                 </button>
                                 <button onClick={() => { socket.emit('draw_deal', { roomId, type: 'BIG' }); onDismiss(); }} disabled={me.cash < 2000} className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 text-white font-bold py-2 rounded-xl text-[10px] uppercase">
                                     Крупная (от $6k)
@@ -794,6 +812,8 @@ const FeedCardItem = ({
     );
 };
 
+
+
 export const ActiveCardZone = ({
     state,
     isMyTurn,
@@ -805,7 +825,9 @@ export const ActiveCardZone = ({
     diceValue,
     previewCard,
     onDismissPreview,
-    canShowCard = true
+    canShowCard = true,
+    isTutorial,
+    tutorialStep
 }: ActiveCardZoneProps) => {
     // Safety Guards
     if (!state || !me) return null;

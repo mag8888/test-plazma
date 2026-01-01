@@ -110,6 +110,30 @@ export default function HomePage() {
                         </div>
                     </button>
 
+                    {/* TUTORIAL BUTTON */}
+                    <button
+                        onClick={() => {
+                            handleHaptic('medium');
+                            router.push('/lobby?tutorial=true');
+                        }}
+                        className="w-full bg-gradient-to-r from-emerald-900/40 to-teal-900/40 p-[1px] rounded-2xl group active:scale-[0.98] transition-transform"
+                    >
+                        <div className="bg-[#0f2e1b]/60 backdrop-blur-md rounded-2xl p-4 flex items-center gap-4 relative overflow-hidden">
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+
+                            <div className="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow-lg shadow-emerald-500/20 text-white group-hover:scale-110 transition-transform">
+                                <BookOpen size={24} />
+                            </div>
+                            <div className="text-left">
+                                <h3 className="text-lg font-bold text-emerald-100 group-hover:text-white transition-colors">Обучение</h3>
+                                <p className="text-xs text-emerald-200/50 uppercase tracking-wider font-bold">Пройти обучение</p>
+                            </div>
+                            <div className="ml-auto text-emerald-500/50 group-hover:translate-x-1 transition-transform">
+                                <ChevronRight />
+                            </div>
+                        </div>
+                    </button>
+
                     {/* Secondary Grid */}
                     <div className="grid grid-cols-2 gap-4">
                         {/* EARN */}

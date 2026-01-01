@@ -9,10 +9,13 @@ interface RulesModalProps {
         market: { remaining: number; total: number };
         expense: { remaining: number; total: number };
     };
+    isTutorial?: boolean;
+    onConfirm?: () => void;
 }
 
-export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
+export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts, isTutorial, onConfirm }) => {
     const [activeTab, setActiveTab] = useState<'RULES' | 'SMALL' | 'BIG' | 'MARKET' | 'EXPENSE'>('RULES');
+    const [hasRead, setHasRead] = useState(false);
 
     // ... (renderCard and getTabContent remain same)
     const renderCard = (card: Card) => (
@@ -153,7 +156,15 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
                 </div>
 
                 {/* Scrollable Content */}
-                <div className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-[#151b2b]">
+                <div
+                    className="p-6 overflow-y-auto custom-scrollbar flex-1 bg-[#151b2b]"
+                    onScroll={(e) => {
+                        const target = e.currentTarget;
+                        if (target.scrollHeight - target.scrollTop <= target.clientHeight + 50) {
+                            if (!hasRead) setHasRead(true);
+                        }
+                    }}
+                >
                     {getTabContent()}
                 </div>
 
@@ -199,12 +210,28 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts }) => {
                                 📜 Правила
                             </button>
                         )}
-                        <button
-                            onClick={onClose}
-                            className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all border border-white/10"
-                        >
-                            Закрыть
-                        </button>
+
+                        {isTutorial ? (
+                            <button
+                                onClick={() => {
+                                    if (hasRead && onConfirm) onConfirm();
+                                }}
+                                disabled={!hasRead}
+                                className={`px-6 py-2 rounded-xl font-bold transition-all flex items-center gap-2 ${hasRead
+                                    ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg animate-pulse'
+                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
+                                    }`}
+                            >
+                                {hasRead ? '✅ Я прочитал!' : '📜 Пролистайте вниз'}
+                            </button>
+                        ) : (
+                            <button
+                                onClick={onClose}
+                                className="px-6 py-2 bg-white/10 hover:bg-white/20 text-white font-bold rounded-xl transition-all border border-white/10"
+                            >
+                                Закрыть
+                            </button>
+                        )}
                     </div>
                 </div>
             </div>

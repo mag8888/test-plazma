@@ -24,6 +24,7 @@ interface Room {
     status: string;
     creatorId: string;
     maxPlayers?: number;
+    isTraining?: boolean;
 }
 
 export default function GameRoom() {
@@ -277,7 +278,7 @@ function GameContent() {
             board: [],
             log: []
         };
-        return <GameBoard roomId={roomId} userId={myUserId} initialState={initialBoardState} isHost={isHost} />;
+        return <GameBoard roomId={roomId} userId={myUserId} initialState={initialBoardState} isHost={isHost} isTutorial={room.isTraining} />;
     }
 
     return (
@@ -362,6 +363,12 @@ function GameContent() {
                                                     >
                                                         + Easy Bot
                                                     </button>
+                                                    {room.isTraining && room.players.length === 1 && (
+                                                        <div className="absolute top-12 left-0 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg animate-bounce shadow-lg z-50 whitespace-nowrap pointer-events-none">
+                                                            3. Добавьте бота 👆
+                                                            <div className="absolute top-[-4px] left-4 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-emerald-500"></div>
+                                                        </div>
+                                                    )}
                                                     <button
                                                         onClick={() => handleAddBot('hard')}
                                                         className="px-3 py-1 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded text-xs font-bold transition-colors"
@@ -388,6 +395,12 @@ function GameContent() {
                                 <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500 blur-md"></div>
                                 <span className="relative flex items-center justify-center gap-3">
                                     🚀 ЗАПУСТИТЬ ИГРУ
+                                    {room.isTraining && room.players.length >= 2 && (
+                                        <div className="absolute bottom-full mb-2 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg z-50 whitespace-nowrap pointer-events-none">
+                                            4. Нажмите Старт 👇
+                                            <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500"></div>
+                                        </div>
+                                    )}
                                 </span>
                             </button>
                         )}

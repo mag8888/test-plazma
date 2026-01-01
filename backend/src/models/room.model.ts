@@ -23,6 +23,7 @@ export interface IRoom extends Document {
     createdAt: Date;
     updatedAt: Date;
     gameState?: any;
+    isTraining?: boolean;
 }
 
 const RoomSchema: Schema = new Schema({
@@ -33,6 +34,7 @@ const RoomSchema: Schema = new Schema({
     password: { type: String },
     status: { type: String, enum: ['waiting', 'playing', 'finished'], default: 'waiting' },
     gameState: { type: Schema.Types.Mixed },
+    isTraining: { type: Boolean, default: false },
     players: [{
         id: String,
         name: String,

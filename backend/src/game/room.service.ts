@@ -7,7 +7,7 @@ export class RoomService {
 
     constructor() { }
 
-    async createRoom(creatorId: string, userId: string, playerName: string, name: string, maxPlayers: number = 6, timer: number = 120, password?: string, token?: string, dream?: string): Promise<any> {
+    async createRoom(creatorId: string, userId: string, playerName: string, name: string, maxPlayers: number = 6, timer: number = 120, password?: string, token?: string, dream?: string, isTraining: boolean = false): Promise<any> {
         // 0. Strict Isolation: Check if user is already in a PLAYING room
         const playing = await RoomModel.findOne({ status: 'playing', 'players.userId': userId });
         if (playing) {
@@ -22,9 +22,12 @@ export class RoomService {
         await RoomModel.deleteMany({ creatorId: userId, status: 'waiting' });
 
         // 3. Validation: Check for Name Uniqueness
-        const nameTaken = await RoomModel.findOne({ name: name, status: 'waiting' });
-        if (nameTaken) {
-            throw new Error("Комната с таким именем уже существует");
+        // Skip uniqueness check if Training
+        if (!isTraining) {
+            const nameTaken = await RoomModel.findOne({ name: name, status: 'waiting' });
+            if (nameTaken) {
+                throw new Error("Комната с таким именем уже существует");
+            }
         }
 
         // Resolve User Photo safe lookup
@@ -46,6 +49,7 @@ export class RoomService {
             maxPlayers,
             timer,
             password,
+            isTraining,
             players: [{
                 id: creatorId, // Socket ID
                 userId: userId,

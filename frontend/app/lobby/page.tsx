@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { socket } from '../socket';
 import { RulesModal } from '../game/RulesModal';
 import { RoomErrorModal } from './RoomErrorModal';
@@ -22,6 +22,8 @@ import { useTelegram } from '../../components/TelegramProvider';
 
 export default function Lobby() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const isTutorial = searchParams.get('tutorial') === 'true';
     const { user: tgUser, isReady } = useTelegram(); // Use context
 
     // Internal user state for Socket usage. 
@@ -143,9 +145,11 @@ export default function Lobby() {
             maxPlayers,
             timer: 120,
             playerName,
+
             userId,
             token: '🦊',
-            dream: DREAMS[0].name
+            dream: DREAMS[0].name,
+            isTraining: isTutorial // Pass Tutorial Flag
         }, (response: any) => {
             setIsSubmitting(false);
             if (response.success) {
@@ -324,8 +328,14 @@ export default function Lobby() {
                         </h1>
                         <button
                             onClick={() => setIsCreating(!isCreating)}
-                            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/30 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center gap-2"
+                            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/30 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center gap-2 relative"
                         >
+                            {isTutorial && !isCreating && (
+                                <div className="absolute -top-12 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg z-50 whitespace-nowrap">
+                                    1. Создайте комнату 👇
+                                    <div className="absolute bottom-[-6px] right-6 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500"></div>
+                                </div>
+                            )}
                             <span>+</span> Создать комнату
                         </button>
                     </div>
@@ -432,11 +442,17 @@ export default function Lobby() {
                                 <button
                                     onClick={createRoom}
                                     disabled={isSubmitting}
-                                    className={`w-full py-4 rounded-xl font-black uppercase tracking-widest shadow-xl transition-all text-sm ${!newRoomName.trim()
+                                    className={`w-full py-4 rounded-xl font-black uppercase tracking-widest shadow-xl transition-all text-sm relative ${!newRoomName.trim()
                                         ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
                                         : 'bg-green-600 hover:bg-green-500 text-white shadow-green-900/20 hover:-translate-y-1 active:scale-95'
                                         }`}
                                 >
+                                    {isTutorial && (
+                                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg z-50 whitespace-nowrap">
+                                            2. Нажмите Старт 👇
+                                            <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500"></div>
+                                        </div>
+                                    )}
                                     {isSubmitting ? 'Создание...' : '🚀 Запустить Игру'}
                                 </button>
                             </div>

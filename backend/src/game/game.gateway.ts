@@ -23,7 +23,7 @@ export class GameGateway {
         for (const room of activeRooms) {
             try {
                 if (room.gameState) {
-                    const engine = new GameEngine(room.id, room.players, room.creatorId);
+                    const engine = new GameEngine(room.id, room.players, room.creatorId, { isTutorial: room.isTraining });
                     // Hydrate state but FORCE UPDATE BOARD structure (to apply layout fixes to existing games)
                     Object.assign(engine.state, room.gameState);
 
@@ -535,7 +535,7 @@ export class GameGateway {
                     }
 
                     // 2. Init Engine with Shuffled Players
-                    const engine = new GameEngine(roomId, shuffledPlayers, room.creatorId);
+                    const engine = new GameEngine(roomId, shuffledPlayers, room.creatorId, { isTutorial: room.isTraining });
 
                     // 3. Log the result
                     const orderNames = shuffledPlayers.map(p => p.name).join(' -> ');

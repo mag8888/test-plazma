@@ -28,9 +28,12 @@ export interface GameState {
     isGameEnded?: boolean;
     isPaused?: boolean;
     chat: ChatMessage[];
-    activeMarketCards?: ActiveCard[];
-}
+    activeMarketCards?: ActiveCard[]; // Cards currently on the board (Market Offers)
 
+    // Tutorial Mode
+    isTutorial?: boolean;
+    tutorialStep?: number; // 0: Start, 1: Bought Stock (Ready to Sell)
+}
 export interface ActiveCard {
     id: string;
     card: Card;
@@ -239,7 +242,7 @@ export class GameEngine {
     cardManager: CardManager;
     botNextActionAt?: number; // Hook for Bot Pacing
 
-    constructor(roomId: string, players: IPlayer[], creatorId?: string) {
+    constructor(roomId: string, players: IPlayer[], creatorId?: string, options: { isTutorial?: boolean } = {}) {
         // Init CardManager with DB Templates
         const templates = DbCardManager.getInstance().getTemplates();
         this.cardManager = new CardManager(templates);
@@ -255,7 +258,9 @@ export class GameEngine {
             log: ['Game Started'],
             chat: [],
             transactions: [],
-            turnExpiresAt: Date.now() + 120000 // Init first turn timer
+            turnExpiresAt: Date.now() + 120000, // Init first turn timer
+            isTutorial: options.isTutorial || false,
+            tutorialStep: 0
         };
     }
 
@@ -695,7 +700,25 @@ export class GameEngine {
         // this.emitState(); // Handled by Gateway
     }
 
-    rollDice(diceCount: number = 1): number | { total: number, values: number[] } {
+    public rollDice(count: number = 1): number | { total: number, values: number[] } {
+        // Tutorial Rigging
+        if (this.state.isTutorial) {
+            const step = this.state.tutorialStep || 0;
+            // Step 0: Force Roll 2 (Land on Opportunity)
+            if (step === 0) {
+                this.addLog(`🎲 (Tutorial) Forced Roll: 2`);
+                this.movePlayer(2);
+                return { total: 2, values: [2] };
+            }
+            // Step 1: Force Roll 5 (Land on Market)
+            // Start (0) ->(2)-> Opp(2) ->(5)-> Market(7)
+            if (step === 1) {
+                this.addLog(`🎲 (Tutorial) Forced Roll: 5`);
+                this.movePlayer(5);
+                return { total: 5, values: [5] };
+            }
+        }
+
         const player = this.state.players[this.state.currentPlayerIndex];
 
         // Baby Roll Logic
@@ -731,11 +754,11 @@ export class GameEngine {
             // Rat Race: Can roll 1 or 2.
             // Fast Track: Can roll 1, 2, or 3 - PERMANENT (no countdown)
             const maxDice = player.isFastTrack ? 3 : 2;
-            if (diceCount >= 1 && diceCount <= maxDice) {
-                validCount = diceCount;
+            if (count >= 1 && count <= maxDice) {
+                validCount = count;
             } else {
                 validCount = maxDice;
-                if (diceCount > 0 && diceCount <= maxDice) validCount = diceCount;
+                if (count > 0 && count <= maxDice) validCount = count;
             }
             // Only decrease charity turns for Rat Race, Fast Track is permanent
             if (!player.isFastTrack) {
@@ -766,8 +789,6 @@ export class GameEngine {
 
         // Move Player
         this.movePlayer(total);
-
-        // this.state.lastRoll = total; // REMOVED: Property does not exist on type
 
         // Log the roll details
         if (values.length > 1) {
@@ -1204,6 +1225,36 @@ export class GameEngine {
             // Prompt for Small/Big Deal.
             this.state.phase = 'OPPORTUNITY_CHOICE';
         } else if (square.type === 'MARKET') {
+            // Tutorial Override
+            if (this.state.isTutorial && this.state.tutorialStep === 1) {
+                const card = {
+                    id: 'tutorial_market_1',
+                    type: 'MARKET',
+                    title: 'Market Boom',
+                    description: 'Someone wants to buy MYT4U for $40! Everyone can sell.',
+                    targetTitle: 'MYT4U',
+                    offerPrice: 40,
+                    cost: 0,
+                    cashflow: 0
+                } as any;
+
+                this.state.currentCard = card;
+                this.addLog(`🏪 MARKET (Tutorial): ${card.title} - ${card.description}`);
+                if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
+
+                this.state.activeMarketCards.push({
+                    id: `market_${Date.now()}`,
+                    card,
+                    sourcePlayerId: player.id,
+                    expiresAt: Date.now() + 600000 // Long expire
+                });
+
+                // Increment Step to avoid loop or allow next phase
+                this.state.tutorialStep = 2;
+                this.state.phase = 'ACTION';
+                return;
+            }
+
             // Draw Market Card
             const card = this.cardManager.drawMarket();
             console.log('[Market] Drew market card:', card ? card.title : 'NONE AVAILABLE');
@@ -1274,7 +1325,21 @@ export class GameEngine {
         }
 
         let card: Card | undefined;
-        if (type === 'SMALL') {
+        if (this.state.isTutorial && this.state.tutorialStep === 0) {
+            // Force Small Deal: Stock
+            card = {
+                id: 'tutorial_stock_1',
+                type: 'DEAL_SMALL',
+                title: 'MYT4U Electronics',
+                description: 'Penny Stock! High potential.',
+                symbol: 'MYT4U',
+                cost: 5,
+                cashflow: 0,
+                rule: 'Trading range $5-$30'
+            } as any;
+            // Increment Step
+            this.state.tutorialStep = 1;
+        } else if (type === 'SMALL') {
             card = this.cardManager.drawSmallDeal();
         } else {
             card = this.cardManager.drawBigDeal();
@@ -2196,6 +2261,9 @@ export class GameEngine {
         }
 
         this.addLog(`${player.name} купил ${card.title}. Пассивный доход +$${card.cashflow || 0}`);
+
+        // Critical Fix: Check Win Condition immediately after buying asset (e.g. Dream or Business)
+        this.checkWinCondition(player);
 
         // Clear card so it isn't discarded in endTurn
         this.state.currentCard = undefined;

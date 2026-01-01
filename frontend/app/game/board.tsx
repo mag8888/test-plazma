@@ -17,6 +17,7 @@ interface BoardProps {
     userId?: string | null;
     initialState: any;
     isHost?: boolean;
+    isTutorial?: boolean;
 }
 
 // ... (existing code top)
@@ -198,11 +199,26 @@ const getInitials = (name: string) => {
     return name.substring(0, 2).toUpperCase();
 };
 
-export default function GameBoard({ roomId, userId, initialState, isHost }: BoardProps) {
+const TutorialTip: React.FC<{ text: string, position?: string, arrow?: string }> = ({ text, position = "top-full mt-4", arrow = "top-[-6px] border-b-emerald-500 border-t-0" }) => (
+    <div className={`absolute ${position} left-1/2 -translate-x-1/2 z-[100] w-max max-w-[200px] pointer-events-none`}>
+        <div className="bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg shadow-emerald-900/40 relative text-center">
+            {text}
+            <div className={`absolute ${arrow} left-1/2 -translate-x-1/2 border-8 border-transparent`}></div>
+        </div>
+    </div>
+);
+
+export default function GameBoard({ roomId, userId, initialState, isHost, isTutorial }: BoardProps) {
     const router = useRouter();
     const [state, setState] = useState(initialState);
     const [showBank, setShowBank] = useState(false);
     const [showRules, setShowRules] = useState(false);
+
+    // Tutorial: Auto-open Rules
+    useEffect(() => {
+        if (isTutorial) setShowRules(true);
+    }, [isTutorial]);
+
     const [showExpenseBreakdown, setShowExpenseBreakdown] = useState(false);
     const [showTransfer, setShowTransfer] = useState(false);
     const [transferAssetItem, setTransferAssetItem] = useState<{ item: any, index: number } | null>(null);
@@ -1226,6 +1242,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                     className="w-full py-4 rounded-xl bg-violet-500/10 border border-violet-500/30 text-violet-400 font-bold uppercase tracking-widest text-sm hover:bg-violet-500/20 active:bg-violet-500/30 transition-all flex items-center justify-center gap-3"
                                 >
                                     <span>📜</span> Правила
+                                    {isTutorial && showRules && <TutorialTip text="Прочитайте и закройте" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
                                 </button>
 
                                 {/* Sound Settings in Mobile Menu */}
@@ -1514,6 +1531,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                                         canShowCard={canShowCard && !isAnimating && !showDice}
                                         previewCard={squareInfo}
                                         onDismissPreview={() => setSquareInfo(null)}
+                                        isTutorial={isTutorial}
+                                        tutorialStep={state.tutorialStep}
                                     />
                                 </div>
                             </div>
@@ -1550,6 +1569,13 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             >
                                 <span className="text-3xl group-hover:rotate-12 transition-transform">🎲</span>
                                 <span className="text-[10px] font-black uppercase tracking-widest">Бросить</span>
+                                {(isTutorial && isMyTurn && state.phase === 'ROLL' && state.tutorialStep <= 1) && (
+                                    <TutorialTip
+                                        text={state.tutorialStep === 0 ? "5. Бросьте кубик!" : "7. Бросьте кубик снова!"}
+                                        position="bottom-full mb-4"
+                                        arrow="bottom-[-6px] border-t-emerald-500 border-b-0"
+                                    />
+                                )}
                                 {/* Dice Value Overlay */}
                                 {showDice && diceValue && (
                                     <div className="absolute inset-0 bg-emerald-600 flex items-center justify-center z-10 animate-in fade-in zoom-in duration-200">
@@ -1562,13 +1588,20 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                             <button
                                 onClick={handleEndTurn}
                                 disabled={!isMyTurn || (state.phase === 'ROLL') || isAnimating}
-                                className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl
+                                className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative
                                  ${isMyTurn && state.phase !== 'ROLL' && !isAnimating
                                         ? 'bg-blue-600 hover:bg-blue-500 border-blue-500/50 text-white hover:scale-[1.02] active:scale-95'
                                         : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
                             >
                                 <span className="text-3xl">⏭</span>
                                 <span className="text-[10px] font-black uppercase tracking-widest">Далее</span>
+                                {isTutorial && isMyTurn && (state.phase === 'ACTION' || state.phase === 'MARKET' || state.phase === 'RESOLVE') && (
+                                    <TutorialTip
+                                        text="Нажмите, чтобы продолжить"
+                                        position="top-full mt-4"
+                                        arrow="top-[-6px] border-b-emerald-500 border-t-0"
+                                    />
+                                )}
                             </button>
                         </div>
 
@@ -1865,6 +1898,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost }: Boar
                         showRules && (
                             <RulesModal
                                 onClose={() => setShowRules(false)}
+                                isTutorial={isTutorial}
+                                onConfirm={() => setShowRules(false)}
                             />
                         )
                     }
