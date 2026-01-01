@@ -307,7 +307,7 @@ function GameContent() {
                         <h1 className="text-3xl font-black tracking-tight bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400 bg-clip-text text-transparent">
                             {room.name}
                         </h1>
-                        <span className="text-xs font-mono text-slate-500 uppercase tracking-widest pl-1">Room #{room.id}</span>
+                        <span className="text-xs font-mono text-slate-500 uppercase tracking-widest pl-1">Room #{room.id} | T: {String(room.isTraining)}</span>
                     </div>
                 </header>
 
