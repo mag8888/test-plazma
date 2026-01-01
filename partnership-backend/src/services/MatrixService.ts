@@ -228,11 +228,19 @@ export class MatrixService {
 
         const requiredBalance = this.getRequiredBalanceForLevel(avatar.type, avatar.level);
 
+        console.log(`[LevelDebug] Checking Avatar ${avatar._id} L${avatar.level}. Partners: ${avatar.partners.length}/3. Balance: ${avatar.yellowBalance}/${requiredBalance}`);
+
+        // Check partner requirement (Critical logic check)
+        if (avatar.partners.length < 3) return; // Not full yet
+
         // Check funds
         if (avatar.yellowBalance < requiredBalance) {
+            console.log(`[LevelDebug] Avatar ${avatar._id} L${avatar.level}: Funds ${avatar.yellowBalance}/${requiredBalance} - NOT READY`);
             // Should not happen if logic is tight, but return if insufficient
             return;
         }
+
+        console.log(`[LevelDebug] Avatar ${avatar._id} L${avatar.level} -> L${avatar.level + 1} STARTING! Funds: ${avatar.yellowBalance}`);
 
         // Ready to Level Up
         const totalPot = requiredBalance; // Use exact amount

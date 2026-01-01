@@ -158,864 +158,936 @@ export default function AdminPage() {
     const handleViewMatrix = async (user: any) => {
         setSelectAvatarUser(user);
         setLoadingAvatars(true);
-        setAvatarsList([]);
         try {
-            // Updated to use the new Admin endpoint
-            const res = await fetchWithAuth(`/users/${user._id || user.telegram_id}/avatars`);
-
-            if (res.success && res.avatars) {
+            const res = await fetchWithAuth(`/users/${user._id}/avatars`);
+            if (res.success) {
                 setAvatarsList(res.avatars);
-                if (res.avatars.length === 1) {
-                    // Auto-select if only one
-                    setVisualizeAvatar({
-                        id: res.avatars[0]._id,
-                        type: res.avatars[0].type
-                    });
-                    setSelectAvatarUser(null); // Close list modal if auto-opening
+                // Auto-select first active avatar if available
+                const firstActive = res.avatars.find((a: any) => a.isActive) || res.avatars[0];
+                if (firstActive) {
+                    setVisualizeAvatar(firstActive);
                 }
             } else {
-                setAvatarsList([]); // Ensure empty
+                alert('Failed to load avatars');
             }
         } catch (e) {
-            console.error('Fetch avatars error', e);
-            alert('Error fetching avatars');
+            console.error(e);
         } finally {
             setLoadingAvatars(false);
         }
     };
 
-    const handleDeleteAllAvatars = async () => {
-        if (!confirm('🚨 CRITICAL: DELETE ALL AVATARS?\nThis will wipe the entire matrix structure. This cannot be undone.')) return;
-
-        // Double confirmation
-        const promptVal = prompt('Type "DELETE" to confirm:');
-        if (promptVal !== 'DELETE') return;
-
-        setActionOutput('Deleting all avatars...');
+    const handleGlobalMatrix = async () => {
+        setLoadingAvatars(true);
         try {
-            const res = await fetchWithAuth('/avatars/delete-all', { method: 'DELETE' });
-            if (res.success) {
-                setActionOutput(`✅ All Avatars Deleted!\nCount: ${res.deletedCount}`);
-                fetchStats();
+            const res = await fetchWithAuth('/avatars/root');
+            if (res.success && res.avatar) {
+                // Set dummy user context (root owner) or just open matrix directly
+                setSelectAvatarUser(res.avatar.owner || { username: 'ROOT', _id: 'ROOT' });
+                // Directly set visualized avatar
+                setVisualizeAvatar(res.avatar);
+                // Also load list for this owner (optional, but good for context)
+                if (res.avatar.owner && res.avatar.owner._id) {
+                    const listRes = await fetchWithAuth(`/users/${res.avatar.owner._id}/avatars`);
+                    if (listRes.success) setAvatarsList(listRes.avatars);
+                } else {
+                    setAvatarsList([res.avatar]);
+                }
             } else {
-                setActionOutput('❌ Error: ' + res.error);
+                alert('Root avatar not found or no global matrix available.');
             }
         } catch (e: any) {
-            setActionOutput('❌ Network Error: ' + e.message);
-        }
-    };
-
-    const handleCardClick = (type: string) => {
-        // Clear search to show full list for the selected category
-        setUserQuery('');
-
-        if (type === 'AVATARS') {
-            setSortField('avatarsCount');
-            setSortOrder('desc');
-            setPage(1); // Reset page
-        } else if (type === 'GREEN') {
-            setSortField('greenBalance');
-            setSortOrder('desc');
-            setPage(1);
-        } else if (type === 'YELLOW') {
-            setSortField('yellowBalance');
-            setSortOrder('desc');
-            setPage(1);
-        }
-
-        // Switch to Users tab to visualize
-        setActiveTab('USERS');
-    };
-
-    const handleSort = (field: string) => {
-        if (sortField === field) {
-            // Toggle order
-            setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
-        } else {
-            // New field, default to desc (highest first)
-            setSortField(field);
-            setSortOrder('desc');
-        }
-    };
-
-    const renderSortArrow = (field: string) => {
-        if (sortField !== field) return null;
-        return sortOrder === 'asc' ? ' ↑' : ' ↓';
-    };
-
-    const updateReferrer = async () => {
-        if (!editReferrerUser) return;
-        if (!confirm(`Change referrer for ${editReferrerUser.username} to ${newReferrer || 'Nobody'}?`)) return;
-
-        const res = await fetchWithAuth('/referrer', {
-            method: 'POST',
-            body: JSON.stringify({
-                userId: editReferrerUser._id,
-                referrerIdentifier: newReferrer
-            })
-        });
-
-        if (res.success) {
-            alert(res.message);
-            setEditReferrerUser(null);
-            setNewReferrer('');
-            searchUsers(page);
-        } else {
-            alert(res.error || 'Error');
-        }
-    };
-
-    const rebuildReferrals = async () => {
-        if (!confirm('Rebuild all referral links from referredBy strings? This will update users without referrer ObjectIds.')) {
-            return;
-        }
-
-        const res = await fetchWithAuth('/rebuild-referrals', {
-            method: 'POST'
-        });
-
-        if (res.success) {
-            alert(`Referrals rebuilt!\nUpdated: ${res.updated}\nSkipped: ${res.skipped}\nErrors: ${res.errors}`);
-            searchUsers(page);
-        } else {
-            alert(res.error || 'Error rebuilding referrals');
-        }
-    };
-
-    const fetchGames = useCallback(async (p: number = 1, key: string = secret) => {
-        setGamesLoading(true);
-        try {
-            // Uses GAME_API_URL
-            const res = await fetchWithAuth(`/games?page=${p}&limit=20`, {}, key, GAME_API_URL);
-            if (res.games) {
-                setGames(res.games);
-                setGamesTotalPages(res.pages || 1);
-                setGamesPage(res.page || 1);
-            } else {
-                console.warn('Unknown games format', res);
-            }
-        } catch (e) {
-            console.error("Fetch games error", e);
+            console.error(e);
+            alert('Failed to load global matrix: ' + e.message);
         } finally {
-            setGamesLoading(false);
+            setLoadingAvatars(false);
         }
-    }, []);
+    };
+    setAvatarsList([]);
+    try {
+        // Updated to use the new Admin endpoint
+        const res = await fetchWithAuth(`/users/${user._id || user.telegram_id}/avatars`);
 
-    const cancelGame = async (gameId: string) => {
-        if (!confirm('Are you sure you want to CANCEL this game? Players will be notified.')) return;
-        try {
-            // Uses GAME_API_URL
-            const res = await fetchWithAuth(`/games/${gameId}`, { method: 'DELETE' }, secret, GAME_API_URL);
-            if (res.success) {
-                alert('Game cancelled successfully');
-                fetchGames(gamesPage);
-            } else {
-                alert('Failed to delete: ' + res.error);
+        if (res.success && res.avatars) {
+            setAvatarsList(res.avatars);
+            if (res.avatars.length === 1) {
+                // Auto-select if only one
+                setVisualizeAvatar({
+                    id: res.avatars[0]._id,
+                    type: res.avatars[0].type
+                });
+                setSelectAvatarUser(null); // Close list modal if auto-opening
             }
-        } catch (e: any) {
-            alert('Error: ' + e.message);
-        }
-    };
-
-    // Auto-login from storage
-    useEffect(() => {
-        const stored = localStorage.getItem('admin_secret');
-        if (stored) {
-            setSecret(stored);
-            setIsAuthenticated(true);
-            fetchStats(stored);
-            searchUsers(1, stored);
-        }
-    }, []);
-
-    // Also reload when switching tabs
-    useEffect(() => {
-        if (activeTab === 'USERS' && isAuthenticated) {
-            searchUsers(page);
-        }
-        if (activeTab === 'TREE' && isAuthenticated) {
-            fetchTree();
-        }
-        if (activeTab === 'LOGS' && isAuthenticated) {
-            fetchLogs();
-        }
-        if (activeTab === 'GAMES' && isAuthenticated) {
-            fetchGames(1);
-        }
-    }, [activeTab, isAuthenticated, page, sortField, sortOrder, fetchGames]);
-
-    const login = () => {
-        if (secret) {
-            localStorage.setItem('admin_secret', secret); // persistence enabled
-            setIsAuthenticated(true);
-            fetchStats(secret);
-            searchUsers(1, secret);
-        }
-    };
-
-    const logout = () => {
-        localStorage.removeItem('admin_secret');
-        setSecret('');
-        setIsAuthenticated(false);
-        // router.push('/admin/login'); // No need to redirect, just show login state
-    };
-
-
-
-
-    /* fetchWithAuth implementation moved up and refactored */
-
-    const searchUsers = useCallback(async (p: number = 1, key: string = secret) => {
-        setIsLoading(true);
-        try {
-            const res = await fetchWithAuth(`/users?query=${userQuery}&page=${p}&sortBy=${sortField}&order=${sortOrder}`, {}, key);
-            if (res.users) {
-                setUsers(res.users);
-                setTotalPages(res.pages || 1);
-                setPage(res.page || 1);
-            } else {
-                console.warn('Unknown users format', res);
-            }
-        } catch (e) {
-            console.error("Fetch users error", e);
-        } finally {
-            setIsLoading(false);
-        }
-    }, [userQuery, sortField, sortOrder]); // Added sortField and sortOrder to dependencies
-
-    const fetchStats = async (key: string = secret) => {
-        try {
-            const res = await fetchWithAuth('/stats', {}, key);
-            if (res && !res.error) {
-                setStats(res);
-            }
-        } catch (e) {
-            console.error("Fetch stats error", e);
-        }
-    };
-
-    const fetchTree = async () => {
-        if (!treeUserId) return;
-        // Fetching tree from partnership service public endpoint
-        const res = await fetch(`${ADMIN_PARTNERSHIP_URL}/tree/${treeUserId}`);
-        const data = await res.json();
-        setTreeData(data);
-    };
-
-    const fetchLogs = async () => {
-        const res = await fetchWithAuth('/logs');
-        if (Array.isArray(res)) {
-            setLogs(res);
-        }
-    };
-
-    const updateBalance = async () => {
-        if (!selectedUser || !amount) return alert('Amount is required');
-
-        const val = Number(amount);
-        const finalAmount = operation === 'DEDUCT' ? -val : val;
-
-        console.log('Sending balance update:', {
-            userId: selectedUser?._id, // Log ID explicitly
-            amount,
-            finalAmount,
-            balanceType,
-            fullUser: selectedUser
-        });
-
-        const res = await fetchWithAuth('/balance', {
-            method: 'POST',
-            body: JSON.stringify({
-                userId: selectedUser.telegram_id || selectedUser._id, // Prefer Telegram ID per user request
-                amount: finalAmount,
-                type: balanceType,
-                description: reason,
-                bonusDescription: bonusDescription
-            })
-        });
-
-        if (res.success) {
-            alert('Balance updated!');
-            // Reset fields
-            setAmount('');
-            setReason('');
-            setBonusDescription('');
-            setSelectedUser(null);
-            searchUsers(page); // Refresh list
         } else {
-            alert(res.error || 'Failed to update balance');
+            setAvatarsList([]); // Ensure empty
         }
-    };
+    } catch (e) {
+        console.error('Fetch avatars error', e);
+        alert('Error fetching avatars');
+    } finally {
+        setLoadingAvatars(false);
+    }
+};
 
-    const handleResetRatings = async () => {
-        if (!confirm('⚠️ Are you sure you want to RESET ALL USER RATINGS TO 0? This cannot be undone.')) return;
+const handleDeleteAllAvatars = async () => {
+    if (!confirm('🚨 CRITICAL: DELETE ALL AVATARS?\nThis will wipe the entire matrix structure. This cannot be undone.')) return;
 
-        const res = await fetchWithAuth('/reset-ratings', {
-            method: 'POST'
-        });
+    // Double confirmation
+    const promptVal = prompt('Type "DELETE" to confirm:');
+    if (promptVal !== 'DELETE') return;
 
+    setActionOutput('Deleting all avatars...');
+    try {
+        const res = await fetchWithAuth('/avatars/delete-all', { method: 'DELETE' });
         if (res.success) {
-            alert(res.message);
-            searchUsers(page);
+            setActionOutput(`✅ All Avatars Deleted!\nCount: ${res.deletedCount}`);
+            fetchStats();
         } else {
-            alert(res.error || 'Failed to reset ratings');
+            setActionOutput('❌ Error: ' + res.error);
         }
-    };
+    } catch (e: any) {
+        setActionOutput('❌ Network Error: ' + e.message);
+    }
+};
 
-    if (!isAuthenticated) {
-        return (
-            <div className="flex items-center justify-center min-h-screen bg-slate-950">
-                <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 w-96 space-y-6 shadow-2xl">
-                    <div className="flex justify-center">
-                        <div className="bg-red-500/10 p-4 rounded-full border border-red-500/20">
-                            <Lock className="text-red-500" size={32} />
-                        </div>
-                    </div>
-                    <div className="text-center text-white text-xl font-bold">Admin Access</div>
-                    <input
-                        type="password"
-                        placeholder="Enter Admin Secret"
-                        className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none transition"
-                        value={secret}
-                        onChange={(e) => setSecret(e.target.value)}
-                    />
-                    <button
-                        onClick={login}
-                        className="w-full bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl font-bold transition shadow-lg shadow-blue-500/20"
-                    >
-                        Login
-                    </button>
-                    <div className="text-center text-xs text-slate-600">Secure Area for Moneo Admins</div>
-                </div>
-            </div>
-        );
+const handleCardClick = (type: string) => {
+    // Clear search to show full list for the selected category
+    setUserQuery('');
+
+    if (type === 'AVATARS') {
+        setSortField('avatarsCount');
+        setSortOrder('desc');
+        setPage(1); // Reset page
+    } else if (type === 'GREEN') {
+        setSortField('greenBalance');
+        setSortOrder('desc');
+        setPage(1);
+    } else if (type === 'YELLOW') {
+        setSortField('yellowBalance');
+        setSortOrder('desc');
+        setPage(1);
     }
 
+    // Switch to Users tab to visualize
+    setActiveTab('USERS');
+};
+
+const handleSort = (field: string) => {
+    if (sortField === field) {
+        // Toggle order
+        setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+    } else {
+        // New field, default to desc (highest first)
+        setSortField(field);
+        setSortOrder('desc');
+    }
+};
+
+const renderSortArrow = (field: string) => {
+    if (sortField !== field) return null;
+    return sortOrder === 'asc' ? ' ↑' : ' ↓';
+};
+
+const updateReferrer = async () => {
+    if (!editReferrerUser) return;
+    if (!confirm(`Change referrer for ${editReferrerUser.username} to ${newReferrer || 'Nobody'}?`)) return;
+
+    const res = await fetchWithAuth('/referrer', {
+        method: 'POST',
+        body: JSON.stringify({
+            userId: editReferrerUser._id,
+            referrerIdentifier: newReferrer
+        })
+    });
+
+    if (res.success) {
+        alert(res.message);
+        setEditReferrerUser(null);
+        setNewReferrer('');
+        searchUsers(page);
+    } else {
+        alert(res.error || 'Error');
+    }
+};
+
+const rebuildReferrals = async () => {
+    if (!confirm('Rebuild all referral links from referredBy strings? This will update users without referrer ObjectIds.')) {
+        return;
+    }
+
+    const res = await fetchWithAuth('/rebuild-referrals', {
+        method: 'POST'
+    });
+
+    if (res.success) {
+        alert(`Referrals rebuilt!\nUpdated: ${res.updated}\nSkipped: ${res.skipped}\nErrors: ${res.errors}`);
+        searchUsers(page);
+    } else {
+        alert(res.error || 'Error rebuilding referrals');
+    }
+};
+
+const fetchGames = useCallback(async (p: number = 1, key: string = secret) => {
+    setGamesLoading(true);
+    try {
+        // Uses GAME_API_URL
+        const res = await fetchWithAuth(`/games?page=${p}&limit=20`, {}, key, GAME_API_URL);
+        if (res.games) {
+            setGames(res.games);
+            setGamesTotalPages(res.pages || 1);
+            setGamesPage(res.page || 1);
+        } else {
+            console.warn('Unknown games format', res);
+        }
+    } catch (e) {
+        console.error("Fetch games error", e);
+    } finally {
+        setGamesLoading(false);
+    }
+}, []);
+
+const cancelGame = async (gameId: string) => {
+    if (!confirm('Are you sure you want to CANCEL this game? Players will be notified.')) return;
+    try {
+        // Uses GAME_API_URL
+        const res = await fetchWithAuth(`/games/${gameId}`, { method: 'DELETE' }, secret, GAME_API_URL);
+        if (res.success) {
+            alert('Game cancelled successfully');
+            fetchGames(gamesPage);
+        } else {
+            alert('Failed to delete: ' + res.error);
+        }
+    } catch (e: any) {
+        alert('Error: ' + e.message);
+    }
+};
+
+// Auto-login from storage
+useEffect(() => {
+    const stored = localStorage.getItem('admin_secret');
+    if (stored) {
+        setSecret(stored);
+        setIsAuthenticated(true);
+        fetchStats(stored);
+        searchUsers(1, stored);
+    }
+}, []);
+
+// Also reload when switching tabs
+useEffect(() => {
+    if (activeTab === 'USERS' && isAuthenticated) {
+        searchUsers(page);
+    }
+    if (activeTab === 'TREE' && isAuthenticated) {
+        fetchTree();
+    }
+    if (activeTab === 'LOGS' && isAuthenticated) {
+        fetchLogs();
+    }
+    if (activeTab === 'GAMES' && isAuthenticated) {
+        fetchGames(1);
+    }
+}, [activeTab, isAuthenticated, page, sortField, sortOrder, fetchGames]);
+
+const login = () => {
+    if (secret) {
+        localStorage.setItem('admin_secret', secret); // persistence enabled
+        setIsAuthenticated(true);
+        fetchStats(secret);
+        searchUsers(1, secret);
+    }
+};
+
+const logout = () => {
+    localStorage.removeItem('admin_secret');
+    setSecret('');
+    setIsAuthenticated(false);
+    // router.push('/admin/login'); // No need to redirect, just show login state
+};
+
+
+
+
+/* fetchWithAuth implementation moved up and refactored */
+
+const searchUsers = useCallback(async (p: number = 1, key: string = secret) => {
+    setIsLoading(true);
+    try {
+        const res = await fetchWithAuth(`/users?query=${userQuery}&page=${p}&sortBy=${sortField}&order=${sortOrder}`, {}, key);
+        if (res.users) {
+            setUsers(res.users);
+            setTotalPages(res.pages || 1);
+            setPage(res.page || 1);
+        } else {
+            console.warn('Unknown users format', res);
+        }
+    } catch (e) {
+        console.error("Fetch users error", e);
+    } finally {
+        setIsLoading(false);
+    }
+}, [userQuery, sortField, sortOrder]); // Added sortField and sortOrder to dependencies
+
+const fetchStats = async (key: string = secret) => {
+    try {
+        const res = await fetchWithAuth('/stats', {}, key);
+        if (res && !res.error) {
+            setStats(res);
+        }
+    } catch (e) {
+        console.error("Fetch stats error", e);
+    }
+};
+
+const fetchTree = async () => {
+    if (!treeUserId) return;
+    // Fetching tree from partnership service public endpoint
+    const res = await fetch(`${ADMIN_PARTNERSHIP_URL}/tree/${treeUserId}`);
+    const data = await res.json();
+    setTreeData(data);
+};
+
+const fetchLogs = async () => {
+    const res = await fetchWithAuth('/logs');
+    if (Array.isArray(res)) {
+        setLogs(res);
+    }
+};
+
+const updateBalance = async () => {
+    if (!selectedUser || !amount) return alert('Amount is required');
+
+    const val = Number(amount);
+    const finalAmount = operation === 'DEDUCT' ? -val : val;
+
+    console.log('Sending balance update:', {
+        userId: selectedUser?._id, // Log ID explicitly
+        amount,
+        finalAmount,
+        balanceType,
+        fullUser: selectedUser
+    });
+
+    const res = await fetchWithAuth('/balance', {
+        method: 'POST',
+        body: JSON.stringify({
+            userId: selectedUser.telegram_id || selectedUser._id, // Prefer Telegram ID per user request
+            amount: finalAmount,
+            type: balanceType,
+            description: reason,
+            bonusDescription: bonusDescription
+        })
+    });
+
+    if (res.success) {
+        alert('Balance updated!');
+        // Reset fields
+        setAmount('');
+        setReason('');
+        setBonusDescription('');
+        setSelectedUser(null);
+        searchUsers(page); // Refresh list
+    } else {
+        alert(res.error || 'Failed to update balance');
+    }
+};
+
+const handleResetRatings = async () => {
+    if (!confirm('⚠️ Are you sure you want to RESET ALL USER RATINGS TO 0? This cannot be undone.')) return;
+
+    const res = await fetchWithAuth('/reset-ratings', {
+        method: 'POST'
+    });
+
+    if (res.success) {
+        alert(res.message);
+        searchUsers(page);
+    } else {
+        alert(res.error || 'Failed to reset ratings');
+    }
+};
+
+if (!isAuthenticated) {
     return (
-        <div className="min-h-screen bg-slate-900 text-slate-200">
-            {/* Nav */}
-            <div className="bg-slate-950 border-b border-slate-800 p-4 sticky top-0 z-50">
-                <div className="max-w-6xl mx-auto flex justify-between items-center">
-                    <div className="flex items-center gap-2 font-bold text-lg text-white">
-                        <span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">ADMIN</span>
-                        Partnership Panel
+        <div className="flex items-center justify-center min-h-screen bg-slate-950">
+            <div className="bg-slate-900 p-8 rounded-2xl border border-slate-800 w-96 space-y-6 shadow-2xl">
+                <div className="flex justify-center">
+                    <div className="bg-red-500/10 p-4 rounded-full border border-red-500/20">
+                        <Lock className="text-red-500" size={32} />
                     </div>
-                    <div className="flex gap-4">
-                        <button onClick={() => setActiveTab('USERS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'USERS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
-                            <Users size={18} /> Users
-                        </button>
-                        <button onClick={() => setActiveTab('STATS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'STATS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
-                            <BarChart size={18} /> Stats
-                        </button>
-                        <button onClick={() => setActiveTab('TREE')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'TREE' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
-                            <TreePine size={18} /> Tree
-                        </button>
-                        <button onClick={() => setActiveTab('LOGS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'LOGS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
-                            <History size={18} /> Logs
-                        </button>
-                        <button onClick={() => setActiveTab('CARDS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'CARDS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
-                            <CreditCard size={18} /> Cards
-                        </button>
-                        <button onClick={() => setActiveTab('GAMES')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'GAMES' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
-                            <Calendar size={18} /> Games
-                        </button>
-                    </div>
-                    <button onClick={logout} className="bg-red-900/30 hover:bg-red-900/50 text-red-400 px-4 py-1.5 rounded-lg text-xs font-bold transition border border-red-500/30">Выйти</button>
                 </div>
+                <div className="text-center text-white text-xl font-bold">Admin Access</div>
+                <input
+                    type="password"
+                    placeholder="Enter Admin Secret"
+                    className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none transition"
+                    value={secret}
+                    onChange={(e) => setSecret(e.target.value)}
+                />
+                <button
+                    onClick={login}
+                    className="w-full bg-blue-600 hover:bg-blue-500 text-white p-3 rounded-xl font-bold transition shadow-lg shadow-blue-500/20"
+                >
+                    Login
+                </button>
+                <div className="text-center text-xs text-slate-600">Secure Area for Moneo Admins</div>
             </div>
+        </div>
+    );
+}
 
-            <div className="max-w-6xl mx-auto p-4 py-8 space-y-8">
+return (
+    <div className="min-h-screen bg-slate-900 text-slate-200">
+        {/* Nav */}
+        <div className="bg-slate-950 border-b border-slate-800 p-4 sticky top-0 z-50">
+            <div className="max-w-6xl mx-auto flex justify-between items-center">
+                <div className="flex items-center gap-2 font-bold text-lg text-white">
+                    <span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">ADMIN</span>
+                    Partnership Panel
+                </div>
+                <div className="flex gap-4">
+                    <button onClick={() => setActiveTab('USERS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'USERS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
+                        <Users size={18} /> Users
+                    </button>
+                    <button onClick={() => setActiveTab('STATS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'STATS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
+                        <BarChart size={18} /> Stats
+                    </button>
+                    <button onClick={() => setActiveTab('TREE')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'TREE' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
+                        <TreePine size={18} /> Tree
+                    </button>
+                    <button onClick={() => setActiveTab('LOGS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'LOGS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
+                        <History size={18} /> Logs
+                    </button>
+                    <button onClick={() => setActiveTab('CARDS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'CARDS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
+                        <CreditCard size={18} /> Cards
+                    </button>
+                    <button onClick={() => setActiveTab('GAMES')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'GAMES' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
+                        <Calendar size={18} /> Games
+                    </button>
+                </div>
+                <button onClick={logout} className="bg-red-900/30 hover:bg-red-900/50 text-red-400 px-4 py-1.5 rounded-lg text-xs font-bold transition border border-red-500/30">Выйти</button>
+            </div>
+        </div>
 
-                {/* Dashboard Cards */}
-                {stats && (
-                    <div className="flex flex-col md:flex-row gap-6 mb-8">
-                        {/* LEFT COLUMN: ACTION CENTER (Tall) */}
-                        <div className="w-full md:w-1/4 min-w-[280px]">
-                            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 h-full flex flex-col">
-                                <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-                                    <Users className="text-blue-400" />
-                                    Action Center
-                                </h2>
+        <div className="max-w-6xl mx-auto p-4 py-8 space-y-8">
 
-                                {/* Action Buttons Grid */}
-                                <div className="grid grid-cols-2 gap-2 mb-4">
-                                    <button
-                                        onClick={async () => {
-                                            if (!confirm('Rebuild all referral links? This links users based on the text "referredBy" field.')) return;
-                                            setActionOutput('Syncing referrals...');
-                                            const res = await fetchWithAuth('/rebuild-referrals', { method: 'POST' });
+            {/* Dashboard Cards */}
+            {stats && (
+                <div className="flex flex-col md:flex-row gap-6 mb-8">
+                    {/* LEFT COLUMN: ACTION CENTER (Tall) */}
+                    <div className="w-full md:w-1/4 min-w-[280px]">
+                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700 h-full flex flex-col">
+                            <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
+                                <Users className="text-blue-400" />
+                                Action Center
+                            </h2>
+
+                            {/* Action Buttons Grid */}
+                            <div className="grid grid-cols-2 gap-2 mb-4">
+                                <button
+                                    onClick={async () => {
+                                        if (!confirm('Rebuild all referral links? This links users based on the text "referredBy" field.')) return;
+                                        setActionOutput('Syncing referrals...');
+                                        const res = await fetchWithAuth('/rebuild-referrals', { method: 'POST' });
+                                        if (res.success) {
+                                            setActionOutput(`✅ Sync Complete!\nUpdated: ${res.updated}\nRepaired: ${res.repaired}\nErrors: ${res.errors}`);
+                                            searchUsers(page);
+                                        } else {
+                                            setActionOutput('❌ Error: ' + res.error);
+                                        }
+                                    }}
+                                    className="bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 p-2 rounded-lg border border-blue-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
+                                >
+                                    <RefreshCw size={18} />
+                                    <span className="font-bold text-xs">Sync Refs</span>
+                                </button>
+
+                                <button
+                                    onClick={handleDeleteAllAvatars}
+                                    className="bg-red-900/40 hover:bg-red-900/60 text-red-300 p-2 rounded-lg border border-red-700/50 flex flex-col items-center justify-center gap-1 transition text-center"
+                                >
+                                    <XCircle size={18} />
+                                    <span className="font-bold text-xs">Reset Matrix</span>
+                                </button>
+
+                                <button
+                                    onClick={() => setShowBroadcastModal(true)}
+                                    className="bg-purple-900/30 hover:bg-purple-900/50 text-purple-300 p-2 rounded-lg border border-purple-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
+                                >
+                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
+                                    </svg>
+                                    <span className="font-bold text-xs">Broadcast</span>
+                                </button>
+
+                                <button
+                                    onClick={async () => {
+                                        if (!confirm('Activate all avatars and recalculate tariffs?')) return;
+                                        setActionOutput('Recalculating avatars...');
+                                        try {
+                                            const res = await fetchWithAuth('/avatars/recalculate', { method: 'POST' });
                                             if (res.success) {
-                                                setActionOutput(`✅ Sync Complete!\nUpdated: ${res.updated}\nRepaired: ${res.repaired}\nErrors: ${res.errors}`);
-                                                searchUsers(page);
+                                                setActionOutput(`✅ Avatars Updated!\nTotal: ${res.total}\nActivated: ${res.activated}\nUpdated: ${res.updated}`);
+                                                fetchStats();
                                             } else {
                                                 setActionOutput('❌ Error: ' + res.error);
                                             }
-                                        }}
-                                        className="bg-blue-900/30 hover:bg-blue-900/50 text-blue-300 p-2 rounded-lg border border-blue-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
-                                    >
-                                        <RefreshCw size={18} />
-                                        <span className="font-bold text-xs">Sync Refs</span>
-                                    </button>
+                                        } catch (e: any) {
+                                            setActionOutput('❌ Network Error: ' + e.message);
+                                        }
+                                    }}
+                                    className="bg-green-900/30 hover:bg-green-900/50 text-green-300 p-2 rounded-lg border border-green-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
+                                >
+                                    <BarChart size={18} />
+                                    <span className="font-bold text-xs">Recalculate</span>
+                                </button>
 
-                                    <button
-                                        onClick={handleDeleteAllAvatars}
-                                        className="bg-red-900/40 hover:bg-red-900/60 text-red-300 p-2 rounded-lg border border-red-700/50 flex flex-col items-center justify-center gap-1 transition text-center"
-                                    >
-                                        <XCircle size={18} />
-                                        <span className="font-bold text-xs">Reset Matrix</span>
-                                    </button>
-
-                                    <button
-                                        onClick={() => setShowBroadcastModal(true)}
-                                        className="bg-purple-900/30 hover:bg-purple-900/50 text-purple-300 p-2 rounded-lg border border-purple-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5.882V19.24a1.76 1.76 0 01-3.417.592l-2.147-6.15M18 13a3 3 0 100-6M5.436 13.683A4.001 4.001 0 017 6h1.832c4.1 0 7.625-1.234 9.168-3v14c-1.543-1.766-5.067-3-9.168-3H7a3.988 3.988 0 01-1.564-.317z" />
-                                        </svg>
-                                        <span className="font-bold text-xs">Broadcast</span>
-                                    </button>
-
-                                    <button
-                                        onClick={async () => {
-                                            if (!confirm('Activate all avatars and recalculate tariffs?')) return;
-                                            setActionOutput('Recalculating avatars...');
-                                            try {
-                                                const res = await fetchWithAuth('/avatars/recalculate', { method: 'POST' });
-                                                if (res.success) {
-                                                    setActionOutput(`✅ Avatars Updated!\nTotal: ${res.total}\nActivated: ${res.activated}\nUpdated: ${res.updated}`);
-                                                    fetchStats();
-                                                } else {
-                                                    setActionOutput('❌ Error: ' + res.error);
-                                                }
-                                            } catch (e: any) {
-                                                setActionOutput('❌ Network Error: ' + e.message);
-                                            }
-                                        }}
-                                        className="bg-green-900/30 hover:bg-green-900/50 text-green-300 p-2 rounded-lg border border-green-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
-                                    >
-                                        <BarChart size={18} />
-                                        <span className="font-bold text-xs">Recalculate</span>
-                                    </button>
-
-                                    <button
-                                        onClick={async () => {
-                                            if (!confirm('⚠️ RESET ALL RATINGS to 0?')) return;
-                                            setActionOutput('Resetting ratings...');
-                                            const res = await fetchWithAuth('/reset-ratings', { method: 'POST' });
-                                            if (res.success) {
-                                                setActionOutput(`✅ Ratings Reset!\n${res.message}`);
-                                                searchUsers(page);
-                                            } else {
-                                                setActionOutput('❌ Error: ' + res.error);
-                                            }
-                                        }}
-                                        className="bg-red-900/30 hover:bg-red-900/50 text-red-300 p-2 rounded-lg border border-red-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
-                                    >
-                                        <Trash2 size={18} />
-                                        <span className="font-bold text-xs">Reset Rating</span>
-                                    </button>
-                                </div>
-
-                                {/* Action Output Console */}
-                                <div className="flex-1 bg-slate-950 rounded-xl p-3 font-mono text-xs text-slate-300 overflow-y-auto border border-slate-900 shadow-inner max-h-[200px]">
-                                    <div className="text-slate-500 mb-1 pointer-events-none select-none uppercase text-[10px] font-bold tracking-wider">Console Output</div>
-                                    {actionOutput ? (
-                                        <div className="whitespace-pre-wrap animate-pulse-once">{actionOutput}</div>
-                                    ) : (
-                                        <div className="text-slate-600 italic">Ready for commands...</div>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* RIGHT COLUMN: STATS GRID */}
-                        <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-min">
-                            <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
-                                <h2 className="text-xl font-bold mb-4">Users</h2>
-                                <div className="text-4xl font-bold text-white">{stats.totalUsers}</div>
+                                <button
+                                    onClick={async () => {
+                                        if (!confirm('⚠️ RESET ALL RATINGS to 0?')) return;
+                                        setActionOutput('Resetting ratings...');
+                                        const res = await fetchWithAuth('/reset-ratings', { method: 'POST' });
+                                        if (res.success) {
+                                            setActionOutput(`✅ Ratings Reset!\n${res.message}`);
+                                            searchUsers(page);
+                                        } else {
+                                            setActionOutput('❌ Error: ' + res.error);
+                                        }
+                                    }}
+                                    className="bg-red-900/30 hover:bg-red-900/50 text-red-300 p-2 rounded-lg border border-red-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
+                                >
+                                    <Trash2 size={18} />
+                                    <span className="font-bold text-xs">Reset Rating</span>
+                                </button>
                             </div>
 
-                            <div
-                                onClick={() => {
-                                    setActiveTab('USERS');
-                                    setSortField('avatarsCount'); // Now supported by backend
-                                    setSortOrder('desc');
-                                    setTimeout(() => searchUsers(1), 0);
-                                }}
-                                className="bg-slate-800 p-6 rounded-2xl border border-slate-700 cursor-pointer hover:scale-[1.02] transition-transform group"
-                            >
-                                <div className="text-slate-400 text-sm font-bold uppercase mb-2 group-hover:text-white transition-colors">Total Avatars</div>
-                                <div className="text-3xl font-bold text-white">{stats.totalAvatars}</div>
-                            </div>
-
-                            <div
-                                onClick={() => {
-                                    setActiveTab('USERS');
-                                    setSortField('greenBalance');
-                                    setSortOrder('desc');
-                                    setTimeout(() => searchUsers(1), 0); // Trigger search
-                                }}
-                                className="bg-slate-800 p-6 rounded-2xl border border-slate-700 cursor-pointer hover:scale-[1.02] transition-transform group"
-                            >
-                                <div className="text-slate-400 text-sm font-bold uppercase mb-2 group-hover:text-green-400 transition-colors">Green Circulation</div>
-                                <div className="text-3xl font-bold text-green-400">${stats.totalGreen.toLocaleString()}</div>
-                            </div>
-
-                            <div
-                                onClick={() => {
-                                    setActiveTab('USERS');
-                                    setSortField('yellowBalance');
-                                    setSortOrder('desc');
-                                    setTimeout(() => searchUsers(1), 0);
-                                }}
-                                className="bg-slate-800 p-6 rounded-2xl border border-slate-700 cursor-pointer hover:scale-[1.02] transition-transform group"
-                            >
-                                <div className="text-slate-400 text-sm font-bold uppercase mb-2 group-hover:text-yellow-400 transition-colors">Yellow Circulation</div>
-                                <div className="text-3xl font-bold text-yellow-400">${stats.totalYellow.toLocaleString()}</div>
-                            </div>
-                            <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
-                                <h3 className="text-slate-400 text-sm font-medium mb-4 uppercase tracking-wider">Storage Stats</h3>
-                                <div className="text-3xl font-bold text-blue-400">{stats.storageUsed || '0 MB'}</div>
-                                <div className="text-xs text-slate-500 mt-2">Total backups size</div>
+                            {/* Action Output Console */}
+                            <div className="flex-1 bg-slate-950 rounded-xl p-3 font-mono text-xs text-slate-300 overflow-y-auto border border-slate-900 shadow-inner max-h-[200px]">
+                                <div className="text-slate-500 mb-1 pointer-events-none select-none uppercase text-[10px] font-bold tracking-wider">Console Output</div>
+                                {actionOutput ? (
+                                    <div className="whitespace-pre-wrap animate-pulse-once">{actionOutput}</div>
+                                ) : (
+                                    <div className="text-slate-600 italic">Ready for commands...</div>
+                                )}
                             </div>
                         </div>
                     </div>
-                )}
 
-                {/* Rebuild Referrals Button (in STATS tab) */}
-                {activeTab === 'STATS' && (
-                    <div className="mt-6">
-                        <button
-                            onClick={rebuildReferrals}
-                            className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg"
+                    {/* RIGHT COLUMN: STATS GRID */}
+                    <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-min">
+                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                            <h2 className="text-xl font-bold mb-4">Users</h2>
+                            <div className="text-4xl font-bold text-white">{stats.totalUsers}</div>
+                        </div>
+
+                        <div
+                            onClick={() => {
+                                setActiveTab('USERS');
+                                setSortField('avatarsCount'); // Now supported by backend
+                                setSortOrder('desc');
+                                setTimeout(() => searchUsers(1), 0);
+                            }}
+                            className="bg-slate-800 p-6 rounded-2xl border border-slate-700 cursor-pointer hover:scale-[1.02] transition-transform group"
                         >
-                            🔄 Rebuild Referrals
-                        </button>
-                        <p className="text-xs text-slate-500 mt-2">Reconstructs referrer links from referredBy strings</p>
-                    </div>
-                )}
-
-                {/* LOGS TAB */}
-                {activeTab === 'LOGS' && (
-                    <div className="space-y-4">
-                        <h2 className="text-xl font-bold text-white">Admin Logs</h2>
-                        <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
-                                    <tr>
-                                        <th className="p-4">Time</th>
-                                        <th className="p-4">Admin</th>
-                                        <th className="p-4">Action</th>
-                                        <th className="p-4">Target User</th>
-                                        <th className="p-4">Details</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-700">
-                                    {logs.map((log: any) => (
-                                        <tr key={log._id} className="hover:bg-slate-700/50 transition">
-                                            <td className="p-4 text-slate-400 text-sm">
-                                                {new Date(log.createdAt).toLocaleString()}
-                                            </td>
-                                            <td className="p-4 font-bold text-blue-400">
-                                                {log.adminName}
-                                            </td>
-                                            <td className="p-4 text-white">
-                                                <span className="bg-slate-700 px-2 py-1 rounded text-xs">{log.action}</span>
-                                            </td>
-                                            <td className="p-4 text-slate-300">
-                                                {log.targetUser ? (log.targetUser.username || log.targetUser.telegram_id || 'ID:' + log.targetUser) : 'N/A'}
-                                            </td>
-                                            <td className="p-4 text-slate-400 text-sm">
-                                                {log.details}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {logs.length === 0 && (
-                                        <tr><td colSpan={5} className="p-8 text-center text-slate-500">No logs found</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
+                            <div className="text-slate-400 text-sm font-bold uppercase mb-2 group-hover:text-white transition-colors">Total Avatars</div>
+                            <div className="text-3xl font-bold text-white">{stats.totalAvatars}</div>
                         </div>
+
+                        <div
+                            onClick={() => {
+                                setActiveTab('USERS');
+                                setSortField('greenBalance');
+                                setSortOrder('desc');
+                                setTimeout(() => searchUsers(1), 0); // Trigger search
+                            }}
+                            className="bg-slate-800 p-6 rounded-2xl border border-slate-700 cursor-pointer hover:scale-[1.02] transition-transform group"
+                        >
+                            <div className="text-slate-400 text-sm font-bold uppercase mb-2 group-hover:text-green-400 transition-colors">Green Circulation</div>
+                            <div className="text-3xl font-bold text-green-400">${stats.totalGreen.toLocaleString()}</div>
+                        </div>
+
+                        <div
+                            onClick={() => {
+                                <div className="flex-1">
+                                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+                                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                                            <div className="text-slate-500 text-sm font-bold uppercase mb-2">Total Users</div>
+                                            <div className="text-3xl font-bold text-white">{stats.totalUsers}</div>
+                                        </div>
+                                        <div
+                                            className="bg-slate-800 p-6 rounded-2xl border border-slate-700 cursor-pointer hover:border-blue-500 transition relative group"
+                                            onClick={handleGlobalMatrix}
+                                        >
+                                            <div className="text-slate-500 text-sm font-bold uppercase mb-2 flex justify-between">
+                                                <span>Total Avatars</span>
+                                                <span className="text-xs bg-blue-900/50 text-blue-300 px-2 py-0.5 rounded">View All</span>
+                                            </div>
+                                            <div className="text-3xl font-bold text-white mb-2">{stats.totalAvatars}</div>
+                                            {stats.levels && (
+                                                <div className="flex gap-2 text-xs text-slate-400">
+                                                    {Object.entries(stats.levels).map(([lvl, count]: any) => (
+                                                        <div key={lvl} className="bg-slate-900 px-1.5 py-0.5 rounded border border-slate-700">
+                                                            L{lvl}: <span className="text-white font-bold">{count}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                            <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
+                                                <Maximize className="text-blue-400 w-4 h-4" />
+                                            </div>
+                                        </div>
+                                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                                            <div className="text-slate-500 text-sm font-bold uppercase mb-2">Total Green</div>
+                                            <div className="text-3xl font-bold text-green-400">${stats.totalGreen?.toLocaleString()}</div>
+                                        </div>
+                                        <div className="bg-slate-800 p-6 rounded-2xl border border-slate-700">
+                                            <div className="text-slate-500 text-sm font-bold uppercase mb-2">Total Yellow</div>
+                                            <div className="text-3xl font-bold text-yellow-400">${stats.totalYellow?.toLocaleString()}</div>
+                                        </div>
+                                    </div>
+                                    <div className="bg-slate-800 p-6 rounded-xl border border-slate-700">
+                                        <h3 className="text-slate-400 text-sm font-medium mb-4 uppercase tracking-wider">Storage Stats</h3>
+                                        <div className="text-3xl font-bold text-blue-400">{stats.storageUsed || '0 MB'}</div>
+                                        <div className="text-xs text-slate-500 mt-2">Total backups size</div>
+                                    </div>
+                                </div>
                     </div>
                 )}
 
-                {/* TABS */}
-                {activeTab === 'USERS' && (
-                    <div className="space-y-4">
-                        <div className="flex gap-2">
-                            <div className="relative flex-1">
-                                <Search className="absolute left-3 top-3 text-slate-500" size={20} />
+                    {/* Rebuild Referrals Button (in STATS tab) */}
+                    {activeTab === 'STATS' && (
+                        <div className="mt-6">
+                            <button
+                                onClick={rebuildReferrals}
+                                className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-xl font-bold transition shadow-lg"
+                            >
+                                🔄 Rebuild Referrals
+                            </button>
+                            <p className="text-xs text-slate-500 mt-2">Reconstructs referrer links from referredBy strings</p>
+                        </div>
+                    )}
+
+                    {/* LOGS TAB */}
+                    {activeTab === 'LOGS' && (
+                        <div className="space-y-4">
+                            <h2 className="text-xl font-bold text-white">Admin Logs</h2>
+                            <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
+                                        <tr>
+                                            <th className="p-4">Time</th>
+                                            <th className="p-4">Admin</th>
+                                            <th className="p-4">Action</th>
+                                            <th className="p-4">Target User</th>
+                                            <th className="p-4">Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-700">
+                                        {logs.map((log: any) => (
+                                            <tr key={log._id} className="hover:bg-slate-700/50 transition">
+                                                <td className="p-4 text-slate-400 text-sm">
+                                                    {new Date(log.createdAt).toLocaleString()}
+                                                </td>
+                                                <td className="p-4 font-bold text-blue-400">
+                                                    {log.adminName}
+                                                </td>
+                                                <td className="p-4 text-white">
+                                                    <span className="bg-slate-700 px-2 py-1 rounded text-xs">{log.action}</span>
+                                                </td>
+                                                <td className="p-4 text-slate-300">
+                                                    {log.targetUser ? (log.targetUser.username || log.targetUser.telegram_id || 'ID:' + log.targetUser) : 'N/A'}
+                                                </td>
+                                                <td className="p-4 text-slate-400 text-sm">
+                                                    {log.details}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {logs.length === 0 && (
+                                            <tr><td colSpan={5} className="p-8 text-center text-slate-500">No logs found</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* TABS */}
+                    {activeTab === 'USERS' && (
+                        <div className="space-y-4">
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-3 top-3 text-slate-500" size={20} />
+                                    <input
+                                        className="w-full bg-slate-950 text-white pl-10 p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                                        placeholder="Search by username or Telegram ID..."
+                                        value={userQuery}
+                                        onChange={(e) => setUserQuery(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && searchUsers(1)}
+                                    />
+                                </div>
+                                <button onClick={() => searchUsers(1)} className="bg-blue-600 hover:bg-blue-500 text-white px-6 rounded-xl font-bold transition">
+                                    Search
+                                </button>
+                            </div>
+
+                            <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
+                                        <tr>
+                                            <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('createdAt')}>User {renderSortArrow('createdAt')}</th>
+                                            <th className="p-4 text-left">Referrer</th>
+                                            <th className="p-4 text-left cursor-pointer hover:text-green-400" onClick={() => handleSort('greenBalance')}>Green Bal {renderSortArrow('greenBalance')}</th>
+                                            <th className="p-4 text-left cursor-pointer hover:text-yellow-400" onClick={() => handleSort('yellowBalance')}>Yellow Bal {renderSortArrow('yellowBalance')}</th>
+                                            <th className="p-4 text-left cursor-pointer hover:text-red-400" onClick={() => handleSort('balanceRed')}>Red Bal {renderSortArrow('balanceRed')}</th>
+                                            <th className="p-4 text-left cursor-pointer hover:text-purple-400" onClick={() => handleSort('rating')}>Rating {renderSortArrow('rating')}</th>
+                                            <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('gamesPlayed')}>Games {renderSortArrow('gamesPlayed')}</th>
+                                            <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('referralsCount')}>Invited {renderSortArrow('referralsCount')}</th>
+                                            <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('avatarsCount')}>Avatars {renderSortArrow('avatarsCount')}</th>
+                                            <th className="p-4 text-left">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-700">
+                                        {users.map(u => (
+                                            <tr key={u._id} className="hover:bg-slate-700/50 transition">
+                                                <td className="p-4 font-bold text-white">
+                                                    {u.username ? (
+                                                        <a
+                                                            href={`https://t.me/${u.username}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-white hover:text-blue-400 hover:underline"
+                                                        >
+                                                            {u.username}
+                                                        </a>
+                                                    ) : 'No Name'}
+                                                    <div className="text-xs text-slate-500 font-mono">{u.telegram_id}</div>
+                                                </td>
+                                                <td className="p-4 text-slate-300">
+                                                    {u.referrer ? (
+                                                        <a
+                                                            href={`https://t.me/${u.referrer.username}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="hover:text-blue-400 hover:underline"
+                                                        >
+                                                            {u.referrer.username || u.referrer.telegram_id || u.referrer}
+                                                        </a>
+                                                    ) : (u.referredBy || '-')}
+                                                </td>
+                                                <td className="p-4 text-green-400 font-bold">${u.greenBalance}</td>
+                                                <td className="p-4 text-yellow-400 font-bold">${u.yellowBalance}</td>
+                                                <td className="p-4 text-red-400 font-bold">${u.balanceRed || 0}</td>
+                                                <td className="p-4 text-purple-400 font-bold">{u.rating || 0}</td>
+                                                <td className="p-4 text-slate-300">{u.gamesPlayed || 0}</td>
+                                                <td className="p-4 text-slate-300">{u.referralsCount || 0}</td>
+                                                <td className="p-4">
+                                                    {u.avatarCounts && u.avatarCounts.total > 0 ? (
+                                                        <div className="flex gap-1 text-xs">
+                                                            {u.avatarCounts.basic > 0 && <span className="bg-green-900/30 border border-green-500/30 px-2 py-1 rounded text-green-400">{u.avatarCounts.basic}</span>}
+                                                            {u.avatarCounts.advanced > 0 && <span className="bg-blue-900/30 border border-blue-500/30 px-2 py-1 rounded text-blue-400">{u.avatarCounts.advanced}</span>}
+                                                            {u.avatarCounts.premium > 0 && <span className="bg-yellow-900/30 border border-yellow-500/30 px-2 py-1 rounded text-yellow-400">{u.avatarCounts.premium}</span>}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-slate-600">-</span>
+                                                    )}
+                                                </td>
+                                                <td className="p-4 flex gap-2 flex-wrap max-w-[200px]">
+                                                    <button
+                                                        onClick={() => handleViewHistory(u)}
+                                                        className="bg-purple-600 hover:bg-purple-500 text-white px-2 py-1 rounded text-xs transition flex-1 border border-purple-500/30"
+                                                    >
+                                                        History
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setSelectedUser(u)}
+                                                        className="bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded text-xs transition flex-1"
+                                                    >
+                                                        Balance
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setEditReferrerUser(u)}
+                                                        className="bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded text-xs transition flex-1"
+                                                    >
+                                                        Edit Ref
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setTreeUserId(u._id);
+                                                            setActiveTab('TREE');
+                                                        }}
+                                                        className="bg-purple-900/50 hover:bg-purple-800 text-purple-300 px-2 py-1 rounded text-xs transition flex-1 border border-purple-500/30"
+                                                    >
+                                                        Tree
+                                                    </button>
+                                                    <button
+                                                        onClick={() => setAddAvatarUser(u)}
+                                                        className="bg-green-900/50 hover:bg-green-800 text-green-300 px-2 py-1 rounded text-xs transition flex-1 border border-green-500/30"
+                                                    >
+                                                        +Avatar
+                                                    </button>
+
+                                                    {u.avatarCounts && u.avatarCounts.total > 0 && (
+                                                        <button
+                                                            onClick={() => handleViewMatrix(u)}
+                                                            className="bg-blue-900/50 hover:bg-blue-800 text-blue-300 px-2 py-1 rounded text-xs transition flex-1 border border-blue-500/30"
+                                                        >
+                                                            Matrix
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {users.length === 0 && (
+                                            <tr><td colSpan={10} className="p-8 text-center text-slate-500">No users found</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            {/* Pagination */}
+                            <div className="flex justify-between items-center text-slate-400 text-sm">
+                                <div>Page {page} of {totalPages}</div>
+                                <div className="flex gap-2">
+                                    <button
+                                        disabled={page <= 1}
+                                        onClick={() => searchUsers(page - 1)}
+                                        className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <ChevronLeft size={20} />
+                                    </button>
+                                    <button
+                                        disabled={page >= totalPages}
+                                        onClick={() => searchUsers(page + 1)}
+                                        className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <ChevronRight size={20} />
+                                    </button>
+                                </div>
+                            </div>
+
+                        </div>
+                    )}
+
+                    {/* ... (TREE TAB - Keep existing) ... */}
+                    {activeTab === 'TREE' && (
+                        <div className="space-y-4">
+                            <div className="flex gap-2">
                                 <input
-                                    className="w-full bg-slate-950 text-white pl-10 p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                                    placeholder="Search by username or Telegram ID..."
-                                    value={userQuery}
-                                    onChange={(e) => setUserQuery(e.target.value)}
-                                    onKeyDown={(e) => e.key === 'Enter' && searchUsers(1)}
+                                    className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
+                                    placeholder="Enter User ID for Tree View"
+                                    value={treeUserId}
+                                    onChange={(e) => setTreeUserId(e.target.value)}
                                 />
+                                <button onClick={fetchTree} className="bg-purple-600 hover:bg-purple-500 text-white px-6 rounded-xl font-bold transition">
+                                    Load
+                                </button>
                             </div>
-                            <button onClick={() => searchUsers(1)} className="bg-blue-600 hover:bg-blue-500 text-white px-6 rounded-xl font-bold transition">
-                                Search
-                            </button>
+                            {treeData && (
+                                <div className="bg-slate-800 p-8 rounded-xl border border-slate-700 overflow-auto">
+                                    <pre className="text-xs text-green-400 font-mono">
+                                        {JSON.stringify(treeData, null, 2)}
+                                    </pre>
+                                </div>
+                            )}
                         </div>
+                    )}
 
-                        <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
-                                    <tr>
-                                        <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('createdAt')}>User {renderSortArrow('createdAt')}</th>
-                                        <th className="p-4 text-left">Referrer</th>
-                                        <th className="p-4 text-left cursor-pointer hover:text-green-400" onClick={() => handleSort('greenBalance')}>Green Bal {renderSortArrow('greenBalance')}</th>
-                                        <th className="p-4 text-left cursor-pointer hover:text-yellow-400" onClick={() => handleSort('yellowBalance')}>Yellow Bal {renderSortArrow('yellowBalance')}</th>
-                                        <th className="p-4 text-left cursor-pointer hover:text-red-400" onClick={() => handleSort('balanceRed')}>Red Bal {renderSortArrow('balanceRed')}</th>
-                                        <th className="p-4 text-left cursor-pointer hover:text-purple-400" onClick={() => handleSort('rating')}>Rating {renderSortArrow('rating')}</th>
-                                        <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('gamesPlayed')}>Games {renderSortArrow('gamesPlayed')}</th>
-                                        <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('referralsCount')}>Invited {renderSortArrow('referralsCount')}</th>
-                                        <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('avatarsCount')}>Avatars {renderSortArrow('avatarsCount')}</th>
-                                        <th className="p-4 text-left">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-700">
-                                    {users.map(u => (
-                                        <tr key={u._id} className="hover:bg-slate-700/50 transition">
-                                            <td className="p-4 font-bold text-white">
-                                                {u.username ? (
-                                                    <a
-                                                        href={`https://t.me/${u.username}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-white hover:text-blue-400 hover:underline"
-                                                    >
-                                                        {u.username}
-                                                    </a>
-                                                ) : 'No Name'}
-                                                <div className="text-xs text-slate-500 font-mono">{u.telegram_id}</div>
-                                            </td>
-                                            <td className="p-4 text-slate-300">
-                                                {u.referrer ? (
-                                                    <a
-                                                        href={`https://t.me/${u.referrer.username}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="hover:text-blue-400 hover:underline"
-                                                    >
-                                                        {u.referrer.username || u.referrer.telegram_id || u.referrer}
-                                                    </a>
-                                                ) : (u.referredBy || '-')}
-                                            </td>
-                                            <td className="p-4 text-green-400 font-bold">${u.greenBalance}</td>
-                                            <td className="p-4 text-yellow-400 font-bold">${u.yellowBalance}</td>
-                                            <td className="p-4 text-red-400 font-bold">${u.balanceRed || 0}</td>
-                                            <td className="p-4 text-purple-400 font-bold">{u.rating || 0}</td>
-                                            <td className="p-4 text-slate-300">{u.gamesPlayed || 0}</td>
-                                            <td className="p-4 text-slate-300">{u.referralsCount || 0}</td>
-                                            <td className="p-4">
-                                                {u.avatarCounts && u.avatarCounts.total > 0 ? (
-                                                    <div className="flex gap-1 text-xs">
-                                                        {u.avatarCounts.basic > 0 && <span className="bg-green-900/30 border border-green-500/30 px-2 py-1 rounded text-green-400">{u.avatarCounts.basic}</span>}
-                                                        {u.avatarCounts.advanced > 0 && <span className="bg-blue-900/30 border border-blue-500/30 px-2 py-1 rounded text-blue-400">{u.avatarCounts.advanced}</span>}
-                                                        {u.avatarCounts.premium > 0 && <span className="bg-yellow-900/30 border border-yellow-500/30 px-2 py-1 rounded text-yellow-400">{u.avatarCounts.premium}</span>}
-                                                    </div>
-                                                ) : (
-                                                    <span className="text-slate-600">-</span>
-                                                )}
-                                            </td>
-                                            <td className="p-4 flex gap-2 flex-wrap max-w-[200px]">
-                                                <button
-                                                    onClick={() => handleViewHistory(u)}
-                                                    className="bg-purple-600 hover:bg-purple-500 text-white px-2 py-1 rounded text-xs transition flex-1 border border-purple-500/30"
-                                                >
-                                                    History
-                                                </button>
-                                                <button
-                                                    onClick={() => setSelectedUser(u)}
-                                                    className="bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded text-xs transition flex-1"
-                                                >
-                                                    Balance
-                                                </button>
-                                                <button
-                                                    onClick={() => setEditReferrerUser(u)}
-                                                    className="bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded text-xs transition flex-1"
-                                                >
-                                                    Edit Ref
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setTreeUserId(u._id);
-                                                        setActiveTab('TREE');
-                                                    }}
-                                                    className="bg-purple-900/50 hover:bg-purple-800 text-purple-300 px-2 py-1 rounded text-xs transition flex-1 border border-purple-500/30"
-                                                >
-                                                    Tree
-                                                </button>
-                                                <button
-                                                    onClick={() => setAddAvatarUser(u)}
-                                                    className="bg-green-900/50 hover:bg-green-800 text-green-300 px-2 py-1 rounded text-xs transition flex-1 border border-green-500/30"
-                                                >
-                                                    +Avatar
-                                                </button>
+                    {/* GAMES TAB */}
+                    {activeTab === 'GAMES' && (
+                        <div className="space-y-4">
+                            <div className="flex justify-between items-center">
+                                <h2 className="text-xl font-bold text-white">Scheduled Games</h2>
+                                <button onClick={() => fetchGames(1)} className="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg transition">
+                                    <RefreshCw size={20} />
+                                </button>
+                            </div>
 
-                                                {u.avatarCounts && u.avatarCounts.total > 0 && (
-                                                    <button
-                                                        onClick={() => handleViewMatrix(u)}
-                                                        className="bg-blue-900/50 hover:bg-blue-800 text-blue-300 px-2 py-1 rounded text-xs transition flex-1 border border-blue-500/30"
-                                                    >
-                                                        Matrix
-                                                    </button>
-                                                )}
-                                            </td>
+                            {gamesLoading && <div className="text-center text-slate-500 animate-pulse">Loading games...</div>}
+
+                            <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
+                                <table className="w-full text-left">
+                                    <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
+                                        <tr>
+                                            <th className="p-4">Time</th>
+                                            <th className="p-4">Host</th>
+                                            <th className="p-4">Status</th>
+                                            <th className="p-4">Players</th>
+                                            <th className="p-4">Price</th>
+                                            <th className="p-4">Actions</th>
                                         </tr>
-                                    ))}
-                                    {users.length === 0 && (
-                                        <tr><td colSpan={10} className="p-8 text-center text-slate-500">No users found</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
+                                    </thead>
+                                    <tbody className="divide-y divide-slate-700">
+                                        {games.map(game => (
+                                            <tr key={game._id} className="hover:bg-slate-700/50 transition">
+                                                <td className="p-4 text-white">
+                                                    <div className="font-bold">{new Date(game.startTime).toLocaleDateString()}</div>
+                                                    <div className="text-xs text-slate-400">{new Date(game.startTime).toLocaleTimeString()}</div>
+                                                </td>
+                                                <td className="p-4 text-slate-300">
+                                                    {game.hostId ? (
+                                                        <a href={`https://t.me/${game.hostId.username}`} target="_blank" className="hover:text-blue-400">
+                                                            {game.hostId.first_name} (@{game.hostId.username})
+                                                        </a>
+                                                    ) : 'Unknown'}
+                                                </td>
+                                                <td className="p-4">
+                                                    <span className={`px-2 py-1 rounded text-xs font-bold ${game.status === 'SCHEDULED' ? 'bg-green-900/30 text-green-400' :
+                                                        game.status === 'CANCELLED' ? 'bg-red-900/30 text-red-400' :
+                                                            'bg-slate-700 text-slate-400'
+                                                        }`}>
+                                                        {game.status}
+                                                    </span>
+                                                </td>
+                                                <td className="p-4 text-slate-300">
+                                                    {game.participants?.length || 0} / {game.maxPlayers}
+                                                </td>
+                                                <td className="p-4 text-yellow-400 font-bold">
+                                                    {game.price}
+                                                </td>
+                                                <td className="p-4">
+                                                    {game.status === 'SCHEDULED' && (
+                                                        <button
+                                                            onClick={() => cancelGame(game._id)}
+                                                            className="bg-red-900/50 hover:bg-red-800 text-red-300 px-3 py-1.5 rounded-lg text-xs transition border border-red-500/30 flex items-center gap-1"
+                                                        >
+                                                            <XCircle size={14} /> Cancel
+                                                        </button>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                        {games.length === 0 && !gamesLoading && (
+                                            <tr><td colSpan={6} className="p-8 text-center text-slate-500">No games found</td></tr>
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
 
-                        {/* Pagination */}
-                        <div className="flex justify-between items-center text-slate-400 text-sm">
-                            <div>Page {page} of {totalPages}</div>
-                            <div className="flex gap-2">
-                                <button
-                                    disabled={page <= 1}
-                                    onClick={() => searchUsers(page - 1)}
-                                    className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <ChevronLeft size={20} />
-                                </button>
-                                <button
-                                    disabled={page >= totalPages}
-                                    onClick={() => searchUsers(page + 1)}
-                                    className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <ChevronRight size={20} />
-                                </button>
+                            {/* Pagination */}
+                            <div className="flex justify-between items-center text-slate-400 text-sm">
+                                <div>Page {gamesPage} of {gamesTotalPages}</div>
+                                <div className="flex gap-2">
+                                    <button
+                                        disabled={gamesPage <= 1}
+                                        onClick={() => fetchGames(gamesPage - 1)}
+                                        className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <ChevronLeft size={20} />
+                                    </button>
+                                    <button
+                                        disabled={gamesPage >= gamesTotalPages}
+                                        onClick={() => fetchGames(gamesPage + 1)}
+                                        className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                                    >
+                                        <ChevronRight size={20} />
+                                    </button>
+                                </div>
                             </div>
                         </div>
-
-                    </div>
-                )}
-
-                {/* ... (TREE TAB - Keep existing) ... */}
-                {activeTab === 'TREE' && (
-                    <div className="space-y-4">
-                        <div className="flex gap-2">
-                            <input
-                                className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                                placeholder="Enter User ID for Tree View"
-                                value={treeUserId}
-                                onChange={(e) => setTreeUserId(e.target.value)}
-                            />
-                            <button onClick={fetchTree} className="bg-purple-600 hover:bg-purple-500 text-white px-6 rounded-xl font-bold transition">
-                                Load
-                            </button>
-                        </div>
-                        {treeData && (
-                            <div className="bg-slate-800 p-8 rounded-xl border border-slate-700 overflow-auto">
-                                <pre className="text-xs text-green-400 font-mono">
-                                    {JSON.stringify(treeData, null, 2)}
-                                </pre>
-                            </div>
-                        )}
-                    </div>
-                )}
-
-                {/* GAMES TAB */}
-                {activeTab === 'GAMES' && (
-                    <div className="space-y-4">
-                        <div className="flex justify-between items-center">
-                            <h2 className="text-xl font-bold text-white">Scheduled Games</h2>
-                            <button onClick={() => fetchGames(1)} className="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg transition">
-                                <RefreshCw size={20} />
-                            </button>
-                        </div>
-
-                        {gamesLoading && <div className="text-center text-slate-500 animate-pulse">Loading games...</div>}
-
-                        <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
-                            <table className="w-full text-left">
-                                <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
-                                    <tr>
-                                        <th className="p-4">Time</th>
-                                        <th className="p-4">Host</th>
-                                        <th className="p-4">Status</th>
-                                        <th className="p-4">Players</th>
-                                        <th className="p-4">Price</th>
-                                        <th className="p-4">Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody className="divide-y divide-slate-700">
-                                    {games.map(game => (
-                                        <tr key={game._id} className="hover:bg-slate-700/50 transition">
-                                            <td className="p-4 text-white">
-                                                <div className="font-bold">{new Date(game.startTime).toLocaleDateString()}</div>
-                                                <div className="text-xs text-slate-400">{new Date(game.startTime).toLocaleTimeString()}</div>
-                                            </td>
-                                            <td className="p-4 text-slate-300">
-                                                {game.hostId ? (
-                                                    <a href={`https://t.me/${game.hostId.username}`} target="_blank" className="hover:text-blue-400">
-                                                        {game.hostId.first_name} (@{game.hostId.username})
-                                                    </a>
-                                                ) : 'Unknown'}
-                                            </td>
-                                            <td className="p-4">
-                                                <span className={`px-2 py-1 rounded text-xs font-bold ${game.status === 'SCHEDULED' ? 'bg-green-900/30 text-green-400' :
-                                                    game.status === 'CANCELLED' ? 'bg-red-900/30 text-red-400' :
-                                                        'bg-slate-700 text-slate-400'
-                                                    }`}>
-                                                    {game.status}
-                                                </span>
-                                            </td>
-                                            <td className="p-4 text-slate-300">
-                                                {game.participants?.length || 0} / {game.maxPlayers}
-                                            </td>
-                                            <td className="p-4 text-yellow-400 font-bold">
-                                                {game.price}
-                                            </td>
-                                            <td className="p-4">
-                                                {game.status === 'SCHEDULED' && (
-                                                    <button
-                                                        onClick={() => cancelGame(game._id)}
-                                                        className="bg-red-900/50 hover:bg-red-800 text-red-300 px-3 py-1.5 rounded-lg text-xs transition border border-red-500/30 flex items-center gap-1"
-                                                    >
-                                                        <XCircle size={14} /> Cancel
-                                                    </button>
-                                                )}
-                                            </td>
-                                        </tr>
-                                    ))}
-                                    {games.length === 0 && !gamesLoading && (
-                                        <tr><td colSpan={6} className="p-8 text-center text-slate-500">No games found</td></tr>
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-
-                        {/* Pagination */}
-                        <div className="flex justify-between items-center text-slate-400 text-sm">
-                            <div>Page {gamesPage} of {gamesTotalPages}</div>
-                            <div className="flex gap-2">
-                                <button
-                                    disabled={gamesPage <= 1}
-                                    onClick={() => fetchGames(gamesPage - 1)}
-                                    className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <ChevronLeft size={20} />
-                                </button>
-                                <button
-                                    disabled={gamesPage >= gamesTotalPages}
-                                    onClick={() => fetchGames(gamesPage + 1)}
-                                    className="p-2 bg-slate-800 rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                                >
-                                    <ChevronRight size={20} />
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                    )}
 
 
-            </div>
+                </div>
 
             {/* HISTORY MODAL */}
             {
@@ -1095,9 +1167,9 @@ export default function AdminPage() {
                                                                 </td>
                                                                 <td className="p-3">
                                                                     <span className={`px-2 py-1 rounded text-xs font-bold ${tx.type.includes('BONUS') ?
-                                                                            (tx.currency === 'YELLOW' || tx.description?.toLowerCase().includes('yellow') ? 'bg-yellow-900/30 text-yellow-400' : 'bg-green-900/30 text-green-400') :
-                                                                            tx.type === 'WITHDRAWAL' ? 'bg-red-900/30 text-red-400' :
-                                                                                'bg-slate-800 text-slate-300'
+                                                                        (tx.currency === 'YELLOW' || tx.description?.toLowerCase().includes('yellow') ? 'bg-yellow-900/30 text-yellow-400' : 'bg-green-900/30 text-green-400') :
+                                                                        tx.type === 'WITHDRAWAL' ? 'bg-red-900/30 text-red-400' :
+                                                                            'bg-slate-800 text-slate-300'
                                                                         }`}>
                                                                         {tx.type}
                                                                     </span>
@@ -1435,5 +1507,5 @@ export default function AdminPage() {
             }
 
         </div >
-    );
+        );
 }

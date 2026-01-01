@@ -321,9 +321,27 @@ export class AdminController {
                 }
             ]);
 
+            // Avatar Breakdown
+            const avatarStats = await Avatar.aggregate([
+                {
+                    $group: {
+                        _id: "$level",
+                        count: { $sum: 1 }
+                    }
+                },
+                { $sort: { _id: 1 } }
+            ]);
+
+            // Transform into object { "0": 30, "1": 5 }
+            const levels: any = {};
+            avatarStats.forEach(s => {
+                levels[s._id] = s.count;
+            });
+
             res.json({
                 totalUsers,
                 totalAvatars,
+                levels, // Breakdown by level
                 totalGreen: balanceStats[0]?.totalGreen || 0,
                 totalYellow: balanceStats[0]?.totalYellow || 0,
                 debug: {
@@ -702,4 +720,17 @@ export class AdminController {
         }
     }
 
+    // Get Root Avatar specific (Oldest)
+    static async getRootAvatar(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const rootAvatar = await Avatar.findOne({ isActive: true }).sort({ createdAt: 1 }).populate('owner');
+            if (rootAvatar) {
+                res.json({ success: true, avatar: rootAvatar });
+            } else {
+                res.status(404).json({ error: 'No avatars found' });
+            }
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
 }
