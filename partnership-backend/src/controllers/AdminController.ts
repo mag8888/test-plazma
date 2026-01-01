@@ -726,14 +726,13 @@ export class AdminController {
             await AdminLog.create({
                 adminName,
                 action: AdminActionType.BALANCE_CHANGE, // Reusing existing type
-                details: `Recalculated avatars. Total: ${avatars.length}, Activated: ${activated}, Updated: ${updated}, Errors: ${errors.length}`
+                details: `Recalculated (Replay) avatars. Total: ${avatars.length}, Processed: ${processed}, Errors: ${errors.length}`
             });
 
             res.json({
                 success: true,
                 total: avatars.length,
-                activated,
-                updated,
+                processed,
                 errors: errors.length > 0 ? errors : undefined
             });
 
