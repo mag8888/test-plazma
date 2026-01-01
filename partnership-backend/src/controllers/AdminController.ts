@@ -657,30 +657,70 @@ export class AdminController {
             // Import Services
             const { MatrixService } = require('../services/MatrixService');
 
-            // Get all active avatars
-            // Sort by level ascending? Not strictly necessary but maybe logical.
-            const avatars = await Avatar.find({ isActive: true }).sort({ level: 1 });
+            console.log(`[Admin] Starting FULL MATRIX RECALCULATION (Replay Mode)...`);
 
-            let activated = 0;
-            let updated = 0;
+            // 1. Fetch ALL Avatars (Active & Inactive - we might want to fix everything, or just active)
+            // User implies "distribution according to purchases", usually usually means all valid purchases.
+            // We'll stick to 'isActive: true' to avoid resurrecting deleted/banned ones.
+            const avatars = await Avatar.find({ isActive: true }).sort({ createdAt: 1 }).populate('owner');
+
+            console.log(`[Admin] Resetting ${avatars.length} avatars...`);
+
+            // 2. RESET STATE (Structure & Balance)
+            // We leave 'owner', 'type', 'cost', 'createdAt' intact.
+            // We wipe 'parent', 'partners', 'level', 'yellowBalance', 'isClosed'.
+            await Avatar.updateMany(
+                { isActive: true },
+                {
+                    $set: {
+                        parent: null,
+                        partners: [],
+                        level: 0,
+                        yellowBalance: 0,
+                        isClosed: false,
+                        lastLevelUpAt: null
+                    }
+                }
+            );
+
+            let processed = 0;
             const errors = [];
 
-            console.log(`[Admin] Starting recalculation for ${avatars.length} avatars...`);
-
+            // 3. REPLAY HISTORY
             for (const avatar of avatars) {
                 try {
-                    // Trigger Level Check
-                    // This will handle 1/3-2/3 splits if eligible
-                    await MatrixService.checkLevelProgression(avatar);
+                    // Reload fresh state (it was reset)
+                    const freshAvatar = await Avatar.findById(avatar._id);
+                    if (!freshAvatar) continue;
 
-                    // We don't easily know if it updated inside the service without return value,
-                    // but we can assume success if no error.
-                    updated++;
+                    // Get Referrer ID from populated owner or fetch user
+                    const owner = avatar.owner as any; // Type assertion
+                    const referrerId = owner.referrer;
+
+                    // A. PLACE AVATAR (New Logic: Hungry Global)
+                    const { parent } = await MatrixService.placeAvatar(freshAvatar, referrerId);
+
+                    // B. SIMULATE MATRIX VALUE FLOW (50% Cost)
+                    if (parent) {
+                        const matrixValue = (freshAvatar.cost || 0) / 2;
+
+                        // Add to Parent Yellow Balance
+                        parent.yellowBalance = (parent.yellowBalance || 0) + matrixValue;
+                        await parent.save();
+
+                        // C. TRIGGER LEVEL PROGRESSION
+                        // This will recursively level up the parent chain
+                        await MatrixService.checkLevelProgression(parent);
+                    }
+
+                    processed++;
                 } catch (err: any) {
-                    console.error(`Recalc Error Avatar ${avatar._id}:`, err);
+                    console.error(`Replay Error Avatar ${avatar._id}:`, err);
                     errors.push(`Avatar ${avatar._id}: ${err.message}`);
                 }
             }
+
+            console.log(`[Admin] Replay Complete. Processed: ${processed}`);
 
             // Log Admin Action
             await AdminLog.create({
