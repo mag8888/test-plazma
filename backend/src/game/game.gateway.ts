@@ -140,7 +140,8 @@ export class GameGateway {
                         timer,
                         password,
                         data.token,
-                        data.dream
+                        data.dream,
+                        data.isTraining
                     );
                     socket.join(room.id);
                     if (userId) socket.join(userId);
