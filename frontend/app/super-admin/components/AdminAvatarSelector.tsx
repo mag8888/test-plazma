@@ -97,7 +97,7 @@ export default function AdminAvatarSelector({ userId, username, onSelect, onClos
                                 </div>
 
                                 {/* Iterating Levels within Type */}
-                                {Object.entries(levels).map(([levelStr, list]) => {
+                                {Object.entries(levels as Record<string, any[]>).map(([levelStr, list]) => {
                                     const level = Number(levelStr);
                                     const groupKey = `${type}-${level}`;
                                     const isExpanded = expandedGroups.has(groupKey);
