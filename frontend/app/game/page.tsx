@@ -460,14 +460,6 @@ function GameContent() {
                                 <div className={`mb-8 p-4 rounded-3xl transition-all duration-500 ${token ? 'bg-purple-500/10 border border-purple-500/30 shadow-[0_0_30px_rgba(168,85,247,0.15)] animate-pulse-slow' : ''}`}>
                                     <label className={`text-xs uppercase font-bold mb-2 block tracking-wider transition-colors ${token ? 'text-purple-400' : 'text-slate-500'}`}>
                                         Ваша Мечта
-                                        {effectiveIsTraining && !isReady && (
-                                            <div className="absolute top-[-80px] right-0 z-[60]">
-                                                <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold px-4 py-3 rounded-xl animate-bounce shadow-lg shadow-emerald-900/40 relative max-w-[250px] text-center border border-emerald-400/50">
-                                                    ✨ <span className="text-yellow-300">Выбор мечты очень важен!</span> Правильно выбранная мечта помогает выигрывать в игре и в жизни!
-                                                    <div className="absolute bottom-[-6px] right-4 border-l-8 border-r-8 border-t-8 border-l-transparent border-r-transparent border-t-teal-600"></div>
-                                                </div>
-                                            </div>
-                                        )}
                                     </label>
                                     <div className="relative">
                                         <select
@@ -487,6 +479,14 @@ function GameContent() {
                                             ))}
                                         </select>
                                         <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
+                                        {effectiveIsTraining && !isReady && (
+                                            <div className="absolute top-full mt-4 right-0 z-[60]">
+                                                <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold px-4 py-3 rounded-xl animate-bounce shadow-lg shadow-emerald-900/40 relative max-w-[250px] text-center border border-emerald-400/50">
+                                                    ✨ <span className="text-yellow-300">Выбор мечты очень важен!</span> Правильно выбранная мечта помогает выигрывать в игре и в жизни!
+                                                    <div className="absolute top-[-6px] right-4 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-teal-600 border-t-0"></div>
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
