@@ -368,8 +368,8 @@ function GameContent() {
                                     <div key={`empty-${i}`} className="p-4 rounded-2xl border border-white/5 border-dashed bg-transparent flex items-center justify-center text-slate-600 text-sm italic relative group/empty">
                                         {isHost ? (
                                             <div className="flex flex-col items-center gap-2">
-                                                <span className="group-hover/empty:hidden">Ожидание игрока...</span>
-                                                <div className="hidden group-hover/empty:flex gap-2">
+                                                <span className={`${room.isTraining ? 'hidden' : 'group-hover/empty:hidden'}`}>Ожидание игрока...</span>
+                                                <div className={`${room.isTraining ? 'flex' : 'hidden group-hover/empty:flex'} gap-2`}>
                                                     <button
                                                         onClick={() => handleAddBot('easy')}
                                                         className="px-3 py-1 bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white rounded text-xs font-bold transition-colors"
@@ -378,7 +378,7 @@ function GameContent() {
                                                     </button>
                                                     {room.isTraining && room.players.length === 1 && (
                                                         <div className="absolute top-12 left-0 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg animate-bounce shadow-lg z-50 whitespace-nowrap pointer-events-none">
-                                                            3. Добавьте бота 👆
+                                                            Для старта нужен 2-й игрок! Добавьте бота 👆
                                                             <div className="absolute top-[-4px] left-4 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-emerald-500"></div>
                                                         </div>
                                                     )}
@@ -389,7 +389,7 @@ function GameContent() {
                                                         + Hard Bot
                                                     </button>
                                                 </div>
-                                                <span className="text-[10px] text-slate-700 font-mono mt-1 group-hover/empty:hidden">+ Добавить бота</span>
+                                                <span className={`text-[10px] text-slate-700 font-mono mt-1 ${room.isTraining ? 'hidden' : 'group-hover/empty:hidden'}`}>+ Добавить бота</span>
                                             </div>
                                         ) : (
                                             "Ожидание игрока..."
@@ -403,9 +403,11 @@ function GameContent() {
                             <button
                                 onClick={startGame}
                                 disabled={room.players.length < 2 || !room.players.every(p => p.isReady)}
-                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 py-6 rounded-3xl font-black text-xl shadow-[0_0_40px_rgba(79,70,229,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:shadow-none border border-white/10 relative overflow-hidden group"
+                                className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 py-6 rounded-3xl font-black text-xl shadow-[0_0_40px_rgba(79,70,229,0.3)] transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:shadow-none border border-white/10 relative group"
                             >
-                                <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500 blur-md"></div>
+                                <div className="absolute inset-0 overflow-hidden rounded-3xl pointer-events-none">
+                                    <div className="absolute inset-0 bg-white/20 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-500 blur-md"></div>
+                                </div>
                                 <span className="relative flex items-center justify-center gap-3">
                                     🚀 ЗАПУСТИТЬ ИГРУ
                                     {effectiveIsTraining && room.players.length >= 2 && (
