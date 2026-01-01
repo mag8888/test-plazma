@@ -148,8 +148,10 @@ app.get('/admin', (req, res) => {
     if (fs.existsSync(adminFile)) res.sendFile(adminFile);
     else res.sendFile(indexFile);
 });
+import { DepositController } from './deposit/deposit.controller';
 
 app.use('/api/auth', AuthController);
+app.post('/api/deposit/request', DepositController.requestDeposit as any);
 
 // Card Management API (Admin Only)
 import cardRoutes from './game/card.routes';

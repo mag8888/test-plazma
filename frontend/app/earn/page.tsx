@@ -1,5 +1,5 @@
 'use client';
-
+import { useRouter } from 'next/navigation';
 import { useTelegram } from '../../components/TelegramProvider';
 import { Copy, Gift, TrendingUp, Users, Wallet, Check, X } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -11,6 +11,7 @@ import { AvatarPurchase } from './AvatarPurchase';
 import { RedBalanceModal } from './RedBalanceModal';
 
 export default function EarnPage() {
+    const router = useRouter();
     const { webApp, user } = useTelegram();
     const [isLoading, setIsLoading] = useState(false);
     const [partnershipUser, setPartnershipUser] = useState<any>(null);
@@ -214,7 +215,7 @@ export default function EarnPage() {
     };
 
     const handleSupportTopUp = () => {
-        window.open('https://t.me/Aurelia_8888?text=хочу пополнить счет Moneo', '_blank');
+        router.push('/deposit');
         setShowRefillModal(false);
     };
 

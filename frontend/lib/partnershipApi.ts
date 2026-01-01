@@ -133,5 +133,24 @@ export const partnershipApi = {
             console.error("Get Legacy Balance Error", e);
             return { legacyBalance: 0 };
         }
+    },
+
+    async requestDeposit(userId: string, amount: number, proofBase64: string) {
+        const BACKEND_URL = getBackendUrl();
+        try {
+            const res = await fetch(`${BACKEND_URL}/api/deposit/request`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId, amount, proofBase64 })
+            });
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(text);
+            }
+            return res.json();
+        } catch (e: any) {
+            console.error("Deposit Request Error", e);
+            throw e;
+        }
     }
 };

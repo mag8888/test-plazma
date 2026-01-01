@@ -15,6 +15,13 @@ type BroadcastState = {
     category?: 'all' | 'avatars' | 'balance' | 'custom';
     selectedUsers?: string[]; // User IDs for custom selection
 };
+
+// Deposit State
+type DepositState = {
+    state: 'WAITING_AMOUNT' | 'WAITING_SCREENSHOT';
+    amount?: number;
+    currency?: string;
+};
 import dotenv from 'dotenv';
 import { CloudinaryService } from '../services/cloudinary.service';
 
@@ -33,6 +40,7 @@ export class BotService {
     broadcastStates: Map<number, BroadcastState> = new Map();
     participantStates: Map<number, { state: 'WAITING_POST_LINK', gameId: string }> = new Map();
     photoUploadStates: Map<number, { state: 'WAITING_PHOTO' }> = new Map();
+    depositStates: Map<number, DepositState> = new Map();
     cloudinaryService: CloudinaryService;
 
     constructor() {
@@ -1157,11 +1165,22 @@ export class BotService {
                 }
             }
         });
-        // Helper for Uploads
         const handleUpload = async (msg: any, type: 'image' | 'video' | 'raw' | 'auto' = 'auto') => {
             const chatId = msg.chat.id;
+            if (msg.date && (Date.now() / 1000 - msg.date) > 60) return;
 
-            // Broadcast Photo Handling (Priority 1)
+            // Check for Deposit Screenshot Upload
+            const depositState = this.depositStates.get(msg.chat.id);
+            if (depositState && depositState.state === 'WAITING_SCREENSHOT') {
+                if (msg.photo) {
+                    await this.handleDepositScreenshot(msg, depositState);
+                } else {
+                    this.bot?.sendMessage(msg.chat.id, "⚠️ Пожалуйста, загрузите скриншот оплаты (фото).");
+                }
+                return;
+            }
+
+            // Check for Admin Broadcast Photo Uploadndling (Priority 1)
             const broadcastState = this.broadcastStates.get(chatId);
             if (broadcastState && broadcastState.state === 'WAITING_PHOTO' && msg.photo) {
                 const photo = msg.photo[msg.photo.length - 1];
@@ -2371,6 +2390,192 @@ export class BotService {
         } catch (e) {
             console.error("Send broadcast error:", e);
             this.bot?.sendMessage(chatId, "❌ Ошибка при отправке рассылки.");
+        }
+    }
+
+
+    // --- Deposit System ---
+
+    async handleDeposit(chatId: number) {
+        if (!this.bot) return;
+        this.depositStates.set(chatId, { state: 'WAITING_AMOUNT' });
+
+        await this.bot.sendMessage(chatId, '💰 <b>Пополнение баланса (Green)</b>\n\nВыберите сумму пополнения:', {
+            parse_mode: 'HTML',
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '20 $', callback_data: 'deposit_amount_20' }, { text: '100 $', callback_data: 'deposit_amount_100' }],
+                    [{ text: '1000 $', callback_data: 'deposit_amount_1000' }, { text: '1120 $', callback_data: 'deposit_amount_1120' }],
+                    [{ text: '❌ Отмена', callback_data: 'cancel_action' }]
+                ]
+            }
+        });
+    }
+
+    async handleDepositAmount(chatId: number, amount: number) {
+        if (!this.bot) return;
+
+        const state = this.depositStates.get(chatId);
+        if (!state) return;
+
+        state.amount = amount;
+        state.state = 'WAITING_SCREENSHOT';
+        this.depositStates.set(chatId, state);
+
+        const requisites =
+            `💳 <b>Реквизиты для оплаты ${amount}$</b>\n\n` +
+            `🔹 <b>Сбербанк</b>\n` +
+            `<code>+79164632850</code>\n\n` +
+            `🔹 <b>USDT (BEP-20)</b>\n` +
+            `<code>0xb15e97ad107d57f5ca5405556877395848cf745d</code>\n\n` +
+            `🔹 <b>USDT (TRC-20)</b>\n` +
+            `<code>TG8Ltochc5rYz54M5SeRPbMq7Xj9ovz7j9</code>\n\n` +
+            `⚠️ После оплаты, пожалуйста, <b>пришлите скриншот (фото)</b> в этот чат для подтверждения.`;
+
+        await this.bot.sendMessage(chatId, requisites, {
+            parse_mode: 'HTML',
+            reply_markup: {
+                inline_keyboard: [[{ text: '⬅️ Назад', callback_data: 'deposit_back' }]]
+            }
+        });
+    }
+
+    async handleDepositScreenshot(msg: any, state: DepositState) {
+        if (!this.bot || !state.amount) return;
+        const chatId = msg.chat.id;
+
+        try {
+            await this.bot.sendMessage(chatId, '⏳ Загрузка и проверка скриншота...');
+
+            // Upload to Cloudinary
+            const photo = msg.photo[msg.photo.length - 1];
+            const fileUrl = await this.bot.getFileLink(photo.file_id);
+            const uploadRes = await this.cloudinaryService.uploadImage(fileUrl, 'details/deposits');
+
+            // Create Deposit Request in DB
+            const { UserModel } = await import('../models/user.model');
+            const { DepositRequestModel } = await import('../models/deposit-request.model');
+
+            const user = await UserModel.findOne({ telegram_id: chatId });
+            if (!user) {
+                await this.bot.sendMessage(chatId, '❌ Ошибка: Пользователь не найден.');
+                return;
+            }
+
+            const request = await DepositRequestModel.create({
+                user: user._id,
+                amount: state.amount,
+                currency: 'USD',
+                proofUrl: uploadRes,
+                status: 'PENDING'
+            });
+
+            // Notify User
+            await this.bot.sendMessage(chatId, '✅ <b>Заявка принята!</b>\n\nОжидайте подтверждения админом. Баланс будет пополнен автоматически.', { parse_mode: 'HTML' });
+
+            // Clear State
+            this.depositStates.delete(chatId);
+
+            // Notify Admin
+            const adminMsg =
+                `💰 <b>Заявка на пополнение</b>\n` +
+                `👤 Пользователь: @${user.username} (ID: ${user.telegram_id})\n` +
+                `💵 Сумма: <b>$${state.amount}</b>\n` +
+                `📅 Дата: ${new Date().toLocaleString()}\n` +
+                `📄 ID заявки: ${request._id}`;
+
+            const adminIdsStr = process.env.ADMIN_IDS || process.env.ADMIN_ID || '';
+            const adminIds = adminIdsStr.split(',').map(id => id.trim()).filter(id => id);
+
+            for (const adminId of adminIds) {
+                await this.bot.sendPhoto(adminId, photo.file_id, {
+                    caption: adminMsg,
+                    parse_mode: 'HTML',
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '✅ Подтвердить', callback_data: `approve_deposit_${request._id}` }],
+                            [{ text: '❌ Отклонить', callback_data: `reject_deposit_${request._id}` }],
+                            [{ text: '✏️ Изменить сумму (WIP)', callback_data: `edit_deposit_${request._id}` }]
+                        ]
+                    }
+                });
+            }
+
+        } catch (e) {
+            console.error('Deposit Error:', e);
+            await this.bot.sendMessage(chatId, '❌ Произошла ошибка при обработке. Попробуйте позже.');
+        }
+    }
+
+    async handleAdminDepositAction(adminChatId: number, query: any, action: 'APPROVE' | 'REJECT') {
+        if (!this.bot) return;
+        const requestId = query.data.split('_')[2];
+
+        try {
+            const { DepositRequestModel } = await import('../models/deposit-request.model');
+            const { UserModel } = await import('../models/user.model');
+
+            const request = await DepositRequestModel.findById(requestId).populate('user');
+            if (!request) {
+                await this.bot.answerCallbackQuery(query.id, { text: '❌ Заявка не найдена', show_alert: true });
+                return;
+            }
+
+            if (request.status !== 'PENDING') {
+                await this.bot.answerCallbackQuery(query.id, { text: '⚠️ Заявка уже обработана', show_alert: true });
+                return;
+            }
+
+            if (action === 'APPROVE') {
+                request.status = 'APPROVED';
+
+                // Credit Balance
+                const user = await UserModel.findById(request.user._id);
+                if (user) {
+                    user.greenBalance = (user.greenBalance || 0) + request.amount;
+                    await user.save();
+
+                    // Note: Transaction logging might need explicit model import if not available globally
+                    // Assuming basic update strictly for now.
+
+                    if (user.telegram_id) {
+                        await this.bot.sendMessage(user.telegram_id, `✅ <b>Ваш депозит подтвержден!</b>\n\nВаш Green баланс пополнен на $${request.amount}.`, { parse_mode: 'HTML' });
+                    }
+                }
+
+                await this.bot.editMessageCaption('✅ <b>ОДОБРЕНО</b>\n' + query.message.caption, {
+                    chat_id: adminChatId,
+                    message_id: query.message.message_id,
+                    parse_mode: 'HTML'
+                });
+
+            } else {
+                request.status = 'REJECTED';
+
+                if (request.user && request.user.telegram_id) { // Assuming populated
+                    // Need to re-fetch if user is just ObjectId? populate worked?
+                    // populate('user') returns usage object.
+                    // TS might complain about type.
+                    // But at runtime user is object.
+                    const u: any = request.user;
+                    if (u.telegram_id) {
+                        await this.bot.sendMessage(u.telegram_id, `❌ <b>Ваш депозит отклонен.</b>\n\nСвяжитесь с админом для уточнения.`, { parse_mode: 'HTML' });
+                    }
+                }
+
+                await this.bot.editMessageCaption('❌ <b>ОТКЛОНЕНО</b>\n' + query.message.caption, {
+                    chat_id: adminChatId,
+                    message_id: query.message.message_id,
+                    parse_mode: 'HTML'
+                });
+            }
+
+            await request.save();
+            await this.bot.answerCallbackQuery(query.id, { text: 'Выполнено' });
+
+        } catch (e) {
+            console.error('Admin Action Error:', e);
+            await this.bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки', show_alert: true });
         }
     }
 }

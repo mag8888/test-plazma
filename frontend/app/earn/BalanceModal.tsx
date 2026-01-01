@@ -116,13 +116,13 @@ export function BalanceModal({ isOpen, onClose, balance, tariff, onTopUp }: Bala
                         <div className="space-y-4 animate-in slide-in-from-right-4 duration-300">
                             <div className="bg-green-900/10 border border-green-500/20 p-4 rounded-xl text-center">
                                 <p className="text-green-200 text-sm mb-3">
-                                    Пополните баланс через администратора для покупки аватаров и участия в программе.
+                                    Пополните баланс криптовалютой или переводом через банк.
                                 </p>
                                 <button
                                     onClick={onTopUp}
                                     className="w-full bg-green-600 hover:bg-green-500 text-white font-bold py-3 rounded-xl shadow-lg shadow-green-900/20 transition-all flex items-center justify-center gap-2"
                                 >
-                                    Написать в поддержку
+                                    Пополнить баланс
                                     <ArrowUpRight size={16} />
                                 </button>
                             </div>
