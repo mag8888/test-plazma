@@ -329,17 +329,40 @@ function LobbyContent() {
                         </h1>
                         <button
                             onClick={() => setIsCreating(!isCreating)}
-                            className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/30 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center gap-2 relative"
+                            className={`bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/30 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center gap-2 relative ${isTutorial && !isCreating ? 'z-50 ring-4 ring-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.6)] animate-pulse' : ''}`}
                         >
-                            {isTutorial && !isCreating && (
-                                <div className="absolute -top-12 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg z-50 whitespace-nowrap">
-                                    1. Создайте комнату 👇
-                                    <div className="absolute bottom-[-6px] right-6 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500"></div>
-                                </div>
-                            )}
                             <span>+</span> Создать комнату
                         </button>
                     </div>
+
+                    {/* TUTORIAL OVERLAY */}
+                    {isTutorial && !isCreating && (
+                        <div className="fixed inset-0 bg-black/80 z-40 flex items-center justify-center backdrop-blur-sm">
+                            <div className="text-center relative">
+                                <div className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300 drop-shadow-2xl animate-bounce mb-8">
+                                    1. Создайте комнату
+                                </div>
+                                <div className="absolute -top-20 right-[-100px] md:right-[-200px] text-emerald-400 animate-pulse hidden md:block">
+                                    <svg width="150" height="150" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" className="transform rotate-12">
+                                        <path d="M10 80 Q 50 10 90 10" markerEnd="url(#arrowhead)" />
+                                    </svg>
+                                </div>
+                                {/* Mobile Arrow */}
+                                <div className="absolute -top-32 right-0 text-emerald-400 animate-pulse md:hidden">
+                                    <svg width="80" height="150" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="4">
+                                        <path d="M50 100 L 50 10" markerEnd="url(#arrowhead)" />
+                                    </svg>
+                                </div>
+                                <svg className="hidden">
+                                    <defs>
+                                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                            <polygon points="0 0, 10 3.5, 0 7" fill="currentColor" />
+                                        </marker>
+                                    </defs>
+                                </svg>
+                            </div>
+                        </div>
+                    )}
 
                     {/* ACTIVE GAMES */}
                     {myRooms.length > 0 && (
@@ -415,9 +438,9 @@ function LobbyContent() {
                                         className="w-full bg-slate-900 border border-slate-700 focus:border-blue-500 rounded-xl px-5 py-4 text-white placeholder:text-slate-600 outline-none transition-all font-bold"
                                     />
                                     {isTutorial && !newRoomName && (
-                                        <div className="absolute top-[-40px] right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg z-50 whitespace-nowrap">
+                                        <div className="absolute top-[-45px] left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg z-50 whitespace-nowrap">
                                             1. Введите название 👇
-                                            <div className="absolute bottom-[-6px] right-4 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500"></div>
+                                            <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500"></div>
                                         </div>
                                     )}
                                 </div>
