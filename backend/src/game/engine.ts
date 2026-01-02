@@ -2738,25 +2738,22 @@ export class GameEngine {
 
         if (success) {
             if (player.childrenCount < 3) {
-                player.childrenCount++;
-                const childExpense = player.childCost; // Use player's specific child cost
-                player.expenses += childExpense;
-                player.cashflow = player.income - player.expenses;
+                // DISABLED for V1: No financial impact
+                // player.childrenCount++;
+                // const childExpense = player.childCost; 
+                // player.expenses += childExpense;
+                // player.cashflow = player.income - player.expenses;
 
-                // No cash gift from bank by default? Original code gave $5000.
-                // Keeping $5000 gift if it was there? Original had it.
-                // User didn't ask to remove it.
-                // "New expenses and joy".
-                // I'll keep the logic but rely on `childCost` property properly.
+                const childExpense = 0; // Set to 0 for log/payload
 
-                this.addLog(`🎉 Поздравляем! Родился ребёнок! (Кубик: ${roll}). Расходы +$${childExpense}/мес`);
+                this.addLog(`🎉 Поздравляем! Родился ребёнок! (Кубик: ${roll}). Расходы не увеличились (Обучение).`);
                 this.state.lastEvent = {
                     type: 'BABY_BORN',
                     payload: {
                         player: player.name,
                         playerId: player.id,
                         roll,
-                        childCost: childExpense
+                        childCost: 0 // Explicitly 0
                     }
                 };
             } else {
