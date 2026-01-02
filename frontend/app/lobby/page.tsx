@@ -323,7 +323,7 @@ function LobbyContent() {
                 <div className="lg:col-span-3 space-y-8">
 
                     {/* NEW ROOM & ACTIONS */}
-                    <div className="flex justify-between items-center bg-[#1e293b]/50 p-4 rounded-2xl border border-slate-800/50 backdrop-blur-sm">
+                    <div className={`flex justify-between items-center bg-[#1e293b]/50 p-4 rounded-2xl border border-slate-800/50 backdrop-blur-sm ${isTutorial && !isCreating ? 'relative z-50' : ''}`}>
                         <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
                             <span className="text-3xl">🎲</span> Лобби
                         </h1>
