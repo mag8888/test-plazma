@@ -284,9 +284,13 @@ function GameContent() {
         }
     };
 
+    const [isAddingBot, setIsAddingBot] = useState(false);
+
     const handleAddBot = (difficulty: 'easy' | 'hard') => {
-        if (!myUserId) return;
+        if (!myUserId || isAddingBot) return;
+        setIsAddingBot(true);
         socket.emit('add_bot', { roomId, difficulty, userId: myUserId }, (res: any) => {
+            setIsAddingBot(false);
             if (!res.success) {
                 alert("Ошибка при добавлении бота: " + res.error);
             }
@@ -401,7 +405,8 @@ function GameContent() {
                                                 <div className={`${effectiveIsTraining ? 'flex' : 'hidden group-hover/empty:flex'} gap-2`}>
                                                     <button
                                                         onClick={() => handleAddBot('easy')}
-                                                        className="px-3 py-1 bg-green-500/20 text-green-400 hover:bg-green-500 hover:text-white rounded text-xs font-bold transition-colors"
+                                                        disabled={isAddingBot}
+                                                        className={`px-3 py-1 bg-green-500/20 text-green-400 rounded text-xs font-bold transition-colors ${isAddingBot ? 'opacity-50 cursor-not-allowed' : 'hover:bg-green-500 hover:text-white'}`}
                                                     >
                                                         + Easy Bot
                                                     </button>
@@ -414,7 +419,8 @@ function GameContent() {
                                                     )}
                                                     <button
                                                         onClick={() => handleAddBot('hard')}
-                                                        className="px-3 py-1 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white rounded text-xs font-bold transition-colors"
+                                                        disabled={isAddingBot}
+                                                        className={`px-3 py-1 bg-red-500/20 text-red-400 rounded text-xs font-bold transition-colors ${isAddingBot ? 'opacity-50 cursor-not-allowed' : 'hover:bg-red-500 hover:text-white'}`}
                                                     >
                                                         + Hard Bot
                                                     </button>
