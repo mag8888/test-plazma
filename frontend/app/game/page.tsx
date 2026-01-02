@@ -407,8 +407,8 @@ function GameContent() {
                                                     </button>
                                                     {/* Step 4: Add Bot */}
                                                     {effectiveIsTraining && isReady && room.players.length < 2 && room.players.length === 1 && (
-                                                        <div className="absolute top-12 left-0 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg animate-pulse shadow-lg z-50 whitespace-nowrap pointer-events-none">
-                                                            4. Добавьте бота! 👆
+                                                        <div className="absolute top-12 left-0 bg-emerald-500 text-white text-[10px] font-bold px-3 py-2 rounded-xl animate-pulse shadow-lg z-50 pointer-events-none max-w-[180px] text-center leading-tight">
+                                                            4. Пригласите друга или выберите бота для старта игры 👆
                                                             <div className="absolute top-[-4px] left-4 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-emerald-500"></div>
                                                         </div>
                                                     )}
