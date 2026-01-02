@@ -121,11 +121,11 @@ const AnimatedNumber = ({ value, className = '' }: { value: number, className?: 
             const diff = value - displayValue;
             const isIncrease = diff > 0;
 
-            // 1. Play Sound if Increase
-            // if (isIncrease) {
-            //     sfx.play('cash');
-            //     setIsAnimating(true);
-            // }
+            // 1. Play Sound if Increase (HANDLED GLOBALLY NOW)
+            if (isIncrease) {
+                // sfx.play('cash'); // Disabled to avoid double sound
+                setIsAnimating(true);
+            }
 
             // 2. Count Up Logic
             const steps = 20;
@@ -1529,7 +1529,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                         })}
                                         // Fix Animation Sync: Don't show card while animating move or rolling dice
                                         canShowCard={canShowCard && !isAnimating && !showDice}
-                                        previewCard={squareInfo}
+                                        previewCard={squareInfo?.card ? squareInfo : null}
                                         onDismissPreview={() => setSquareInfo(null)}
                                         isTutorial={isTutorial}
                                         tutorialStep={state.tutorialStep}
@@ -1988,6 +1988,16 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                         <VictoryModal
                             player={victoryPlayer}
                             onClose={() => setShowVictory(false)}
+                        />
+                    )}
+
+                    {/* Square Info Modal (Interactive Board Cells) */}
+                    {squareInfo && !squareInfo.card && (
+                        <SquareInfoModal
+                            square={squareInfo}
+                            onClose={() => setSquareInfo(null)}
+                            player={localPlayer}
+                            roomId={roomId}
                         />
                     )}
                 </div>

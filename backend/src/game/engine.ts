@@ -299,6 +299,17 @@ export class GameEngine {
         };
     }
 
+    getDeckContent(type: string) {
+        const templates = DbCardManager.getInstance().getTemplates();
+        if (type === 'SMALL') {
+            return templates.small;
+        }
+        if (type === 'BIG') {
+            return templates.big;
+        }
+        return [];
+    }
+
     // --- Helper for Consistency ---
     recalculateFinancials(player: PlayerState) {
         if (player.isFastTrack) return; // Fast Track logic is different

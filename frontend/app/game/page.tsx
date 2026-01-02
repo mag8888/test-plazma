@@ -27,14 +27,22 @@ interface Room {
     isTraining?: boolean;
 }
 
-const TutorialTip: React.FC<{ text: string, position?: string, arrow?: string }> = ({ text, position = "top-full mt-4", arrow = "top-[-6px] border-b-emerald-500 border-t-0" }) => (
+const TutorialTip: React.FC<{ text: string, position?: string, arrow?: string, colorClass?: string, arrowColorClass?: string }> = ({
+    text,
+    position = "top-full mt-4",
+    arrow = "top-[-6px] border-t-0",
+    colorClass = "bg-emerald-500 text-white",
+    arrowColorClass = "border-b-emerald-500"
+}) => (
     <div className={`absolute ${position} left-1/2 -translate-x-1/2 z-[100] w-max max-w-[200px] pointer-events-none`}>
-        <div className="bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg shadow-emerald-900/40 relative text-center">
+        <div className={`${colorClass} text-xs font-bold px-3 py-2 rounded-xl animate-pulse shadow-lg shadow-black/20 relative text-center`}>
             {text}
-            <div className={`absolute ${arrow} left-1/2 -translate-x-1/2 border-8 border-transparent`}></div>
+            <div className={`absolute ${arrow} left-1/2 -translate-x-1/2 border-8 border-transparent ${arrowColorClass}`}></div>
         </div>
     </div>
 );
+
+
 
 export default function GameRoom() {
     return (
@@ -378,7 +386,7 @@ function GameContent() {
                                                     </button>
                                                     {room.isTraining && room.players.length === 1 && (
                                                         <div className="absolute top-12 left-0 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg animate-bounce shadow-lg z-50 whitespace-nowrap pointer-events-none">
-                                                            Для старта нужен 2-й игрок! Добавьте бота 👆
+                                                            Для запуска игры нужен соперник. Добавьте бота! 👆
                                                             <div className="absolute top-[-4px] left-4 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-emerald-500"></div>
                                                         </div>
                                                     )}
@@ -482,21 +490,30 @@ function GameContent() {
                                         </select>
                                         <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
                                         {effectiveIsTraining && !isReady && (
-                                            <div className="absolute top-full mt-4 right-0 z-[60]">
-                                                <div className="bg-gradient-to-r from-emerald-500 to-teal-600 text-white text-xs font-bold px-4 py-3 rounded-xl animate-bounce shadow-lg shadow-emerald-900/40 relative max-w-[250px] text-center border border-emerald-400/50">
-                                                    ✨ <span className="text-yellow-300">Выбор мечты очень важен!</span> Правильно выбранная мечта помогает выигрывать в игре и в жизни!
-                                                    <div className="absolute top-[-6px] right-4 border-l-8 border-r-8 border-b-8 border-l-transparent border-r-transparent border-b-teal-600 border-t-0"></div>
-                                                </div>
-                                            </div>
+                                            <TutorialTip
+                                                text="✨ Выбор мечты очень важен! Правильно выбранная мечта помогает выигрывать в игре и в жизни!"
+                                                position="top-full mt-4"
+                                                colorClass="bg-gradient-to-r from-amber-500 to-orange-600 text-white border border-amber-400/50"
+                                                arrowColorClass="border-b-orange-600"
+                                            />
                                         )}
                                     </div>
                                 </div>
                             </div>
                             <button
                                 onClick={handleReadyClick}
-                                className={`w-full py-6 rounded-2xl font-bold text-lg transition-all transform shadow-xl border ${isReady ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20' : 'bg-gradient-to-r from-emerald-500 to-teal-500 border-transparent text-white hover:brightness-110 shadow-emerald-500/20 hover:scale-[1.01]'}`}
+                                className={`w-full py-6 rounded-2xl font-bold text-lg transition-all transform shadow-xl border relative ${isReady ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20' : 'bg-gradient-to-r from-emerald-500 to-teal-500 border-transparent text-white hover:brightness-110 shadow-emerald-500/20 hover:scale-[1.01]'}`}
                             >
                                 {isReady ? '✖ Отменить готовность' : '✨ Я Готов!'}
+                                {effectiveIsTraining && !isReady && (
+                                    <TutorialTip
+                                        text="3. Нажмите, когда выберете мечту! 👇"
+                                        position="bottom-full mb-2"
+                                        arrow="bottom-[-6px] border-t-amber-500 border-b-0"
+                                        colorClass="bg-amber-500 text-white"
+                                        arrowColorClass="border-t-amber-500"
+                                    />
+                                )}
                             </button>
                         </div>
                     </div>

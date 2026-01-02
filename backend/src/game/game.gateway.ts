@@ -2,6 +2,7 @@ import { Server, Socket } from 'socket.io';
 import { v4 as uuidv4 } from 'uuid';
 import { RoomService } from './room.service';
 import { GameEngine, FULL_BOARD } from './engine';
+import { DbCardManager } from './db.card.manager';
 import { UserModel } from '../models/user.model';
 
 export class GameGateway {
@@ -24,37 +25,28 @@ export class GameGateway {
             try {
                 if (room.gameState) {
                     const engine = new GameEngine(room.id, room.players, room.creatorId, { isTutorial: room.isTraining });
-                    // Hydrate state but FORCE UPDATE BOARD structure (to apply layout fixes to existing games)
+                    // Hydrate state but FORCE UPDATE BOARD structure
                     Object.assign(engine.state, room.gameState);
-
-                    // CRITICAL FIX: Overwrite the restored board with the new code definition
-                    // This ensures old games get the new Payday/Deal layout
+                    // CRITICAL FIX: Overwrite the restored board
                     engine.state.board = FULL_BOARD;
-
                     this.games.set(room.id, engine);
                     console.log(`Restored game ${room.id} (Turn: ${room.gameState.currentTurnTime}) | Board Updated`);
                 }
             } catch (err) {
                 console.error(`Failed to restore room ${room.id}:`, err);
-                // Continue to next room - DO NOT CRASH SERVER
             }
         }
     }
 
     private saveState(roomId: string, game: GameEngine) {
         const state = game.getState();
-        // Debug Logging for Turn Persistence
-        // console.log(`[Persist] Room ${roomId} | Turn Index: ${state.currentPlayerIndex} | Player: ${state.players[state.currentPlayerIndex]?.name}`);
         this.roomService.saveGameState(roomId, state).catch(err => console.error("Persist Error:", err));
     }
 
     public handleBabyRoll(roomId: string) {
         const game = this.games.get(roomId);
         if (!game) throw new Error("Game not found");
-
-        if (game.getState().phase !== 'BABY_ROLL') {
-            throw new Error("Not in baby roll phase");
-        }
+        if (game.getState().phase !== 'BABY_ROLL') throw new Error("Not in baby roll phase");
 
         const result: any = game.resolveBabyRoll();
         const state = game.getState();
@@ -74,10 +66,6 @@ export class GameGateway {
         const game = this.games.get(roomId);
         if (!game) throw new Error("Game not found");
 
-        // Validate fromUser is actually in the game (optional but good)
-        // const fromPlayer = game.state.players.find(p => p.userId === fromUserId);
-        // if (!fromPlayer) throw new Error("Player not found");
-
         game.transferDeal(fromUserId, targetPlayerId, cardId);
         const state = game.getState();
         this.io.to(roomId).emit('state_updated', { state });
@@ -86,14 +74,13 @@ export class GameGateway {
     }
 
     initEvents() {
-        // Game Loop for Timers (Every 1s)
+        // Game Loop for Timers
         setInterval(() => {
             this.games.forEach((game, roomId) => {
                 try {
                     const changed = game.checkTurnTimeout();
                     if (changed) {
                         this.io.to(roomId).emit('turn_ended', { state: game.getState() });
-                        // Also persist state
                         this.saveState(roomId, game);
                     }
                 } catch (err) {
@@ -111,22 +98,29 @@ export class GameGateway {
                 callback(rooms);
             });
 
+            // Get Deck Content
+            socket.on('get_deck_content', (data) => {
+                const { type } = data;
+                const templates = DbCardManager.getInstance().getTemplates();
+                let content: any[] = [];
+                if (type === 'SMALL') content = templates.small;
+                if (type === 'BIG') content = templates.big;
+                socket.emit('deck_content', content);
+            });
+
             // Get Leaderboard
             socket.on('get_leaderboard', async (callback) => {
                 try {
-                    // Fetch top 10 players by wins
                     const leaders = await UserModel.find({ wins: { $gt: 0 } })
                         .sort({ wins: -1 })
                         .limit(10)
                         .select('username firstName lastName wins photo_url');
-
                     callback({ success: true, leaders });
                 } catch (e) {
                     console.error("Leaderboard Error:", e);
                     callback({ success: false, error: "Failed to fetch leaderboard" });
                 }
             });
-
             // Create Room
             socket.on('create_room', async (data, callback) => {
                 try {
@@ -325,7 +319,7 @@ export class GameGateway {
                         game.toggleSkipTurns(userId);
                         const state = game.getState();
                         this.io.to(roomId).emit('state_updated', { state });
-                        saveState(roomId, game);
+                        this.saveState(roomId, game);
                     } catch (e: any) {
                         socket.emit('error', e.message);
                     }
