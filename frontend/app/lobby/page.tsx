@@ -308,8 +308,19 @@ function LobbyContent() {
                                             <div className={`text-sm font-bold truncate ${idx === 0 ? 'text-yellow-400' : 'text-slate-200'} group-hover:text-white transition-colors`}>
                                                 {player.username || player.firstName || 'Player'}
                                             </div>
-                                            <div className="text-[10px] text-slate-500 font-mono">
-                                                Побед: <span className="text-slate-300">{player.wins}</span>
+                                            <div className="flex items-center gap-3 text-[10px] text-slate-500 font-mono mt-0.5">
+                                                <span className="flex items-center gap-1">
+                                                    <span className="text-yellow-500">★</span>
+                                                    <span className="text-slate-300 font-bold">{Math.round(player.rating || 0)}</span>
+                                                </span>
+                                                <span className="w-px h-3 bg-slate-700"></span>
+                                                <span>
+                                                    Игр: <span className="text-slate-300">{player.gamesPlayed || 0}</span>
+                                                </span>
+                                                <span className="w-px h-3 bg-slate-700"></span>
+                                                <span>
+                                                    Побед: <span className="text-slate-300">{player.wins || 0}</span>
+                                                </span>
                                             </div>
                                         </div>
                                     </div>

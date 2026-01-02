@@ -1227,6 +1227,33 @@ app.get('/api/users/:id/stats', async (req, res) => {
     }
 });
 
+// Update User Stats (Admin)
+app.post('/api/users/:id/stats', async (req, res) => {
+    try {
+        const secret = req.headers['x-admin-secret'];
+        const validSecrets = (process.env.ADMIN_SECRET || '').split(',').map(s => s.trim());
+        if (!validSecrets.includes(secret as string)) {
+            return res.status(403).json({ error: 'Unauthorized' });
+        }
+
+        const { id } = req.params;
+        const { rating, gamesPlayed } = req.body;
+        const { UserModel } = await import('./models/user.model');
+
+        const update: any = {};
+        if (rating !== undefined) update.rating = Number(rating);
+        if (gamesPlayed !== undefined) update.gamesPlayed = Number(gamesPlayed);
+
+        const user = await UserModel.findByIdAndUpdate(id, { $set: update }, { new: true });
+        if (!user) return res.status(404).json({ error: "User not found" });
+
+        res.json({ success: true, user });
+    } catch (e) {
+        console.error("Update stats failed:", e);
+        res.status(500).json({ error: "Update failed" });
+    }
+});
+
 // Rankings API
 app.get('/api/rankings', async (req, res) => {
     try {

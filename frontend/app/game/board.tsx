@@ -82,7 +82,8 @@ import { ActiveCardZone } from './ActiveCardZone';
 import { PlayerCard } from './PlayerCard';
 import { SquareInfoModal } from './SquareInfoModal';
 import CongratulateModal from './CongratulateModal';
-
+import { WinnerModal } from './WinnerModal';
+import { TutorialOverlay } from './TutorialOverlay';
 // Helper for Cash Animation
 const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
     const [diff, setDiff] = useState<number | null>(null);
@@ -290,6 +291,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
     // Congratulate Modal State
     const [congratulateData, setCongratulateData] = useState<{ isOpen: boolean, targetName: string, targetId: string } | null>(null);
     const [showVictory, setShowVictory] = useState(false);
+    const [showYouWon, setShowYouWon] = useState(false);
     const [victoryPlayer, setVictoryPlayer] = useState<any>(null);
 
     // Auto-open modal when a new card appears
@@ -657,9 +659,15 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                 // Check if current player just won
                 const currentMe = data.state.players.find((p: any) => p.id === socket.id);
                 const previousMe = state?.players?.find((p: any) => p.id === socket.id);
+
+                // If I just won (and wasn't winning before)
                 if (currentMe?.hasWon && !previousMe?.hasWon) {
                     setVictoryPlayer(currentMe);
-                    setShowVictory(true);
+                    // Use new WinnerModal instead of VictoryModal or generic notification
+                    setShowYouWon(true);
+                } else if (!currentMe?.hasWon && data.state.lastEvent?.type === 'WINNER') {
+                    // Someone ELSE won
+                    setTurnNotification(`🏆 ${data.state.lastEvent.payload?.player} ЗАНЯЛ ${data.state.rankings?.length || 1}-Е МЕСТО!`);
                 }
             }
         });
@@ -994,15 +1002,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
 
 
 
-                {showRankings && (
-                    <RankingsModal
-                        rankings={rankings}
-                        onExit={() => {
-                            setShowRankings(false); // Maybe leave?
-                            router.push('/lobby');
-                        }}
-                    />
-                )}
+
 
 
 
@@ -1112,11 +1112,22 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                 </div>
 
                                 {/* Assets Section */}
-                                <div className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
+                                <div id="tutorial-assets" className="bg-[#1e293b] rounded-2xl p-5 border border-slate-700/50 shadow-lg">
                                     <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2">
                                         <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
                                         <span className="font-mono text-green-400">+${totalAssetYield}</span>
                                     </h3>
+
+                                    {/* TUTORIAL ONLY: Get Asset Button */}
+                                    {isTutorial && (
+                                        <button
+                                            onClick={() => socket.emit('tutorial_add_asset', { roomId })}
+                                            className="w-full mb-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-bold py-2 rounded-lg text-xs uppercase shadow-lg shadow-amber-500/20 active:scale-95 transition-all"
+                                        >
+                                            🎲 Получить актив (Обучение)
+                                        </button>
+                                    )}
+
                                     {localPlayer.assets?.length > 0 ? (
                                         <div className="space-y-2">
                                             {localPlayer.assets.map((a: any, i: number) => (
@@ -1398,7 +1409,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                             </div>
 
                             {/* Stats Grid: Cash & Credit */}
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-3" id="tutorial-balance">
                                 <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group/btn relative">
                                     <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
                                     <div className="font-mono text-xl text-green-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left relative">
@@ -1483,6 +1494,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
 
                         {/* 3. MENU BUTTON (Fixed Bottom Sidebar) */}
                         <button
+                            id="tutorial-menu"
                             onClick={() => setShowMenuModal(true)}
                             className="bg-[#1e293b] hover:bg-slate-700 text-slate-300 py-4 rounded-3xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-all border border-slate-700/50 shadow-lg hover:shadow-xl hover:border-slate-600 group shrink-0"
                         >
@@ -1540,10 +1552,10 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                     </div>
 
                     {/* RIGHT SIDEBAR (Redesigned) - Flex Column */}
-                    <div className="hidden lg:flex flex-col w-[350px] h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4">
+                    <div id="tutorial-players" className="hidden lg:flex flex-col w-[350px] h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4">
 
                         {/* 1. TURN INFO & TIMER */}
-                        <div className="bg-[#151b2b] rounded-3xl p-6 border border-slate-800 shadow-lg flex items-center justify-between shrink-0">
+                        <div id="tutorial-turn-timer" className="bg-[#151b2b] rounded-3xl p-6 border border-slate-800 shadow-lg flex items-center justify-between shrink-0">
                             <div className="flex flex-col">
                                 <div className="flex items-center gap-2 mb-1">
                                     <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
@@ -1557,7 +1569,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                         </div>
 
                         {/* 2. GAME CONTROLS GRID (Dice & Skip) */}
-                        <div className="grid grid-cols-2 gap-3 shrink-0 h-[100px]">
+                        {/* 2. GAME CONTROLS GRID (Dice & Skip) */}
+                        <div id="tutorial-roll-action" className="grid grid-cols-2 gap-3 shrink-0 h-[100px]">
                             {/* ROLL BUTTON (Left, Big) */}
                             <button
                                 onClick={() => handleRoll()}
@@ -1988,6 +2001,14 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                         <VictoryModal
                             player={victoryPlayer}
                             onClose={() => setShowVictory(false)}
+                        />
+                    )}
+
+                    {showRankings && (
+                        <RankingsModal
+                            rankings={rankings}
+                            onClose={() => router.push('/lobby')}
+                            isOpen={showRankings} // Pass isOpen prop
                         />
                     )}
 

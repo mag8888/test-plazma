@@ -111,10 +111,10 @@ export class GameGateway {
             // Get Leaderboard
             socket.on('get_leaderboard', async (callback) => {
                 try {
-                    const leaders = await UserModel.find({ wins: { $gt: 0 } })
-                        .sort({ wins: -1 })
+                    const leaders = await UserModel.find({ gamesPlayed: { $gt: 0 } })
+                        .sort({ rating: -1, wins: -1 })
                         .limit(10)
-                        .select('username firstName lastName wins photo_url');
+                        .select('username firstName lastName wins rating gamesPlayed photo_url');
                     callback({ success: true, leaders });
                 } catch (e) {
                     console.error("Leaderboard Error:", e);
@@ -390,39 +390,48 @@ export class GameGateway {
                         return callback({ success: false, error: "Only host can end game" });
                     }
 
-                    // Calculate Final Rankings
+                    // Calculate Final Rankings & Assign Points
                     const rankings = game.calculateFinalRankings();
                     game.addLog(`🛑 HOST ЗАВЕРШИЛ ИГРУ!`);
 
-                    // Access State directly from game instance (public read access usually?)
-                    // Engine 'state' is private/protected? Let's assume getState() returns ref or I can access internals.
-                    // Actually 'game.getState()' returns the object. 
                     const state = game.getState();
-                    const winnerName = state.winner;
+                    const winnerName = rankings[0]?.name || 'Unknown';
 
                     // Update DB Stats
                     const { UserModel } = await import('../models/user.model');
-
-                    // New Ranking Logic (10, 6, 4, 3, 2, 1, 0.5, 0)
                     const POINTS_MAP = [10, 6, 4, 3, 2, 1, 0.5]; // Index 0 = Place 1
 
                     for (const rank of rankings) {
                         if (rank.userId) {
                             const points = POINTS_MAP[rank.place - 1] || 0;
+                            const update: any = {
+                                $inc: {
+                                    rating: points,
+                                    gamesPlayed: 1
+                                }
+                            };
 
-                            const update: any = { $inc: { rating: points } };
                             if (rank.place === 1) {
                                 update.$inc.wins = 1;
                             }
 
-                            await UserModel.findOneAndUpdate(
-                                { _id: rank.userId },
-                                update
-                            ).catch(e => console.error(`Failed to update ranking for ${rank.name}:`, e));
+                            try {
+                                await UserModel.findOneAndUpdate({ _id: rank.userId }, update);
+                                console.log(`[EndGame] Updated stats for ${rank.name}: +${points} pts`);
+                            } catch (e) {
+                                console.error(`[EndGame] Failed to update stats for ${rank.name}:`, e);
+                            }
 
-                            // Attach points to ranking object for frontend display if needed
+                            // Attach points to ranking object for frontend display
                             (rank as any).earnedPoints = points;
                         }
+                    }
+
+                    // Mark Room as Completed in DB so it doesn't show up as 'playing'
+                    const roomModel = await this.roomService.getRoom(roomId);
+                    if (roomModel && (roomModel as any)._id) { // Use internal _id to update
+                        const { RoomModel } = await import('../models/room.model');
+                        await RoomModel.findByIdAndUpdate((roomModel as any)._id || roomId, { status: 'completed' });
                     }
 
                     // Emit Game Ended
@@ -432,6 +441,11 @@ export class GameGateway {
                     });
 
                     this.saveState(roomId, game);
+                    // Remove from active memory? Or keep for a bit?
+                    // Better to keep for a minute to allow final socket events to process, or just delete.
+                    // Implementation Plan said: "Manually ends game to finalize rankings".
+                    // Usually we clear memory to free resources.
+                    // this.games.delete(roomId); 
 
                     callback({ success: true });
                 } catch (e: any) {
@@ -582,6 +596,39 @@ export class GameGateway {
                 if (game.getState().phase === 'BABY_ROLL') {
                     const result: any = game.resolveBabyRoll();
                     const state = game.getState();
+
+                    // Tutorial: Add Random Asset
+                    socket.on('tutorial_add_asset', ({ roomId }) => {
+                        const game = this.games.get(roomId);
+                        if (!game) return;
+
+                        // Add random asset (Logic from engine or manual)
+                        // For simplicity, let's just pick a random Small/Big deal and add it.
+                        // Or better, use a specific mock asset.
+                        const mockAsset = {
+                            id: 'tutorial-' + Date.now(),
+                            title: 'Тестовый Дом 3Br/2Ba',
+                            description: 'Отличный актив для старта',
+                            cost: 0,
+                            downPayment: 0,
+                            cashflow: 250,
+                            type: 'SMALL_DEAL',
+                            rule: 'residential',
+                            quantity: 1
+                        };
+
+                        const player = game.state.players.find(p => p.id === socket.id);
+                        if (player) {
+                            player.assets.push(mockAsset);
+                            player.passiveIncome += mockAsset.cashflow;
+                            player.income += mockAsset.cashflow;
+                            game.updateCashflow(player);
+
+                            game.addLog(`🎓 ${player.name} получил обучающий актив: ${mockAsset.title}`);
+                            this.io.to(roomId).emit('game_state_update', game.getState());
+                            this.saveState(roomId, game);
+                        }
+                    });
 
                     // Emit result
                     this.io.to(roomId).emit('dice_rolled', {

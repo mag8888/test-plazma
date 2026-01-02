@@ -81,6 +81,10 @@ export default function AdminPage() {
     const [historyLoading, setHistoryLoading] = useState(false);
     const [historyTab, setHistoryTab] = useState<'TRANSACTIONS' | 'REFERRALS' | 'INVITER'>('TRANSACTIONS');
 
+    // Edit Stats Modal
+    const [editStatsUser, setEditStatsUser] = useState<any>(null);
+    const [newStats, setNewStats] = useState({ rating: 0, gamesPlayed: 0 });
+
     // Action Center Output
     const [actionOutput, setActionOutput] = useState<string | null>(null);
 
@@ -481,6 +485,26 @@ export default function AdminPage() {
         } else {
             alert(res.error || 'Failed to reset ratings');
         }
+
+    };
+
+    const handleUpdateStats = async () => {
+        if (!editStatsUser) return;
+
+        // Uses GAME_API_URL because we added the endpoint to the Game Service (backend/src/index.ts)
+        // NOT the Partnership Service
+        const res = await fetchWithAuth(`/users/${editStatsUser._id}/stats`, {
+            method: 'POST',
+            body: JSON.stringify(newStats)
+        }, secret, GAME_API_URL);
+
+        if (res.success) {
+            alert('Stats updated!');
+            setEditStatsUser(null);
+            searchUsers(page);
+        } else {
+            alert(res.error || 'Failed to update stats');
+        }
     };
 
     if (!isAuthenticated) {
@@ -875,7 +899,20 @@ export default function AdminPage() {
                                                     >
                                                         Matrix
                                                     </button>
+
                                                 )}
+                                                <button
+                                                    onClick={() => {
+                                                        setEditStatsUser(u);
+                                                        setNewStats({
+                                                            rating: u.rating || 0,
+                                                            gamesPlayed: u.gamesPlayed || 0
+                                                        });
+                                                    }}
+                                                    className="bg-yellow-900/50 hover:bg-yellow-800 text-yellow-300 px-2 py-1 rounded text-xs transition flex-1 border border-yellow-500/30"
+                                                >
+                                                    Stats
+                                                </button>
                                             </td>
                                         </tr>
                                     ))}
@@ -1030,6 +1067,52 @@ export default function AdminPage() {
 
 
             </div>
+
+            {/* EDIT STATS MODAL */}
+            {
+                editStatsUser && (
+                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                        <div className="bg-slate-900 border border-slate-700 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4">
+                            <h2 className="text-xl font-bold text-white mb-4">Edit Stats: {editStatsUser.username}</h2>
+
+                            <div>
+                                <label className="text-xs text-slate-500 uppercase font-bold block mb-2">Rating</label>
+                                <input
+                                    type="number"
+                                    value={newStats.rating}
+                                    onChange={(e) => setNewStats({ ...newStats, rating: Number(e.target.value) })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none"
+                                />
+                            </div>
+
+                            <div>
+                                <label className="text-xs text-slate-500 uppercase font-bold block mb-2">Games Played</label>
+                                <input
+                                    type="number"
+                                    value={newStats.gamesPlayed}
+                                    onChange={(e) => setNewStats({ ...newStats, gamesPlayed: Number(e.target.value) })}
+                                    className="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-white focus:border-blue-500 outline-none"
+                                />
+                            </div>
+
+                            <div className="flex gap-3 mt-6">
+                                <button
+                                    onClick={() => setEditStatsUser(null)}
+                                    className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold rounded-xl transition"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={handleUpdateStats}
+                                    className="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-bold rounded-xl transition shadow-lg shadow-blue-500/20"
+                                >
+                                    Save Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )
+            }
 
             {/* HISTORY MODAL */}
             {

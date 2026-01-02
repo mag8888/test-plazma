@@ -604,6 +604,7 @@ export class GameEngine {
 
     checkWinCondition(player: PlayerState) {
         if (!player.isFastTrack) return;
+        if (player.hasWon) return; // Already won
 
         const incomeGoalMet = player.fastTrackStartIncome !== undefined
             ? (player.passiveIncome >= player.fastTrackStartIncome + 50000)
@@ -613,17 +614,34 @@ export class GameEngine {
         const dreamBought = player.assets.some(a => a.type === 'DREAM' && a.title === player.dream);
 
         // Win Condition: +50k Income OR (Buy Dream AND 2 Businesses)
-        // User Screenshot shows they have +$54,000 but didn't win, implying OR logic was desired but AND was implemented.
         let won = false;
-        if (incomeGoalMet || dreamBought) {
+        if (incomeGoalMet || (dreamBought && businessCount >= 2)) {
             won = true;
         }
 
-        if (won && !player.hasWon) {
+        if (won) {
             player.hasWon = true;
-            this.addLog(`🏆 ${player.name} ВЫИГРАЛ ИГРУ! (+50k Поток, Мечта, 2 Бизнеса)`);
-            this.addLog(`✨ ПОЗДРАВЛЯЕМ! ✨`);
-            // Default to NOT skipping turns (Sandbox Mode active)
+            // Initialize rankings if missing (should be in constructor/interface)
+            if (!this.state.rankings) this.state.rankings = [];
+
+            const place = this.state.rankings.length + 1;
+            this.state.rankings.push({
+                name: player.name,
+                reason: incomeGoalMet ? 'Достиг цели по доходу' : 'Купил Мечту и бизнесы',
+                place: place,
+                id: player.id,
+                userId: player.userId
+            });
+
+            this.addLog(`🏆 ${player.name} ЗАНЯЛ ${place}-Е МЕСТО! (${this.state.rankings[this.state.rankings.length - 1].reason})`);
+            this.addLog(`✨ Игра продолжается для остальных! ✨`);
+
+            // Allow them to continue playing ("Sandbox Mode") implicitly by not removing them
+            // Optionally set isSkippingTurns = false to ensure they can roll if they want, 
+            // BUT usually winners might want to spectate. 
+            // Request says: "Игра продолжается...". 
+            // If they keep playing, they might screw up economy? 
+            // Let's leave them active but marked as won.
             player.isSkippingTurns = false;
         }
     }
@@ -646,6 +664,49 @@ export class GameEngine {
         this.state.isPaused = !this.state.isPaused;
         const status = this.state.isPaused ? 'PAUSED ⏸' : 'RESUMED ▶️';
         this.addLog(`🛑 ADMIN ${status} THE GAME`);
+    }
+
+    calculateFinalRankings() {
+        // 1. Start with existing winners from state.rankings
+        const finalRankings = [...(this.state.rankings || [])];
+
+        // 2. Identify players NOT in rankings yet
+        const remainingPlayers = this.state.players.filter(p => !p.hasWon);
+
+        // 3. Sort remaining players
+        // Criteria: Fast Track > Rat Race.
+        // Within Fast Track: Current Cashflow.
+        // Within Rat Race: Passive Income > Cash.
+        remainingPlayers.sort((a, b) => {
+            if (a.isFastTrack && !b.isFastTrack) return -1; // a comes first
+            if (!a.isFastTrack && b.isFastTrack) return 1;
+
+            if (a.isFastTrack) {
+                // Both Fast Track: Higher Cashflow wins
+                return b.cashflow - a.cashflow;
+            } else {
+                // Both Rat Race: Higher Passive wins, then Cash
+                if (b.passiveIncome !== a.passiveIncome) return b.passiveIncome - a.passiveIncome;
+                return b.cash - a.cash;
+            }
+        });
+
+        // 4. Append to rankings
+        let currentPlace = finalRankings.length + 1;
+        remainingPlayers.forEach(p => {
+            finalRankings.push({
+                name: p.name,
+                place: currentPlace++,
+                reason: p.isFastTrack ? 'Fast Track Progress' : 'Rat Race Progress',
+                id: p.id,
+                userId: p.userId,
+                // Additional Stats for breakdown
+                // stats: { passive: p.passiveIncome, cash: p.cash }
+            });
+        });
+
+        this.state.rankings = finalRankings;
+        return finalRankings;
     }
 
 
