@@ -621,8 +621,7 @@ export class GameGateway {
                         if (player) {
                             player.assets.push(mockAsset);
                             player.passiveIncome += mockAsset.cashflow;
-                            player.income += mockAsset.cashflow;
-                            game.updateCashflow(player);
+                            game.recalculateFinancials(player);
 
                             game.addLog(`🎓 ${player.name} получил обучающий актив: ${mockAsset.title}`);
                             this.io.to(roomId).emit('game_state_update', game.getState());

@@ -2766,35 +2766,7 @@ export class GameEngine {
         return rollResult;
     }
 
-    // Force End Game & Calculate Rankings
-    public calculateFinalRankings() {
-        const sortedPlayers = [...this.state.players].sort((a, b) => {
-            // 1. Fast Track Priority
-            if (a.isFastTrack && !b.isFastTrack) return -1;
-            if (!a.isFastTrack && b.isFastTrack) return 1;
 
-            // 2. Passive Income
-            if (a.passiveIncome !== b.passiveIncome) {
-                return b.passiveIncome - a.passiveIncome;
-            }
-
-            // 3. Cash
-            return b.cash - a.cash;
-        });
-
-        this.state.rankings = sortedPlayers.map((p, index) => ({
-            name: p.name,
-            place: index + 1,
-            reason: p.isFastTrack ? 'Fast Track' : `Passive Income: $${p.passiveIncome}`
-        }));
-
-        if (sortedPlayers.length > 0) {
-            this.state.winner = sortedPlayers[0].name;
-            this.state.isGameEnded = true;
-        }
-
-        return this.state.rankings;
-    }
 
     getState(): GameState {
         return {
