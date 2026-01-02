@@ -1529,11 +1529,21 @@ export default function AdminPage() {
                         avatarType={visualizeAvatar.type}
                         fetcher={async (url) => {
                             try {
-                                const match = url.match(/\/matrix\/([a-zA-Z0-9]+)/);
-                                if (match && match[1]) {
-                                    return await partnershipApi.getAvatarMatrix(match[1]);
+                                const id = visualizeAvatar.id; // Use ID from closure directly for safety
+                                if (!id) throw new Error("No ID");
+
+                                const token = secret || localStorage.getItem('admin_secret') || '';
+                                const res = await fetch(`${ADMIN_PARTNERSHIP_URL}/avatars/matrix/${id}`, {
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'x-admin-secret': token
+                                    }
+                                });
+
+                                if (!res.ok) {
+                                    throw new Error(`Fetch failed: ${res.status}`);
                                 }
-                                throw new Error("Invalid Matrix URL");
+                                return await res.json();
                             } catch (e) {
                                 console.error("Matrix fetch failed:", e);
                                 return null;

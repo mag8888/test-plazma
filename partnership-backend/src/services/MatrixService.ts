@@ -60,16 +60,31 @@ export class MatrixService {
             const currentAvatar = await Avatar.findById(currentId);
             if (!currentAvatar || !currentAvatar.isActive) continue;
 
-            // If found space, return immediately (BFS guarantees this is the closest/highest slot)
-            if (currentAvatar.partners.length < 3) {
+            // Strict Validation: Get counts of ACTUAL ACTIVE partners
+            const activePartners = await Avatar.find({
+                _id: { $in: currentAvatar.partners },
+                isActive: true
+            });
+
+            // Self-Repair: If mismatch found (e.g. Ghost partners), clean it up
+            if (activePartners.length !== currentAvatar.partners.length) {
+                // console.log(`[Matrix] Repairing ghost partners for ${currentAvatar._id}`);
+                currentAvatar.partners = activePartners.map(p => p._id as mongoose.Types.ObjectId);
+                await currentAvatar.save();
+            }
+
+            // Check Space
+            if (activePartners.length < 3) {
                 return currentAvatar;
             }
 
-            // Enqueue children (Left-to-Right based on array order)
-            for (const partnerId of currentAvatar.partners) {
-                if (!visited.has(partnerId.toString())) {
-                    visited.add(partnerId.toString());
-                    queue.push(partnerId);
+            // Enqueue sorted by position (assuming array order is valid left-to-right)
+            // But we should probably sort by createdAt to be consistent?
+            // Actually, existing array order determines "Left-to-Right" slots.
+            for (const partner of activePartners) {
+                if (!visited.has(partner._id.toString())) {
+                    visited.add(partner._id.toString());
+                    queue.push(partner._id as mongoose.Types.ObjectId);
                 }
             }
         }
