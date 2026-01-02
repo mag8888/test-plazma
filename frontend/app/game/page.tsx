@@ -85,6 +85,9 @@ function GameContent() {
     }, [token]);
 
 
+    const [hasSelectedToken, setHasSelectedToken] = useState(false);
+    const [hasSelectedDream, setHasSelectedDream] = useState(false);
+
     // Initial Join & Socket Setup
     useEffect(() => {
         if (!roomId || !user) return; // Wait for user
@@ -98,6 +101,14 @@ function GameContent() {
         setDisplayName(prefName);
         setDream(prefDream);
         setToken(prefToken); // Backend handles collision, UI handles selection
+
+        // Auto-fulfill steps if preferences exist? 
+        // For tutorial, better to force interaction or check if they changed it?
+        // Let's assume for tutorial we start fresh or treat loaded prefs as "not yet selected in this session" to guide them?
+        // Actually the user wants 1 -> 2 -> 3. 
+        // If they have a token pre-selected, maybe we should consider step 1 done?
+        // But the prompt implies "Choice" is needed. 
+        // Let's start with false to force the "Look here -> Click" flow.
 
         const userId = user._id || user.id;
 
@@ -289,6 +300,16 @@ function GameContent() {
     const isRoomTraining = room?.isTraining ?? false;
     const effectiveIsTraining = isRoomTraining || isTutorialOverride;
 
+    // TUTORIAL STEPS LOGIC
+    // 1. Token (If no token interactions yet)
+    // 2. Dream (If token done, no dream interaction yet)
+    // 3. Ready (If token & dream done, not ready)
+    // 4. Add Bot (If ready, < 2 players)
+    // 5. Start Game (If ready, >= 2 players)
+
+    // We assume 'hasSelectedToken' becomes true on click.
+    // We assume 'hasSelectedDream' becomes true on change.
+
     if (room.status === 'playing') {
         const initialBoardState = gameState || {
             roomId,
@@ -384,9 +405,10 @@ function GameContent() {
                                                     >
                                                         + Easy Bot
                                                     </button>
-                                                    {room.isTraining && room.players.length === 1 && (
-                                                        <div className="absolute top-12 left-0 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg animate-bounce shadow-lg z-50 whitespace-nowrap pointer-events-none">
-                                                            Для запуска игры нужен соперник. Добавьте бота! 👆
+                                                    {/* Step 4: Add Bot */}
+                                                    {effectiveIsTraining && isReady && room.players.length < 2 && room.players.length === 1 && (
+                                                        <div className="absolute top-12 left-0 bg-emerald-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg animate-pulse shadow-lg z-50 whitespace-nowrap pointer-events-none">
+                                                            4. Добавьте бота! 👆
                                                             <div className="absolute top-[-4px] left-4 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-emerald-500"></div>
                                                         </div>
                                                     )}
@@ -418,9 +440,10 @@ function GameContent() {
                                 </div>
                                 <span className="relative flex items-center justify-center gap-3">
                                     🚀 ЗАПУСТИТЬ ИГРУ
-                                    {effectiveIsTraining && room.players.length >= 2 && (
-                                        <div className="absolute bottom-full mb-2 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg z-50 whitespace-nowrap pointer-events-none">
-                                            4. Нажмите Старт 👇
+                                    {/* Step 5: Start Game */}
+                                    {effectiveIsTraining && isReady && room.players.length >= 2 && (
+                                        <div className="absolute bottom-full mb-2 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-pulse shadow-lg z-50 whitespace-nowrap pointer-events-none">
+                                            5. Запустите игру! 🚀
                                             <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500"></div>
                                         </div>
                                     )}
@@ -450,6 +473,7 @@ function GameContent() {
                                                     disabled={isTaken || isReady}
                                                     onClick={() => {
                                                         if (!isReady) {
+                                                            setHasSelectedToken(true); // Tutorial step 1 complete
                                                             setToken(t);
                                                             updateSettings(t, dream);
                                                         }
@@ -459,8 +483,9 @@ function GameContent() {
                                                     <span className={`drop-shadow-lg ${isSelected ? 'animate-bounce-subtle' : ''}`}>{t}</span>
                                                     {isSelected && <div className="absolute -top-3 -right-3 w-8 h-8 flex items-center justify-center"><div className="absolute inset-0 bg-blue-500 rounded-full blur-[2px]"></div><div className="relative bg-blue-500 bg-gradient-to-br from-blue-400 to-indigo-600 text-white rounded-full w-7 h-7 flex items-center justify-center border-2 border-slate-900 shadow-xl"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg></div></div>}
                                                     {isTaken && <div className="absolute inset-0 flex items-center justify-center"><div className="w-full h-[1px] bg-slate-500/50 rotate-45 transform scale-150"></div></div>}
-                                                    {room.isTraining && t === '🦊' && !isReady && (
-                                                        <TutorialTip text="Выберите фишку" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />
+                                                    {/* Step 1: Token Hint */}
+                                                    {effectiveIsTraining && !hasSelectedToken && !isReady && t === '🦊' && (
+                                                        <TutorialTip text="1. Выберите фишку" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />
                                                     )}
                                                 </button>
                                             );
@@ -475,9 +500,18 @@ function GameContent() {
                                         <select
                                             value={dream}
                                             onChange={(e) => {
+                                                setHasSelectedDream(true); // Tutorial step 2 complete
                                                 const newDream = e.target.value;
                                                 setDream(newDream);
                                                 updateSettings(token, newDream);
+                                            }}
+                                            onClick={() => {
+                                                // Optional: if opening dropdown counts as "interaction", or we wait for change.
+                                                // Let's rely on Valid change for now? Or wait, if they start with default dream,
+                                                // they might never change it.
+                                                // Let's set it to true on Click too, just in case they like the default.
+                                                // Better: set it to true if they interact at all.
+                                                setHasSelectedDream(true);
                                             }}
                                             className="w-full bg-black/20 border border-white/10 rounded-2xl px-6 py-4 appearance-none outline-none focus:border-blue-500/50 focus:bg-black/40 transition-all text-lg font-medium text-slate-200 shadow-inner"
                                             disabled={isReady}
@@ -489,9 +523,10 @@ function GameContent() {
                                             ))}
                                         </select>
                                         <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
-                                        {effectiveIsTraining && !isReady && (
+                                        {/* Step 2: Dream Hint */}
+                                        {effectiveIsTraining && hasSelectedToken && !hasSelectedDream && !isReady && (
                                             <TutorialTip
-                                                text="✨ Выбор мечты очень важен! Правильно выбранная мечта помогает выигрывать в игре и в жизни!"
+                                                text="2. Выберите мечту 👇"
                                                 position="top-full mt-4"
                                                 colorClass="bg-gradient-to-r from-amber-500 to-orange-600 text-white border border-amber-400/50"
                                                 arrowColorClass="border-b-orange-600"
@@ -505,9 +540,10 @@ function GameContent() {
                                 className={`w-full py-6 rounded-2xl font-bold text-lg transition-all transform shadow-xl border relative ${isReady ? 'bg-rose-500/10 border-rose-500/30 text-rose-400 hover:bg-rose-500/20' : 'bg-gradient-to-r from-emerald-500 to-teal-500 border-transparent text-white hover:brightness-110 shadow-emerald-500/20 hover:scale-[1.01]'}`}
                             >
                                 {isReady ? '✖ Отменить готовность' : '✨ Я Готов!'}
-                                {effectiveIsTraining && !isReady && (
+                                {/* Step 3: Ready Hint */}
+                                {effectiveIsTraining && hasSelectedToken && hasSelectedDream && !isReady && (
                                     <TutorialTip
-                                        text="3. Нажмите, когда выберете мечту! 👇"
+                                        text="3. Нажмите Готов! ✨"
                                         position="bottom-full mb-2"
                                         arrow="bottom-[-6px] border-t-amber-500 border-b-0"
                                         colorClass="bg-amber-500 text-white"
