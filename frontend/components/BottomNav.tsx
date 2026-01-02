@@ -13,7 +13,8 @@ export const BottomNav = () => {
 
     // Hide on Game Board to save space (only during active game with roomId)
     // Show in lobby
-    if (pathname === '/game' && searchParams.has('id')) {
+    // Hide on Game Board (any /game route)
+    if (pathname?.startsWith('/game')) {
         return null;
     }
 

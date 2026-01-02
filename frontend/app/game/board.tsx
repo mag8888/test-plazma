@@ -1724,7 +1724,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
 
 
                     {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */}
-                    <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pt-2 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 z-50 flex flex-col gap-3 pb-8">
+                    <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pt-2 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 z-50 flex flex-col gap-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
 
                         {/* 1. MINI PLAYERS STRIP */}
                         <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-1 pb-2">
