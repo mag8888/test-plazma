@@ -87,6 +87,9 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
         if (!root) return null;
 
         allAvatars.forEach(a => {
+            // Prevent Root from being added as a child to anyone (breaks Root cycles)
+            if (a._id === root._id) return;
+
             if (a.parent && avatarMap.has(a.parent)) {
                 avatarMap.get(a.parent)!.children.push(avatarMap.get(a._id));
             }
@@ -108,7 +111,18 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
     };
 
     // Recursive Node Renderer (Horizontal Tree / List style)
-    const renderNode = (node: any, depth: number) => {
+    const renderNode = (node: any, depth: number, path: Set<string> = new Set()) => {
+        // Cycle Detection
+        if (path.has(node._id)) {
+            console.warn('Cycle detected in MatrixView:', node._id);
+            return (
+                <div className="text-red-500 text-xs p-2 border border-red-500 rounded">
+                    Cycle Detected
+                </div>
+            );
+        }
+        const newPath = new Set(path).add(node._id);
+
         const theme = LEVEL_THEMES[Math.min(depth, 5)];
         const isExpanded = expandedIds.has(node._id);
         const children = node.children || [];
@@ -202,7 +216,7 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
                 {/* CHILDREN CONTAINER */}
                 {isExpanded && (
                     <div className="ml-[34px] pt-4 relative flex flex-col gap-3 pl-6 border-l border-slate-700/50">
-                        {children.map((child: any) => renderNode(child, depth + 1))}
+                        {children.map((child: any) => renderNode(child, depth + 1, newPath))}
 
                         {/* EMPTY SLOTS Render Logic */}
                         {/* Always show if depth < 5 and (slots not full OR showEmptyMode)
