@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { X, ArrowLeft, Plus, Minus, ExternalLink, User as UserIcon, ZoomIn, Info } from 'lucide-react';
+import { ProfileModal } from './ProfileModal';
 
 interface Avatar {
     _id: string;
@@ -35,7 +36,7 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
     const [matrixData, setMatrixData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-    const [showEmptyMode, setShowEmptyMode] = useState(false); // If true, empty slots are always visible in expanded branches
+    const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
     useEffect(() => {
         if (isOpen && avatarId) {
@@ -98,8 +99,12 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
         return root;
     }, [matrixData]);
 
-    const handleNodeClick = (username: string) => {
-        if (username) window.open(`https://t.me/${username}`, '_blank');
+    const handleNodeClick = (owner: any) => {
+        if (owner && owner._id) {
+            setSelectedUserId(owner._id);
+        } else {
+            console.warn("No Owner ID for profile click:", owner);
+        }
     };
 
     const toggleExpand = (id: string, e?: React.MouseEvent) => {
@@ -170,7 +175,7 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
                             ${theme.bg} ${theme.border} ${theme.glow} hover:shadow-lg
                             cursor-pointer min-w-[200px] hover:scale-105 active:scale-95
                         `}
-                        onClick={() => handleNodeClick(node.owner?.username)}
+                        onClick={() => handleNodeClick(node.owner)}
                     >
                         {/* Level Badge / Avatar */}
                         <div className={`
@@ -335,6 +340,15 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
                     )}
                 </div>
             </div>
+
+            {/* Profile Modal Overlay */}
+            {selectedUserId && (
+                <ProfileModal
+                    isOpen={!!selectedUserId}
+                    onClose={() => setSelectedUserId(null)}
+                    userId={selectedUserId}
+                />
+            )}
         </div>
     );
 }

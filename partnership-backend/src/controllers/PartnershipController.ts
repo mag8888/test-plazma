@@ -70,13 +70,17 @@ export class PartnershipController {
     static async getStats(req: Request, res: Response) {
         try {
             const { userId } = req.params;
-            const user = await User.findById(userId);
+            const user = await User.findById(userId).populate('referrer', 'username');
             if (!user) return res.status(404).json({ error: 'User not found' });
 
             // Count avatars
             const avatarCount = await Avatar.countDocuments({ owner: userId });
 
             res.json({
+                username: user.username,
+                photoUrl: user.photo_url,
+                registrationDate: user.createdAt,
+                referrer: user.referrer ? (user.referrer as any).username : null,
                 greenBalance: user.greenBalance,
                 yellowBalance: user.yellowBalance,
                 balanceRed: user.balanceRed,
