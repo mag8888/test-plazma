@@ -159,7 +159,12 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
                         return (
                             <div
                                 key={idx}
-                                className={`${avatarType.bgColor} border ${avatarType.borderColor} rounded-lg p-3 flex items-center justify-between`}
+                                onClick={() => {
+                                    setSelectedAvatarId(avatar._id);
+                                    setSelectedAvatarType(avatarType.name);
+                                    setShowMatrix(true);
+                                }}
+                                className={`${avatarType.bgColor} border ${avatarType.borderColor} rounded-lg p-3 flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity`}
                             >
                                 <div className="flex items-center gap-3">
                                     <Icon className="w-5 h-5 text-white" />
