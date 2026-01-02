@@ -1528,22 +1528,18 @@ export default function AdminPage() {
                         avatarId={visualizeAvatar.id}
                         avatarType={visualizeAvatar.type}
                         fetcher={async (url) => {
-                            // Manual fetch to bypass /admin prefix and use correct backend URL
-                            const endpointPath = url.replace('/api/partnership', '');
-                            const finalUrl = `${ADMIN_PARTNERSHIP_URL}${endpointPath}`;
-
-                            const headers = {
-                                'Content-Type': 'application/json',
-                                'x-admin-secret': secret || localStorage.getItem('admin_secret') || ''
-                            };
-
-                            const res = await fetch(finalUrl, { headers });
-                            if (!res.ok) {
-                                const text = await res.text();
-                                throw new Error(`Fetch failed: ${res.status} ${text.substring(0, 50)}`);
+                            try {
+                                const match = url.match(/\/matrix\/([a-zA-Z0-9]+)/);
+                                if (match && match[1]) {
+                                    return await partnershipApi.getAvatarMatrix(match[1]);
+                                }
+                                throw new Error("Invalid Matrix URL");
+                            } catch (e) {
+                                console.error("Matrix fetch failed:", e);
+                                return null;
                             }
-                            return res.json();
                         }}
+
                     />
                 )
             }

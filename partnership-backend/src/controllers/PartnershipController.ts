@@ -473,7 +473,7 @@ export class PartnershipController {
                 if (level < 5 && avatar.partners && avatar.partners.length > 0) {
                     const partners = await Avatar.find({
                         _id: { $in: avatar.partners }
-                    }).populate('owner', 'username');
+                    }).populate('owner', 'username referrer');
 
                     for (const partner of partners) {
                         queue.push({ avatar: partner, level: level + 1 });

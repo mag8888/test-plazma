@@ -1,11 +1,11 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { X, ExternalLink, Info, ArrowDown, ArrowLeft, ZoomIn } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { X, ArrowLeft, Plus, Minus, ExternalLink, User as UserIcon, ZoomIn, Info } from 'lucide-react';
 
 interface Avatar {
     _id: string;
-    owner: { username: string };
+    owner: { _id?: string; username: string; referrer?: string };
     type: string;
     level: number;
     partners: string[];
@@ -21,48 +21,42 @@ interface MatrixViewProps {
     fetcher?: (url: string) => Promise<any>;
 }
 
-const BRANCH_COLORS = [
-    { name: 'Cyan', bg: 'bg-cyan-500', border: 'border-cyan-500/30', text: 'text-cyan-400', stroke: '#22d3ee' },
-    { name: 'Purple', bg: 'bg-purple-500', border: 'border-purple-500/30', text: 'text-purple-400', stroke: '#a855f7' },
-    { name: 'Pink', bg: 'bg-pink-500', border: 'border-pink-500/30', text: 'text-pink-400', stroke: '#ec4899' }
+// Colors for depth levels (0-5)
+const LEVEL_THEMES = [
+    { bg: 'bg-gradient-to-r from-amber-500/20 to-orange-600/20', border: 'border-amber-500/50', text: 'text-amber-500', glow: 'shadow-amber-500/20' }, // L0 (Root)
+    { bg: 'bg-gradient-to-r from-cyan-500/20 to-blue-600/20', border: 'border-cyan-500/50', text: 'text-cyan-400', glow: 'shadow-cyan-500/20' },   // L1
+    { bg: 'bg-gradient-to-r from-purple-500/20 to-violet-600/20', border: 'border-purple-500/50', text: 'text-purple-400', glow: 'shadow-purple-500/20' }, // L2
+    { bg: 'bg-gradient-to-r from-pink-500/20 to-rose-600/20', border: 'border-pink-500/50', text: 'text-pink-400', glow: 'shadow-pink-500/20' },     // L3
+    { bg: 'bg-gradient-to-r from-indigo-500/20 to-blue-600/20', border: 'border-indigo-500/50', text: 'text-indigo-400', glow: 'shadow-indigo-500/20' }, // L4
+    { bg: 'bg-gradient-to-r from-emerald-500/20 to-green-600/20', border: 'border-emerald-500/50', text: 'text-emerald-400', glow: 'shadow-emerald-500/20' } // L5
 ];
 
 export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: MatrixViewProps) {
     const [matrixData, setMatrixData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [currentViewId, setCurrentViewId] = useState(avatarId);
-    const [history, setHistory] = useState<string[]>([]);
+    const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
+    const [showEmptyMode, setShowEmptyMode] = useState(false); // If true, empty slots are always visible in expanded branches
 
     useEffect(() => {
-        if (isOpen) {
-            if (history.length === 0) {
-                setCurrentViewId(avatarId);
-            }
+        if (isOpen && avatarId) {
+            loadMatrix(avatarId);
+            setExpandedIds(new Set([avatarId])); // Auto-expand root
         } else {
-            setHistory([]);
-            setCurrentViewId(avatarId);
+            setExpandedIds(new Set());
         }
     }, [isOpen, avatarId]);
-
-    useEffect(() => {
-        if (isOpen && currentViewId) {
-            loadMatrix(currentViewId);
-        }
-    }, [currentViewId, isOpen]);
 
     const loadMatrix = async (id: string) => {
         setLoading(true);
         try {
             const endpoint = `/api/partnership/avatars/matrix/${id}`;
             let data;
-
             if (fetcher) {
                 data = await fetcher(endpoint);
             } else {
                 const res = await fetch(endpoint);
                 data = await res.json();
             }
-
             setMatrixData(data);
         } catch (err) {
             console.error('Failed to load matrix:', err);
@@ -71,266 +65,259 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
         }
     };
 
-    const handleDive = (childId: string) => {
-        setHistory(prev => [...prev, currentViewId]);
-        setCurrentViewId(childId);
+    // Construct Tree from backend flat levels
+    const tree = useMemo(() => {
+        if (!matrixData || !matrixData.root) return null;
+
+        const allAvatars: Avatar[] = [
+            matrixData.root,
+            ...(matrixData.level1 || []),
+            ...(matrixData.level2 || []),
+            ...(matrixData.level3 || []),
+            ...(matrixData.level4 || []),
+            ...(matrixData.level5 || [])
+        ];
+
+        // Map for fast lookup
+        const avatarMap = new Map<string, Avatar & { children: any[] }>();
+        allAvatars.forEach(a => avatarMap.set(a._id, { ...a, children: [] }));
+
+        // Build hierarchy
+        const root = avatarMap.get(matrixData.root._id);
+        if (!root) return null;
+
+        allAvatars.forEach(a => {
+            if (a.parent && avatarMap.has(a.parent)) {
+                avatarMap.get(a.parent)!.children.push(avatarMap.get(a._id));
+            }
+        });
+
+        return root;
+    }, [matrixData]);
+
+    const handleNodeClick = (username: string) => {
+        if (username) window.open(`https://t.me/${username}`, '_blank');
     };
 
-    const handleBack = () => {
-        if (history.length === 0) return;
-        const prev = history[history.length - 1];
-        setHistory(prevHist => prevHist.slice(0, -1));
-        setCurrentViewId(prev);
+    const toggleExpand = (id: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        const newSet = new Set(expandedIds);
+        if (newSet.has(id)) newSet.delete(id);
+        else newSet.add(id);
+        setExpandedIds(newSet);
     };
 
-    const handleAvatarClick = (username: string) => {
-        if (username) {
-            window.open(`https://t.me/${username}`, '_blank');
-        }
-    };
+    // Recursive Node Renderer (Horizontal Tree / List style)
+    const renderNode = (node: any, depth: number) => {
+        const theme = LEVEL_THEMES[Math.min(depth, 5)];
+        const isExpanded = expandedIds.has(node._id);
+        const children = node.children || [];
+        const maxSlots = 3;
+        const emptyCount = maxSlots - children.length;
 
-    const getChildren = (parentId: string, nextLevelAvatars: Avatar[]) => {
-        return nextLevelAvatars?.filter(a => a.parent === parentId) || [];
-    };
+        // Determine if spilled or direct
+        // Direct: referrer == root.owner._id
+        // Spillover: referrer != root.owner._id (and not self)
 
-    const renderAvatarSlot = (avatar: Avatar | null, colorTheme: any, isPlaceholder = false) => {
-        if (isPlaceholder || !avatar) {
-            return (
-                <div className="flex flex-col items-center gap-1 relative z-10 transition-all hover:scale-105">
-                    <div className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 border-dashed flex items-center justify-center hover:bg-slate-800 transition-colors shadow-inner">
-                        <div className="w-2 h-2 rounded-full bg-slate-700"></div>
-                    </div>
-                </div>
-            );
+        // Note: matrixData.root.owner is populated object in controller, but Typescript assumes ID string sometimes.
+        // Controller populates: .populate('owner', 'username referrer')
+
+        const rootOwnerId = matrixData?.root?.owner?._id || matrixData?.root?.owner;
+        const nodeReferrerId = node.owner?.referrer;
+
+        // If Root Node, no referrer check needed. For children:
+        let isDirect = false;
+        let isSpillover = false;
+
+        if (depth > 0 && rootOwnerId) {
+            if (nodeReferrerId === rootOwnerId) {
+                isDirect = true;
+            } else if (nodeReferrerId && nodeReferrerId !== rootOwnerId) {
+                isSpillover = true;
+            }
         }
 
         return (
-            <div className="flex flex-col items-center gap-1 group relative z-10">
-                <div className="relative">
+            <div key={node._id} className="relative flex flex-col">
+                <div className="flex items-center group">
+
+                    {/* CONNECTOR LINE (Horizontal) */}
+                    {depth > 0 && (
+                        <div className="w-8 h-px bg-slate-700 mr-2 flex-shrink-0 relative">
+                            {/* Dot at intersection */}
+                            <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-1 rounded-full bg-slate-600"></div>
+                        </div>
+                    )}
+
+                    {/* NODE CAPSULE */}
                     <div
-                        onClick={() => handleAvatarClick(avatar.owner?.username)}
-                        className={`w-10 h-10 rounded-full ${colorTheme.bg} cursor-pointer flex items-center justify-center relative transition-transform hover:scale-110 shadow-[0_0_15px_rgba(0,0,0,0.5)] border-2 ${colorTheme.border}`}
+                        className={`
+                            relative flex items-center gap-3 px-3 py-2 rounded-xl border transition-all duration-300
+                            ${theme.bg} ${theme.border} ${theme.glow} hover:shadow-lg
+                            cursor-pointer min-w-[200px] hover:scale-105 active:scale-95
+                        `}
+                        onClick={() => handleNodeClick(node.owner?.username)}
                     >
-                        <span className="text-xs font-bold text-white">{avatar.level}</span>
-                        {/* Tooltip */}
-                        <div className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded border border-slate-700 pointer-events-none whitespace-nowrap z-20 transition-opacity">
-                            @{avatar.owner?.username || 'unknown'}
+                        {/* Level Badge / Avatar */}
+                        <div className={`
+                            w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs shadow-inner
+                            bg-slate-900/50 backdrop-blur border border-white/10 ${theme.text}
+                        `}>
+                            {depth === 0 ? 'YOU' : node.level}
+                        </div>
+
+                        {/* User Info */}
+                        <div className="flex flex-col flex-1 min-w-0">
+                            <div className="flex items-center gap-2">
+                                <span className="text-sm font-bold text-white truncate max-w-[120px]">
+                                    @{node.owner?.username || 'unknown'}
+                                </span>
+                                {isDirect && (
+                                    <span className="text-[9px] px-1 py-0.5 rounded bg-yellow-500/20 text-yellow-400 border border-yellow-500/30 font-mono">
+                                        DIRECT
+                                    </span>
+                                )}
+                                {isSpillover && (
+                                    <span className="text-[9px] px-1 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30 font-mono">
+                                        SPILL
+                                    </span>
+                                )}
+                            </div>
+                            <div className={`text-[10px] opacity-70 ${theme.text}`}>
+                                {children.length}/3 Filled
+                            </div>
+                        </div>
+
+                        {/* EXPAND BUTTON */}
+                        <div
+                            className="bg-slate-900/80 p-1.5 rounded-lg hover:bg-slate-800 transition-colors border border-white/10"
+                            onClick={(e) => toggleExpand(node._id, e)}
+                        >
+                            {isExpanded ? <Minus size={12} className="text-white" /> : <Plus size={12} className="text-white" />}
                         </div>
                     </div>
 
-                    {/* EXPAND BUTTON (+) */}
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleDive(avatar._id);
-                        }}
-                        className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-900 border border-slate-600 rounded-full flex items-center justify-center hover:bg-slate-800 transition-colors z-20 shadow-lg"
-                        title="Развернуть"
-                    >
-                        <ZoomIn size={10} className="text-white" />
-                    </button>
                 </div>
 
-                {/* Bonus Indicator */}
-                <div className="text-[9px] text-yellow-500/80 font-mono opacity-60 group-hover:opacity-100 transition-opacity absolute top-full mt-1 font-bold">
-                    +50%🟡
-                </div>
+                {/* CHILDREN CONTAINER */}
+                {isExpanded && (
+                    <div className="ml-[34px] pt-4 relative flex flex-col gap-3 pl-6 border-l border-slate-700/50">
+                        {children.map((child: any) => renderNode(child, depth + 1))}
+
+                        {/* EMPTY SLOTS Render Logic */}
+                        {/* Always show if depth < 5 and (slots not full OR showEmptyMode)
+                            Actually user asked: "unfilled hidden under minus but clickable to open"
+                            This implies if I click 'expand', I see filled children. 
+                            Do I see empty ones? 
+                            User: "accordingly when filled they should act immediately" -> Filled are shown. 
+                            "hidden under minus but clickable to open" -> Maybe empty slots are grouped?
+                            Let's render a single "Add/Empty Group" button if there are empty slots?
+                        */}
+                        {emptyCount > 0 && depth < 5 && (
+                            <div className="flex items-center opacity-60 hover:opacity-100 transition-opacity group">
+                                <div className="w-8 h-px bg-slate-700 mr-2 border-dashed border-t-0 border-b-2 border-slate-800/50"></div>
+                                <div className="
+                                    border border-dashed border-slate-600 rounded-xl px-3 py-2
+                                    flex items-center gap-2 bg-slate-900/30 min-w-[180px]
+                                ">
+                                    <div className="w-8 h-8 rounded-lg border border-slate-700 bg-slate-800/50 flex items-center justify-center">
+                                        <Plus size={12} className="text-slate-500" />
+                                    </div>
+                                    <div className="flex flex-col">
+                                        <span className="text-xs text-slate-400 font-medium">Empty Slot</span>
+                                        <span className="text-[9px] text-yellow-500 font-mono">+50% Bonus</span>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         );
     };
 
     if (!isOpen) return null;
 
-    const rootLevel = matrixData?.root?.level || 0;
-    const level1Avatars = matrixData?.level1 || [];
-    const level2Avatars = matrixData?.level2 || [];
-    const branches = Array.from({ length: 3 }).map((_, i) => {
-        const branchAvatar = level1Avatars[i] || null;
-        const children = branchAvatar ? getChildren(branchAvatar._id, level2Avatars) : [];
-        return {
-            id: i,
-            avatar: branchAvatar,
-            children: children,
-            color: BRANCH_COLORS[i]
-        };
-    });
-
-    const TARIFF_COSTS: Record<string, number> = {
-        'PLAYER': 20, 'BASIC': 20, 'MASTER': 100, 'ADVANCED': 100, 'PARTNER': 1000, 'PREMIUM': 1000
-    };
-    const cost = TARIFF_COSTS[avatarType] || 0;
+    // Financials
     const earnings = matrixData?.earnings || {};
     const yellowActual = earnings.yellowEarned || 0;
     const greenActual = earnings.greenEarned || 0;
-    const activeSlots = matrixData?.root?.partners?.length || 0;
-    const levelMultiplier = Math.pow(2, rootLevel);
-    const unitBonus = cost * 0.5 * levelMultiplier;
-    const yellowPotential = unitBonus * 3;
-    const greenPotential = unitBonus * 3;
 
     return (
         <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-            <div className="bg-slate-900/95 rounded-2xl border border-slate-700 max-w-5xl w-full max-h-[95vh] flex flex-col shadow-2xl relative overflow-hidden">
-                {/* Header */}
-                <div className="p-4 border-b border-slate-700 flex items-center justify-between bg-slate-800/80 backdrop-blur z-30 sticky top-0">
-                    <div className="flex items-center gap-3">
-                        {history.length > 0 && (
-                            <button
-                                onClick={handleBack}
-                                className="p-1.5 bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-600 transition-colors"
-                            >
-                                <ArrowLeft size={16} className="text-white" />
-                            </button>
-                        )}
+            <div className="bg-[#0B1120] rounded-2xl border border-slate-700/50 max-w-6xl w-full max-h-[92vh] flex flex-col shadow-2xl relative overflow-hidden">
+
+                {/* HEADLINE / HEADER */}
+                <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/50 backdrop-blur z-20">
+                    <div className="flex items-center gap-4">
+                        <div className="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/20">
+                            <ZoomIn size={20} className="text-white" />
+                        </div>
                         <div>
-                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                Матрица
-                                <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/30">
-                                    {avatarType}
-                                </span>
-                            </h2>
+                            <h2 className="text-xl font-bold text-white tracking-tight">Matrix Overview</h2>
+                            <div className="flex items-center gap-2 text-xs text-slate-400">
+                                <span className="uppercase tracking-wider font-bold">{avatarType}</span>
+                                <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                                <span>Level {matrixData?.root?.level || 0}</span>
+                            </div>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                        <X className="w-5 h-5 text-slate-400" />
+
+                    <div className="flex gap-8 px-6 py-2 bg-slate-900 rounded-xl border border-slate-800">
+                        <div className="text-center">
+                            <div className="text-[10px] text-yellow-500 font-bold uppercase tracking-widest mb-0.5">Yellow</div>
+                            <div className="text-2xl font-black text-white">{yellowActual}</div>
+                        </div>
+                        <div className="w-px bg-slate-800"></div>
+                        <div className="text-center">
+                            <div className="text-[10px] text-green-500 font-bold uppercase tracking-widest mb-0.5">Green</div>
+                            <div className="text-2xl font-black text-white">{greenActual}</div>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={onClose}
+                        className="p-2.5 rounded-xl hover:bg-slate-800 border border-transparent hover:border-slate-700 transition-all group"
+                    >
+                        <X className="w-5 h-5 text-slate-400 group-hover:text-white" />
                     </button>
                 </div>
 
-                {/* Content */}
-                <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 relative bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black">
+                {/* SCROLLABLE CONTENT */}
+                <div className="flex-1 overflow-auto bg-[radial-gradient(ellipse_at_top_left,_var(--tw-gradient-stops))] from-slate-900 via-[#0B1120] to-black scrollbar-thin scrollbar-thumb-slate-700">
+
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center py-20 space-y-4">
-                            <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                            <div className="text-slate-500 text-sm animate-pulse">Загрузка нейросети...</div>
+                        <div className="h-full flex flex-col items-center justify-center space-y-4">
+                            <div className="w-12 h-12 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="text-slate-500 animate-pulse text-sm font-medium">Loading structure...</div>
                         </div>
-                    ) : matrixData ? (
-                        <div className="flex flex-col items-center min-h-[600px] w-full">
-
-                            {/* TOP STATS */}
-                            <div className="flex gap-12 mb-8 relative z-20 p-4 bg-slate-900/50 rounded-2xl border border-slate-800 backdrop-blur-sm">
-                                <div className="text-center">
-                                    <div className="text-2xl font-black text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">{yellowActual}</div>
-                                    <div className="text-[9px] text-yellow-500/50 uppercase tracking-widest font-bold mt-1">Yellow</div>
+                    ) : tree ? (
+                        <div className="p-8 min-w-[800px]">
+                            {/* Legend */}
+                            <div className="flex gap-4 mb-8 text-[10px] font-mono border-b border-slate-800/50 pb-4">
+                                <div className="flex items-center gap-1.5 opacity-70">
+                                    <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                                    <span className="text-yellow-500">DIRECT (Personal)</span>
                                 </div>
-                                <div className="w-px bg-slate-800"></div>
-                                <div className="text-center">
-                                    <div className="text-2xl font-black text-green-500 drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]">{greenActual}</div>
-                                    <div className="text-[9px] text-green-500/50 uppercase tracking-widest font-bold mt-1">Green</div>
+                                <div className="flex items-center gap-1.5 opacity-70">
+                                    <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                                    <span className="text-blue-400">SPILLOVER</span>
                                 </div>
-                            </div>
-
-                            {/* TREE CONTAINER */}
-                            <div className="relative w-full max-w-3xl mx-auto">
-
-                                {/* GLOBAL SVG LINES LAYER */}
-                                {/* This SVG covers the entire tree area to draw lines between nodes */}
-                                <div className="absolute inset-0 pointer-events-none z-0 overflow-visible" style={{ height: '500px' }}>
-                                    <svg width="100%" height="100%" className="overflow-visible">
-                                        <defs>
-                                            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
-                                                <feGaussianBlur stdDeviation="2" result="blur" />
-                                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                                            </filter>
-                                        </defs>
-
-                                        {/* ROOT -> BRANCHES */}
-                                        {/* Root is at 50% horizontal, y=0 approx (relative to tree start which is below stats) */}
-                                        {/* Branch row is at y=120 approx */}
-
-                                        {/* Left Branch Connection */}
-                                        <path d="M 50% 60 C 50% 100, 16.6% 80, 16.6% 140" stroke="#fbbf24" strokeWidth="2" fill="none" strokeOpacity="0.4" />
-                                        {/* Mid Branch Connection */}
-                                        <path d="M 50% 60 L 50% 140" stroke="#fbbf24" strokeWidth="2" fill="none" strokeOpacity="0.4" />
-                                        {/* Right Branch Connection */}
-                                        <path d="M 50% 60 C 50% 100, 83.3% 80, 83.3% 140" stroke="#fbbf24" strokeWidth="2" fill="none" strokeOpacity="0.4" />
-
-                                        {/* BRANCHES -> CHILDREN */}
-                                        {/* We iterate branches and draw lines if they exist */}
-                                        {branches.map((b, i) => {
-                                            const branchX = i === 0 ? '16.6%' : i === 1 ? '50%' : '83.3%';
-                                            const color = b.color.stroke;
-                                            // Child Row Y starts at approx 240
-
-                                            // Since we can't easily map exact coordinates in this single SVG without ref logic, 
-                                            // we will use relative paths assuming the layout grid is consistent.
-
-                                            if (!b.avatar) return null;
-
-                                            // To children (relative X offsets from branch center)
-                                            // Left child: -10%, Mid: 0, Right: +10% (relative to container width?)
-                                            // Actually children are in a nested grid. 
-                                            // Let's rely on the secondary per-column SVGs for children to be safer with responsiveness
-                                            return null;
-                                        })}
-                                    </svg>
-                                </div>
-
-                                {/* ROOT NODE */}
-                                <div className="flex flex-col items-center relative z-20 mb-16">
-                                    <div className="w-20 h-20 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-full flex flex-col items-center justify-center shadow-[0_0_40px_rgba(245,158,11,0.4)] border-4 border-slate-900 z-10 relative hover:scale-105 transition-transform cursor-default">
-                                        <div className="text-3xl font-black text-white">{rootLevel}</div>
-                                        <div className="text-[9px] font-bold text-yellow-100 uppercase tracking-widest text-shadow">LVL</div>
-                                        {/* Badge */}
-                                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-slate-900 shadow-sm">
-                                            {(rootLevel + 1)}
-                                        </div>
-                                    </div>
-                                    <div className="mt-2 bg-slate-900/80 px-3 py-1 rounded-full border border-slate-700 backdrop-blur-sm">
-                                        <div className="text-xs text-white font-bold">@{matrixData.root?.owner?.username || 'me'}</div>
-                                    </div>
-                                </div>
-
-                                {/* BRANCHES ROW */}
-                                <div className="grid grid-cols-3 w-full relative z-10">
-                                    {branches.map((branch, i) => (
-                                        <div key={i} className="flex flex-col items-center relative">
-
-                                            {/* Local SVG for Children Connections */}
-                                            {/* Draws lines from Branch Node (top) to Children (bottom) */}
-                                            <div className="absolute top-[20px] left-0 w-full h-[120px] pointer-events-none z-0">
-                                                <svg width="100%" height="100%" className="overflow-visible">
-                                                    {/* Branch Center is 50% of this column */}
-                                                    {/* Children are at 16%, 50%, 83% of this column (since they are grid-3) */}
-                                                    {branch.avatar && (
-                                                        <>
-                                                            {/* Line to Left Child */}
-                                                            <path d="M 50% 20 C 50% 60, 16% 40, 16% 80" stroke={branch.color.stroke} strokeOpacity="0.3" strokeWidth="1.5" fill="none" />
-                                                            {/* Line to Mid Child */}
-                                                            <path d="M 50% 20 L 50% 80" stroke={branch.color.stroke} strokeOpacity="0.3" strokeWidth="1.5" fill="none" />
-                                                            {/* Line to Right Child */}
-                                                            <path d="M 50% 20 C 50% 60, 84% 40, 84% 80" stroke={branch.color.stroke} strokeOpacity="0.3" strokeWidth="1.5" fill="none" />
-                                                        </>
-                                                    )}
-                                                </svg>
-                                            </div>
-
-                                            {/* L1 Node */}
-                                            <div className="mb-16 relative z-10">
-                                                {renderAvatarSlot(branch.avatar, branch.color, !branch.avatar)}
-                                            </div>
-
-                                            {/* L2 Children */}
-                                            {/* No background box, just pure grid */}
-                                            <div className="w-full relative px-1">
-                                                <div className="grid grid-cols-3 gap-0.5">
-                                                    {Array.from({ length: 3 }).map((_, idx) => {
-                                                        const child = branch.children[idx] || null;
-                                                        return (
-                                                            <div key={idx} className="flex justify-center relative pt-2">
-                                                                {renderAvatarSlot(child, branch.color, !child)}
-                                                            </div>
-                                                        );
-                                                    })}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    ))}
+                                <div className="flex items-center gap-1.5 opacity-50">
+                                    <div className="w-2 h-2 rounded-full border border-slate-500"></div>
+                                    <span className="text-slate-400">EMPTY SLOT</span>
                                 </div>
                             </div>
 
+                            {/* Tree Render */}
+                            <div className="pl-4">
+                                {renderNode(tree, 0)}
+                            </div>
                         </div>
                     ) : (
-                        <div className="text-center py-12 text-slate-500">Нет данных</div>
+                        <div className="h-full flex items-center justify-center text-slate-500">
+                            No matrix data found.
+                        </div>
                     )}
                 </div>
             </div>
