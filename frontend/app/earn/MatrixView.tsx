@@ -22,9 +22,9 @@ interface MatrixViewProps {
 }
 
 const BRANCH_COLORS = [
-    { name: 'Cyan', bg: 'bg-cyan-500', border: 'border-cyan-500/30', text: 'text-cyan-400', glow: 'shadow-[0_0_15px_rgba(6,182,212,0.3)]' },
-    { name: 'Purple', bg: 'bg-purple-500', border: 'border-purple-500/30', text: 'text-purple-400', glow: 'shadow-[0_0_15px_rgba(168,85,247,0.3)]' },
-    { name: 'Pink', bg: 'bg-pink-500', border: 'border-pink-500/30', text: 'text-pink-400', glow: 'shadow-[0_0_15px_rgba(236,72,153,0.3)]' }
+    { name: 'Cyan', bg: 'bg-cyan-500', border: 'border-cyan-500/30', text: 'text-cyan-400', stroke: '#22d3ee' },
+    { name: 'Purple', bg: 'bg-purple-500', border: 'border-purple-500/30', text: 'text-purple-400', stroke: '#a855f7' },
+    { name: 'Pink', bg: 'bg-pink-500', border: 'border-pink-500/30', text: 'text-pink-400', stroke: '#ec4899' }
 ];
 
 export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: MatrixViewProps) {
@@ -35,18 +35,15 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
 
     useEffect(() => {
         if (isOpen) {
-            // Reset to root when opening fresh, OR if prop changes
             if (history.length === 0) {
                 setCurrentViewId(avatarId);
             }
         } else {
-            // Reset on close
             setHistory([]);
             setCurrentViewId(avatarId);
         }
     }, [isOpen, avatarId]);
 
-    // Reload when currentViewId changes
     useEffect(() => {
         if (isOpen && currentViewId) {
             loadMatrix(currentViewId);
@@ -92,17 +89,15 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
         }
     };
 
-    // Helper to find children of a parent from the next level array
     const getChildren = (parentId: string, nextLevelAvatars: Avatar[]) => {
         return nextLevelAvatars?.filter(a => a.parent === parentId) || [];
     };
 
-    // Render a single avatar slot
     const renderAvatarSlot = (avatar: Avatar | null, colorTheme: any, isPlaceholder = false) => {
         if (isPlaceholder || !avatar) {
             return (
-                <div className="flex flex-col items-center gap-1">
-                    <div className="w-10 h-10 rounded-lg bg-slate-800/80 border border-slate-700 border-dashed flex items-center justify-center">
+                <div className="flex flex-col items-center gap-1 relative z-10 transition-all hover:scale-105">
+                    <div className="w-10 h-10 rounded-full bg-slate-800/80 border border-slate-700 border-dashed flex items-center justify-center hover:bg-slate-800 transition-colors shadow-inner">
                         <div className="w-2 h-2 rounded-full bg-slate-700"></div>
                     </div>
                 </div>
@@ -110,15 +105,15 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
         }
 
         return (
-            <div className="flex flex-col items-center gap-1 group relative">
+            <div className="flex flex-col items-center gap-1 group relative z-10">
                 <div className="relative">
                     <div
                         onClick={() => handleAvatarClick(avatar.owner?.username)}
-                        className={`w-10 h-10 rounded-lg ${colorTheme.bg} cursor-pointer flex items-center justify-center relative transition-transform hover:scale-110 z-10`}
+                        className={`w-10 h-10 rounded-full ${colorTheme.bg} cursor-pointer flex items-center justify-center relative transition-transform hover:scale-110 shadow-[0_0_15px_rgba(0,0,0,0.5)] border-2 ${colorTheme.border}`}
                     >
                         <span className="text-xs font-bold text-white">{avatar.level}</span>
                         {/* Tooltip */}
-                        <div className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded border border-slate-700 pointer-events-none whitespace-nowrap z-20 transition-opacity">
+                        <div className="absolute opacity-0 group-hover:opacity-100 bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] px-2 py-1 rounded border border-slate-700 pointer-events-none whitespace-nowrap z-20 transition-opacity">
                             @{avatar.owner?.username || 'unknown'}
                         </div>
                     </div>
@@ -129,7 +124,7 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
                             e.stopPropagation();
                             handleDive(avatar._id);
                         }}
-                        className="absolute -bottom-2 -right-2 w-5 h-5 bg-slate-900 border border-slate-600 rounded-full flex items-center justify-center hover:bg-slate-800 transition-colors z-20 shadow-lg"
+                        className="absolute -bottom-1 -right-1 w-5 h-5 bg-slate-900 border border-slate-600 rounded-full flex items-center justify-center hover:bg-slate-800 transition-colors z-20 shadow-lg"
                         title="Развернуть"
                     >
                         <ZoomIn size={10} className="text-white" />
@@ -137,7 +132,7 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
                 </div>
 
                 {/* Bonus Indicator */}
-                <div className="text-[9px] text-yellow-500/80 font-mono opacity-60 group-hover:opacity-100 transition-opacity">
+                <div className="text-[9px] text-yellow-500/80 font-mono opacity-60 group-hover:opacity-100 transition-opacity absolute top-full mt-1 font-bold">
                     +50%🟡
                 </div>
             </div>
@@ -149,10 +144,6 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
     const rootLevel = matrixData?.root?.level || 0;
     const level1Avatars = matrixData?.level1 || [];
     const level2Avatars = matrixData?.level2 || [];
-
-    // Construct the 3 Branches
-    // We expect up to 3 avatars in Level 1.
-    // If fewer, we show placeholders.
     const branches = Array.from({ length: 3 }).map((_, i) => {
         const branchAvatar = level1Avatars[i] || null;
         const children = branchAvatar ? getChildren(branchAvatar._id, level2Avatars) : [];
@@ -165,39 +156,23 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
     });
 
     const TARIFF_COSTS: Record<string, number> = {
-        'PLAYER': 20,
-        'BASIC': 20,
-        'MASTER': 100,
-        'ADVANCED': 100,
-        'PARTNER': 1000,
-        'PREMIUM': 1000
+        'PLAYER': 20, 'BASIC': 20, 'MASTER': 100, 'ADVANCED': 100, 'PARTNER': 1000, 'PREMIUM': 1000
     };
-
     const cost = TARIFF_COSTS[avatarType] || 0;
-
-    // Get actual earnings from backend
     const earnings = matrixData?.earnings || {};
-
-    // Yellow = Accumulated for level upgrade
     const yellowActual = earnings.yellowEarned || 0;
-    const yellowBalance = earnings.yellowBalance || 0;
-
-    // Green = Withdrawn/available balance  
     const greenActual = earnings.greenEarned || 0;
-    const greenBalance = earnings.greenBalance || 0;
-
-    // Calculate potential based on slots
     const activeSlots = matrixData?.root?.partners?.length || 0;
     const levelMultiplier = Math.pow(2, rootLevel);
     const unitBonus = cost * 0.5 * levelMultiplier;
-    const yellowPotential = unitBonus * 3;  // Max 3 slots
+    const yellowPotential = unitBonus * 3;
     const greenPotential = unitBonus * 3;
 
     return (
         <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">
-            <div className="bg-slate-900/90 rounded-2xl border border-slate-700 max-w-5xl w-full max-h-[90vh] flex flex-col shadow-2xl">
+            <div className="bg-slate-900/95 rounded-2xl border border-slate-700 max-w-5xl w-full max-h-[95vh] flex flex-col shadow-2xl relative overflow-hidden">
                 {/* Header */}
-                <div className="p-5 border-b border-slate-700 flex items-center justify-between bg-slate-800/50 rounded-t-2xl">
+                <div className="p-4 border-b border-slate-700 flex items-center justify-between bg-slate-800/80 backdrop-blur z-30 sticky top-0">
                     <div className="flex items-center gap-3">
                         {history.length > 0 && (
                             <button
@@ -209,7 +184,7 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
                         )}
                         <div>
                             <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                                Матрица аватара
+                                Матрица
                                 <span className="text-xs bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded border border-indigo-500/30">
                                     {avatarType}
                                 </span>
@@ -222,123 +197,137 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
                 </div>
 
                 {/* Content */}
-                <div className="flex-1 overflow-y-auto p-6 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+                <div className="flex-1 overflow-y-auto overflow-x-hidden p-6 relative bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-slate-900 via-slate-950 to-black">
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center py-12 space-y-4">
-                            <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
-                            <div className="text-slate-500 text-sm">Загружаем структуру...</div>
+                        <div className="flex flex-col items-center justify-center py-20 space-y-4">
+                            <div className="w-10 h-10 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin"></div>
+                            <div className="text-slate-500 text-sm animate-pulse">Загрузка нейросети...</div>
                         </div>
                     ) : matrixData ? (
-                        <div className="space-y-4">
+                        <div className="flex flex-col items-center min-h-[600px] w-full">
 
-                            {/* ROOT - Level 0/1 */}
-                            <div className="flex flex-col items-center justify-center relative pb-8">
-                                <div className="text-xs text-slate-500 mb-2 font-mono uppercase tracking-widest">Мой Аватар</div>
-                                <div className="w-16 h-16 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-2xl flex flex-col items-center justify-center shadow-[0_0_30px_rgba(245,158,11,0.2)] border-2 border-yellow-400/20 z-10 relative">
-                                    <div className="text-3xl font-black text-white">{rootLevel}</div>
-                                    <div className="text-[9px] font-bold text-yellow-100 uppercase tracking-widest">Уровень</div>
+                            {/* TOP STATS */}
+                            <div className="flex gap-12 mb-8 relative z-20 p-4 bg-slate-900/50 rounded-2xl border border-slate-800 backdrop-blur-sm">
+                                <div className="text-center">
+                                    <div className="text-2xl font-black text-yellow-500 drop-shadow-[0_0_8px_rgba(234,179,8,0.5)]">{yellowActual}</div>
+                                    <div className="text-[9px] text-yellow-500/50 uppercase tracking-widest font-bold mt-1">Yellow</div>
+                                </div>
+                                <div className="w-px bg-slate-800"></div>
+                                <div className="text-center">
+                                    <div className="text-2xl font-black text-green-500 drop-shadow-[0_0_8px_rgba(34,197,94,0.5)]">{greenActual}</div>
+                                    <div className="text-[9px] text-green-500/50 uppercase tracking-widest font-bold mt-1">Green</div>
                                 </div>
                             </div>
 
-                            {/* Explainer / Level Objective */}
-                            <div className="max-w-md mx-auto bg-slate-800/50 rounded-xl p-4 border border-slate-700 relative overflow-hidden mb-8">
-                                <div className="relative z-10 text-center space-y-2">
-                                    <h3 className="font-bold text-white">Нужно заполнить 3 слота ниже</h3>
-                                    <p className="text-xs text-slate-400 leading-relaxed">
-                                        С каждого заполненного слота в 3-х ветках вы получаете <span className="text-yellow-400 font-bold">50% от стоимости</span> ($ {unitBonus}) в накопление желтого бонуса для перехода на уровень выше.
-                                        Также вы получаете <span className="text-green-400 font-bold">50% на вывод</span>.
-                                    </p>
-                                </div>
-                            </div>
+                            {/* TREE CONTAINER */}
+                            <div className="relative w-full max-w-3xl mx-auto">
 
-                            {/* BONUS INDICATORS */}
-                            <div className="flex justify-center items-center gap-12 pb-4 relative z-20">
-                                <div className="text-center flex flex-col items-center">
-                                    {/* Actual */}
-                                    <div className="text-3xl font-black text-yellow-500 drop-shadow-[0_0_10px_rgba(234,179,8,0.5)] mb-1">
-                                        {yellowActual}
-                                    </div>
-                                    <div className="text-[10px] text-yellow-400 uppercase tracking-widest font-bold mb-2">YELLOW</div>
-                                    {/* Potential */}
-                                    <div className="text-xl font-bold text-yellow-500/30 border-t border-yellow-500/20 pt-1 border-dashed">
-                                        {yellowPotential}
-                                    </div>
-                                </div>
+                                {/* GLOBAL SVG LINES LAYER */}
+                                {/* This SVG covers the entire tree area to draw lines between nodes */}
+                                <div className="absolute inset-0 pointer-events-none z-0 overflow-visible" style={{ height: '500px' }}>
+                                    <svg width="100%" height="100%" className="overflow-visible">
+                                        <defs>
+                                            <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                                                <feGaussianBlur stdDeviation="2" result="blur" />
+                                                <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                                            </filter>
+                                        </defs>
 
-                                <div className="h-12 w-px bg-slate-700"></div>
+                                        {/* ROOT -> BRANCHES */}
+                                        {/* Root is at 50% horizontal, y=0 approx (relative to tree start which is below stats) */}
+                                        {/* Branch row is at y=120 approx */}
 
-                                <div className="text-center flex flex-col items-center">
-                                    {/* Actual */}
-                                    <div className="text-3xl font-black text-green-500 drop-shadow-[0_0_10px_rgba(34,197,94,0.5)] mb-1">
-                                        {greenActual}
-                                    </div>
-                                    <div className="text-[10px] text-green-400 uppercase tracking-widest font-bold mb-2">GREEN</div>
-                                    {/* Potential */}
-                                    <div className="text-xl font-bold text-green-500/30 border-t border-green-500/20 pt-1 border-dashed">
-                                        {greenPotential}
-                                    </div>
-                                </div>
-                            </div>
+                                        {/* Left Branch Connection */}
+                                        <path d="M 50% 60 C 50% 100, 16.6% 80, 16.6% 140" stroke="#fbbf24" strokeWidth="2" fill="none" strokeOpacity="0.4" />
+                                        {/* Mid Branch Connection */}
+                                        <path d="M 50% 60 L 50% 140" stroke="#fbbf24" strokeWidth="2" fill="none" strokeOpacity="0.4" />
+                                        {/* Right Branch Connection */}
+                                        <path d="M 50% 60 C 50% 100, 83.3% 80, 83.3% 140" stroke="#fbbf24" strokeWidth="2" fill="none" strokeOpacity="0.4" />
 
-                            <div className="relative pt-4">
-                                {/* Connector Lines */}
-                                <div className="absolute top-0 left-1/2 -ml-px w-0.5 h-8 bg-gradient-to-b from-yellow-500 to-slate-700"></div>
+                                        {/* BRANCHES -> CHILDREN */}
+                                        {/* We iterate branches and draw lines if they exist */}
+                                        {branches.map((b, i) => {
+                                            const branchX = i === 0 ? '16.6%' : i === 1 ? '50%' : '83.3%';
+                                            const color = b.color.stroke;
+                                            // Child Row Y starts at approx 240
 
-                                {/* LEVEL INDICATOR ON CONNECTOR */}
-                                <div className="absolute top-4 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30">
-                                    <div className="w-8 h-8 rounded-full bg-slate-900 border-2 border-red-500 flex items-center justify-center shadow-[0_0_10px_rgba(239,68,68,0.5)]">
-                                        <span className="text-red-500 font-bold text-sm">{rootLevel + 1}</span>
-                                    </div>
+                                            // Since we can't easily map exact coordinates in this single SVG without ref logic, 
+                                            // we will use relative paths assuming the layout grid is consistent.
+
+                                            if (!b.avatar) return null;
+
+                                            // To children (relative X offsets from branch center)
+                                            // Left child: -10%, Mid: 0, Right: +10% (relative to container width?)
+                                            // Actually children are in a nested grid. 
+                                            // Let's rely on the secondary per-column SVGs for children to be safer with responsiveness
+                                            return null;
+                                        })}
+                                    </svg>
                                 </div>
 
-                                {/* <div className="absolute top-8 left-[16%] right-[16%] h-px bg-gradient-to-r from-cyan-500 via-purple-500 to-pink-500 opacity-50"></div> */}
+                                {/* ROOT NODE */}
+                                <div className="flex flex-col items-center relative z-20 mb-16">
+                                    <div className="w-20 h-20 bg-gradient-to-br from-yellow-500 to-amber-600 rounded-full flex flex-col items-center justify-center shadow-[0_0_40px_rgba(245,158,11,0.4)] border-4 border-slate-900 z-10 relative hover:scale-105 transition-transform cursor-default">
+                                        <div className="text-3xl font-black text-white">{rootLevel}</div>
+                                        <div className="text-[9px] font-bold text-yellow-100 uppercase tracking-widest text-shadow">LVL</div>
+                                        {/* Badge */}
+                                        <div className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-slate-900 shadow-sm">
+                                            {(rootLevel + 1)}
+                                        </div>
+                                    </div>
+                                    <div className="mt-2 bg-slate-900/80 px-3 py-1 rounded-full border border-slate-700 backdrop-blur-sm">
+                                        <div className="text-xs text-white font-bold">@{matrixData.root?.owner?.username || 'me'}</div>
+                                    </div>
+                                </div>
 
-                                {/* Branches Container */}
-
-                                <div className="grid grid-cols-3 gap-2 pt-8 border-t border-slate-800/50 relative">
-                                    <div className="absolute top-0 left-[16.66%] right-[16.66%] h-px bg-slate-700 -translate-y-[1px]"></div>
-                                    <div className="absolute top-0 left-1/2 -translate-x-1/2 h-8 w-px bg-slate-700 -translate-y-full"></div>
-
+                                {/* BRANCHES ROW */}
+                                <div className="grid grid-cols-3 w-full relative z-10">
                                     {branches.map((branch, i) => (
-                                        <div key={i} className={`flex flex-col items-center relative pt-6 ${i !== 1 ? 'border-t-0' : ''}`}>
-                                            <div className="absolute top-0 left-1/2 -translate-x-1/2 h-6 w-px bg-slate-700"></div>
+                                        <div key={i} className="flex flex-col items-center relative">
 
-                                            <div className="mb-4 text-center">
-                                                <div className={`text-[10px] font-bold uppercase mb-2 ${branch.color.text}`}>Ветка {i + 1}</div>
-                                                {renderAvatarSlot(branch.avatar, branch.color, !branch.avatar)}
-                                                {
-                                                    branch.avatar && (
-                                                        <div className="mt-1 text-[9px] text-slate-500">
-                                                            {branch.children.length}/3 заполнено
-                                                        </div>
-                                                    )
-                                                }
+                                            {/* Local SVG for Children Connections */}
+                                            {/* Draws lines from Branch Node (top) to Children (bottom) */}
+                                            <div className="absolute top-[20px] left-0 w-full h-[120px] pointer-events-none z-0">
+                                                <svg width="100%" height="100%" className="overflow-visible">
+                                                    {/* Branch Center is 50% of this column */}
+                                                    {/* Children are at 16%, 50%, 83% of this column (since they are grid-3) */}
+                                                    {branch.avatar && (
+                                                        <>
+                                                            {/* Line to Left Child */}
+                                                            <path d="M 50% 20 C 50% 60, 16% 40, 16% 80" stroke={branch.color.stroke} strokeOpacity="0.3" strokeWidth="1.5" fill="none" />
+                                                            {/* Line to Mid Child */}
+                                                            <path d="M 50% 20 L 50% 80" stroke={branch.color.stroke} strokeOpacity="0.3" strokeWidth="1.5" fill="none" />
+                                                            {/* Line to Right Child */}
+                                                            <path d="M 50% 20 C 50% 60, 84% 40, 84% 80" stroke={branch.color.stroke} strokeOpacity="0.3" strokeWidth="1.5" fill="none" />
+                                                        </>
+                                                    )}
+                                                </svg>
                                             </div>
 
-                                            {branch.avatar && (
-                                                <div className="flex flex-col items-center w-full">
-                                                    <div className="h-6 w-px bg-slate-700/50 mb-2"></div>
-                                                    <div className="bg-slate-800/40 rounded-xl p-3 border border-slate-700/50 w-full flex justify-center gap-3 relative">
-                                                        <div className="absolute -top-3 bg-slate-900 border border-slate-700 text-[9px] text-yellow-500 px-2 py-0.5 rounded-full">
-                                                            Накопление
-                                                        </div>
+                                            {/* L1 Node */}
+                                            <div className="mb-16 relative z-10">
+                                                {renderAvatarSlot(branch.avatar, branch.color, !branch.avatar)}
+                                            </div>
 
-                                                        {Array.from({ length: 3 }).map((_, idx) => {
-                                                            const child = branch.children[idx] || null;
-                                                            return (
-                                                                <div key={idx}>
-                                                                    {renderAvatarSlot(child, branch.color, !child)}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
+                                            {/* L2 Children */}
+                                            {/* No background box, just pure grid */}
+                                            <div className="w-full relative px-1">
+                                                <div className="grid grid-cols-3 gap-0.5">
+                                                    {Array.from({ length: 3 }).map((_, idx) => {
+                                                        const child = branch.children[idx] || null;
+                                                        return (
+                                                            <div key={idx} className="flex justify-center relative pt-2">
+                                                                {renderAvatarSlot(child, branch.color, !child)}
+                                                            </div>
+                                                        );
+                                                    })}
                                                 </div>
-                                            )}
+                                            </div>
                                         </div>
                                     ))}
                                 </div>
-
                             </div>
+
                         </div>
                     ) : (
                         <div className="text-center py-12 text-slate-500">Нет данных</div>
