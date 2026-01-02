@@ -43,69 +43,84 @@ export class MatrixService {
     }
 
     /**
-     * Find Global "Hungry" Parent
-     * Criteria: Active, Same Type, Partners < 3
-     * Order: Oldest First (createdAt ASC), then Empty Slots (partners ASC - implicit by finding any with <3)
+     * BFS Search for First Empty Slot
+     * Scans the sub-tree starting from 'rootAvatarId' level-by-level (Top-to-Bottom, Left-to-Right)
+     * Returns the first avatar found with < 3 partners.
      */
-    static async findGlobalHungryParent(type: AvatarType, excludeOwner?: mongoose.Types.ObjectId): Promise<IAvatar | null> {
-        // Find ALL active avatars of type with space
-        // Sort by createdAt to fill from top/root
-        // We also want to prioritize "Hungriest" - i.e. 0 partners over 1 or 2?
-        // User said: "distributed among 'most hungry' avatars = those with fewest partners"
-        // But also "fills those higher up".
-        // Combined sort: 1. Partners Count (ASC), 2. CreatedAt (ASC)
+    static async findFirstEmptySlotBFS(rootAvatarId: mongoose.Types.ObjectId, type: AvatarType): Promise<IAvatar | null> {
+        // Queue stores IDs to visit
+        const queue: mongoose.Types.ObjectId[] = [rootAvatarId];
+        // Visited set to prevent cycles (though tree shouldn't have them)
+        const visited = new Set<string>();
+        visited.add(rootAvatarId.toString());
 
-        const candidates = await Avatar.find({
-            type,
-            isActive: true,
-            owner: { $ne: excludeOwner },
-            $expr: { $lt: [{ $size: "$partners" }, 3] }
-        }).sort({
-            "partners.0": 1, // Hacky way to sort by array length? No, mongo doesn't support easy array length sort without aggregation.
-            createdAt: 1
-        }).limit(50); // Fetch top batch
+        while (queue.length > 0) {
+            const currentId = queue.shift()!;
 
-        if (candidates.length === 0) return null;
+            const currentAvatar = await Avatar.findById(currentId);
+            if (!currentAvatar || !currentAvatar.isActive) continue;
 
-        // JS Sort for rigorous "Fewest Partners" then "Oldest"
-        candidates.sort((a, b) => {
-            if (a.partners.length !== b.partners.length) {
-                return a.partners.length - b.partners.length; // 0 < 1 < 2
+            // If found space, return immediately (BFS guarantees this is the closest/highest slot)
+            if (currentAvatar.partners.length < 3) {
+                return currentAvatar;
             }
-            // If same partner count, prefer older
-            return a.createdAt.getTime() - b.createdAt.getTime();
-        });
 
-        return candidates[0];
+            // Enqueue children (Left-to-Right based on array order)
+            for (const partnerId of currentAvatar.partners) {
+                if (!visited.has(partnerId.toString())) {
+                    visited.add(partnerId.toString());
+                    queue.push(partnerId);
+                }
+            }
+        }
+
+        return null;
     }
 
     /**
-     * Place Avatar Logic
-     * 1. Try Direct Inviter's Avatar (if exists & has space)
-     * 2. Global Hungry Search
+     * Find Global Root for Type
+     * (Oldest Active Avatar of that type)
+     */
+    static async findGlobalRoot(type: AvatarType): Promise<IAvatar | null> {
+        return Avatar.findOne({ type, isActive: true }).sort({ createdAt: 1 });
+    }
+
+    /**
+     * Place Avatar Logic (BFS / Closest-to-Anchor)
+     * 1. Anchor: Direct Inviter's Oldest Avatar (Personal Root)
+     * 2. If no inviter or full, fallback to Global Root and search down.
      */
     static async placeAvatar(
         newAvatar: IAvatar,
         referrerId?: mongoose.Types.ObjectId
     ): Promise<{ parent: IAvatar | null }> {
         let parentAvatar: IAvatar | null = null;
+        let anchorAvatar: IAvatar | null = null;
 
-        // 1. Try Direct Inviter
+        // 1. Determine Anchor (Where to start searching)
         if (referrerId) {
-            // Find Referrer's avatar of same type that has space
-            // Prioritize oldest if multiple
-            parentAvatar = await Avatar.findOne({
+            // Find Referrer's "Root" avatar for this type (Oldest one)
+            // This defines their sub-matrix.
+            anchorAvatar = await Avatar.findOne({
                 owner: referrerId,
                 type: newAvatar.type,
-                isActive: true,
-                $expr: { $lt: [{ $size: "$partners" }, 3] }
+                isActive: true
             }).sort({ createdAt: 1 });
         }
 
-        // 2. Global Spillover (Common Queue)
+        // 2. Search under Anchor
+        if (anchorAvatar) {
+            parentAvatar = await this.findFirstEmptySlotBFS(anchorAvatar._id as mongoose.Types.ObjectId, newAvatar.type);
+        }
+
+        // 3. Fallback: Search under Global Root (Spillover from very top)
         if (!parentAvatar) {
-            console.log(`[Matrix] No space under referrer ${referrerId}, searching global hungry parent for ${newAvatar.type}`);
-            parentAvatar = await this.findGlobalHungryParent(newAvatar.type, newAvatar.owner);
+            // console.log(`[Matrix] No space under referrer ${referrerId}, searching from Global Root`);
+            const globalRoot = await this.findGlobalRoot(newAvatar.type);
+            if (globalRoot) {
+                // Search BFS from Global Root
+                parentAvatar = await this.findFirstEmptySlotBFS(globalRoot._id as mongoose.Types.ObjectId, newAvatar.type);
+            }
         }
 
         // Link
@@ -116,7 +131,6 @@ export class MatrixService {
             await parentAvatar.save();
         } else {
             console.warn(`[Matrix] ORPHAN AVATAR! No parent found for ${newAvatar._id} (${newAvatar.type})`);
-            // This happens only for the very first Root avatar
         }
 
         await newAvatar.save();
