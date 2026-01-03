@@ -79,10 +79,16 @@ export class FinanceController {
             if (!token) {
                 console.error('[Finance] CRITICAL: TELEGRAM_BOT_TOKEN is missing! Cannot notify admin.');
             } else if (adminIds.length > 0) {
+                let amountDisplay = `<b>$${deposit.amount}</b>`;
+                if (deposit.method === 'SBER_RUB') {
+                    const rubAmount = deposit.amount * 100;
+                    amountDisplay += ` (${rubAmount.toLocaleString('ru-RU')} ₽)`;
+                }
+
                 const adminMsg =
                     `💰 <b>Заявка на пополнение (Web)</b>\n` +
                     `👤 User ID: ${deposit.userId}\n` +
-                    `💵 Сумма: <b>$${deposit.amount}</b>\n` +
+                    `💵 Сумма: ${amountDisplay}\n` +
                     `💳 Способ: ${deposit.method}\n` +
                     `📄 ID заявки: ${deposit._id}`;
 
