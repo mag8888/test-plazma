@@ -64,14 +64,7 @@ export const partnershipApi = {
                 throw new Error(`Invalid userId for avatars: ${userId}`);
             }
 
-            const res = await fetch(url, {
-                method: 'GET',
-                mode: 'cors',
-                cache: 'no-store',
-                headers: {
-                    'Accept': 'application/json'
-                }
-            });
+            const res = await fetch(url);
 
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.json();
