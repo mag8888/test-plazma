@@ -114,30 +114,45 @@ app.use('/api/partnership', async (req, res) => {
 
         const urlObj = new URL(url);
 
-        // Filter headers to avoid conflicts (especially content-length mismatch after stringify)
+        // Filter headers to avoid conflicts
         const { 'content-length': cl, 'content-type': ct, connection, host, ...headers } = req.headers as any;
 
-        const response = await fetch(url, {
-            method: req.method,
-            headers: {
-                'Content-Type': 'application/json',
-                ...headers,
-                host: urlObj.host // Dynamic host
-            },
-            body: body
-        });
+        // Add Timeout
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 15000); // 15s Proxy Timeout
 
-        // Forward status and headers
-        res.status(response.status);
-        response.headers.forEach((v: string, k: string) => res.setHeader(k, v));
+        try {
+            const response = await fetch(url, {
+                method: req.method,
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...headers,
+                    host: urlObj.host // Dynamic host
+                },
+                body: body,
+                signal: controller.signal
+            });
+            clearTimeout(timeout);
 
-        // Forward text/json body
-        const text = await response.text();
-        res.send(text);
+            // Forward status and headers
+            res.status(response.status);
+            response.headers.forEach((v: string, k: string) => res.setHeader(k, v));
 
-    } catch (e) {
-        console.error('Partnership Proxy Error:', e);
-        res.status(502).json({ error: 'Partnership Service Unavailable' });
+            // Forward text/json body
+            const text = await response.text();
+            res.send(text);
+        } catch (fetchError: any) {
+            clearTimeout(timeout);
+            throw fetchError;
+        }
+
+    } catch (e: any) {
+        console.error('Partnership Proxy Error:', e.message);
+        if (e.name === 'AbortError') {
+            res.status(504).json({ error: 'Partnership Service Timeout' });
+        } else {
+            res.status(502).json({ error: 'Partnership Service Unavailable: ' + e.message });
+        }
     }
 });
 

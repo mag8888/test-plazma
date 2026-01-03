@@ -1529,23 +1529,43 @@ export default function AdminPage() {
                         avatarType={visualizeAvatar.type}
                         fetcher={async (url) => {
                             try {
-                                const id = visualizeAvatar.id; // Use ID from closure directly for safety
+                                const id = visualizeAvatar.id;
                                 if (!id) throw new Error("No ID");
 
+                                console.log('[MatrixFetch] Starting fetch for', id);
                                 const token = secret || localStorage.getItem('admin_secret') || '';
-                                const res = await fetch(`${ADMIN_PARTNERSHIP_URL}/avatars/matrix/${id}`, {
-                                    headers: {
-                                        'Content-Type': 'application/json',
-                                        'x-admin-secret': token
-                                    }
-                                });
 
-                                if (!res.ok) {
-                                    throw new Error(`Fetch failed: ${res.status}`);
+                                const controller = new AbortController();
+                                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s Timeout
+
+                                try {
+                                    const res = await fetch(`${ADMIN_PARTNERSHIP_URL}/avatars/matrix/${id}`, {
+                                        headers: {
+                                            'Content-Type': 'application/json',
+                                            'x-admin-secret': token
+                                        },
+                                        signal: controller.signal
+                                    });
+                                    clearTimeout(timeoutId);
+
+                                    console.log('[MatrixFetch] Response status:', res.status);
+                                    if (!res.ok) {
+                                        const text = await res.text();
+                                        console.error('[MatrixFetch] Error body:', text);
+                                        throw new Error(`Fetch failed: ${res.status}`);
+                                    }
+                                    return await res.json();
+                                } catch (fetchErr: any) {
+                                    clearTimeout(timeoutId);
+                                    if (fetchErr.name === 'AbortError') {
+                                        throw new Error('Timeout: Backend took too long to respond (>10s)');
+                                    }
+                                    throw fetchErr;
                                 }
-                                return await res.json();
-                            } catch (e) {
-                                console.error("Matrix fetch failed:", e);
+
+                            } catch (e: any) {
+                                console.error("Matrix fetch failed:", e.message);
+                                alert(`Error loading matrix: ${e.message}`); // Notify admin directly
                                 return null;
                             }
                         }}
