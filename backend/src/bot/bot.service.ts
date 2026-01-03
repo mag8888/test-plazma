@@ -1714,1211 +1714,1210 @@ export class BotService {
                     inline_keyboard: keyboard
                 }
             });
-        });
-    } catch(e) {
-        console.error("Error in handleClients:", e);
+        } catch (e) {
+            console.error("Error in handleClients:", e);
+        }
     }
-}
 
-handleCommunity(chatId: number) {
-    this.bot?.sendMessage(chatId, `Добро пожаловать в наше сообщество! 🌐\nПодключайся к чату: @Arctur_888`);
-}
+    handleCommunity(chatId: number) {
+        this.bot?.sendMessage(chatId, `Добро пожаловать в наше сообщество! 🌐\nПодключайся к чату: @Arctur_888`);
+    }
 
-handleAbout(chatId: number) {
-    this.bot?.sendMessage(chatId,
-        `«Энергия Денег» — это новая образовательная игра, созданная на основе принципов CashFlow.\n` +
-        `Она помогает менять мышление, прокачивать навыки и открывать новые финансовые возможности.`
-    );
-}
+    handleAbout(chatId: number) {
+        this.bot?.sendMessage(chatId,
+            `«Энергия Денег» — это новая образовательная игра, созданная на основе принципов CashFlow.\n` +
+            `Она помогает менять мышление, прокачивать навыки и открывать новые финансовые возможности.`
+        );
+    }
 
     async handlePartnership(chatId: number) {
-    const text = `🔺 **Маркетинг «Тринар» — как работает система**\n\n` +
-        `**1️⃣ Распределение оплат**\n` +
-        `С каждой оплаты приглашённого пользователя 100% суммы распределяется внутри системы:\n` +
-        `• 50% → на зелёный баланс пригласившего (доступно к выводу)\n` +
-        `• 50% → в жёлтый бонус (накапливается в структуре)\n\n` +
-        `**2️⃣ Аватар при подписке**\n` +
-        `При покупке любой подписки ($20, $100, $1000) вы получаете **Аватара**, который встает в структуру и начинает приносить доход.\n\n` +
-        `**3️⃣ Тарифы**\n` +
-        `🔵 **Игрок ($20)**: Доход $480 при закрытии 5 уровня.\n` +
-        `🟣 **Мастер ($100)**: Доход $2400.\n` +
-        `🔶 **Партнер ($1000)**: Доход $24,000.\n\n` +
-        `Денежная энергия работает на вас! 🚀`;
+        const text = `🔺 **Маркетинг «Тринар» — как работает система**\n\n` +
+            `**1️⃣ Распределение оплат**\n` +
+            `С каждой оплаты приглашённого пользователя 100% суммы распределяется внутри системы:\n` +
+            `• 50% → на зелёный баланс пригласившего (доступно к выводу)\n` +
+            `• 50% → в жёлтый бонус (накапливается в структуре)\n\n` +
+            `**2️⃣ Аватар при подписке**\n` +
+            `При покупке любой подписки ($20, $100, $1000) вы получаете **Аватара**, который встает в структуру и начинает приносить доход.\n\n` +
+            `**3️⃣ Тарифы**\n` +
+            `🔵 **Игрок ($20)**: Доход $480 при закрытии 5 уровня.\n` +
+            `🟣 **Мастер ($100)**: Доход $2400.\n` +
+            `🔶 **Партнер ($1000)**: Доход $24,000.\n\n` +
+            `Денежная энергия работает на вас! 🚀`;
 
-    this.bot?.sendMessage(chatId, text, { parse_mode: 'Markdown' });
-}
+        this.bot?.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+    }
 
     async handleBecomeMaster(chatId: number, telegramId: number) {
-    try {
-        const { UserModel } = await import('../models/user.model');
-        const user = await UserModel.findOne({ telegram_id: telegramId });
+        try {
+            const { UserModel } = await import('../models/user.model');
+            const user = await UserModel.findOne({ telegram_id: telegramId });
 
-        if (!user) {
-            this.bot?.sendMessage(chatId, "Ошибка профиля.");
-            return;
-        }
-
-        if (user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date()) {
-            this.bot?.sendMessage(chatId, `✅ Вы уже Мастер! Статус активен до ${user.masterExpiresAt.toLocaleDateString()}`);
-            this.sendMasterMenu(chatId);
-            return;
-        }
-
-        // Check Balance (GREEN only for Status)
-        if (user.referralBalance >= 100) {
-            user.referralBalance -= 100;
-            user.isMaster = true;
-            const nextYear = new Date();
-            nextYear.setFullYear(nextYear.getFullYear() + 1);
-            user.masterExpiresAt = nextYear;
-            await user.save();
-
-            this.bot?.sendMessage(chatId, `🎉 Поздравляем! Вы стали Мастером!\nСтатус активен до ${user.masterExpiresAt.toLocaleDateString()}\n\nТеперь вам доступна кнопка "Добавить игру".`);
-            this.sendMasterMenu(chatId);
-        } else {
-            this.bot?.sendMessage(chatId, `❌ Недостаточно средств на Зеленом балансе.\nВаш баланс: $${user.referralBalance}.\nСтоимость статуса: $100.`);
-        }
-
-    } catch (e) {
-        console.error("Error in become master:", e);
-    }
-}
-
-sendMasterMenu(chatId: number) {
-    this.bot?.sendMessage(chatId, "Меню Мастера активировано.", {
-        reply_markup: {
-            keyboard: [
-                [{ text: '➕ Добавить игру' }, { text: '📅 Ближайшие игры' }],
-                [{ text: '📋 Мои игры' }],
-                [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
-                [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
-                [{ text: 'ℹ️ О проекте' }]
-            ],
-            resize_keyboard: true
-        }
-    });
-}
-
-handleTransferStart(chatId: number) {
-    this.transferStates.set(chatId, { state: 'WAITING_USER' });
-    this.bot?.sendMessage(chatId, "💸 **Перевод средств (Зеленый баланс)**\n\nВведите Username или ID получателя:");
-}
-
-    async handleAddGameStart(chatId: number, telegramId ?: number) {
-    if (!telegramId) return;
-    const { UserModel } = await import('../models/user.model');
-    const user = await UserModel.findOne({ telegram_id: telegramId });
-
-    if (!user || !user.isMaster) {
-        this.bot?.sendMessage(chatId, "⛔️ Доступно только для Мастеров.");
-        return;
-    }
-
-    // Init State
-    this.masterStates.set(chatId, { state: 'WAITING_DATE' });
-
-    // Generate Dates (Next 14 days)
-    const buttons: any[] = [];
-    const now = new Date();
-
-    for (let i = 0; i < 14; i++) {
-        const d = new Date(now);
-        d.setDate(now.getDate() + i);
-
-        const dayStr = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'numeric' });
-        const weekday = d.toLocaleDateString('ru-RU', { weekday: 'short' });
-        const dateIso = d.toISOString().split('T')[0]; // YYYY-MM-DD
-
-        buttons.push({
-            text: `${dayStr} (${weekday})`,
-            callback_data: `date_select_${dateIso}`
-        });
-    }
-
-    // Group into rows of 3
-    const keyboard: any[] = [];
-    for (let i = 0; i < buttons.length; i += 3) {
-        keyboard.push(buttons.slice(i, i + 3));
-    }
-
-    this.bot?.sendMessage(chatId, "📅 Выберите дату игры:", {
-        reply_markup: { inline_keyboard: keyboard }
-    });
-}
-
-    async handleDateSelection(chatId: number, dateIso: string) {
-    const state = this.masterStates.get(chatId);
-    if (!state) return;
-
-    state.gameData = { dateIso: dateIso };
-    state.state = 'WAITING_TIME'; // Update state to allow manual input
-
-    // Time Slots
-    const times = ['09:00', '10:00', '12:00', '13:00', '14:00', '16:00', '18:00', '20:00', '21:00', '22:00'];
-    const buttons = times.map(t => ({ text: t, callback_data: `time_select_${t}` }));
-
-    // Group rows of 4
-    const keyboard: any[] = [];
-    for (let i = 0; i < buttons.length; i += 4) {
-        keyboard.push(buttons.slice(i, i + 4));
-    }
-
-    this.bot?.sendMessage(chatId, `🗓 Дата: ${dateIso}\n⏰ Выберите время (МСК):`, {
-        reply_markup: { inline_keyboard: keyboard }
-    });
-}
-
-    async handleTimeSelection(chatId: number, timeStr: string) {
-    const state = this.masterStates.get(chatId);
-    if (!state || !state.gameData || !state.gameData.dateIso) {
-        this.bot?.sendMessage(chatId, "⚠️ Ошибка состояния. Начните заново.");
-        return;
-    }
-
-    // Combine
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const dateParts = state.gameData.dateIso.split('-').map(Number); // YYYY, MM, DD
-
-    // Create Date object assuming input is MSK (UTC+3)
-    // We want to store 13:00 MSK as 10:00 UTC.
-    // If we use new Date(...hours...), server (UTC) creates 13:00 UTC.
-    // So we need to subtract 3 hours from the input hours.
-
-    // Easier: Create as UTC then subtract 3 hours
-    const finalDate = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2], hours, minutes));
-    finalDate.setHours(finalDate.getHours() - 3);
-
-    state.gameData.startTime = finalDate;
-    state.state = 'WAITING_MAX';
-
-    this.bot?.sendMessage(chatId, `✅ Дата и время: ${finalDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК)\n\n👥 Введите макс. кол-во игроков (по умолчанию 8):`);
-}
-
-    async handleSchedule(chatId: number) {
-    try {
-        const now = new Date();
-        const games = await ScheduledGameModel.find({
-            startTime: { $gt: now },
-            status: 'SCHEDULED'
-        }).sort({ startTime: 1 }).limit(10); // Show next 10 games
-
-        if (games.length === 0) {
-            this.bot?.sendMessage(chatId, "😔 Пока нет запланированных игр.\nЗагляните позже!");
-            return;
-        }
-
-        // Determine requester status
-        const requester = await UserModel.findOne({ telegram_id: chatId });
-        const isRequesterMaster = requester?.isMaster || false;
-
-        for (const game of games) {
-            const cardData = await this.renderGameCard(game, chatId);
-            this.bot?.sendMessage(chatId, cardData.text, {
-                parse_mode: 'Markdown',
-                reply_markup: cardData.reply_markup
-            });
-        }
-
-    } catch (e) {
-        console.error(e);
-        this.bot?.sendMessage(chatId, "Ошибка загрузки расписания.");
-    }
-}
-
-    async handleMyGames(chatId: number, telegramId: number) {
-    try {
-        const user = await UserModel.findOne({ telegram_id: telegramId });
-        if (!user) return;
-
-        const games = await ScheduledGameModel.find({
-            hostId: user._id,
-            status: 'SCHEDULED',
-            startTime: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
-        }).sort({ startTime: 1 });
-
-        if (games.length === 0) {
-            this.bot?.sendMessage(chatId, "У вас пока нет запланированных игр.");
-            return;
-        }
-
-        this.bot?.sendMessage(chatId, "📋 **Ваши игры:**", { parse_mode: 'Markdown' });
-
-        for (const game of games) {
-            const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
-                day: 'numeric',
-                month: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit',
-                timeZone: 'Europe/Moscow'
-            });
-            const participantsCount = game.participants.length;
-
-            this.bot?.sendMessage(chatId, `🗓 ${dateStr} (МСК)\n👥 ${participantsCount}/${game.maxPlayers}`, {
-                reply_markup: {
-                    inline_keyboard: [[{ text: '⚙️ Управление', callback_data: `manage_game_${game._id}` }]]
-                }
-            });
-        }
-
-    } catch (e) {
-        console.error(e);
-        this.bot?.sendMessage(chatId, "Ошибка загрузки списка игр.");
-    }
-}
-
-    async handleManageGame(chatId: number, gameId: string) {
-    try {
-        const game = await ScheduledGameModel.findById(gameId);
-        if (!game) {
-            this.bot?.sendMessage(chatId, "Игра не найдена.");
-            return;
-        }
-
-        const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
-            day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow'
-        });
-
-        const text = `⚙️ **Управление игрой**\n\n🗓 ${dateStr} (МСК)\n👥 Мест: ${game.participants.length}/${game.maxPlayers}\n🎟 Промо: ${game.participants.filter((p: any) => p.type === 'PROMO').length}/${game.promoSpots}`;
-
-        this.bot?.sendMessage(chatId, text, {
-            parse_mode: 'Markdown',
-            reply_markup: {
-                inline_keyboard: [
-                    [
-                        { text: '✏️ Время', callback_data: `edit_time_${game._id}` },
-                        { text: '👥 Места', callback_data: `edit_max_${game._id}` },
-                        { text: '🎟 Промо', callback_data: `edit_promo_${game._id}` }
-                    ],
-                    [
-                        { text: '👥 Участники', callback_data: `view_participants_${game._id}` },
-                        { text: '➕ Игрок', callback_data: `add_player_${game._id}` }
-                    ],
-                    [{ text: '📢 Рассылка', callback_data: `broadcast_game_${game._id}` }],
-                    [{ text: '❌ Отменить игру', callback_data: `cancel_game_${game._id}` }]
-                ]
+            if (!user) {
+                this.bot?.sendMessage(chatId, "Ошибка профиля.");
+                return;
             }
-        });
 
-    } catch (e) {
-        console.error(e);
-        this.bot?.sendMessage(chatId, "Ошибка.");
-    }
-}
-
-    async handleViewParticipants(chatId: number, gameId: string) {
-    try {
-        const { ScheduledGameModel } = await import('../models/scheduled-game.model');
-        const { UserModel } = await import('../models/user.model');
-        const game = await ScheduledGameModel.findById(gameId);
-        if (!game) return;
-
-        if (game.participants.length === 0) {
-            this.bot?.sendMessage(chatId, "Нет участников.");
-            return;
-        }
-
-        for (const p of game.participants) {
-            // For privacy, maybe just show name and verify status
-            const user = await UserModel.findById(p.userId);
-            const name = user ? (user.username ? `@${user.username}` : user.first_name) : 'Unknown';
-            const status = p.isVerified ? '✅' : '⏳';
-            const type = p.type === 'PAID' ? '💰' : '🎟';
-
-            this.bot?.sendMessage(chatId, `${status} ${type} ${name}`, {
-                reply_markup: {
-                    inline_keyboard: [[
-                        { text: '⚙️ Управление', callback_data: `manage_player_${game._id}_${p.userId}` }
-                    ]]
-                }
-            });
-        }
-
-    } catch (e) {
-        console.error(e);
-        this.bot?.sendMessage(chatId, "Ошибка.");
-    }
-}
-
-    async handleManagePlayer(chatId: number, gameId: string, userId: string) {
-    // Show actions for specific player
-    try {
-        const { UserModel } = await import('../models/user.model');
-        const user = await UserModel.findById(userId);
-        if (!user) return;
-
-        this.bot?.sendMessage(chatId, `👤 Игрок: ${user.first_name}(@${user.username})`, {
-            reply_markup: {
-                inline_keyboard: [
-                    [{ text: '✍️ Написать', url: `tg://user?id=${user.telegram_id}` }],
-                    [{ text: '❌ Исключить', callback_data: `kick_player_${gameId}_${userId}` }]
-                ]
+            if (user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date()) {
+                this.bot?.sendMessage(chatId, `✅ Вы уже Мастер! Статус активен до ${user.masterExpiresAt.toLocaleDateString()}`);
+                this.sendMasterMenu(chatId);
+                return;
             }
-        });
-    } catch (e) { console.error(e); }
-}
 
-    async handleKickPlayer(chatId: number, gameId: string, userId: string) {
-    try {
-        const { ScheduledGameModel } = await import('../models/scheduled-game.model');
-        const { UserModel } = await import('../models/user.model');
-        const game = await ScheduledGameModel.findById(gameId);
+            // Check Balance (GREEN only for Status)
+            if (user.referralBalance >= 100) {
+                user.referralBalance -= 100;
+                user.isMaster = true;
+                const nextYear = new Date();
+                nextYear.setFullYear(nextYear.getFullYear() + 1);
+                user.masterExpiresAt = nextYear;
+                await user.save();
 
-        if (game) {
-            const pIndex = game.participants.findIndex((p: any) => p.userId.toString() === userId);
-            if (pIndex > -1) {
-                game.participants.splice(pIndex, 1);
-                await game.save();
-                this.bot?.sendMessage(chatId, "✅ Игрок исключен.");
-
-                // Notify user
-                const user = await UserModel.findById(userId);
-                if (user) {
-                    this.bot?.sendMessage(user.telegram_id, `❌ Вы были исключены из игры ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}.`);
-                }
+                this.bot?.sendMessage(chatId, `🎉 Поздравляем! Вы стали Мастером!\nСтатус активен до ${user.masterExpiresAt.toLocaleDateString()}\n\nТеперь вам доступна кнопка "Добавить игру".`);
+                this.sendMasterMenu(chatId);
             } else {
-                this.bot?.sendMessage(chatId, "Игрок не найден в списке.");
+                this.bot?.sendMessage(chatId, `❌ Недостаточно средств на Зеленом балансе.\nВаш баланс: $${user.referralBalance}.\nСтоимость статуса: $100.`);
             }
-        }
-    } catch (e) { console.error(e); }
-}
 
-    async handleCancelGame(chatId: number, gameId: string) {
-    try {
-        const { ScheduledGameModel } = await import('../models/scheduled-game.model');
-        const { UserModel } = await import('../models/user.model');
-        const game = await ScheduledGameModel.findById(gameId);
-        if (!game) {
-            this.bot?.sendMessage(chatId, "Игра не найдена.");
-            return;
+        } catch (e) {
+            console.error("Error in become master:", e);
         }
+    }
 
-        // Notify all
-        for (const p of game.participants) {
-            const user = await UserModel.findById(p.userId);
-            if (user) {
-                this.bot?.sendMessage(user.telegram_id, `⚠️ Игра ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} была отменена организатором.`);
+    sendMasterMenu(chatId: number) {
+        this.bot?.sendMessage(chatId, "Меню Мастера активировано.", {
+            reply_markup: {
+                keyboard: [
+                    [{ text: '➕ Добавить игру' }, { text: '📅 Ближайшие игры' }],
+                    [{ text: '📋 Мои игры' }],
+                    [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
+                    [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
+                    [{ text: 'ℹ️ О проекте' }]
+                ],
+                resize_keyboard: true
             }
-        }
+        });
+    }
 
-        // Delete
-        await ScheduledGameModel.findByIdAndDelete(gameId);
+    handleTransferStart(chatId: number) {
+        this.transferStates.set(chatId, { state: 'WAITING_USER' });
+        this.bot?.sendMessage(chatId, "💸 **Перевод средств (Зеленый баланс)**\n\nВведите Username или ID получателя:");
+    }
 
-        this.bot?.sendMessage(chatId, "✅ Игра отменена и удалена из расписания.");
-    } catch (e) { console.error(e); }
-}
-
-    async handleJoinGame(chatId: number, telegramId: number, gameId: string, type: 'PROMO' | 'PAY_RED' | 'PAY_GREEN' | 'PAY_SPOT') {
-    try {
-        const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+    async handleAddGameStart(chatId: number, telegramId?: number) {
+        if (!telegramId) return;
         const { UserModel } = await import('../models/user.model');
-
-        const game = await ScheduledGameModel.findById(gameId);
         const user = await UserModel.findOne({ telegram_id: telegramId });
 
-        if (!game || !user) {
-            this.bot?.sendMessage(chatId, "Игра или пользователь не найдены.");
+        if (!user || !user.isMaster) {
+            this.bot?.sendMessage(chatId, "⛔️ Доступно только для Мастеров.");
             return;
         }
 
-        // Check if already registered
-        if (game.participants.some((p: any) => p.userId.toString() === user._id.toString())) {
-            this.bot?.sendMessage(chatId, "⚠️ Вы уже записаны на эту игру!");
-            return;
+        // Init State
+        this.masterStates.set(chatId, { state: 'WAITING_DATE' });
+
+        // Generate Dates (Next 14 days)
+        const buttons: any[] = [];
+        const now = new Date();
+
+        for (let i = 0; i < 14; i++) {
+            const d = new Date(now);
+            d.setDate(now.getDate() + i);
+
+            const dayStr = d.toLocaleDateString('ru-RU', { day: 'numeric', month: 'numeric' });
+            const weekday = d.toLocaleDateString('ru-RU', { weekday: 'short' });
+            const dateIso = d.toISOString().split('T')[0]; // YYYY-MM-DD
+
+            buttons.push({
+                text: `${dayStr} (${weekday})`,
+                callback_data: `date_select_${dateIso}`
+            });
         }
 
-        // Check Limits
-        const promoCount = game.participants.filter((p: any) => p.type === 'PROMO').length;
-        const paidCount = game.participants.filter((p: any) => p.type === 'PAID' || p.type === 'PAY_RED' || p.type === 'PAY_GREEN' || p.type === 'PAY_SPOT').length; // Simplify: just non-promo
-
-        // Actually, we store 'PAID' broadly or specific? 
-        // The backend update stored 'PAID' for all paid types, but maybe we should be consistent.
-        // Let's stick to what we decided: Backend stores `type: 'PAID'` but logic depends on input.
-        // Wait, backend update: `type: type === 'PROMO' ? 'PROMO' : 'PAID', ... paymentMethod: type`
-        // Bot should do same.
-
-        const freeSpots = game.promoSpots - promoCount;
-        const paidSpots = (game.maxPlayers - game.promoSpots) - paidCount;
-
-        let paymentStatus = 'PENDING';
-        let storedType = 'PAID';
-
-        if (type === 'PROMO') {
-            if (freeSpots <= 0) {
-                this.bot?.sendMessage(chatId, "😔 Промо-места закончились.");
-                return;
-            }
-            storedType = 'PROMO';
-            paymentStatus = 'PROMO'; // or n/a
-        } else {
-            // PAID TYPES
-            if (paidSpots <= 0) {
-                this.bot?.sendMessage(chatId, "😔 Платные места закончились!");
-                return;
-            }
-
-            if (type === 'PAY_SPOT') {
-                paymentStatus = 'PAY_AT_GAME';
-            } else if (type === 'PAY_RED') {
-                if (user.balanceRed >= 20) {
-                    user.balanceRed -= 20;
-                    await user.save();
-                    paymentStatus = 'PAID';
-                } else {
-                    this.bot?.sendMessage(chatId, `❌ Недостаточно средств на Красном счете ($20).\nБаланс: $${user.balanceRed}`);
-                    return;
-                }
-            } else if (type === 'PAY_GREEN') {
-                if (user.referralBalance >= 20) {
-                    user.referralBalance -= 20;
-                    await user.save();
-                    paymentStatus = 'PAID';
-                } else {
-                    this.bot?.sendMessage(chatId, `❌ Недостаточно средств на Зеленом счете ($20).\nБаланс: $${user.referralBalance}`);
-                    return;
-                }
-            }
+        // Group into rows of 3
+        const keyboard: any[] = [];
+        for (let i = 0; i < buttons.length; i += 3) {
+            keyboard.push(buttons.slice(i, i + 3));
         }
 
-        game.participants.push({
-            userId: user._id,
-            username: user.username,
-            firstName: user.first_name || 'Игрок',
-            type: storedType,
-            paymentMethod: type, // Store specific method for reference
-            paymentStatus: paymentStatus,
-            joinedAt: new Date(),
-            isVerified: storedType === 'PAID' || type === 'PAY_SPOT' ? false : true // Spot needs verify? Or auto? Let's say Spot/Promo is verified? Actually paid is verified. Spot might need manual confirm?
-            // Let's standardise: 
-            // PAID (Red/Green) -> Auto Verified (Money taken)
-            // SPOT -> Not Verified (Needs Master to confirm cash?) -> Current logic said "Onsite... Requires master confirmation"
-            // PROMO -> Auto Verified (as per recent changes)
-        });
-
-        // Adjust verification logic
-        const lastP = game.participants[game.participants.length - 1];
-        if (paymentStatus === 'PAID') lastP.isVerified = true;
-        if (storedType === 'PROMO') lastP.isVerified = true;
-        if (type === 'PAY_SPOT') lastP.isVerified = false;
-
-        await game.save();
-
-        // Notify User
-        let msg = `✅ Вы записаны! (${type === 'PROMO' ? 'Promo' : type === 'PAY_SPOT' ? 'Оплата на месте' : 'Оплачено'})\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК)`;
-        if (type === 'PAY_SPOT') msg += `\n💰 Оплата $20 мастеру на игре.`;
-
-        this.bot?.sendMessage(chatId, msg, {
-            reply_markup: {
-                inline_keyboard: [[{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]]
-            }
-        });
-
-        // Notify Master
-        const host = await UserModel.findById(game.hostId);
-        if (host) {
-            const methodText = type === 'PROMO' ? 'Promo' : type === 'PAY_RED' ? 'Red Balance' : type === 'PAY_GREEN' ? 'Green Balance' : 'On Spot';
-            this.bot?.sendMessage(host.telegram_id,
-                `🆕 Игрок ${user.first_name} (@${user.username}) записался.\nТип: ${methodText}\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`,
-                {
-                    reply_markup: {
-                        inline_keyboard: [[
-                            { text: '✅ Подтвердить', callback_data: `confirm_player_${game._id}_${user._id}` },
-                            { text: '❌ Отменить', callback_data: `reject_player_${game._id}_${user._id}` }
-                        ]]
-                    }
-                }
-            );
-        }
-
-    } catch (e) {
-        console.error("Join error:", e);
-        this.bot?.sendMessage(chatId, "Ошибка записи на игру.");
-    }
-}
-
-    async showJoinOptions(chatId: number, gameId: string) {
-    try {
-        const { ScheduledGameModel } = await import('../models/scheduled-game.model');
-        const game = await ScheduledGameModel.findById(gameId);
-        if (!game) return;
-
-        const promoCount = game.participants.filter((p: any) => p.type === 'PROMO').length;
-        const freeSpots = game.promoSpots - promoCount;
-
-        const keyboard = [];
-
-        // 1. Red Balance
-        keyboard.push([{ text: '1. Списать с баланса красный бонус ($20)', callback_data: `join_red_${game._id}` }]);
-
-        // 2. Green Balance
-        keyboard.push([{ text: '2. Списать с баланса зеленый бонус ($20)', callback_data: `join_green_${game._id}` }]);
-
-        // 3. On Spot
-        keyboard.push([{ text: '3. Оплатить на месте ($20)', callback_data: `join_onsite_${game._id}` }]);
-
-        // 4. Promo
-        if (freeSpots > 0) {
-            keyboard.push([{ text: '4. Промо (Бесплатно)', callback_data: `join_promo_${game._id}` }]);
-        }
-
-        keyboard.push([{ text: '🔙 Назад', callback_data: `view_game_${game._id}` }]); // Assuming view_game callback exists or just cancel
-
-        this.bot?.sendMessage(chatId, "👇 Выберите способ оплаты:", {
+        this.bot?.sendMessage(chatId, "📅 Выберите дату игры:", {
             reply_markup: { inline_keyboard: keyboard }
         });
+    }
 
-    } catch (e) { console.error(e); }
-}
+    async handleDateSelection(chatId: number, dateIso: string) {
+        const state = this.masterStates.get(chatId);
+        if (!state) return;
+
+        state.gameData = { dateIso: dateIso };
+        state.state = 'WAITING_TIME'; // Update state to allow manual input
+
+        // Time Slots
+        const times = ['09:00', '10:00', '12:00', '13:00', '14:00', '16:00', '18:00', '20:00', '21:00', '22:00'];
+        const buttons = times.map(t => ({ text: t, callback_data: `time_select_${t}` }));
+
+        // Group rows of 4
+        const keyboard: any[] = [];
+        for (let i = 0; i < buttons.length; i += 4) {
+            keyboard.push(buttons.slice(i, i + 4));
+        }
+
+        this.bot?.sendMessage(chatId, `🗓 Дата: ${dateIso}\n⏰ Выберите время (МСК):`, {
+            reply_markup: { inline_keyboard: keyboard }
+        });
+    }
+
+    async handleTimeSelection(chatId: number, timeStr: string) {
+        const state = this.masterStates.get(chatId);
+        if (!state || !state.gameData || !state.gameData.dateIso) {
+            this.bot?.sendMessage(chatId, "⚠️ Ошибка состояния. Начните заново.");
+            return;
+        }
+
+        // Combine
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        const dateParts = state.gameData.dateIso.split('-').map(Number); // YYYY, MM, DD
+
+        // Create Date object assuming input is MSK (UTC+3)
+        // We want to store 13:00 MSK as 10:00 UTC.
+        // If we use new Date(...hours...), server (UTC) creates 13:00 UTC.
+        // So we need to subtract 3 hours from the input hours.
+
+        // Easier: Create as UTC then subtract 3 hours
+        const finalDate = new Date(Date.UTC(dateParts[0], dateParts[1] - 1, dateParts[2], hours, minutes));
+        finalDate.setHours(finalDate.getHours() - 3);
+
+        state.gameData.startTime = finalDate;
+        state.state = 'WAITING_MAX';
+
+        this.bot?.sendMessage(chatId, `✅ Дата и время: ${finalDate.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК)\n\n👥 Введите макс. кол-во игроков (по умолчанию 8):`);
+    }
+
+    async handleSchedule(chatId: number) {
+        try {
+            const now = new Date();
+            const games = await ScheduledGameModel.find({
+                startTime: { $gt: now },
+                status: 'SCHEDULED'
+            }).sort({ startTime: 1 }).limit(10); // Show next 10 games
+
+            if (games.length === 0) {
+                this.bot?.sendMessage(chatId, "😔 Пока нет запланированных игр.\nЗагляните позже!");
+                return;
+            }
+
+            // Determine requester status
+            const requester = await UserModel.findOne({ telegram_id: chatId });
+            const isRequesterMaster = requester?.isMaster || false;
+
+            for (const game of games) {
+                const cardData = await this.renderGameCard(game, chatId);
+                this.bot?.sendMessage(chatId, cardData.text, {
+                    parse_mode: 'Markdown',
+                    reply_markup: cardData.reply_markup
+                });
+            }
+
+        } catch (e) {
+            console.error(e);
+            this.bot?.sendMessage(chatId, "Ошибка загрузки расписания.");
+        }
+    }
+
+    async handleMyGames(chatId: number, telegramId: number) {
+        try {
+            const user = await UserModel.findOne({ telegram_id: telegramId });
+            if (!user) return;
+
+            const games = await ScheduledGameModel.find({
+                hostId: user._id,
+                status: 'SCHEDULED',
+                startTime: { $gt: new Date(Date.now() - 24 * 60 * 60 * 1000) }
+            }).sort({ startTime: 1 });
+
+            if (games.length === 0) {
+                this.bot?.sendMessage(chatId, "У вас пока нет запланированных игр.");
+                return;
+            }
+
+            this.bot?.sendMessage(chatId, "📋 **Ваши игры:**", { parse_mode: 'Markdown' });
+
+            for (const game of games) {
+                const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
+                    day: 'numeric',
+                    month: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: 'Europe/Moscow'
+                });
+                const participantsCount = game.participants.length;
+
+                this.bot?.sendMessage(chatId, `🗓 ${dateStr} (МСК)\n👥 ${participantsCount}/${game.maxPlayers}`, {
+                    reply_markup: {
+                        inline_keyboard: [[{ text: '⚙️ Управление', callback_data: `manage_game_${game._id}` }]]
+                    }
+                });
+            }
+
+        } catch (e) {
+            console.error(e);
+            this.bot?.sendMessage(chatId, "Ошибка загрузки списка игр.");
+        }
+    }
+
+    async handleManageGame(chatId: number, gameId: string) {
+        try {
+            const game = await ScheduledGameModel.findById(gameId);
+            if (!game) {
+                this.bot?.sendMessage(chatId, "Игра не найдена.");
+                return;
+            }
+
+            const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
+                day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow'
+            });
+
+            const text = `⚙️ **Управление игрой**\n\n🗓 ${dateStr} (МСК)\n👥 Мест: ${game.participants.length}/${game.maxPlayers}\n🎟 Промо: ${game.participants.filter((p: any) => p.type === 'PROMO').length}/${game.promoSpots}`;
+
+            this.bot?.sendMessage(chatId, text, {
+                parse_mode: 'Markdown',
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: '✏️ Время', callback_data: `edit_time_${game._id}` },
+                            { text: '👥 Места', callback_data: `edit_max_${game._id}` },
+                            { text: '🎟 Промо', callback_data: `edit_promo_${game._id}` }
+                        ],
+                        [
+                            { text: '👥 Участники', callback_data: `view_participants_${game._id}` },
+                            { text: '➕ Игрок', callback_data: `add_player_${game._id}` }
+                        ],
+                        [{ text: '📢 Рассылка', callback_data: `broadcast_game_${game._id}` }],
+                        [{ text: '❌ Отменить игру', callback_data: `cancel_game_${game._id}` }]
+                    ]
+                }
+            });
+
+        } catch (e) {
+            console.error(e);
+            this.bot?.sendMessage(chatId, "Ошибка.");
+        }
+    }
+
+    async handleViewParticipants(chatId: number, gameId: string) {
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const { UserModel } = await import('../models/user.model');
+            const game = await ScheduledGameModel.findById(gameId);
+            if (!game) return;
+
+            if (game.participants.length === 0) {
+                this.bot?.sendMessage(chatId, "Нет участников.");
+                return;
+            }
+
+            for (const p of game.participants) {
+                // For privacy, maybe just show name and verify status
+                const user = await UserModel.findById(p.userId);
+                const name = user ? (user.username ? `@${user.username}` : user.first_name) : 'Unknown';
+                const status = p.isVerified ? '✅' : '⏳';
+                const type = p.type === 'PAID' ? '💰' : '🎟';
+
+                this.bot?.sendMessage(chatId, `${status} ${type} ${name}`, {
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: '⚙️ Управление', callback_data: `manage_player_${game._id}_${p.userId}` }
+                        ]]
+                    }
+                });
+            }
+
+        } catch (e) {
+            console.error(e);
+            this.bot?.sendMessage(chatId, "Ошибка.");
+        }
+    }
+
+    async handleManagePlayer(chatId: number, gameId: string, userId: string) {
+        // Show actions for specific player
+        try {
+            const { UserModel } = await import('../models/user.model');
+            const user = await UserModel.findById(userId);
+            if (!user) return;
+
+            this.bot?.sendMessage(chatId, `👤 Игрок: ${user.first_name}(@${user.username})`, {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '✍️ Написать', url: `tg://user?id=${user.telegram_id}` }],
+                        [{ text: '❌ Исключить', callback_data: `kick_player_${gameId}_${userId}` }]
+                    ]
+                }
+            });
+        } catch (e) { console.error(e); }
+    }
+
+    async handleKickPlayer(chatId: number, gameId: string, userId: string) {
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const { UserModel } = await import('../models/user.model');
+            const game = await ScheduledGameModel.findById(gameId);
+
+            if (game) {
+                const pIndex = game.participants.findIndex((p: any) => p.userId.toString() === userId);
+                if (pIndex > -1) {
+                    game.participants.splice(pIndex, 1);
+                    await game.save();
+                    this.bot?.sendMessage(chatId, "✅ Игрок исключен.");
+
+                    // Notify user
+                    const user = await UserModel.findById(userId);
+                    if (user) {
+                        this.bot?.sendMessage(user.telegram_id, `❌ Вы были исключены из игры ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}.`);
+                    }
+                } else {
+                    this.bot?.sendMessage(chatId, "Игрок не найден в списке.");
+                }
+            }
+        } catch (e) { console.error(e); }
+    }
+
+    async handleCancelGame(chatId: number, gameId: string) {
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const { UserModel } = await import('../models/user.model');
+            const game = await ScheduledGameModel.findById(gameId);
+            if (!game) {
+                this.bot?.sendMessage(chatId, "Игра не найдена.");
+                return;
+            }
+
+            // Notify all
+            for (const p of game.participants) {
+                const user = await UserModel.findById(p.userId);
+                if (user) {
+                    this.bot?.sendMessage(user.telegram_id, `⚠️ Игра ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} была отменена организатором.`);
+                }
+            }
+
+            // Delete
+            await ScheduledGameModel.findByIdAndDelete(gameId);
+
+            this.bot?.sendMessage(chatId, "✅ Игра отменена и удалена из расписания.");
+        } catch (e) { console.error(e); }
+    }
+
+    async handleJoinGame(chatId: number, telegramId: number, gameId: string, type: 'PROMO' | 'PAY_RED' | 'PAY_GREEN' | 'PAY_SPOT') {
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const { UserModel } = await import('../models/user.model');
+
+            const game = await ScheduledGameModel.findById(gameId);
+            const user = await UserModel.findOne({ telegram_id: telegramId });
+
+            if (!game || !user) {
+                this.bot?.sendMessage(chatId, "Игра или пользователь не найдены.");
+                return;
+            }
+
+            // Check if already registered
+            if (game.participants.some((p: any) => p.userId.toString() === user._id.toString())) {
+                this.bot?.sendMessage(chatId, "⚠️ Вы уже записаны на эту игру!");
+                return;
+            }
+
+            // Check Limits
+            const promoCount = game.participants.filter((p: any) => p.type === 'PROMO').length;
+            const paidCount = game.participants.filter((p: any) => p.type === 'PAID' || p.type === 'PAY_RED' || p.type === 'PAY_GREEN' || p.type === 'PAY_SPOT').length; // Simplify: just non-promo
+
+            // Actually, we store 'PAID' broadly or specific? 
+            // The backend update stored 'PAID' for all paid types, but maybe we should be consistent.
+            // Let's stick to what we decided: Backend stores `type: 'PAID'` but logic depends on input.
+            // Wait, backend update: `type: type === 'PROMO' ? 'PROMO' : 'PAID', ... paymentMethod: type`
+            // Bot should do same.
+
+            const freeSpots = game.promoSpots - promoCount;
+            const paidSpots = (game.maxPlayers - game.promoSpots) - paidCount;
+
+            let paymentStatus = 'PENDING';
+            let storedType = 'PAID';
+
+            if (type === 'PROMO') {
+                if (freeSpots <= 0) {
+                    this.bot?.sendMessage(chatId, "😔 Промо-места закончились.");
+                    return;
+                }
+                storedType = 'PROMO';
+                paymentStatus = 'PROMO'; // or n/a
+            } else {
+                // PAID TYPES
+                if (paidSpots <= 0) {
+                    this.bot?.sendMessage(chatId, "😔 Платные места закончились!");
+                    return;
+                }
+
+                if (type === 'PAY_SPOT') {
+                    paymentStatus = 'PAY_AT_GAME';
+                } else if (type === 'PAY_RED') {
+                    if (user.balanceRed >= 20) {
+                        user.balanceRed -= 20;
+                        await user.save();
+                        paymentStatus = 'PAID';
+                    } else {
+                        this.bot?.sendMessage(chatId, `❌ Недостаточно средств на Красном счете ($20).\nБаланс: $${user.balanceRed}`);
+                        return;
+                    }
+                } else if (type === 'PAY_GREEN') {
+                    if (user.referralBalance >= 20) {
+                        user.referralBalance -= 20;
+                        await user.save();
+                        paymentStatus = 'PAID';
+                    } else {
+                        this.bot?.sendMessage(chatId, `❌ Недостаточно средств на Зеленом счете ($20).\nБаланс: $${user.referralBalance}`);
+                        return;
+                    }
+                }
+            }
+
+            game.participants.push({
+                userId: user._id,
+                username: user.username,
+                firstName: user.first_name || 'Игрок',
+                type: storedType,
+                paymentMethod: type, // Store specific method for reference
+                paymentStatus: paymentStatus,
+                joinedAt: new Date(),
+                isVerified: storedType === 'PAID' || type === 'PAY_SPOT' ? false : true // Spot needs verify? Or auto? Let's say Spot/Promo is verified? Actually paid is verified. Spot might need manual confirm?
+                // Let's standardise: 
+                // PAID (Red/Green) -> Auto Verified (Money taken)
+                // SPOT -> Not Verified (Needs Master to confirm cash?) -> Current logic said "Onsite... Requires master confirmation"
+                // PROMO -> Auto Verified (as per recent changes)
+            });
+
+            // Adjust verification logic
+            const lastP = game.participants[game.participants.length - 1];
+            if (paymentStatus === 'PAID') lastP.isVerified = true;
+            if (storedType === 'PROMO') lastP.isVerified = true;
+            if (type === 'PAY_SPOT') lastP.isVerified = false;
+
+            await game.save();
+
+            // Notify User
+            let msg = `✅ Вы записаны! (${type === 'PROMO' ? 'Promo' : type === 'PAY_SPOT' ? 'Оплата на месте' : 'Оплачено'})\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })} (МСК)`;
+            if (type === 'PAY_SPOT') msg += `\n💰 Оплата $20 мастеру на игре.`;
+
+            this.bot?.sendMessage(chatId, msg, {
+                reply_markup: {
+                    inline_keyboard: [[{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]]
+                }
+            });
+
+            // Notify Master
+            const host = await UserModel.findById(game.hostId);
+            if (host) {
+                const methodText = type === 'PROMO' ? 'Promo' : type === 'PAY_RED' ? 'Red Balance' : type === 'PAY_GREEN' ? 'Green Balance' : 'On Spot';
+                this.bot?.sendMessage(host.telegram_id,
+                    `🆕 Игрок ${user.first_name} (@${user.username}) записался.\nТип: ${methodText}\n📅 ${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`,
+                    {
+                        reply_markup: {
+                            inline_keyboard: [[
+                                { text: '✅ Подтвердить', callback_data: `confirm_player_${game._id}_${user._id}` },
+                                { text: '❌ Отменить', callback_data: `reject_player_${game._id}_${user._id}` }
+                            ]]
+                        }
+                    }
+                );
+            }
+
+        } catch (e) {
+            console.error("Join error:", e);
+            this.bot?.sendMessage(chatId, "Ошибка записи на игру.");
+        }
+    }
+
+    async showJoinOptions(chatId: number, gameId: string) {
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const game = await ScheduledGameModel.findById(gameId);
+            if (!game) return;
+
+            const promoCount = game.participants.filter((p: any) => p.type === 'PROMO').length;
+            const freeSpots = game.promoSpots - promoCount;
+
+            const keyboard = [];
+
+            // 1. Red Balance
+            keyboard.push([{ text: '1. Списать с баланса красный бонус ($20)', callback_data: `join_red_${game._id}` }]);
+
+            // 2. Green Balance
+            keyboard.push([{ text: '2. Списать с баланса зеленый бонус ($20)', callback_data: `join_green_${game._id}` }]);
+
+            // 3. On Spot
+            keyboard.push([{ text: '3. Оплатить на месте ($20)', callback_data: `join_onsite_${game._id}` }]);
+
+            // 4. Promo
+            if (freeSpots > 0) {
+                keyboard.push([{ text: '4. Промо (Бесплатно)', callback_data: `join_promo_${game._id}` }]);
+            }
+
+            keyboard.push([{ text: '🔙 Назад', callback_data: `view_game_${game._id}` }]); // Assuming view_game callback exists or just cancel
+
+            this.bot?.sendMessage(chatId, "👇 Выберите способ оплаты:", {
+                reply_markup: { inline_keyboard: keyboard }
+            });
+
+        } catch (e) { console.error(e); }
+    }
 
 
     async renderGameCard(game: any, requesterId: number) {
-    // Dynamic import if needed, or assume models loaded
-    const requester = await UserModel.findOne({ telegram_id: requesterId });
-    const isRequesterMaster = requester?.isMaster || false;
+        // Dynamic import if needed, or assume models loaded
+        const requester = await UserModel.findOne({ telegram_id: requesterId });
+        const isRequesterMaster = requester?.isMaster || false;
 
-    const totalParticipants = game.participants.length;
-    const freeSpots = game.promoSpots - game.participants.filter((p: any) => p.type === 'PROMO').length;
-    const paidSpots = (game.maxPlayers - game.promoSpots) - game.participants.filter((p: any) => p.type === 'PAID').length;
+        const totalParticipants = game.participants.length;
+        const freeSpots = game.promoSpots - game.participants.filter((p: any) => p.type === 'PROMO').length;
+        const paidSpots = (game.maxPlayers - game.promoSpots) - game.participants.filter((p: any) => p.type === 'PAID').length;
 
-    // Create text
-    const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
-        day: 'numeric',
-        month: 'long',
-        hour: '2-digit',
-        minute: '2-digit',
-        timeZone: 'Europe/Moscow'
-    });
-
-    // Helper to escape Markdown
-    const escapeMd = (s: string) => s.replace(/[_*[`]/g, '\\$&');
-
-    // Fetch Host
-    const host = await UserModel.findById(game.hostId);
-    const hostName = host ? (host.username ? `@${escapeMd(host.username)}` : escapeMd(host.first_name || '')) : 'Неизвестно';
-
-    let text = `🎲 **Игра: ${dateStr} (МСК)**\n`;
-    text += `👑 Мастер: ${hostName}\n`;
-    text += `👥 Игроков: ${totalParticipants}/${game.maxPlayers}\n`;
-    text += `🎟 Промо (Free): ${freeSpots > 0 ? freeSpots : '❌ Нет мест'}\n`;
-    text += `💰 Платные ($20): ${paidSpots > 0 ? paidSpots : '❌ Нет мест'}\n`;
-
-    // Participants List
-    if (totalParticipants > 0) {
-        text += `\nУчастники:\n`;
-        game.participants.forEach((p: any, i: number) => {
-            const verifiedMark = p.isVerified ? '✅' : '';
-            // Privacy Logic
-            let name = escapeMd(p.firstName || 'Игрок');
-            let line = `${i + 1}. ${name} ${verifiedMark}`;
-            if (isRequesterMaster) {
-                const uname = p.username ? `@${escapeMd(p.username)}` : 'no\\_user';
-                line += ` (${uname})`;
-            }
-            text += `${line}\n`;
+        // Create text
+        const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
+            day: 'numeric',
+            month: 'long',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZone: 'Europe/Moscow'
         });
+
+        // Helper to escape Markdown
+        const escapeMd = (s: string) => s.replace(/[_*[`]/g, '\\$&');
+
+        // Fetch Host
+        const host = await UserModel.findById(game.hostId);
+        const hostName = host ? (host.username ? `@${escapeMd(host.username)}` : escapeMd(host.first_name || '')) : 'Неизвестно';
+
+        let text = `🎲 **Игра: ${dateStr} (МСК)**\n`;
+        text += `👑 Мастер: ${hostName}\n`;
+        text += `👥 Игроков: ${totalParticipants}/${game.maxPlayers}\n`;
+        text += `🎟 Промо (Free): ${freeSpots > 0 ? freeSpots : '❌ Нет мест'}\n`;
+        text += `💰 Платные ($20): ${paidSpots > 0 ? paidSpots : '❌ Нет мест'}\n`;
+
+        // Participants List
+        if (totalParticipants > 0) {
+            text += `\nУчастники:\n`;
+            game.participants.forEach((p: any, i: number) => {
+                const verifiedMark = p.isVerified ? '✅' : '';
+                // Privacy Logic
+                let name = escapeMd(p.firstName || 'Игрок');
+                let line = `${i + 1}. ${name} ${verifiedMark}`;
+                if (isRequesterMaster) {
+                    const uname = p.username ? `@${escapeMd(p.username)}` : 'no\\_user';
+                    line += ` (${uname})`;
+                }
+                text += `${line}\n`;
+            });
+        }
+
+        // Build rows
+        const rows: any[] = [];
+        // Safety check for p.userId
+        const isParticipant = requester && game.participants.some((p: any) => p.userId && requester._id && p.userId.toString() === requester._id.toString());
+
+        if (isParticipant) {
+            rows.push([{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]);
+        } else {
+            // Single Join Button triggers selection menu
+            rows.push([{ text: '📝 Записаться на игру', callback_data: `join_options_${game._id}` }]);
+        }
+
+        // Time button
+        rows.push([{ text: '🕒 Когда начало?', callback_data: `check_time_${game._id}` }]);
+
+        // Host Actions
+        if (isRequesterMaster && game.hostId && requester._id.toString() === game.hostId.toString()) {
+            rows.push([{ text: '📢 Отправить сообщение', callback_data: `announce_game_${game._id}` }]);
+            rows.push([{ text: '⚙️ Управление', callback_data: `manage_game_${game._id}` }]);
+        }
+
+        return { text, reply_markup: { inline_keyboard: rows } };
     }
-
-    // Build rows
-    const rows: any[] = [];
-    // Safety check for p.userId
-    const isParticipant = requester && game.participants.some((p: any) => p.userId && requester._id && p.userId.toString() === requester._id.toString());
-
-    if (isParticipant) {
-        rows.push([{ text: '❌ Отменить запись', callback_data: `leave_game_${game._id}` }]);
-    } else {
-        // Single Join Button triggers selection menu
-        rows.push([{ text: '📝 Записаться на игру', callback_data: `join_options_${game._id}` }]);
-    }
-
-    // Time button
-    rows.push([{ text: '🕒 Когда начало?', callback_data: `check_time_${game._id}` }]);
-
-    // Host Actions
-    if (isRequesterMaster && game.hostId && requester._id.toString() === game.hostId.toString()) {
-        rows.push([{ text: '📢 Отправить сообщение', callback_data: `announce_game_${game._id}` }]);
-        rows.push([{ text: '⚙️ Управление', callback_data: `manage_game_${game._id}` }]);
-    }
-
-    return { text, reply_markup: { inline_keyboard: rows } };
-}
 
     async checkReminders() {
-    const now = new Date();
-    const hour = now.getHours(); // Local server time. 
-    // 9:00 - 21:00 Check (Only for PROMO link reminders, global reminders should run always?)
-    // User request: "send notification every 3 hours in working time 9.00 -21.00" -> this was for POST LINK.
-    // For game reminders (24h, 30m), maybe acceptable anytime? Assuming yes.
+        const now = new Date();
+        const hour = now.getHours(); // Local server time. 
+        // 9:00 - 21:00 Check (Only for PROMO link reminders, global reminders should run always?)
+        // User request: "send notification every 3 hours in working time 9.00 -21.00" -> this was for POST LINK.
+        // For game reminders (24h, 30m), maybe acceptable anytime? Assuming yes.
 
-    try {
-        const { ScheduledGameModel } = await import('../models/scheduled-game.model');
-        const { UserModel } = await import('../models/user.model');
+        try {
+            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+            const { UserModel } = await import('../models/user.model');
 
-        // Find upcoming games
-        const games = await ScheduledGameModel.find({
-            status: 'SCHEDULED'
-        });
+            // Find upcoming games
+            const games = await ScheduledGameModel.find({
+                status: 'SCHEDULED'
+            });
 
-        for (const game of games) {
-            const diffMs = new Date(game.startTime).getTime() - now.getTime();
-            const diffHours = diffMs / (1000 * 60 * 60);
-            const diffMinutes = diffMs / (1000 * 60);
-            let gameModified = false;
+            for (const game of games) {
+                const diffMs = new Date(game.startTime).getTime() - now.getTime();
+                const diffHours = diffMs / (1000 * 60 * 60);
+                const diffMinutes = diffMs / (1000 * 60);
+                let gameModified = false;
 
-            // 1. 24 Hour Reminder (23-25h window to be safe)
-            if (!game.reminder24hSent && diffHours <= 24 && diffHours > 23) {
-                // Send to all
-                for (const p of game.participants) {
-                    const user = await UserModel.findById(p.userId);
-                    if (user) this.bot?.sendMessage(user.telegram_id, `⏰ Напоминание: Игра через 24 часа! (${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })})`);
+                // 1. 24 Hour Reminder (23-25h window to be safe)
+                if (!game.reminder24hSent && diffHours <= 24 && diffHours > 23) {
+                    // Send to all
+                    for (const p of game.participants) {
+                        const user = await UserModel.findById(p.userId);
+                        if (user) this.bot?.sendMessage(user.telegram_id, `⏰ Напоминание: Игра через 24 часа! (${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })})`);
+                    }
+                    // Validate Host
+                    const host = await UserModel.findById(game.hostId);
+                    if (host) this.bot?.sendMessage(host.telegram_id, `⏰ Напоминание Мастеру: Игра через 24 часа! (${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })})`);
+
+                    game.reminder24hSent = true;
+                    gameModified = true;
                 }
-                // Validate Host
-                const host = await UserModel.findById(game.hostId);
-                if (host) this.bot?.sendMessage(host.telegram_id, `⏰ Напоминание Мастеру: Игра через 24 часа! (${new Date(game.startTime).toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })})`);
 
-                game.reminder24hSent = true;
-                gameModified = true;
-            }
+                // 2. 30 Minute Reminder (25-35m window)
+                if (!game.reminder30mSent && diffMinutes <= 30 && diffMinutes > 0) {
+                    for (const p of game.participants) {
+                        const user = await UserModel.findById(p.userId);
+                        if (user) this.bot?.sendMessage(user.telegram_id, `⏰ Напоминание: Игра начинается через 30 минут!`);
+                    }
+                    // Validate Host
+                    const host = await UserModel.findById(game.hostId);
+                    if (host) this.bot?.sendMessage(host.telegram_id, `⏰ Напоминание Мастеру: Игра начинается через 30 минут!`);
 
-            // 2. 30 Minute Reminder (25-35m window)
-            if (!game.reminder30mSent && diffMinutes <= 30 && diffMinutes > 0) {
-                for (const p of game.participants) {
-                    const user = await UserModel.findById(p.userId);
-                    if (user) this.bot?.sendMessage(user.telegram_id, `⏰ Напоминание: Игра начинается через 30 минут!`);
+                    game.reminder30mSent = true;
+                    gameModified = true;
                 }
-                // Validate Host
-                const host = await UserModel.findById(game.hostId);
-                if (host) this.bot?.sendMessage(host.telegram_id, `⏰ Напоминание Мастеру: Игра начинается через 30 минут!`);
 
-                game.reminder30mSent = true;
-                gameModified = true;
-            }
+                // 3. Start Reminder (0-5m window or slightly past?)
+                if (!game.reminderStartSent && diffMinutes <= 0 && diffMinutes > -10) {
+                    for (const p of game.participants) {
+                        const user = await UserModel.findById(p.userId);
+                        if (user) this.bot?.sendMessage(user.telegram_id, `🚀 Игра начинается! Ссылка на подключение: [Здесь будет ссылка] (Свяжитесь с мастером)`);
+                    }
+                    // Validate Host
+                    const host = await UserModel.findById(game.hostId);
+                    if (host) this.bot?.sendMessage(host.telegram_id, `🚀 Напоминание Мастеру: Игра начинается! Пора запускать комнату!`);
 
-            // 3. Start Reminder (0-5m window or slightly past?)
-            if (!game.reminderStartSent && diffMinutes <= 0 && diffMinutes > -10) {
-                for (const p of game.participants) {
-                    const user = await UserModel.findById(p.userId);
-                    if (user) this.bot?.sendMessage(user.telegram_id, `🚀 Игра начинается! Ссылка на подключение: [Здесь будет ссылка] (Свяжитесь с мастером)`);
+                    game.reminderStartSent = true;
+                    gameModified = true;
                 }
-                // Validate Host
-                const host = await UserModel.findById(game.hostId);
-                if (host) this.bot?.sendMessage(host.telegram_id, `🚀 Напоминание Мастеру: Игра начинается! Пора запускать комнату!`);
 
-                game.reminderStartSent = true;
-                gameModified = true;
-            }
+                // 4. Promo Link Verification Reminder (Only 9-21)
+                if (hour >= 9 && hour < 21) {
+                    for (const p of game.participants) {
+                        if (p.type === 'PROMO' && !p.isVerified) {
+                            const lastTime = p.lastReminderSentAt || p.joinedAt;
+                            const verifyDiffMs = now.getTime() - new Date(lastTime).getTime();
+                            const verifyDiffHours = verifyDiffMs / (1000 * 60 * 60);
 
-            // 4. Promo Link Verification Reminder (Only 9-21)
-            if (hour >= 9 && hour < 21) {
-                for (const p of game.participants) {
-                    if (p.type === 'PROMO' && !p.isVerified) {
-                        const lastTime = p.lastReminderSentAt || p.joinedAt;
-                        const verifyDiffMs = now.getTime() - new Date(lastTime).getTime();
-                        const verifyDiffHours = verifyDiffMs / (1000 * 60 * 60);
-
-                        if (verifyDiffHours >= 3) {
-                            const user = await UserModel.findById(p.userId);
-                            if (user) {
-                                this.bot?.sendMessage(user.telegram_id, "⏰ Напоминание! \nВы записались на игру (PROMO), но не прикрепили ссылку на пост.\nПожалуйста, отправьте ссылку на репост, чтобы подтвердить участие.");
-                                p.lastReminderSentAt = now;
-                                gameModified = true;
+                            if (verifyDiffHours >= 3) {
+                                const user = await UserModel.findById(p.userId);
+                                if (user) {
+                                    this.bot?.sendMessage(user.telegram_id, "⏰ Напоминание! \nВы записались на игру (PROMO), но не прикрепили ссылку на пост.\nПожалуйста, отправьте ссылку на репост, чтобы подтвердить участие.");
+                                    p.lastReminderSentAt = now;
+                                    gameModified = true;
+                                }
                             }
                         }
                     }
                 }
+
+                if (gameModified) await game.save();
             }
-
-            if (gameModified) await game.save();
+        } catch (e) {
+            console.error("Reminder Error:", e);
         }
-    } catch (e) {
-        console.error("Reminder Error:", e);
-    }
-}
-
-// Broadcast Helper Methods
-showCategorySelection(chatId: number) {
-    this.bot?.sendMessage(chatId, "📢 **Выберите категорию получателей:**", {
-        parse_mode: 'Markdown',
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: '📢 Всем пользователям', callback_data: 'broadcast_category_all' }],
-                [{ text: '🎭 С аватарами', callback_data: 'broadcast_category_avatars' }],
-                [{ text: '💰 С балансом', callback_data: 'broadcast_category_balance' }],
-                [{ text: '✅ Выбрать вручную', callback_data: 'broadcast_category_custom' }]
-            ]
-        }
-    });
-}
-
-    async executeBroadcast(chatId: number, category: string) {
-    const state = this.broadcastStates.get(chatId);
-    if (!state || !state.text) {
-        this.bot?.sendMessage(chatId, "❌ Ошибка: текст не найден.");
-        return;
     }
 
-    try {
-        const { UserModel } = await import('../models/user.model');
-        let users: any[] = [];
-
-        // Filter users by category
-        switch (category) {
-            case 'all':
-                users = await UserModel.find({});
-                break;
-            case 'avatars':
-                // Users with avatars (has partnership balance or avatar data)
-                users = await UserModel.find({
-                    $or: [
-                        { hasAvatar: true },
-                        { partnershipBalance: { $gt: 0 } }
-                    ]
-                });
-                break;
-            case 'balance':
-                // Users with any balance
-                users = await UserModel.find({
-                    $or: [
-                        { referralBalance: { $gt: 0 } },
-                        { balanceRed: { $gt: 0 } }
-                    ]
-                });
-                break;
-            case 'custom':
-                // TODO: Implement custom selection UI
-                this.bot?.sendMessage(chatId, "⚠️ Ручной выбор пока не реализован. Используйте другие категории.");
-                return;
-            default:
-                this.bot?.sendMessage(chatId, "❌ Неизвестная категория.");
-                return;
-        }
-
-        // Confirm before sending
-        this.bot?.sendMessage(chatId, `📊 Найдено получателей: ${users.length}\\n\\nОтправить рассылку?`, {
+    // Broadcast Helper Methods
+    showCategorySelection(chatId: number) {
+        this.bot?.sendMessage(chatId, "📢 **Выберите категорию получателей:**", {
+            parse_mode: 'Markdown',
             reply_markup: {
                 inline_keyboard: [
-                    [
-                        { text: '✅ Отправить', callback_data: `broadcast_confirm_${category}` },
-                        { text: '❌ Отменить', callback_data: 'broadcast_cancel' }
-                    ]
+                    [{ text: '📢 Всем пользователям', callback_data: 'broadcast_category_all' }],
+                    [{ text: '🎭 С аватарами', callback_data: 'broadcast_category_avatars' }],
+                    [{ text: '💰 С балансом', callback_data: 'broadcast_category_balance' }],
+                    [{ text: '✅ Выбрать вручную', callback_data: 'broadcast_category_custom' }]
                 ]
             }
         });
-
-        // Store users temporarily
-        state.category = category as any;
-        state.selectedUsers = users.map(u => u._id.toString());
-
-    } catch (e) {
-        console.error("Broadcast error:", e);
-        this.bot?.sendMessage(chatId, "❌ Ошибка при подготовке рассылки.");
-    }
-}
-
-    async sendBroadcast(chatId: number) {
-    const state = this.broadcastStates.get(chatId);
-    if (!state || !state.text || !state.selectedUsers) {
-        this.bot?.sendMessage(chatId, "❌ Ошибка: данные рассылки не найдены.");
-        return;
     }
 
-    try {
-        const { UserModel } = await import('../models/user.model');
-        let sent = 0;
-        let failed = 0;
-
-        this.bot?.sendMessage(chatId, "📤 Отправка началась...");
-
-        for (const userId of state.selectedUsers) {
-            try {
-                const user = await UserModel.findById(userId);
-                if (!user || !user.telegram_id) {
-                    failed++;
-                    continue;
-                }
-
-                // Send with photo if present
-                if (state.photoId) {
-                    await this.bot?.sendPhoto(user.telegram_id, state.photoId, {
-                        caption: state.text,
-                        parse_mode: 'Markdown'
-                    });
-                } else {
-                    await this.bot?.sendMessage(user.telegram_id, state.text, {
-                        parse_mode: 'Markdown'
-                    });
-                }
-
-                sent++;
-                // Small delay to avoid rate limits
-                await new Promise(resolve => setTimeout(resolve, 50));
-            } catch (e) {
-                failed++;
-                console.error(`Failed to send to ${userId}:`, e);
-            }
+    async executeBroadcast(chatId: number, category: string) {
+        const state = this.broadcastStates.get(chatId);
+        if (!state || !state.text) {
+            this.bot?.sendMessage(chatId, "❌ Ошибка: текст не найден.");
+            return;
         }
 
-        this.bot?.sendMessage(chatId, `✅ **Рассылка завершена!**\\n\\n📤 Отправлено: ${sent}\\n❌ Ошибок: ${failed}`);
-        this.broadcastStates.delete(chatId);
+        try {
+            const { UserModel } = await import('../models/user.model');
+            let users: any[] = [];
 
-    } catch (e) {
-        console.error("Send broadcast error:", e);
-        this.bot?.sendMessage(chatId, "❌ Ошибка при отправке рассылки.");
+            // Filter users by category
+            switch (category) {
+                case 'all':
+                    users = await UserModel.find({});
+                    break;
+                case 'avatars':
+                    // Users with avatars (has partnership balance or avatar data)
+                    users = await UserModel.find({
+                        $or: [
+                            { hasAvatar: true },
+                            { partnershipBalance: { $gt: 0 } }
+                        ]
+                    });
+                    break;
+                case 'balance':
+                    // Users with any balance
+                    users = await UserModel.find({
+                        $or: [
+                            { referralBalance: { $gt: 0 } },
+                            { balanceRed: { $gt: 0 } }
+                        ]
+                    });
+                    break;
+                case 'custom':
+                    // TODO: Implement custom selection UI
+                    this.bot?.sendMessage(chatId, "⚠️ Ручной выбор пока не реализован. Используйте другие категории.");
+                    return;
+                default:
+                    this.bot?.sendMessage(chatId, "❌ Неизвестная категория.");
+                    return;
+            }
+
+            // Confirm before sending
+            this.bot?.sendMessage(chatId, `📊 Найдено получателей: ${users.length}\\n\\nОтправить рассылку?`, {
+                reply_markup: {
+                    inline_keyboard: [
+                        [
+                            { text: '✅ Отправить', callback_data: `broadcast_confirm_${category}` },
+                            { text: '❌ Отменить', callback_data: 'broadcast_cancel' }
+                        ]
+                    ]
+                }
+            });
+
+            // Store users temporarily
+            state.category = category as any;
+            state.selectedUsers = users.map(u => u._id.toString());
+
+        } catch (e) {
+            console.error("Broadcast error:", e);
+            this.bot?.sendMessage(chatId, "❌ Ошибка при подготовке рассылки.");
+        }
     }
-}
+
+    async sendBroadcast(chatId: number) {
+        const state = this.broadcastStates.get(chatId);
+        if (!state || !state.text || !state.selectedUsers) {
+            this.bot?.sendMessage(chatId, "❌ Ошибка: данные рассылки не найдены.");
+            return;
+        }
+
+        try {
+            const { UserModel } = await import('../models/user.model');
+            let sent = 0;
+            let failed = 0;
+
+            this.bot?.sendMessage(chatId, "📤 Отправка началась...");
+
+            for (const userId of state.selectedUsers) {
+                try {
+                    const user = await UserModel.findById(userId);
+                    if (!user || !user.telegram_id) {
+                        failed++;
+                        continue;
+                    }
+
+                    // Send with photo if present
+                    if (state.photoId) {
+                        await this.bot?.sendPhoto(user.telegram_id, state.photoId, {
+                            caption: state.text,
+                            parse_mode: 'Markdown'
+                        });
+                    } else {
+                        await this.bot?.sendMessage(user.telegram_id, state.text, {
+                            parse_mode: 'Markdown'
+                        });
+                    }
+
+                    sent++;
+                    // Small delay to avoid rate limits
+                    await new Promise(resolve => setTimeout(resolve, 50));
+                } catch (e) {
+                    failed++;
+                    console.error(`Failed to send to ${userId}:`, e);
+                }
+            }
+
+            this.bot?.sendMessage(chatId, `✅ **Рассылка завершена!**\\n\\n📤 Отправлено: ${sent}\\n❌ Ошибок: ${failed}`);
+            this.broadcastStates.delete(chatId);
+
+        } catch (e) {
+            console.error("Send broadcast error:", e);
+            this.bot?.sendMessage(chatId, "❌ Ошибка при отправке рассылки.");
+        }
+    }
 
 
     // --- Deposit System ---
 
     async handleDeposit(chatId: number) {
-    if (!this.bot) return;
-    this.depositStates.set(chatId, { state: 'WAITING_AMOUNT' });
+        if (!this.bot) return;
+        this.depositStates.set(chatId, { state: 'WAITING_AMOUNT' });
 
-    await this.bot.sendMessage(chatId, '💰 <b>Пополнение баланса (Green)</b>\n\nВыберите сумму пополнения:', {
-        parse_mode: 'HTML',
-        reply_markup: {
-            inline_keyboard: [
-                [{ text: '20 $', callback_data: 'deposit_amount_20' }, { text: '100 $', callback_data: 'deposit_amount_100' }],
-                [{ text: '1000 $', callback_data: 'deposit_amount_1000' }, { text: '1120 $', callback_data: 'deposit_amount_1120' }],
-                [{ text: '❌ Отмена', callback_data: 'cancel_action' }]
-            ]
-        }
-    });
-}
+        await this.bot.sendMessage(chatId, '💰 <b>Пополнение баланса (Green)</b>\n\nВыберите сумму пополнения:', {
+            parse_mode: 'HTML',
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '20 $', callback_data: 'deposit_amount_20' }, { text: '100 $', callback_data: 'deposit_amount_100' }],
+                    [{ text: '1000 $', callback_data: 'deposit_amount_1000' }, { text: '1120 $', callback_data: 'deposit_amount_1120' }],
+                    [{ text: '❌ Отмена', callback_data: 'cancel_action' }]
+                ]
+            }
+        });
+    }
 
     async handleDepositAmount(chatId: number, amount: number) {
-    if (!this.bot) return;
+        if (!this.bot) return;
 
-    const state = this.depositStates.get(chatId);
-    if (!state) return;
+        const state = this.depositStates.get(chatId);
+        if (!state) return;
 
-    state.amount = amount;
-    state.state = 'WAITING_SCREENSHOT';
-    this.depositStates.set(chatId, state);
+        state.amount = amount;
+        state.state = 'WAITING_SCREENSHOT';
+        this.depositStates.set(chatId, state);
 
-    const requisites =
-        `💳 <b>Реквизиты для оплаты ${amount}$</b>\n\n` +
-        `🔹 <b>Сбербанк</b>\n` +
-        `<code>+79164632850</code>\n\n` +
-        `🔹 <b>USDT (BEP-20)</b>\n` +
-        `<code>0xb15e97ad107d57f5ca5405556877395848cf745d</code>\n\n` +
-        `🔹 <b>USDT (TRC-20)</b>\n` +
-        `<code>TG8Ltochc5rYz54M5SeRPbMq7Xj9ovz7j9</code>\n\n` +
-        `⚠️ После оплаты, пожалуйста, <b>пришлите скриншот (фото)</b> в этот чат для подтверждения.`;
+        const requisites =
+            `💳 <b>Реквизиты для оплаты ${amount}$</b>\n\n` +
+            `🔹 <b>Сбербанк</b>\n` +
+            `<code>+79164632850</code>\n\n` +
+            `🔹 <b>USDT (BEP-20)</b>\n` +
+            `<code>0xb15e97ad107d57f5ca5405556877395848cf745d</code>\n\n` +
+            `🔹 <b>USDT (TRC-20)</b>\n` +
+            `<code>TG8Ltochc5rYz54M5SeRPbMq7Xj9ovz7j9</code>\n\n` +
+            `⚠️ После оплаты, пожалуйста, <b>пришлите скриншот (фото)</b> в этот чат для подтверждения.`;
 
-    await this.bot.sendMessage(chatId, requisites, {
-        parse_mode: 'HTML',
-        reply_markup: {
-            inline_keyboard: [[{ text: '⬅️ Назад', callback_data: 'deposit_back' }]]
-        }
-    });
-}
+        await this.bot.sendMessage(chatId, requisites, {
+            parse_mode: 'HTML',
+            reply_markup: {
+                inline_keyboard: [[{ text: '⬅️ Назад', callback_data: 'deposit_back' }]]
+            }
+        });
+    }
 
     async handleDepositScreenshot(msg: any, state: DepositState) {
-    if (!this.bot || !state.amount) return;
-    const chatId = msg.chat.id;
-
-    try {
-        await this.bot.sendMessage(chatId, '⏳ Загрузка и проверка скриншота...');
-
-        // Upload to Cloudinary
-        const photo = msg.photo[msg.photo.length - 1];
-        const fileUrl = await this.bot.getFileLink(photo.file_id);
-        const uploadRes = await this.cloudinaryService.uploadImage(fileUrl, 'details/deposits');
-
-        // Create Deposit Request in DB
-        const { UserModel } = await import('../models/user.model');
-        const { DepositRequestModel } = await import('../models/deposit-request.model');
-
-        const user = await UserModel.findOne({ telegram_id: chatId });
-        if (!user) {
-            await this.bot.sendMessage(chatId, '❌ Ошибка: Пользователь не найден.');
-            return;
-        }
-
-        const request = await DepositRequestModel.create({
-            user: user._id,
-            amount: state.amount,
-            currency: 'USD',
-            proofUrl: uploadRes,
-            status: 'PENDING'
-        });
-
-        // Notify User
-        await this.bot.sendMessage(chatId, '✅ <b>Заявка принята!</b>\n\nОжидайте подтверждения админом. Баланс будет пополнен автоматически.', { parse_mode: 'HTML' });
-
-        // Clear State
-        this.depositStates.delete(chatId);
-
-        // Notify Admin
-        const adminMsg =
-            `💰 <b>Заявка на пополнение</b>\n` +
-            `👤 Пользователь: @${user.username} (ID: ${user.telegram_id})\n` +
-            `💵 Сумма: <b>$${state.amount}</b>\n` +
-            `📅 Дата: ${new Date().toLocaleString()}\n` +
-            `📄 ID заявки: ${request._id}`;
-
-        const adminIdsStr = process.env.ADMIN_IDS || process.env.ADMIN_ID || '';
-        const adminIds = adminIdsStr.split(',').map(id => id.trim()).filter(id => id);
-
-        for (const adminId of adminIds) {
-            await this.bot.sendPhoto(adminId, photo.file_id, {
-                caption: adminMsg,
-                parse_mode: 'HTML',
-                reply_markup: {
-                    inline_keyboard: [
-                        [{ text: '✅ Подтвердить', callback_data: `approve_deposit_${request._id}` }],
-                        [{ text: '❌ Отклонить', callback_data: `reject_deposit_${request._id}` }],
-                        [{ text: '✏️ Изменить сумму (WIP)', callback_data: `edit_deposit_${request._id}` }]
-                    ]
-                }
-            });
-        }
-
-    } catch (e) {
-        console.error('Deposit Error:', e);
-        await this.bot.sendMessage(chatId, '❌ Произошла ошибка при обработке. Попробуйте позже.');
-    }
-}
-
-    async handleAdminDepositAction(adminChatId: number, query: any, action: 'APPROVE' | 'REJECT') {
-    if (!this.bot) return;
-    const requestId = query.data.split('_')[2];
-
-    try {
-        const { DepositRequestModel } = await import('../models/deposit-request.model');
-        const { UserModel } = await import('../models/user.model');
-
-        const request = await DepositRequestModel.findById(requestId).populate('user');
-        if (!request) {
-            await this.bot.answerCallbackQuery(query.id, { text: '❌ Заявка не найдена', show_alert: true });
-            return;
-        }
-
-        if (request.status !== 'PENDING') {
-            await this.bot.answerCallbackQuery(query.id, { text: '⚠️ Заявка уже обработана', show_alert: true });
-            return;
-        }
-
-        if (action === 'APPROVE') {
-            request.status = 'APPROVED';
-
-            // Credit Balance
-            const user = await UserModel.findById(request.user._id);
-            if (user) {
-                user.greenBalance = (user.greenBalance || 0) + request.amount;
-                await user.save();
-
-                // Note: Transaction logging might need explicit model import if not available globally
-                // Assuming basic update strictly for now.
-
-                if (user.telegram_id) {
-                    await this.bot.sendMessage(user.telegram_id, `✅ <b>Ваш депозит подтвержден!</b>\n\nВаш Green баланс пополнен на $${request.amount}.`, { parse_mode: 'HTML' });
-                }
-            }
-
-            await this.bot.editMessageCaption('✅ <b>ОДОБРЕНО</b>\n' + query.message.caption, {
-                chat_id: adminChatId,
-                message_id: query.message.message_id,
-                parse_mode: 'HTML'
-            });
-
-        } else {
-            request.status = 'REJECTED';
-
-            if (request.user && request.user.telegram_id) { // Assuming populated
-                // Need to re-fetch if user is just ObjectId? populate worked?
-                // populate('user') returns usage object.
-                // TS might complain about type.
-                // But at runtime user is object.
-                const u: any = request.user;
-                if (u.telegram_id) {
-                    await this.bot.sendMessage(u.telegram_id, `❌ <b>Ваш депозит отклонен.</b>\n\nСвяжитесь с админом для уточнения.`, { parse_mode: 'HTML' });
-                }
-            }
-
-            await this.bot.editMessageCaption('❌ <b>ОТКЛОНЕНО</b>\n' + query.message.caption, {
-                chat_id: adminChatId,
-                message_id: query.message.message_id,
-                parse_mode: 'HTML'
-            });
-        }
-
-        await request.save();
-        await this.bot.answerCallbackQuery(query.id, { text: 'Выполнено' });
-
-    } catch (e) {
-        console.error('Admin Action Error:', e);
-        await this.bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки', show_alert: true });
-    }
-}
-    async handleDepositCommand(chatId: number) {
-    this.depositStates.set(chatId, { state: 'WAITING_METHOD' } as any);
-
-    await this.bot?.sendMessage(chatId, "💰 **Пополнение баланса**\n\nВыберите способ пополнения:", {
-        parse_mode: 'Markdown',
-        reply_markup: {
-            keyboard: [
-                [{ text: 'USDT BEP20' }, { text: 'USDT TRC20' }],
-                [{ text: 'Сбербанк (RUB)' }],
-                [{ text: '❌ Отмена' }]
-            ],
-            resize_keyboard: true
-        }
-    });
-}
-
-    async handleDepositMessage(chatId: number, text: string, msg: TelegramBot.Message) {
-    const state = this.depositStates.get(chatId);
-    if (!state) return false;
-
-    // Cancel helper
-    if (text === '❌ Отмена') {
-        this.depositStates.delete(chatId);
-        this.sendMainMenu(chatId, "✅ Отменено.");
-        return true;
-    }
-
-    if (state.state === 'WAITING_METHOD') {
-        if (['USDT BEP20', 'USDT TRC20', 'Сбербанк (RUB)'].includes(text)) {
-            state.method = text;
-            state.state = 'WAITING_AMOUNT';
-            this.depositStates.set(chatId, state);
-
-            await this.bot?.sendMessage(chatId, `✅ Выбрано: ${text}\n\nВыберите сумму:`, {
-                reply_markup: {
-                    keyboard: [
-                        [{ text: '20$' }, { text: '100$' }, { text: '1120$' }],
-                        [{ text: 'Своя сумма' }],
-                        [{ text: '❌ Отмена' }]
-                    ],
-                    resize_keyboard: true
-                }
-            });
-        } else {
-            await this.bot?.sendMessage(chatId, "⚠️ Выберите способ из меню.");
-        }
-        return true;
-    }
-
-    if (state.state === 'WAITING_AMOUNT') {
-        let amount: number | null = null;
-
-        // Parse amount
-        if (text === '20$') amount = 20;
-        else if (text === '100$') amount = 100;
-        else if (text === '1120$') amount = 1120;
-
-        // Handle custom amount input if numeric (ignoring 'Своя сумма' text which just prompts)
-        if (amount === null && !isNaN(Number(text))) {
-            amount = Number(text);
-        }
-
-        if (text === 'Своя сумма') {
-            await this.bot?.sendMessage(chatId, "Введите сумму цифрами (в долларах):", { reply_markup: { remove_keyboard: true } });
-            // Don't change state, just prompt user to input number next
-            return true;
-        }
-
-        if (amount && amount > 0) {
-            state.amount = amount;
-            state.state = 'WAITING_SCREENSHOT';
-            this.depositStates.set(chatId, state);
-
-            let wallet = '';
-            if (state.method === 'USDT BEP20') wallet = `0xb15e97ad107d57f5ca5405556877395848cf745d`;
-            else if (state.method === 'USDT TRC20') wallet = `TG8Ltochc5rYz54M5SeRPbMq7Xj9ovz7j9`;
-            else if (state.method === 'Сбербанк (RUB)') wallet = `+79164632850 (Роман Богданович П.)`;
-
-            const msgText = `💵 К оплате: <b>$${amount}</b>\n` +
-                `💳 Способ: ${state.method}\n` +
-                `📥 Реквизиты/Кошелек:\n` +
-                `<code>${wallet}</code>\n\n` +
-                `📸 После оплаты пришлите скриншот (картинкой/файлом) в этот чат.`;
-
-            await this.bot?.sendMessage(chatId, msgText, { parse_mode: 'HTML', reply_markup: { keyboard: [[{ text: '❌ Отмена' }]], resize_keyboard: true } });
-        } else {
-            if (text !== 'Своя сумма') { // Only warn if it wasn't the button click
-                await this.bot?.sendMessage(chatId, "⚠️ Введите корректную сумму числом.");
-            }
-        }
-        return true;
-    }
-
-    return false;
-}
-
-    async handleDepositPhoto(chatId: number, msg: TelegramBot.Message) {
-    const state = this.depositStates.get(chatId);
-    if (state && state.state === 'WAITING_SCREENSHOT') {
-        const photo = msg.photo![msg.photo!.length - 1]; // Highest Res
+        if (!this.bot || !state.amount) return;
+        const chatId = msg.chat.id;
 
         try {
-            const fileLink = await this.bot?.getFileLink(photo.file_id);
-            if (fileLink) {
-                await this.bot?.sendMessage(chatId, "⏳ Загрузка...", { reply_markup: { remove_keyboard: true } });
+            await this.bot.sendMessage(chatId, '⏳ Загрузка и проверка скриншота...');
 
-                // Upload
-                const proofUrl = await this.cloudinaryService.uploadImage(fileLink, 'deposits');
+            // Upload to Cloudinary
+            const photo = msg.photo[msg.photo.length - 1];
+            const fileUrl = await this.bot.getFileLink(photo.file_id);
+            const uploadRes = await this.cloudinaryService.uploadImage(fileUrl, 'details/deposits');
 
-                // Create Request
-                // Use dynamic import to avoid circular dependency issues if any
-                const { DepositRequestModel } = await import('../models/deposit-request.model');
-                const { UserModel } = await import('../models/user.model');
+            // Create Deposit Request in DB
+            const { UserModel } = await import('../models/user.model');
+            const { DepositRequestModel } = await import('../models/deposit-request.model');
 
-                const user = await UserModel.findOne({ telegram_id: chatId });
-                if (!user) {
-                    await this.bot?.sendMessage(chatId, "❌ Ошибка: User not found");
-                    this.depositStates.delete(chatId);
-                    return true;
-                }
+            const user = await UserModel.findOne({ telegram_id: chatId });
+            if (!user) {
+                await this.bot.sendMessage(chatId, '❌ Ошибка: Пользователь не найден.');
+                return;
+            }
 
-                const deposit = await DepositRequestModel.create({
-                    user: user._id,
-                    amount: state.amount,
-                    currency: 'USD',
-                    method: state.method,
-                    proofUrl: proofUrl,
-                    status: 'PENDING'
+            const request = await DepositRequestModel.create({
+                user: user._id,
+                amount: state.amount,
+                currency: 'USD',
+                proofUrl: uploadRes,
+                status: 'PENDING'
+            });
+
+            // Notify User
+            await this.bot.sendMessage(chatId, '✅ <b>Заявка принята!</b>\n\nОжидайте подтверждения админом. Баланс будет пополнен автоматически.', { parse_mode: 'HTML' });
+
+            // Clear State
+            this.depositStates.delete(chatId);
+
+            // Notify Admin
+            const adminMsg =
+                `💰 <b>Заявка на пополнение</b>\n` +
+                `👤 Пользователь: @${user.username} (ID: ${user.telegram_id})\n` +
+                `💵 Сумма: <b>$${state.amount}</b>\n` +
+                `📅 Дата: ${new Date().toLocaleString()}\n` +
+                `📄 ID заявки: ${request._id}`;
+
+            const adminIdsStr = process.env.ADMIN_IDS || process.env.ADMIN_ID || '';
+            const adminIds = adminIdsStr.split(',').map(id => id.trim()).filter(id => id);
+
+            for (const adminId of adminIds) {
+                await this.bot.sendPhoto(adminId, photo.file_id, {
+                    caption: adminMsg,
+                    parse_mode: 'HTML',
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '✅ Подтвердить', callback_data: `approve_deposit_${request._id}` }],
+                            [{ text: '❌ Отклонить', callback_data: `reject_deposit_${request._id}` }],
+                            [{ text: '✏️ Изменить сумму (WIP)', callback_data: `edit_deposit_${request._id}` }]
+                        ]
+                    }
                 });
+            }
 
-                // Notify Admins
-                if (this.bot) {
-                    const adminMsg =
-                        `💰 <b>Заявка на пополнение (Bot)</b>\n` +
-                        `👤 Пользователь: @${user.username} (ID: ${user.telegram_id})\n` +
-                        `💵 Сумма: <b>$${state.amount}</b>\n` +
-                        `💳 Способ: ${state.method}\n` +
-                        `📄 ID заявки: ${deposit._id}`;
+        } catch (e) {
+            console.error('Deposit Error:', e);
+            await this.bot.sendMessage(chatId, '❌ Произошла ошибка при обработке. Попробуйте позже.');
+        }
+    }
 
-                    const adminIdsStr = process.env.ADMIN_IDS || process.env.ADMIN_ID || '';
-                    const adminIds = adminIdsStr.split(',').map(id => id.trim()).filter(id => id);
+    async handleAdminDepositAction(adminChatId: number, query: any, action: 'APPROVE' | 'REJECT') {
+        if (!this.bot) return;
+        const requestId = query.data.split('_')[2];
 
-                    for (const adminId of adminIds) {
-                        try {
-                            await this.bot.sendPhoto(adminId, proofUrl, {
-                                caption: adminMsg,
-                                parse_mode: 'HTML',
-                                reply_markup: {
-                                    inline_keyboard: [
-                                        [{ text: '✅ Подтвердить', callback_data: `approve_deposit_${deposit._id}` }],
-                                        [{ text: '❌ Отклонить', callback_data: `reject_deposit_${deposit._id}` }]
-                                    ]
-                                }
-                            });
-                        } catch (e) { console.error(`Failed to notify admin ${adminId}`, e); }
+        try {
+            const { DepositRequestModel } = await import('../models/deposit-request.model');
+            const { UserModel } = await import('../models/user.model');
+
+            const request = await DepositRequestModel.findById(requestId).populate('user');
+            if (!request) {
+                await this.bot.answerCallbackQuery(query.id, { text: '❌ Заявка не найдена', show_alert: true });
+                return;
+            }
+
+            if (request.status !== 'PENDING') {
+                await this.bot.answerCallbackQuery(query.id, { text: '⚠️ Заявка уже обработана', show_alert: true });
+                return;
+            }
+
+            if (action === 'APPROVE') {
+                request.status = 'APPROVED';
+
+                // Credit Balance
+                const user = await UserModel.findById(request.user._id);
+                if (user) {
+                    user.greenBalance = (user.greenBalance || 0) + request.amount;
+                    await user.save();
+
+                    // Note: Transaction logging might need explicit model import if not available globally
+                    // Assuming basic update strictly for now.
+
+                    if (user.telegram_id) {
+                        await this.bot.sendMessage(user.telegram_id, `✅ <b>Ваш депозит подтвержден!</b>\n\nВаш Green баланс пополнен на $${request.amount}.`, { parse_mode: 'HTML' });
                     }
                 }
 
-                await this.bot?.sendMessage(chatId, "✅ Заявка отправлена! Ожидайте подтверждения.");
-                this.depositStates.delete(chatId);
-                this.sendMainMenu(chatId, "🏠 Главное меню");
+                await this.bot.editMessageCaption('✅ <b>ОДОБРЕНО</b>\n' + query.message.caption, {
+                    chat_id: adminChatId,
+                    message_id: query.message.message_id,
+                    parse_mode: 'HTML'
+                });
+
+            } else {
+                request.status = 'REJECTED';
+
+                if (request.user && request.user.telegram_id) { // Assuming populated
+                    // Need to re-fetch if user is just ObjectId? populate worked?
+                    // populate('user') returns usage object.
+                    // TS might complain about type.
+                    // But at runtime user is object.
+                    const u: any = request.user;
+                    if (u.telegram_id) {
+                        await this.bot.sendMessage(u.telegram_id, `❌ <b>Ваш депозит отклонен.</b>\n\nСвяжитесь с админом для уточнения.`, { parse_mode: 'HTML' });
+                    }
+                }
+
+                await this.bot.editMessageCaption('❌ <b>ОТКЛОНЕНО</b>\n' + query.message.caption, {
+                    chat_id: adminChatId,
+                    message_id: query.message.message_id,
+                    parse_mode: 'HTML'
+                });
             }
-        } catch (e: any) {
-            console.error("Deposit Proof Error:", e);
-            await this.bot?.sendMessage(chatId, `❌ Ошибка загрузки: ${e.message}`);
+
+            await request.save();
+            await this.bot.answerCallbackQuery(query.id, { text: 'Выполнено' });
+
+        } catch (e) {
+            console.error('Admin Action Error:', e);
+            await this.bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки', show_alert: true });
         }
-        return true; // We handled the photo
     }
-    return false; // Not in deposit state
-}
+    async handleDepositCommand(chatId: number) {
+        this.depositStates.set(chatId, { state: 'WAITING_METHOD' } as any);
+
+        await this.bot?.sendMessage(chatId, "💰 **Пополнение баланса**\n\nВыберите способ пополнения:", {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                keyboard: [
+                    [{ text: 'USDT BEP20' }, { text: 'USDT TRC20' }],
+                    [{ text: 'Сбербанк (RUB)' }],
+                    [{ text: '❌ Отмена' }]
+                ],
+                resize_keyboard: true
+            }
+        });
+    }
+
+    async handleDepositMessage(chatId: number, text: string, msg: TelegramBot.Message) {
+        const state = this.depositStates.get(chatId);
+        if (!state) return false;
+
+        // Cancel helper
+        if (text === '❌ Отмена') {
+            this.depositStates.delete(chatId);
+            this.sendMainMenu(chatId, "✅ Отменено.");
+            return true;
+        }
+
+        if (state.state === 'WAITING_METHOD') {
+            if (['USDT BEP20', 'USDT TRC20', 'Сбербанк (RUB)'].includes(text)) {
+                state.method = text;
+                state.state = 'WAITING_AMOUNT';
+                this.depositStates.set(chatId, state);
+
+                await this.bot?.sendMessage(chatId, `✅ Выбрано: ${text}\n\nВыберите сумму:`, {
+                    reply_markup: {
+                        keyboard: [
+                            [{ text: '20$' }, { text: '100$' }, { text: '1120$' }],
+                            [{ text: 'Своя сумма' }],
+                            [{ text: '❌ Отмена' }]
+                        ],
+                        resize_keyboard: true
+                    }
+                });
+            } else {
+                await this.bot?.sendMessage(chatId, "⚠️ Выберите способ из меню.");
+            }
+            return true;
+        }
+
+        if (state.state === 'WAITING_AMOUNT') {
+            let amount: number | null = null;
+
+            // Parse amount
+            if (text === '20$') amount = 20;
+            else if (text === '100$') amount = 100;
+            else if (text === '1120$') amount = 1120;
+
+            // Handle custom amount input if numeric (ignoring 'Своя сумма' text which just prompts)
+            if (amount === null && !isNaN(Number(text))) {
+                amount = Number(text);
+            }
+
+            if (text === 'Своя сумма') {
+                await this.bot?.sendMessage(chatId, "Введите сумму цифрами (в долларах):", { reply_markup: { remove_keyboard: true } });
+                // Don't change state, just prompt user to input number next
+                return true;
+            }
+
+            if (amount && amount > 0) {
+                state.amount = amount;
+                state.state = 'WAITING_SCREENSHOT';
+                this.depositStates.set(chatId, state);
+
+                let wallet = '';
+                if (state.method === 'USDT BEP20') wallet = `0xb15e97ad107d57f5ca5405556877395848cf745d`;
+                else if (state.method === 'USDT TRC20') wallet = `TG8Ltochc5rYz54M5SeRPbMq7Xj9ovz7j9`;
+                else if (state.method === 'Сбербанк (RUB)') wallet = `+79164632850 (Роман Богданович П.)`;
+
+                const msgText = `💵 К оплате: <b>$${amount}</b>\n` +
+                    `💳 Способ: ${state.method}\n` +
+                    `📥 Реквизиты/Кошелек:\n` +
+                    `<code>${wallet}</code>\n\n` +
+                    `📸 После оплаты пришлите скриншот (картинкой/файлом) в этот чат.`;
+
+                await this.bot?.sendMessage(chatId, msgText, { parse_mode: 'HTML', reply_markup: { keyboard: [[{ text: '❌ Отмена' }]], resize_keyboard: true } });
+            } else {
+                if (text !== 'Своя сумма') { // Only warn if it wasn't the button click
+                    await this.bot?.sendMessage(chatId, "⚠️ Введите корректную сумму числом.");
+                }
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    async handleDepositPhoto(chatId: number, msg: TelegramBot.Message) {
+        const state = this.depositStates.get(chatId);
+        if (state && state.state === 'WAITING_SCREENSHOT') {
+            const photo = msg.photo![msg.photo!.length - 1]; // Highest Res
+
+            try {
+                const fileLink = await this.bot?.getFileLink(photo.file_id);
+                if (fileLink) {
+                    await this.bot?.sendMessage(chatId, "⏳ Загрузка...", { reply_markup: { remove_keyboard: true } });
+
+                    // Upload
+                    const proofUrl = await this.cloudinaryService.uploadImage(fileLink, 'deposits');
+
+                    // Create Request
+                    // Use dynamic import to avoid circular dependency issues if any
+                    const { DepositRequestModel } = await import('../models/deposit-request.model');
+                    const { UserModel } = await import('../models/user.model');
+
+                    const user = await UserModel.findOne({ telegram_id: chatId });
+                    if (!user) {
+                        await this.bot?.sendMessage(chatId, "❌ Ошибка: User not found");
+                        this.depositStates.delete(chatId);
+                        return true;
+                    }
+
+                    const deposit = await DepositRequestModel.create({
+                        user: user._id,
+                        amount: state.amount,
+                        currency: 'USD',
+                        method: state.method,
+                        proofUrl: proofUrl,
+                        status: 'PENDING'
+                    });
+
+                    // Notify Admins
+                    if (this.bot) {
+                        const adminMsg =
+                            `💰 <b>Заявка на пополнение (Bot)</b>\n` +
+                            `👤 Пользователь: @${user.username} (ID: ${user.telegram_id})\n` +
+                            `💵 Сумма: <b>$${state.amount}</b>\n` +
+                            `💳 Способ: ${state.method}\n` +
+                            `📄 ID заявки: ${deposit._id}`;
+
+                        const adminIdsStr = process.env.ADMIN_IDS || process.env.ADMIN_ID || '';
+                        const adminIds = adminIdsStr.split(',').map(id => id.trim()).filter(id => id);
+
+                        for (const adminId of adminIds) {
+                            try {
+                                await this.bot.sendPhoto(adminId, proofUrl, {
+                                    caption: adminMsg,
+                                    parse_mode: 'HTML',
+                                    reply_markup: {
+                                        inline_keyboard: [
+                                            [{ text: '✅ Подтвердить', callback_data: `approve_deposit_${deposit._id}` }],
+                                            [{ text: '❌ Отклонить', callback_data: `reject_deposit_${deposit._id}` }]
+                                        ]
+                                    }
+                                });
+                            } catch (e) { console.error(`Failed to notify admin ${adminId}`, e); }
+                        }
+                    }
+
+                    await this.bot?.sendMessage(chatId, "✅ Заявка отправлена! Ожидайте подтверждения.");
+                    this.depositStates.delete(chatId);
+                    this.sendMainMenu(chatId, "🏠 Главное меню");
+                }
+            } catch (e: any) {
+                console.error("Deposit Proof Error:", e);
+                await this.bot?.sendMessage(chatId, `❌ Ошибка загрузки: ${e.message}`);
+            }
+            return true; // We handled the photo
+        }
+        return false; // Not in deposit state
+    }
 }
 
