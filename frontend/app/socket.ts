@@ -5,7 +5,8 @@ import { getBackendUrl, getGameServiceUrl } from "../lib/config";
 
 const SOCKET_URL = getGameServiceUrl();
 
-export const socket = io(SOCKET_URL, {
+// Prevent SSR Crash: Only initialize socket on client
+export const socket = (typeof window !== 'undefined' ? io(SOCKET_URL, {
     autoConnect: true,
     reconnection: true,
     reconnectionAttempts: Infinity,
@@ -13,4 +14,13 @@ export const socket = io(SOCKET_URL, {
     reconnectionDelayMax: 5000,
     transports: ['websocket'], // Force WebSocket to bypass 400 Errors on Polling (Sticky Session/Proxy issues)
     timeout: 20000,
-});
+}) : {
+    // Mock for Server Side Rendering
+    on: () => { },
+    off: () => { },
+    emit: () => { },
+    connect: () => { },
+    disconnect: () => { },
+    active: false,
+    connected: false,
+}) as any;
