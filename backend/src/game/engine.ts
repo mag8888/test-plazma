@@ -2282,7 +2282,7 @@ export class GameEngine {
                     card: this.state.currentCard,
                     expiresAt: Date.now() + 120000, // 2 min
                     sourcePlayerId: this.state.players[this.state.currentPlayerIndex].id,
-                    dismissedBy: []
+                    dismissedBy: [this.state.players[this.state.currentPlayerIndex].id]
                 });
             }
         }
