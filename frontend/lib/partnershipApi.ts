@@ -18,7 +18,7 @@ const getPartnershipUrl = () => {
     return envUrl;
 };
 
-const API_URL = getPartnershipUrl();
+const API_URL = `${getPartnershipUrl()}/api`;
 
 export const partnershipApi = {
     login: async (telegramId: string, username?: string, referrerId?: string) => {
