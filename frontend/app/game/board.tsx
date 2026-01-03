@@ -1834,19 +1834,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                 </button>
                             )}
 
-                            {/* Sandbox Toggle (Skip/Play) - Available to ALL active players (AFK Mode) */}
-                            {!localPlayer?.isBankrupted && (
-                                <button
-                                    onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
-                                    className={`w-16 h-16 rounded-xl border flex flex-col items-center justify-center gap-1 text-[10px] font-bold uppercase tracking-wider transition-all shadow-lg
-                                    ${localPlayer.isSkippingTurns
-                                            ? 'bg-yellow-600 border-yellow-500 text-white animate-pulse'
-                                            : 'bg-indigo-600 border-indigo-500 text-white'}`}
-                                >
-                                    <span className="text-xl">{localPlayer.isSkippingTurns ? '⏸' : '▶️'}</span>
-                                    <span>{localPlayer.isSkippingTurns ? 'Пауза' : 'Играть'}</span>
-                                </button>
-                            )}
+                            {/* Sandbox Toggle Removed per user request */}
 
                             {/* BANK BUTTON (Mobile) */}
                             <button

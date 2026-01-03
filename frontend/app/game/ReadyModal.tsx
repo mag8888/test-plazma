@@ -11,8 +11,8 @@ export function ReadyModal({ token, dream, initialName, onConfirm, onCancel }: R
     const [name, setName] = React.useState(initialName);
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-[#1e293b] p-8 rounded-3xl max-w-md w-full border border-slate-700 shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200 p-4">
+            <div className="bg-[#1e293b] p-6 rounded-3xl max-w-md w-full border border-slate-700 shadow-2xl relative overflow-hidden animate-in zoom-in-95 duration-300 max-h-[90vh] overflow-y-auto">
                 <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-400 to-emerald-500"></div>
 
                 <h2 className="text-2xl font-black text-white mb-6 text-center">Вы готовы? 🚀</h2>
