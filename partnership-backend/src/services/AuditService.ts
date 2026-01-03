@@ -243,6 +243,7 @@ export class AuditService {
      * Detects excess bonuses and deducts them from Green Balance.
      */
     static async fixBalances(userId: string): Promise<{ success: boolean, message: string, deducted: number }> {
+        console.log(`[AuditService v2.5] FIX START for ${userId}`);
         const user = await User.findById(userId);
         if (!user) return { success: false, message: 'User not found', deducted: 0 };
 
