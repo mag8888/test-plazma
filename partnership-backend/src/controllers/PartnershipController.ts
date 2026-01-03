@@ -21,7 +21,20 @@ export class PartnershipController {
     static async getTree(req: Request, res: Response) {
         try {
             const { userId } = req.params;
-            const userAvatars = await Avatar.find({ owner: userId }).populate({
+            let targetId = userId;
+
+            // Resolve Telegram ID if needed
+            if (!mongoose.Types.ObjectId.isValid(userId)) {
+                if (!isNaN(Number(userId))) {
+                    const u = await User.findOne({ telegram_id: Number(userId) });
+                    if (u) targetId = u._id.toString();
+                    else return res.status(404).json({ error: 'User not found' });
+                } else {
+                    return res.status(400).json({ error: 'Invalid User ID' });
+                }
+            }
+
+            const userAvatars = await Avatar.find({ owner: targetId }).populate({
                 path: 'partners',
                 populate: { path: 'partners' }
             });
@@ -34,7 +47,10 @@ export class PartnershipController {
     static async getStats(req: Request, res: Response) {
         try {
             const { userId } = req.params;
-            let user = await User.findById(userId).populate('referrer', 'username');
+            let user;
+            if (mongoose.Types.ObjectId.isValid(userId)) {
+                user = await User.findById(userId).populate('referrer', 'username');
+            }
 
             if (!user && !isNaN(Number(userId))) {
                 user = await User.findOne({ telegram_id: Number(userId) }).populate('referrer', 'username');
