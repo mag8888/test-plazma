@@ -222,14 +222,19 @@ export class PartnershipController {
 
             // Resolve Telegram ID if needed
             if (!mongoose.Types.ObjectId.isValid(userId)) {
-                const u = await User.findOne({ telegram_id: Number(userId) });
-                if (u) {
-                    targetId = u._id.toString();
-                    console.log(`[Partnership] Resolved Telegram ID ${userId} -> ObjectId ${targetId}`);
-                }
-                else if (!isNaN(Number(userId))) {
-                    console.log(`[Partnership] User not found by Telegram ID ${userId}`);
-                    return res.json({ avatars: [] });
+                const asNum = Number(userId);
+                if (!isNaN(asNum)) {
+                    const u = await User.findOne({ telegram_id: asNum });
+                    if (u) {
+                        targetId = u._id.toString();
+                        console.log(`[Partnership] Resolved Telegram ID ${userId} -> ObjectId ${targetId}`);
+                    } else {
+                        console.log(`[Partnership] User not found by Telegram ID ${userId}`);
+                        return res.json({ avatars: [] });
+                    }
+                } else {
+                    console.log(`[Partnership] Invalid User ID format (not ObjectId, not Number): ${userId}`);
+                    return res.status(400).json({ error: `Invalid User ID: ${userId}` });
                 }
             }
 
