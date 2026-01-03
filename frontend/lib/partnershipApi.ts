@@ -15,7 +15,7 @@ const getPartnershipUrl = () => {
         return '';
     }
 
-    return envUrl;
+    return envUrl.trim();
 };
 
 const API_URL = `${getPartnershipUrl()}/api`;
@@ -54,8 +54,22 @@ export const partnershipApi = {
     },
 
     async getMyAvatars(userId: string) {
-        const res = await fetch(`${API_URL}/avatars/my-avatars/${userId}`);
-        return res.json();
+        const url = `${API_URL}/avatars/my-avatars/${userId}`;
+        console.log(`[Partnership] getMyAvatars calling: ${url}, userId:`, userId, typeof userId);
+
+        try {
+            // Verify userId is safe string
+            if (typeof userId !== 'string' || !userId) {
+                throw new Error(`Invalid userId for avatars: ${userId}`);
+            }
+
+            const res = await fetch(url);
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.json();
+        } catch (e: any) {
+            console.error(`[Partnership] getMyAvatars FAILED. URL: "${url}"`, e);
+            throw new Error(`Fetch Error: ${e.message} (URL: ${url})`);
+        }
     },
 
     withdraw: async (userId: string, amount: number, walletAddress: string) => {
