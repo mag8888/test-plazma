@@ -676,10 +676,14 @@ const FeedCardItem = ({
                                 // CRITICAL: Only card owner can buy (except when selling)
                                 if (transactionMode === 'BUY' && !canControl) return true;
 
-                                // Check loan limit
                                 const maxLoan = Math.max(0, Math.floor((me?.cashflow || 0) / 100) * 1000);
                                 const loanAmount = Math.ceil(loanNeeded / 1000) * 1000;
-                                return transactionMode === 'BUY' && loanNeeded > 0 && loanAmount > maxLoan && !me?.isFastTrack;
+
+                                // Validation: Disable if unaffordable loan AND NOT Mandatory
+                                // Mandatory cards must allow clicking to trigger "Force Pay / Bankrupt" backend logic
+                                const isMandatory = card.type === 'EXPENSE' || card.mandatory;
+
+                                return transactionMode === 'BUY' && loanNeeded > 0 && loanAmount > maxLoan && !me?.isFastTrack && !isMandatory;
                             })()}
                             onClick={(e) => {
                                 e.stopPropagation();

@@ -1774,18 +1774,13 @@ export class GameEngine {
             // If player hasn't paid (we're dismissing), force payment
             if (expenseCost > 0) {
                 // Check if player can afford
-                if (currentPlayer.cash >= expenseCost) {
-                    currentPlayer.cash -= expenseCost;
-                    this.addLog(`💸 ${currentPlayer.name} paid expense: ${this.state.currentCard.title} (-$${expenseCost})`);
-                } else {
-                    // Auto-take loan if can't afford
-                    const loanAmount = Math.ceil((expenseCost - currentPlayer.cash) / 1000) * 1000;
-                    currentPlayer.loanDebt += loanAmount;
-                    currentPlayer.cash += loanAmount;
-                    this.addLog(`💳 ${currentPlayer.name} взял кредит $${loanAmount} на оплату расходов`);
-                    currentPlayer.cash -= expenseCost;
-                    this.addLog(`💸 ${currentPlayer.name} paid expense: ${this.state.currentCard.title} (-$${expenseCost})`);
-                }
+                // Use Standard Force Payment to handle Loan/Bankruptcy strict checks
+                this.forcePayment(currentPlayer, expenseCost, this.state.currentCard.title);
+
+                // If Bankrupt, stop?
+                // dismissCard falls through to discard card and end turn.
+                // If bankrupt, endTurn might skip player? 
+                // Engine handles bankruptcy state in endTurn.
             }
         }
 
@@ -2160,7 +2155,10 @@ export class GameEngine {
         // Real Estate / Business Logic (Quantity always 1)
         const costToPay = card.downPayment !== undefined ? card.downPayment : (card.cost || 0);
 
-        if (player.cash < costToPay) {
+        // Check Affordability (Skip for mandatory - handled by forcePayment)
+        const isMandatory = card.type === 'EXPENSE' || card.mandatory;
+
+        if (player.cash < costToPay && !isMandatory) {
             this.addLog(`${player.name} cannot afford ${card.title} ($${costToPay})`);
             return;
         }
@@ -2206,12 +2204,31 @@ export class GameEngine {
             }
         }
 
-        player.cash -= costToPay;
+        // Handle Payment
+        if (isMandatory && card.subtype !== 'CHARITY_ROLL') {
+            // Use Force Payment for Expenses/Mandatory
+            this.forcePayment(player, costToPay, card.title);
+
+            // If player went bankrupt in forcePayment, stop
+            if (this.state.lastEvent?.type === 'BANKRUPTCY') {
+                // But wait, forcePayment calls bankruptPlayer which resets state.
+                // We should probably end turn immediately or return.
+                // engine usually expects turn end.
+                this.state.currentCard = undefined;
+                this.endTurn();
+                return;
+            }
+        } else {
+            // Standard Asset Buy
+            player.cash -= costToPay;
+        }
 
         // Handle Expense Payment (No Asset added)
         // Exception: CHARITY_ROLL has its own outcome logic (shouldAddAsset flag)
-        if ((card.type === 'EXPENSE' || card.mandatory) && card.subtype !== 'CHARITY_ROLL') {
-            this.addLog(`${player.name} paid: ${card.title} (-$${costToPay})`);
+        if (isMandatory && card.subtype !== 'CHARITY_ROLL') {
+            // Logic moved above to forcePayment. 
+            // Just clean up.
+            // this.addLog(`${player.name} paid: ${card.title} (-$${costToPay})`); // Logged in forcePayment
 
             // Discard the paid expense card
             if (this.state.currentCard && this.state.currentCard.id === card.id) {
