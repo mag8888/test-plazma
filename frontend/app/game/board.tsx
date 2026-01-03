@@ -554,11 +554,11 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
     const [rankings, setRankings] = useState<any[]>([]);
 
     useEffect(() => {
-        socket.on('dice_rolled', (data) => {
+        socket.on('dice_rolled', (data: { type: string; roll: number; diceValues?: number[]; message?: string; state?: any }) => {
             if (data.type === 'MLM') {
                 setDiceValue(data.roll);
                 setShowDice(true);
-                setMlmMessage(data.message);
+                setMlmMessage(data.message || null);
 
                 setTimeout(() => {
                     setShowDice(false);
@@ -623,7 +623,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
             }, DICE_DURATION);
         });
 
-        socket.on('game_over', (data) => {
+        socket.on('game_over', (data: any) => {
             setState(data.state);
             setRankings(data.rankings);
             setShowRankings(true);
@@ -632,7 +632,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
             sfx.play('victory');
         });
 
-        socket.on('state_updated', (data) => {
+        socket.on('state_updated', (data: any) => {
             if (!isRollingRef.current) {
                 // SOUNDS DISABLED per user request - too many sound effects
                 // // My Turn Check
@@ -672,7 +672,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
             }
         });
 
-        socket.on('turn_ended', (data) => {
+        socket.on('turn_ended', (data: any) => {
             isRollingRef.current = false;
 
             // My Turn Check - SOUND DISABLED per user request
@@ -685,7 +685,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
             setSquareInfo(null);
         });
 
-        socket.on('game_started', (data) => {
+        socket.on('game_started', (data: any) => {
             isRollingRef.current = false;
             setState(data.state);
             sfx.play('start');
