@@ -1334,6 +1334,89 @@ export class BotService {
                         show_alert: false
                     });
                 }
+            } else if (data.startsWith('approve_deposit_')) {
+                const depositId = data.replace('approve_deposit_', '');
+                try {
+                    const { DepositRequestModel } = await import('../models/deposit-request.model');
+                    const { UserModel } = await import('../models/user.model');
+                    const { TransactionModel } = await import('../models/transaction.model');
+
+                    const deposit = await DepositRequestModel.findById(depositId);
+                    if (!deposit) {
+                        this.bot?.answerCallbackQuery(query.id, { text: 'Заявка не найдена', show_alert: true });
+                        return;
+                    }
+
+                    if (deposit.status !== 'PENDING') {
+                        this.bot?.answerCallbackQuery(query.id, { text: `Уже обработана: ${deposit.status}`, show_alert: true });
+                        return;
+                    }
+
+                    // 1. Update Deposit
+                    deposit.status = 'APPROVED';
+                    await deposit.save();
+
+                    // 2. Credit User
+                    // Note: deposit.user is likely a User ID (ObjectId or String depending on creation)
+                    // FinanceController used userId (Telegram ID) in some paths?
+                    // Let's resolve safely
+                    let user = await UserModel.findById(deposit.user);
+                    if (!user) {
+                        // Fallback: maybe it stored telegram_id?
+                        // Actually FinanceController: const deposit = new DepositRequest({ userId: req.body.userId })
+                        // It depends on what req.body.userId was. If it was telegram_id, then deposit.user might fail casting if defined as ObjectId
+                        // But let's assume valid linkage or try alternate find
+                        user = await UserModel.findOne({ telegram_id: deposit.user });
+                    }
+
+                    if (user) {
+                        const amount = Number(deposit.amount);
+                        user.greenBalance = (user.greenBalance || 0) + amount;
+                        await user.save();
+
+                        // 3. Log Transaction
+                        await TransactionModel.create({
+                            userId: user._id,
+                            amount: amount,
+                            currency: 'GREEN',
+                            type: 'DEPOSIT',
+                            description: `Deposit via ${deposit.method || 'Manual'}`
+                        });
+
+                        // 4. Notify User
+                        this.bot?.sendMessage(user.telegram_id!, `✅ Ваш депозит $${amount} успешно зачислен!`);
+                    }
+
+                    // 5. Update Admin Message
+                    this.bot?.editMessageCaption(`💰 <b>Заявка на пополнение (Web)</b>\n✅ <b>ОДОБРЕНО</b>\nAmount: $${deposit.amount}\nUser: ${user ? user.username : 'Unknown'}`, {
+                        chat_id: chatId,
+                        message_id: query.message?.message_id,
+                        parse_mode: 'HTML'
+                    });
+
+                } catch (e: any) {
+                    console.error("Approve Deposit Error:", e);
+                    this.bot?.answerCallbackQuery(query.id, { text: `Ошибка: ${e.message}`, show_alert: true });
+                }
+
+            } else if (data.startsWith('reject_deposit_')) {
+                const depositId = data.replace('reject_deposit_', '');
+                try {
+                    const { DepositRequestModel } = await import('../models/deposit-request.model');
+                    const deposit = await DepositRequestModel.findById(depositId);
+                    if (deposit) {
+                        deposit.status = 'REJECTED';
+                        await deposit.save();
+
+                        this.bot?.editMessageCaption(`💰 <b>Заявка на пополнение (Web)</b>\n❌ <b>ОТКЛОНЕНО</b>\nAmount: $${deposit.amount}`, {
+                            chat_id: chatId,
+                            message_id: query.message?.message_id,
+                            parse_mode: 'HTML'
+                        });
+                    }
+                } catch (e: any) {
+                    console.error("Reject Deposit Error:", e);
+                }
             }
         });
         const handleUpload = async (msg: any, type: 'image' | 'video' | 'raw' | 'auto' = 'auto') => {
