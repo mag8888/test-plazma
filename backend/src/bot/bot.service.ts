@@ -1,6 +1,6 @@
-
 import TelegramBot from 'node-telegram-bot-api';
 import dotenv from 'dotenv';
+import mongoose from 'mongoose';
 import { CloudinaryService } from '../services/cloudinary.service';
 import { UserModel } from '../models/user.model';
 import { AuthService } from '../auth/auth.service';
@@ -74,6 +74,17 @@ export class BotService {
         }
     }
 
+    isSuperAdmin(telegramId: number): boolean {
+        const superId = process.env.TELEGRAM_ADMIN_ID;
+        return superId ? String(telegramId) === String(superId).trim() : false;
+    }
+
+    isAdmin(telegramId: number): boolean {
+        if (this.isSuperAdmin(telegramId)) return true;
+        const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => id.trim());
+        return adminIds.includes(String(telegramId));
+    }
+
     async setBotCommands() {
         if (!this.bot) return;
 
@@ -84,19 +95,22 @@ export class BotService {
             { command: 'about', description: 'ℹ️ О проекте' }
         ]);
 
-        // Admin Commands (Scope: specific user)
-        const adminId = process.env.TELEGRAM_ADMIN_ID;
-        if (adminId) {
+        // Admin Commands
+        const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => id.trim());
+        if (process.env.TELEGRAM_ADMIN_ID) adminIds.push(process.env.TELEGRAM_ADMIN_ID);
+
+        for (const adminId of adminIds) {
+            if (!adminId) continue;
             try {
                 await this.bot.setMyCommands([
                     { command: 'start', description: '🏠 Главное меню' },
                     { command: 'admin', description: '👑 Админ панель' },
+                    { command: 'admin_users', description: '👥 Список игроков' },
                     { command: 'app', description: '📱 Приложение MONEO' },
                     { command: 'about', description: 'ℹ️ О проекте' }
                 ], { scope: { type: 'chat', chat_id: adminId } });
-                console.log(`Admin commands set for ${adminId}`);
             } catch (e) {
-                console.error("Failed to set admin commands:", e);
+                console.error(`Failed to set admin commands for ${adminId}:`, e);
             }
         }
     }
@@ -190,6 +204,90 @@ export class BotService {
             if (!isAdmin) return;
             this.adminStates.set(chatId, { state: 'WAITING_FOR_SYNC_USER' });
             this.bot?.sendMessage(chatId, "Enter username or ID to force sync:");
+        });
+
+        // /admin_users command - List users with stats
+        this.bot.onText(/\/admin_users/, async (msg) => {
+            const chatId = msg.chat.id;
+            const telegramId = msg.from?.id;
+            if (!telegramId || !this.isAdmin(telegramId)) {
+                this.bot?.sendMessage(chatId, "⛔ Доступ запрещен.");
+                return;
+            }
+
+            this.bot?.sendMessage(chatId, "⏳ Собираю статистику...");
+
+            try {
+                const { UserModel } = await import('../models/user.model');
+
+                // 1. Fetch All Users
+                const users = await UserModel.find({}).sort({ referralsCount: -1 }).lean();
+
+                // 2. Fetch Avatar Counts (Raw Collection - bypassing missing model)
+                let avatarCounts: Record<string, number> = {};
+                try {
+                    const collection = mongoose.connection.db?.collection('avatars');
+                    if (collection) {
+                        const counts = await collection.aggregate([
+                            { $match: { isActive: true } },
+                            { $group: { _id: '$owner', count: { $sum: 1 } } }
+                        ]).toArray();
+
+                        counts.forEach((c: any) => {
+                            avatarCounts[String(c._id)] = c.count;
+                        });
+                    }
+                } catch (e) {
+                    console.warn("Avatar aggregation failed:", e);
+                }
+
+                // 3. Build Referral Map (direct children)
+                const referralMap = new Map<string, any[]>();
+                users.forEach((u: any) => {
+                    if (u.referrer) {
+                        const refId = String(u.referrer);
+                        if (!referralMap.has(refId)) referralMap.set(refId, []);
+                        referralMap.get(refId)?.push(u);
+                    }
+                });
+
+                // 4. Generate Report
+                const totalInvited = Array.from(referralMap.values()).reduce((acc, list) => acc + list.length, 0);
+
+                let report = `📊 Отчет по игрокам (${new Date().toLocaleString()})\n`;
+                report += `Всего пользователей: ${users.length}\n`;
+                report += `Суммарно приглашено: ${totalInvited}\n`;
+                report += `-------------------------------------------\n`;
+
+                users.forEach((u: any, index) => {
+                    const avCount = avatarCounts[String(u._id)] || 0;
+                    const directRefs = referralMap.get(String(u._id)) || [];
+
+                    report += `${index + 1}. @${u.username || 'NoName'} (ID: ${u.telegram_id})\n`;
+                    report += `   Приглашено: ${directRefs.length} | Аватаров: ${avCount} | Доход: G:$${u.greenBalance || 0} / R:$${u.balanceRed || 0}\n`;
+
+                    if (directRefs.length > 0) {
+                        report += `   ⬇️ Приглашенные:\n`;
+                        directRefs.forEach(ref => {
+                            report += `      - @${ref.username || 'NoName'} (${ref.first_name || ''})\n`;
+                        });
+                    }
+                    report += `\n`;
+                });
+
+                // 5. Send File
+                const buffer = Buffer.from(report, 'utf-8');
+                await this.bot?.sendDocument(chatId, buffer, {
+                    caption: `📊 Статистика пользователей\nВсего: ${users.length}\nПриглашений: ${totalInvited}`
+                }, {
+                    filename: `users_stats_${new Date().toISOString().split('T')[0]}.txt`,
+                    contentType: 'text/plain'
+                });
+
+            } catch (e: any) {
+                console.error("Admin Users Error:", e);
+                this.bot?.sendMessage(chatId, `❌ Ошибка: ${e.message}`);
+            }
         });
 
         // /broadcast command - Admin mass messaging
