@@ -1,17 +1,20 @@
 import { getBackendUrl } from './config';
 
-// Get Partnership API URL - use backend proxy for Telegram WebApp compatibility
+// Get Partnership API URL - prioritizes explicit Environment Variable
 const getPartnershipUrl = () => {
+    // 1. Explicit Env Var (Production/Dev setup) - PREFERRED if set
+    if (process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL) {
+        return process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL;
+    }
+
+    // 2. Proxy via Backend (if running in browser and no env var)
     if (typeof window !== 'undefined') {
         const backend = getBackendUrl();
         // Backend handles /api/partnership/* and proxies to partnership-backend
         return `${backend}/api/partnership`;
     }
 
-    // SSR/Development fallback - MUST be set in ENV for production
-    const envUrl = process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL;
-    if (!envUrl) console.warn("NEXT_PUBLIC_PARTNERSHIP_API_URL is not set");
-    return envUrl || '';
+    return '';
 };
 
 const API_URL = getPartnershipUrl();

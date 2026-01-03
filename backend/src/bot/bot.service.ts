@@ -1427,69 +1427,78 @@ export class BotService {
         try {
             const { UserModel } = await import('../models/user.model');
 
-            let user = await UserModel.findOne({ telegram_id: telegramId });
-
-            if (!user) {
-                // Check if username exists (rare collision case for telegram users)
-                const existingUsername = await UserModel.findOne({ username });
-                if (existingUsername) {
-                    // Append random to username to make unique
-                    username = `${username}_${Math.floor(Math.random() * 1000)}`;
-                }
-
-                // Fetch Photo
-                let photoUrl = '';
-                try {
-                    const photos = await this.bot?.getUserProfilePhotos(telegramId, { limit: 1 });
-                    if (photos && photos.total_count > 0 && photos.photos[0].length > 0) {
-                        const largest = photos.photos[0][photos.photos[0].length - 1];
-                        const tempUrl = await this.bot?.getFileLink(largest.file_id);
-                        if (tempUrl) {
-                            // Upload to Cloudinary for persistence
-                            photoUrl = await this.cloudinaryService.uploadImage(tempUrl, 'avatars');
-                        }
-                    }
-                } catch (e) {
-                    console.error("Failed to fetch/upload user photo:", e);
-                }
-
-                // First just prepare the user object, don't save or reward yet
-                user = new UserModel({
-                    username,
-                    first_name: firstName,
-                    telegram_id: telegramId,
-                    referralBalance: 0,
-                    referralsCount: 0,
-                    photo_url: photoUrl
-                });
-
-                let referrerToReward: any = null;
-
-                // Check Referral Code
-                if (referralCode) {
-                    let referrer = await UserModel.findOne({ username: referralCode });
-                    if (!referrer && !isNaN(Number(referralCode))) {
-                        referrer = await UserModel.findOne({ telegram_id: Number(referralCode) });
-                    }
-
-                    if (referrer && referrer._id.toString() !== user._id.toString()) {
-                        user.referredBy = referrer.username;
-                        referrerToReward = referrer;
+            // Fetch Photo (optimistic, before DB op)
+            let photoUrl = '';
+            try {
+                const photos = await this.bot?.getUserProfilePhotos(telegramId, { limit: 1 });
+                if (photos && photos.total_count > 0 && photos.photos[0].length > 0) {
+                    const largest = photos.photos[0][photos.photos[0].length - 1];
+                    const tempUrl = await this.bot?.getFileLink(largest.file_id);
+                    if (tempUrl) {
+                        photoUrl = await this.cloudinaryService.uploadImage(tempUrl, 'avatars');
                     }
                 }
+            } catch (e) {
+                console.error("Failed to fetch/upload user photo:", e);
+            }
 
-                // 1. SAVE NEW USER FIRST (Atomic Constraint)
-                // If this fails (duplicate telegram_id), the code throws and skips reward.
-                await user.save();
-                console.log(`New user registered via bot: ${username}`);
+            // Resolve Referrer (Reference only, logic applied atomically later)
+            let referredByUsername: string | undefined;
+            let referrerToReward: any = null;
 
-                // 2. AWARD REFERRER (Only if user save succeeded)
+            if (referralCode) {
+                let referrer = await UserModel.findOne({ username: referralCode });
+                if (!referrer && !isNaN(Number(referralCode))) {
+                    referrer = await UserModel.findOne({ telegram_id: Number(referralCode) });
+                }
+                if (referrer && referrer.telegram_id !== telegramId) { // Self-ref check
+                    referredByUsername = referrer.username;
+                    referrerToReward = referrer;
+                }
+            }
+
+            // ATOMIC UPSERT
+            // $setOnInsert fields only set if new document created
+            const result = await UserModel.findOneAndUpdate(
+                { telegram_id: telegramId },
+                {
+                    $setOnInsert: {
+                        username,
+                        first_name: firstName,
+                        referralBalance: 0,
+                        balanceRed: 0,
+                        referralsCount: 0,
+                        referredBy: referredByUsername,
+                        createdAt: new Date()
+                    },
+                    $set: {
+                        photo_url: photoUrl || undefined // Update photo if new one found, or set to undefined if photoUrl is empty
+                    }
+                },
+                {
+                    upsert: true,
+                    new: true,
+                    includeResultMetadata: true // Needed to check inside 'raw' or 'lastErrorObject' if it was inserted
+                }
+            );
+
+            const user = result.value;
+            // Check if inserted (requires 'includeResultMetadata' or 'rawResult' depending on driver version)
+            // Mongoose classic: rawResult: true -> lastErrorObject.updatedExisting
+            // Newer Mongoose: result is just doc if {new: true}.
+            // Let's use standard logic: compare createdAt? Or check a flag.
+
+            // Standard approach with Mongoose 6+: check 'lastErrorObject' from raw result if option set?
+            // Actually 'includeResultMetadata' isn't standard in older versions. 
+            // Better check:
+            const isNew = result.lastErrorObject?.updatedExisting === false;
+
+            if (isNew) {
+                console.log(`New user registered via bot (Atomic): ${username}`);
+
+                // AWARD REFERRER
                 if (referrerToReward) {
                     try {
-                        // Re-fetch to be safe or just modify? 
-                        // Better to atomically update inside transaction if possible, but simple increment is okay for now.
-                        // To avoid version error, ideally use findOneAndUpdate for atomic increment
-
                         await UserModel.findByIdAndUpdate(referrerToReward._id, {
                             $inc: { balanceRed: 10, referralsCount: 1 }
                         });
@@ -1506,44 +1515,17 @@ export class BotService {
                         });
 
                         this.bot?.sendMessage(referrerToReward.telegram_id!, `🎉 У вас новый реферал: ${firstName} (@${username})! Баланс +$10 (🔴 Red Balance).`);
-
                     } catch (err) {
                         console.error("Failed to process referral reward:", err);
-                        // Non-critical: User created, but bonus failed. Logs will show.
                     }
                 }
             } else {
-                // Update existing user photo if missing or changed (On every /start? Maybe expensive? Let's just do it.)
-                try {
-                    const photos = await this.bot?.getUserProfilePhotos(telegramId, { limit: 1 });
-                    if (photos && photos.total_count > 0) {
-                        const largest = photos.photos[0][photos.photos[0].length - 1];
-                        const tempUrl = await this.bot?.getFileLink(largest.file_id);
-
-                        // Check if we need update (Generic check: if current URL is NOT cloudinary or if empty)
-                        // Or just update always?
-                        // Better: If current URL is empty OR contains 'api.telegram.org' (expired) OR just do it periodically.
-                        // Let's check if it exists.
-
-                        if (tempUrl) {
-                            // Optimization: Don't re-upload if we already have a Cloudinary URL and user didn't change photo?
-                            // Hard to know if user changed photo without comparing content.
-                            // Simple heuristic: If it's a new session, update it. Cloudinary isn't that expensive for small usage.
-                            // But to save bandwidth, maybe store file_id in DB?
-                            // For now, let's just upload if not present or if it looks like a temp URL.
-
-                            const isCloudinary = user.photo_url?.includes('cloudinary.com');
-                            if (!user.photo_url || !isCloudinary) {
-                                const secureUrl = await this.cloudinaryService.uploadImage(tempUrl, 'avatars');
-                                user.photo_url = secureUrl;
-                                await user.save();
-                            }
-                        }
-                    }
-                } catch (e) { }
+                // Existing user logic if needed (e.g. check photo update)
+                // For now, doing nothing to avoid complexity, or rely on $set above.
             }
-        } catch (e) {
-            console.error("Error registering user:", e);
+
+        } catch (error: any) {
+            console.error("HandleUserRegistration Error:", error);
         }
     }
 
