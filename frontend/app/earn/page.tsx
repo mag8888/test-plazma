@@ -34,6 +34,10 @@ export default function EarnPage() {
 
     // Get current tariff - find highest active avatar type
     const getCurrentTariff = () => {
+        // 1. Prefer backend calculated tariff if available
+        if (partnershipUser?.tariff) return partnershipUser.tariff;
+
+        // 2. Fallback to calculating from avatars list
         const avatars = partnershipUser?.avatars || [];
         const activeAvatars = avatars.filter((a: any) => a.active || a.isActive);
 

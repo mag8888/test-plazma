@@ -43,6 +43,12 @@ export class PartnershipController {
 
             const avatarCount = await Avatar.countDocuments({ owner: user._id, isActive: true });
 
+            // Calculate Tariff
+            const bestAvatar = await Avatar.findOne({ owner: user._id, isActive: true })
+                .sort({ cost: -1 }); // PREMIUM(1000) > ADVANCED(100) > BASIC(20)
+
+            const tariff = bestAvatar ? bestAvatar.type : 'GUEST';
+
             res.json({
                 username: user.username,
                 photoUrl: user.photo_url,
@@ -55,9 +61,11 @@ export class PartnershipController {
                 gamesPlayed: user.gamesPlayed,
                 wins: user.wins,
                 referralsCount: user.referralsCount,
-                avatarCount // Now strictly Active count
+                avatarCount,
+                tariff // Return calculated tariff
             });
         } catch (error: any) {
+            console.error('[getStats] Error:', error);
             res.status(500).json({ error: error.message });
         }
     }
@@ -169,33 +177,40 @@ export class PartnershipController {
                 isActive: true
             }).populate('parent').sort({ createdAt: -1 });
 
-            // Aggregation to get earnings
+            // Aggregation to get earnings (Optional, fail-safe)
             const avatarIds = avatars.map(a => a._id);
-            const earnings = await AvatarPurchase.aggregate([
-                {
-                    $match: {
-                        parentAvatarId: { $in: avatarIds }
-                    }
-                },
-                {
-                    $group: {
-                        _id: '$parentAvatarId',
-                        yellowEarned: { $sum: '$parentBonus' },
-                        greenEarned: {
-                            $sum: {
-                                $cond: [
-                                    { $eq: ['$referrerId', new mongoose.Types.ObjectId(targetId as string)] },
-                                    '$referrerBonus',
-                                    0
-                                ]
+            let earningsMap = new Map();
+
+            try {
+                if (avatarIds.length > 0) {
+                    const earnings = await AvatarPurchase.aggregate([
+                        {
+                            $match: {
+                                parentAvatarId: { $in: avatarIds }
+                            }
+                        },
+                        {
+                            $group: {
+                                _id: '$parentAvatarId',
+                                yellowEarned: { $sum: '$parentBonus' },
+                                greenEarned: {
+                                    $sum: {
+                                        $cond: [
+                                            { $eq: ['$referrerId', new mongoose.Types.ObjectId(targetId as string)] },
+                                            '$referrerBonus',
+                                            0
+                                        ]
+                                    }
+                                }
                             }
                         }
-                    }
+                    ]);
+                    earnings.forEach(e => earningsMap.set(e._id.toString(), e));
                 }
-            ]);
-
-            const earningsMap = new Map();
-            earnings.forEach(e => earningsMap.set(e._id.toString(), e));
+            } catch (aggError) {
+                console.error('[getMyAvatars] Aggregation failed:', aggError);
+                // Continue without earnings data
+            }
 
             const now = new Date();
             const avatarsWithStatus = avatars.map(avatar => {
