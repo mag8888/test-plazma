@@ -24,9 +24,10 @@ type BroadcastState = {
 
 // Deposit State
 type DepositState = {
-    state: 'WAITING_AMOUNT' | 'WAITING_SCREENSHOT';
+    state: 'WAITING_METHOD' | 'WAITING_AMOUNT' | 'WAITING_SCREENSHOT';
     amount?: number;
     currency?: string;
+    method?: string;
 };
 
 dotenv.config();
@@ -796,6 +797,8 @@ export class BotService {
             } else if (text === '📋 Мои игры') {
                 const userId = msg.from?.id;
                 if (userId) await this.handleMyGames(chatId, userId);
+            } else if (text === '💰 Пополнить') {
+                await this.handleDepositCommand(chatId);
             } else if (text === '🔑 Получить пароль') {
                 await this.handleGetPassword(chatId, msg.from?.id);
             }
@@ -2573,4 +2576,175 @@ export class BotService {
             await this.bot.answerCallbackQuery(query.id, { text: 'Ошибка обработки', show_alert: true });
         }
     }
+    async handleDepositCommand(chatId: number) {
+        this.depositStates.set(chatId, { state: 'WAITING_METHOD' } as any);
+
+        await this.bot?.sendMessage(chatId, "💰 **Пополнение баланса**\n\nВыберите способ пополнения:", {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                keyboard: [
+                    [{ text: 'USDT BEP20' }, { text: 'USDT TRC20' }],
+                    [{ text: 'Сбербанк (RUB)' }],
+                    [{ text: '❌ Отмена' }]
+                ],
+                resize_keyboard: true
+            }
+        });
+    }
+
+    async handleDepositMessage(chatId: number, text: string, msg: TelegramBot.Message) {
+        const state = this.depositStates.get(chatId);
+        if (!state) return false;
+
+        // Cancel helper
+        if (text === '❌ Отмена') {
+            this.depositStates.delete(chatId);
+            this.sendMainMenu(chatId, "✅ Отменено.");
+            return true;
+        }
+
+        if (state.state === 'WAITING_METHOD') {
+            if (['USDT BEP20', 'USDT TRC20', 'Сбербанк (RUB)'].includes(text)) {
+                state.method = text;
+                state.state = 'WAITING_AMOUNT';
+                this.depositStates.set(chatId, state);
+
+                await this.bot?.sendMessage(chatId, `✅ Выбрано: ${text}\n\nВыберите сумму:`, {
+                    reply_markup: {
+                        keyboard: [
+                            [{ text: '20$' }, { text: '100$' }, { text: '1120$' }],
+                            [{ text: 'Своя сумма' }],
+                            [{ text: '❌ Отмена' }]
+                        ],
+                        resize_keyboard: true
+                    }
+                });
+            } else {
+                await this.bot?.sendMessage(chatId, "⚠️ Выберите способ из меню.");
+            }
+            return true;
+        }
+
+        if (state.state === 'WAITING_AMOUNT') {
+            let amount: number | null = null;
+
+            // Parse amount
+            if (text === '20$') amount = 20;
+            else if (text === '100$') amount = 100;
+            else if (text === '1120$') amount = 1120;
+
+            // Handle custom amount input if numeric (ignoring 'Своя сумма' text which just prompts)
+            if (amount === null && !isNaN(Number(text))) {
+                amount = Number(text);
+            }
+
+            if (text === 'Своя сумма') {
+                await this.bot?.sendMessage(chatId, "Введите сумму цифрами (в долларах):", { reply_markup: { remove_keyboard: true } });
+                // Don't change state, just prompt user to input number next
+                return true;
+            }
+
+            if (amount && amount > 0) {
+                state.amount = amount;
+                state.state = 'WAITING_SCREENSHOT';
+                this.depositStates.set(chatId, state);
+
+                let wallet = '';
+                if (state.method === 'USDT BEP20') wallet = `0xb15e97ad107d57f5ca5405556877395848cf745d`;
+                else if (state.method === 'USDT TRC20') wallet = `TG8Ltochc5rYz54M5SeRPbMq7Xj9ovz7j9`;
+                else if (state.method === 'Сбербанк (RUB)') wallet = `+79164632850 (Роман Богданович П.)`;
+
+                const msgText = `💵 К оплате: <b>$${amount}</b>\n` +
+                    `💳 Способ: ${state.method}\n` +
+                    `📥 Реквизиты/Кошелек:\n` +
+                    `<code>${wallet}</code>\n\n` +
+                    `📸 После оплаты пришлите скриншот (картинкой/файлом) в этот чат.`;
+
+                await this.bot?.sendMessage(chatId, msgText, { parse_mode: 'HTML', reply_markup: { keyboard: [[{ text: '❌ Отмена' }]], resize_keyboard: true } });
+            } else {
+                if (text !== 'Своя сумма') { // Only warn if it wasn't the button click
+                    await this.bot?.sendMessage(chatId, "⚠️ Введите корректную сумму числом.");
+                }
+            }
+            return true;
+        }
+
+        return false;
+    }
+
+    async handleDepositPhoto(chatId: number, msg: TelegramBot.Message) {
+        const state = this.depositStates.get(chatId);
+        if (state && state.state === 'WAITING_SCREENSHOT') {
+            const photo = msg.photo![msg.photo!.length - 1]; // Highest Res
+
+            try {
+                const fileLink = await this.bot?.getFileLink(photo.file_id);
+                if (fileLink) {
+                    await this.bot?.sendMessage(chatId, "⏳ Загрузка...", { reply_markup: { remove_keyboard: true } });
+
+                    // Upload
+                    const proofUrl = await this.cloudinaryService.uploadImage(fileLink, 'deposits');
+
+                    // Create Request
+                    // Use dynamic import to avoid circular dependency issues if any
+                    const { DepositRequestModel } = await import('../models/deposit-request.model');
+                    const { UserModel } = await import('../models/user.model');
+
+                    const user = await UserModel.findOne({ telegram_id: chatId });
+                    if (!user) {
+                        await this.bot?.sendMessage(chatId, "❌ Ошибка: User not found");
+                        this.depositStates.delete(chatId);
+                        return true;
+                    }
+
+                    const deposit = await DepositRequestModel.create({
+                        user: user._id,
+                        amount: state.amount,
+                        currency: 'USD',
+                        method: state.method,
+                        proofUrl: proofUrl,
+                        status: 'PENDING'
+                    });
+
+                    // Notify Admins
+                    if (this.bot) {
+                        const adminMsg =
+                            `💰 <b>Заявка на пополнение (Bot)</b>\n` +
+                            `👤 Пользователь: @${user.username} (ID: ${user.telegram_id})\n` +
+                            `💵 Сумма: <b>$${state.amount}</b>\n` +
+                            `💳 Способ: ${state.method}\n` +
+                            `📄 ID заявки: ${deposit._id}`;
+
+                        const adminIdsStr = process.env.ADMIN_IDS || process.env.ADMIN_ID || '';
+                        const adminIds = adminIdsStr.split(',').map(id => id.trim()).filter(id => id);
+
+                        for (const adminId of adminIds) {
+                            try {
+                                await this.bot.sendPhoto(adminId, proofUrl, {
+                                    caption: adminMsg,
+                                    parse_mode: 'HTML',
+                                    reply_markup: {
+                                        inline_keyboard: [
+                                            [{ text: '✅ Подтвердить', callback_data: `approve_deposit_${deposit._id}` }],
+                                            [{ text: '❌ Отклонить', callback_data: `reject_deposit_${deposit._id}` }]
+                                        ]
+                                    }
+                                });
+                            } catch (e) { console.error(`Failed to notify admin ${adminId}`, e); }
+                        }
+                    }
+
+                    await this.bot?.sendMessage(chatId, "✅ Заявка отправлена! Ожидайте подтверждения.");
+                    this.depositStates.delete(chatId);
+                    this.sendMainMenu(chatId, "🏠 Главное меню");
+                }
+            } catch (e: any) {
+                console.error("Deposit Proof Error:", e);
+                await this.bot?.sendMessage(chatId, `❌ Ошибка загрузки: ${e.message}`);
+            }
+            return true; // We handled the photo
+        }
+        return false; // Not in deposit state
+    }
 }
+

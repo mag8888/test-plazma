@@ -146,7 +146,13 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
             {/* My Avatars List */}
             {myAvatars.length > 0 && (
                 <div className="mt-6 space-y-2">
-                    <h3 className="text-lg font-bold text-white">Мои Аватары</h3>
+                    <div className="flex justify-between items-end">
+                        <h3 className="text-lg font-bold text-white">Мои Аватары</h3>
+                        <div className="text-xs text-slate-400 text-right">
+                            Общий доход: <span className="text-green-400 font-bold">${myAvatars.reduce((acc, a) => acc + (a.earnedGreen || 0), 0).toLocaleString()} (S)</span> + <span className="text-yellow-400 font-bold">${myAvatars.reduce((acc, a) => acc + (a.earnedYellow || 0), 0).toLocaleString()} (B)</span>
+                        </div>
+                    </div>
+
                     {myAvatars.map((avatar, idx) => {
                         const avatarType = AVATAR_TYPES.find(a => a.type === avatar.type);
                         if (!avatarType) return null;
@@ -164,36 +170,54 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
                                     setSelectedAvatarType(avatarType.name);
                                     setShowMatrix(true);
                                 }}
-                                className={`${avatarType.bgColor} border ${avatarType.borderColor} rounded-lg p-3 flex items-center justify-between cursor-pointer hover:opacity-80 transition-opacity`}
+                                className={`${avatarType.bgColor} border ${avatarType.borderColor} rounded-lg p-3 flex flex-col gap-2 cursor-pointer hover:opacity-80 transition-opacity`}
                             >
-                                <div className="flex items-center gap-3">
-                                    <Icon className="w-5 h-5 text-white" />
-                                    <div>
-                                        <div className="font-bold text-white text-sm">{avatarType.name}</div>
-                                        <div className="text-xs text-slate-400">
-                                            Уровень {avatar.level} • {avatar.partners?.length || 0}/3 партнеров
-                                            {avatar.isClosed && <span className="ml-2 text-green-400">✓ Закрыто</span>}
+                                <div className="flex items-center justify-between w-full">
+                                    <div className="flex items-center gap-3">
+                                        <Icon className="w-5 h-5 text-white" />
+                                        <div>
+                                            <div className="font-bold text-white text-sm">{avatarType.name}</div>
+                                            <div className="text-xs text-slate-400">
+                                                Уровень {avatar.level} • {avatar.partners?.length || 0}/3 партнеров
+                                                {avatar.isClosed && <span className="ml-2 text-green-400">✓ Закрыто</span>}
+                                            </div>
                                         </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <div className="text-right">
+                                            <div className="text-sm text-white">{expiryDate}</div>
+                                            <div className={`text-xs ${avatar.hasActiveSubscription ? 'text-green-400' : 'text-red-400'}`}>
+                                                {avatar.hasActiveSubscription ? 'Активна' : 'Истекла'}
+                                            </div>
+                                        </div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation(); // Prevent double click
+                                                setSelectedAvatarId(avatar._id);
+                                                setSelectedAvatarType(avatarType.name);
+                                                setShowMatrix(true);
+                                            }}
+                                            className="p-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors ml-2"
+                                            title="Посмотреть матрицу"
+                                        >
+                                            <Eye className="w-4 h-4 text-white" />
+                                        </button>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-2">
-                                    <div className="text-right">
-                                        <div className="text-sm text-white">{expiryDate}</div>
-                                        <div className={`text-xs ${avatar.hasActiveSubscription ? 'text-green-400' : 'text-red-400'}`}>
-                                            {avatar.hasActiveSubscription ? 'Активна' : 'Истекла'}
+
+                                {/* Income Stats per Avatar */}
+                                <div className="border-t border-white/10 pt-2 mt-1 flex justify-between items-center text-xs">
+                                    <span className="text-slate-500">Доход аватара:</span>
+                                    <div className="flex gap-3">
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[10px] text-slate-400">S:</span>
+                                            <span className="text-green-400 font-bold">+${(avatar.earnedGreen || 0).toLocaleString()}</span>
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                            <span className="text-[10px] text-slate-400">B:</span>
+                                            <span className="text-yellow-400 font-bold">+${(avatar.earnedYellow || 0).toLocaleString()}</span>
                                         </div>
                                     </div>
-                                    <button
-                                        onClick={() => {
-                                            setSelectedAvatarId(avatar._id);
-                                            setSelectedAvatarType(avatarType.name);
-                                            setShowMatrix(true);
-                                        }}
-                                        className="p-2 bg-blue-600 hover:bg-blue-500 rounded-lg transition-colors ml-2"
-                                        title="Посмотреть матрицу"
-                                    >
-                                        <Eye className="w-4 h-4 text-white" />
-                                    </button>
                                 </div>
                             </div>
                         );

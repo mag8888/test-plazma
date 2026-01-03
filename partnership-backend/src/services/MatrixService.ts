@@ -371,7 +371,7 @@ export class MatrixService {
                     amount: halfCost,
                     currency: 'YELLOW',
                     type: TransactionType.AVATAR_BONUS,
-                    description: `Yellow bonus: ${type} placed by ${user.username}`
+                    description: `Yellow bonus: ${type} from ${user.username}` // CHANGED: "placed by" -> "from" to match RegEx
                 });
             }
 

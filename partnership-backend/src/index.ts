@@ -5,6 +5,7 @@ import { connectDB } from './db';
 import { PartnershipController } from './controllers/PartnershipController';
 import { AdminController } from './controllers/AdminController';
 import { WalletController } from './controllers/WalletController';
+import { FinanceController } from './controllers/FinanceController';
 
 dotenv.config();
 
@@ -69,6 +70,13 @@ walletRouter.post('/charge', WalletController.charge as any);
 walletRouter.post('/deposit', WalletController.deposit as any);
 
 app.use('/api/wallet', walletRouter);
+
+// Finance Routes
+const financeRouter = express.Router();
+financeRouter.post('/deposit', FinanceController.createDepositRequest as any);
+financeRouter.post('/proof', FinanceController.submitProof as any);
+financeRouter.get('/pending', FinanceController.getPendingRequests as any); // Should be admin protected later
+app.use('/api/finance', financeRouter);
 
 app.use('/api/admin', adminRouter);
 

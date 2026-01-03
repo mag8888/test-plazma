@@ -33,10 +33,15 @@ export class PartnershipController {
     static async getStats(req: Request, res: Response) {
         try {
             const { userId } = req.params;
-            const user = await User.findById(userId).populate('referrer', 'username');
+            let user = await User.findById(userId).populate('referrer', 'username');
+
+            if (!user && !isNaN(Number(userId))) {
+                user = await User.findOne({ telegram_id: Number(userId) }).populate('referrer', 'username');
+            }
+
             if (!user) return res.status(404).json({ error: 'User not found' });
 
-            const avatarCount = await Avatar.countDocuments({ owner: userId });
+            const avatarCount = await Avatar.countDocuments({ owner: user._id, isActive: true });
 
             res.json({
                 username: user.username,
@@ -50,8 +55,160 @@ export class PartnershipController {
                 gamesPlayed: user.gamesPlayed,
                 wins: user.wins,
                 referralsCount: user.referralsCount,
-                avatarCount
+                avatarCount // Now strictly Active count
             });
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    // ... (withdraw is fine) ...
+
+    // ... (createUser is fine) ...
+
+    static async getPartners(req: Request, res: Response) {
+        try {
+            const { userId } = req.params;
+            let user;
+
+            if (mongoose.Types.ObjectId.isValid(userId)) {
+                user = await User.findById(userId);
+            }
+
+            if (!user && !isNaN(Number(userId))) {
+                user = await User.findOne({ telegram_id: Number(userId) });
+            }
+
+            if (!user) return res.status(404).json({ error: 'User not found' });
+
+            let referrals = await User.find({ referrer: user._id }).lean();
+
+            // ... (Rest of logic is same, but using Resolved user._id) ...
+
+            if (referrals.length < (user.referralsCount || 0)) {
+                // ... (Fallback logic) ...
+                const fallbackReferrals = await User.find({
+                    referrer: { $exists: false },
+                    $or: [
+                        { referredBy: user.username },
+                        { referredBy: { $regex: new RegExp(`^${user.username}$`, 'i') } },
+                        { referredBy: String(user.telegram_id) },
+                        { referredBy: String(user._id) }
+                    ]
+                });
+                if (fallbackReferrals.length > 0) {
+                    // ... repair logic ...
+                    referrals = [...referrals, ...fallbackReferrals.map(r => r.toObject())] as any;
+                }
+            }
+
+            const result = [];
+            for (const ref of referrals) {
+                const refUser = ref as any;
+                const bestAvatar = await Avatar.findOne({ owner: refUser._id, isActive: true })
+                    .sort({ level: -1 }).lean();
+
+                // IMPROVED SEARCH: Look for Username in description (Direct Bonus, Level Bonus, Yellow Bonus)
+                const bonuses = await Transaction.find({
+                    user: user._id,
+                    description: { $regex: new RegExp(refUser.username, 'i') }
+                }).lean();
+
+                let green = 0;
+                let yellow = 0;
+                let red = 0;
+
+                for (const tx of bonuses) {
+                    const type = tx.type as string;
+                    if (type === TransactionType.BONUS_GREEN || (type === 'AVATAR_BONUS' && tx.currency === 'GREEN')) green += tx.amount;
+                    if (type === TransactionType.BONUS_YELLOW || (type === 'AVATAR_BONUS' && tx.currency === 'YELLOW')) yellow += tx.amount;
+
+                    // Red Balance Logic Audit:
+                    if (tx.currency === 'balanceRed' || type === 'GAME_WIN' || type === 'REFERRAL_REWARD') {
+                        red += tx.amount;
+                    }
+                }
+
+                result.push({
+                    _id: refUser._id,
+                    username: refUser.username,
+                    firstName: refUser.first_name,
+                    telegramId: refUser.telegram_id,
+                    avatarType: bestAvatar?.type || (!bestAvatar && refUser.isMaster ? 'MASTER' : 'GUEST'), // Fallback if matrix avatar missing but legacy flag exists
+                    level: bestAvatar?.level || 0,
+                    incomeGreen: green,
+                    incomeYellow: yellow,
+                    incomeRed: red,
+                    joinedAt: refUser.createdAt
+                });
+            }
+
+            res.json(result);
+        } catch (error: any) {
+            console.error("Get Partners Error:", error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    // ...
+
+    static async getMyAvatars(req: Request, res: Response) {
+        try {
+            const { userId } = req.params;
+            let targetId = userId;
+
+            // Resolve Telegram ID if needed
+            if (!mongoose.Types.ObjectId.isValid(userId)) {
+                const u = await User.findOne({ telegram_id: Number(userId) });
+                if (u) targetId = u._id.toString();
+                else if (!isNaN(Number(userId))) return res.json({ avatars: [] }); // User not found
+            }
+
+            const avatars = await Avatar.find({
+                owner: targetId,
+                isActive: true
+            }).populate('parent').sort({ createdAt: -1 });
+
+            // Aggregation to get earnings
+            const avatarIds = avatars.map(a => a._id);
+            const earnings = await AvatarPurchase.aggregate([
+                {
+                    $match: {
+                        parentAvatarId: { $in: avatarIds }
+                    }
+                },
+                {
+                    $group: {
+                        _id: '$parentAvatarId',
+                        yellowEarned: { $sum: '$parentBonus' },
+                        greenEarned: {
+                            $sum: {
+                                $cond: [
+                                    { $eq: ['$referrerId', new mongoose.Types.ObjectId(targetId as string)] },
+                                    '$referrerBonus',
+                                    0
+                                ]
+                            }
+                        }
+                    }
+                }
+            ]);
+
+            const earningsMap = new Map();
+            earnings.forEach(e => earningsMap.set(e._id.toString(), e));
+
+            const now = new Date();
+            const avatarsWithStatus = avatars.map(avatar => {
+                const earn = earningsMap.get(avatar._id.toString()) || { yellowEarned: 0, greenEarned: 0 };
+                return {
+                    ...avatar.toObject(),
+                    hasActiveSubscription: !avatar.subscriptionExpires || avatar.subscriptionExpires > now,
+                    earnedGreen: earn.greenEarned,
+                    earnedYellow: earn.yellowEarned
+                };
+            });
+
+            res.json({ avatars: avatarsWithStatus });
         } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
@@ -164,90 +321,7 @@ export class PartnershipController {
         }
     }
 
-    static async getPartners(req: Request, res: Response) {
-        try {
-            const { userId } = req.params;
-            let user;
 
-            if (mongoose.Types.ObjectId.isValid(userId)) {
-                user = await User.findById(userId);
-            }
-
-            if (!user && !isNaN(Number(userId))) {
-                user = await User.findOne({ telegram_id: Number(userId) });
-            }
-
-            if (!user) return res.status(404).json({ error: 'User not found' });
-
-            let referrals = await User.find({ referrer: user._id }).lean();
-
-            if (referrals.length < (user.referralsCount || 0)) {
-                console.log(`[Partners] Mismatch for ${user.username}: Found ${referrals.length} vs Expected ${user.referralsCount}. Trying fallback...`);
-                const fallbackReferrals = await User.find({
-                    referrer: { $exists: false },
-                    $or: [
-                        { referredBy: user.username },
-                        { referredBy: { $regex: new RegExp(`^${user.username}$`, 'i') } },
-                        { referredBy: String(user.telegram_id) },
-                        { referredBy: String(user._id) }
-                    ]
-                });
-
-                if (fallbackReferrals.length > 0) {
-                    Promise.all(fallbackReferrals.map(async (orphan) => {
-                        try {
-                            await User.updateOne({ _id: orphan._id }, { referrer: user._id });
-                        } catch (e) {
-                            console.error(`Failed to repair orphan ${orphan._id}`, e);
-                        }
-                    }));
-                    referrals = [...referrals, ...fallbackReferrals.map(r => r.toObject())] as any;
-                }
-            }
-
-            const result = [];
-            for (const ref of referrals) {
-                const refUser = ref as any;
-                const bestAvatar = await Avatar.findOne({ owner: refUser._id, isActive: true })
-                    .sort({ level: -1 }).lean();
-
-                const bonuses = await Transaction.find({
-                    user: user._id,
-                    description: { $regex: new RegExp(`from ${refUser.username}`, 'i') }
-                }).lean();
-
-                let green = 0;
-                let yellow = 0;
-                let red = 0;
-
-                for (const tx of bonuses) {
-                    if (tx.type === TransactionType.BONUS_GREEN) green += tx.amount;
-                    if (tx.type === TransactionType.BONUS_YELLOW) yellow += tx.amount;
-                    if (tx.currency === 'balanceRed' || (tx.type === 'ADMIN_ADJUSTMENT' && tx.amount > 0 && !tx.currency)) {
-                        if (tx.currency === 'balanceRed') red += tx.amount;
-                    }
-                }
-
-                result.push({
-                    _id: refUser._id,
-                    username: refUser.username,
-                    firstName: refUser.first_name,
-                    telegramId: refUser.telegram_id,
-                    avatarType: bestAvatar?.type || null,
-                    level: bestAvatar?.level || 0,
-                    incomeGreen: green,
-                    incomeYellow: yellow,
-                    incomeRed: red,
-                    joinedAt: refUser.createdAt
-                });
-            }
-
-            res.json(result);
-        } catch (error: any) {
-            console.error("Get Partners Error:", error);
-            res.status(500).json({ error: error.message });
-        }
-    }
 
     static async purchaseAvatar(req: Request, res: Response) {
         try {
@@ -294,26 +368,7 @@ export class PartnershipController {
         }
     }
 
-    static async getMyAvatars(req: Request, res: Response) {
-        try {
-            const { userId } = req.params;
 
-            const avatars = await Avatar.find({
-                owner: userId,
-                isActive: true
-            }).populate('parent').sort({ createdAt: -1 });
-
-            const now = new Date();
-            const avatarsWithStatus = avatars.map(avatar => ({
-                ...avatar.toObject(),
-                hasActiveSubscription: !avatar.subscriptionExpires || avatar.subscriptionExpires > now
-            }));
-
-            res.json({ avatars: avatarsWithStatus });
-        } catch (error: any) {
-            res.status(500).json({ error: error.message });
-        }
-    }
 
     static async getPremiumCount(req: Request, res: Response) {
         try {

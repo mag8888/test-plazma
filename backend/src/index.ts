@@ -168,6 +168,23 @@ import { DepositController } from './deposit/deposit.controller';
 app.use('/api/auth', AuthController);
 app.post('/api/deposit/request', DepositController.requestDeposit as any);
 
+// Generic Upload API (for frontend usage)
+app.post('/api/upload', async (req, res) => {
+    try {
+        const { image, folder } = req.body;
+        if (!image) return res.status(400).json({ error: 'Image required' });
+
+        const { CloudinaryService } = await import('./services/cloudinary.service');
+        const cloudinary = new CloudinaryService();
+        const url = await cloudinary.uploadImage(image, folder || 'moneo_uploads');
+
+        res.json({ success: true, url });
+    } catch (e: any) {
+        console.error("Upload failed:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
+
 // Card Management API (Admin Only)
 import cardRoutes from './game/card.routes';
 app.use('/api/cards', cardRoutes);
