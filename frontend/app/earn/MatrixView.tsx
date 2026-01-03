@@ -298,7 +298,7 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
     const greenActual = earnings.greenEarned || 0;
 
     return (
-        <div className="fixed inset-0 bg-black/95 z-50 flex items-center justify-center p-4 backdrop-blur-md">
+        <div className="fixed inset-0 bg-black/95 z-[100] flex items-center justify-center p-4 backdrop-blur-md">
             <div className="bg-[#0B1120] rounded-2xl border border-slate-700/50 max-w-6xl w-full max-h-[92vh] flex flex-col shadow-2xl relative overflow-hidden">
 
                 {/* HEADLINE / HEADER */}

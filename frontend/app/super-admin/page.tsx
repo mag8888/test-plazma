@@ -1115,7 +1115,7 @@ export default function AdminPage() {
             {/* EDIT STATS MODAL */}
             {
                 editStatsUser && (
-                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
                         <div className="bg-slate-900 border border-slate-700 w-full max-w-md p-6 rounded-2xl shadow-2xl space-y-4">
                             <h2 className="text-xl font-bold text-white mb-4">Edit Stats: {editStatsUser.username}</h2>
 
@@ -1161,7 +1161,7 @@ export default function AdminPage() {
             {/* HISTORY MODAL */}
             {
                 historyUser && (
-                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
                         <div className="bg-slate-900 border border-slate-700 w-full max-w-4xl h-[90vh] rounded-2xl flex flex-col shadow-2xl">
                             {/* Header */}
                             <div className="p-6 border-b border-slate-700 flex justify-between items-center bg-slate-950 rounded-t-2xl">
@@ -1345,7 +1345,7 @@ export default function AdminPage() {
             {/* BALANCE MODAL */}
             {
                 selectedUser && (
-                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
                         <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-6">
                             <h2 className="text-xl font-bold text-white">Manage Balance</h2>
                             <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{selectedUser.username}</span></div>
@@ -1422,7 +1422,7 @@ export default function AdminPage() {
             {/* ADD AVATAR MODAL */}
             {
                 addAvatarUser && (
-                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
                         <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-6">
                             <h2 className="text-xl font-bold text-white">Add Avatar (Admin)</h2>
                             <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{addAvatarUser.username}</span></div>
@@ -1483,7 +1483,7 @@ export default function AdminPage() {
             {/* EDIT REFERRER MODAL */}
             {
                 editReferrerUser && (
-                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
                         <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-6">
                             <h2 className="text-xl font-bold text-white">Edit Referrer</h2>
                             <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{editReferrerUser.username}</span></div>
@@ -1517,7 +1517,7 @@ export default function AdminPage() {
             {/* AVATAR LIST MODAL */}
             {
                 selectAvatarUser && (
-                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
+                    <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[100] p-4">
                         <div className="bg-slate-900 p-6 rounded-2xl border border-slate-700 w-full max-w-md space-y-4 max-h-[80vh] flex flex-col">
                             <div className="flex justify-between items-center">
                                 <h2 className="text-xl font-bold text-white">Select Avatar</h2>
