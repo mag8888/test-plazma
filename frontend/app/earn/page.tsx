@@ -16,6 +16,7 @@ export default function EarnPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [partnershipUser, setPartnershipUser] = useState<any>(null);
     const [partnershipError, setPartnershipError] = useState<string | null>(null);
+    const [avatarError, setAvatarError] = useState<string | null>(null);
     const [totalUsers, setTotalUsers] = useState(0);
 
     // Modal State
@@ -105,6 +106,7 @@ export default function EarnPage() {
                                 const avatarsList = data.avatars || [];
                                 console.log('🎭 [Earn Page] Avatars fetched:', avatarsList);
                                 setPartnershipUser({ ...dbUser, ...stats, avatars: avatarsList });
+                                setAvatarError(null);
 
                                 // Only attempt sync if we have initData (Telegram WebApp)
                                 if (webApp?.initData) {
@@ -132,6 +134,7 @@ export default function EarnPage() {
                             })
                             .catch(err => {
                                 console.error('❌ [Earn Page] Failed to fetch avatars:', err);
+                                setAvatarError(`Fetch Error: ${err.message}`);
                                 // Still set user data even if avatars fail
                                 setPartnershipUser({ ...dbUser, ...stats, avatars: [] });
                             });
@@ -589,12 +592,13 @@ export default function EarnPage() {
                         <div>
                             <span className="text-slate-600">Partnership User:</span>{' '}
                             {partnershipUser ? (
-                                <span className="text-green-400">Found ({partnershipUser.telegramId})</span>
+                                <span className="text-green-400">Found ({partnershipUser.telegramId || partnershipUser.telegram_id})</span>
                             ) : (
                                 <span className="text-red-400">Not Found</span>
                             )}
                         </div>
                         {partnershipError && <div className="text-red-500 text-[10px] mt-1 break-all bg-red-900/10 p-1 rounded">Err: {partnershipError}</div>}
+                        {avatarError && <div className="text-orange-500 text-[10px] mt-1 break-all bg-orange-900/10 p-1 rounded">Avatar Err: {avatarError}</div>}
                         <div className="text-[9px] text-slate-700 mt-1 truncate">Env Valid: {process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL?.includes('http') ? 'Yes' : 'No'}</div>
                         <div className="text-[9px] text-slate-700 mt-1 truncate">DB Name: {dbName}</div>
                         <div className="text-[9px] text-slate-700 mt-1 truncate">DB Host: {dbHost}</div>
