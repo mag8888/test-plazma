@@ -258,11 +258,11 @@ export class BotService {
             const isAdmin = adminIds.includes(String(telegramId));
 
             if (!isAdmin) {
-                this.bot?.sendMessage(chatId, `⛔ Access Denied. (Your ID: ${telegramId})`);
+                this.bot?.sendMessage(chatId, `⛔ Доступ запрещен. (Ваш ID: ${telegramId})`);
                 return;
             }
 
-            this.bot?.sendMessage(chatId, "⏳ Starting Database Restoration...\nThis may take a minute.");
+            this.bot?.sendMessage(chatId, "⏳ Начинаю восстановление базы данных...\nЭто может занять минуту.");
 
             try {
                 // Dynamically import restore logic
@@ -270,19 +270,56 @@ export class BotService {
 
                 const backups = await listBackups();
                 if (backups.length === 0) {
-                    this.bot?.sendMessage(chatId, "❌ No backups found in Cloudinary.");
+                    this.bot?.sendMessage(chatId, "❌ Резервные копии не найдены в Cloudinary.");
                     return;
                 }
 
                 const latest = backups[0];
-                this.bot?.sendMessage(chatId, `📥 Found backup: ${latest.created_at}\nRestoring from: ${latest.secure_url}`);
+                this.bot?.sendMessage(chatId, `📥 Найдена копия от: ${latest.created_at}\nВосстанавливаю из: ${latest.secure_url}`);
 
                 await restoreBackup(latest.secure_url);
 
-                this.bot?.sendMessage(chatId, "✅ Full Database Restored Successfully!");
+                this.bot?.sendMessage(chatId, "✅ База данных успешно восстановлена!");
             } catch (e: any) {
                 console.error("Restore Error:", e);
-                this.bot?.sendMessage(chatId, `❌ Restore Failed:\n${e.message}`);
+                this.bot?.sendMessage(chatId, `❌ Ошибка восстановления:\n${e.message}`);
+            }
+        });
+
+        // Handle Documents (Backup Restore)
+        this.bot.on('document', async (msg) => {
+            const chatId = msg.chat.id;
+            const telegramId = msg.from?.id;
+
+            // 1. Check Admin
+            const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => id.trim());
+            if (process.env.TELEGRAM_ADMIN_ID) adminIds.push(process.env.TELEGRAM_ADMIN_ID.trim());
+
+            if (!adminIds.includes(String(telegramId))) return; // Ignore non-admins
+
+            // 2. Check File Type
+            const file = msg.document;
+            if (!file || !file.file_name?.endsWith('.json')) {
+                // Quietly ignore or maybe warn if it looks like they tried?
+                // Let's ignore to avoid spamming on random uploads
+                return;
+            }
+
+            // 3. Confirm Intent
+            // Ideally we'd ask for confirmation, but for now let's just do it as requested "when uploading... it updates"
+            this.bot?.sendMessage(chatId, `⏳ Обнаружен файл бэкапа: ${file.file_name}\nСкачивание и восстановление...`);
+
+            try {
+                const fileLink = await this.bot?.getFileLink(file.file_id);
+                if (!fileLink) throw new Error("Could not get file link");
+
+                const { restoreBackup } = await import('../restore_db');
+                await restoreBackup(fileLink);
+
+                this.bot?.sendMessage(chatId, "✅ База данных успешно восстановлена из загруженного файла!");
+            } catch (e: any) {
+                console.error("File Restore Error:", e);
+                this.bot?.sendMessage(chatId, `❌ Ошибка восстановления:\n${e.message}`);
             }
         });
 
