@@ -85,6 +85,11 @@ export class BotService {
         return adminIds.includes(String(telegramId));
     }
 
+    isMinAdmin(telegramId: number): boolean {
+        const minIds = (process.env.MIN_ADMIN_IDS || '').split(',').map(id => id.trim());
+        return minIds.includes(String(telegramId));
+    }
+
     async setBotCommands() {
         if (!this.bot) return;
 
@@ -95,7 +100,7 @@ export class BotService {
             { command: 'about', description: 'ℹ️ О проекте' }
         ]);
 
-        // Admin Commands
+        // Full Admin Commands
         const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => id.trim());
         if (process.env.TELEGRAM_ADMIN_ID) adminIds.push(process.env.TELEGRAM_ADMIN_ID);
 
@@ -111,6 +116,22 @@ export class BotService {
                 ], { scope: { type: 'chat', chat_id: adminId } });
             } catch (e) {
                 console.error(`Failed to set admin commands for ${adminId}:`, e);
+            }
+        }
+
+        // Min Admin Commands (Reduced)
+        const minAdminIds = (process.env.MIN_ADMIN_IDS || '').split(',').map(id => id.trim());
+        for (const minId of minAdminIds) {
+            if (!minId) continue;
+            try {
+                await this.bot.setMyCommands([
+                    { command: 'start', description: '🏠 Главное меню' },
+                    { command: 'admin_users', description: '👥 Список игроков' },
+                    { command: 'app', description: '📱 Приложение MONEO' },
+                    { command: 'about', description: 'ℹ️ О проекте' }
+                ], { scope: { type: 'chat', chat_id: minId } });
+            } catch (e) {
+                console.error(`Failed to set min-admin commands for ${minId}:`, e);
             }
         }
     }
@@ -210,11 +231,11 @@ export class BotService {
         this.bot.onText(/\/admin_users/, async (msg) => {
             const chatId = msg.chat.id;
             const telegramId = msg.from?.id;
-            if (!telegramId || !this.isAdmin(telegramId)) {
+            // Allow Regular Admins OR Min Admins
+            if (!telegramId || !(this.isAdmin(telegramId) || this.isMinAdmin(telegramId))) {
                 this.bot?.sendMessage(chatId, "⛔ Доступ запрещен.");
                 return;
             }
-
             this.bot?.sendMessage(chatId, "⏳ Собираю статистику...");
 
             try {
