@@ -4,7 +4,14 @@ import dotenv from 'dotenv';
 import fs from 'fs';
 import path from 'path';
 
-const envPath = path.resolve(__dirname, '../../.env');
+const envPath = '/Users/ADMIN/MONEO/partnership-backend/.env';
+const result = dotenv.config({ path: envPath, debug: true });
+
+if (result.error) {
+    console.error("❌ Dotenv failed to load:", result.error);
+} else {
+    console.log(`✅ Loaded env from ${envPath}`);
+}
 
 // Keys provided by user (Removed for Security - Set in .env)
 // process.env.CLOUDINARY_CLOUD_NAME = '...';
@@ -12,6 +19,7 @@ const envPath = path.resolve(__dirname, '../../.env');
 // process.env.CLOUDINARY_API_SECRET = '...';
 
 console.log("DEBUG: Cloudinary Configured.");
+console.log("DEBUG: Cloud Name:", process.env.CLOUDINARY_CLOUD_NAME ? "Set" : "MISSING");
 
 // CONFIG
 const LOCAL_MONGO_URL = 'mongodb://mongo:xARHeObYcGbdLXkpbknPDMrrxHxEZzod@nozomi.proxy.rlwy.net:55910';
@@ -105,8 +113,8 @@ async function run() {
     console.log(`- Users Updated: ${cleanUsers.length}. Total Clean Green: $${totalGreen.toFixed(2)}`);
 
     // 3. Connect to Local DB
-    console.log(`🔌 Connecting to Local DB: ${LOCAL_MONGO_URL}`);
-    await mongoose.connect(LOCAL_MONGO_URL);
+    console.log(`🔌 Connecting to Local DB: ${LOCAL_MONGO_URL} (dbName: moneo)`);
+    await mongoose.connect(LOCAL_MONGO_URL, { dbName: 'moneo' });
     const db = mongoose.connection.db;
     if (!db) throw new Error("No DB");
 

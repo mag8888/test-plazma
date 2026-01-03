@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight, CreditCard, Trash2, Calendar, XCircle, RefreshCw, Maximize } from 'lucide-react';
 import { partnershipApi } from '../../lib/partnershipApi';
@@ -835,112 +835,130 @@ export default function AdminPage() {
                                         <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('gamesPlayed')}>Games {renderSortArrow('gamesPlayed')}</th>
                                         <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('referralsCount')}>Invited {renderSortArrow('referralsCount')}</th>
                                         <th className="p-4 text-left cursor-pointer hover:text-white" onClick={() => handleSort('avatarsCount')}>Avatars {renderSortArrow('avatarsCount')}</th>
-                                        <th className="p-4 text-left">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-slate-700">
                                     {users.map(u => (
-                                        <tr key={u._id} className="hover:bg-slate-700/50 transition">
-                                            <td className="p-4 font-bold text-white">
-                                                {u.username ? (
-                                                    <a
-                                                        href={`https://t.me/${u.username}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-white hover:text-blue-400 hover:underline"
-                                                    >
-                                                        {u.username}
-                                                    </a>
-                                                ) : 'No Name'}
-                                                <div className="text-xs text-slate-500 font-mono">{u.telegram_id}</div>
-                                            </td>
-                                            <td className="p-4 text-slate-300">
-                                                {u.referrer ? (
-                                                    <a
-                                                        href={`https://t.me/${u.referrer.username}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="hover:text-blue-400 hover:underline"
-                                                    >
-                                                        {u.referrer.username || u.referrer.telegram_id || u.referrer}
-                                                    </a>
-                                                ) : (u.referredBy || '-')}
-                                            </td>
-                                            <td className="p-4 text-green-400 font-bold">${u.greenBalance}</td>
-                                            <td className="p-4 text-yellow-400 font-bold">${u.yellowBalance}</td>
-                                            <td className="p-4 text-red-400 font-bold">${u.balanceRed || 0}</td>
-                                            <td className="p-4 text-purple-400 font-bold">{u.rating || 0}</td>
-                                            <td className="p-4 text-slate-300">{u.gamesPlayed || 0}</td>
-                                            <td className="p-4 text-slate-300">{u.referralsCount || 0}</td>
-                                            <td className="p-4">
-                                                {u.avatarCounts && u.avatarCounts.total > 0 ? (
-                                                    <div className="flex gap-1 text-xs">
-                                                        {u.avatarCounts.basic > 0 && <span className="bg-green-900/30 border border-green-500/30 px-2 py-1 rounded text-green-400">{u.avatarCounts.basic}</span>}
-                                                        {u.avatarCounts.advanced > 0 && <span className="bg-blue-900/30 border border-blue-500/30 px-2 py-1 rounded text-blue-400">{u.avatarCounts.advanced}</span>}
-                                                        {u.avatarCounts.premium > 0 && <span className="bg-yellow-900/30 border border-yellow-500/30 px-2 py-1 rounded text-yellow-400">{u.avatarCounts.premium}</span>}
+                                        <Fragment key={u._id}>
+                                            <tr className="hover:bg-slate-700/50 transition">
+                                                <td className="p-4 font-bold text-white">
+                                                    {u.username ? (
+                                                        <a
+                                                            href={`https://t.me/${u.username}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-white hover:text-blue-400 hover:underline"
+                                                        >
+                                                            {u.username}
+                                                        </a>
+                                                    ) : 'No Name'}
+                                                    <div className="text-xs text-slate-500 font-mono">{u.telegram_id}</div>
+                                                </td>
+                                                <td className="p-4 text-slate-300">
+                                                    {u.referrer ? (
+                                                        <a
+                                                            href={`https://t.me/${u.referrer.username}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="hover:text-blue-400 hover:underline"
+                                                        >
+                                                            {u.referrer.username || u.referrer.telegram_id || u.referrer}
+                                                        </a>
+                                                    ) : (u.referredBy || '-')}
+                                                </td>
+                                                <td className="p-4 text-green-400 font-bold">${u.greenBalance}</td>
+                                                <td className="p-4 text-yellow-400 font-bold">
+                                                    <div>${u.yellowBalance}</div>
+                                                    {u.spentYellow > 0 && (
+                                                        <div className="text-xs text-yellow-600 font-normal">-{u.spentYellow}</div>
+                                                    )}
+                                                </td>
+                                                <td className="p-4 text-red-400 font-bold">${u.balanceRed || 0}</td>
+                                                <td className="p-4 text-purple-400 font-bold">{u.rating || 0}</td>
+                                                <td className="p-4 text-slate-300">{u.gamesPlayed || 0}</td>
+                                                <td className="p-4 text-slate-300">{u.referralsCount || 0}</td>
+                                                <td className="p-4">
+                                                    {u.avatarCounts && u.avatarCounts.total > 0 ? (
+                                                        <div className="flex gap-1 text-xs">
+                                                            {u.avatarCounts.basic > 0 && <span className="bg-green-900/30 border border-green-500/30 px-2 py-1 rounded text-green-400">{u.avatarCounts.basic}</span>}
+                                                            {u.avatarCounts.advanced > 0 && <span className="bg-blue-900/30 border border-blue-500/30 px-2 py-1 rounded text-blue-400">{u.avatarCounts.advanced}</span>}
+                                                            {u.avatarCounts.premium > 0 && <span className="bg-yellow-900/30 border border-yellow-500/30 px-2 py-1 rounded text-yellow-400">{u.avatarCounts.premium}</span>}
+                                                        </div>
+                                                    ) : (
+                                                        <span className="text-slate-600">-</span>
+                                                    )}
+                                                </td>
+                                            </tr>
+                                            {/* Action Row */}
+                                            <tr className="border-b border-slate-700/50 hover:bg-slate-800/30 transition-colors">
+                                                <td colSpan={9} className="p-2 px-4 pb-4">
+                                                    <div className="flex gap-4 items-center pl-12 opacity-80 hover:opacity-100 transition-opacity">
+                                                        <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mr-2">Actions:</span>
+                                                        <button
+                                                            onClick={() => handleViewHistory(u)}
+                                                            className="flex items-center gap-1 bg-purple-900/30 hover:bg-purple-800/50 text-purple-300 px-3 py-1.5 rounded-lg text-xs border border-purple-500/20 hover:border-purple-500/50 transition-all font-medium"
+                                                        >
+                                                            History
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setSelectedUser(u)}
+                                                            className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs border border-slate-600/30 hover:border-slate-500/50 transition-all font-medium"
+                                                        >
+                                                            Balance
+                                                        </button>
+                                                        <button
+                                                            onClick={() => setEditReferrerUser(u)}
+                                                            className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 px-3 py-1.5 rounded-lg text-xs border border-slate-600/30 hover:border-slate-500/50 transition-all font-medium"
+                                                        >
+                                                            Edit Ref
+                                                        </button>
+
+                                                        <div className="h-4 w-px bg-slate-700 mx-2"></div>
+
+                                                        <button
+                                                            onClick={() => {
+                                                                setTreeUserId(u._id);
+                                                                setActiveTab('TREE');
+                                                            }}
+                                                            className="flex items-center gap-1 bg-indigo-900/30 hover:bg-indigo-800/50 text-indigo-300 px-3 py-1.5 rounded-lg text-xs border border-indigo-500/20 hover:border-indigo-500/50 transition-all font-medium"
+                                                        >
+                                                            Tree
+                                                        </button>
+
+                                                        {u.avatarCounts && u.avatarCounts.total > 0 && (
+                                                            <button
+                                                                onClick={() => handleViewMatrix(u)}
+                                                                className="flex items-center gap-1 bg-blue-900/30 hover:bg-blue-800/50 text-blue-300 px-3 py-1.5 rounded-lg text-xs border border-blue-500/20 hover:border-blue-500/50 transition-all font-medium"
+                                                            >
+                                                                Matrix
+                                                            </button>
+                                                        )}
+
+                                                        <button
+                                                            onClick={() => setAddAvatarUser(u)}
+                                                            className="flex items-center gap-1 bg-green-900/30 hover:bg-green-800/50 text-green-300 px-3 py-1.5 rounded-lg text-xs border border-green-500/20 hover:border-green-500/50 transition-all font-medium"
+                                                        >
+                                                            +Avatar
+                                                        </button>
+
+                                                        <div className="h-4 w-px bg-slate-700 mx-2"></div>
+
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditStatsUser(u);
+                                                                setNewStats({
+                                                                    rating: u.rating || 0,
+                                                                    gamesPlayed: u.gamesPlayed || 0
+                                                                });
+                                                            }}
+                                                            className="flex items-center gap-1 bg-yellow-900/30 hover:bg-yellow-800/50 text-yellow-300 px-3 py-1.5 rounded-lg text-xs border border-yellow-500/20 hover:border-yellow-500/50 transition-all font-medium"
+                                                        >
+                                                            Stats
+                                                        </button>
                                                     </div>
-                                                ) : (
-                                                    <span className="text-slate-600">-</span>
-                                                )}
-                                            </td>
-                                            <td className="p-4 flex gap-2 flex-wrap max-w-[200px]">
-                                                <button
-                                                    onClick={() => handleViewHistory(u)}
-                                                    className="bg-purple-600 hover:bg-purple-500 text-white px-2 py-1 rounded text-xs transition flex-1 border border-purple-500/30"
-                                                >
-                                                    History
-                                                </button>
-                                                <button
-                                                    onClick={() => setSelectedUser(u)}
-                                                    className="bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded text-xs transition flex-1"
-                                                >
-                                                    Balance
-                                                </button>
-                                                <button
-                                                    onClick={() => setEditReferrerUser(u)}
-                                                    className="bg-slate-700 hover:bg-slate-600 text-white px-2 py-1 rounded text-xs transition flex-1"
-                                                >
-                                                    Edit Ref
-                                                </button>
-                                                <button
-                                                    onClick={() => {
-                                                        setTreeUserId(u._id);
-                                                        setActiveTab('TREE');
-                                                    }}
-                                                    className="bg-purple-900/50 hover:bg-purple-800 text-purple-300 px-2 py-1 rounded text-xs transition flex-1 border border-purple-500/30"
-                                                >
-                                                    Tree
-                                                </button>
-                                                <button
-                                                    onClick={() => setAddAvatarUser(u)}
-                                                    className="bg-green-900/50 hover:bg-green-800 text-green-300 px-2 py-1 rounded text-xs transition flex-1 border border-green-500/30"
-                                                >
-                                                    +Avatar
-                                                </button>
-
-                                                {u.avatarCounts && u.avatarCounts.total > 0 && (
-                                                    <button
-                                                        onClick={() => handleViewMatrix(u)}
-                                                        className="bg-blue-900/50 hover:bg-blue-800 text-blue-300 px-2 py-1 rounded text-xs transition flex-1 border border-blue-500/30"
-                                                    >
-                                                        Matrix
-                                                    </button>
-
-                                                )}
-                                                <button
-                                                    onClick={() => {
-                                                        setEditStatsUser(u);
-                                                        setNewStats({
-                                                            rating: u.rating || 0,
-                                                            gamesPlayed: u.gamesPlayed || 0
-                                                        });
-                                                    }}
-                                                    className="bg-yellow-900/50 hover:bg-yellow-800 text-yellow-300 px-2 py-1 rounded text-xs transition flex-1 border border-yellow-500/30"
-                                                >
-                                                    Stats
-                                                </button>
-                                            </td>
-                                        </tr>
+                                                </td>
+                                            </tr>
+                                        </Fragment>
                                     ))}
                                     {users.length === 0 && (
                                         <tr><td colSpan={10} className="p-8 text-center text-slate-500">No users found</td></tr>

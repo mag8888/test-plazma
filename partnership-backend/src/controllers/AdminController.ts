@@ -99,6 +99,36 @@ export class AdminController {
                 }
             });
 
+            // 4.5 Lookup Transitions for Spent Yellow Calculation
+            // We need to find LevelTransitions where 'avatar' matches any of the user's avatars
+            pipeline.push({
+                $lookup: {
+                    from: 'leveltransitions',
+                    let: { avatarIds: '$avatars._id' }, // Array of avatar IDs
+                    pipeline: [
+                        { $match: { $expr: { $in: ['$avatar', '$$avatarIds'] } } }
+                    ],
+                    as: 'transitions'
+                }
+            });
+
+            pipeline.push({
+                $addFields: {
+                    spentYellow: {
+                        $sum: {
+                            $map: {
+                                input: '$transitions',
+                                as: 't',
+                                in: { $add: ['$$t.yellowBonusSent', '$$t.referrerBonus'] }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Cleanup transitions array to keep response light
+            pipeline.push({ $project: { transitions: 0 } });
+
             // 5. Sort
             let sortStage: any = { createdAt: -1 };
             if (req.query.sortBy) {

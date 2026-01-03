@@ -13,13 +13,14 @@ import { NotificationService } from '../services/NotificationService';
 NotificationService.sendTelegramMessage = async () => { return; };
 
 // CONFIG
-const LOCAL_MONGO_URL = process.env.DEV_MONGO_URL || 'mongodb://localhost:27017/moneo';
-// const LOCAL_MONGO_URL = 'mongodb://mongo:...@...'; // Set via Env
+// CONFIG
+const LOCAL_MONGO_URL = 'mongodb://mongo:xARHeObYcGbdLXkpbknPDMrrxHxEZzod@nozomi.proxy.rlwy.net:55910';
 
 async function run() {
     console.log("🚀 Starting Matrix Recalculation on DEV...");
 
-    await mongoose.connect(LOCAL_MONGO_URL);
+    console.log(`🔌 Connecting to DB: ${LOCAL_MONGO_URL} (dbName: test)`);
+    await mongoose.connect(LOCAL_MONGO_URL, { dbName: 'test' });
     console.log("🔌 Connected to DB");
 
     // 1. Fetch ALL Active Avatars (Sorted by Creation)
