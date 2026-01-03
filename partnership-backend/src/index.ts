@@ -80,11 +80,31 @@ app.use('/api/finance', financeRouter);
 
 app.use('/api/admin', adminRouter);
 
+app.get('/health', (req, res) => {
+    // console.log('[Health] Check received');
+    res.status(200).send('OK');
+});
+
+// Using '0.0.0.0' is crucial for Docker/Railway environments to expose the port correctly
 const startServer = async () => {
-    await connectDB();
-    app.listen(PORT, () => {
-        console.log(`Server running on port ${PORT}`);
-    });
+    try {
+        await connectDB();
+        const server = app.listen(Number(PORT), '0.0.0.0', () => {
+            console.log(`Server running on port ${PORT} (0.0.0.0)`);
+        });
+
+        // Graceful Shutdown
+        process.on('SIGTERM', () => {
+            console.log('SIGTERM signal received: closing HTTP server');
+            server.close(() => {
+                console.log('HTTP server closed');
+                process.exit(0);
+            });
+        });
+    } catch (e) {
+        console.error('Failed to start server:', e);
+        process.exit(1);
+    }
 };
 
 startServer();
