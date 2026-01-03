@@ -91,9 +91,9 @@ export class WatchdogService {
         const currentFailures = (this.failures.get(target.name) || 0) + 1;
         this.failures.set(target.name, currentFailures);
 
-        console.warn(`[Watchdog] ${target.name} check failed (${currentFailures}/${this.THRESHOlD}): ${reason}`);
+        console.warn(`[Watchdog] ${target.name} check failed (${currentFailures}/${this.THRESHOLD}): ${reason}`);
 
-        if (currentFailures >= this.THRESHOlD && !this.isAlerted.get(target.name)) {
+        if (currentFailures >= this.THRESHOLD && !this.isAlerted.get(target.name)) {
             this.isAlerted.set(target.name, true);
             const msg = `🚨 <b>SERVICE DOWN:</b> ${target.name}\n\nReason: ${reason}\nFailures: ${currentFailures}\n\nImmediate attention required!`;
             this.botService.sendAdminMessage(msg).catch(console.error);
