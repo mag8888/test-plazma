@@ -30,5 +30,8 @@ export const env = {
   databaseUrl: requireEnv('MONGO_URL'),
   adminEmail: requireEnv('ADMIN_EMAIL'),
   adminPassword: requireEnv('ADMIN_PASSWORD'),
-  publicBaseUrl: requireEnv('PUBLIC_BASE_URL'),
+  publicBaseUrl: process.env.PUBLIC_BASE_URL
+    || (process.env.RAILWAY_SERVICE_WEB_URL ? `https://${process.env.RAILWAY_SERVICE_WEB_URL}` : undefined)
+    || (process.env.RAILWAY_PUBLIC_DOMAIN ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : undefined)
+    || requireEnv('PUBLIC_BASE_URL'),
 };

@@ -11,50 +11,59 @@ export async function ensureUser(ctx: Context) {
     const db = await getMongoDb();
     const users = db.collection('User');
 
-    // 1. Try to find existing
-    const existingUser = await users.findOne({ telegramId });
-
-    if (existingUser) {
-      // Update
-      await users.updateOne(
-        { _id: new ObjectId(existingUser._id) },
-        {
-          $set: {
-            firstName: from.first_name ?? null,
-            lastName: from.last_name ?? null,
-            username: from.username ?? null,
-            languageCode: from.language_code ?? null,
-            updatedAt: new Date()
-          }
-        }
-      );
-      // Return full object merged with updates
-      return {
-        id: existingUser._id.toString(),
-        telegramId: existingUser.telegramId,
+    // Use atomic findOneAndUpdate with upsert to prevent race conditions
+    const update = {
+      $set: {
         firstName: from.first_name ?? null,
         lastName: from.last_name ?? null,
         username: from.username ?? null,
         languageCode: from.language_code ?? null,
-      };
-    }
-
-    // 2. Create new
-    const newUser = {
-      telegramId,
-      firstName: from.first_name ?? null,
-      lastName: from.last_name ?? null,
-      username: from.username ?? null,
-      languageCode: from.language_code ?? null,
-      createdAt: new Date(),
-      updatedAt: new Date()
+        updatedAt: new Date()
+      },
+      $setOnInsert: {
+        createdAt: new Date(),
+        telegramId // Ensure telegramId is set on insert
+      }
     };
 
-    const result = await users.insertOne(newUser);
+    const result = await users.findOneAndUpdate(
+      { telegramId },
+      update,
+      {
+        upsert: true,
+        returnDocument: 'after' // Return the updated/inserted document
+      }
+    );
+
+    // ensure result.value is consistent (mongodb driver version differences)
+    // In v6+, result is the document directly if returnDocument is used? 
+    // Actually findOneAndUpdate returns a FindAndModifyResult. 
+    // Let's handle both cases or assume v5/v6 compatibility layer.
+
+    // In mongodb v4 driver: result.value
+    // In mongodb v5 driver: result.value
+    // In mongodb v6: returns result (the document) if includeResultMetadata is false (default)?
+    // Wait, the project uses mongodb ^6.0.0 or similar. Let's check package.json.
+    // It says "mongodb": "^7.0.0" now.
+
+    // In MongoDB Driver v6+, findOneAndUpdate returns the document directly by default?
+    // Let's verify documentation behaviour or use safe access.
+    // Actually, in v5+, if { includeResultMetadata: false } (default), it returns the document.
+
+    const doc = result; // For v6+ default behavior
+
+    if (!doc) {
+      console.error('ensureUser: findOneAndUpdate returned null but upsert is true');
+      return null;
+    }
 
     return {
-      id: result.insertedId.toString(),
-      ...newUser
+      id: doc._id.toString(),
+      telegramId: doc.telegramId,
+      firstName: doc.firstName,
+      lastName: doc.lastName,
+      username: doc.username,
+      languageCode: doc.languageCode
     };
 
   } catch (error) {
