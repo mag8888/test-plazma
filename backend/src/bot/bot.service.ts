@@ -50,6 +50,13 @@ export class BotService {
 
     constructor(polling = true) {
         this.cloudinaryService = new CloudinaryService();
+
+        // Safety Override via Env Var
+        if (process.env.DISABLE_BOT_POLLING === 'true') {
+            console.log(`[BotService] 🛑 Polling Force-Disabled via DISABLE_BOT_POLLING env var.`);
+            polling = false;
+        }
+
         console.log(`[BotService] Initializing. Polling enabled: ${polling}. PID: ${process.pid}`);
         if (token) {
             this.bot = new TelegramBot(token, { polling: polling });
