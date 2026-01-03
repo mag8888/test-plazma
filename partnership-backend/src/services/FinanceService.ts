@@ -48,6 +48,7 @@ export class FinanceService {
         await Transaction.create({
             user: userId,
             amount: -amount,
+            currency: 'GREEN',
             type: TransactionType.WITHDRAWAL,
             description: `Withdrawal to ${walletAddress}. Payout: ${payout.toFixed(2)}. Commission: ${commission.toFixed(2)} (${commissionRate * 100}%)`
         });
