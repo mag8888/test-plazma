@@ -169,11 +169,47 @@ export class AuditService {
             }
         }
 
+        // 3. Matrix Completion Bonuses (Self)
+        // Verify if user's OWN avatars reached Level 5.
+        // MatrixService: "if (nextLevel === 5) { ... 100% to Owner ... }"
+        const myAvatars = await Avatar.find({ owner: userId });
+        for (const av of myAvatars) {
+            if (av.level >= 5) {
+                const config = AVATAR_CONFIG[av.type as keyof typeof AVATAR_CONFIG];
+                if (config) {
+                    // Check MatrixService.getRequiredBalanceForLevel logic for L4->L5 transition value.
+                    // L4 pot is used to enter L5.
+                    // Actually MatrixService pays the POT value when entering L5.
+                    const potFunctions = this.getTheoreticalLevelBonusPot(av.type, 5);
+                    expectedTotal += potFunctions;
+                }
+            }
+        }
+
         // 3. What about Matrix (Yellow) Bonuses?
         // The audit requested "Bonus Alert" generally implies Green (Real Money).
         // Yellow is internal. We focus on Green for now as that's "Money out of pocket".
 
         return expectedTotal;
+    }
+
+    // Helper for Personal Matrix Completion Payout (Level 5)
+    static getTheoreticalLevelBonusPot(type: string, levelReached: number): number {
+        const config = AVATAR_CONFIG[type as keyof typeof AVATAR_CONFIG];
+        if (!config) return 0;
+        const base = config.cost / 2;
+
+        // MatrixService.getRequiredBalanceForLevel logic:
+        // Required = 3 * baseValue * (2^currentLevel)
+        // Transition to Level 5 means we completed Level 4.
+        // Pot comes from 3 partners at Level 4 upgrading.
+        // Pot = 3 * Base * 2^4 = 3 * Base * 16 = 48 * Base.
+
+        // Wait, let's verify Formula.
+        // L0->1: Pot = 3*Base*1.
+        // L4->5: Pot = 3*Base*(2^4).
+
+        return 3 * base * Math.pow(2, levelReached - 1);
     }
 
     // Duplicate math from MatrixService (safest to hardcode expected values to detect logic drift)
@@ -182,17 +218,7 @@ export class AuditService {
         if (!config) return 0;
         const base = config.cost / 2;
 
-        // Level Reached 1 (Transition 0->1): Pot = 3 * Base * 2^0 = 3*Base. Inviter = Pot/3 = Base.
-        // Level Reached 2 (Transition 1->2): Pot = 3 * Base * 2^1 = 6*Base. Inviter = Pot/3 = 2*Base.
-        // Level Reached 3 (Transition 2->3): Pot = 12*Base. Inviter = 4*Base.
-        // Formula: InviterBonus = Base * 2^(levelReached - 1)
-
-        // Exception: Level 5 (Max) triggers "Matrix Completed" (100% to Owner).
-        // Does Inviter get anything for Lv5?
-        // MatrixService.ts: "if (nextLevel === 5) { ... 100% to Owner ... return; }"
-        // So Inviter gets NOTHING for L5 transition. 
-
-        if (levelReached >= 5) return 0;
+        if (levelReached >= 5) return 0; // Inviter gets nothing for L5
 
         return base * Math.pow(2, levelReached - 1);
     }
