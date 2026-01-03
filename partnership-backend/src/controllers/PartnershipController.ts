@@ -218,17 +218,28 @@ export class PartnershipController {
             const { userId } = req.params;
             let targetId = userId;
 
+            console.log(`[Partnership] getMyAvatars request for userId: ${userId}`);
+
             // Resolve Telegram ID if needed
             if (!mongoose.Types.ObjectId.isValid(userId)) {
                 const u = await User.findOne({ telegram_id: Number(userId) });
-                if (u) targetId = u._id.toString();
-                else if (!isNaN(Number(userId))) return res.json({ avatars: [] }); // User not found
+                if (u) {
+                    targetId = u._id.toString();
+                    console.log(`[Partnership] Resolved Telegram ID ${userId} -> ObjectId ${targetId}`);
+                }
+                else if (!isNaN(Number(userId))) {
+                    console.log(`[Partnership] User not found by Telegram ID ${userId}`);
+                    return res.json({ avatars: [] });
+                }
             }
 
+            console.log(`[Partnership] Querying avatars for Owner: ${targetId}, Active: True`);
             const avatars = await Avatar.find({
                 owner: targetId,
                 isActive: true
             }).populate('parent').sort({ createdAt: -1 });
+
+            console.log(`[Partnership] Found ${avatars.length} avatars for ${targetId}`);
 
             // Aggregation to get earnings (Optional, fail-safe)
             const avatarIds = avatars.map(a => a._id);
