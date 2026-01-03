@@ -237,5 +237,9 @@ export const partnershipApi = {
             body: JSON.stringify({ requestId, proofUrl: file }) // logic handled in UI to pass URL
         });
         return res.json();
-    }
-};
+    async getReferrals(username: string) {
+            const BACKEND_URL = getBackendUrl();
+            const res = await fetch(`${BACKEND_URL}/api/check-referrals/${username}`);
+            return res.json();
+        }
+    };

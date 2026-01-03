@@ -13,12 +13,62 @@ interface ProfileModalProps {
 export function ProfileModal({ isOpen, onClose, userId }: ProfileModalProps) {
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [showReferrals, setShowReferrals] = useState(false);
 
     useEffect(() => {
         if (isOpen && userId) {
             loadProfile();
+            setShowReferrals(false); // Reset view on open
         }
     }, [isOpen, userId]);
+
+    function ReferralsList({ username }: { username: string }) {
+        const [referrals, setReferrals] = useState<any[]>([]);
+        const [loading, setLoading] = useState(true);
+
+        useEffect(() => {
+            if (username) {
+                partnershipApi.getReferrals(username).then(data => {
+                    // API returns { referrals: [...] } or array?
+                    // check-referrals returns { referrals: [...] }
+                    setReferrals(data.referrals || []);
+                }).catch(err => console.error(err))
+                    .finally(() => setLoading(false));
+            }
+        }, [username]);
+
+        if (loading) return <div className="text-center py-4 text-slate-400 text-sm">Loading team...</div>;
+
+        if (referrals.length === 0) {
+            return (
+                <div className="text-center py-8 text-slate-500">
+                    <p className="text-sm">No referrals yet.</p>
+                    <p className="text-xs mt-1">Invite friends to earn bonuses!</p>
+                </div>
+            );
+        }
+
+        return (
+            <div className="space-y-2">
+                {referrals.map((ref: any, i: number) => (
+                    <div key={i} className="bg-white/5 rounded-lg p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-300">
+                                {ref.username ? ref.username[0].toUpperCase() : 'U'}
+                            </div>
+                            <div>
+                                <div className="text-sm font-medium text-white">{ref.firstName || 'User'}</div>
+                                <div className="text-xs text-slate-400">@{ref.username || 'unknown'}</div>
+                            </div>
+                        </div>
+                        <div className="text-xs text-slate-500">
+                            {new Date(ref.joinedAt).toLocaleDateString()}
+                        </div>
+                    </div>
+                ))}
+            </div>
+        );
+    }
 
     const loadProfile = async () => {
         setLoading(true);
@@ -71,18 +121,26 @@ export function ProfileModal({ isOpen, onClose, userId }: ProfileModalProps) {
                     ) : (
                         <>
                             {/* Key Stats Grid */}
-                            <div className="grid grid-cols-2 gap-3">
-                                <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 flex flex-col items-center">
-                                    <span className="text-xs text-slate-400 mb-1">Games Played</span>
-                                    <div className="text-lg font-bold text-white flex items-center gap-1">
-                                        <Gamepad2 size={16} className="text-purple-400" />
+                            <div className="grid grid-cols-3 gap-2">
+                                <div className="bg-slate-800/50 p-2 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center">
+                                    <span className="text-[10px] text-slate-400 mb-1">Played</span>
+                                    <div className="text-base font-bold text-white flex items-center gap-1">
+                                        <Gamepad2 size={14} className="text-purple-400" />
                                         {profile.gamesPlayed || 0}
                                     </div>
                                 </div>
-                                <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 flex flex-col items-center">
-                                    <span className="text-xs text-slate-400 mb-1">Rating Results</span>
-                                    <div className="text-lg font-bold text-white flex items-center gap-1">
-                                        <Trophy size={16} className="text-amber-400" />
+                                <div className="bg-slate-800/50 p-2 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center cursor-pointer hover:bg-slate-700/50 transition-colors"
+                                    onClick={() => setShowReferrals(true)}>
+                                    <span className="text-[10px] text-slate-400 mb-1">Referrals</span>
+                                    <div className="text-base font-bold text-white flex items-center gap-1">
+                                        <Users size={14} className="text-blue-400" />
+                                        {profile.referralsCount || 0}
+                                    </div>
+                                </div>
+                                <div className="bg-slate-800/50 p-2 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center">
+                                    <span className="text-[10px] text-slate-400 mb-1">Rating</span>
+                                    <div className="text-base font-bold text-white flex items-center gap-1">
+                                        <Trophy size={14} className="text-amber-400" />
                                         {profile.rating || 0}
                                     </div>
                                 </div>
@@ -92,7 +150,7 @@ export function ProfileModal({ isOpen, onClose, userId }: ProfileModalProps) {
                             <div className="bg-slate-800/30 p-3 rounded-xl border border-slate-700/30">
                                 <div className="flex justify-between items-center mb-2">
                                     <span className="text-xs text-slate-400 flex items-center gap-1">
-                                        <Users size={14} /> Avatars Owned
+                                        <Award size={14} /> Avatars Owned
                                     </span>
                                     <span className="text-sm font-bold text-white">{profile.avatarCount || 0}</span>
                                 </div>
@@ -135,6 +193,26 @@ export function ProfileModal({ isOpen, onClose, userId }: ProfileModalProps) {
                         </>
                     )}
                 </div>
+
+                {/* Referrals List Overlay */}
+                {showReferrals && (
+                    <div className="absolute inset-0 bg-[#121826] z-20 flex flex-col animate-in slide-in-from-right-full duration-200">
+                        <div className="p-4 border-b border-white/5 flex items-center justify-between bg-[#121826]/95 backdrop-blur-md sticky top-0">
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => setShowReferrals(false)} className="p-2 -ml-2 hover:bg-white/5 rounded-lg active:scale-95 transition-all">
+                                    <svg width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                                    </svg>
+                                </button>
+                                <h3 className="font-semibold text-white">Your Team</h3>
+                            </div>
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                            <ReferralsList username={profile?.username} />
+                        </div>
+                    </div>
+                )}
             </div>
         </div>
     );

@@ -1250,6 +1250,7 @@ app.get('/api/users/:id/stats', async (req, res) => {
             // For now return 0 or implement count.
             // Let's count from ScheduledGameModel where status=COMPLETED and participant.userId = id
             isMaster: targetUser.isMaster,
+            referralsCount: targetUser.referralsCount || 0,
             createdAt: targetUser.createdAt
         });
 
