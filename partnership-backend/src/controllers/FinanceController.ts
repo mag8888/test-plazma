@@ -2,6 +2,7 @@
 import { Request, Response } from 'express';
 import { DepositRequest, DepositStatus, DepositMethod } from '../models/DepositRequest';
 import { User } from '../models/User';
+import mongoose from 'mongoose';
 
 export class FinanceController {
 
@@ -85,9 +86,24 @@ export class FinanceController {
                     amountDisplay += ` (${rubAmount.toLocaleString('ru-RU')} ₽)`;
                 }
 
+                // Fetch User details for notification
+                let userObj = null;
+                if (deposit.userId) {
+                    // Try as Telegram ID Number
+                    if (!isNaN(Number(deposit.userId))) {
+                        userObj = await User.findOne({ telegram_id: Number(deposit.userId) });
+                    }
+                    // Try as ObjectId
+                    if (!userObj && mongoose.Types.ObjectId.isValid(deposit.userId)) {
+                        userObj = await User.findById(deposit.userId);
+                    }
+                }
+
+                const usernameDisplay = userObj ? `@${userObj.username}` : 'Unknown';
+
                 const adminMsg =
                     `💰 <b>Заявка на пополнение (Web)</b>\n` +
-                    `👤 User ID: ${deposit.userId}\n` +
+                    `👤 User: ${usernameDisplay} (ID: ${deposit.userId})\n` +
                     `💵 Сумма: ${amountDisplay}\n` +
                     `💳 Способ: ${deposit.method}\n` +
                     `📄 ID заявки: ${deposit._id}`;
