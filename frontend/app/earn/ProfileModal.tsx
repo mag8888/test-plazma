@@ -35,7 +35,7 @@ export function ProfileModal({ isOpen, onClose, userId }: ProfileModalProps) {
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 bg-black/80 z-[60] flex items-center justify-center p-4 backdrop-blur-sm">
+        <div className="fixed inset-0 bg-black/80 z-[100] flex items-center justify-center p-4 backdrop-blur-sm">
             <div className="bg-[#121826] rounded-2xl border border-slate-700 w-full max-w-sm flex flex-col shadow-2xl relative overflow-hidden">
 
                 {/* Header with Close */}

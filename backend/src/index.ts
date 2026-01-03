@@ -1398,9 +1398,9 @@ const bootstrap = async () => {
                 botService = new BotProxy();
                 botStatus = 'proxy-active';
             } else {
-                console.log('🤖 Running in Monolith Mode');
-                botService = new BotService();
-                botStatus = 'active';
+                console.log('🤖 Running in Monolith Mode (Bot Polling Disabled)');
+                botService = new BotService(false);
+                botStatus = 'active (no-polling)';
                 global.bot = botService.bot;
             }
         } catch (botErr) {

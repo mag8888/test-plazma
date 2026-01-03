@@ -48,10 +48,10 @@ export class BotService {
     depositStates: Map<number, DepositState> = new Map();
     cloudinaryService: CloudinaryService;
 
-    constructor() {
+    constructor(polling = true) {
         this.cloudinaryService = new CloudinaryService();
         if (token) {
-            this.bot = new TelegramBot(token, { polling: true });
+            this.bot = new TelegramBot(token, { polling: polling });
 
             // Handle Polling Errors to prevent crash/spam
             this.bot.on('polling_error', (error) => {
