@@ -78,13 +78,19 @@ export class MatrixService {
                 return currentAvatar;
             }
 
-            // Enqueue sorted by position (assuming array order is valid left-to-right)
-            // But we should probably sort by createdAt to be consistent?
-            // Actually, existing array order determines "Left-to-Right" slots.
-            for (const partner of activePartners) {
-                if (!visited.has(partner._id.toString())) {
-                    visited.add(partner._id.toString());
-                    queue.push(partner._id as mongoose.Types.ObjectId);
+            // STRICT ORDER ENFORCEMENT: Left-To-Right
+            // MongoDB .find with $in does NOT guarantee order. We must manually sort.
+
+            // Map for O(1) lookup
+            const partnerMap = new Map<string, any>();
+            activePartners.forEach(p => partnerMap.set(p._id.toString(), p));
+
+            // Iterate using the original 'partners' array (Source of Truth for Order)
+            for (const pid of currentAvatar.partners) {
+                const p = partnerMap.get(pid.toString());
+                if (p && !visited.has(p._id.toString())) {
+                    visited.add(p._id.toString());
+                    queue.push(p._id as mongoose.Types.ObjectId);
                 }
             }
         }
