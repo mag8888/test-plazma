@@ -166,7 +166,7 @@ export class MatrixService {
      * 1. An avatar receives a new partner (Level 0 accumulation)
      * 2. A child avatar levels up (Level X accumulation)
      */
-    static async checkLevelProgression(avatar: IAvatar, depth: number = 0): Promise<void> {
+    static async checkLevelProgression(avatar: IAvatar, depth: number = 0, isSimulation: boolean = false): Promise<void> {
         if (depth > 10) return; // Recursion safety
 
         // Requirement: 3 Partners
@@ -194,7 +194,7 @@ export class MatrixService {
             return;
         }
 
-        console.log(`[Matrix] Level Up Trigger: Avatar ${avatar._id} L${avatar.level} -> L${avatar.level + 1}. Funds: ${avatar.yellowBalance}`);
+        console.log(`[Matrix] Level Up Trigger: Avatar ${avatar._id} L${avatar.level} -> L${avatar.level + 1}. Funds: ${avatar.yellowBalance} (Sim: ${isSimulation})`);
 
         // Perform Upgrade
         const currentLevel = avatar.level;
@@ -209,13 +209,15 @@ export class MatrixService {
             // 4->5: 100% to Owner.
             const owner = await User.findById(avatar.owner);
             if (owner) {
-                await WalletService.deposit(
-                    owner._id,
-                    Currency.GREEN,
-                    totalPot,
-                    `Matrix Completed! Level 5 Bonus for ${avatar.type}`,
-                    TransactionType.AVATAR_BONUS
-                );
+                if (!isSimulation) {
+                    await WalletService.deposit(
+                        owner._id,
+                        Currency.GREEN,
+                        totalPot,
+                        `Matrix Completed! Level 5 Bonus for ${avatar.type}`,
+                        TransactionType.AVATAR_BONUS
+                    );
+                }
             }
             avatar.level = 5;
             avatar.isClosed = true;
@@ -236,14 +238,16 @@ export class MatrixService {
             if (referrer) {
                 // Check active status
                 if (await this.hasActiveSubscription(referrer._id)) {
-                    await WalletService.deposit(
-                        referrer._id,
-                        Currency.GREEN,
-                        inviterBonus,
-                        `Level Bonus: ${ownerUser.username} reached L${nextLevel}`,
-                        TransactionType.AVATAR_BONUS
-                    );
-                    // Notification could go here
+                    if (!isSimulation) {
+                        await WalletService.deposit(
+                            referrer._id,
+                            Currency.GREEN,
+                            inviterBonus,
+                            `Level Bonus: ${ownerUser.username} reached L${nextLevel}`,
+                            TransactionType.AVATAR_BONUS
+                        );
+                        // Notification could go here
+                    }
                 }
             }
         }
@@ -261,7 +265,7 @@ export class MatrixService {
 
                 // RECURSIVE CHECK: Parent might now have enough to upgrade!
                 // Parent needs this payment from 3 children.
-                await this.checkLevelProgression(matrixParent, depth + 1);
+                await this.checkLevelProgression(matrixParent, depth + 1, isSimulation);
             }
         }
 
@@ -271,13 +275,15 @@ export class MatrixService {
         await avatar.save();
 
         // Log Transition
-        await LevelTransition.create({
-            avatar: avatar._id,
-            fromLevel: currentLevel,
-            toLevel: nextLevel,
-            referrerBonus: inviterBonus,
-            yellowBonusSent: upgradeCost
-        });
+        if (!isSimulation) {
+            await LevelTransition.create({
+                avatar: avatar._id,
+                fromLevel: currentLevel,
+                toLevel: nextLevel,
+                referrerBonus: inviterBonus,
+                yellowBonusSent: upgradeCost
+            });
+        }
     }
 
     /**

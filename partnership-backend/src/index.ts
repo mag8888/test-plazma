@@ -60,6 +60,8 @@ adminRouter.delete('/avatars/delete-all', AdminController.deleteAllAvatars as an
 adminRouter.post('/avatars/recalculate', AdminController.recalculateAvatars as any);
 adminRouter.get('/users/:userId/avatars', AdminController.getUserAvatars as any);
 adminRouter.get('/avatars/root', AdminController.getRootAvatar as any);
+adminRouter.post('/audit', AdminController.auditBonuses as any);
+adminRouter.post('/audit/fix', AdminController.auditFix as any);
 
 
 // Wallet Routes (Protected by Admin Secret or Internal Network)

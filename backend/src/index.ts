@@ -1539,6 +1539,18 @@ const bootstrap = async () => {
     } catch (fatalError) {
         console.error("FATAL SERVER ERROR:", fatalError);
     }
+
+    // 6. Watchdog (Tester/Monitor Mode)
+    if (process.env.ENABLE_WATCHDOG === 'true' && botService) {
+        try {
+            console.log('🛡️ Starting Watchdog Service...');
+            const { WatchdogService } = await import('./services/watchdog.service');
+            const watchdog = new WatchdogService(botService);
+            watchdog.start();
+        } catch (e) {
+            console.error('Watchdog start failed:', e);
+        }
+    }
 };
 
 process.on('uncaughtException', (err) => {

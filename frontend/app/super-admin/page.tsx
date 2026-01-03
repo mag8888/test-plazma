@@ -537,7 +537,7 @@ export default function AdminPage() {
     }
 
     return (
-        <div className="min-h-screen bg-slate-900 text-slate-200">
+        <div className="min-h-screen bg-slate-900 text-slate-200 pb-32">
             {/* Nav */}
             <div className="bg-slate-950 border-b border-slate-800 p-4 sticky top-0 z-50">
                 <div className="max-w-6xl mx-auto flex justify-between items-center">
@@ -640,6 +640,32 @@ export default function AdminPage() {
                                     >
                                         <BarChart size={18} />
                                         <span className="font-bold text-xs">Recalculate</span>
+                                    </button>
+
+                                    <button
+                                        onClick={async () => {
+                                            if (!confirm('⚠️ FIX BALANCES?\nThis will audit ALL users and DEDUCT duplicate bonuses found.')) return;
+                                            setActionOutput('Fixing balances...');
+                                            try {
+                                                const res = await fetchWithAuth('/audit/fix', { method: 'POST', body: JSON.stringify({}) }); // Empty body = Global
+                                                if (res.success) {
+                                                    setActionOutput(`✅ Balance Fix Complete!\n${res.message}`);
+                                                    if (res.details && res.details.length > 0) {
+                                                        const detailStr = res.details.join('\n');
+                                                        setActionOutput(prev => prev + '\n\n' + detailStr);
+                                                    }
+                                                    searchUsers(page);
+                                                } else {
+                                                    setActionOutput('❌ Error: ' + res.error);
+                                                }
+                                            } catch (e: any) {
+                                                setActionOutput('❌ Network Error: ' + e.message);
+                                            }
+                                        }}
+                                        className="bg-orange-900/30 hover:bg-orange-900/50 text-orange-300 p-2 rounded-lg border border-orange-700/30 flex flex-col items-center justify-center gap-1 transition text-center"
+                                    >
+                                        <DollarSign size={18} />
+                                        <span className="font-bold text-xs">Fix Balances</span>
                                     </button>
 
                                     <button
@@ -1154,7 +1180,7 @@ export default function AdminPage() {
                             </div>
 
                             {/* Content */}
-                            <div className="flex-1 overflow-auto p-6 bg-slate-900">
+                            <div className="flex-1 overflow-auto p-6 bg-slate-900 pb-24">
                                 {historyLoading ? (
                                     <div className="flex justify-center items-center h-full text-slate-500 animate-pulse">Loading history...</div>
                                 ) : !historyData ? (
@@ -1481,7 +1507,7 @@ export default function AdminPage() {
                             </div>
                             <div className="text-slate-400 text-sm">User: <span className="text-white font-bold">{selectAvatarUser.username}</span></div>
 
-                            <div className="flex-1 overflow-y-auto space-y-2 pr-2">
+                            <div className="flex-1 overflow-y-auto space-y-2 pr-2 pb-24">
                                 {loadingAvatars ? (
                                     <div className="text-center text-slate-500 py-4">Loading avatars...</div>
                                 ) : avatarsList.length === 0 ? (

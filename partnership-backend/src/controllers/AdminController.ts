@@ -710,7 +710,8 @@ export class AdminController {
 
                         // C. TRIGGER LEVEL PROGRESSION
                         // This will recursively level up the parent chain
-                        await MatrixService.checkLevelProgression(parent);
+                        // PASS TRUE for isSimulation to avoid duplicate payouts
+                        await MatrixService.checkLevelProgression(parent, 0, true);
                     }
 
                     processed++;
@@ -733,6 +734,8 @@ export class AdminController {
                 success: true,
                 total: avatars.length,
                 processed,
+                activated: processed, // Map for frontend
+                updated: 0,           // Map for frontend
                 errors: errors.length > 0 ? errors : undefined
             });
 
@@ -776,6 +779,69 @@ export class AdminController {
                 res.status(404).json({ error: 'No avatars found' });
             }
         } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    /**
+     * Audit Endpoint
+     */
+    static async auditBonuses(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const { userId } = req.query;
+            const { AuditService } = require('../services/AuditService');
+
+            const results = await AuditService.performAudit(userId as string);
+
+            res.json({
+                success: true,
+                issuesFound: results.length,
+                results
+            });
+        } catch (error: any) {
+            console.error('Audit Error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    /**
+     * Fix Audit Issues Endpoint
+     */
+    static async auditFix(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const { userId } = req.body;
+            const { AuditService } = require('../services/AuditService');
+
+            if (userId) {
+                // Single User
+                const result = await AuditService.fixBalances(userId);
+                res.json(result);
+            } else {
+                // Fix All Users
+                console.log('[Admin] Starting Global Balance Fix...');
+                const users = await User.find({});
+                let fixed = 0;
+                let totalDeducted = 0;
+                const details = [];
+
+                for (const user of users) {
+                    const res = await AuditService.fixBalances(user._id);
+                    if (res.deducted > 0) {
+                        fixed++;
+                        totalDeducted += res.deducted;
+                        details.push(`${user.username || user.telegram_id}: -$${res.deducted.toFixed(2)}`);
+                    }
+                }
+
+                res.json({
+                    success: true,
+                    message: `Global Fix Complete. Fixed: ${fixed} users. Total Deducted: $${totalDeducted.toFixed(2)}`,
+                    details
+                });
+            }
+
+        } catch (error: any) {
+            console.error('Audit Fix Error:', error);
             res.status(500).json({ error: error.message });
         }
     }
