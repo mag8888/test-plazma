@@ -248,39 +248,55 @@ export class AuditService {
 
         const audit = await this.auditUser(user);
 
-        // Check for excess
-        const excess = audit.details.actualBonuses - audit.details.theoreticalBonuses;
+        // Check for discrepancy
+        const discrepancy = audit.details.actualBonuses - audit.details.theoreticalBonuses;
 
-        // We only fix if excess is significantly positive (e.g. > $1)
-        if (excess > 1.0) {
-            console.log(`[AuditFix] Fixing user ${user.username}. Excess: ${excess}`);
+        // CASE 1: Excess (User has too much) - Deduct
+        if (discrepancy > 1.0) {
+            console.log(`[AuditFix] Fixing user ${user.username}. Deducting Excess: ${discrepancy}`);
 
-            // Deduct from Balance
-            // WARNING: If balance is low, this might make it negative. 
-            // In admin fix mode, negative balance is acceptable to show debt, or we just zero it?
-            // User likely wants to remove the dupes.
-
-            user.greenBalance = (user.greenBalance || 0) - excess;
-            if (user.greenBalance < 0) user.greenBalance = 0; // Cap at 0 for now to avoid confusion
-
+            user.greenBalance = (user.greenBalance || 0) - discrepancy;
+            if (user.greenBalance < 0) user.greenBalance = 0;
             await user.save();
 
-            // Log Transaction
             await Transaction.create({
                 user: user._id,
-                amount: -excess,
+                amount: -discrepancy,
                 currency: 'GREEN',
                 type: TransactionType.ADMIN_ADJUSTMENT,
-                description: `Audit Correction: Removed duplicate bonuses ($${excess.toFixed(2)})`
+                description: `Audit Correction: Removed duplicate/excess bonuses ($${discrepancy.toFixed(2)})`
             });
 
             return {
                 success: true,
-                message: `Fixed! Deducted $${excess.toFixed(2)}. New Balance: $${user.greenBalance}`,
-                deducted: excess
+                message: `Fixed Excess! Deducted $${discrepancy.toFixed(2)}. New Balance: $${user.greenBalance}`,
+                deducted: discrepancy
             };
         }
 
-        return { success: true, message: 'No excess bonuses found to fix.', deducted: 0 };
+        // CASE 2: Deficit (User has too little - likely due to wrongful deduction) - Restore
+        if (discrepancy < -1.0) {
+            const refundAmount = Math.abs(discrepancy);
+            console.log(`[AuditFix] Fixing user ${user.username}. Restoring Deficit: ${refundAmount}`);
+
+            user.greenBalance = (user.greenBalance || 0) + refundAmount;
+            await user.save();
+
+            await Transaction.create({
+                user: user._id,
+                amount: refundAmount,
+                currency: 'GREEN',
+                type: TransactionType.ADMIN_ADJUSTMENT,
+                description: `Audit Correction: Restored missing/wrongfully deducted funds ($${refundAmount.toFixed(2)})`
+            });
+
+            return {
+                success: true,
+                message: `Fixed Deficit! Restored $${refundAmount.toFixed(2)}. New Balance: $${user.greenBalance}`,
+                deducted: -refundAmount // Negative deduction = addition
+            };
+        }
+
+        return { success: true, message: 'Balance is correct (matches theoretical).', deducted: 0 };
     }
 }
