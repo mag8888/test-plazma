@@ -1349,16 +1349,47 @@ export class GameEngine {
                     expiresAt: new Date(activeCard.expiresAt).toISOString(),
                     totalActiveCards: this.state.activeMarketCards.length
                 });
+
+                // SCAM LOGIC: Bitcoin Crash
+                if (card.id === 'mkt_btc_scam') {
+                    this.state.players.forEach(p => {
+                        const initialCount = p.assets.length;
+                        p.assets = p.assets.filter(a => a.symbol !== 'BTC' && a.title !== 'Bitcoin');
+                        if (p.assets.length < initialCount) {
+                            this.recalculateFinancials(p);
+                            this.addLog(`🔥 ${p.name} потерял все биткоины из-за скама биржи!`);
+                        }
+                    });
+                }
+
                 this.state.phase = 'ACTION';
             } else {
                 this.addLog(`🏪 РЫНОК: Карты закончились.`);
             }
         } else if (square.type === 'EXPENSE') {
             const card = this.cardManager.drawExpense();
-            this.state.currentCard = card;
-            // Removed automatic deduction. Now handled via buyAsset (Mandatory Pay)
-            this.addLog(`💸 Трата: ${card.title} ($${card.cost})`);
+            const cost = card.cost || 0;
+
+            if (cost > 0) {
+                // Auto-Pay Logic
+                if (player.cash < cost) {
+                    const loanNeeded = Math.ceil((cost - player.cash) / 1000) * 1000;
+                    this.takeLoan(player.id, loanNeeded);
+                }
+                player.cash -= cost;
+                this.addLog(`💸 Трата: ${card.title} (-$${cost}) [Авто-оплата]`);
+            } else {
+                this.addLog(`💸 Трата: ${card.title} ($0)`);
+            }
+
+            // Do NOT set currentCard, effectively skipping the modal
+            // User requested: "Simply close them (make them work automatically)"
+
+            // Since we handled the expense, we effectively consumed the action.
+            // But we must allow user to end turn.
             this.state.phase = 'ACTION';
+            // Note: If no currentCard, frontend should show "End Turn" button if phase is ACTION.
+
         } else if (square.type === 'BABY') {
             if (player.childrenCount >= 3) {
                 this.addLog(`${player.name} уже имеет максимум детей.`);
