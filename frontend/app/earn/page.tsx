@@ -655,6 +655,7 @@ export default function EarnPage() {
                         </div>
                     </div>
                 </details>
+
             </div>
 
             {/* Insufficient Funds Modal */}
