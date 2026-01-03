@@ -438,6 +438,7 @@ export default function EarnPage() {
                 onClose={() => setShowBalanceModal(false)}
                 balance={partnershipUser?.greenBalance || 0}
                 tariff={currentTariff}
+                userId={partnershipUser?._id}
                 onTopUp={handleSupportTopUp}
             />
 

@@ -231,10 +231,10 @@ export class PartnershipController {
 
     static async withdraw(req: Request, res: Response) {
         try {
-            const { userId, amount } = req.body;
-            if (!userId || !amount) return res.status(400).json({ error: 'Missing fields' });
+            const { userId, amount, walletAddress } = req.body;
+            if (!userId || !amount || !walletAddress) return res.status(400).json({ error: 'Missing fields: userId, amount, walletAddress' });
 
-            const result = await FinanceService.processWithdrawal(userId, amount);
+            const result = await FinanceService.processWithdrawal(userId, amount, walletAddress);
             res.json({ success: true, ...result });
         } catch (error: any) {
             res.status(400).json({ error: error.message });

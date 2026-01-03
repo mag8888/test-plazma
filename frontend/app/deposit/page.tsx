@@ -30,7 +30,7 @@ const DEPOSIT_METHODS = [
     }
 ];
 
-const AMOUNTS = [20, 100, 1120];
+const AMOUNTS = [20, 100, 1000];
 
 export default function DepositPage() {
     const router = useRouter();
@@ -43,6 +43,7 @@ export default function DepositPage() {
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState(false);
+    const [copied, setCopied] = useState(false);
 
     const handleMethodSelect = (m: any) => {
         setMethod(m);
@@ -59,6 +60,17 @@ export default function DepositPage() {
         setStep('PROOF');
     };
 
+    const handleCopy = () => {
+        if (!method?.wallet) return;
+        navigator.clipboard.writeText(method.wallet);
+        setCopied(true);
+        // Haptic feedback
+        if (typeof window !== 'undefined' && window.Telegram?.WebApp) {
+            window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+        }
+        setTimeout(() => setCopied(false), 2000);
+    };
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const f = e.target.files[0];
@@ -70,14 +82,6 @@ export default function DepositPage() {
     };
 
     const handleSubmit = async () => {
-        if (!process.env.NEXT_PUBLIC_INIT_DATA && typeof window !== 'undefined') {
-            // In browser/dev, assume we have a user from localStorage or similar?
-            // Or we rely on layout to provide context? 
-            // Ideally we get userId from a context or standard API call.
-            // But for now, let's try to get it from partnershipApi if available, 
-            // OR assume we have initData if in Telegram.
-        }
-
         const telegramId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id
             || localStorage.getItem('debug_telegram_id');
 
@@ -103,7 +107,6 @@ export default function DepositPage() {
 
             // Upload via Generic Upload Endpoint
             const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://moneo-backend.up.railway.app';
-            // Fallback to relative if env missing but proxy works, or hardcoded for dev
             const uploadUrl = `${backendUrl}/api/upload`;
 
             const uploadRes = await fetch(uploadUrl, {
@@ -116,7 +119,7 @@ export default function DepositPage() {
             const { url } = await uploadRes.json();
 
             // 3. Submit Proof URL to Finance
-            await partnershipApi.uploadProof(requestId, url as any); // Type cast if needed
+            await partnershipApi.uploadProof(requestId, url as any);
 
             setSuccess(true);
 
@@ -201,7 +204,7 @@ export default function DepositPage() {
                         <label className="text-slate-400 text-sm">Ваша сумма ($)</label>
                         <input
                             type="number"
-                            value={customAmount}
+                            value={amount || customAmount}
                             onChange={(e) => {
                                 setAmount('');
                                 setCustomAmount(e.target.value);
@@ -236,10 +239,11 @@ export default function DepositPage() {
                             <div className="text-xs text-slate-500 mb-1">Кошелек / Реквизиты:</div>
                             <div className="text-sm text-white font-mono">{method.wallet}</div>
                             <button
-                                onClick={() => navigator.clipboard.writeText(method.wallet)}
-                                className="absolute top-2 right-2 p-1.5 bg-slate-700 rounded hover:bg-slate-600 transition-colors"
+                                onClick={handleCopy}
+                                className={`absolute top-2 right-2 p-1.5 rounded transition-all flex items-center gap-1 ${copied ? 'bg-green-600 text-white' : 'bg-slate-700 text-slate-400 hover:text-white'}`}
                             >
-                                <Copy className="w-4 h-4 text-white" />
+                                {copied ? <CheckCircle size={14} /> : <Copy size={16} />}
+                                {copied && <span className="text-[10px] font-bold">Скопировано</span>}
                             </button>
                         </div>
                     </div>

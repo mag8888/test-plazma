@@ -58,11 +58,11 @@ export const partnershipApi = {
         return res.json();
     },
 
-    withdraw: async (userId: string, amount: number) => {
+    withdraw: async (userId: string, amount: number, walletAddress: string) => {
         const res = await fetch(`${API_URL}/withdraw`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId, amount })
+            body: JSON.stringify({ userId, amount, walletAddress })
         });
         return res.json();
     },

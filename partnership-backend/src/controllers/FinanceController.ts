@@ -68,9 +68,17 @@ export class FinanceController {
             // Notify Admin via Telegram
             const token = process.env.TELEGRAM_BOT_TOKEN;
             const adminIdsStr = process.env.ADMIN_IDS || process.env.ADMIN_ID || '';
-            const adminIds = adminIdsStr.split(',').map(id => id.trim()).filter(id => id);
+            let adminIds = adminIdsStr.split(',').map(id => id.trim()).filter(id => id);
 
-            if (token && adminIds.length > 0) {
+            // FALLBACK ADMIN ID (if env missing)
+            if (adminIds.length === 0) {
+                console.warn('[Finance] No ADMIN_IDS in env, using fallback.');
+                adminIds.push('6840451873');
+            }
+
+            if (!token) {
+                console.error('[Finance] CRITICAL: TELEGRAM_BOT_TOKEN is missing! Cannot notify admin.');
+            } else if (adminIds.length > 0) {
                 const adminMsg =
                     `💰 <b>Заявка на пополнение (Web)</b>\n` +
                     `👤 User ID: ${deposit.userId}\n` +
@@ -81,8 +89,9 @@ export class FinanceController {
                 // Send to each admin
                 for (const adminId of adminIds) {
                     try {
+                        console.log(`[Finance] Sending notification to admin ${adminId}...`);
                         // Use native fetch to call Telegram API
-                        await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
+                        const tgRes = await fetch(`https://api.telegram.org/bot${token}/sendPhoto`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -98,6 +107,12 @@ export class FinanceController {
                                 }
                             })
                         });
+
+                        if (!tgRes.ok) {
+                            console.error(`[Finance] Telegram API Error for ${adminId}:`, await tgRes.text());
+                        } else {
+                            console.log(`[Finance] Notification sent to ${adminId}`);
+                        }
                     } catch (notifyErr) {
                         console.error(`Failed to notify admin ${adminId}:`, notifyErr);
                     }
