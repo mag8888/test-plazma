@@ -138,7 +138,9 @@ export class MatrixService {
         if (!parentAvatar) {
             // console.log(`[Matrix] No space under referrer ${referrerId}, searching from Global Root`);
             const globalRoot = await this.findGlobalRoot(newAvatar.type);
-            if (globalRoot) {
+
+            // Critical Check: Prevent Self-Loop if this IS the Global Root (First Avatar)
+            if (globalRoot && globalRoot._id.toString() !== newAvatar._id.toString()) {
                 // Search BFS from Global Root
                 parentAvatar = await this.findFirstEmptySlotBFS(globalRoot._id as mongoose.Types.ObjectId, newAvatar.type);
             }
