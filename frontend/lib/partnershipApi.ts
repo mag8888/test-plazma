@@ -54,8 +54,9 @@ export const partnershipApi = {
     },
 
     async getMyAvatars(userId: string) {
-        const url = `${API_URL}/avatars/my-avatars/${userId}`;
-        console.log(`[Partnership] getMyAvatars calling: ${url}, userId:`, userId, typeof userId);
+        const safeUserId = encodeURIComponent(userId);
+        const url = `${API_URL}/avatars/my-avatars/${safeUserId}`;
+        console.log(`[Partnership] getMyAvatars calling: ${url}, origId:`, userId);
 
         try {
             // Verify userId is safe string
@@ -63,12 +64,20 @@ export const partnershipApi = {
                 throw new Error(`Invalid userId for avatars: ${userId}`);
             }
 
-            const res = await fetch(url);
+            const res = await fetch(url, {
+                method: 'GET',
+                mode: 'cors',
+                cache: 'no-store',
+                headers: {
+                    'Accept': 'application/json'
+                }
+            });
+
             if (!res.ok) throw new Error(`HTTP ${res.status}`);
             return res.json();
         } catch (e: any) {
             console.error(`[Partnership] getMyAvatars FAILED. URL: "${url}"`, e);
-            throw new Error(`Fetch Error: ${e.message} (URL: ${url})`);
+            throw new Error(`[v2] Fetch Error: ${e.message} (URL: ${url})`);
         }
     },
 
