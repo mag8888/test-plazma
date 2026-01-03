@@ -1,20 +1,21 @@
 import { getBackendUrl } from './config';
 
-// Get Partnership API URL - prioritizes explicit Environment Variable
+// RADICAL CLEANUP: Enforce Direct Connection for Static Export
+// The frontend is a Static Export, so it CANNOT proxy requests via Next.js middleware.
+// We must connect directly to the Partnership Backend.
+
 const getPartnershipUrl = () => {
-    // 1. Explicit Env Var (Production/Dev setup) - PREFERRED if set
-    if (process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL) {
-        return process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL;
+    const envUrl = process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL;
+
+    // Strict enforcement
+    if (!envUrl) {
+        // In development, we might not have it set, but we shouldn't fail silently.
+        console.error("CRITICAL CONFIG ERROR: NEXT_PUBLIC_PARTNERSHIP_API_URL is not set!");
+        // We return empty string to avoid crash on load, but all requests will fail.
+        return '';
     }
 
-    // 2. Proxy via Backend (if running in browser and no env var)
-    if (typeof window !== 'undefined') {
-        const backend = getBackendUrl();
-        // Backend handles /api/partnership/* and proxies to partnership-backend
-        return `${backend}/api/partnership`;
-    }
-
-    return '';
+    return envUrl;
 };
 
 const API_URL = getPartnershipUrl();
