@@ -9,6 +9,7 @@ export class GameGateway {
     private io: Server;
     private roomService: RoomService;
     private games: Map<string, GameEngine> = new Map();
+    private processedWinners: Map<string, Set<string>> = new Map(); // roomId -> Set<userId>
 
     constructor(io: Server) {
         this.io = io;
@@ -41,6 +42,47 @@ export class GameGateway {
     private saveState(roomId: string, game: GameEngine) {
         const state = game.getState();
         this.roomService.saveGameState(roomId, state).catch(err => console.error("Persist Error:", err));
+
+        // Sync stats for any new winners
+        this.syncWinners(roomId, game).catch(err => console.error("Sync Stats Error:", err));
+    }
+
+    private async syncWinners(roomId: string, game: GameEngine) {
+        const rankings = game.state.rankings || [];
+        if (rankings.length === 0) return;
+
+        if (!this.processedWinners.has(roomId)) {
+            this.processedWinners.set(roomId, new Set());
+        }
+        const processed = this.processedWinners.get(roomId)!;
+
+        // Points Map: 1st=10, 2nd=6, 3rd=4, 4th=3, 5th=2, 6th=1, 7th=0.5
+        const POINTS_MAP = [10, 6, 4, 3, 2, 1, 0.5];
+
+        for (const rank of rankings) {
+            if (rank.userId && !processed.has(rank.userId)) {
+                // Found a new winner to process
+                const points = POINTS_MAP[rank.place - 1] || 0;
+
+                const update: any = {
+                    $inc: {
+                        rating: points,
+                        gamesPlayed: 1
+                    }
+                };
+                if (rank.place === 1) {
+                    update.$inc.wins = 1;
+                }
+
+                try {
+                    console.log(`[AutoSync] Updating stats for ${rank.name} (Place ${rank.place}): +${points} pts`);
+                    await UserModel.findOneAndUpdate({ _id: rank.userId }, update);
+                    processed.add(rank.userId);
+                } catch (e) {
+                    console.error(`[AutoSync] Failed to update stats for ${rank.name}:`, e);
+                }
+            }
+        }
     }
 
     public handleBabyRoll(roomId: string) {
@@ -397,34 +439,11 @@ export class GameGateway {
                     const state = game.getState();
                     const winnerName = rankings[0]?.name || 'Unknown';
 
-                    // Update DB Stats
-                    const { UserModel } = await import('../models/user.model');
-                    const POINTS_MAP = [10, 6, 4, 3, 2, 1, 0.5]; // Index 0 = Place 1
-
+                    // Attach points for frontend display (DB update handled by syncWinners via saveState)
+                    const POINTS_MAP = [10, 6, 4, 3, 2, 1, 0.5];
                     for (const rank of rankings) {
-                        if (rank.userId) {
-                            const points = POINTS_MAP[rank.place - 1] || 0;
-                            const update: any = {
-                                $inc: {
-                                    rating: points,
-                                    gamesPlayed: 1
-                                }
-                            };
-
-                            if (rank.place === 1) {
-                                update.$inc.wins = 1;
-                            }
-
-                            try {
-                                await UserModel.findOneAndUpdate({ _id: rank.userId }, update);
-                                console.log(`[EndGame] Updated stats for ${rank.name}: +${points} pts`);
-                            } catch (e) {
-                                console.error(`[EndGame] Failed to update stats for ${rank.name}:`, e);
-                            }
-
-                            // Attach points to ranking object for frontend display
-                            (rank as any).earnedPoints = points;
-                        }
+                        const points = POINTS_MAP[rank.place - 1] || 0;
+                        (rank as any).earnedPoints = points;
                     }
 
                     // Mark Room as Completed in DB so it doesn't show up as 'playing'
@@ -441,6 +460,7 @@ export class GameGateway {
                     });
 
                     this.saveState(roomId, game);
+
                     // Remove from active memory? Or keep for a bit?
                     // Better to keep for a minute to allow final socket events to process, or just delete.
                     // Implementation Plan said: "Manually ends game to finalize rankings".
