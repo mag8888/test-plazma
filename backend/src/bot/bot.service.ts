@@ -50,6 +50,7 @@ export class BotService {
 
     constructor(polling = true) {
         this.cloudinaryService = new CloudinaryService();
+        console.log(`[BotService] Initializing. Polling enabled: ${polling}`);
         if (token) {
             this.bot = new TelegramBot(token, { polling: polling });
 
