@@ -1,3 +1,4 @@
+
 import { Request, Response } from 'express';
 import { MatrixService } from '../services/MatrixService';
 import { FinanceService } from '../services/FinanceService';
@@ -49,7 +50,10 @@ export class PartnershipController {
 
             const tariff = bestAvatar ? bestAvatar.type : 'GUEST';
 
+            const userObj = user.toObject();
             res.json({
+                ...userObj,
+                telegramId: user.telegram_id, // Ensure frontend compatibility
                 username: user.username,
                 photoUrl: user.photo_url,
                 registrationDate: user.createdAt,
@@ -70,9 +74,67 @@ export class PartnershipController {
         }
     }
 
-    // ... (withdraw is fine) ...
+    static async withdraw(req: Request, res: Response) {
+        try {
+            const { userId, amount, walletAddress } = req.body;
+            if (!userId || !amount || !walletAddress) return res.status(400).json({ error: 'Missing fields: userId, amount, walletAddress' });
 
-    // ... (createUser is fine) ...
+            const result = await FinanceService.processWithdrawal(userId, amount, walletAddress);
+            res.json({ success: true, ...result });
+        } catch (error: any) {
+            res.status(400).json({ error: error.message });
+        }
+    }
+
+    static async createUser(req: Request, res: Response) {
+        try {
+            const { telegramId, username, referrerId } = req.body;
+            let user = await User.findOne({ telegram_id: telegramId });
+
+            if (user) {
+                if (username && user.username !== username) {
+                    user.username = username;
+                    await user.save();
+                }
+                const userObj = user.toObject();
+                return res.json({ ...userObj, telegramId: user.telegram_id });
+            }
+
+            try {
+                user = await User.create({
+                    telegram_id: telegramId,
+                    username,
+                    referrer: referrerId
+                });
+                const userObj = user.toObject();
+                return res.json({ ...userObj, telegramId: user.telegram_id });
+            } catch (createError: any) {
+                if (createError.code === 11000 || createError.message.includes('E11000')) {
+                    const existing = await User.findOne({ telegram_id: telegramId });
+                    if (existing) {
+                        const existingObj = existing.toObject();
+                        return res.json({ ...existingObj, telegramId: existing.telegram_id });
+                    }
+
+                    if (username) {
+                        const existingByName = await User.findOne({ username });
+                        if (existingByName) {
+                            console.log(`[Partnership] Merging legacy user ${username} with new telegram_id ${telegramId}`);
+                            existingByName.telegram_id = telegramId;
+                            await existingByName.save();
+                            const mergedObj = existingByName.toObject();
+                            return res.json({ ...mergedObj, telegramId: existingByName.telegram_id });
+                        }
+                    }
+                }
+                throw createError;
+            }
+
+        } catch (error: any) {
+            console.error("CreateUser Error:", error);
+            res.status(500).json({ error: error.message || "Login failed" });
+        }
+    }
 
     static async getPartners(req: Request, res: Response) {
         try {
@@ -91,10 +153,8 @@ export class PartnershipController {
 
             let referrals = await User.find({ referrer: user._id }).lean();
 
-            // ... (Rest of logic is same, but using Resolved user._id) ...
-
-            if (referrals.length < (user.referralsCount || 0)) {
-                // ... (Fallback logic) ...
+            // Allow legacy string referrer matching if needed
+            if (referrals.length === 0) {
                 const fallbackReferrals = await User.find({
                     referrer: { $exists: false },
                     $or: [
@@ -104,10 +164,7 @@ export class PartnershipController {
                         { referredBy: String(user._id) }
                     ]
                 });
-                if (fallbackReferrals.length > 0) {
-                    // ... repair logic ...
-                    referrals = [...referrals, ...fallbackReferrals.map(r => r.toObject())] as any;
-                }
+                referrals = fallbackReferrals.map(r => r.toObject()) as any;
             }
 
             const result = [];
@@ -116,7 +173,6 @@ export class PartnershipController {
                 const bestAvatar = await Avatar.findOne({ owner: refUser._id, isActive: true })
                     .sort({ level: -1 }).lean();
 
-                // IMPROVED SEARCH: Look for Username in description (Direct Bonus, Level Bonus, Yellow Bonus)
                 const bonuses = await Transaction.find({
                     user: user._id,
                     description: { $regex: new RegExp(refUser.username, 'i') }
@@ -131,7 +187,6 @@ export class PartnershipController {
                     if (type === TransactionType.BONUS_GREEN || (type === 'AVATAR_BONUS' && tx.currency === 'GREEN')) green += tx.amount;
                     if (type === TransactionType.BONUS_YELLOW || (type === 'AVATAR_BONUS' && tx.currency === 'YELLOW')) yellow += tx.amount;
 
-                    // Red Balance Logic Audit:
                     if (tx.currency === 'balanceRed' || type === 'GAME_WIN' || type === 'REFERRAL_REWARD') {
                         red += tx.amount;
                     }
@@ -142,7 +197,7 @@ export class PartnershipController {
                     username: refUser.username,
                     firstName: refUser.first_name,
                     telegramId: refUser.telegram_id,
-                    avatarType: bestAvatar?.type || (!bestAvatar && refUser.isMaster ? 'MASTER' : 'GUEST'), // Fallback if matrix avatar missing but legacy flag exists
+                    avatarType: bestAvatar?.type || (!bestAvatar && refUser.isMaster ? 'MASTER' : 'GUEST'),
                     level: bestAvatar?.level || 0,
                     incomeGreen: green,
                     incomeYellow: yellow,
@@ -157,8 +212,6 @@ export class PartnershipController {
             res.status(500).json({ error: error.message });
         }
     }
-
-    // ...
 
     static async getMyAvatars(req: Request, res: Response) {
         try {
@@ -229,62 +282,6 @@ export class PartnershipController {
         }
     }
 
-    static async withdraw(req: Request, res: Response) {
-        try {
-            const { userId, amount, walletAddress } = req.body;
-            if (!userId || !amount || !walletAddress) return res.status(400).json({ error: 'Missing fields: userId, amount, walletAddress' });
-
-            const result = await FinanceService.processWithdrawal(userId, amount, walletAddress);
-            res.json({ success: true, ...result });
-        } catch (error: any) {
-            res.status(400).json({ error: error.message });
-        }
-    }
-
-    static async createUser(req: Request, res: Response) {
-        try {
-            const { telegramId, username, referrerId } = req.body;
-            let user = await User.findOne({ telegram_id: telegramId });
-
-            if (user) {
-                if (username && user.username !== username) {
-                    user.username = username;
-                    await user.save();
-                }
-                return res.json(user);
-            }
-
-            try {
-                user = await User.create({
-                    telegram_id: telegramId,
-                    username,
-                    referrer: referrerId
-                });
-                return res.json(user);
-            } catch (createError: any) {
-                if (createError.code === 11000 || createError.message.includes('E11000')) {
-                    const existing = await User.findOne({ telegram_id: telegramId });
-                    if (existing) return res.json(existing);
-
-                    if (username) {
-                        const existingByName = await User.findOne({ username });
-                        if (existingByName) {
-                            console.log(`[Partnership] Merging legacy user ${username} with new telegram_id ${telegramId}`);
-                            existingByName.telegram_id = telegramId;
-                            await existingByName.save();
-                            return res.json(existingByName);
-                        }
-                    }
-                }
-                throw createError;
-            }
-
-        } catch (error: any) {
-            console.error("CreateUser Error:", error);
-            res.status(500).json({ error: error.message || "Login failed" });
-        }
-    }
-
     static async getPublicStats(req: Request, res: Response) {
         try {
             const { telegramId } = req.params;
@@ -336,8 +333,6 @@ export class PartnershipController {
         }
     }
 
-
-
     static async purchaseAvatar(req: Request, res: Response) {
         try {
             console.log('[PartnershipController] purchaseAvatar req.body:', req.body);
@@ -382,8 +377,6 @@ export class PartnershipController {
             res.status(500).json({ error: error.message });
         }
     }
-
-
 
     static async getPremiumCount(req: Request, res: Response) {
         try {
