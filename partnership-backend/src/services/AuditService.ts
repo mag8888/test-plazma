@@ -90,8 +90,10 @@ export class AuditService {
 
         // 2. Bonus Legitimacy Check
         // Actual Bonuses Received
+        // 2. Bonus Legitimacy Check
+        // Actual Bonuses Received (GREEN ONLY)
         const actualBonuses = transactions
-            .filter(t => t.type === TransactionType.AVATAR_BONUS || t.type === TransactionType.BONUS_GREEN)
+            .filter(t => (t.type === TransactionType.AVATAR_BONUS || t.type === TransactionType.BONUS_GREEN) && (t.currency === 'GREEN' || t.currency === Currency.GREEN))
             .reduce((sum, t) => sum + t.amount, 0);
 
         // Theoretical Bonuses Expected
