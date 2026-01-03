@@ -57,11 +57,18 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
     const [selectedAvatarType, setSelectedAvatarType] = useState<string>('');
 
     useEffect(() => {
+        console.log('[AvatarPurchase] Prop partnershipUser updated:', {
+            id: partnershipUser?._id,
+            avatarsLength: partnershipUser?.avatars?.length
+        });
+
         if (partnershipUser?._id) {
             // Update state if props change (e.g. after purchase in parent)
             if (partnershipUser.avatars) {
+                console.log('[AvatarPurchase] Setting avatars from props:', partnershipUser.avatars.length);
                 setMyAvatars(partnershipUser.avatars);
             } else {
+                console.log('[AvatarPurchase] Props have no avatars, loading manually...');
                 loadMyAvatars();
             }
             loadPremiumCount();
@@ -70,7 +77,9 @@ export function AvatarPurchase({ partnershipUser, onPurchaseSuccess }: AvatarPur
 
     const loadMyAvatars = async () => {
         try {
+            console.log('[AvatarPurchase] Fetching avatars manually for', partnershipUser._id);
             const data = await partnershipApi.getMyAvatars(partnershipUser._id);
+            console.log('[AvatarPurchase] Fetched:', data.avatars?.length);
             setMyAvatars(data.avatars || []);
         } catch (err) {
             console.error('Failed to load avatars:', err);
