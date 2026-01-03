@@ -7,12 +7,12 @@ class CardUI {
         this.container = null;
         this.init();
     }
-    
+
     init() {
         this.createContainer();
         this.render();
     }
-    
+
     // Создание контейнера для карт
     createContainer() {
         // Ищем существующий контейнер или создаем новый
@@ -21,19 +21,19 @@ class CardUI {
             this.container = document.createElement('div');
             this.container.id = 'cardUI';
             this.container.className = 'card-ui';
-            
+
             // Добавляем в sidebar или создаем отдельную панель
             const sidebar = document.querySelector('.sidebar') || document.body;
             sidebar.appendChild(this.container);
         }
     }
-    
+
     // Рендеринг UI карт
     render() {
         if (!this.container) return;
-        
+
         const stats = this.cardManager.getStats();
-        
+
         this.container.innerHTML = `
             <div class="card-ui-header">
                 <h3>🃏 Карты</h3>
@@ -125,7 +125,7 @@ class CardUI {
             </div>
         `;
     }
-    
+
     // Взятие карты
     drawCard(deckType) {
         const card = this.cardManager.drawCard(deckType);
@@ -136,7 +136,7 @@ class CardUI {
             console.warn(`⚠️ CardUI: No cards available in ${deckType} deck`);
         }
     }
-    
+
     // Показ карты
     showCard(card) {
         // Создаем модальное окно для показа карты
@@ -156,49 +156,121 @@ class CardUI {
                 </div>
                 <div class="card-modal-actions">
                     <button class="btn btn-primary" onclick="cardUI.useCard('${card.id}')">Использовать</button>
-                    <button class="btn btn-secondary" onclick="cardUI.discardCard('${card.id}')">В отбой</button>
+                    <button class="btn btn-secondary" onclick="cardUI.transferCard('${card.id}')">Передать</button>
+                    <button class="btn btn-danger" onclick="cardUI.discardCard('${card.id}')">В отбой</button>
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(modal);
-        
+
+        // Сохраняем текущую карту для использования
+        this.currentCard = card;
+
         // Анимация появления
         setTimeout(() => {
             modal.classList.add('show');
         }, 10);
     }
-    
+
+    // Передача карты другому игроку
+    async transferCard(cardId) {
+        if (!this.currentCard || this.currentCard.id !== cardId) {
+            console.error('Card UI error: card mismatch');
+            return;
+        }
+
+        const card = this.currentCard;
+
+        // Получаем список игроков из gameState
+        const players = window.gameState?.players || [];
+        const myId = window.gameState?.getUserId?.();
+        const otherPlayers = players.filter(p => String(p.userId) !== String(myId));
+
+        if (otherPlayers.length === 0) {
+            alert('В комнате нет других игроков!');
+            return;
+        }
+
+        let targetId = null;
+        if (otherPlayers.length === 1) {
+            const p = otherPlayers[0];
+            const name = p.name || `Игрок ${p.userId}`;
+            if (confirm(`Передать карту "${card.name}" игроку ${name}?`)) {
+                targetId = p.userId;
+            }
+        } else {
+            const list = otherPlayers.map((p, i) => `${i + 1}. ${p.name || p.userId}`).join('\n');
+            const choice = prompt(`Выберите игрока (номер):\n${list}`);
+            const idx = parseInt(choice) - 1;
+            if (choice && otherPlayers[idx]) {
+                targetId = otherPlayers[idx].userId;
+            }
+        }
+
+        if (targetId) {
+            try {
+                const roomId = window.gameState?.roomId;
+                const res = await fetch('/api/cards/transfer', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-id': myId
+                    },
+                    body: JSON.stringify({
+                        card: card,
+                        targetUserId: targetId,
+                        roomId: roomId
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success) {
+                    alert('Карта успешно передана!');
+                    // Закрываем модальное окно
+                    const modal = document.querySelector('.card-modal');
+                    if (modal) modal.remove();
+                    this.render();
+                } else {
+                    alert('Ошибка: ' + data.message);
+                }
+            } catch (e) {
+                console.error('Transfer failed', e);
+                alert('Ошибка сети при передаче');
+            }
+        }
+    }
+
     // Использование карты
     useCard(cardId) {
         // Здесь должна быть логика использования карты
         console.log(`🎯 CardUI: Using card ${cardId}`);
-        
+
         // Закрываем модальное окно
         const modal = document.querySelector('.card-modal');
         if (modal) {
             modal.remove();
         }
-        
+
         // Обновляем UI
         this.render();
     }
-    
+
     // Отправка карты в отбой
     discardCard(cardId) {
         // Здесь должна быть логика отправки карты в отбой
         console.log(`🗑️ CardUI: Discarding card ${cardId}`);
-        
+
         // Закрываем модальное окно
         const modal = document.querySelector('.card-modal');
         if (modal) {
             modal.remove();
         }
-        
+
         // Обновляем UI
         this.render();
     }
-    
+
     // Обновление UI
     refresh() {
         this.render();

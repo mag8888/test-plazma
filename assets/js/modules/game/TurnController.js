@@ -3,7 +3,7 @@
  */
 
 export class TurnController {
-    constructor({ state, rollButton, endTurnButton, phaseLabel, lastRollLabel, notifier, statusChip, timerLabel }) {
+    constructor({ state, rollButton, endTurnButton, phaseLabel, lastRollLabel, notifier, statusChip, timerLabel, avatarElement }) {
         this.state = state;
         this.rollButton = rollButton;
         this.endTurnButton = endTurnButton;
@@ -12,11 +12,17 @@ export class TurnController {
         this.notifier = notifier;
         this.statusChip = statusChip;
         this.timerLabel = timerLabel;
+        this.avatarElement = avatarElement;
 
         this.currentPhase = 'waiting';
         this.currentTurnIndex = null;
         this.hasRolledThisTurn = false;
         this.turnTimer = null;
+
+        // Auto-roll defaults to true on mobile, false on desktop
+        const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+        this.isAutoRolling = isMobile;
+        this.autoRollTimer = null;
     }
 
     async init() {
@@ -24,6 +30,11 @@ export class TurnController {
         this.state?.on('change', (snapshot) => this.updateFromState(snapshot));
         this.updateUI(false, null);
         this.stopTimers(true);
+
+        // Initial visual state
+        if (this.avatarElement) {
+            this.updateAvatarState();
+        }
     }
 
     setupUI() {
@@ -32,6 +43,44 @@ export class TurnController {
         }
         if (this.endTurnButton) {
             this.endTurnButton.addEventListener('click', () => this.handleEndTurn());
+        }
+        if (this.avatarElement) {
+            this.avatarElement.style.cursor = 'pointer';
+            this.avatarElement.addEventListener('click', () => this.toggleAutoRoll());
+        }
+    }
+
+    toggleAutoRoll() {
+        this.isAutoRolling = !this.isAutoRolling;
+        this.updateAvatarState();
+
+        if (this.notifier) {
+            const status = this.isAutoRolling ? 'ВКЛЮЧЕН' : 'ВЫКЛЮЧЕН';
+            this.notifier.show(`Авто-ход ${status}`, { type: 'info' });
+        }
+
+        // If we enabled it and it's our turn, try to roll immediately
+        if (this.isAutoRolling) {
+            const isMyTurn = this.state?.isMyTurn?.() || false;
+            if (isMyTurn && !this.hasRolledThisTurn) {
+                this.checkAutoRoll();
+            }
+        }
+    }
+
+    updateAvatarState() {
+        if (!this.avatarElement) return;
+
+        if (this.isAutoRolling) {
+            this.avatarElement.classList.add('auto-rolling-active');
+            this.avatarElement.style.border = '2px solid #32df8d'; // Success color
+            this.avatarElement.style.boxShadow = '0 0 15px rgba(50, 223, 141, 0.6)';
+            this.avatarElement.title = "Авто-ход включен (нажмите для выключения)";
+        } else {
+            this.avatarElement.classList.remove('auto-rolling-active');
+            this.avatarElement.style.border = '';
+            this.avatarElement.style.boxShadow = '';
+            this.avatarElement.title = "Авто-ход выключен (нажмите для включения)";
         }
     }
 
@@ -75,6 +124,22 @@ export class TurnController {
         }
 
         this.updateUI(isMyTurn, currentPlayer);
+
+        // Check for auto-roll
+        if (isMyTurn && !this.hasRolledThisTurn && this.isAutoRolling) {
+            this.checkAutoRoll();
+        }
+    }
+
+    checkAutoRoll() {
+        if (this.autoRollTimer) clearTimeout(this.autoRollTimer);
+
+        this.autoRollTimer = setTimeout(() => {
+            if (this.state?.isMyTurn?.() && !this.hasRolledThisTurn && this.isAutoRolling) {
+                console.log('🎲 Auto-rolling dice...');
+                this.handleRollDice();
+            }
+        }, 1500); // 1.5s delay
     }
 
     async handleRollDice() {

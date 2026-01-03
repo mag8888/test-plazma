@@ -46,7 +46,7 @@ class GameModule {
                         roll: async () => {
                             const res = await this.state.rollDice();
                             const values = [res?.result?.dice1 || 0, res?.result?.dice2 || 0].filter(Boolean);
-                            const total = res?.result?.total || values.reduce((a,b)=>a+b,0) || 0;
+                            const total = res?.result?.total || values.reduce((a, b) => a + b, 0) || 0;
                             return { values, total };
                         }
                     };
@@ -82,7 +82,8 @@ class GameModule {
             lastRollLabel: document.getElementById('lastRollValue'),
             notifier: this.notifier,
             statusChip: document.getElementById('turnStatusChip'),
-            timerLabel: document.getElementById('turnTimerValue')
+            timerLabel: document.getElementById('turnTimerValue'),
+            avatarElement: document.getElementById('user-avatar')
         });
         turnController.init();
         this.modules.push(turnController);
@@ -102,7 +103,7 @@ class GameModule {
         });
         assetsManager.init();
         this.modules.push(assetsManager);
-        
+
         // Делаем AssetsManager доступным глобально
         window.assetsManager = assetsManager;
 
@@ -114,7 +115,7 @@ class GameModule {
         this.bankUpdateDebounce = null;
         this.lastBankUpdate = 0;
         this.BANK_UPDATE_INTERVAL = 5000; // 5 секунд между обновлениями
-        
+
         // Инициализируем push-уведомления
         this.pushService = window.pushNotificationService;
         this.setupPushNotifications();
@@ -125,11 +126,11 @@ class GameModule {
                 const user = this.state.api?.getCurrentUser?.();
                 const roomId = this.roomId;
                 if (!user?.username || !roomId) return;
-                
+
                 // Проверяем, нужно ли обновлять банковские данные
                 const snapshot = this.state.getSnapshot();
                 const shouldUpdateBank = this.shouldUpdateBankData(snapshot);
-                
+
                 if (shouldUpdateBank && window.dataStore && window.dataStoreAdapter) {
                     // Debounce банковских запросов - обновляем максимум раз в 5 секунд
                     this.debouncedBankUpdate(user.username, roomId);
@@ -156,20 +157,20 @@ class GameModule {
         // 1. Смена хода (активный игрок изменился)
         // 2. Изменение состояния игры (начало/конец)
         // 3. Изменение состава игроков
-        
+
         const currentTime = Date.now();
         const timeSinceLastUpdate = currentTime - this.lastBankUpdate;
-        
+
         // Минимальный интервал между обновлениями
         if (timeSinceLastUpdate < this.BANK_UPDATE_INTERVAL) {
             return false;
         }
-        
+
         // Проверяем критические изменения
         const hasTurnChanged = this.lastActiveIndex !== snapshot.activeIndex;
         const hasGameStateChanged = this.lastGameState !== snapshot.gameState;
         const hasPlayersChanged = this.lastPlayersCount !== (snapshot.players?.length || 0);
-        
+
         if (hasTurnChanged || hasGameStateChanged || hasPlayersChanged) {
             // Обновляем кэш
             this.lastActiveIndex = snapshot.activeIndex;
@@ -178,7 +179,7 @@ class GameModule {
             this.lastBankUpdate = currentTime;
             return true;
         }
-        
+
         return false;
     }
 
@@ -192,25 +193,25 @@ class GameModule {
         if (this.bankUpdateDebounce) {
             clearTimeout(this.bankUpdateDebounce);
         }
-        
+
         // Устанавливаем новый таймер
         this.bankUpdateDebounce = setTimeout(async () => {
             try {
                 console.log('🔄 GameModule: Обновление банковских данных (debounced)');
-                
+
                 // Параллельно загружаем все данные
                 const [balanceRes, creditRes, financialsRes] = await Promise.all([
                     fetch(`/api/bank/balance/${encodeURIComponent(username)}/${encodeURIComponent(roomId)}`),
                     fetch(`/api/bank/credit/status/${encodeURIComponent(username)}/${encodeURIComponent(roomId)}`),
                     fetch(`/api/bank/financials/${encodeURIComponent(username)}/${encodeURIComponent(roomId)}`)
                 ]);
-                
+
                 const [balanceData, creditData, financialsData] = await Promise.all([
                     balanceRes.json(),
                     creditRes.json(),
                     financialsRes.json()
                 ]);
-                
+
                 // Обновляем DataStore
                 window.dataStore.update({
                     balance: Number(balanceData?.amount || 0),
@@ -218,13 +219,13 @@ class GameModule {
                     salary: Number(financialsData?.salary || 0),
                     passiveIncome: Number(financialsData?.passiveIncome || 0)
                 });
-                
+
                 // Пересчитываем производные значения
                 window.dataStore.calculateDerivedValues();
-                
+
                 // Обновляем UI через DataStoreAdapter
                 window.dataStoreAdapter.updateUI();
-                
+
                 console.log('✅ GameModule: Банковские данные обновлены (debounced)');
             } catch (error) {
                 console.error('❌ GameModule: Ошибка debounced обновления банковских данных:', error);
@@ -303,7 +304,7 @@ class GameModule {
             if (window.bankWindow && !window.bankWindow.closed) {
                 window.bankWindow.close();
             }
-            
+
             const v = Date.now();
             const features = 'width=720,height=840,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no,status=no';
             // Открываем банковский модуль v4
@@ -312,7 +313,7 @@ class GameModule {
             } else {
                 console.error('BankModuleV4 не доступен! Убедитесь, что модуль загружен.');
             }
-            
+
             // Фокусируем новое окно
             if (window.bankWindow) {
                 window.bankWindow.focus();
@@ -366,8 +367,8 @@ class GameModule {
                     setText('smallDealCount', small);
                     setText('bigDealCount', big);
                 })
-                .catch(() => {});
-        } catch (_) {}
+                .catch(() => { });
+        } catch (_) { }
     }
 }
 

@@ -48,20 +48,20 @@ const initializeDatabase = async () => {
         const { connectToMongoDB, setModels, dbWrapper } = require('./game-board/config/database-mongodb');
         const UserModel = require('./game-board/models/UserModel');
         const RoomModel = require('./game-board/models/RoomModel');
-        
+
         await connectToMongoDB();
         setModels(UserModel, RoomModel);
         db = dbWrapper;
         dbConnected = true;
         console.log('✅ Connected to MongoDB Atlas');
-        
+
         // Load users from MongoDB
         await loadUsersFromDatabase();
-        
+
     } catch (error) {
         console.error('❌ MongoDB connection failed:', error.message);
         console.error('❌ Server requires MongoDB Atlas connection');
-        
+
         // Проверяем, что мы на Railway или принудительно включен режим Railway
         const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID || process.env.FORCE_RAILWAY_MODE;
         if (isRailway) {
@@ -79,11 +79,11 @@ const loadUsersFromDatabase = async () => {
         console.log('🔄 Загружаем пользователей из MongoDB...');
         const users = await db.getAllUsers();
         console.log(`📋 Найдено пользователей в MongoDB: ${users.length}`);
-        
+
         users.forEach(user => {
             console.log(`👤 Загружаем пользователя: ${user.email} (ID: ${user._id || user.id})`);
         });
-        
+
         console.log(`✅ Загружено пользователей в память: ${users.length}`);
     } catch (error) {
         console.error('❌ Ошибка загрузки пользователей:', error);
@@ -94,7 +94,7 @@ const loadUsersFromDatabase = async () => {
 app.use(cors({
     origin: [
         "http://localhost:8080",
-        "http://localhost:3000", 
+        "http://localhost:3000",
         "https://em1-production.up.railway.app",
         "https://em1-production.railway.app"
     ],
@@ -106,7 +106,7 @@ app.use(cors({
 app.options('*', cors({
     origin: [
         "http://localhost:8080",
-        "http://localhost:3000", 
+        "http://localhost:3000",
         "https://em1-production.up.railway.app",
         "https://em1-production.railway.app"
     ],
@@ -158,16 +158,16 @@ async function initializeSQLite() {
     try {
         // Проверяем, что мы на Railway или принудительно включен режим Railway
         const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID || process.env.FORCE_RAILWAY_MODE;
-        
+
         sqliteDb = new SQLiteDatabase();
         await sqliteDb.init();
-        
+
         if (isRailway) {
             console.log('✅ SQLite database initialized on Railway');
         } else {
             console.log('✅ SQLite database initialized locally');
         }
-        
+
         // Load existing rooms from database
         await loadRoomsFromSQLite();
         console.log('✅ Rooms loaded from database');
@@ -193,7 +193,7 @@ async function loadRoomsFromSQLite() {
                             player.tokenOffset = index; // Set visual offset for multiple players
                         });
                     }
-                    
+
                     rooms.set(roomData.gameState.id, roomData.gameState);
                     console.log(`✅ Loaded room from MongoDB: ${roomData.gameState.id} (${roomData.gameState.status}) with ${roomData.gameState.players?.length || 0} players`);
                 }
@@ -201,7 +201,7 @@ async function loadRoomsFromSQLite() {
             console.log(`✅ Loaded ${mongoRooms.length} rooms from MongoDB`);
             return;
         }
-        
+
         // Fallback to SQLite
         console.log('🔄 Loading rooms from SQLite...');
         const allRooms = await sqliteDb.getAllRooms();
@@ -214,7 +214,7 @@ async function loadRoomsFromSQLite() {
                         player.tokenOffset = index; // Set visual offset for multiple players
                     });
                 }
-                
+
                 rooms.set(roomState.id, roomState);
                 console.log(`✅ Loaded room from SQLite: ${roomState.id} (${roomState.status}) with ${roomState.players?.length || 0} players`);
             }
@@ -236,7 +236,7 @@ async function saveRoomToSQLite(room) {
                 activeIndex: room.activeIndex,
                 playersCount: room.players?.length || 0
             });
-            
+
             await db.getRoom(room.id).then(async (existingRoom) => {
                 if (existingRoom) {
                     // Update existing room
@@ -262,7 +262,7 @@ async function saveRoomToSQLite(room) {
             console.error('❌ Failed to save room to MongoDB:', error);
         }
     }
-    
+
     // Fallback to SQLite
     if (!sqliteDb) return;
     try {
@@ -280,7 +280,7 @@ async function saveRoomToSQLite(room) {
                 passiveIncome: p.passiveIncome
             }))
         });
-        
+
         await sqliteDb.saveRoomState(room);
         console.log('✅ Room state saved to SQLite successfully');
     } catch (error) {
@@ -444,10 +444,10 @@ function autoEndTurn(roomId) {
         clearTurnTimer(roomId);
         return;
     }
-    
+
     // Ensure activeIndex is always a number
     if (typeof room.activeIndex !== 'number') room.activeIndex = 0;
-    
+
     // Advance to next player
     const count = (room.players || []).length || 1;
     room.activeIndex = (room.activeIndex + 1) % count;
@@ -456,10 +456,10 @@ function autoEndTurn(roomId) {
 
     // Start timer for next player
     startTurnTimer(roomId, room.turnTime || 120);
-    
+
     // Save to database
     saveRoomToSQLite(room);
-    
+
     console.log(`Auto-ended turn for room ${roomId}, now active: ${room.activeIndex}`);
 }
 
@@ -468,11 +468,11 @@ app.get('/health', (req, res) => {
     console.log('🏥 Health check requested');
     try {
         const healthData = {
-        status: 'ok',
-        service: 'EM1 Game Board v2.0',
-        version: '2.1.0',
-        timestamp: new Date().toISOString(),
-        database: 'Memory',
+            status: 'ok',
+            service: 'EM1 Game Board v2.0',
+            version: '2.1.0',
+            timestamp: new Date().toISOString(),
+            database: 'Memory',
             rooms: rooms ? rooms.size : 0,
             users: users ? users.size : 0,
             uptime: process.uptime(),
@@ -530,7 +530,7 @@ app.get('/api/rooms', async (req, res) => {
                 console.error('❌ Failed to load rooms from MongoDB, falling back to memory:', mongoError);
             }
         }
-        
+
         // Fallback to memory
         const list = Array.from(rooms.values()).map(room => ({
             id: room.id,
@@ -588,7 +588,7 @@ app.post('/api/rooms', async (req, res) => {
                 break;
             }
         }
-        
+
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
@@ -640,10 +640,10 @@ app.post('/api/rooms', async (req, res) => {
             ]
         };
         rooms.set(room.id, room);
-        
+
         // Auto-save room
         await autoSaveRoom(room.id);
-        
+
         // Save to SQLite database
         if (sqliteDb) {
             try {
@@ -658,7 +658,7 @@ app.post('/api/rooms', async (req, res) => {
                     turnTime: room.turnTime,
                     assignProfessions: false
                 });
-                
+
                 // Create host player in database (new signature expects object)
                 await sqliteDb.addPlayerToRoom(room.id, {
                     userId: String(user.id),
@@ -675,7 +675,7 @@ app.post('/api/rooms', async (req, res) => {
                 console.error('❌ Failed to save room to SQLite:', dbError);
             }
         }
-        
+
         // Save to MongoDB
         if (dbConnected && db) {
             try {
@@ -699,7 +699,7 @@ app.post('/api/rooms', async (req, res) => {
                 console.error('❌ Failed to save room to MongoDB:', mongoError);
             }
         }
-        
+
         res.status(201).json({ success: true, room });
     } catch (error) {
         console.error('Ошибка создания комнаты:', error);
@@ -714,14 +714,14 @@ function sanitizeRoom(room) {
     const readyCount = players.filter(p => p.isReady).length;
     const playersCount = players.length;
     const canStart = playersCount >= 2 && readyCount >= 2;
-    
+
     // Собираем занятые фишки и мечты
     const takenTokens = players
         .filter(p => p.selectedToken)
         .map(p => p.selectedToken);
-    
+
     // Мечты теперь можно выбирать нескольким игрокам, поэтому takenDreams не нужен
-    
+
     return {
         id: room.id,
         name: room.name,
@@ -754,7 +754,7 @@ function sanitizeRoom(room) {
 app.get('/api/rooms/:roomId', async (req, res) => {
     try {
         let room = rooms.get(req.params.roomId);
-        
+
         // If room not in memory, try to load from MongoDB
         if (!room && dbConnected && db) {
             try {
@@ -769,7 +769,7 @@ app.get('/api/rooms/:roomId', async (req, res) => {
                 console.error('❌ Failed to load room from MongoDB:', mongoError);
             }
         }
-        
+
         if (!room) {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
@@ -781,7 +781,7 @@ app.get('/api/rooms/:roomId', async (req, res) => {
             try {
                 const payload = jwt.verify(token, JWT_SECRET);
                 currentUserId = String(payload.userId || payload.id || '') || null;
-            } catch (_) {}
+            } catch (_) { }
         }
         if (!currentUserId) {
             currentUserId = String(req.query.user_id || req.headers['x-user-id'] || '') || null;
@@ -814,7 +814,7 @@ app.post('/api/rooms/:roomId/join', async (req, res) => {
                 break;
             }
         }
-        
+
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
@@ -851,10 +851,10 @@ app.post('/api/rooms/:roomId/join', async (req, res) => {
             });
             room.updatedAt = new Date().toISOString();
             room.lastActivity = Date.now();
-            
+
             // Auto-save room
             await autoSaveRoom(room.id);
-            
+
             // Save to database
             if (sqliteDb) {
                 try {
@@ -900,7 +900,7 @@ app.post('/api/rooms/:roomId/start', async (req, res) => {
                 break;
             }
         }
-        
+
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
@@ -919,7 +919,7 @@ app.post('/api/rooms/:roomId/start', async (req, res) => {
         // Случайно выбираем первого игрока
         const playersCount = (room.players || []).length || 1;
         room.activeIndex = Math.floor(Math.random() * playersCount);
-        
+
         // Auto-save room
         await autoSaveRoom(room.id);
         // Инициализация стартовых позиций на малом круге
@@ -938,13 +938,13 @@ app.post('/api/rooms/:roomId/start', async (req, res) => {
             pushHistory(room.id, { from: 'Банк', to: p.name, amount: 3000, roomId: room.id, timestamp: Date.now(), type: 'initial_deposit', reason: 'стартовые сбережения' });
         });
         room.updatedAt = new Date().toISOString();
-        
+
         // Запускаем серверный таймер для первого игрока
         startTurnTimer(room.id, room.turnTime || 120);
-        
+
         // Save to database
         saveRoomToSQLite(room);
-        
+
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
         console.error('Ошибка запуска игры:', error);
@@ -968,7 +968,7 @@ app.post('/api/rooms/:roomId/dream', (req, res) => {
                 break;
             }
         }
-        
+
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
@@ -977,18 +977,18 @@ app.post('/api/rooms/:roomId/dream', (req, res) => {
         if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
         const player = (room.players || []).find(p => String(p.userId) === userId);
         if (!player) return res.status(400).json({ success: false, message: 'Игрок не в комнате' });
-        
+
         const dreamId = req.body?.dream_id ?? req.body?.dreamId;
-        
+
         // Разрешаем мечты выбирать нескольким игрокам
-        
+
         player.selectedDream = dreamId ?? null;
         room.updatedAt = new Date().toISOString();
         room.lastActivity = Date.now();
-        
+
         // Save to database
         saveRoomToSQLite(room);
-        
+
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
         console.error('Ошибка выбора мечты:', error);
@@ -1012,7 +1012,7 @@ app.post('/api/rooms/:roomId/token', (req, res) => {
                 break;
             }
         }
-        
+
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
@@ -1021,30 +1021,30 @@ app.post('/api/rooms/:roomId/token', (req, res) => {
         if (!room) return res.status(404).json({ success: false, message: 'Комната не найдена' });
         const player = (room.players || []).find(p => String(p.userId) === userId);
         if (!player) return res.status(400).json({ success: false, message: 'Игрок не в комнате' });
-        
+
         const tokenId = req.body?.token_id ?? req.body?.tokenId;
-        
+
         // Проверяем, что фишка не выбрана другим игроком
         if (tokenId) {
-            const isTokenTaken = (room.players || []).some(p => 
+            const isTokenTaken = (room.players || []).some(p =>
                 String(p.userId) !== String(userId) && p.selectedToken === tokenId
             );
-            
+
             if (isTokenTaken) {
-                return res.status(400).json({ 
-                    success: false, 
-                    message: 'Эта фишка уже выбрана другим игроком' 
+                return res.status(400).json({
+                    success: false,
+                    message: 'Эта фишка уже выбрана другим игроком'
                 });
             }
         }
-        
+
         player.selectedToken = tokenId ?? null;
         room.updatedAt = new Date().toISOString();
         room.lastActivity = Date.now();
-        
+
         // Save to database
         saveRoomToSQLite(room);
-        
+
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
         console.error('Ошибка выбора фишки:', error);
@@ -1068,7 +1068,7 @@ app.post('/api/rooms/:roomId/ready', (req, res) => {
                 break;
             }
         }
-        
+
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
@@ -1080,10 +1080,10 @@ app.post('/api/rooms/:roomId/ready', (req, res) => {
         player.isReady = !player.isReady;
         room.updatedAt = new Date().toISOString();
         room.lastActivity = Date.now();
-        
+
         // Save to database
         saveRoomToSQLite(room);
-        
+
         return res.json({ success: true, room: sanitizeRoom(room) });
     } catch (error) {
         console.error('Ошибка готовности:', error);
@@ -1107,7 +1107,7 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
                 break;
             }
         }
-        
+
         if (!user) {
             return res.status(404).json({ success: false, message: 'User not found' });
         }
@@ -1126,13 +1126,13 @@ app.get('/api/rooms/:roomId/game-state', (req, res) => {
         // Return game state
         const activePlayer = room.players?.[room.activeIndex || 0] || null;
         const turnTimeLeft = getTurnTimeLeft(room.id);
-        
+
         console.log('🔍 Game state - activeIndex:', room.activeIndex, 'activePlayer:', activePlayer, 'allPlayers:', room.players?.map(p => ({ userId: p.userId, name: p.name })));
         console.log('🔍 Game state - room.turnTime:', room.turnTime, 'turnTimeLeft:', turnTimeLeft, 'roomId:', room.id);
-        
+
         // Ensure activeIndex is always a number
         const activeIndex = typeof room.activeIndex === 'number' ? room.activeIndex : 0;
-        
+
         const gameState = {
             roomId: room.id,
             status: room.status,
@@ -1203,16 +1203,16 @@ function syncPlayerBalance(roomId, username) {
     try {
         const room = rooms.get(roomId);
         if (!room) return;
-        
+
         const player = (room.players || []).find(p => p.name === username || p.username === username);
         if (!player) return;
-        
+
         const bankBalance = ensureBalance(roomId, username);
-        
+
         // Синхронизируем: игрок получает баланс из банка (банк - источник истины)
         const bankAmount = Number(bankBalance.amount || 0);
         const playerCash = Number(player.cash || 0);
-        
+
         // Банковский баланс - источник истины, обновляем игрока
         if (bankAmount !== playerCash) {
             player.cash = bankAmount;
@@ -1220,7 +1220,7 @@ function syncPlayerBalance(roomId, username) {
         } else {
             console.log(`🔄 Синхронизация: балансы уже синхронизированы для ${username} = $${playerCash}`);
         }
-        
+
     } catch (error) {
         console.error('Ошибка синхронизации баланса:', error);
     }
@@ -1230,10 +1230,10 @@ function syncPlayerBalance(roomId, username) {
 app.get('/api/bank/balance/:username/:roomId', (req, res) => {
     try {
         const { username, roomId } = req.params;
-        
+
         // Синхронизируем баланс перед возвратом
         syncPlayerBalance(roomId, username);
-        
+
         const balance = ensureBalance(roomId, username);
         res.json({ amount: balance.amount });
     } catch (error) {
@@ -1250,12 +1250,12 @@ app.get('/api/bank/financials/:username/:roomId', (req, res) => {
         if (!room) {
             return res.status(404).json({ error: 'Room not found' });
         }
-        
+
         const player = (room?.players || []).find(p => p.name === username || p.username === username);
         if (!player) {
             return res.status(404).json({ error: 'Player not found' });
         }
-        
+
         // Показываем базовую зарплату всегда, даже если есть кредиты
         const baseSalary = 10000; // Базовая зарплата предпринимателя
         const actualSalary = Number(player?.profession?.salary || 0);
@@ -1265,7 +1265,7 @@ app.get('/api/bank/financials/:username/:roomId', (req, res) => {
         const childExpenses = Number(player?.children || 0) * 400;
         const totalExpenses = baseExpenses + childExpenses + creditPayment;
         const netIncome = (baseSalary + passiveIncome) - totalExpenses;
-        
+
         res.json({
             salary: baseSalary,
             passiveIncome,
@@ -1302,41 +1302,41 @@ app.post('/api/bank/transfer', (req, res) => {
     try {
         const { from, to, amount, roomId } = req.body || {};
         const sum = Number(amount);
-        
+
         console.log(`💸 Перевод: ${from} → ${to}, сумма: $${sum}, комната: ${roomId}`);
-        
+
         if (!roomId || !from || !to || !Number.isFinite(sum) || sum <= 0) {
             return res.status(400).json({ error: 'Неверные параметры перевода' });
         }
-        
+
         const fromBal = ensureBalance(roomId, from);
         const toBal = ensureBalance(roomId, to);
-        
+
         console.log(`💸 Балансы до перевода: ${from}=$${fromBal.amount}, ${to}=$${toBal.amount}`);
-        
+
         if (fromBal.amount < sum) {
             return res.status(400).json({ error: 'Недостаточно средств' });
         }
-        
+
         fromBal.amount -= sum;
         toBal.amount += sum;
-        
+
         console.log(`💸 Балансы после перевода: ${from}=$${fromBal.amount}, ${to}=$${toBal.amount}`);
-        
-        const record = { 
-            from, 
-            to, 
-            amount: sum, 
-            roomId, 
+
+        const record = {
+            from,
+            to,
+            amount: sum,
+            roomId,
             reason: 'перевод от игрока',
-            timestamp: Date.now() 
+            timestamp: Date.now()
         };
         pushHistory(roomId, record);
-        
+
         // Синхронизируем балансы игроков
         syncPlayerBalance(roomId, from);
         syncPlayerBalance(roomId, to);
-        
+
         res.json({ success: true, newBalance: { amount: fromBal.amount }, record });
     } catch (error) {
         console.error('Ошибка перевода:', error);
@@ -1349,29 +1349,29 @@ app.post('/api/bank/transfer', (req, res) => {
 app.post('/api/bank/notify/balance', (req, res) => {
     try {
         const { username, roomId, amount, reason } = req.body || {};
-        
+
         if (!username || !roomId || typeof amount !== 'number') {
             return res.status(400).json({ error: 'Неверные параметры уведомления' });
         }
-        
+
         // Add to history with reason
-        pushHistory(roomId, { 
+        pushHistory(roomId, {
             type: 'notification',
-            username, 
-            amount, 
+            username,
+            amount,
             reason: reason || 'пополнение баланса',
-            timestamp: Date.now() 
+            timestamp: Date.now()
         });
-        
+
         console.log(`🔔 Push notification: ${username} ${amount >= 0 ? '+' : ''}$${amount} - ${reason || 'пополнение баланса'}`);
-        
+
         // Формируем правильное сообщение в зависимости от знака суммы
-        const message = amount >= 0 
+        const message = amount >= 0
             ? `Ваш счет пополнен на сумму $${amount}`
             : `С вашего счета списан расход $${Math.abs(amount)}`;
-            
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             message: message,
             reason: reason || 'пополнение баланса'
         });
@@ -1391,7 +1391,7 @@ app.get('/api/bank/credit/status/:username/:roomId', (req, res) => {
         // Find room and player's income (passive income or salary)
         const room = rooms.get(roomId);
         const player = (room?.players || []).find(p => p.name === username || p.username === username);
-        
+
         // PAYDAY (net income) = salary + passiveIncome - totalExpenses
         const passiveIncome = Number(player?.passiveIncome || 0);
         const salary = Number(player?.profession?.salary || 0);
@@ -1399,7 +1399,7 @@ app.get('/api/bank/credit/status/:username/:roomId', (req, res) => {
         const childExpenses = Number(player?.children || 0) * 400;
         const totalExpenses = baseExpenses + childExpenses;
         const payday = Math.max(0, (salary + passiveIncome) - totalExpenses);
-        
+
         // Максимальный кредит = PAYDAY * 10
         const CREDIT_MULTIPLIER = 10;
         const maxAvailable = Math.max(0, payday * CREDIT_MULTIPLIER);
@@ -1439,18 +1439,18 @@ app.post('/api/bank/credit/take', (req, res) => {
 
         const step = 1000;
         const ratePerStep = 100;
-        
+
         // Используем общий доход (зарплата + пассивный доход) для расчета лимита
         const passiveIncome = Number(player.passiveIncome || 0);
         const salary = Number(player.profession?.salary || 0);
         const totalIncome = salary + passiveIncome;
-        
+
         // Рассчитываем базовые расходы (без учета штрафа по кредиту)
         const baseExpenses = Number(player.profession?.expenses || 0);
         const childrenCount = Number(player.children || 0);
         const childrenExpenses = childrenCount * 400;
         const totalBaseExpenses = baseExpenses + childrenExpenses;
-        
+
         // Базовый чистый доход (без штрафа по кредиту)
         const baseNetIncome = totalIncome - totalBaseExpenses;
         const maxAvailable = Math.max(0, Math.floor(baseNetIncome / ratePerStep) * step);
@@ -1461,7 +1461,7 @@ app.post('/api/bank/credit/take', (req, res) => {
         // Update loan and player
         const loan = ensureLoan(roomId, username);
         loan.amount = Number(loan.amount || 0) + sum;
-        
+
         // Уменьшаем пассивный доход или зарплату
         if (passiveIncome > 0) {
             player.passiveIncome = Math.max(0, passiveIncome - (sum / 1000) * ratePerStep);
@@ -1472,25 +1472,25 @@ app.post('/api/bank/credit/take', (req, res) => {
         // Credit funds to player balance
         const oldCash = player.cash || 0;
         player.cash = oldCash + sum;
-        
+
         console.log(`💰 Кредит: ${username} получил $${sum}, баланс: $${oldCash} → $${player.cash}`);
-        
+
         // Обновляем банковский баланс
         const bankBalance = ensureBalance(roomId, username);
         bankBalance.amount = player.cash;
-        
+
         console.log(`💰 Банковский баланс обновлен: ${username} = $${bankBalance.amount}`);
-        
+
         // Синхронизируем банковский баланс
         syncPlayerBalance(roomId, username);
-        pushHistory(roomId, { 
-            from: 'Банк', 
-            to: username, 
-            amount: sum, 
-            roomId, 
+        pushHistory(roomId, {
+            from: 'Банк',
+            to: username,
+            amount: sum,
+            roomId,
             reason: 'взятие кредита',
-            timestamp: Date.now(), 
-            type: 'credit_take' 
+            timestamp: Date.now(),
+            type: 'credit_take'
         });
 
         res.json({ success: true, loanAmount: loan.amount, newBalance: bankBalance, cashflow: player.passiveIncome });
@@ -1522,43 +1522,43 @@ app.post('/api/bank/credit/repay', (req, res) => {
 
         // Update state
         loan.amount -= sum;
-        
+
         // Получаем игрока
         const room = rooms.get(roomId);
         const player = (room?.players || []).find(p => p.name === username || p.username === username);
-        
+
         if (!player) {
             return res.status(404).json({ error: 'Игрок не найден' });
         }
-        
+
         // Списываем с баланса игрока
         player.cash = Math.max(0, (player.cash || 0) - sum);
-        
+
         // Обновляем банковский баланс перед синхронизацией
         bal.amount = player.cash;
-        
+
         // Синхронизируем банковский баланс
         syncPlayerBalance(roomId, username);
 
         // Restore cashflow on player (пассивный доход или зарплату)
-            const passiveIncome = Number(player.passiveIncome || 0);
-            const salary = Number(player.profession?.salary || 0);
-            const restoredAmount = (sum / 1000) * 100;
-            
-            if (passiveIncome > 0) {
-                player.passiveIncome = passiveIncome + restoredAmount;
-            } else {
-                player.profession.salary = salary + restoredAmount;
+        const passiveIncome = Number(player.passiveIncome || 0);
+        const salary = Number(player.profession?.salary || 0);
+        const restoredAmount = (sum / 1000) * 100;
+
+        if (passiveIncome > 0) {
+            player.passiveIncome = passiveIncome + restoredAmount;
+        } else {
+            player.profession.salary = salary + restoredAmount;
         }
 
-        pushHistory(roomId, { 
-            from: username, 
-            to: 'Банк', 
-            amount: sum, 
-            roomId, 
+        pushHistory(roomId, {
+            from: username,
+            to: 'Банк',
+            amount: sum,
+            roomId,
             reason: 'погашение кредита',
-            timestamp: Date.now(), 
-            type: 'credit_repay' 
+            timestamp: Date.now(),
+            type: 'credit_repay'
         });
         const bankBalance = ensureBalance(roomId, username);
         res.json({ success: true, loanAmount: loan.amount, newBalance: bankBalance, cashflow: player?.passiveIncome || 0 });
@@ -1572,45 +1572,45 @@ app.post('/api/bank/credit/repay', (req, res) => {
 app.post('/api/bank/loans/payoff', (req, res) => {
     try {
         const { roomId, username, loanType, amount } = req.body;
-        
+
         if (!roomId || !username || !loanType || !amount) {
             return res.status(400).json({ success: false, message: 'Недостаточно данных' });
         }
-        
+
         const room = rooms.get(roomId);
         if (!room) {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
-        
+
         const player = (room.players || []).find(p => p.name === username || p.username === username);
         if (!player) {
             return res.status(404).json({ success: false, message: 'Игрок не найден' });
         }
-        
+
         const bankBalance = ensureBalance(roomId, username);
         const payoffAmount = Number(amount);
-        
+
         if (payoffAmount <= 0) {
             return res.status(400).json({ success: false, message: 'Сумма погашения должна быть положительной' });
         }
-        
+
         if (bankBalance.amount < payoffAmount) {
             return res.status(400).json({ success: false, message: 'Недостаточно средств для погашения' });
         }
-        
+
         // Проверяем, что кредит еще не погашен
         if (!player.loans) player.loans = {};
         if (player.loans[loanType] === false) {
             return res.status(400).json({ success: false, message: 'Кредит уже погашен' });
         }
-        
+
         // Списываем деньги
         bankBalance.amount -= payoffAmount;
         player.cash = bankBalance.amount;
-        
+
         // Отмечаем кредит как погашенный
         player.loans[loanType] = false;
-        
+
         // Записываем в историю
         const loanNames = {
             car: 'Кредит на авто',
@@ -1618,7 +1618,7 @@ app.post('/api/bank/loans/payoff', (req, res) => {
             mortgage: 'Ипотека',
             creditCards: 'Кредитные карты'
         };
-        
+
         pushHistory(roomId, {
             from: username,
             to: 'Банк',
@@ -1628,17 +1628,17 @@ app.post('/api/bank/loans/payoff', (req, res) => {
             timestamp: Date.now(),
             type: 'loan_payoff'
         });
-        
+
         // Сохраняем в базу
         saveRoomToSQLite(room);
-        
+
         res.json({
             success: true,
             message: `${loanNames[loanType] || loanType} погашен`,
             balance: bankBalance.amount,
             loans: player.loans
         });
-        
+
     } catch (error) {
         console.error('Ошибка погашения кредита:', error);
         res.status(500).json({ success: false, message: 'Ошибка сервера' });
@@ -1650,26 +1650,26 @@ app.post('/api/auth/register', async (req, res) => {
     try {
         console.log('📝 Registration request received:', req.body);
         const { username, email, password, confirmPassword } = req.body;
-        
+
         // Validation
         if (!username || !email || !password) {
             return res.status(400).json({ error: 'Все поля обязательны' });
         }
-        
+
         if (password !== confirmPassword) {
             return res.status(400).json({ error: 'Пароли не совпадают' });
         }
-        
+
         // Check if user exists
         for (let user of users.values()) {
             if (user.email === email) {
                 return res.status(400).json({ error: 'Пользователь с таким email уже существует' });
             }
         }
-        
+
         // Hash password
         const hashedPassword = await bcrypt.hash(password, 10);
-        
+
         // Create user
         const userId = Date.now().toString();
         const newUser = {
@@ -1680,17 +1680,17 @@ app.post('/api/auth/register', async (req, res) => {
             createdAt: new Date(),
             isActive: true
         };
-        
+
         users.set(userId, newUser);
         console.log('✅ User created successfully:', newUser.username);
-        
+
         // Generate JWT token
         const token = jwt.sign(
             { userId: newUser.id, email: newUser.email },
             JWT_SECRET,
             { expiresIn: '7d' }
         );
-        
+
         res.status(201).json({
             message: 'Пользователь успешно зарегистрирован',
             accessToken: token,
@@ -1701,7 +1701,7 @@ app.post('/api/auth/register', async (req, res) => {
                 email: newUser.email
             }
         });
-        
+
     } catch (error) {
         console.error('❌ Registration error:', error);
         res.status(500).json({ error: 'Ошибка сервера при регистрации' });
@@ -1712,16 +1712,16 @@ app.post('/api/auth/register', async (req, res) => {
 app.post('/api/auth/login', async (req, res) => {
     try {
         const { email, password } = req.body;
-        
+
         if (!email) {
             return res.status(400).json({ error: 'Email обязателен' });
         }
-        
+
         // Временно убираем проверку пароля
         // if (!password) {
         //     return res.status(400).json({ error: 'Пароль обязателен' });
         // }
-        
+
         // Find user
         let user = null;
         for (let u of users.values()) {
@@ -1730,7 +1730,7 @@ app.post('/api/auth/login', async (req, res) => {
                 break;
             }
         }
-        
+
         if (!user) {
             // Auto-create user on login for minimal in-memory server (can be disabled with AUTH_AUTO_CREATE_ON_LOGIN=false)
             const allowAutoCreate = (process.env.AUTH_AUTO_CREATE_ON_LOGIN || 'true').toLowerCase() !== 'false';
@@ -1753,20 +1753,20 @@ app.post('/api/auth/login', async (req, res) => {
                 return res.status(401).json({ error: 'Неверный email или пароль' });
             }
         }
-        
+
         // Временно убираем проверку пароля
         // const isValidPassword = await bcrypt.compare(password, user.password);
         // if (!isValidPassword) {
         //     return res.status(401).json({ error: 'Неверный email или пароль' });
         // }
-        
+
         // Generate JWT token
         const token = jwt.sign(
             { userId: user.id, email: user.email },
             JWT_SECRET,
             { expiresIn: '7d' }
         );
-        
+
         res.json({
             message: 'Успешный вход',
             accessToken: token,
@@ -1777,7 +1777,7 @@ app.post('/api/auth/login', async (req, res) => {
                 email: user.email
             }
         });
-        
+
     } catch (error) {
         console.error('❌ Login error:', error);
         res.status(500).json({ error: 'Ошибка сервера при входе' });
@@ -1788,21 +1788,21 @@ app.post('/api/auth/login', async (req, res) => {
 app.get('/auth/telegram', async (req, res) => {
     try {
         const { token } = req.query;
-        
+
         if (!token) {
             return res.redirect('/login?error=no_token');
         }
-        
+
         // Verify JWT token
         const decoded = jwt.verify(token, JWT_SECRET);
-        
+
         if (decoded.type !== 'telegram') {
             return res.redirect('/login?error=invalid_token');
         }
-        
+
         const telegramId = decoded.telegramId;
         console.log(`🔐 Telegram auth attempt: ${telegramId}`);
-        
+
         // Find or create user
         let user = null;
         for (let u of users.values()) {
@@ -1811,7 +1811,7 @@ app.get('/auth/telegram', async (req, res) => {
                 break;
             }
         }
-        
+
         if (!user) {
             // Create new user from Telegram
             const userId = Date.now().toString();
@@ -1823,14 +1823,14 @@ app.get('/auth/telegram', async (req, res) => {
                 createdAt: new Date(),
                 isTelegramUser: true
             };
-            
+
             users.set(userId, user);
             console.log(`✅ New Telegram user created: ${telegramId}`);
         }
-        
+
         // Create session token
         const sessionToken = jwt.sign(
-            { 
+            {
                 userId: user.id,
                 username: user.username,
                 email: user.email,
@@ -1839,17 +1839,17 @@ app.get('/auth/telegram', async (req, res) => {
             JWT_SECRET,
             { expiresIn: '7d' }
         );
-        
+
         // Set cookie and redirect
-        res.cookie('authToken', sessionToken, { 
-            httpOnly: true, 
+        res.cookie('authToken', sessionToken, {
+            httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
         });
-        
+
         console.log(`✅ Telegram user authenticated: ${telegramId}`);
         res.redirect('/game.html?auth=telegram');
-        
+
     } catch (error) {
         console.error('❌ Telegram auth error:', error);
         res.redirect('/login?error=auth_failed');
@@ -1860,7 +1860,7 @@ app.get('/auth/telegram', async (req, res) => {
 app.get('/api/user/profile/:username', (req, res) => {
     try {
         const { username } = req.params;
-        
+
         // Find user by username
         let user = null;
         for (let u of users.values()) {
@@ -1869,11 +1869,11 @@ app.get('/api/user/profile/:username', (req, res) => {
                 break;
             }
         }
-        
+
         if (!user) {
             return res.status(404).json({ error: 'Пользователь не найден' });
         }
-        
+
         res.json({
             id: user.id,
             username: user.username,
@@ -1881,7 +1881,7 @@ app.get('/api/user/profile/:username', (req, res) => {
             createdAt: user.createdAt,
             isActive: user.isActive
         });
-        
+
     } catch (error) {
         console.error('❌ Profile error:', error);
         res.status(500).json({ error: 'Ошибка сервера при получении профиля' });
@@ -1896,7 +1896,7 @@ app.get('/api/user/profile', async (req, res) => {
         console.log('📋 Profile request - userId:', userId);
         console.log('📋 Headers:', req.headers['x-user-id']);
         console.log('📋 Query:', req.query.user_id);
-        
+
         if (!userId) {
             console.log('❌ No user ID provided');
             return res.status(401).json({ error: 'User ID required' });
@@ -1912,7 +1912,7 @@ app.get('/api/user/profile', async (req, res) => {
                 console.log('⚠️ MongoDB query failed:', err.message);
             }
         }
-        
+
         // Fallback to memory
         if (!user) {
             for (let u of users.values()) {
@@ -1923,14 +1923,14 @@ app.get('/api/user/profile', async (req, res) => {
             }
             console.log('📋 User from memory:', user ? 'found' : 'not found');
         }
-        
+
         if (!user) {
             console.log('❌ User not found:', userId);
             return res.status(404).json({ error: 'User not found' });
         }
-        
+
         console.log('✅ Profile found for user:', user.username);
-        
+
         res.json({
             id: user.id,
             username: user.username,
@@ -1945,7 +1945,7 @@ app.get('/api/user/profile', async (req, res) => {
             createdAt: user.createdAt,
             isActive: user.isActive
         });
-        
+
     } catch (error) {
         console.error('❌ Profile error:', error);
         res.status(500).json({ error: 'Ошибка сервера при получении профиля' });
@@ -1969,7 +1969,7 @@ app.get('/api/user/stats', (req, res) => {
                 break;
             }
         }
-        
+
         if (!user) {
             return res.status(404).json({ error: 'User not found' });
         }
@@ -2022,7 +2022,7 @@ app.get('/game/lobby', (req, res) => {
 app.get('/api/cards', (req, res) => {
     try {
         // Minimal mock lists (IDs only) to provide counts to the UI
-        const makeArray = (n, type) => Array.from({ length: n }, (_, i) => ({ id: `${type}_${i+1}` }));
+        const makeArray = (n, type) => Array.from({ length: n }, (_, i) => ({ id: `${type}_${i + 1}` }));
         const marketCards = makeArray(24, 'market');
         const expenseCards = makeArray(24, 'expense');
         const smallDeals = makeArray(32, 'small');
@@ -2030,6 +2030,27 @@ app.get('/api/cards', (req, res) => {
         res.json({ success: true, marketCards, expenseCards, smallDeals, bigDeals });
     } catch (e) {
         res.status(500).json({ success: false, message: 'Ошибка загрузки карт' });
+    }
+});
+
+app.post('/api/cards/transfer', (req, res) => {
+    try {
+        const { card, targetUserId, roomId } = req.fields || req.body; // express-formidable or json
+        const senderId = req.headers['x-user-id'];
+
+        if (!card || !targetUserId || !roomId || !senderId) {
+            return res.status(400).json({ success: false, message: 'Missing required fields' });
+        }
+
+        console.log(`🔀 Card Transfer: ${card.name} (${card.id}) from ${senderId} to ${targetUserId} in room ${roomId}`);
+
+        // TODO: Implement actual game state modification here (remove from sender, add to recipient)
+        // For now, we trust the client to update UI and just log the event.
+
+        res.json({ success: true, message: 'Карта успешно передана' });
+    } catch (e) {
+        console.error('Transfer error:', e);
+        res.status(500).json({ success: false, message: 'Ошибка сервера' });
     }
 });
 
@@ -2066,9 +2087,9 @@ app.post('/api/rooms/:roomId/roll', (req, res) => {
 
         // Ensure activeIndex is always a number
         const activeIndex = typeof room.activeIndex === 'number' ? room.activeIndex : 0;
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             result: { dice1: firstDie, dice2: null, total },
             state: {
                 roomId: room.id,
@@ -2152,7 +2173,7 @@ app.post('/api/rooms/:roomId/move', (req, res) => {
 
         // Ensure activeIndex is always a number
         const activeIndex = typeof room.activeIndex === 'number' ? room.activeIndex : 0;
-        
+
         // Return updated game state
         const updatedGameState = {
             roomId: room.id,
@@ -2230,22 +2251,22 @@ app.post('/api/rooms/:roomId/end-turn', async (req, res) => {
 
         // Ensure activeIndex is always a number
         if (typeof room.activeIndex !== 'number') room.activeIndex = 0;
-        
+
         // Advance active player in round-robin
         const count = (room.players || []).length || 1;
         room.activeIndex = (room.activeIndex + 1) % count;
         room.hasRolledThisTurn = false;
         room.updatedAt = new Date().toISOString();
-        
+
         // Auto-save room
         await autoSaveRoom(room.id);
-        
+
         // Restart timer for next player
         startTurnTimer(room.id, room.turnTime || 120);
-        
+
         // Save to database
         saveRoomToSQLite(room);
-        
+
         // Return updated state
         const gameState = {
             roomId: room.id,
@@ -2261,7 +2282,7 @@ app.post('/api/rooms/:roomId/end-turn', async (req, res) => {
             turnTimeLeft: getTurnTimeLeft(room.id),
             turnTime: room.turnTime || 120
         };
-        
+
         res.json({ success: true, state: gameState });
     } catch (error) {
         console.error('Ошибка завершения хода:', error);
@@ -2275,9 +2296,9 @@ app.post('/api/rooms/:roomId/deals/choose', (req, res) => {
         if (!room) {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
-        
+
         const { size } = req.body;
-        
+
         // Simple deal simulation
         const deal = {
             id: Date.now().toString(),
@@ -2287,9 +2308,9 @@ app.post('/api/rooms/:roomId/deals/choose', (req, res) => {
             income: size === 'small' ? 500 : 5000,
             description: `Это ${size === 'small' ? 'малая' : 'большая'} сделка`
         };
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             deal,
             state: {
                 roomId: room.id,
@@ -2315,22 +2336,22 @@ app.post('/api/rooms/:roomId/deals/choose', (req, res) => {
 app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
     try {
         console.log(`🔍 Deals resolve: ${req.params.roomId}`, req.body);
-        
+
         const room = rooms.get(req.params.roomId);
         if (!room) {
             console.log(`❌ Комната ${req.params.roomId} не найдена`);
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
-        
+
         const { action, deal } = req.body || {};
         console.log(`🔍 Action: ${action}, Deal:`, deal);
 
         // Получаем активного игрока
         const activePlayerId = room.activePlayerId || room.players?.[0]?.userId;
         const player = (room.players || []).find(p => String(p.userId) === String(activePlayerId));
-        
+
         console.log(`🔍 Active player: ${activePlayerId}, Found:`, !!player);
-        
+
         if (!player) {
             console.log(`❌ Активный игрок ${activePlayerId} не найден в комнате ${req.params.roomId}`);
             return res.status(404).json({ success: false, message: 'Активный игрок не найден' });
@@ -2339,40 +2360,40 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
         // Apply effects: if user buys a deal, deduct cost and add passive income
         if (action === 'buy' && deal) {
             console.log(`💰 Покупка актива: ${deal.name} за $${deal.amount || deal.cost}`);
-            
+
             if (player) {
                 const dealCost = Number(deal.amount || deal.cost || 0);
                 const dealIncome = Number(deal.income || 0);
-                
+
                 // СИНХРОНИЗИРУЕМ БАЛАНС ПЕРЕД ПРОВЕРКОЙ
                 console.log(`🔄 Синхронизация баланса перед покупкой для ${player.name || player.username}`);
                 syncPlayerBalance(req.params.roomId, player.name || player.username);
-                
+
                 console.log(`💰 Стоимость: $${dealCost}, Доход: $${dealIncome}, Баланс игрока: $${player.cash}`);
-                
+
                 // Проверяем, достаточно ли денег у игрока
                 if (player.cash < dealCost) {
                     console.log(`❌ Недостаточно средств: нужно $${dealCost}, есть $${player.cash}`);
-                    return res.status(400).json({ 
-                        success: false, 
-                        message: `Недостаточно средств! Нужно: $${dealCost}, доступно: $${player.cash}` 
+                    return res.status(400).json({
+                        success: false,
+                        message: `Недостаточно средств! Нужно: $${dealCost}, доступно: $${player.cash}`
                     });
                 }
-                
+
                 // Списываем деньги с баланса игрока
                 player.cash = Math.max(0, player.cash - dealCost);
-                
+
                 // Добавляем пассивный доход
                 player.passiveIncome = Number(player.passiveIncome || 0) + dealIncome;
-                
+
                 // Добавляем актив в портфель игрока
                 if (!Array.isArray(player.assets)) player.assets = [];
-                
+
                 // Для акций добавляем количество
-                const assetName = deal.category === 'stocks' && deal.quantity > 1 
+                const assetName = deal.category === 'stocks' && deal.quantity > 1
                     ? `${deal.name} (${deal.quantity} шт.)`
                     : deal.name || 'Сделка';
-                
+
                 const newAsset = {
                     id: deal.id || Date.now().toString(),
                     name: assetName,
@@ -2385,7 +2406,7 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                     originalOwnerId: player.userId
                 };
                 player.assets.push(newAsset);
-                
+
                 // Отправляем push-уведомление о покупке актива
                 if (global.pushNotificationService) {
                     global.pushNotificationService.emitAssetPurchase({
@@ -2396,7 +2417,7 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                         timestamp: Date.now()
                     });
                 }
-                
+
                 // Сразу перемещаем актив в каталог
                 if (!room.catalogAssets) {
                     room.catalogAssets = [];
@@ -2405,7 +2426,7 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                     ...newAsset,
                     addedToCatalogAt: Date.now()
                 });
-                
+
                 console.log(`✅ Актив добавлен и перемещен в каталог:`, newAsset);
                 console.log(`💰 Новый баланс игрока: $${player.cash}`);
 
@@ -2414,11 +2435,11 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                     const bankBalance = ensureBalance(req.params.roomId, player.name || player.username);
                     bankBalance.amount = player.cash;
                     console.log(`💰 Банковский баланс обновлен: ${player.name || player.username} = $${bankBalance.amount}`);
-                    
+
                     // Синхронизируем с банковским балансом
                     console.log(`🔄 Синхронизация баланса для ${player.name || player.username}`);
                     syncPlayerBalance(req.params.roomId, player.name || player.username);
-                    
+
                     // Записываем в историю банка
                     console.log(`📝 Запись в историю банка`);
                     pushHistory(req.params.roomId, {
@@ -2447,8 +2468,8 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
         }
 
         // Возвращаем обновленные данные игрока
-        const response = { 
-            success: true, 
+        const response = {
+            success: true,
             action,
             player: player, // Возвращаем обновленные данные игрока
             state: {
@@ -2462,11 +2483,11 @@ app.post('/api/rooms/:roomId/deals/resolve', (req, res) => {
                 pendingDeal: null
             }
         };
-        
+
         if (action === 'buy' && deal) {
             response.player = player;
         }
-        
+
         console.log(`✅ Отправка ответа:`, { success: response.success, action: response.action });
         res.json(response);
     } catch (error) {
@@ -2484,7 +2505,7 @@ app.post('/api/rooms/:roomId/assets/transfer', (req, res) => {
 
         const { assetId, assetName, targetUserId } = req.body;
         const userId = req.headers['x-user-id'];
-        
+
         if (!userId) {
             return res.status(401).json({ success: false, message: 'User ID required' });
         }
@@ -2505,28 +2526,28 @@ app.post('/api/rooms/:roomId/assets/transfer', (req, res) => {
         const fromAssets = fromPlayer.assets || [];
         console.log(`🔍 Поиск актива ${assetId || assetName} у игрока ${fromPlayer.name}`);
         console.log(`🔍 Активы игрока:`, fromAssets.map(a => ({ id: a.id, name: a.name })));
-        
+
         // Пробуем найти актив по ID или имени
         let assetIndex = -1;
-        
+
         if (assetId) {
-            assetIndex = fromAssets.findIndex(asset => 
+            assetIndex = fromAssets.findIndex(asset =>
                 String(asset.id || asset.assetId) === String(assetId)
             );
         }
-        
+
         // Если не нашли по ID, пробуем найти по имени
         if (assetIndex === -1 && assetName) {
-            assetIndex = fromAssets.findIndex(asset => 
+            assetIndex = fromAssets.findIndex(asset =>
                 asset.name && asset.name.toLowerCase().includes(assetName.toLowerCase())
             );
         }
 
         if (assetIndex === -1) {
             console.log(`❌ Актив ${assetId} не найден у отправителя ${fromPlayer.name}`);
-            return res.status(404).json({ 
-                success: false, 
-                message: `Актив не найден у отправителя. Доступные активы: ${fromAssets.map(a => a.name).join(', ')}` 
+            return res.status(404).json({
+                success: false,
+                message: `Актив не найден у отправителя. Доступные активы: ${fromAssets.map(a => a.name).join(', ')}`
             });
         }
 
@@ -2558,8 +2579,8 @@ app.post('/api/rooms/:roomId/assets/transfer', (req, res) => {
             type: 'asset_transfer'
         });
 
-        res.json({ 
-            success: true, 
+        res.json({
+            success: true,
             message: `Актив "${asset.name}" передан игроку ${toPlayer.name}`,
             asset: asset,
             fromPlayer: fromPlayer.name,
@@ -2577,9 +2598,9 @@ app.post('/api/rooms/:roomId/assets/sell', (req, res) => {
         if (!room) {
             return res.status(404).json({ success: false, message: 'Комната не найдена' });
         }
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             state: {
                 roomId: room.id,
                 status: room.status,
@@ -2637,24 +2658,24 @@ app.post('/api/rooms/:roomId/charity', (req, res) => {
         const salary = Number(activePlayer?.profession?.salary || 0);
         const passive = Number(activePlayer?.passiveIncome || 0);
         const donation = Math.floor((salary + passive) * 0.10);
-        
+
         console.log(`❤️ Благотворительность: игрок ${activePlayer.name}, зарплата: $${salary}, пассивный доход: $${passive}, пожертвование: $${donation}`);
-        
+
         if ((activePlayer.cash || 0) < donation) {
             console.log(`❌ Недостаточно средств для благотворительности: нужно $${donation}, есть $${activePlayer.cash}`);
             return res.status(400).json({ success: false, message: 'Недостаточно средств для пожертвования' });
         }
-        
+
         const oldCash = activePlayer.cash;
         activePlayer.cash -= donation;
         activePlayer.charityTurns = 3;
-        
+
         console.log(`✅ Благотворительность выполнена: баланс ${oldCash} → ${activePlayer.cash}, получено 3 хода с выбором кубиков`);
-        
+
         // Синхронизируем с банковским балансом
         try {
             syncPlayerBalance(req.params.roomId, activePlayer.name || activePlayer.username);
-            
+
             // Записываем в историю банка
             pushHistory(req.params.roomId, {
                 from: activePlayer.name || activePlayer.username || `Игрок ${activePlayer.userId}`,
@@ -2668,7 +2689,7 @@ app.post('/api/rooms/:roomId/charity', (req, res) => {
         } catch (syncError) {
             console.error('❌ Ошибка синхронизации баланса при благотворительности:', syncError);
         }
-        
+
         saveRoomToSQLite(room);
         res.json({ success: true, donation, charityTurns: activePlayer.charityTurns });
     } catch (error) {
@@ -2715,17 +2736,17 @@ const startServer = async () => {
     try {
         // Проверяем, что мы на Railway или принудительно включен режим Railway
         const isRailway = process.env.RAILWAY_ENVIRONMENT || process.env.RAILWAY_PROJECT_ID || process.env.FORCE_RAILWAY_MODE;
-        
+
         // Initialize database first (always, not just on Railway)
         await initializeSQLite();
-        
+
         app.listen(PORT, '0.0.0.0', () => {
             console.log('🎮 EM1 Game Board v2.0 Production Server запущен!');
             console.log(`🚀 Сервер работает на порту ${PORT}`);
             console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
             console.log(`🔗 URL: ${process.env.RAILWAY_ENVIRONMENT ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}` : `http://localhost:${PORT}`}`);
             console.log(`🏥 Health check: ${process.env.RAILWAY_ENVIRONMENT ? `https://${process.env.RAILWAY_PUBLIC_DOMAIN}/health` : `http://localhost:${PORT}/health`}`);
-            
+
             if (isRailway) {
                 console.log('🚂 Railway deployment detected');
                 console.log(`💾 Database: ${dbConnected ? 'MongoDB Atlas + SQLite' : 'Memory only'}`);
@@ -2734,7 +2755,7 @@ const startServer = async () => {
                 console.log(`💾 Database: ${dbConnected ? 'MongoDB Atlas' : 'Memory only'}`);
                 console.log('⚠️ SQLite disabled for local development');
             }
-            
+
             console.log('✅ Готов к обслуживанию файлов');
         });
     } catch (error) {
