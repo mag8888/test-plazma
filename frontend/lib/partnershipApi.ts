@@ -119,8 +119,27 @@ export const partnershipApi = {
     },
 
     async getAvatarMatrix(avatarId: string) {
-        const res = await fetch(`${API_URL}/avatars/matrix/${avatarId}`);
-        return res.json();
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 15000); // 15s timeout
+
+        try {
+            const res = await fetch(`${API_URL}/avatars/matrix/${avatarId}`, {
+                signal: controller.signal
+            });
+            clearTimeout(timeoutId);
+
+            if (!res.ok) {
+                const text = await res.text();
+                throw new Error(`Matrix Load Failed: ${res.status} ${text}`);
+            }
+            return res.json();
+        } catch (e: any) {
+            clearTimeout(timeoutId);
+            if (e.name === 'AbortError') {
+                throw new Error("Matrix Load Timeout (Backend did not respond in 15s)");
+            }
+            throw e;
+        }
     },
 
     // Check Pending Legacy Balance

@@ -49,18 +49,53 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
 
     const loadMatrix = async (id: string) => {
         setLoading(true);
+        // Reset old data to avoid confusion
+        setMatrixData(null);
+
         try {
             const endpoint = `/api/partnership/avatars/matrix/${id}`;
             let data;
+
             if (fetcher) {
                 data = await fetcher(endpoint);
             } else {
-                const res = await fetch(endpoint);
-                data = await res.json();
+                // Default Fetcher with Timeout (10s)
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
+                try {
+                    const res = await fetch(endpoint, {
+                        signal: controller.signal,
+                        headers: { 'Accept': 'application/json' }
+                    });
+                    clearTimeout(timeoutId);
+
+                    if (!res.ok) {
+                        const errorText = await res.text();
+                        console.error(`[MatrixView] Error ${res.status}:`, errorText);
+                        throw new Error(`Failed to load matrix (Status: ${res.status})`);
+                    }
+
+                    data = await res.json();
+                } catch (fetchErr: any) {
+                    clearTimeout(timeoutId);
+                    if (fetchErr.name === 'AbortError') {
+                        throw new Error("Timeout: Failed to load matrix structure (Backend slow)");
+                    }
+                    throw fetchErr;
+                }
             }
+
+            if (!data || !data.root) {
+                console.warn('[MatrixView] Empty data received');
+                // Don't throw if just empty, render "No data" state
+            }
+
             setMatrixData(data);
         } catch (err) {
             console.error('Failed to load matrix:', err);
+            // Could set an error state here to show in UI
+            setMatrixData(null); // Ensure we don't show stale data
         } finally {
             setLoading(false);
         }
