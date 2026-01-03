@@ -18,20 +18,28 @@ export class PartnershipController {
 
     // ... (Existing methods omitted for brevity, keeping only changes where needed) ...
 
+    /**
+     * Helper to resolve a potential Telegram ID string to a valid MongoDB ObjectId string.
+     * Returns the valid ObjectId string if found, or null if not found.
+     */
+    private static async resolveUserId(userId: string): Promise<string | null> {
+        if (mongoose.Types.ObjectId.isValid(userId)) {
+            return userId;
+        }
+        if (!isNaN(Number(userId))) {
+            const u = await User.findOne({ telegram_id: Number(userId) });
+            return u ? u._id.toString() : null;
+        }
+        return null;
+    }
+
     static async getTree(req: Request, res: Response) {
         try {
             const { userId } = req.params;
-            let targetId = userId;
+            const targetId = await PartnershipController.resolveUserId(userId);
 
-            // Resolve Telegram ID if needed
-            if (!mongoose.Types.ObjectId.isValid(userId)) {
-                if (!isNaN(Number(userId))) {
-                    const u = await User.findOne({ telegram_id: Number(userId) });
-                    if (u) targetId = u._id.toString();
-                    else return res.status(404).json({ error: 'User not found' });
-                } else {
-                    return res.status(400).json({ error: 'Invalid User ID' });
-                }
+            if (!targetId) {
+                return res.status(404).json({ error: 'User not found' });
             }
 
             const userAvatars = await Avatar.find({ owner: targetId }).populate({
@@ -47,15 +55,13 @@ export class PartnershipController {
     static async getStats(req: Request, res: Response) {
         try {
             const { userId } = req.params;
-            let user;
-            if (mongoose.Types.ObjectId.isValid(userId)) {
-                user = await User.findById(userId).populate('referrer', 'username');
+            const targetId = await PartnershipController.resolveUserId(userId);
+
+            if (!targetId) {
+                return res.status(404).json({ error: 'User not found' });
             }
 
-            if (!user && !isNaN(Number(userId))) {
-                user = await User.findOne({ telegram_id: Number(userId) }).populate('referrer', 'username');
-            }
-
+            const user = await User.findById(targetId).populate('referrer', 'username');
             if (!user) return res.status(404).json({ error: 'User not found' });
 
             const avatarCount = await Avatar.countDocuments({ owner: user._id, isActive: true });
@@ -155,16 +161,13 @@ export class PartnershipController {
     static async getPartners(req: Request, res: Response) {
         try {
             const { userId } = req.params;
-            let user;
+            const targetId = await PartnershipController.resolveUserId(userId);
 
-            if (mongoose.Types.ObjectId.isValid(userId)) {
-                user = await User.findById(userId);
+            if (!targetId) {
+                return res.status(404).json({ error: 'User not found' });
             }
 
-            if (!user && !isNaN(Number(userId))) {
-                user = await User.findOne({ telegram_id: Number(userId) });
-            }
-
+            const user = await User.findById(targetId);
             if (!user) return res.status(404).json({ error: 'User not found' });
 
             let referrals = await User.find({ referrer: user._id }).lean();
@@ -232,26 +235,13 @@ export class PartnershipController {
     static async getMyAvatars(req: Request, res: Response) {
         try {
             const { userId } = req.params;
-            let targetId = userId;
-
             console.log(`[Partnership] getMyAvatars request for userId: ${userId}`);
 
-            // Resolve Telegram ID if needed
-            if (!mongoose.Types.ObjectId.isValid(userId)) {
-                const asNum = Number(userId);
-                if (!isNaN(asNum)) {
-                    const u = await User.findOne({ telegram_id: asNum });
-                    if (u) {
-                        targetId = u._id.toString();
-                        console.log(`[Partnership] Resolved Telegram ID ${userId} -> ObjectId ${targetId}`);
-                    } else {
-                        console.log(`[Partnership] User not found by Telegram ID ${userId}`);
-                        return res.json({ avatars: [] });
-                    }
-                } else {
-                    console.log(`[Partnership] Invalid User ID format (not ObjectId, not Number): ${userId}`);
-                    return res.status(400).json({ error: `Invalid User ID: ${userId}` });
-                }
+            const targetId = await PartnershipController.resolveUserId(userId);
+
+            if (!targetId) {
+                console.log(`[Partnership] User not found by ID ${userId}`);
+                return res.json({ avatars: [] });
             }
 
             console.log(`[Partnership] Querying avatars for Owner: ${targetId}, Active: True`);
@@ -374,16 +364,9 @@ export class PartnershipController {
                 return res.status(400).json({ error: 'userId and type are required' });
             }
 
-            let targetUserId = userId;
-
-            if (!mongoose.Types.ObjectId.isValid(userId)) {
-                const userByTg = await User.findOne({ telegram_id: userId });
-                if (userByTg) {
-                    targetUserId = userByTg._id.toString();
-                    console.log(`[PartnershipController] Resolved Telegram ID ${userId} to ObjectId ${targetUserId}`);
-                } else {
-                    return res.status(400).json({ error: 'Invalid user ID format and user not found by Telegram ID' });
-                }
+            const targetUserId = await PartnershipController.resolveUserId(userId);
+            if (!targetUserId) {
+                return res.status(400).json({ error: 'Invalid user ID format and user not found by Telegram ID' });
             }
 
             const TARIFF_MAP: Record<string, AvatarType> = {
