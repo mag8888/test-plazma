@@ -60,8 +60,9 @@ export default function PartnershipPage() {
 
     const handleWithdraw = async () => {
         const amount = prompt('Enter amount to withdraw:');
-        if (amount && userId) {
-            const res = await partnershipApi.withdraw(userId, Number(amount));
+        const wallet = prompt('Enter TRC20/BEP20 Wallet Address:', '0x...');
+        if (amount && wallet && userId) {
+            const res = await partnershipApi.withdraw(userId, Number(amount), wallet);
             if (res.success) {
                 alert(`Payout: ${res.payout}. Commission: ${res.commission}`);
                 fetchData();
