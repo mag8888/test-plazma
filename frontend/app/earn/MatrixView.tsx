@@ -311,7 +311,7 @@ export function MatrixView({ isOpen, onClose, avatarId, avatarType, fetcher }: M
                             <div className="text-slate-500 animate-pulse text-sm font-medium">Loading structure...</div>
                         </div>
                     ) : tree ? (
-                        <div className="p-8 min-w-[800px]">
+                        <div className="p-8 pb-32 min-w-[800px]">
                             {/* Legend */}
                             <div className="flex gap-4 mb-8 text-[10px] font-mono border-b border-slate-800/50 pb-4">
                                 <div className="flex items-center gap-1.5 opacity-70">
