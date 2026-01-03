@@ -1,4 +1,10 @@
+
 import TelegramBot from 'node-telegram-bot-api';
+import dotenv from 'dotenv';
+import { CloudinaryService } from '../services/cloudinary.service';
+import { UserModel } from '../models/user.model';
+import { AuthService } from '../auth/auth.service';
+import { ScheduledGameModel } from '../models/scheduled-game.model';
 
 // Transfer State
 type TransferState = {
@@ -22,8 +28,6 @@ type DepositState = {
     amount?: number;
     currency?: string;
 };
-import dotenv from 'dotenv';
-import { CloudinaryService } from '../services/cloudinary.service';
 
 dotenv.config();
 
@@ -1478,8 +1482,7 @@ export class BotService {
 
     async handlePlay(chatId: number) {
         try {
-            const { UserModel } = await import('../models/user.model');
-            const { AuthService } = await import('../auth/auth.service');
+            // Static Import Usage
             const authService = new AuthService();
             const user = await UserModel.findOne({ telegram_id: chatId });
 
@@ -1516,7 +1519,6 @@ export class BotService {
     }
 
     async handleClients(chatId: number) {
-        const { UserModel } = await import('../models/user.model');
         const user = await UserModel.findOne({ telegram_id: chatId });
         const isMaster = user && user.isMaster && user.masterExpiresAt && user.masterExpiresAt > new Date();
 
@@ -1572,7 +1574,6 @@ export class BotService {
 
     async handleBecomeMaster(chatId: number, telegramId: number) {
         try {
-            const { UserModel } = await import('../models/user.model');
             const user = await UserModel.findOne({ telegram_id: telegramId });
 
             if (!user) {
@@ -1718,7 +1719,6 @@ export class BotService {
 
     async handleSchedule(chatId: number) {
         try {
-            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
             const now = new Date();
             const games = await ScheduledGameModel.find({
                 startTime: { $gt: now },
@@ -1731,7 +1731,6 @@ export class BotService {
             }
 
             // Determine requester status
-            const { UserModel } = await import('../models/user.model');
             const requester = await UserModel.findOne({ telegram_id: chatId });
             const isRequesterMaster = requester?.isMaster || false;
 
@@ -1751,8 +1750,6 @@ export class BotService {
 
     async handleMyGames(chatId: number, telegramId: number) {
         try {
-            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
-            const { UserModel } = await import('../models/user.model');
             const user = await UserModel.findOne({ telegram_id: telegramId });
             if (!user) return;
 
@@ -1794,7 +1791,6 @@ export class BotService {
 
     async handleManageGame(chatId: number, gameId: string) {
         try {
-            const { ScheduledGameModel } = await import('../models/scheduled-game.model');
             const game = await ScheduledGameModel.findById(gameId);
             if (!game) {
                 this.bot?.sendMessage(chatId, "Игра не найдена.");
@@ -2099,7 +2095,6 @@ export class BotService {
 
     async renderGameCard(game: any, requesterId: number) {
         // Dynamic import if needed, or assume models loaded
-        const { UserModel } = await import('../models/user.model');
         const requester = await UserModel.findOne({ telegram_id: requesterId });
         const isRequesterMaster = requester?.isMaster || false;
 
