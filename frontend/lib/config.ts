@@ -38,5 +38,9 @@ export const getGameServiceUrl = () => {
     }
 
     // Default to existing Backend URL if we assume legacy behavior or Same Origin proxy
-    return getBackendUrl();
+    const fallback = getBackendUrl();
+    if (typeof window !== 'undefined') {
+        console.warn(`[Config] NEXT_PUBLIC_GAME_API_URL not set. Defaulting to: ${fallback}. (This will fail if Partnership Service doesn't support Socket.IO)`);
+    }
+    return fallback;
 };
