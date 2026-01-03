@@ -1357,16 +1357,12 @@ export class BotService {
                     await deposit.save();
 
                     // 2. Credit User
-                    // Note: deposit.user is likely a User ID (ObjectId or String depending on creation)
-                    // FinanceController used userId (Telegram ID) in some paths?
-                    // Let's resolve safely
-                    let user = await UserModel.findById(deposit.user);
-                    if (!user) {
-                        // Fallback: maybe it stored telegram_id?
-                        // Actually FinanceController: const deposit = new DepositRequest({ userId: req.body.userId })
-                        // It depends on what req.body.userId was. If it was telegram_id, then deposit.user might fail casting if defined as ObjectId
-                        // But let's assume valid linkage or try alternate find
-                        user = await UserModel.findOne({ telegram_id: deposit.user });
+                    // FinanceController stores 'userId' (Telegram ID String)
+                    let user = await UserModel.findOne({ telegram_id: Number(deposit.userId) });
+
+                    if (!user && deposit.user) {
+                        // Fallback to old user ObjectId if present
+                        user = await UserModel.findById(deposit.user);
                     }
 
                     if (user) {

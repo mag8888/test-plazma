@@ -1,22 +1,26 @@
 import mongoose, { Schema, Document } from 'mongoose';
 
 export interface IDepositRequest extends Document {
-    user: mongoose.Types.ObjectId;
+    userId: string;
+    user?: mongoose.Types.ObjectId;
     amount: number;
     currency: string;
-    proofUrl: string;
-    status: 'PENDING' | 'APPROVED' | 'REJECTED';
+    method?: string;
+    proofUrl?: string;
+    status: string;
     adminComment?: string;
     createdAt: Date;
     updatedAt: Date;
 }
 
 const DepositRequestSchema: Schema = new Schema({
-    user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    userId: { type: String, required: true }, // Aligned with Partnership-Backend
+    user: { type: Schema.Types.ObjectId, ref: 'User' }, // Optional legacy/alternative
     amount: { type: Number, required: true },
     currency: { type: String, default: 'USD' },
-    proofUrl: { type: String, required: true },
-    status: { type: String, enum: ['PENDING', 'APPROVED', 'REJECTED'], default: 'PENDING' },
+    method: { type: String }, // Added to match
+    proofUrl: { type: String }, // Made optional
+    status: { type: String, default: 'PENDING' },
     adminComment: { type: String }
 }, { timestamps: true });
 
