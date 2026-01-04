@@ -210,11 +210,66 @@ app.get('/api/partnership/admin/games', async (req, res) => {
     if (!checkAdminAuth(req, res)) return;
     try {
         const { ScheduledGameModel } = await import('./models/scheduled-game.model');
-        const games = await ScheduledGameModel.find({})
+        const { RoomModel } = await import('./models/room.model');
+        const { UserModel } = await import('./models/user.model');
+
+        // 1. Fetch Scheduled Games
+        const scheduledGames = await ScheduledGameModel.find({})
             .sort({ startTime: -1 })
-            .populate('hostId', 'username first_name telegram_id');
-        res.json({ games });
+            .populate('hostId', 'username first_name telegram_id')
+            .lean();
+
+        // 2. Fetch Active Instant Rooms (Waiting or Playing)
+        const instantRooms = await RoomModel.find({
+            status: { $in: ['waiting', 'playing'] },
+            isTraining: { $ne: true }
+        }).sort({ createdAt: -1 }).lean();
+
+        // 3. Map Instant Rooms to Unified Structure
+        const instantGamesMapped = await Promise.all(instantRooms.map(async (room: any) => {
+            // Manual population of Host
+            let host = { username: 'Unknown', first_name: 'Unknown', telegram_id: 0 };
+            try {
+                if (room.creatorId) {
+                    if (mongoose.Types.ObjectId.isValid(room.creatorId)) {
+                        const h = await UserModel.findById(room.creatorId).select('username first_name telegram_id');
+                        if (h) host = h;
+                    } else if (!isNaN(Number(room.creatorId))) {
+                        const h = await UserModel.findOne({ telegram_id: Number(room.creatorId) }).select('username first_name telegram_id');
+                        if (h) host = h;
+                    }
+                }
+            } catch (e) { }
+
+            return {
+                _id: room._id,
+                startTime: room.createdAt, // Instant games start "now" (creation time)
+                price: 0,
+                maxPlayers: room.maxPlayers,
+                promoSpots: 0,
+                participants: room.players.map((p: any) => ({
+                    userId: p.userId,
+                    username: p.name || 'Player',
+                    firstName: p.name || 'Player',
+                    type: 'INSTANT',
+                    paymentStatus: 'FREE',
+                    joinedAt: room.createdAt
+                })),
+                status: room.status.toUpperCase(), // 'WAITING' | 'PLAYING'
+                type: 'INSTANT_ROOM', // Discriminator
+                hostId: host,
+                description: `Instant Room: ${room.name}`
+            };
+        }));
+
+        // 4. Merge and Sort
+        const allGames = [...scheduledGames, ...instantGamesMapped].sort((a: any, b: any) => {
+            return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
+        });
+
+        res.json({ games: allGames });
     } catch (e: any) {
+        console.error("Admin Games Error:", e);
         res.status(500).json({ error: e.message });
     }
 });
