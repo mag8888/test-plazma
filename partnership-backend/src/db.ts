@@ -16,7 +16,7 @@ export const connectDB = async () => {
         const maskedURI = mongoURI.replace(/:([^:@]+)@/, ':****@');
         console.log('Attempting to connect to MongoDB URI (SHARED WITH GAME BACKEND):', maskedURI);
 
-        await mongoose.connect(mongoURI, { dbName: 'test' });
+        await mongoose.connect(mongoURI, { dbName: 'moneo' });
 
         // Log the connected Database Name
         if (mongoose.connection.db) {

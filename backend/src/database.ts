@@ -26,8 +26,8 @@ export const connectDatabase = async () => {
         }
 
         mongoose.set('strictQuery', false);
-        // FORCE 'test' DB to match partnership-backend containing user data
-        await mongoose.connect(mongoUrl, { dbName: 'test' });
+        // FORCE 'moneo' DB to match migrated data
+        await mongoose.connect(mongoUrl, { dbName: 'moneo' });
         console.log('Successfully connected to MongoDB (dbName: test)');
 
         // Seed users after connection
