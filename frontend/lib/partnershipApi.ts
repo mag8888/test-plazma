@@ -54,15 +54,20 @@ export const partnershipApi = {
     },
 
     async getMyAvatars(userId: string) {
-        const safeUserId = encodeURIComponent(userId);
-        const url = `${API_URL}/avatars/my-avatars/${safeUserId}`;
-        console.log(`[Partnership] getMyAvatars calling: ${url}, origId:`, userId);
-
+        let url = 'UNKNOWN_URL';
         try {
             // Verify userId is safe string
-            if (typeof userId !== 'string' || !userId) {
+            if (!userId || userId === 'undefined' || userId === 'null') {
+                console.warn(`[Partnership] Invalid userId: ${userId}`);
                 throw new Error(`Invalid userId for avatars: ${userId}`);
             }
+
+            // Explicit cast to string to handle ObjectIds passed as objects
+            const userIdStr = String(userId);
+            const safeUserId = encodeURIComponent(userIdStr);
+            url = `${API_URL}/avatars/my-avatars/${safeUserId}`;
+
+            console.log(`[Partnership] getMyAvatars calling: ${url}, origId:`, userId);
 
             const res = await fetch(url);
 

@@ -4,10 +4,11 @@ import { socket } from '../socket';
 interface CardGalleryModalProps {
     isOpen: boolean;
     onClose: () => void;
-    type: 'SMALL' | 'BIG' | 'MARKET'; // Added MARKET
+    type: 'SMALL' | 'BIG' | 'MARKET';
+    roomId?: string;
 }
 
-export const CardGalleryModal = ({ isOpen, onClose, type }: CardGalleryModalProps) => {
+export const CardGalleryModal = ({ isOpen, onClose, type, roomId }: CardGalleryModalProps) => {
     const [cards, setCards] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
 
@@ -17,7 +18,7 @@ export const CardGalleryModal = ({ isOpen, onClose, type }: CardGalleryModalProp
             setCards([]); // Reset
 
             // Special handling for MARKET: It might need a different event or same event with type
-            socket.emit('get_deck_content', { type });
+            socket.emit('get_deck_content', { type, roomId });
 
             const handleData = (data: any[]) => {
                 setCards(data);
