@@ -1575,6 +1575,32 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                         <div id="tutorial-roll-action" className="grid grid-cols-2 gap-3 shrink-0 h-[100px]">
                             {/* Define local variable for render */}
                             {(() => {
+                                // Manual Draw Phases
+                                if (state.phase === 'MARKET_WAITING') {
+                                    return (
+                                        <button
+                                            onClick={() => socket.emit('draw_card', { roomId, type: 'MARKET' })}
+                                            disabled={!isMyTurn}
+                                            className="col-span-2 rounded-3xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-xl font-black uppercase tracking-widest"
+                                        >
+                                            <span>🏪</span>
+                                            <span>Открыть Рынок</span>
+                                        </button>
+                                    );
+                                }
+                                if (state.phase === 'EXPENSE_WAITING') {
+                                    return (
+                                        <button
+                                            onClick={() => socket.emit('draw_card', { roomId, type: 'EXPENSE' })}
+                                            disabled={!isMyTurn}
+                                            className="col-span-2 rounded-3xl bg-pink-600 hover:bg-pink-500 text-white flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-xl font-black uppercase tracking-widest"
+                                        >
+                                            <span>💸</span>
+                                            <span>Открыть Трату</span>
+                                        </button>
+                                    );
+                                }
+
                                 const diceCount = (localPlayer?.charityTurns > 0 || localPlayer?.isFastTrack) ? 2 : 1;
                                 return (
                                     <>
@@ -1790,8 +1816,26 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
 
                         {/* 2. MAIN CONTROLS */}
                         <div className="flex gap-3">
-                            {/* Roll Logic */}
-                            {(localPlayer?.charityTurns || 0) > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+                            {/* Roll / Action Logic */}
+                            {state.phase === 'MARKET_WAITING' ? (
+                                <button
+                                    onClick={() => socket.emit('draw_card', { roomId, type: 'MARKET' })}
+                                    disabled={!isMyTurn}
+                                    className="flex-1 bg-blue-600 active:bg-blue-500 text-white rounded-xl font-bold text-sm shadow-lg flex flex-col items-center justify-center gap-1 transition-all"
+                                >
+                                    <span className="text-2xl">🏪</span>
+                                    <span>ОТКРЫТЬ</span>
+                                </button>
+                            ) : state.phase === 'EXPENSE_WAITING' ? (
+                                <button
+                                    onClick={() => socket.emit('draw_card', { roomId, type: 'EXPENSE' })}
+                                    disabled={!isMyTurn}
+                                    className="flex-1 bg-pink-600 active:bg-pink-500 text-white rounded-xl font-bold text-sm shadow-lg flex flex-col items-center justify-center gap-1 transition-all"
+                                >
+                                    <span className="text-2xl">💸</span>
+                                    <span>ОТКРЫТЬ</span>
+                                </button>
+                            ) : (localPlayer?.charityTurns || 0) > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
                                 <div className="flex gap-2 flex-1 h-16">
                                     <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
                                         <span className="text-xl">🎲</span>
@@ -1813,7 +1857,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                     onClick={() => handleRoll()}
                                     disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
                                     className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg relative overflow-hidden
-                            ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
+                                ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
                                             ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
                                             : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
                                 >

@@ -1012,6 +1012,21 @@ export class GameGateway {
                 }
             });
 
+            socket.on('draw_card', ({ roomId, type }) => {
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        // type: 'MARKET' | 'EXPENSE'
+                        game.drawCard(socket.id, type);
+                        const state = game.getState();
+                        this.io.to(roomId).emit('state_updated', { state });
+                        saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
             socket.on('end_turn', ({ roomId }) => {
                 const game = this.games.get(roomId);
                 if (game) {

@@ -10,7 +10,7 @@ export interface GameState {
     players: PlayerState[];
     currentPlayerIndex: number;
     currentTurnTime: number;
-    phase: 'ROLL' | 'ACTION' | 'END' | 'OPPORTUNITY_CHOICE' | 'CHARITY_CHOICE' | 'BABY_ROLL' | 'DOWNSIZED_DECISION';
+    phase: 'ROLL' | 'ACTION' | 'END' | 'OPPORTUNITY_CHOICE' | 'CHARITY_CHOICE' | 'BABY_ROLL' | 'DOWNSIZED_DECISION' | 'MARKET_WAITING' | 'EXPENSE_WAITING';
     board: BoardSquare[];
     currentCard?: Card;
     log: string[];
@@ -1297,86 +1297,16 @@ export class GameEngine {
             // Prompt for Small/Big Deal.
             this.state.phase = 'OPPORTUNITY_CHOICE';
         } else if (square.type === 'MARKET') {
-            // Tutorial Override
-            if (this.state.isTutorial && this.state.tutorialStep === 1) {
-                const card = {
-                    id: 'tutorial_market_1',
-                    type: 'MARKET',
-                    title: 'Market Boom',
-                    description: 'Someone wants to buy MYT4U for $40! Everyone can sell.',
-                    targetTitle: 'MYT4U',
-                    offerPrice: 40,
-                    cost: 0,
-                    cashflow: 0
-                } as any;
+            // Tutorial Override handled separately or inside Draw?
+            // Let's keep Tutorial Override inside the DRAW logic to ensure consistent flow.
+            // Or here? If we pause here, user clicks Draw, then we see tutorial card.
+            this.addLog(`${player.name} попал на РЫНОК. Ждем открытия карты...`);
+            this.state.phase = 'MARKET_WAITING';
 
-                this.state.currentCard = card;
-                this.addLog(`🏪 MARKET (Tutorial): ${card.title} - ${card.description}`);
-                if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
-
-                this.state.activeMarketCards.push({
-                    id: `market_${Date.now()}`,
-                    card,
-                    sourcePlayerId: player.id,
-                    expiresAt: Date.now() + 600000 // Long expire
-                });
-
-                // Increment Step to avoid loop or allow next phase
-                this.state.tutorialStep = 2;
-                this.state.phase = 'ACTION';
-                return;
-            }
-
-            // Draw Market Card
-            const card = this.cardManager.drawMarket();
-            console.log('[Market] Drew market card:', card ? card.title : 'NONE AVAILABLE');
-
-            if (card) {
-                this.state.currentCard = card;
-                this.addLog(`🏪 MARKET: ${card.title} - ${card.description}`);
-                if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
-
-                const activeCard = {
-                    id: `market_${Date.now()}`,
-                    card,
-                    sourcePlayerId: player.id,
-                    expiresAt: Date.now() + 60000 // 60s
-                };
-
-                this.state.activeMarketCards.push(activeCard);
-                console.log('[Market] Added to activeMarketCards:', {
-                    cardTitle: card.title,
-                    expiresAt: new Date(activeCard.expiresAt).toISOString(),
-                    totalActiveCards: this.state.activeMarketCards.length
-                });
-
-                // SCAM LOGIC: Bitcoin Crash
-                if (card.id === 'mkt_btc_scam') {
-                    this.state.players.forEach(p => {
-                        const initialCount = p.assets.length;
-                        p.assets = p.assets.filter(a => a.symbol !== 'BTC' && a.title !== 'Bitcoin');
-                        if (p.assets.length < initialCount) {
-                            this.recalculateFinancials(p);
-                            this.addLog(`🔥 ${p.name} потерял все биткоины из-за скама биржи!`);
-                        }
-                    });
-                }
-
-                this.state.phase = 'ACTION';
-            } else {
-                this.addLog(`🏪 РЫНОК: Карты закончились.`);
-            }
         } else if (square.type === 'EXPENSE') {
-            const card = this.cardManager.drawExpense();
-            if (card) {
-                this.state.currentCard = card;
-                this.addLog(`💸 Трата: ${card.title} (-$${card.cost || 0})`);
-                this.state.phase = 'ACTION';
-            } else {
-                this.addLog(`💸 Трата: Нет карт расходов.`);
-                this.state.phase = 'ACTION';
-            }
-            // Frontend will show Modal. User clicks "Pay" -> buyAsset -> forcePayment.
+            this.addLog(`${player.name} попал на ТРАТУ. Ждем открытия карты...`);
+            this.state.phase = 'EXPENSE_WAITING';
+
 
 
         } else if (square.type === 'BABY') {
