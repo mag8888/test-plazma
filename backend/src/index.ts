@@ -199,9 +199,12 @@ app.get('/api/partnership/admin/users', async (req, res) => {
 app.get('/api/partnership/admin/cards', async (req, res) => {
     if (!checkAdminAuth(req, res)) return;
     try {
-        const cards = await mongoose.connection.collection('cards').find({}).toArray();
+        const { CardModel } = await import('./models/card.model');
+        const cards = await CardModel.find({}).lean();
+        console.log(`[Admin] Fetched ${cards.length} cards`);
         res.json({ cards });
     } catch (e: any) {
+        console.error("Admin Cards Error:", e);
         res.status(500).json({ error: e.message });
     }
 });
@@ -219,11 +222,15 @@ app.get('/api/partnership/admin/games', async (req, res) => {
             .populate('hostId', 'username first_name telegram_id')
             .lean();
 
+        console.log(`[Admin] Scheduled Games: ${scheduledGames.length}`);
+
         // 2. Fetch Active Instant Rooms (Waiting or Playing)
         const instantRooms = await RoomModel.find({
             status: { $in: ['waiting', 'playing'] },
             isTraining: { $ne: true }
         }).sort({ createdAt: -1 }).lean();
+
+        console.log(`[Admin] Instant Rooms Matches: ${instantRooms.length}`);
 
         // 3. Map Instant Rooms to Unified Structure
         const instantGamesMapped = await Promise.all(instantRooms.map(async (room: any) => {
@@ -243,19 +250,19 @@ app.get('/api/partnership/admin/games', async (req, res) => {
 
             return {
                 _id: room._id,
-                startTime: room.createdAt, // Instant games start "now" (creation time)
+                startTime: room.createdAt || new Date(),
                 price: 0,
                 maxPlayers: room.maxPlayers,
                 promoSpots: 0,
-                participants: room.players.map((p: any) => ({
+                participants: (room.players || []).map((p: any) => ({
                     userId: p.userId,
                     username: p.name || 'Player',
                     firstName: p.name || 'Player',
                     type: 'INSTANT',
                     paymentStatus: 'FREE',
-                    joinedAt: room.createdAt
+                    joinedAt: room.createdAt || new Date()
                 })),
-                status: room.status.toUpperCase(), // 'WAITING' | 'PLAYING'
+                status: (room.status || 'waiting').toUpperCase(), // 'WAITING' | 'PLAYING'
                 type: 'INSTANT_ROOM', // Discriminator
                 hostId: host,
                 description: `Instant Room: ${room.name}`
@@ -266,6 +273,8 @@ app.get('/api/partnership/admin/games', async (req, res) => {
         const allGames = [...scheduledGames, ...instantGamesMapped].sort((a: any, b: any) => {
             return new Date(b.startTime).getTime() - new Date(a.startTime).getTime();
         });
+
+        console.log(`[Admin] Total Games Returned: ${allGames.length}`);
 
         res.json({ games: allGames });
     } catch (e: any) {
