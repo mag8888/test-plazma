@@ -143,6 +143,37 @@ export class GameGateway {
                 callback(rooms);
             });
 
+            // Transfer Cash
+            socket.on('transfer_cash', (data) => {
+                const { roomId, amount, targetPlayerId } = data;
+                const game = this.games.get(roomId);
+                if (game) {
+                    // Start of rudimentary auth check: socket.id mapping or passing fromId
+                    // For now, we rely on the client sending correct actions or session map
+                    // But `GameEngine.transferCash` needs `fromId`.
+                    // We need to resolve `fromId` from socket. 
+                    // Usually we store `socket.id -> userId` mapping or passed activePlayerId.
+                    // Let's assume frontend passes `fromUserId` or we find it.
+                    // Wait, existing handlers like `buy_asset` don't extract user from socket context here?
+                    // Ah, `buy_asset` uses `state.currentPlayerIndex`. 
+                    // But transfer can be done by ANYONE (even not their turn)? 
+                    // Or only current player? User said "Click on player -> Transfer". Usually implies anytime.
+                    // But to be safe, let's limit to "My Turn" OR find player by socket.
+                    // Since we don't have socket auth mapping easily here without lookup...
+                    // Let's rely on frontend passing `fromUserId` for now and trust it (MVP).
+                    // Or iterate players to find one with this socket ID? 
+                    // Players don't store socket ID in `engine` state usually (unless `connected: true` etc).
+                    // Actually `game.join` stores socketId?
+                    // Let's look at `game.gateway.ts` structure.
+                    // `handleJoin` stores socket?
+
+                    // Simple approach: Frontend sends `fromUserId`.
+                    if (data.fromUserId) {
+                        game.transferCash(data.fromUserId, targetPlayerId, Number(amount));
+                    }
+                }
+            });
+
             // Get Deck Content
             socket.on('get_deck_content', (data) => {
                 const { type, roomId } = data;

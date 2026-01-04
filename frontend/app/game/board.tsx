@@ -71,6 +71,7 @@ interface PlayerState {
 import { BankModal } from './BankModal';
 import { ExpenseBreakdownModal } from './ExpenseBreakdownModal';
 import { TransferModal } from './TransferModal';
+import { TransferCashModal } from './TransferCashModal';
 import { RulesModal } from './RulesModal';
 import { RankingsModal } from './RankingsModal';
 import { MenuModal } from './MenuModal';
@@ -552,6 +553,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
 
     const [showRankings, setShowRankings] = useState(false);
     const [rankings, setRankings] = useState<any[]>([]);
+    const [transferTarget, setTransferTarget] = useState<any>(null);
 
     useEffect(() => {
         socket.on('dice_rolled', (data: { type: string; roll: number; diceValues?: number[]; message?: string; state?: any }) => {
@@ -1749,12 +1751,19 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                 const isCurrent = p.id === currentPlayer?.id;
                                 const isMe = p.id === localPlayer?.id;
                                 return (
-                                    <div
+                                    <button
                                         key={p.id}
+                                        onClick={() => {
+                                            if (isMe) {
+                                                setShowBank(true);
+                                            } else {
+                                                setTransferTarget(p);
+                                            }
+                                        }}
                                         className={`flex items-center gap-2 p-1.5 pr-3 rounded-full border shrink-0 transition-all ${isCurrent
                                             ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
                                             : 'bg-slate-800/50 border-slate-700'
-                                            }`}
+                                            } active:scale-95`}
                                     >
                                         <div className="relative">
                                             <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-700 relative">
@@ -1766,7 +1775,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                             </div>
                                             {isCurrent && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>}
                                         </div>
-                                        <div className="flex flex-col">
+                                        <div className="flex flex-col text-left">
                                             <span className={`text-[10px] font-bold leading-none ${isCurrent ? 'text-white' : 'text-slate-400'}`}>
                                                 {isMe ? 'Вы' : p.name}
                                             </span>
@@ -1774,7 +1783,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                                 ${(p.cash || 0).toLocaleString()}
                                             </span>
                                         </div>
-                                    </div>
+                                    </button>
                                 );
                             })}
                         </div>
@@ -2023,6 +2032,24 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                         />
                     )}
 
+                    {transferTarget && (
+                        <TransferCashModal
+                            isOpen={!!transferTarget}
+                            onClose={() => setTransferTarget(null)}
+                            target={transferTarget}
+                            maxCash={localPlayer?.cash || 0}
+                            onTransfer={(amount) => {
+                                socket.emit('transfer_cash', {
+                                    roomId,
+                                    fromUserId: localPlayer?.id, // Should use ID not index
+                                    targetPlayerId: transferTarget.id,
+                                    amount
+                                });
+                                setTransferTarget(null);
+                            }}
+                        />
+                    )}
+
                     {/* Square Info Modal (Interactive Board Cells) */}
                     {squareInfo && !squareInfo.card && (
                         <SquareInfoModal
@@ -2033,7 +2060,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                         />
                     )}
                 </div>
-            </div>
+            </div >
         )
     );
 }

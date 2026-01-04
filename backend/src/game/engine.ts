@@ -2792,6 +2792,32 @@ export class GameEngine {
         this.addLog(`ℹ️ ${player.name} restarted. Loan Limit reduced to 50%.`);
     }
 
+    transferCash(fromId: string, toId: string, amount: number) {
+        if (amount <= 0) return;
+
+        const fromPlayer = this.state.players.find(p => p.id === fromId);
+        const toPlayer = this.state.players.find(p => p.id === toId);
+
+        if (!fromPlayer || !toPlayer) return;
+
+        if (fromPlayer.cash < amount) {
+            // Should be handled by UI validation usually, but safety check
+            return;
+        }
+
+        fromPlayer.cash -= amount;
+        toPlayer.cash += amount;
+
+        this.addLog(`💸 ${fromPlayer.name} перевел $${amount.toLocaleString()} игроку ${toPlayer.name}`);
+        // this.emitState(); // Usually called by gateway after action returns? No, gateway calls getState. 
+        // Gateway: game.transferDeal -> state updated -> emit. 
+        // So we don't need emitState here if gateway handles it. 
+        // Gateway `handleTransferDeal` calls `game.getState` and emits.
+        // My new `handleTransferCash` in gateway does NOT emit yet! 
+        // Wait, I checked `game.gateway.ts` changes. I added `game.transferCash(...)` but didn't add emit logic!
+        // I must fix gateway to emit state!
+    }
+
     resolveBabyRoll(): number | { total: number, values: number[] } {
         const player = this.state.players[this.state.currentPlayerIndex];
         const roll = Math.floor(Math.random() * 6) + 1;

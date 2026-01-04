@@ -13,9 +13,12 @@ async function migrateCards() {
     try {
         console.log('🚀 Starting card migration...');
 
-        // Connect to MongoDB - use Railway public URL
-        const mongoUrl = 'mongodb://mongo:JCjSZpMRVCUSfWRJutrJwfHaXtnTkEMd@caboose.proxy.rlwy.net:33070';
-        await mongoose.connect(mongoUrl);
+        // Connect to MongoDB
+        const mongoUrl = process.env.MONGO_URL;
+        if (!mongoUrl) {
+            throw new Error('MONGO_URL not found in environment');
+        }
+        await mongoose.connect(mongoUrl, { dbName: 'test' });
         console.log('✅ Connected to MongoDB');
 
         // Clear existing cards
