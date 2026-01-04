@@ -1813,7 +1813,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                                 setTransferTarget(p);
                                             }
                                         }}
-                                        className={`flex items-center gap-2 p-1.5 pr-3 rounded-full border shrink-0 transition-all ${isCurrent
+                                        className={`flex items-center gap-2 p-1.5 pr-3 rounded-full border shrink-0 transition-all cursor-pointer ${isCurrent
                                             ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
                                             : 'bg-slate-800/50 border-slate-700'
                                             } active:scale-95`}
