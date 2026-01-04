@@ -10,11 +10,11 @@ export const getBackendUrl = () => {
     // }
 
     // 2. Try Relative (Same Origin) if in Browser and not Localhost
-    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        const origin = window.location.origin;
-        // console.log('Connecting to origin:', origin); 
-        return origin;
-    }
+    // DISABLED: Frontend is separate from Backend, so we shouldn't use origin.
+    // if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+    //     const origin = window.location.origin;
+    //     return origin;
+    // }
 
     // 3. No configuration found - Default to Live Backend
     console.warn("Backend URL not configured. Defaulting to Live.");
