@@ -170,6 +170,8 @@ export class GameGateway {
                     // Simple approach: Frontend sends `fromUserId`.
                     if (data.fromUserId) {
                         game.transferCash(data.fromUserId, targetPlayerId, Number(amount));
+                        this.io.to(roomId).emit('state_updated', { state: game.getState() });
+                        this.saveState(roomId, game);
                     }
                 }
             });
