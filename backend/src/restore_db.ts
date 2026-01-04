@@ -38,10 +38,17 @@ const listBackups = async () => {
     }
 };
 
-const restoreBackup = async (url: string) => {
-    console.log(`📥 Downloading Backup from: ${url}`);
-    const response = await fetch(url);
-    const data = await response.json();
+const restoreBackup = async (urlOrPath: string) => {
+    console.log(`📥 Restoring Backup from: ${urlOrPath}`);
+    let data;
+    if (urlOrPath.startsWith('http')) {
+        const response = await fetch(urlOrPath);
+        data = await response.json();
+    } else {
+        const fs = require('fs');
+        const raw = fs.readFileSync(urlOrPath, 'utf-8');
+        data = JSON.parse(raw);
+    }
 
     if (!data.collections) {
         console.error("❌ Invalid Backup Format: No 'collections' object found.");

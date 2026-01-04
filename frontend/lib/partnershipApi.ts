@@ -119,8 +119,8 @@ export const partnershipApi = {
 
     // Sync from Main Backend Legacy Balance
     async syncLegacyBalance(initData: string) {
-        const BACKEND_URL = getBackendUrl();
         try {
+            const BACKEND_URL = getBackendUrl();
             const res = await fetch(`${BACKEND_URL}/api/partnership/sync-balance`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

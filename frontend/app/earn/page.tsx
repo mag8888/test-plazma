@@ -110,7 +110,8 @@ export default function EarnPage() {
 
                                 // Only attempt sync if we have initData (Telegram WebApp)
                                 if (webApp?.initData) {
-                                    return partnershipApi.syncLegacyBalance(webApp.initData)
+                                    // Use independent catch so we don't wipe avatars if sync fails
+                                    partnershipApi.syncLegacyBalance(webApp.initData)
                                         .then((syncRes) => {
                                             console.log("Sync Result:", syncRes);
                                             if (syncRes.success && syncRes.synced > 0) {
@@ -125,8 +126,12 @@ export default function EarnPage() {
                                                     if (res.legacyBalance > 0) {
                                                         setPartnershipUser((prev: any) => ({ ...prev, pendingBalance: res.legacyBalance }));
                                                     }
-                                                });
+                                                }).catch(e => console.warn("Get Legacy Balance Error (Silent)", e));
                                             }
+                                        })
+                                        .catch(syncErr => {
+                                            console.error("⚠️ [Earn Page] Legacy Sync Failed (Non-fatal):", syncErr);
+                                            // Do not setAvatarError here, as avatars are already loaded!
                                         });
                                 } else {
                                     console.log('ℹ️ [Earn Page] Skipping legacy sync - no initData (browser mode)');
