@@ -9,8 +9,15 @@ export class RedisService {
     private isConnected: boolean = false;
 
     constructor() {
-        // Use REDIS_URL from env or fallback to localhost
-        const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+        // Try common Redis environment variables
+        const redisUrl = process.env.REDIS_URL ||
+            process.env.REDIS_PUBLIC_URL ||
+            (process.env.REDISHOST ? `redis://${process.env.REDISHOST}:${process.env.REDISPORT || 6379}` : undefined) ||
+            'redis://localhost:6379';
+
+        if (process.env.NODE_ENV === 'production' && redisUrl.includes('localhost')) {
+            console.warn('[Redis] ⚠️ WARNING: Connecting to localhost in PRODUCTION. Ensure REDIS_URL is set.');
+        }
 
         console.log('[RedisService] Connecting to:', redisUrl);
 
