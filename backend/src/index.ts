@@ -90,7 +90,18 @@ app.use(express.json());
 // Proxy to Partnership Backend (Internal)
 // Frontend calls /api/partnership/user -> We forward to http://localhost:4000/api/user
 // DIRECT ADMIN ROUTES (Bypass Proxy)
+const checkAdminAuth = (req: express.Request, res: express.Response) => {
+    const secret = req.headers['x-admin-secret'];
+    const validSecrets = (process.env.ADMIN_SECRET || 'admin').split(',').map(s => s.trim());
+    if (!validSecrets.includes(secret as string)) {
+        res.status(403).json({ error: 'Unauthorized' });
+        return false;
+    }
+    return true;
+};
+
 app.get('/api/partnership/admin/stats', async (req, res) => {
+    if (!checkAdminAuth(req, res)) return;
     try {
         const usersCount = await mongoose.connection.collection('users').countDocuments({});
         const avatarsCount = await mongoose.connection.collection('avatars').countDocuments({});
@@ -129,6 +140,7 @@ app.get('/api/partnership/admin/stats', async (req, res) => {
 });
 
 app.get('/api/partnership/admin/users', async (req, res) => {
+    if (!checkAdminAuth(req, res)) return;
     try {
         const { query, page = 1 } = req.query;
         const limit = 50;
