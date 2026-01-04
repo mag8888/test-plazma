@@ -24,7 +24,7 @@ const check = async () => {
             const allDbs = await client.db().admin().listDatabases();
             console.log(`   - Databases: ${allDbs.databases.map(d => d.name).join(', ')}`);
 
-        } catch (e) {
+        } catch (e: any) {
             console.error(`   ❌ Error: ${e.message}`);
         } finally {
             await client.close();
