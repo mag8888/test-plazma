@@ -955,7 +955,7 @@ export class GameEngine {
                 const square = this.getSquare(globalIndex);
                 if (square && square.type === 'PAYDAY' && i !== steps) {
                     player.cash += player.cashflow;
-                    this.addLog(`💰 ${player.name} прошел день расплаты! +$${player.cashflow}`);
+                    this.addLog(`💰 ${player.name} прошел день расплаты! Доход: $${player.income}, Расходы: $${player.expenses} -> Итог: +$${player.cashflow}`);
                     this.recordTransaction({
                         from: 'Bank',
                         to: player.name,
@@ -971,7 +971,7 @@ export class GameEngine {
                 const square = this.getSquare(squareIndex);
                 if (square && square.type === 'PAYDAY' && i !== steps) {
                     player.cash += player.cashflow;
-                    this.addLog(`💰 ${player.name} прошел день расплаты! +$${player.cashflow}`);
+                    this.addLog(`💰 ${player.name} прошел день расплаты! Доход: $${player.income}, Расходы: $${player.expenses} -> Итог: +$${player.cashflow}`);
                     this.recordTransaction({
                         from: 'Bank',
                         to: player.name,
@@ -1280,7 +1280,7 @@ export class GameEngine {
             // Simplest fix: Pay if square.index !== 0. Index 0 is paid by "Passing Payday" log.
             if (square.index !== 0) {
                 player.cash += player.cashflow;
-                this.addLog(`День расплаты! +$${player.cashflow}`);
+                this.addLog(`💰 День расплаты! Доход: $${player.income}, Расходы: $${player.expenses} -> Итог: +$${player.cashflow}`);
                 this.recordTransaction({
                     from: 'Bank',
                     to: player.name,
