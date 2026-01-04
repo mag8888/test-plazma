@@ -117,7 +117,7 @@ export const SMALL_DEALS: Card[] = [
     ...expand(3, { title: 'Флипинг студии', cost: 1500, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
 
     // Partner Business Cards (Roll for partners)
-    ...expand(2, { title: 'Бизнес: MONEO', cost: 1000, cashflow: 0, description: 'MONEO. Кол-во партнеров = Бросок кубика. ($500/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
+    ...expand(2, { title: 'Бизнес: MONEO', cost: 1000, cashflow: 0, description: 'Сетевой бизнес. Цена входа $1,000. Бросьте кубик: +$500 пассив за каждое выпавшее число.', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
     ...expand(2, { title: 'Бизнес: Plazma Water', cost: 200, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
 
     // FRIEND CARDS (Hidden Outcomes)
@@ -140,6 +140,9 @@ export const BIG_DEALS: Card[] = [
 
     // Hospitality
     ...expand(4, { title: 'Мини-отель', cost: 100000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 75000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+
+    // Franchise
+    { id: 'bd_moneo_franchise', title: 'Франшиза MONEO', cost: 30000, cashflow: 3000, description: 'Франшиза MONEO. Стабильный доход при минимальной вовлеченности.', downPayment: 30000, businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG' },
 
     // Classic Business
     ...expand(4, { title: 'Сеть кафе быстрого питания', cost: 240000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 150000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
