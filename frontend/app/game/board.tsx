@@ -84,6 +84,7 @@ import { PlayerCard } from './PlayerCard';
 import { SquareInfoModal } from './SquareInfoModal';
 import CongratulateModal from './CongratulateModal';
 import { WinnerModal } from './WinnerModal';
+import { GameTimer } from './GameTimer';
 import { TutorialOverlay } from './TutorialOverlay';
 // Helper for Cash Animation
 const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
@@ -325,8 +326,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
     // Host Menu State
     const [selectedPlayerForMenu, setSelectedPlayerForMenu] = useState<PlayerState | null>(null);
 
-    // Timer State
-    const [timeLeft, setTimeLeft] = useState(120);
+    // Timer State removed - using GameTimer component to isolate re-renders
 
     // LAYOUT MODE: Default to 'auto' (responsive). 'landscape' forces desktop layout.
     const [forceLandscape, setForceLandscape] = useState(false);
@@ -532,21 +532,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
     }, [state.activeMarketCards, squareInfo]);
 
     // Timer Sync & Countdown Logic
-    useEffect(() => {
-        const updateTimer = () => {
-            if (state.turnExpiresAt) {
-                const diff = Math.max(0, Math.ceil((state.turnExpiresAt - Date.now()) / 1000));
-                setTimeLeft(diff);
-            } else {
-                // Fallback if not set (legacy or error)
-                if (state.currentTurnTime) setTimeLeft(state.currentTurnTime);
-            }
-        };
-
-        updateTimer(); // Initial
-        const timer = setInterval(updateTimer, 1000);
-        return () => clearInterval(timer);
-    }, [state.turnExpiresAt, state.currentTurnTime]);
+    // Timer Sync & Countdown Logic MOVED to GameTimer component
 
     // Track rolling state to prevent efficient handling of 'state_updated' race conditions
     const isRollingRef = useRef(false);
@@ -908,11 +894,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
         }
     }, [state?.phase, isAnimatingMove, state?.currentCard]);
 
-    const formatTime = (seconds: number) => {
-        const m = Math.floor(seconds / 60);
-        const s = seconds % 60;
-        return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')} `;
-    };
+
 
     return (
         !state ? (
@@ -1177,7 +1159,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                                     setSelectedPlayerForMenu(p);
                                                 }}
                                                 className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer hover:border-slate-500 active:scale-[0.98]
-                                            ${p.id === currentPlayer.id ? 'bg-slate-800/80 border-blue-500/50 shadow-lg shadow-blue-900/10' : 'bg-slate-900/30 border-slate-800/50'} 
+                                            ${p.id === currentPlayer.id ? 'bg-slate-800/80 border-blue-500/50 shadow-lg shadow-blue-900/10' : 'bg-slate-900/30 border-slate-800/50'}
                                             ${p.hasWon ? 'ring-2 ring-yellow-500' : ''}
                                             ${p.isBankrupted ? 'opacity-50 grayscale' : ''}
                                         `}
@@ -1347,16 +1329,18 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                         {/* 1. Status Row (Top Priority) */}
                         <div className="flex items-center justify-between px-1 bg-slate-800/50 p-2 rounded-xl mb-1">
                             <div className="flex items-center gap-2">
-                                <div className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></div>
+                                <div className={`w-2 h-2 rounded-full ${state.turnExpiresAt && (new Date(state.turnExpiresAt).getTime() - Date.now()) / 1000 < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></div>
                                 <div className="flex flex-col">
                                     <span className="text-[9px] text-slate-400 uppercase font-bold leading-none">Ход</span>
                                     <span className="font-bold text-white text-sm max-w-[150px] truncate leading-tight">{currentPlayer?.name}</span>
                                 </div>
                             </div>
                             <div className="flex items-center gap-2">
-                                <span className={`font-mono font-black text-2xl ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-white'}`}>
-                                    {formatTime(timeLeft)}
-                                </span>
+                                <GameTimer
+                                    expiresAt={state.turnExpiresAt}
+                                    currentTurnTime={state.currentTurnTime}
+                                    className="font-mono font-black text-2xl text-white"
+                                />
                             </div>
                         </div>
 
@@ -1560,14 +1544,16 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                         <div id="tutorial-turn-timer" className="bg-[#151b2b] rounded-3xl p-6 border border-slate-800 shadow-lg flex items-center justify-between shrink-0">
                             <div className="flex flex-col">
                                 <div className="flex items-center gap-2 mb-1">
-                                    <span className={`w-2 h-2 rounded-full ${timeLeft < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
+                                    <span className={`w-2 h-2 rounded-full ${state.turnExpiresAt && (new Date(state.turnExpiresAt).getTime() - Date.now()) / 1000 < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
                                     <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">ХОД ИГРОКА</span>
                                 </div>
                                 <div className="text-xl font-black text-white leading-none truncate max-w-[180px]">{currentPlayer.name}</div>
                             </div>
-                            <div className={`text-4xl font-mono font-black ${timeLeft < 15 ? 'text-red-500 animate-pulse' : 'text-slate-200'}`}>
-                                {formatTime(timeLeft)}
-                            </div>
+                            <GameTimer
+                                expiresAt={state.turnExpiresAt}
+                                currentTurnTime={state.currentTurnTime}
+                                className="text-4xl font-mono font-black text-slate-200"
+                            />
                         </div>
 
                         {/* 2. GAME CONTROLS GRID (Dice & Skip) */}

@@ -51,7 +51,7 @@ const getGradient = (type: string, isFT: boolean) => {
     return 'bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700';
 };
 
-export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId, onSquareClick, zoom = 1, showExitButton, onExitClick }: any) => {
+export const BoardVisualizer = React.memo(({ board, players, animatingPos, currentPlayerId, onSquareClick, zoom = 1, showExitButton, onExitClick }: any) => {
 
     // Helper: Is Fast Track?
     const isFastTrackSquare = (index: number) => index >= 24;
@@ -379,4 +379,4 @@ export const BoardVisualizer = ({ board, players, animatingPos, currentPlayerId,
             </div>
         </div >
     );
-};
+});
