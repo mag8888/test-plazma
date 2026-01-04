@@ -1724,7 +1724,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
 
 
                     {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */}
-                    <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pt-2 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 z-[90] flex flex-col gap-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+                    <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pt-2 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 z-[150] flex flex-col gap-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
 
                         {/* 1. MINI PLAYERS STRIP */}
                         <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-1 pb-2">
@@ -1814,7 +1814,12 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
 
                             <button
                                 onClick={handleEndTurn}
-                                disabled={!isMyTurn || ((state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard || hasRolled) || isAnimating || state.phase === 'BABY_ROLL'}
+                                disabled={
+                                    !isMyTurn ||
+                                    isAnimating ||
+                                    state.phase === 'BABY_ROLL' ||
+                                    (state.phase === 'ROLL' && !state.currentCard && !hasRolled)
+                                }
                                 className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
                         ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
                                         ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
