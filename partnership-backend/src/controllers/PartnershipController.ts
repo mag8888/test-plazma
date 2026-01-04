@@ -23,7 +23,8 @@ export class PartnershipController {
      * Returns the valid ObjectId string if found, or null if not found.
      */
     private static async resolveUserId(userId: string): Promise<string | null> {
-        if (mongoose.Types.ObjectId.isValid(userId)) {
+        // Enforce 24-char hex string for ObjectId to avoid false positives with 12-char strings or other formats
+        if (mongoose.Types.ObjectId.isValid(userId) && userId.length === 24) {
             return userId;
         }
         if (!isNaN(Number(userId))) {
