@@ -2163,6 +2163,8 @@ export class GameEngine {
             isMandatory = true;
         }
 
+        console.log(`[BuyAsset] processing ${card.title} for ${player.name}. Cost: ${costToPay}. Mandatory: ${isMandatory}. Type: ${card.type}`);
+
         if (player.cash < costToPay && !isMandatory) {
             this.addLog(`${player.name} cannot afford ${card.title} ($${costToPay})`);
             return;
@@ -2689,11 +2691,13 @@ export class GameEngine {
     }
 
     private forcePayment(player: PlayerState, amount: number, description: string) {
+        console.log(`[ForcePayment] Processing for ${player.name}: Amount $${amount}, Desc: ${description}, Cash: ${player.cash}`);
         if (amount <= 0) return;
 
         if (player.cash >= amount) {
             player.cash -= amount;
             this.addLog(`💸 ${player.name} paid $${amount} for ${description}`);
+            console.log(`[ForcePayment] Paid directly. New Cash: ${player.cash}`);
             return;
         }
 
