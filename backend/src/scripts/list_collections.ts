@@ -1,39 +1,32 @@
 
-import mongoose from 'mongoose';
-import dotenv from 'dotenv';
-import path from 'path';
+import { MongoClient } from 'mongodb';
 
-dotenv.config({ path: path.join(__dirname, '../../.env') });
+const SOURCE_URL = 'mongodb://mongo:xARHeObYcGbdLXkpbknPDMrrxHxEZzod@nozomi.proxy.rlwy.net:55910';
 
-const listCollections = async () => {
+const list = async () => {
+    console.log('🔌 Connecting to SOURCE...');
+    const client = new MongoClient(SOURCE_URL);
+    await client.connect();
+
+    // Check 'moneo' first
     try {
-        const mongoURI = process.env.MONGO_URL || 'mongodb://127.0.0.1:27017/moneo';
-        if (!mongoURI) {
-            console.error('MONGO_URL not set');
-            process.exit(1);
-        }
-
-        console.log('Connecting to MongoDB...');
-        await mongoose.connect(mongoURI, { dbName: 'moneo' });
-        console.log('Connected.');
-
-        const collections = await mongoose.connection.db!.listCollections().toArray();
-        console.log('Collections:');
-        collections.forEach(c => console.log(`- ${c.name}`));
-
-        // If 'cards' exists, let's peek at one
-        const cardCollection = collections.find(c => c.name.toLowerCase().includes('card') || c.name.toLowerCase().includes('item'));
-        if (cardCollection) {
-            console.log(`\nPeeking at ${cardCollection.name}...`);
-            const sample = await mongoose.connection.db!.collection(cardCollection.name).findOne({});
-            console.log(JSON.stringify(sample, null, 2));
-        }
-
-        process.exit(0);
-    } catch (error) {
-        console.error('Error:', error);
-        process.exit(1);
+        const db = client.db('moneo');
+        const cols = await db.listCollections().toArray();
+        console.log(`\n📚 Collections in 'moneo':`);
+        cols.forEach(c => console.log(` - ${c.name}`));
+    } catch (e) {
+        console.log("Error checking moneo db:", e);
     }
+
+    // Check 'test' just in case
+    try {
+        const db = client.db('test');
+        const cols = await db.listCollections().toArray();
+        console.log(`\n📚 Collections in 'test':`);
+        cols.forEach(c => console.log(` - ${c.name}`));
+    } catch (e) { }
+
+    await client.close();
 };
 
-listCollections();
+list();

@@ -1,5 +1,7 @@
+import React from 'react';
 import { X, User } from 'lucide-react';
 import { useTelegram } from '../../components/TelegramProvider';
+import { getBackendUrl } from '../../lib/config';
 
 interface ParticipantsModalProps {
     game: any;
@@ -27,7 +29,21 @@ export default function ParticipantsModal({ game, onClose }: ParticipantsModalPr
     const [loading, setLoading] = React.useState(true);
 
     React.useEffect(() => {
-        fetch(`/api/games/${game.id}`) // We need a GET endpoint for single game or use the list? 
+        // Fetch full game details if not available
+        if (!game.rawParticipants) {
+            fetch(`${getBackendUrl()}/api/games/${game.id}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.participants) {
+                        setParticipants(data.participants);
+                        setLoading(false);
+                    }
+                })
+                .catch(err => console.error("Failed to fetch game details", err));
+        } else {
+            setParticipants(game.rawParticipants);
+            setLoading(false);
+        }
         // Existing `GET /api/games` returns all. 
         // Let's check if we can filter or if we should just assume valid data if we pass it.
         // Actually, easiest is to ensure `GET /api/games` returns participants array in `SchedulePage` and pass it down.
@@ -96,4 +112,4 @@ export default function ParticipantsModal({ game, onClose }: ParticipantsModalPr
     );
 }
 
-import React from 'react';
+

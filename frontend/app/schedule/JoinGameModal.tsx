@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useTelegram } from '../../components/TelegramProvider';
 import { X, CheckCircle, Wallet, Ticket, Link as LinkIcon } from 'lucide-react';
+import { getBackendUrl } from '../../lib/config';
 import clsx from 'clsx';
 
 interface JoinGameModalProps {
@@ -20,7 +21,7 @@ export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModa
     const handleJoin = async (type: string) => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/games/${game.id}/join`, {
+            const res = await fetch(`${getBackendUrl()}/api/games/${game.id}/join`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -66,7 +67,7 @@ export default function JoinGameModal({ game, onClose, onSuccess }: JoinGameModa
 
         setLoading(true);
         try {
-            await fetch(`/api/games/${game.id}/promo-link`, {
+            await fetch(`${getBackendUrl()}/api/games/${game.id}/promo-link`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

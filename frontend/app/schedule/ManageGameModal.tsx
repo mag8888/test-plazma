@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { useTelegram } from '../../components/TelegramProvider';
 import { X, Save, Clock, Users, Trash2, Send, MessageSquare, AlertCircle, Check, Trophy, Calendar } from 'lucide-react';
 import clsx from 'clsx';
+import { getBackendUrl } from '../../lib/config';
 
 interface ManageGameModalProps {
     gameId: string;
@@ -43,7 +44,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
 
     const fetchGameDetails = async () => {
         try {
-            const res = await fetch(`/api/games/${gameId}`);
+            const res = await fetch(`${getBackendUrl()}/api/games/${gameId}`);
             if (res.ok) {
                 const data = await res.json();
                 setGame(data);
@@ -78,7 +79,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
             const utcHour = h - 3;
             const finalDate = new Date(Date.UTC(year, month, day, utcHour, m));
 
-            const res = await fetch(`/api/games/${gameId}`, {
+            const res = await fetch(`${getBackendUrl()}/api/games/${gameId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -107,7 +108,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
         if (!confirm(`Исключить игрока ${name}?`)) return;
 
         try {
-            const res = await fetch(`/api/games/${gameId}/players/${userId}`, {
+            const res = await fetch(`${getBackendUrl()}/api/games/${gameId}/players/${userId}`, {
                 method: 'DELETE',
                 headers: {
                     'Authorization': `Bearer ${webApp?.initData}`
@@ -127,7 +128,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
         if (!confirm(`Подтвердить участие ${name}?`)) return;
 
         try {
-            const res = await fetch(`/api/games/${gameId}/players/${userId}/confirm`, {
+            const res = await fetch(`${getBackendUrl()}/api/games/${gameId}/players/${userId}/confirm`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -149,7 +150,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
         setUserStats(null);
         try {
             // Fetch stats
-            const res = await fetch(`/api/users/${user._id}/stats`);
+            const res = await fetch(`${getBackendUrl()}/api/users/${user._id}/stats`);
             if (res.ok) {
                 const data = await res.json();
                 setUserStats(data);
@@ -169,7 +170,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
         if (!dmText.trim() || !dmTarget) return;
 
         try {
-            const res = await fetch(`/api/games/${gameId}/message`, {
+            const res = await fetch(`${getBackendUrl()}/api/games/${gameId}/message`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -196,7 +197,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
         if (!confirm('Отправить сообщение всем участникам?')) return;
 
         try {
-            const res = await fetch(`/api/games/${gameId}/broadcast`, {
+            const res = await fetch(`${getBackendUrl()}/api/games/${gameId}/broadcast`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -221,7 +222,7 @@ export default function ManageGameModal({ gameId, onClose, onUpdate }: ManageGam
         }
 
         try {
-            const res = await fetch(`/api/games/${gameId}/invite`, {
+            const res = await fetch(`${getBackendUrl()}/api/games/${gameId}/invite`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

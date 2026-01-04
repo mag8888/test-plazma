@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTelegram } from '../../components/TelegramProvider';
 import { X, Save, Clock, Users, MessageSquare, DollarSign } from 'lucide-react';
+import { getBackendUrl } from '../../lib/config';
 
 interface CreateGameModalProps {
     onClose: () => void;
@@ -48,7 +49,7 @@ export default function CreateGameModal({ onClose, onSuccess }: CreateGameModalP
                 targetDate.setDate(targetDate.getDate() + 1);
             }
 
-            const res = await fetch('/api/games', {
+            const res = await fetch(`${getBackendUrl()}/api/games`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({

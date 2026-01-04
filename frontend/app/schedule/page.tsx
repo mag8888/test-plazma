@@ -9,6 +9,7 @@ import JoinGameModal from './JoinGameModal';
 import ParticipantsModal from './ParticipantsModal';
 
 import CreateGameModal from './CreateGameModal'; // Added import
+import { getBackendUrl } from '../../lib/config';
 
 export default function SchedulePage() {
     const { webApp, user } = useTelegram();
@@ -27,7 +28,8 @@ export default function SchedulePage() {
         const fetchGames = async () => {
             try {
                 console.log('🗓️ [Schedule] Fetching games...', { viewMode, hasUser: !!user, userId: user?.id });
-                const endpoint = viewMode === 'history' ? '/api/games?type=history' : '/api/games';
+                const baseUrl = getBackendUrl();
+                const endpoint = viewMode === 'history' ? `${baseUrl}/api/games?type=history` : `${baseUrl}/api/games`;
                 const res = await fetch(endpoint);
                 console.log('🗓️ [Schedule] Response status:', res.status);
                 if (res.ok) {
@@ -92,7 +94,7 @@ export default function SchedulePage() {
     const handleCancel = async (gameId: string) => {
         if (!confirm("Вы уверены, что хотите отменить запись?")) return;
         try {
-            const res = await fetch(`/api/games/${gameId}/cancel`, {
+            const res = await fetch(`${getBackendUrl()}/api/games/${gameId}/cancel`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ initData: webApp?.initData })

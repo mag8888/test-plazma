@@ -98,7 +98,7 @@ export interface PlayerState extends IPlayer {
 
 export interface BoardSquare {
     index: number;
-    type: 'DEAL' | 'MARKET' | 'EXPENSE' | 'PAYDAY' | 'BABY' | 'CHARITY' | 'DOWNSIZED' | 'DREAM' | 'BUSINESS' | 'LOSS' | 'STOCK_EXCHANGE' | 'LOTTERY';
+    type: 'DEAL' | 'MARKET' | 'EXPENSE' | 'PAYDAY' | 'BABY' | 'CHARITY' | 'DOWNSIZED' | 'DREAM' | 'BUSINESS' | 'LOSS' | 'STOCK_EXCHANGE' | 'LOTTERY' | 'DOODAD';
     name: string;
     cost?: number;
     cashflow?: number;
@@ -1032,6 +1032,27 @@ export class GameEngine {
                 this.addLog(`💰 День расплаты (Скоростная Дорожка)! +$${player.cashflow}`);
                 break;
 
+            case 'DOODAD':
+            case 'EXPENSE':
+                // Treat Fast Track Doodads/Expenses as mandatory payments
+                const ftExpenseCost = square.cost || 0;
+                this.addLog(`💸 ${player.name} попал на ТРАТУ: ${square.name} ($${ftExpenseCost})`);
+
+                this.state.currentCard = {
+                    id: `ft_exp_${square.index}_${Date.now()}`,
+                    type: 'EXPENSE',
+                    title: square.name,
+                    description: square.description || 'Обязательный расход',
+                    cost: ftExpenseCost,
+                    mandatory: true,
+                    // Synthesize properties
+                    cashflow: 0
+                } as any;
+
+                // Allow UI to show the card
+                this.state.phase = 'ACTION';
+                break;
+
             case 'BUSINESS':
             case 'DREAM':
                 // Check Ownership
@@ -1913,7 +1934,9 @@ export class GameEngine {
         }
 
         player.cash -= amount;
-        player.charityTurns = 999; // Permanent for Fast Track (large number)
+        // FAST TRACK: Permanent. RAT RACE: 3 Turns.
+        player.charityTurns = player.isFastTrack ? 999 : 3;
+
         const message = player.isFastTrack
             ? `❤️ ${player.name} donated $${amount}. Can now choose 1-3 dice EVERY turn!`
             : `❤️ ${player.name} donated $${amount}. Can now roll extra dice for 3 turns!`;

@@ -105,6 +105,7 @@ export class BotService {
         // Global Commands
         await this.bot.setMyCommands([
             { command: 'start', description: '🏠 Главное меню' },
+            { command: 'game', description: '🎮 Играть' },
             { command: 'app', description: '📱 Приложение MONEO' },
             { command: 'about', description: 'ℹ️ О проекте' }
         ]);
@@ -118,6 +119,7 @@ export class BotService {
             try {
                 await this.bot.setMyCommands([
                     { command: 'start', description: '🏠 Главное меню' },
+                    { command: 'game', description: '🎮 Играть' },
                     { command: 'admin', description: '👑 Админ панель' },
                     { command: 'admin_users', description: '👥 Список игроков' },
                     { command: 'app', description: '📱 Приложение MONEO' },
@@ -135,6 +137,7 @@ export class BotService {
             try {
                 await this.bot.setMyCommands([
                     { command: 'start', description: '🏠 Главное меню' },
+                    { command: 'game', description: '🎮 Играть' },
                     { command: 'admin_users', description: '👥 Список игроков' },
                     { command: 'app', description: '📱 Приложение MONEO' },
                     { command: 'about', description: 'ℹ️ О проекте' }
