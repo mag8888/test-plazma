@@ -127,12 +127,17 @@ app.get('/api/partnership/admin/stats', async (req, res) => {
         matrixStats.forEach((s: any) => levels[s._id] = s.count);
 
         res.json({
-            totalUsers: usersCount,
-            totalAvatars: avatarsCount,
+            totalUsers: 999, // DEBUG TRACER
+            totalAvatars: 888, // DEBUG TRACER
             totalGreen: stats[0]?.totalGreen || 0,
             totalYellow: stats[0]?.totalYellow || 0,
             levels,
-            debug: { source: 'DIRECT_BACKEND', dbName: mongoose.connection.db?.databaseName }
+            debug: {
+                source: 'DIRECT_BACKEND_TRACER',
+                dbName: mongoose.connection.db?.databaseName,
+                mongoUrlSet: !!process.env.MONGO_URL,
+                docCount: usersCount
+            }
         });
     } catch (e: any) {
         res.status(500).json({ error: e.message });
