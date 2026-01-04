@@ -30,7 +30,8 @@ function HomeContent() {
       // Perform Magic Login
       const performMagicLogin = async () => {
         try {
-          const res = await fetch(`${getBackendUrl()}/api/auth/magic-login`, {
+          // Use relative path to avoid CORS/Mixed Content issues
+          const res = await fetch(`/api/auth/magic-login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: authCode })
@@ -55,9 +56,9 @@ function HomeContent() {
             setError(data.error || 'Invalid Link');
             setHasAuthParam(false);
           }
-        } catch (e) {
+        } catch (e: any) {
           console.error('Network Error during magic login:', e);
-          setError('Auth Network Error');
+          setError(`Auth Error: ${e.message || 'Network'}`);
           setHasAuthParam(false);
         }
       };
