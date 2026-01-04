@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Plus, Edit2, Trash2, RotateCcw } from 'lucide-react';
+import { getGameServiceUrl } from '../../lib/config';
 
 interface Card {
     id: string;
@@ -51,7 +52,9 @@ export default function CardEditor({ secret }: CardEditorProps) {
     const fetchCards = async (type: string) => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/cards/${type}`, {
+            // Fix: Use absolute URL from config to ensure we hit the backend
+            const baseUrl = getGameServiceUrl();
+            const res = await fetch(`${baseUrl}/api/cards/${type}`, {
                 headers: { 'x-admin-secret': secret }
             });
             const data = await res.json();
