@@ -1793,8 +1793,9 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                 >
                                     {/* Dice Value Overlay - Mobile */}
                                     {showDice && diceValue && (
-                                        <div className="absolute inset-0 bg-emerald-600 flex items-center justify-center z-20 animate-in fade-in zoom-in duration-200">
-                                            <span className="text-4xl font-black text-white">{diceValue}</span>
+                                        <div className="absolute inset-0 bg-emerald-600 flex flex-col items-center justify-center z-20 animate-in fade-in zoom-in duration-200">
+                                            <span className="text-4xl font-black text-white leading-none">{diceValue}</span>
+                                            {diceBreakdown && <span className="text-xs font-mono text-emerald-200 font-bold mt-1">({diceBreakdown})</span>}
                                         </div>
                                     )}
 
