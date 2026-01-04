@@ -24,8 +24,45 @@ function HomeContent() {
     const urlParams = new URLSearchParams(window.location.search);
     const authCode = urlParams.get('auth');
     if (authCode) {
-      console.log('🔐 Auth parameter detected, waiting for magic login...');
+      console.log('🔐 Auth parameter detected, attempting magic login...');
       setHasAuthParam(true);
+
+      // Perform Magic Login
+      const performMagicLogin = async () => {
+        try {
+          const res = await fetch(`${getBackendUrl()}/api/auth/magic-login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ code: authCode })
+          });
+          const data = await res.json();
+
+          if (res.ok) {
+            console.log('✅ Magic Login Success:', data.user?.username);
+            localStorage.setItem('moneo_user_auth', JSON.stringify({
+              user: data.user,
+              token: data.token
+            }));
+            localStorage.removeItem('moneo_is_logged_out');
+
+            if (data.user?.isAdmin) {
+              window.location.href = '/admin';
+            } else {
+              window.location.href = '/home';
+            }
+          } else {
+            console.error('❌ Magic Login Failed:', data.error);
+            setError(data.error || 'Invalid Link');
+            setHasAuthParam(false);
+          }
+        } catch (e) {
+          console.error('Network Error during magic login:', e);
+          setError('Auth Network Error');
+          setHasAuthParam(false);
+        }
+      };
+
+      performMagicLogin();
     }
   }, []);
 
