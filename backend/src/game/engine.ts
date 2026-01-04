@@ -2687,6 +2687,17 @@ export class GameEngine {
         this.state.turnExpiresAt = Date.now() + 120000; // Reset timer 120s
 
         const activePlayer = this.state.players[this.state.currentPlayerIndex];
+
+        // Decrement Charity Turns
+        if (activePlayer.charityTurns > 0) {
+            activePlayer.charityTurns--;
+            if (activePlayer.charityTurns === 0) {
+                this.addLog(`🎲 ${activePlayer.name}: Благотворительность закончилась.`);
+            } else {
+                this.addLog(`🎲 ${activePlayer.name}: Благотворительность активна (осталось ходов: ${activePlayer.charityTurns})`);
+            }
+        }
+
         // this.addLog(`Now it is ${activePlayer.name}'s turn.`);
     }
 
