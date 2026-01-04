@@ -2653,9 +2653,28 @@ export class GameEngine {
 
         // 2. Clear current card (Discard if not persistent)
         if (this.state.currentCard) {
-            const isPersistent = this.state.activeMarketCards?.some(ac => ac.card.title === this.state.currentCard?.title);
+            const card = this.state.currentCard;
+            const isMarket = card.type === 'MARKET';
+            const isPrivate = card.subtype === 'MLM_ROLL' || card.subtype === 'CHARITY_ROLL';
+
+            // Persist MARKET cards (excluding private ones)
+            if (isMarket && !isPrivate) {
+                const alreadyActive = this.state.activeMarketCards?.some(ac => ac.card.id === card.id);
+                if (!alreadyActive) {
+                    if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
+                    this.state.activeMarketCards.push({
+                        id: `market_${card.id}_${Date.now()}`,
+                        card: card,
+                        expiresAt: Date.now() + 120000, // 2 mins
+                        sourcePlayerId: this.state.players[this.state.currentPlayerIndex].id,
+                        dismissedBy: []
+                    });
+                }
+            }
+
+            const isPersistent = this.state.activeMarketCards?.some(ac => ac.card.id === card.id);
             if (!isPersistent) {
-                this.cardManager.discard(this.state.currentCard);
+                this.cardManager.discard(card);
             }
             this.state.currentCard = undefined;
         }
