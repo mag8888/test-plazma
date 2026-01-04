@@ -3,7 +3,7 @@
   "version": "1.0.1",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "rm -rf dist && tsc",
     "start": "node dist/index.js",
     "start:game": "MICROSERVICE_MODE=game node dist/index.js",
     "start:bot": "node dist/bot-worker.js",
