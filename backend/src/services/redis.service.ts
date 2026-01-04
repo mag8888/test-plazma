@@ -30,8 +30,9 @@ export class RedisService {
 
         this.subscriber = new Redis(redisUrl, {
             retryStrategy: (times) => {
-                const delay = Math.min(times * 50, 2000);
-                return delay;
+                // If we failed 10+ times, just wait 10 seconds to avoid spamming
+                if (times > 10) return 10000;
+                return Math.min(times * 100, 3000);
             }
         });
 
@@ -44,8 +45,12 @@ export class RedisService {
             console.log('[Redis] Subscriber connected');
         });
 
-        this.publisher.on('error', (err) => console.error('[Redis] Publisher Error:', err));
-        this.subscriber.on('error', (err) => console.error('[Redis] Subscriber Error:', err));
+        this.publisher.on('error', (err) => {
+            console.error('[Redis] Publisher Error (Non-Fatal):', err.message);
+        });
+        this.subscriber.on('error', (err) => {
+            console.error('[Redis] Subscriber Error (Non-Fatal):', err.message);
+        });
     }
 
     /**
