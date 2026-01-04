@@ -46,10 +46,11 @@ export class BotService {
     participantStates: Map<number, { state: 'WAITING_POST_LINK', gameId: string }> = new Map();
     photoUploadStates: Map<number, { state: 'WAITING_PHOTO' }> = new Map();
     depositStates: Map<number, DepositState> = new Map();
-    cloudinaryService: CloudinaryService;
+    authService: AuthService;
 
     constructor(polling = true) {
         this.cloudinaryService = new CloudinaryService();
+        this.authService = new AuthService();
 
         // Safety Override via Env Var
         if (process.env.DISABLE_BOT_POLLING === 'true') {
@@ -164,6 +165,40 @@ export class BotService {
 
     initHandlers() {
         if (!this.bot) return;
+
+        // /game Command
+        this.bot.onText(/\/game/, async (msg) => {
+            const chatId = msg.chat.id;
+            const telegramId = msg.from?.id;
+            if (!telegramId) return;
+
+            try {
+                // Generate Auth Code for Browser Link
+                const authCode = await this.authService.createAuthCode(telegramId);
+                const baseUrl = process.env.PUBLIC_BASE_URL || 'https://moneo.up.railway.app';
+                const authLink = `${baseUrl}/?auth=${authCode}`;
+
+                // Construct Message
+                const text = `Готов попробовать? 🎲\n📱 Жми ЗАПУСТИТЬ для игры в Telegram.\n🌐 Или по ссылке в браузере:\n<a href="${authLink}">${authLink}</a>`;
+
+                await this.bot?.sendMessage(chatId, text, {
+                    parse_mode: 'HTML',
+                    disable_web_page_preview: true,
+                    reply_markup: {
+                        inline_keyboard: [
+                            [{ text: '🚀 ЗАПУСТИТЬ В APP', web_app: { url: baseUrl } }],
+                            [{ text: '🌐 В браузере (Ссылка)', url: authLink }],
+                            [{ text: '📅 Расписание игр', callback_data: 'view_schedule' }],
+                            [{ text: '🔑 Получить пароль', callback_data: 'get_password' }],
+                            [{ text: '➕ Добавить игру', callback_data: 'start_add_game' }]
+                        ]
+                    }
+                });
+            } catch (e) {
+                console.error("Game command error:", e);
+                this.bot?.sendMessage(chatId, "❌ Произошла ошибка. Попробуйте позже.");
+            }
+        });
 
         // Admin: Recalculate Balances (Migration Green -> Red)
         this.bot.onText(/\/admin_recalc/, async (msg) => {
