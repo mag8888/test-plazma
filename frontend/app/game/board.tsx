@@ -1571,80 +1571,95 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                         {/* 2. GAME CONTROLS GRID (Dice & Skip) */}
                         {/* 2. GAME CONTROLS GRID (Dice & Skip) */}
                         <div id="tutorial-roll-action" className="grid grid-cols-2 gap-3 shrink-0 h-[100px]">
-                            {/* ROLL BUTTON (Left, Big) */}
-                            <button
-                                onClick={() => handleRoll()}
-                                disabled={!isMyTurn || state.phase !== 'ROLL' || isRollingRef.current}
-                                className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative overflow-hidden group
+                            {/* Define local variable for render */}
+                            {(() => {
+                                const diceCount = (localPlayer?.charityTurns > 0 || localPlayer?.isFastTrack) ? 2 : 1;
+                                return (
+                                    <>
+                                        {/* ROLL BUTTON (Left, Big) */}
+                                        <button
+                                            onClick={() => handleRoll()}
+                                            disabled={!isMyTurn || state.phase !== 'ROLL' || isRollingRef.current}
+                                            className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative overflow-hidden group
                                 ${isMyTurn && state.phase === 'ROLL' && !isRollingRef.current
-                                        ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500/50 text-white hover:scale-[1.02] active:scale-95'
-                                        : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
-                            >
-                                <span className="text-3xl group-hover:rotate-12 transition-transform">🎲</span>
-                                <span className="text-[10px] font-black uppercase tracking-widest">Бросить</span>
-                                {(isTutorial && isMyTurn && state.phase === 'ROLL' && state.tutorialStep <= 1) && (
-                                    <TutorialTip
-                                        text={state.tutorialStep === 0 ? "5. Бросьте кубик!" : "7. Бросьте кубик снова!"}
-                                        position="bottom-full mb-4"
-                                        arrow="bottom-[-6px] border-t-emerald-500 border-b-0"
-                                    />
-                                )}
-                                {/* Dice Value Overlay */}
-                                {showDice && diceValue && (
-                                    <div className="absolute inset-0 bg-emerald-600 flex items-center justify-center z-10 animate-in fade-in zoom-in duration-200">
-                                        <span className="text-4xl font-black">{diceValue}</span>
-                                    </div>
-                                )}
-                            </button>
+                                                    ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500/50 text-white hover:scale-[1.02] active:scale-95'
+                                                    : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
+                                        >
+                                            <span className="text-3xl group-hover:rotate-12 transition-transform">🎲</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest">
+                                                {diceCount > 1 ? `Бросить (${diceCount})` : 'Бросить'}
+                                            </span>
+                                            {(isTutorial && isMyTurn && state.phase === 'ROLL' && state.tutorialStep <= 1) && (
+                                                <TutorialTip
+                                                    text={state.tutorialStep === 0 ? "5. Бросьте кубик!" : "7. Бросьте кубик снова!"}
+                                                    position="bottom-full mb-4"
+                                                    arrow="bottom-[-6px] border-t-emerald-500 border-b-0"
+                                                />
+                                            )}
+                                            {/* Dice Value Overlay */}
+                                            {showDice && diceValue && (
+                                                <div className="absolute inset-0 bg-emerald-600 flex flex-col items-center justify-center z-10 animate-in fade-in zoom-in duration-200">
+                                                    <span className="text-4xl font-black text-white">{diceValue}</span>
+                                                    {diceBreakdown && <span className="text-xs font-mono text-emerald-200 font-bold mt-1">({diceBreakdown})</span>}
+                                                </div>
+                                            )}
+                                        </button>
 
-                            {/* SKIP / NEXT BUTTON (Right, Big) */}
-                            <button
-                                onClick={handleEndTurn}
-                                disabled={!isMyTurn || (state.phase === 'ROLL') || isAnimating}
-                                className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative
+                                        {/* SKIP / NEXT BUTTON (Right, Big) */}
+                                        <button
+                                            onClick={handleEndTurn}
+                                            disabled={!isMyTurn || (state.phase === 'ROLL') || isAnimating}
+                                            className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative
                                  ${isMyTurn && state.phase !== 'ROLL' && !isAnimating
-                                        ? 'bg-blue-600 hover:bg-blue-500 border-blue-500/50 text-white hover:scale-[1.02] active:scale-95'
-                                        : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
-                            >
-                                <span className="text-3xl">⏭</span>
-                                <span className="text-[10px] font-black uppercase tracking-widest">Далее</span>
-                                {isTutorial && isMyTurn && (state.phase === 'ACTION' || state.phase === 'MARKET' || state.phase === 'RESOLVE') && (
-                                    <TutorialTip
-                                        text="Нажмите, чтобы продолжить"
-                                        position="top-full mt-4"
-                                        arrow="top-[-6px] border-b-emerald-500 border-t-0"
-                                    />
-                                )}
-                            </button>
+                                                    ? 'bg-blue-600 hover:bg-blue-500 border-blue-500/50 text-white hover:scale-[1.02] active:scale-95'
+                                                    : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
+                                        >
+                                            <span className="text-3xl">⏭</span>
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Далее</span>
+                                            {isTutorial && isMyTurn && (state.phase === 'ACTION' || state.phase === 'MARKET' || state.phase === 'RESOLVE') && (
+                                                <TutorialTip
+                                                    text="Нажмите, чтобы продолжить"
+                                                    position="top-full mt-4"
+                                                    arrow="top-[-6px] border-b-emerald-500 border-t-0"
+                                                />
+                                            )}
+                                        </button>
+                                    </>
+                                );
+                            })()}
                         </div>
 
                         {/* DESKTOP SKIP / PAUSE TOGGLE */}
-                        {!localPlayer?.isBankrupted && (
-                            <button
-                                onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
-                                className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0
+                        {
+                            !localPlayer?.isBankrupted && (
+                                <button
+                                    onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
+                                    className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0
                                     ${localPlayer.isSkippingTurns
-                                        ? 'bg-blue-600 hover:bg-blue-500 text-white animate-pulse'
-                                        : 'bg-slate-800 hover:bg-indigo-600/50 border border-slate-700 text-slate-400 hover:text-white'}`}
-                            >
-                                <span className="text-sm">{localPlayer.isSkippingTurns ? '▶️' : '⏸'}</span>
-                                <span>{localPlayer.isSkippingTurns ? 'ВЕРНУТЬСЯ В ИГРУ' : 'ОТОЙТИ (AFK)'}</span>
-                            </button>
-                        )}
+                                            ? 'bg-blue-600 hover:bg-blue-500 text-white animate-pulse'
+                                            : 'bg-slate-800 hover:bg-indigo-600/50 border border-slate-700 text-slate-400 hover:text-white'}`}
+                                >
+                                    <span className="text-sm">{localPlayer.isSkippingTurns ? '▶️' : '⏸'}</span>
+                                    <span>{localPlayer.isSkippingTurns ? 'ВЕРНУТЬСЯ В ИГРУ' : 'ОТОЙТИ (AFK)'}</span>
+                                </button>
+                            )
+                        }
 
                         {/* HOST PAUSE CONTROL */}
-                        {isHost && (
-                            <button
-                                onClick={handleTogglePause}
-                                className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0 mb-2
+                        {
+                            isHost && (
+                                <button
+                                    onClick={handleTogglePause}
+                                    className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0 mb-2
                                     ${state.isPaused
-                                        ? 'bg-blue-600 hover:bg-blue-500 text-white animate-pulse'
-                                        : 'bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white'}`}
-                            >
-                                <span className="text-sm">{state.isPaused ? '▶️' : '⏸'}</span>
-                                <span>{state.isPaused ? 'RESUME GAME' : 'PAUSE GAME'}</span>
-                            </button>
-                        )}
+                                            ? 'bg-blue-600 hover:bg-blue-500 text-white animate-pulse'
+                                            : 'bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white'}`}
+                                >
+                                    <span className="text-sm">{state.isPaused ? '▶️' : '⏸'}</span>
+                                    <span>{state.isPaused ? 'RESUME GAME' : 'PAUSE GAME'}</span>
+                                </button>
+                            )
+                        }
 
                         {/* 3. PLAYERS GRID (Small Cards) */}
                         <div className="grid grid-cols-2 gap-2 shrink-0 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
@@ -1701,24 +1716,26 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                         */}
                         </div>
 
-                        {state.isPaused && (
-                            <div className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-in fade-in duration-300">
-                                <div className="bg-[#1e293b] p-8 rounded-3xl border border-slate-700 shadow-2xl flex flex-col items-center max-w-md w-full text-center">
-                                    <div className="text-6xl mb-4 animate-bounce">⏸</div>
-                                    <h2 className="text-2xl font-black text-white uppercase tracking-widest mb-2">Game Paused</h2>
-                                    <p className="text-slate-400 mb-8">Игра приостановлена администратором. Пожалуйста, ожидайте.</p>
+                        {
+                            state.isPaused && (
+                                <div className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-in fade-in duration-300">
+                                    <div className="bg-[#1e293b] p-8 rounded-3xl border border-slate-700 shadow-2xl flex flex-col items-center max-w-md w-full text-center">
+                                        <div className="text-6xl mb-4 animate-bounce">⏸</div>
+                                        <h2 className="text-2xl font-black text-white uppercase tracking-widest mb-2">Game Paused</h2>
+                                        <p className="text-slate-400 mb-8">Игра приостановлена администратором. Пожалуйста, ожидайте.</p>
 
-                                    {isHost && (
-                                        <button
-                                            onClick={handleTogglePause}
-                                            className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
-                                        >
-                                            ▶️ Resume Game
-                                        </button>
-                                    )}
+                                        {isHost && (
+                                            <button
+                                                onClick={handleTogglePause}
+                                                className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+                                            >
+                                                ▶️ Resume Game
+                                            </button>
+                                        )}
+                                    </div>
                                 </div>
-                            </div>
-                        )}
+                            )
+                        }
                     </div>
 
 

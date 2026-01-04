@@ -2156,7 +2156,12 @@ export class GameEngine {
         const costToPay = card.downPayment !== undefined ? card.downPayment : (card.cost || 0);
 
         // Check Affordability (Skip for mandatory - handled by forcePayment)
-        const isMandatory = card.type === 'EXPENSE' || card.mandatory;
+        let isMandatory = card.type === 'EXPENSE' || card.mandatory;
+
+        // Patch for stale DB data: Force mandatory for known damage cards
+        if (!isMandatory && (card.title.includes('Roof') || card.title.includes('Крыша') || card.title.includes('Sewer') || card.title.includes('Прорыв'))) {
+            isMandatory = true;
+        }
 
         if (player.cash < costToPay && !isMandatory) {
             this.addLog(`${player.name} cannot afford ${card.title} ($${costToPay})`);
