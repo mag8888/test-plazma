@@ -26,9 +26,9 @@ export const connectDatabase = async () => {
         }
 
         mongoose.set('strictQuery', false);
-        // Connect to 'test' DB which contains the correct data (200 users, G:1047)
-        await mongoose.connect(mongoUrl, { dbName: 'test' });
-        console.log('Successfully connected to MongoDB (dbName: test)');
+        // Use database from connection string (Railway standard)
+        await mongoose.connect(mongoUrl);
+        console.log(`Successfully connected to MongoDB`);
 
         // Seed users after connection
         await seedTestUsers();
