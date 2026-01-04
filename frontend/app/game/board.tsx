@@ -1588,6 +1588,33 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                         </button>
                                     );
                                 }
+                                if (state.phase === 'OPPORTUNITY_CHOICE') {
+                                    return (
+                                        <>
+                                            <button
+                                                onClick={() => socket.emit('draw_deal', { roomId, type: 'SMALL' })}
+                                                disabled={!isMyTurn || (localPlayer?.cash || 0) < 0} // Allow even if low cash, engine checks cost? Small Deal usually cost $0 to draw but >0 to buy.
+                                                className="rounded-3xl bg-green-700 hover:bg-green-600 text-white flex flex-col items-center justify-center gap-1 shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+                                            >
+                                                <span className="text-xl">🟢</span>
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Small Deal</span>
+                                                <span className="text-[9px] opacity-70">Cost &lt; $5k</span>
+                                            </button>
+                                            <button
+                                                onClick={() => socket.emit('draw_deal', { roomId, type: 'BIG' })}
+                                                disabled={!isMyTurn || (localPlayer?.cash || 0) < 6000} // Big Deal requires $6000 cash at hand usually? Rule: "You can only do Big Deal if you have $6000"
+                                                className={`rounded-3xl flex flex-col items-center justify-center gap-1 shadow-lg transition-all
+                                        ${(localPlayer?.cash || 0) >= 6000
+                                                        ? 'bg-yellow-600 hover:bg-yellow-500 text-white hover:scale-[1.02] active:scale-95'
+                                                        : 'bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed opacity-50'}`}
+                                            >
+                                                <span className="text-xl">🟡</span>
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Big Deal</span>
+                                                <span className="text-[9px] opacity-70">Cost &gt; $6k</span>
+                                            </button>
+                                        </>
+                                    );
+                                }
                                 if (state.phase === 'EXPENSE_WAITING') {
                                     return (
                                         <button
@@ -1826,6 +1853,30 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                     <span className="text-2xl">🏪</span>
                                     <span>ОТКРЫТЬ</span>
                                 </button>
+                            ) : state.phase === 'OPPORTUNITY_CHOICE' ? (
+                                <div className="flex gap-2 flex-1">
+                                    <button
+                                        onClick={() => socket.emit('draw_deal', { roomId, type: 'SMALL' })}
+                                        disabled={!isMyTurn}
+                                        className="flex-1 bg-green-700 active:bg-green-600 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all"
+                                    >
+                                        <span className="text-xl">🟢</span>
+                                        <span>SMALL</span>
+                                        <span className="text-[9px] opacity-80">{'< $5k'}</span>
+                                    </button>
+                                    <button
+                                        onClick={() => socket.emit('draw_deal', { roomId, type: 'BIG' })}
+                                        disabled={!isMyTurn || (localPlayer?.cash || 0) < 6000} // Rule Check
+                                        className={`flex-1 rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all
+                                        ${(localPlayer?.cash || 0) >= 6000
+                                                ? 'bg-yellow-600 active:bg-yellow-500 text-white'
+                                                : 'bg-slate-800 text-slate-500 border border-slate-700'}`}
+                                    >
+                                        <span className="text-xl">🟡</span>
+                                        <span>BIG</span>
+                                        <span className="text-[9px] opacity-80">{'> $6k'}</span>
+                                    </button>
+                                </div>
                             ) : state.phase === 'EXPENSE_WAITING' ? (
                                 <button
                                     onClick={() => socket.emit('draw_card', { roomId, type: 'EXPENSE' })}
