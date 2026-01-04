@@ -12,7 +12,9 @@ import BroadcastModal from './BroadcastModal';
 
 // Dynamic URLs to prevent static build relative path issues
 // We use a function or lazy init, but since this is 'use client', we can just call the functions.
-const ADMIN_PARTNERSHIP_URL = `${getBackendUrl()}/api/partnership`;
+const ADMIN_PARTNERSHIP_URL = process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL
+    ? `${process.env.NEXT_PUBLIC_PARTNERSHIP_API_URL.replace(/\/$/, '')}/api`
+    : `${getBackendUrl()}/api/partnership`;
 const GAME_API_URL = `${getGameServiceUrl()}/api`; // Direct game backend
 
 export default function AdminPage() {
