@@ -2655,10 +2655,11 @@ export class GameEngine {
         if (this.state.currentCard) {
             const card = this.state.currentCard;
             const isMarket = card.type === 'MARKET';
+            const isStock = !!card.symbol; // Stocks can be sold by anyone
             const isPrivate = card.subtype === 'MLM_ROLL' || card.subtype === 'CHARITY_ROLL';
 
-            // Persist MARKET cards (excluding private ones)
-            if (isMarket && !isPrivate) {
+            // Persist MARKET cards or STOCKS (excluding private ones)
+            if ((isMarket || isStock) && !isPrivate) {
                 const alreadyActive = this.state.activeMarketCards?.some(ac => ac.card.id === card.id);
                 if (!alreadyActive) {
                     if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
