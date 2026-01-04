@@ -1931,6 +1931,95 @@ export class GameEngine {
         this.endTurn();
     }
 
+    /**
+     * Generic Draw Card for Manual Phases
+     */
+    drawCard(playerId: string, type: 'MARKET' | 'EXPENSE') {
+        const player = this.state.players.find(p => p.id === playerId);
+        if (!player) return;
+        if (playerId !== this.state.players[this.state.currentPlayerIndex].id) return;
+
+        // Validation based on phase
+        if (type === 'MARKET' && this.state.phase !== 'MARKET_WAITING') return;
+        if (type === 'EXPENSE' && this.state.phase !== 'EXPENSE_WAITING') return;
+
+        if (type === 'MARKET') {
+            // Tutorial Override
+            if (this.state.isTutorial && this.state.tutorialStep === 1) {
+                const card = {
+                    id: 'tutorial_market_1',
+                    type: 'MARKET',
+                    title: 'Market Boom',
+                    description: 'Someone wants to buy MYT4U for $40! Everyone can sell.',
+                    targetTitle: 'MYT4U',
+                    offerPrice: 40,
+                    cost: 0,
+                    cashflow: 0
+                } as any;
+
+                this.state.currentCard = card;
+                this.addLog(`🏪 MARKET (Tutorial): ${card.title} - ${card.description}`);
+                if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
+
+                this.state.activeMarketCards.push({
+                    id: `market_${Date.now()}`,
+                    card,
+                    sourcePlayerId: player.id,
+                    expiresAt: Date.now() + 600000 // Long expire
+                });
+
+                this.state.tutorialStep = 2;
+                this.state.phase = 'ACTION';
+                return;
+            }
+
+            // Normal Market Draw
+            const card = this.cardManager.drawMarket();
+            if (card) {
+                this.state.currentCard = card;
+                this.addLog(`🏪 MARKET: ${card.title}`);
+                if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
+                const activeCard = {
+                    id: `market_${Date.now()}`,
+                    card,
+                    sourcePlayerId: player.id,
+                    expiresAt: Date.now() + 60000
+                };
+                this.state.activeMarketCards.push(activeCard);
+
+                // Scam Logic
+                if (card.id === 'mkt_btc_scam') {
+                    this.state.players.forEach(p => {
+                        const initialCount = p.assets.length;
+                        p.assets = p.assets.filter(a => a.symbol !== 'BTC' && a.title !== 'Bitcoin');
+                        if (p.assets.length < initialCount) {
+                            this.recalculateFinancials(p);
+                            this.addLog(`🔥 ${p.name} потерял все биткоины из-за скама биржи!`);
+                        }
+                    });
+                }
+                this.state.phase = 'ACTION';
+            } else {
+                this.addLog(`🏪 РЫНОК: Карты закончились.`);
+                this.state.phase = 'ACTION';
+                this.endTurn(); // Or specific no card logic?
+            }
+
+        } else if (type === 'EXPENSE') {
+            const card = this.cardManager.drawExpense();
+            if (card) {
+                this.state.currentCard = card;
+                this.addLog(`💸 Трата: ${card.title} (-$${card.cost || 0})`);
+                this.state.phase = 'ACTION';
+            } else {
+                this.addLog(`💸 Трата: Нет карт расходов.`);
+                this.state.phase = 'ACTION';
+                // If no expense, end turn?
+                this.endTurn();
+            }
+        }
+    }
+
     buyAsset(playerId: string, quantity: number = 1, cardId?: string) {
         const player = this.state.players.find(p => p.id === playerId);
         const currentPlayer = this.state.players[this.state.currentPlayerIndex];
