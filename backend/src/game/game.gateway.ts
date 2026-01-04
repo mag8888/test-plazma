@@ -19,6 +19,9 @@ export class GameGateway {
     }
 
     async initialize() {
+        // Initialize Card Manager (Load from DB or Seed)
+        await DbCardManager.getInstance().init();
+
         // Restore active games from DB on server restart
         const activeRooms = await this.roomService.getActiveGames();
         console.log(`Restoring ${activeRooms.length} active games...`);

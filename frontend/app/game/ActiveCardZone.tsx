@@ -1207,7 +1207,7 @@ export const ActiveCardZone = ({
 
                                         // 3. Market Card Dismissal (Server-side per-player tracking)
                                         if (item.source === 'MARKET') {
-                                            socket.emit('dismiss_market_card', { roomId, cardId: item.card.id });
+                                            socket.emit('dismiss_market_card', { roomId, cardId: item.id });
                                             // Also dismiss locally for immediate feedback
                                             setLocallyDismissedIds(prev => [...prev, item.id]);
                                             return;
