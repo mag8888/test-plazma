@@ -16,9 +16,9 @@ export const getBackendUrl = () => {
         return origin;
     }
 
-    // 3. No configuration found
-    console.error("Critical: Backend URL not configured. Set NEXT_PUBLIC_API_URL.");
-    return '';
+    // 3. No configuration found - Default to Live Backend
+    console.warn("Backend URL not configured. Defaulting to Live.");
+    return 'https://moneo-live.up.railway.app';
 };
 
 export const getGameServiceUrl = () => {

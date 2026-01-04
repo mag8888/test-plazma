@@ -30,8 +30,8 @@ function HomeContent() {
       // Perform Magic Login
       const performMagicLogin = async () => {
         try {
-          // Use relative path to avoid CORS/Mixed Content issues
-          const res = await fetch(`/api/auth/magic-login`, {
+          // Use absolute path to Backend since Frontend is separate
+          const res = await fetch(`${getBackendUrl()}/api/auth/magic-login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ code: authCode })
