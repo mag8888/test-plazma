@@ -90,6 +90,10 @@ export default function AdminPage() {
     // Action Center Output
     const [actionOutput, setActionOutput] = useState<string | null>(null);
 
+    // Cards
+    const [cards, setCards] = useState<any[]>([]);
+    const [cardsLoading, setCardsLoading] = useState(false);
+
     const fetchWithAuth = async (endpoint: string, options: any = {}, key: string = secret, baseUrl: string = ADMIN_PARTNERSHIP_URL) => {
         // Fallback to localStorage to prevent stale closure issues with useCallback
         const token = key || localStorage.getItem('admin_secret') || '';
@@ -369,6 +373,9 @@ export default function AdminPage() {
         if (activeTab === 'GAMES' && isAuthenticated) {
             fetchGames(1);
         }
+        if (activeTab === 'CARDS' && isAuthenticated) {
+            fetchCards();
+        }
     }, [activeTab, isAuthenticated, page, sortField, sortOrder, fetchGames]);
 
     const login = () => {
@@ -433,6 +440,20 @@ export default function AdminPage() {
         const res = await fetchWithAuth('/logs');
         if (Array.isArray(res)) {
             setLogs(res);
+        }
+    };
+
+    const fetchCards = async () => {
+        setCardsLoading(true);
+        try {
+            const res = await fetchWithAuth('/admin/cards', {}, secret);
+            if (res && res.cards) {
+                setCards(res.cards);
+            }
+        } catch (e) {
+            console.error("Fetch cards error", e);
+        } finally {
+            setCardsLoading(false);
         }
     };
 
@@ -1014,6 +1035,67 @@ export default function AdminPage() {
                                 </pre>
                             </div>
                         )}
+                    </div>
+                )}
+
+                {/* CARDS TAB */}
+                {activeTab === 'CARDS' && (
+                    <div className="space-y-4">
+                        <div className="flex justify-between items-center">
+                            <h2 className="text-xl font-bold text-white">Game Cards ({cards.length})</h2>
+                            <button onClick={fetchCards} className="bg-slate-800 hover:bg-slate-700 text-white p-2 rounded-lg transition">
+                                <RefreshCw size={20} />
+                            </button>
+                        </div>
+
+                        {cardsLoading && <div className="text-center text-slate-500 animate-pulse">Loading cards...</div>}
+
+                        <div className="bg-slate-800 rounded-xl overflow-hidden border border-slate-700">
+                            <table className="w-full text-left">
+                                <thead className="bg-slate-950 text-slate-400 text-xs uppercase">
+                                    <tr>
+                                        <th className="p-4">ID</th>
+                                        <th className="p-4">Type</th>
+                                        <th className="p-4">Trigger</th>
+                                        <th className="p-4">Rarity/Value</th>
+                                        <th className="p-4">Function</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-slate-700">
+                                    {cards.map((card: any) => (
+                                        <tr key={card._id} className="hover:bg-slate-700/50 transition">
+                                            <td className="p-4 text-slate-500 font-mono text-xs">
+                                                {card.id || card._id.toString().slice(-6)}
+                                            </td>
+                                            <td className="p-4">
+                                                <span className={`px-2 py-1 rounded text-xs font-bold ${card.type === 'DEAL_SMALL' ? 'bg-blue-900/30 text-blue-400' :
+                                                        card.type === 'DEAL_BIG' ? 'bg-green-900/30 text-green-400' :
+                                                            card.type === 'MARKET' ? 'bg-yellow-900/30 text-yellow-400' :
+                                                                card.type === 'EXPENSE' ? 'bg-red-900/30 text-red-400' :
+                                                                    'bg-slate-700 text-slate-300'
+                                                    }`}>
+                                                    {card.type}
+                                                </span>
+                                            </td>
+                                            <td className="p-4 text-slate-300 text-sm">
+                                                {card.triggerType || '-'}
+                                            </td>
+                                            <td className="p-4 text-slate-300">
+                                                {card.rarity && <div className="text-xs text-purple-400">{card.rarity}</div>}
+                                                {card.cost && <div className="text-red-400">-${card.cost}</div>}
+                                                {card.price && <div className="text-yellow-400">${card.price}</div>}
+                                            </td>
+                                            <td className="p-4 text-slate-400 text-xs font-mono max-w-xs truncate">
+                                                {JSON.stringify(card.effect || card.data || {})}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                    {cards.length === 0 && !cardsLoading && (
+                                        <tr><td colSpan={5} className="p-8 text-center text-slate-500">No cards found</td></tr>
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 )}
 

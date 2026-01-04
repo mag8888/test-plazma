@@ -196,6 +196,29 @@ app.get('/api/partnership/admin/users', async (req, res) => {
     }
 });
 
+app.get('/api/partnership/admin/cards', async (req, res) => {
+    if (!checkAdminAuth(req, res)) return;
+    try {
+        const cards = await mongoose.connection.collection('cards').find({}).toArray();
+        res.json({ cards });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/partnership/admin/games', async (req, res) => {
+    if (!checkAdminAuth(req, res)) return;
+    try {
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const games = await ScheduledGameModel.find({})
+            .sort({ startTime: -1 })
+            .populate('hostId', 'username first_name telegram_id');
+        res.json({ games });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.use('/api/partnership', async (req, res) => {
     let partnershipUrl = process.env.PARTNERSHIP_API_URL || 'http://127.0.0.1:4000/api';
     // Remove trailing slash from base if present to avoid double slashes
