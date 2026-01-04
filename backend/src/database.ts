@@ -26,8 +26,8 @@ export const connectDatabase = async () => {
         }
 
         mongoose.set('strictQuery', false);
-        // FORCE 'moneo' DB to match migrated data
-        await mongoose.connect(mongoUrl, { dbName: 'moneo' });
+        // Connect to 'test' DB which contains the correct data (200 users, G:1047)
+        await mongoose.connect(mongoUrl, { dbName: 'test' });
         console.log('Successfully connected to MongoDB (dbName: test)');
 
         // Seed users after connection
