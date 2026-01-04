@@ -46,6 +46,7 @@ export class BotService {
     participantStates: Map<number, { state: 'WAITING_POST_LINK', gameId: string }> = new Map();
     photoUploadStates: Map<number, { state: 'WAITING_PHOTO' }> = new Map();
     depositStates: Map<number, DepositState> = new Map();
+    cloudinaryService: CloudinaryService;
     authService: AuthService;
 
     constructor(polling = true) {
