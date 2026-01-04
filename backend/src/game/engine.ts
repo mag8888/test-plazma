@@ -1368,27 +1368,16 @@ export class GameEngine {
             }
         } else if (square.type === 'EXPENSE') {
             const card = this.cardManager.drawExpense();
-            const cost = card.cost || 0;
-
-            if (cost > 0) {
-                // Auto-Pay Logic
-                if (player.cash < cost) {
-                    const loanNeeded = Math.ceil((cost - player.cash) / 1000) * 1000;
-                    this.takeLoan(player.id, loanNeeded);
-                }
-                player.cash -= cost;
-                this.addLog(`💸 Трата: ${card.title} (-$${cost}) [Авто-оплата]`);
+            if (card) {
+                this.state.currentCard = card;
+                this.addLog(`💸 Трата: ${card.title} (-$${card.cost || 0})`);
+                this.state.phase = 'ACTION';
             } else {
-                this.addLog(`💸 Трата: ${card.title} ($0)`);
+                this.addLog(`💸 Трата: Нет карт расходов.`);
+                this.state.phase = 'ACTION';
             }
+            // Frontend will show Modal. User clicks "Pay" -> buyAsset -> forcePayment.
 
-            // Do NOT set currentCard, effectively skipping the modal
-            // User requested: "Simply close them (make them work automatically)"
-
-            // Since we handled the expense, we effectively consumed the action.
-            // But we must allow user to end turn.
-            this.state.phase = 'ACTION';
-            // Note: If no currentCard, frontend should show "End Turn" button if phase is ACTION.
 
         } else if (square.type === 'BABY') {
             if (player.childrenCount >= 3) {
@@ -2562,6 +2551,16 @@ export class GameEngine {
         if (this.state.turnExpiresAt && Date.now() > this.state.turnExpiresAt) {
             if (player) {
                 this.addLog(`⌛ Turn timeout for ${player.name}`);
+
+                // Auto-Pay Mandatory Expense on Timeout
+                if (this.state.currentCard && (this.state.currentCard.type === 'EXPENSE' || this.state.currentCard.mandatory)) {
+                    const cost = this.state.currentCard.cost || 0;
+                    // Only pay if cost > 0
+                    if (cost > 0) {
+                        this.addLog(`🤖 Timeout Auto-Pay: ${this.state.currentCard.title}`);
+                        this.forcePayment(player, cost, this.state.currentCard.title);
+                    }
+                }
             }
             this.endTurn();
             return true;
