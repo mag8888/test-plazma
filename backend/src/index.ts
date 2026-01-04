@@ -196,6 +196,30 @@ app.get('/api/partnership/admin/users', async (req, res) => {
     }
 });
 
+// DEBUG: Public DB Inspector
+app.get('/api/public/debug-db', async (req, res) => {
+    try {
+        if (!mongoose.connection.db) {
+            return res.status(503).json({ error: 'DB not connected' });
+        }
+        const collections = await mongoose.connection.db.listCollections().toArray();
+        const stats: any = {};
+
+        for (const col of collections) {
+            const count = await mongoose.connection.collection(col.name).countDocuments();
+            stats[col.name] = count;
+        }
+
+        res.json({
+            status: 'ok',
+            dbName: mongoose.connection.db.databaseName,
+            collections: stats
+        });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.get('/api/partnership/admin/cards', async (req, res) => {
     if (!checkAdminAuth(req, res)) return;
     try {
