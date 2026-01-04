@@ -2088,7 +2088,7 @@ export class GameEngine {
             return;
         }
 
-        if (card.type !== 'MARKET' && card.type !== 'DEAL_SMALL' && card.type !== 'DEAL_BIG' && card.type !== 'BUSINESS' && card.type !== 'DREAM' && card.type !== 'EXPENSE') return;
+        if (card.type !== 'MARKET' && card.type !== 'DEAL_SMALL' && card.type !== 'DEAL_BIG' && card.type !== 'BUSINESS' && card.type !== 'DREAM' && card.type !== 'EXPENSE' && card.type !== 'STOCK') return;
 
         // Stock Logic:
         if (card.symbol) {
