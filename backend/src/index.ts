@@ -89,6 +89,101 @@ app.use(express.json());
 
 // Proxy to Partnership Backend (Internal)
 // Frontend calls /api/partnership/user -> We forward to http://localhost:4000/api/user
+// DIRECT ADMIN ROUTES (Bypass Proxy)
+app.get('/api/partnership/admin/stats', async (req, res) => {
+    try {
+        const usersCount = await mongoose.connection.collection('users').countDocuments({});
+        const avatarsCount = await mongoose.connection.collection('avatars').countDocuments({});
+        const stats = await mongoose.connection.collection('users').aggregate([
+            {
+                $group: {
+                    _id: null,
+                    totalGreen: { $sum: "$greenBalance" },
+                    totalYellow: { $sum: "$yellowBalance" }
+                }
+            }
+        ]).toArray();
+        const matrixStats = await mongoose.connection.collection('avatars').aggregate([
+            {
+                $group: {
+                    _id: "$level",
+                    count: { $sum: 1 }
+                }
+            }
+        ]).toArray();
+
+        const levels: any = {};
+        matrixStats.forEach((s: any) => levels[s._id] = s.count);
+
+        res.json({
+            totalUsers: usersCount,
+            totalAvatars: avatarsCount,
+            totalGreen: stats[0]?.totalGreen || 0,
+            totalYellow: stats[0]?.totalYellow || 0,
+            levels,
+            debug: { source: 'DIRECT_BACKEND', dbName: mongoose.connection.db?.databaseName }
+        });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
+app.get('/api/partnership/admin/users', async (req, res) => {
+    try {
+        const { query, page = 1 } = req.query;
+        const limit = 50;
+        const skip = (Number(page) - 1) * limit;
+
+        const filter: any = {};
+        if (query) {
+            const q = String(query).replace('@', '').trim();
+            if (/^\d+$/.test(q)) {
+                filter.$or = [{ username: new RegExp(q, 'i') }, { telegram_id: Number(q) }];
+            } else {
+                filter.username = new RegExp(q, 'i');
+            }
+        }
+
+        const users = await mongoose.connection.collection('users').find(filter)
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit)
+            .toArray();
+
+        const total = await mongoose.connection.collection('users').countDocuments(filter);
+
+        // Enrich with Avatar counts (basic approximation)
+        // Ideally we should lookup, but for fallback let's keep it simple or do a loop
+        // Frontend sorts by avatarsCount, so we might return 0 if we don't fetch it.
+        // Let's do a quick lookup for these 50 users.
+        const userIds = users.map(u => u._id);
+        const avatars = await mongoose.connection.collection('avatars').find({ owner: { $in: userIds } }).toArray();
+
+        const enrichedUsers = users.map(u => {
+            const userAvatars = avatars.filter(a => String(a.owner) === String(u._id));
+            return {
+                ...u,
+                avatarsCount: userAvatars.length,
+                avatarCounts: {
+                    total: userAvatars.length,
+                    basic: userAvatars.filter(a => a.type === 'BASIC').length,
+                    advanced: userAvatars.filter(a => a.type === 'ADVANCED').length,
+                    premium: userAvatars.filter(a => a.type === 'PREMIUM').length
+                }
+            };
+        });
+
+        res.json({
+            users: enrichedUsers,
+            total,
+            page: Number(page),
+            pages: Math.ceil(total / limit)
+        });
+    } catch (e: any) {
+        res.status(500).json({ error: e.message });
+    }
+});
+
 app.use('/api/partnership', async (req, res) => {
     let partnershipUrl = process.env.PARTNERSHIP_API_URL || 'http://127.0.0.1:4000/api';
     // Remove trailing slash from base if present to avoid double slashes
