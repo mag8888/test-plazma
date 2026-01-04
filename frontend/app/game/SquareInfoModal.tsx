@@ -10,7 +10,7 @@ interface SquareInfoModalProps {
 }
 
 export const SquareInfoModal = ({ square, onClose, player, roomId }: SquareInfoModalProps) => {
-    const [galleryType, setGalleryType] = useState<'SMALL' | 'BIG' | null>(null);
+    const [galleryType, setGalleryType] = useState<'SMALL' | 'BIG' | 'MARKET' | null>(null);
 
     if (!square) return null;
 
@@ -49,6 +49,12 @@ export const SquareInfoModal = ({ square, onClose, player, roomId }: SquareInfoM
                                     <p className="text-xs text-slate-400 mb-4">
                                         Здесь вы можете купить или продать активы, если у вас есть соответствующие карточки.
                                     </p>
+                                    <button
+                                        onClick={() => setGalleryType('MARKET')}
+                                        className="w-full text-[10px] bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg transition-colors font-bold uppercase tracking-wider"
+                                    >
+                                        👀 Посмотреть рынок
+                                    </button>
                                 </div>
                             </div>
                         )}
@@ -114,6 +120,7 @@ export const SquareInfoModal = ({ square, onClose, player, roomId }: SquareInfoM
                 isOpen={!!galleryType}
                 onClose={() => setGalleryType(null)}
                 type={galleryType || 'SMALL'}
+                roomId={roomId}
             />
         </>
     );

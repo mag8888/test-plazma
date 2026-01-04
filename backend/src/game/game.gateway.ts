@@ -145,7 +145,27 @@ export class GameGateway {
 
             // Get Deck Content
             socket.on('get_deck_content', (data) => {
-                const { type } = data;
+                const { type, roomId } = data;
+
+                if (type === 'MARKET') {
+                    // Start with empty array
+                    let content: any[] = [];
+
+                    // If roomId is provided, get active market cards from game instance
+                    if (roomId) {
+                        const game = this.games.get(roomId);
+                        if (game && game.state.activeMarketCards) {
+                            // Map active market items to their card content
+                            content = game.state.activeMarketCards.map(item => item.card);
+                        }
+                    } else {
+                        // Fallback or Error? 
+                        // Maybe getting template market cards? No, market is dynamic.
+                    }
+                    socket.emit('deck_content', content);
+                    return;
+                }
+
                 const templates = DbCardManager.getInstance().getTemplates();
                 let content: any[] = [];
                 if (type === 'SMALL') content = templates.small;

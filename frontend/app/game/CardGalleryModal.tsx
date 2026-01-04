@@ -4,7 +4,7 @@ import { socket } from '../socket';
 interface CardGalleryModalProps {
     isOpen: boolean;
     onClose: () => void;
-    type: 'SMALL' | 'BIG';
+    type: 'SMALL' | 'BIG' | 'MARKET'; // Added MARKET
 }
 
 export const CardGalleryModal = ({ isOpen, onClose, type }: CardGalleryModalProps) => {
@@ -15,6 +15,8 @@ export const CardGalleryModal = ({ isOpen, onClose, type }: CardGalleryModalProp
         if (isOpen) {
             setLoading(true);
             setCards([]); // Reset
+
+            // Special handling for MARKET: It might need a different event or same event with type
             socket.emit('get_deck_content', { type });
 
             const handleData = (data: any[]) => {
@@ -32,19 +34,46 @@ export const CardGalleryModal = ({ isOpen, onClose, type }: CardGalleryModalProp
 
     if (!isOpen) return null;
 
+    const getTitle = () => {
+        switch (type) {
+            case 'SMALL': return 'Малые Сделки';
+            case 'BIG': return 'Крупные Сделки';
+            case 'MARKET': return 'Рынок (Активные)';
+            default: return 'Карты';
+        }
+    };
+
+    const getDescription = () => {
+        switch (type) {
+            case 'SMALL': return 'Стоимость до $5,000';
+            case 'BIG': return 'Стоимость от $6,000';
+            case 'MARKET': return 'Карты, доступные для покупки другими игроками';
+            default: return '';
+        }
+    };
+
+    const getIcon = () => {
+        switch (type) {
+            case 'SMALL': return '🐟';
+            case 'BIG': return '🐋';
+            case 'MARKET': return '🏪';
+            default: return '🃏';
+        }
+    }
+
     return (
         <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md p-4 animate-in fade-in duration-200">
             <div className="bg-slate-900 w-full max-w-5xl h-[85vh] rounded-3xl border border-slate-700 flex flex-col relative overflow-hidden shadow-2xl">
                 {/* Header */}
                 <div className="p-6 border-b border-slate-700/50 bg-slate-800/50 flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-4">
-                        <span className="text-4xl">{type === 'SMALL' ? '🐟' : '🐋'}</span>
+                        <span className="text-4xl">{getIcon()}</span>
                         <div>
                             <h2 className="text-2xl font-black text-white uppercase tracking-wide">
-                                {type === 'SMALL' ? 'Малые Сделки' : 'Крупные Сделки'}
+                                {getTitle()}
                             </h2>
                             <p className="text-sm text-slate-400">
-                                {type === 'SMALL' ? 'Стоимость до $5,000' : 'Стоимость от $6,000'} • Всего карт: {cards.length}
+                                {getDescription()} • Всего карт: {cards.length}
                             </p>
                         </div>
                     </div>
