@@ -49,7 +49,19 @@ export const FastTrackInfoModal = ({ onClose, player }: FastTrackInfoModalProps)
                             <div className="text-slate-400 text-xs mt-1">
                                 Добавьте <span className="text-green-400">+$50,000</span> к вашему стартовому Денежному Потоку.
                                 <br />
-                                <span className="text-yellow-400 font-bold">Осталось набрать: ${needed.toLocaleString()}</span>
+                                <div className="mt-2 bg-slate-800/50 p-2 rounded-lg border border-slate-700">
+                                    <div className="flex justify-between text-[10px] text-slate-500 mb-1">
+                                        <span>Старт: ${player.fastTrackStartIncome?.toLocaleString() || 0}</span>
+                                        <span>Цель: ${((player.fastTrackStartIncome || 0) + 50000).toLocaleString()}</span>
+                                    </div>
+                                    <div className="w-full bg-slate-700 h-1.5 rounded-full overflow-hidden mb-1">
+                                        <div
+                                            className="h-full bg-green-500"
+                                            style={{ width: `${Math.min(100, ((player.passiveIncome - (player.fastTrackStartIncome || 0)) / 50000) * 100)}%` }}
+                                        ></div>
+                                    </div>
+                                    <span className="text-yellow-400 font-bold block text-right">Осталось: ${needed.toLocaleString()}</span>
+                                </div>
                             </div>
                         </div>
                     </div>
