@@ -70,6 +70,7 @@ export default function SchedulePage() {
                                 price: g.price,
                                 hostId: hostIdStr,
                                 hostTelegramId: hostTgId,
+                                hostUsername: hostObj?.username,
                                 rawIso: g.startTime,
                                 isJoined: isJoined,
                                 rawParticipants: participants
@@ -248,7 +249,8 @@ export default function SchedulePage() {
                                     const isHost =
                                         String(game.hostId) === String(user?.id) ||
                                         String(game.hostId) === String(user?._id) ||
-                                        (game.hostTelegramId && String(game.hostTelegramId) === String(user?.telegram_id));
+                                        (game.hostTelegramId && String(game.hostTelegramId) === String(user?.telegram_id)) ||
+                                        (user?.username && game.hostUsername === user.username);
 
                                     return isHost ? (
                                         <button

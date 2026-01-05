@@ -563,8 +563,8 @@ export class GameGateway {
 
                 if (!message || message.trim().length === 0) return;
 
-                // Add to log
-                game.state.log.push(`💬 ${player.name}: ${message.trim().slice(0, 100)}`); // Limit length
+                // Add to log using addLog to enforce 200-item limit
+                game.addLog(`💬 ${player.name}: ${message.trim().slice(0, 100)}`);
                 this.io.to(roomId).emit('game_state_update', game.state);
             });
 
