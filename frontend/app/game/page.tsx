@@ -299,7 +299,23 @@ function GameContent() {
 
     const isHost = !!(room && myUserId && String(room.creatorId) === String(myUserId));
 
-    if (!room) return <div className="min-h-screen bg-slate-900 flex items-center justify-center text-white">Загрузка комнаты... {error && <span className="text-red-500 ml-2">{error}</span>}</div>;
+    if (!room) return (
+        <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center text-white gap-4 p-4 text-center">
+            <div className="text-xl text-slate-400 animate-pulse">Загрузка данных комнаты...</div>
+            {error && (
+                <div className="bg-red-500/10 border border-red-500/20 p-6 rounded-2xl flex flex-col items-center gap-4 max-w-sm">
+                    <div className="text-red-400 font-bold text-lg">🚫 Ошибка</div>
+                    <div className="text-slate-300">{error}</div>
+                    <button
+                        onClick={() => router.push('/lobby')}
+                        className="px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors border border-slate-700 w-full"
+                    >
+                        ⬅ Вернуться в Лобби
+                    </button>
+                </div>
+            )}
+        </div>
+    );
 
     const isRoomTraining = room?.isTraining ?? false;
     const effectiveIsTraining = isRoomTraining || isTutorialOverride;
