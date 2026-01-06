@@ -1,5 +1,11 @@
 export const getBackendUrl = () => {
-    // 1. Try Environmental Variable
+    // 1. Try Relative (Same Origin) - PREFERRED for Monolith
+    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+        const origin = window.location.origin;
+        return origin;
+    }
+
+    // 2. Try Environmental Variable
     let url = (process.env.NEXT_PUBLIC_API_URL || '').trim();
     url = url.replace(/^["']|["']$/g, '');
     if (url) {
@@ -7,12 +13,6 @@ export const getBackendUrl = () => {
             url = `https://${url}`;
         }
         return url.replace(/\/$/, '');
-    }
-
-    // 2. Try Relative (Same Origin) if in Browser and not Localhost
-    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        const origin = window.location.origin;
-        return origin;
     }
 
     // 3. No configuration found - Default to Live Backend
