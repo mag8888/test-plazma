@@ -1572,6 +1572,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                         canShowCard={canShowCard && !isAnimating && !showDice}
                                         previewCard={squareInfo?.card ? squareInfo : null}
                                         onDismissPreview={() => setSquareInfo(null)}
+                                        // Force remount on tutorial step change to avoid hook consistency issues
+                                        key={`acz-${isTutorial ? state.tutorialStep : 'main'}`}
                                         isTutorial={isTutorial}
                                         tutorialStep={state.tutorialStep}
                                     />
