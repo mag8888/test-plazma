@@ -305,6 +305,10 @@ export class RoomService {
         return affectedRoomIds;
     }
 
+    async getCreatedRooms(userId: string): Promise<any[]> {
+        return RoomModel.find({ creatorId: userId }).select('_id status').lean();
+    }
+
     async kickPlayer(roomId: string, requesterUserId: string, playerIdToKick: string): Promise<void> {
         const room = await RoomModel.findById(roomId);
         if (!room) throw new Error("Room not found");

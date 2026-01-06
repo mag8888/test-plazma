@@ -223,6 +223,37 @@ export class GameGateway {
             socket.on('create_room', async (data, callback) => {
                 try {
                     const { name, maxPlayers, timer, password, playerName, userId } = data; // Expect userId
+
+                    // 1. Single Room Policy: Cleanup previous rooms hosted by this user
+                    if (userId) {
+                        try {
+                            const previousRooms = await this.roomService.getCreatedRooms(userId);
+                            if (previousRooms.length > 0) {
+                                console.log(`[SingleRoomPolicy] Cleaning up ${previousRooms.length} rooms for host ${userId}`);
+                                for (const prevRoom of previousRooms) {
+                                    const prevRoomId = prevRoom._id.toString();
+
+                                    // A. Memory Cleanup
+                                    if (this.games.has(prevRoomId)) {
+                                        this.games.delete(prevRoomId);
+                                    }
+
+                                    // B. Notify Clients
+                                    this.io.to(prevRoomId).emit('room_deleted');
+
+                                    // C. Database Cleanup
+                                    await this.roomService.deleteRoom(prevRoomId, userId);
+                                }
+                                // Broadcast update after massive deletion
+                                const rooms = await this.roomService.getRooms();
+                                this.io.emit('rooms_updated', rooms);
+                            }
+                        } catch (cleanupErr) {
+                            console.error("[SingleRoomPolicy] Cleanup failed:", cleanupErr);
+                            // Verify if we should block creation? Probably not, try to proceed.
+                        }
+                    }
+
                     const room = await this.roomService.createRoom(
                         socket.id,
                         userId || 'guest_' + socket.id, // Fallback
