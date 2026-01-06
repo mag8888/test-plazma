@@ -1632,7 +1632,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                             </span>
                                             {(isTutorial && isMyTurn && state.phase === 'ROLL' && state.tutorialStep <= 1) && (
                                                 <TutorialTip
-                                                    text={state.tutorialStep === 0 ? "5. Бросьте кубик!" : "7. Бросьте кубик снова!"}
+                                                    text={state.tutorialStep === 0 ? "2. Бросайте кубик, чтобы ходить" : "7. Бросьте кубик снова!"}
                                                     position="bottom-full mb-4"
                                                     arrow="bottom-[-6px] border-t-emerald-500 border-b-0"
                                                 />
