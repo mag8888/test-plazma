@@ -384,6 +384,42 @@ app.get('/admin', (req, res) => {
 import { DepositController } from './deposit/deposit.controller';
 
 app.use('/api/auth', AuthController);
+
+// CRITICAL FIX: Inject Magic Login directly to bypass potential Router issues
+app.post('/api/auth/magic-login', async (req, res) => {
+    try {
+        const { code } = req.body;
+        console.log(`[MagicLogin-Direct] Attempting login with code: '${code}'`);
+
+        if (!code) return res.status(400).json({ error: "Missing code" });
+
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyAuthCode(code);
+
+        if (!user) {
+            console.log(`[MagicLogin-Direct] Code rejected: User not found or expired.`);
+            return res.status(401).json({ error: "Invalid or expired code" });
+        }
+        console.log(`[MagicLogin-Direct] Success for user: ${user.username} (${user._id})`);
+
+        res.json({
+            token: "mock-jwt-token-for-" + user._id,
+            message: 'Login successful',
+            user: {
+                id: user._id.toString(),
+                telegram_id: user.telegram_id,
+                username: user.username,
+                first_name: user.first_name,
+                photo_url: user.photo_url,
+                isAdmin: user.isAdmin || false
+            }
+        });
+    } catch (error: any) {
+        console.error("Magic login direct error:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
 app.post('/api/deposit/request', DepositController.requestDeposit as any);
 
 // Generic Upload API (for frontend usage)
