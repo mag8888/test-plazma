@@ -33,6 +33,7 @@ export interface GameState {
     // Tutorial Mode
     isTutorial?: boolean;
     tutorialStep?: number; // 0: Start, 1: Bought Stock (Ready to Sell)
+    gameMode?: 'ENGINEER' | 'ENTREPRENEUR';
 }
 export interface ActiveCard {
     id: string;
@@ -242,14 +243,14 @@ export class GameEngine {
     cardManager: CardManager;
     botNextActionAt?: number; // Hook for Bot Pacing
 
-    constructor(roomId: string, players: IPlayer[], creatorId?: string, options: { isTutorial?: boolean } = {}) {
+    constructor(roomId: string, players: IPlayer[], creatorId?: string, options: { isTutorial?: boolean; gameMode?: 'ENGINEER' | 'ENTREPRENEUR' } = {}) {
         // Init CardManager with DB Templates
         const templates = DbCardManager.getInstance().getTemplates();
         this.cardManager = new CardManager(templates);
         this.state = {
             roomId,
             creatorId,
-            players: players.map(p => this.initPlayer(p)),
+            players: players.map(p => this.initPlayer(p, options.gameMode)),
             currentPlayerIndex: 0,
             currentTurnTime: 120,
             phase: 'ROLL',
@@ -260,13 +261,26 @@ export class GameEngine {
             transactions: [],
             turnExpiresAt: Date.now() + 120000, // Init first turn timer
             isTutorial: options.isTutorial || false,
-            tutorialStep: 0
+            tutorialStep: 0,
+            gameMode: options.gameMode || 'ENGINEER'
         };
     }
 
-    initPlayer(p: IPlayer): PlayerState {
-        // Randomly assign a profession
-        const profession = PROFESSIONS[Math.floor(Math.random() * PROFESSIONS.length)];
+    initPlayer(p: IPlayer, gameMode: string = 'ENGINEER'): PlayerState {
+        // Assign Profession based on Mode
+        let profession = PROFESSIONS.find(prof => prof.name === 'Engineer'); // Default
+
+        if (gameMode === 'ENTREPRENEUR') {
+            const ent = PROFESSIONS.find(prof => prof.name === 'Entrepreneur');
+            if (ent) profession = ent;
+        } else {
+            // Ensure Engineer
+            const eng = PROFESSIONS.find(prof => prof.name === 'Engineer');
+            if (eng) profession = eng;
+        }
+
+        // Fallback (should not happen if professions.ts is correct)
+        if (!profession) profession = PROFESSIONS[0];
 
         // Populate liabilities from profession details
         const liabilities = [];

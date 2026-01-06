@@ -264,7 +264,8 @@ export class GameGateway {
                         password,
                         data.token,
                         data.dream,
-                        data.isTraining
+                        data.isTraining,
+                        data.gameMode
                     );
                     socket.join(room.id);
                     if (userId) socket.join(userId);
@@ -651,7 +652,7 @@ export class GameGateway {
                     }
 
                     // 2. Init Engine with Shuffled Players
-                    const engine = new GameEngine(roomId, shuffledPlayers, room.creatorId, { isTutorial: room.isTraining });
+                    const engine = new GameEngine(roomId, shuffledPlayers, room.creatorId, { isTutorial: room.isTraining, gameMode: room.gameMode });
 
                     // 3. Log the result
                     const orderNames = shuffledPlayers.map(p => p.name).join(' -> ');

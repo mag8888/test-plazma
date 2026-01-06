@@ -24,6 +24,7 @@ export interface IRoom extends Document {
     updatedAt: Date;
     gameState?: any;
     isTraining?: boolean;
+    gameMode?: 'ENGINEER' | 'ENTREPRENEUR';
 }
 
 const RoomSchema: Schema = new Schema({
@@ -35,6 +36,7 @@ const RoomSchema: Schema = new Schema({
     status: { type: String, enum: ['waiting', 'playing', 'finished'], default: 'waiting' },
     gameState: { type: Schema.Types.Mixed },
     isTraining: { type: Boolean, default: false },
+    gameMode: { type: String, enum: ['ENGINEER', 'ENTREPRENEUR'], default: 'ENGINEER' },
     players: [{
         id: String,
         name: String,

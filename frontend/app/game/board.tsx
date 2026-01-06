@@ -872,7 +872,7 @@ function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState 
                                                     setAdminAction({ type: 'SKIP', player: selectedPlayerForMenu });
                                                     setSelectedPlayerForMenu(null);
                                                 }}
-                                                className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors"
+                                                className="bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors"
                                             >
                                                 🚫 Пропустить
                                             </button>
@@ -881,21 +881,39 @@ function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState 
                                                     setAdminAction({ type: 'KICK', player: selectedPlayerForMenu });
                                                     setSelectedPlayerForMenu(null);
                                                 }}
-                                                className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600/50 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors"
+                                                className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600/50 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors"
                                             >
                                                 👢 Выгнать
                                             </button>
-                                            {isHost && (
-                                                <button
-                                                    onClick={() => {
-                                                        setAdminAction({ type: 'GIFT', player: selectedPlayerForMenu });
-                                                        setSelectedPlayerForMenu(null);
-                                                    }}
-                                                    className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors col-span-2"
-                                                >
-                                                    💵 Подарить деньги
-                                                </button>
-                                            )}
+
+                                            <button
+                                                onClick={() => {
+                                                    setAdminAction({ type: 'FORCE_MOVE', player: selectedPlayerForMenu });
+                                                    setSelectedPlayerForMenu(null);
+                                                }}
+                                                className="bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors"
+                                            >
+                                                🎲 Ход за него
+                                            </button>
+                                            <button
+                                                onClick={() => {
+                                                    setAdminAction({ type: 'TRANSFER_DEAL', player: selectedPlayerForMenu });
+                                                    setSelectedPlayerForMenu(null);
+                                                }}
+                                                className="bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors"
+                                            >
+                                                🤝 Передать сделку
+                                            </button>
+
+                                            <button
+                                                onClick={() => {
+                                                    setAdminAction({ type: 'GIFT', player: selectedPlayerForMenu });
+                                                    setSelectedPlayerForMenu(null);
+                                                }}
+                                                className="bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors col-span-2"
+                                            >
+                                                💵 Подарить деньги
+                                            </button>
                                         </div>
                                     </>
                                 )}
@@ -2031,7 +2049,8 @@ function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState 
                                 onClose={() => setAdminAction(null)}
                                 type={adminAction.type}
                                 targetPlayer={adminAction.player}
-                                onConfirm={(amount) => {
+                                players={state.players}
+                                onConfirm={(amount, targetId) => {
                                     if (adminAction.type === 'SKIP') {
                                         // Use 'userId' prop (Persistent ID) for permission check
                                         socket.emit('host_skip_turn', { roomId, userId }, (response: any) => {
@@ -2048,6 +2067,10 @@ function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState 
                                                 console.error('Gift failed:', response?.error);
                                             }
                                         });
+                                    } else if (adminAction.type === 'FORCE_MOVE') {
+                                        socket.emit('host_force_move', { roomId, userId, targetPlayerId: adminAction.player.id });
+                                    } else if (adminAction.type === 'TRANSFER_DEAL' && targetId) {
+                                        socket.emit('host_transfer_deal', { roomId, userId, targetPlayerId: adminAction.player.id, recipientId: targetId });
                                     }
                                     setAdminAction(null);
                                 }}

@@ -17,7 +17,7 @@ export interface Profession {
 
 export const PROFESSIONS: Profession[] = [
     {
-        name: 'Entrepreneur',
+        name: 'Engineer',
         salary: 10000,
         savings: 2000,
         perChildCost: 400,
@@ -28,6 +28,22 @@ export const PROFESSIONS: Profession[] = [
         creditCard: { cost: 20000, payment: 1000 },
         schoolLoan: { cost: 10000, payment: 500 },
         mortgage: { cost: 240000, payment: 1200 },
-        retailDebt: { cost: 0, payment: 0 } // Explicitly 0 if not listed
+        retailDebt: { cost: 0, payment: 0 }
+    },
+    {
+        name: 'Entrepreneur',
+        salary: 0,
+        savings: 100000,
+        perChildCost: 400,
+        expenses: 5800,
+        taxes: 1200, // Taxes might need to be 0 or dynamic if salary is 0? User said "such expenses". Taxes usually % of income. But let's keep fixed if user said "same expenses". But 1200 tax on 0 income is harsh.
+        // User request: "no salary but same expenses".
+        // I will keep expenses identical for now.
+        otherExpenses: 1200,
+        carLoan: { cost: 14000, payment: 700 },
+        creditCard: { cost: 20000, payment: 1000 },
+        schoolLoan: { cost: 10000, payment: 500 },
+        mortgage: { cost: 240000, payment: 1200 },
+        retailDebt: { cost: 0, payment: 0 }
     }
 ];

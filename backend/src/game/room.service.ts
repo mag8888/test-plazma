@@ -7,7 +7,7 @@ export class RoomService {
 
     constructor() { }
 
-    async createRoom(creatorId: string, userId: string, playerName: string, name: string, maxPlayers: number = 6, timer: number = 120, password?: string, token?: string, dream?: string, isTraining: boolean = false): Promise<any> {
+    async createRoom(creatorId: string, userId: string, playerName: string, name: string, maxPlayers: number = 6, timer: number = 120, password?: string, token?: string, dream?: string, isTraining: boolean = false, gameMode: 'ENGINEER' | 'ENTREPRENEUR' = 'ENGINEER'): Promise<any> {
         // 0. Strict Isolation: Check if user is already in a PLAYING room
         const playing = await RoomModel.findOne({ status: 'playing', 'players.userId': userId });
         if (playing) {
@@ -50,6 +50,7 @@ export class RoomService {
             timer,
             password,
             isTraining,
+            gameMode,
             players: [{
                 id: creatorId, // Socket ID
                 userId: userId,

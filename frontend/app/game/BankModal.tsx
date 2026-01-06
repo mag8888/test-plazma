@@ -151,7 +151,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         <div className="flex justify-between items-center pb-2 border-b border-slate-700/50">
                             <span className="text-emerald-400 font-bold tracking-wide relative">
                                 ↗ ДОХОД
-                                {showHint(0) && <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 z-[3000] min-w-[200px] pointer-events-none"><TutorialTip text="1. Ваши Доходы и Расходы. Нажмите сюда, чтобы продолжить." position="" arrow="left-[-6px] border-r-emerald-500 border-l-0" /></div>}
+                                {showHint(0) && <div className="absolute top-10 right-0 z-[3000] w-64 pointer-events-none"><TutorialTip text="1. Ваши Доходы и Расходы. Нажмите сюда, чтобы продолжить." position="right" arrow="top-[-6px] border-b-emerald-500 border-t-0 right-4" /></div>}
                             </span>
                             <span className="text-white font-mono text-lg">${player.income?.toLocaleString()}</span>
                         </div>
@@ -216,7 +216,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         <div className="flex justify-between items-center mb-4">
                             <span className="text-slate-400 text-xs font-bold uppercase tracking-wider relative">
                                 Текущий Кредит
-                                {showHint(1) && <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 z-[3000] min-w-[200px] pointer-events-none"><TutorialTip text="2. Управление кредитами. Нажмите, чтобы продолжить." position="" arrow="left-[-6px] border-r-emerald-500 border-l-0" /></div>}
+                                {showHint(1) && <div className="absolute top-8 left-0 z-[3000] w-64 pointer-events-none"><TutorialTip text="2. Управление кредитами. Нажмите, чтобы продолжить." position="left" arrow="top-[-6px] border-b-emerald-500 border-t-0 left-4" /></div>}
                             </span>
                             <span className="text-red-400 font-mono font-black text-xl">${currentLoan.toLocaleString()}</span>
                         </div>
@@ -239,7 +239,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         />
 
                         <div className="grid grid-cols-2 gap-3" onClick={(e) => e.stopPropagation()}>
-                            <button onClick={handleRepayLoan} className="bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-900/20 active:scale-95 flex items-center justify-center gap-2">
+                            <button onClick={() => { handleRepayLoan(); advanceTutorial(1); }} className="bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-900/20 active:scale-95 flex items-center justify-center gap-2">
                                 Погасить
                             </button>
                             {/* Disabled for Fast Track */}
@@ -248,7 +248,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                                     Кредит недоступен
                                 </button>
                             ) : (
-                                <button onClick={handleTakeLoan} className="bg-red-600 hover:bg-red-500 text-white py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-red-900/20 relative">
+                                <button onClick={() => { handleTakeLoan(); advanceTutorial(1); }} className="bg-red-600 hover:bg-red-500 text-white py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-red-900/20 relative">
                                     Взять
                                 </button>
                             )}
@@ -271,12 +271,12 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                     {/* Transfer Section */}
                     <div
                         onClick={() => advanceTutorial(2)}
-                        className="bg-slate-800/40 p-6 rounded-3xl border border-slate-700/40 shadow-xl relative overflow-hidden cursor-pointer hover:border-slate-500/50 transition-colors"
+                        className="bg-slate-800/40 p-6 rounded-3xl border border-slate-700/40 shadow-xl relative cursor-pointer hover:border-slate-500/50 transition-colors"
                     >
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
                         <h4 className="text-slate-300 font-bold mb-4 flex items-center gap-2 text-sm uppercase tracking-wider text-blue-300/80 relative">
                             <span className="text-lg">💸</span> Перевод средств
-                            {showHint(2) && <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 z-[3000] min-w-[200px] pointer-events-none"><TutorialTip text="3. Переводы другим игрокам. Нажмите, чтобы продолжить." position="" arrow="right-[-6px] border-l-emerald-500 border-r-0" /></div>}
+                            {showHint(2) && <div className="absolute top-10 left-0 z-[3000] w-64 pointer-events-none"><TutorialTip text="3. Переводы другим игрокам. Нажмите, чтобы продолжить." position="left" arrow="top-[-6px] border-b-emerald-500 border-t-0 left-4" /></div>}
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 relative z-10" onClick={e => e.stopPropagation()}>
                             <select
@@ -302,7 +302,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         </div>
                         <div className="flex justify-end gap-3 relative z-10" onClick={e => e.stopPropagation()}>
                             <button onClick={() => { setTransferAmount(0); setRecipientId(''); }} className="px-5 py-2.5 rounded-xl border border-slate-600/50 text-slate-400 hover:bg-slate-700/50 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider">Сбросить</button>
-                            <button onClick={handleTransfer} className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold shadow-lg shadow-blue-900/30 transition-all text-xs uppercase tracking-wider active:scale-95 flex items-center gap-2">
+                            <button onClick={() => { handleTransfer(); advanceTutorial(2); }} className="px-8 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold shadow-lg shadow-blue-900/30 transition-all text-xs uppercase tracking-wider active:scale-95 flex items-center gap-2">
                                 Выполнить <span className="opacity-70">➤</span>
                             </button>
                         </div>
