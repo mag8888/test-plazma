@@ -17,9 +17,9 @@ export class RoomService {
         // 1. Cleanup: Remove user from ALL waiting rooms (Auto-Leave)
         await this.removeUserFromAllWaitingRooms(userId);
 
-        // 2. Cleanup: Delete any previous room hosted by this user
-        // This ensures the Host moves to the new room and the old one is closed/wiped
-        await RoomModel.deleteMany({ creatorId: userId, status: 'waiting' });
+        // 2. Cleanup: Delete ANY previous room hosted by this user (Waiting OR Playing)
+        // This enforces the "Single Room Policy" strictly.
+        await RoomModel.deleteMany({ creatorId: userId });
 
         // 3. Validation: Check for Name Uniqueness
         // Skip uniqueness check if Training
