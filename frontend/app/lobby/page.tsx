@@ -496,149 +496,151 @@ function LobbyContent() {
                                         })}
                                     </div>
                                 </div>
-                            </div>
 
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 block">Режим Игры</label>
-                                <div className="grid grid-cols-2 gap-3">
-                                    <div
-                                        onClick={() => setGameMode('ENGINEER')}
-                                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${gameMode === 'ENGINEER'
-                                            ? 'bg-blue-600/20 border-blue-500 ring-2 ring-blue-500/20'
-                                            : 'bg-slate-800 border-transparent hover:bg-slate-700'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-xl">👷</span>
-                                            <span className={`font-bold ${gameMode === 'ENGINEER' ? 'text-white' : 'text-slate-400'}`}>Инженер</span>
-                                        </div>
-                                        <div className="space-y-1 text-[10px] font-mono text-slate-400">
-                                            <div className="flex justify-between">
-                                                <span>Старт:</span>
-                                                <span className="text-emerald-400">$2,000</span>
-                                            </div>
-                                            <div className="flex justify-between">
-                                                <span>Зарплата:</span>
-                                                <span className="text-emerald-400">$10,000</span>
-                                            </div>
-                                            <div className="text-slate-500 mt-1">Классический старт</div>
-                                        </div>
-                                    </div>
 
-                                    <div
-                                        onClick={() => setGameMode('ENTREPRENEUR')}
-                                        className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${gameMode === 'ENTREPRENEUR'
-                                            ? 'bg-purple-600/20 border-purple-500 ring-2 ring-purple-500/20'
-                                            : 'bg-slate-800 border-transparent hover:bg-slate-700'
-                                            }`}
-                                    >
-                                        <div className="flex items-center gap-2 mb-2">
-                                            <span className="text-xl">🚀</span>
-                                            <span className={`font-bold ${gameMode === 'ENTREPRENEUR' ? 'text-white' : 'text-slate-400'}`}>Предпр.</span>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 block">Режим Игры</label>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div
+                                            onClick={() => setGameMode('ENGINEER')}
+                                            className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${gameMode === 'ENGINEER'
+                                                ? 'bg-blue-600/20 border-blue-500 ring-2 ring-blue-500/20'
+                                                : 'bg-slate-800 border-transparent hover:bg-slate-700'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-xl">👷</span>
+                                                <span className={`font-bold ${gameMode === 'ENGINEER' ? 'text-white' : 'text-slate-400'}`}>Инженер</span>
+                                            </div>
+                                            <div className="space-y-1 text-[10px] font-mono text-slate-400">
+                                                <div className="flex justify-between">
+                                                    <span>Старт:</span>
+                                                    <span className="text-emerald-400">$2,000</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Зарплата:</span>
+                                                    <span className="text-emerald-400">$10,000</span>
+                                                </div>
+                                                <div className="text-slate-500 mt-1">Классический старт</div>
+                                            </div>
                                         </div>
-                                        <div className="space-y-1 text-[10px] font-mono text-slate-400">
-                                            <div className="flex justify-between">
-                                                <span>Старт:</span>
-                                                <span className="text-emerald-400">$100,000</span>
+
+                                        <div
+                                            onClick={() => setGameMode('ENTREPRENEUR')}
+                                            className={`p-4 rounded-xl border-2 cursor-pointer transition-all ${gameMode === 'ENTREPRENEUR'
+                                                ? 'bg-purple-600/20 border-purple-500 ring-2 ring-purple-500/20'
+                                                : 'bg-slate-800 border-transparent hover:bg-slate-700'
+                                                }`}
+                                        >
+                                            <div className="flex items-center gap-2 mb-2">
+                                                <span className="text-xl">🚀</span>
+                                                <span className={`font-bold ${gameMode === 'ENTREPRENEUR' ? 'text-white' : 'text-slate-400'}`}>Предпр.</span>
                                             </div>
-                                            <div className="flex justify-between">
-                                                <span>Зарплата:</span>
-                                                <span className="text-red-400">$0</span>
+                                            <div className="space-y-1 text-[10px] font-mono text-slate-400">
+                                                <div className="flex justify-between">
+                                                    <span>Старт:</span>
+                                                    <span className="text-emerald-400">$100,000</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Зарплата:</span>
+                                                    <span className="text-red-400">$0</span>
+                                                </div>
+                                                <div className="text-slate-500 mt-1 leading-tight">Кредиты только при Cashflow &gt; 0</div>
                                             </div>
-                                            <div className="text-slate-500 mt-1 leading-tight">Кредиты только при Cashflow &gt; 0</div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
 
-                            <button
-                                onClick={createRoom}
-                                disabled={isSubmitting}
-                                className={`w-full py-4 rounded-xl font-black uppercase tracking-widest shadow-xl transition-all text-sm relative ${!newRoomName.trim()
-                                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                                    : 'bg-green-600 hover:bg-green-500 text-white shadow-green-900/20 hover:-translate-y-1 active:scale-95'
-                                    }`}
-                            >
-                                {isTutorial && (
-                                    <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg z-50 whitespace-nowrap">
-                                        2. Нажмите Старт 👇
-                                        <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500"></div>
-                                    </div>
-                                )}
-                                {isSubmitting ? 'Создание...' : '🚀 Запустить Игру'}
-                            </button>
-                        </div>
+                                <button
+                                    onClick={createRoom}
+                                    disabled={isSubmitting}
+                                    className={`w-full py-4 rounded-xl font-black uppercase tracking-widest shadow-xl transition-all text-sm relative ${!newRoomName.trim()
+                                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                        : 'bg-green-600 hover:bg-green-500 text-white shadow-green-900/20 hover:-translate-y-1 active:scale-95'
+                                        }`}
+                                >
+                                    {isTutorial && (
+                                        <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg z-50 whitespace-nowrap">
+                                            2. Нажмите Старт 👇
+                                            <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500"></div>
+                                        </div>
+                                    )}
+                                    {isSubmitting ? 'Создание...' : '🚀 Запустить Игру'}
+                                </button>
+                            </div>
                         </div>
                     )}
 
-                {/* ROOM LIST */}
-                <div className="space-y-4">
-                    <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-1">Доступные комнаты</h2>
+                    {/* ROOM LIST */}
+                    <div className="space-y-4">
+                        <h2 className="text-sm font-bold text-slate-500 uppercase tracking-widest px-1">Доступные комнаты</h2>
 
-                    {rooms.length === 0 ? (
-                        <div className="text-center py-20 bg-[#1e293b]/50 rounded-3xl border border-dashed border-slate-800">
-                            <div className="text-6xl mb-4 opacity-20">📭</div>
-                            <div className="text-slate-500 font-bold">Нет доступных комнат</div>
-                            <div className="text-slate-600 text-sm mt-2">Будьте первыми — создайте игру!</div>
-                        </div>
-                    ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
-                            {rooms.map((room) => (
-                                <div key={room.id} className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 hover:border-slate-600 hover:shadow-xl transition-all group flex flex-col justify-between h-[180px]">
-                                    <div>
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-lg text-white group-hover:text-blue-400 transition-colors line-clamp-1">{room.name}</h3>
-                                                {room.creatorUsername && (
-                                                    <a
-                                                        href={`https://t.me/${room.creatorUsername}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="text-xs text-slate-500 hover:text-blue-400 transition-colors inline-flex items-center gap-1 mt-1"
-                                                        onClick={(e) => e.stopPropagation()}
-                                                    >
-                                                        👤 @{room.creatorUsername}
-                                                    </a>
-                                                )}
-                                            </div>
-                                            <div className="flex flex-col items-end gap-1">
-                                                {room.status === 'playing' && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-1 rounded font-bold uppercase">Идет игра</span>}
-                                                <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase border flex items-center gap-1 ${room.gameMode === 'ENTREPRENEUR'
+                        {rooms.length === 0 ? (
+                            <div className="text-center py-20 bg-[#1e293b]/50 rounded-3xl border border-dashed border-slate-800">
+                                <div className="text-6xl mb-4 opacity-20">📭</div>
+                                <div className="text-slate-500 font-bold">Нет доступных комнат</div>
+                                <div className="text-slate-600 text-sm mt-2">Будьте первыми — создайте игру!</div>
+                            </div>
+                        ) : (
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-4">
+                                {rooms.map((room) => (
+                                    <div key={room.id} className="bg-[#1e293b] p-5 rounded-2xl border border-slate-800 hover:border-slate-600 hover:shadow-xl transition-all group flex flex-col justify-between h-[180px]">
+                                        <div>
+                                            <div className="flex justify-between items-start mb-2">
+                                                <div className="flex-1">
+                                                    <h3 className="font-bold text-lg text-white group-hover:text-blue-400 transition-colors line-clamp-1">{room.name}</h3>
+                                                    {room.creatorUsername && (
+                                                        <a
+                                                            href={`https://t.me/${room.creatorUsername}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-xs text-slate-500 hover:text-blue-400 transition-colors inline-flex items-center gap-1 mt-1"
+                                                            onClick={(e) => e.stopPropagation()}
+                                                        >
+                                                            👤 @{room.creatorUsername}
+                                                        </a>
+                                                    )}
+                                                </div>
+                                                <div className="flex flex-col items-end gap-1">
+                                                    {room.status === 'playing' && <span className="text-[10px] bg-red-500/20 text-red-400 px-2 py-1 rounded font-bold uppercase">Идет игра</span>}
+                                                    <span className={`text-[10px] px-2 py-1 rounded font-bold uppercase border flex items-center gap-1 ${room.gameMode === 'ENTREPRENEUR'
                                                         ? 'bg-purple-900/50 text-purple-300 border-purple-500/30'
                                                         : 'bg-blue-900/50 text-blue-300 border-blue-500/30'
-                                                    }`}>
-                                                    <span>{room.gameMode === 'ENTREPRENEUR' ? '🚀' : '👷'}</span>
-                                                    {room.gameMode === 'ENTREPRENEUR' ? 'Предпр.' : 'Инженер'}
-                                                </span>
+                                                        }`}>
+                                                        <span>{room.gameMode === 'ENTREPRENEUR' ? '🚀' : '👷'}</span>
+                                                        {room.gameMode === 'ENTREPRENEUR' ? 'Предпр.' : 'Инженер'}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex gap-2 mb-4">
+                                                <div className="text-xs bg-slate-900 px-2 py-1 rounded text-slate-400 font-mono border border-slate-800">
+                                                    ⏱ {Math.floor(room.timer / 60)} мин/ход
+                                                </div>
+                                                <div className="text-xs bg-slate-900 px-2 py-1 rounded text-slate-400 font-mono border border-slate-800">
+                                                    👥 {room.players.length}/{room.maxPlayers}
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="flex gap-2 mb-4">
-                                            <div className="text-xs bg-slate-900 px-2 py-1 rounded text-slate-400 font-mono border border-slate-800">
-                                                ⏱ {Math.floor(room.timer / 60)} мин/ход
-                                            </div>
-                                            <div className="text-xs bg-slate-900 px-2 py-1 rounded text-slate-400 font-mono border border-slate-800">
-                                                👥 {room.players.length}/{room.maxPlayers}
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                    <button
-                                        onClick={() => joinRoom(room.id)}
-                                        disabled={room.players.length >= room.maxPlayers}
-                                        className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${room.players.length >= room.maxPlayers
-                                            ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                                            : 'bg-slate-700 hover:bg-blue-600 text-white shadow-lg'
-                                            }`}
-                                    >
-                                        {room.status === 'playing'
-                                            ? (room.players.length >= room.maxPlayers ? 'Мест нет (Игра идет)' : 'Присоединиться (Игра идет)')
-                                            : (room.players.length >= room.maxPlayers ? 'Мест нет' : 'Присоединиться')
-                                        }
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
+                                        <button
+                                            onClick={() => joinRoom(room.id)}
+                                            disabled={room.players.length >= room.maxPlayers}
+                                            className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${room.players.length >= room.maxPlayers
+                                                ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                                                : 'bg-slate-700 hover:bg-blue-600 text-white shadow-lg'
+                                                }`}
+                                        >
+                                            {room.status === 'playing'
+                                                ? (room.players.length >= room.maxPlayers ? 'Мест нет (Игра идет)' : 'Присоединиться (Игра идет)')
+                                                : (room.players.length >= room.maxPlayers ? 'Мест нет' : 'Присоединиться')
+                                            }
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+
                 </div>
 
             </div>
