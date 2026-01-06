@@ -140,6 +140,18 @@ function LobbyContent() {
         const playerName = user.firstName || user.username || 'Guest';
         const userId = user._id || user.id;
 
+        // 0. Pre-check: If already in a room, prompt to leave/delete
+        if (myRooms.length > 0) {
+            const currentRoom = myRooms[0];
+            setIsSubmitting(false); // Reset
+            setRoomError({
+                isOpen: true,
+                message: `Вы уже находитесь в комнате "${currentRoom.name}" (${currentRoom.status === 'playing' ? 'Игра идет' : 'Ожидание'}). Хотите покинуть её и создать новую?`,
+                roomIdToLeave: currentRoom.id
+            });
+            return;
+        }
+
         socket.emit('create_room', {
             name: newRoomName,
             maxPlayers,
@@ -162,7 +174,7 @@ function LobbyContent() {
                 // Optimistically check if we are in a room locally:
                 const currentRoom = myRooms[0]; // Simplistic check if we are in ANY room
 
-                if (response.error.includes('already') || currentRoom) {
+                if (response.error.includes('already') || response.error.includes('Вы уже находитесь') || currentRoom) {
                     setRoomError({
                         isOpen: true,
                         message: `Вы уже находитесь в комнате "${currentRoom?.name || 'Unknown'}" (${currentRoom?.status === 'playing' ? 'Игра идет' : 'Ожидание'}). Хотите покинуть её и создать новую?`,
