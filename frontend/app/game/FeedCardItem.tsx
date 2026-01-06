@@ -35,8 +35,8 @@ export const FeedCardItem = ({
     isTutorial?: boolean,
     tutorialStep?: number
 }) => {
-    // Guard Clause: Prevent crash if state is undefined (Moved AFTER ALL hooks)
-    if (!state) return null;
+    // Guard Clause: MOVED TO BOTTOM or rely on ActiveCardZone protection. 
+    // ActiveCardZone already checks (!state || !me) return null; so state is guaranteed here.
 
     const card = cardWrapper.card || cardWrapper; // Handle wrapper or direct card
     const source = cardWrapper.source || 'CURRENT'; // 'MARKET' or 'CURRENT'
