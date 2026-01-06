@@ -71,8 +71,7 @@ const FeedCardItem = ({
     const [pendingLoan, setPendingLoan] = useState<{ amount: number; quantity: number } | null>(null);
     const [showTransfer, setShowTransfer] = useState(false);
 
-    // Guard Clause: Prevent crash if state is undefined (Moved AFTER hooks)
-    if (!state) return null;
+
 
     // MLM Detection
     const isMLM = card.title?.toLowerCase().includes('network') || card.title?.toLowerCase().includes('сетевой') || card.description?.toLowerCase().includes('partners') || card.description?.toLowerCase().includes('партнер');
@@ -199,6 +198,9 @@ const FeedCardItem = ({
             // Optional: Don't auto-set, let user decide
         }
     }, [viewMode, transactionMode, isStock, stockQty, maxVal]);
+
+    // Guard Clause: Prevent crash if state is undefined (Moved AFTER ALL hooks)
+    if (!state) return null;
 
     // Generate card number if not present
     const getCardNumber = () => {
