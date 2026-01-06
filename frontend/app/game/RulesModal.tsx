@@ -233,42 +233,45 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts, isTutor
 
                 {/* Footer Navigation */}
                 <div className="p-4 border-t border-slate-700 bg-[#0f172a] rounded-b-2xl flex flex-wrap gap-2 justify-between items-center flex-shrink-0">
-                    <div className="flex gap-2 flex-wrap">
-                        <button
-                            onClick={() => { setActiveTab('SMALL'); if (isTutorial) setHasViewedCards(true); }}
-                            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'SMALL' ? 'bg-green-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                        >
-                            <span>Малые</span>
-                            {counts && <span className="text-[9px] opacity-70">{counts.small.total}/{counts.small.remaining}</span>}
-                            {isTutorial && !hasViewedCards && activeTab === 'RULES' && (
-                                <TutorialTip
-                                    text="1. Посмотрите карточки"
-                                    position="bottom-full mb-3"
-                                    arrow="bottom-[-6px] border-t-emerald-500 border-b-0"
-                                />
-                            )}
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('BIG')}
-                            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'BIG' ? 'bg-purple-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                        >
-                            <span>Крупные</span>
-                            {counts && <span className="text-[9px] opacity-70">{counts.big.total}/{counts.big.remaining}</span>}
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('MARKET')}
-                            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'MARKET' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                        >
-                            <span>Рынок</span>
-                            {counts && <span className="text-[9px] opacity-70">{counts.market.total}/{counts.market.remaining}</span>}
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('EXPENSE')}
-                            className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'EXPENSE' ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                        >
-                            <span>Расходы</span>
-                            {counts && <span className="text-[9px] opacity-70">{counts.expense.total}/{counts.expense.remaining}</span>}
-                        </button>
+                    <div className="flex flex-col gap-1">
+                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Карточки</span>
+                        <div className="flex gap-2 flex-wrap">
+                            <button
+                                onClick={() => { setActiveTab('SMALL'); if (isTutorial) setHasViewedCards(true); }}
+                                className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'SMALL' ? 'bg-green-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            >
+                                <span>Малые</span>
+                                {counts && <span className="text-[9px] opacity-70">{counts.small.total}/{counts.small.remaining}</span>}
+                                {isTutorial && !hasViewedCards && activeTab === 'RULES' && (
+                                    <TutorialTip
+                                        text="КАРТОЧКИ"
+                                        position="bottom-full mb-3"
+                                        arrow="bottom-[-6px] border-t-emerald-500 border-b-0"
+                                    />
+                                )}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('BIG')}
+                                className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'BIG' ? 'bg-purple-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            >
+                                <span>Крупные</span>
+                                {counts && <span className="text-[9px] opacity-70">{counts.big.total}/{counts.big.remaining}</span>}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('MARKET')}
+                                className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'MARKET' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            >
+                                <span>Рынок</span>
+                                {counts && <span className="text-[9px] opacity-70">{counts.market.total}/{counts.market.remaining}</span>}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('EXPENSE')}
+                                className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'EXPENSE' ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                            >
+                                <span>Расходы</span>
+                                {counts && <span className="text-[9px] opacity-70">{counts.expense.total}/{counts.expense.remaining}</span>}
+                            </button>
+                        </div>
                     </div>
 
                     <div className="flex gap-2">
