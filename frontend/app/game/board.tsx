@@ -219,7 +219,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
 
     // Initial State Sync & Version Check
     useEffect(() => {
-        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: FIX_HOOKS_V7 (GameBoard ErrorBoundary) 🚀');
+        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: FIX_HOOKS_V8 (No Early Return) 🚀');
         if (initialState) {
             setState(initialState);
         }
@@ -907,16 +907,18 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
         }
     }, [state?.phase, isAnimatingMove, state?.currentCard]);
 
-    if (!currentTurnPlayer) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold uppercase tracking-widest animate-pulse">Загрузка игры...</div>;
+    // if (!currentTurnPlayer) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold uppercase tracking-widest animate-pulse">Загрузка игры...</div>;
 
 
 
     return (
-        !state ? (
+        (!state || !currentTurnPlayer) ? (
             <div className="h-[100dvh] w-full bg-[#0f172a] flex items-center justify-center text-white">
                 <div className="flex flex-col items-center gap-4">
                     <span className="text-4xl animate-spin">🎲</span>
-                    <span className="text-sm font-bold uppercase tracking-widest text-slate-400">Загрузка состояния...</span>
+                    <span className="text-sm font-bold uppercase tracking-widest text-slate-400">
+                        {!state ? 'Загрузка состояния...' : 'Загрузка игры...'}
+                    </span>
                 </div>
             </div>
         ) : (
