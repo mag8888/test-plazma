@@ -1360,11 +1360,16 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                 <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс</span>
                                 <span className="text-sm font-black text-green-400 font-mono tracking-tight">${localPlayer?.cash?.toLocaleString() || 0}</span>
                                 {isTutorial && state.tutorialStep === 3 && (
-                                    <TutorialTip
-                                        text="Нажмите на банк"
-                                        position="top-full mt-2 left-1/2 -translate-x-1/2 absolute z-[3000] w-[200px]"
-                                        arrow="top-[-6px] border-b-emerald-500 border-t-0"
-                                    />
+                                    (() => {
+                                        console.log('[Board-Render] Showing Bank Hint (Mobile)');
+                                        return (
+                                            <TutorialTip
+                                                text="Нажмите на банк"
+                                                position="top-full mt-2 left-1/2 -translate-x-1/2 absolute z-[3000] w-[200px]"
+                                                arrow="top-[-6px] border-b-emerald-500 border-t-0"
+                                            />
+                                        );
+                                    })()
                                 )}
                             </div>
                             <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
@@ -2058,8 +2063,12 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                         showFastTrackModal && (
                             <ExitToFastTrackModal
                                 onClose={() => {
+                                    console.log('[Board] Closing FastTrackModal, triggering step 3');
                                     setShowFastTrackModal(false);
-                                    if (isTutorial) socket.emit('set_tutorial_step', { roomId, step: 3 });
+                                    if (isTutorial) {
+                                        console.log('[Board] Emitting set_tutorial_step: 3');
+                                        socket.emit('set_tutorial_step', { roomId, step: 3 });
+                                    }
                                 }}
                                 player={localPlayer}
                                 onConfirm={handleEnterFastTrack}
@@ -2068,8 +2077,12 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                     }
 
                     {showFastTrackInfo && <FastTrackInfoModal onClose={() => {
+                        console.log('[Board] Closing FastTrackInfoModal, triggering step 3');
                         setShowFastTrackInfo(false);
-                        if (isTutorial) socket.emit('set_tutorial_step', { roomId, step: 3 });
+                        if (isTutorial) {
+                            console.log('[Board] Emitting set_tutorial_step: 3');
+                            socket.emit('set_tutorial_step', { roomId, step: 3 });
+                        }
                     }} player={localPlayer} />}
 
                     {
