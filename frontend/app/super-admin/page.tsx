@@ -1447,11 +1447,46 @@ export default function AdminPage() {
                 )
             }
 
-            {/* Profile Modal */}
+            {/* USER PROFILE MODAL */}
             <AdminUserProfileModal
                 isOpen={!!viewProfileUser}
                 onClose={() => setViewProfileUser(null)}
-                user={viewProfileUser}
+                user={viewProfileUser || {}}
+                onUserSelect={async (u) => {
+                    // Smart handling of user selection from modal (Referrer/Referral clicks)
+                    // If the object looks complete (has admin fields like balanceRed), use it directly.
+                    if (u.balanceRed !== undefined || u.greenBalance !== undefined) {
+                        setViewProfileUser(u);
+                        return;
+                    }
+
+                    // Otherwise, fetch full profile from Admin API
+                    const identifier = u.username || u.telegram_id || u.telegramId || u._id;
+                    if (!identifier) return;
+
+                    try {
+                        // Use search to find the user
+                        const res = await fetchWithAuth(`/users/search?q=${identifier}`);
+                        if (res.users && res.users.length > 0) {
+                            // Find best match
+                            const fullUser = res.users.find((found: any) =>
+                                found.username === identifier ||
+                                found.telegram_id == identifier
+                            ) || res.users[0];
+
+                            if (fullUser) {
+                                setViewProfileUser(fullUser);
+                            } else {
+                                alert(`User details not found for: ${identifier}`);
+                            }
+                        } else {
+                            alert(`User not found: ${identifier}`);
+                        }
+                    } catch (e) {
+                        console.error("Failed to load user profile", e);
+                        alert("Failed to load user info");
+                    }
+                }}
             />
 
             {/* BALANCE MODAL */}

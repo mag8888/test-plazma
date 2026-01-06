@@ -1,12 +1,26 @@
-import { X, User, Calendar, Trophy, Users, Gamepad2, Award } from 'lucide-react';
+import { X, User, Trophy, TrendingUp, Medal, ExternalLink, Calendar, Users, ChevronDown, ChevronUp } from 'lucide-react';
+import { partnershipApi } from '../../../lib/partnershipApi';
+import { useState, useEffect } from 'react';
 
 interface AdminUserProfileModalProps {
     isOpen: boolean;
     onClose: () => void;
     user: any;
+    onUserSelect?: (user: any) => void;
 }
 
-export function AdminUserProfileModal({ isOpen, onClose, user }: AdminUserProfileModalProps) {
+export function AdminUserProfileModal({ isOpen, onClose, user, onUserSelect }: AdminUserProfileModalProps) {
+    // State for Referrals List
+    const [isReferralsOpen, setIsReferralsOpen] = useState(false);
+    const [referrals, setReferrals] = useState<any[]>([]);
+    const [isLoadingReferrals, setIsLoadingReferrals] = useState(false);
+
+    // Reset state when user changes
+    useEffect(() => {
+        setIsReferralsOpen(false);
+        setReferrals([]);
+    }, [user?._id]);
+
     if (!isOpen || !user) return null;
 
     const username = user.username || user.telegram_id || 'Unknown';
@@ -14,132 +28,249 @@ export function AdminUserProfileModal({ isOpen, onClose, user }: AdminUserProfil
 
     // Referrer Logic
     let referrerName = 'None';
-    let referrerUrl = '#';
+    let referrerIdDisplay = '';
+    let referrerObj: any = null;
 
     if (user.referrer) {
         if (typeof user.referrer === 'string') {
-            referrerName = user.referrer;
-            // Try to guess it's a username if it starts with @, else fetch? Just display for now.
-            referrerUrl = `https://t.me/${user.referrer}`;
-        } else if (user.referrer.username) {
-            referrerName = user.referrer.username;
-            referrerUrl = `https://t.me/${user.referrer.username}`;
-        } else if (user.referrer.telegram_id) {
-            referrerName = String(user.referrer.telegram_id);
+            referrerName = user.referrer; // Could be ID or Username
+            referrerIdDisplay = user.referrer;
+        } else {
+            // It's an object
+            referrerObj = user.referrer;
+            referrerName = user.referrer.username || user.referrer.first_name || 'User';
+            referrerIdDisplay = user.referrer.telegram_id || user.referrer._id;
         }
     }
 
+    const partnershipData = user.partnershipData;
+    const name = user.first_name || user.username || 'User';
+
+    const tariff = partnershipData?.tariff || (user.isMaster ? 'MASTER' : 'GUEST');
+    let tariffColor = 'text-slate-400 border-slate-700';
+    if (tariff === 'MASTER') tariffColor = 'text-purple-400 border-purple-700 bg-purple-900/20';
+    if (tariff === 'PARTNER') tariffColor = 'text-blue-400 border-blue-700 bg-blue-900/20';
+    if (tariff === 'PLAYER') tariffColor = 'text-green-400 border-green-700 bg-green-900/20';
+
+
+    const toggleReferrals = async () => {
+        if (!isReferralsOpen && referrals.length === 0) {
+            setIsLoadingReferrals(true);
+            try {
+                // Fetch referrals using public API (returns partial user objects)
+                // We use username if available, else maybe userId?
+                // The API /api/check-referrals/:username expects username.
+                // If user has no username, we might fail.
+                if (user.username) {
+                    const data = await partnershipApi.getReferrals(user.username);
+                    setReferrals(data.referrals || []);
+                } else {
+                    console.warn("Cannot fetch referrals for user without username");
+                }
+            } catch (e) {
+                console.error("Failed to load referrals", e);
+            } finally {
+                setIsLoadingReferrals(false);
+            }
+        }
+        setIsReferralsOpen(!isReferralsOpen);
+    };
+
+    const handleUserClick = (u: any) => {
+        if (onUserSelect) {
+            onUserSelect(u);
+        }
+    };
+
     return (
-        <div className="fixed inset-0 bg-black/80 z-[200] flex items-center justify-center p-4 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="bg-[#121826] rounded-2xl border border-slate-700 w-full max-w-sm flex flex-col shadow-2xl relative overflow-hidden">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 animate-in fade-in duration-200">
+            <div className="bg-slate-900/90 rounded-3xl w-full max-w-sm border border-slate-700 shadow-2xl overflow-hidden relative max-h-[90vh] flex flex-col">
 
                 {/* Close Button */}
-                <div className="absolute top-3 right-3 z-10">
-                    <button onClick={onClose} className="p-2 rounded-full bg-black/20 hover:bg-white/10 text-white/70 hover:text-white transition-colors">
-                        <X size={18} />
-                    </button>
-                </div>
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 z-20 w-8 h-8 rounded-full bg-black/50 flex items-center justify-center text-white hover:bg-black/70 transition"
+                >
+                    <X size={18} />
+                </button>
 
-                {/* Header */}
-                <div className="pt-8 pb-6 px-6 bg-gradient-to-b from-indigo-900/40 to-transparent flex flex-col items-center">
-                    <div className="w-20 h-20 rounded-full bg-slate-800 border-2 border-indigo-500/50 flex items-center justify-center mb-3 shadow-lg shadow-indigo-500/20 text-3xl overflow-hidden relative">
-                        {user.photo_url ? (
-                            <img src={user.photo_url} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : (
-                            <span className="text-white">👤</span>
-                        )}
-                    </div>
-                    <a
-                        href={profileUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xl font-bold text-white mb-1 hover:text-blue-400 transition-colors flex items-center gap-1 group"
-                    >
-                        @{username}
-                        <span className="opacity-0 group-hover:opacity-100 transition-opacity text-sm ml-1">↗</span>
-                    </a>
+                {/* Scrollable Content */}
+                <div className="overflow-y-auto custom-scrollbar">
 
-                    {user.referrer && (
-                        <div className="flex items-center gap-1 text-xs text-indigo-300 bg-indigo-500/10 px-2 py-1 rounded-full border border-indigo-500/20 mt-2">
-                            <span>Invited by</span>
-                            <a href={referrerUrl} target="_blank" rel="noopener noreferrer" className="font-bold hover:underline hover:text-indigo-200">
-                                @{referrerName}
+                    {/* Header Image / Pattern */}
+                    <div className="h-32 bg-gradient-to-b from-blue-900/40 to-slate-900 relative shrink-0"></div>
+
+                    {/* Profile Info */}
+                    <div className="px-6 pb-8 -mt-16 relative z-10 flex flex-col items-center">
+
+                        {/* Avatar Photo */}
+                        <div className="w-24 h-24 rounded-full border-4 border-slate-900 bg-slate-800 flex items-center justify-center overflow-hidden shadow-xl mb-3 shrink-0">
+                            {user.photoUrl ? (
+                                <img src={user.photoUrl} className="w-full h-full object-cover" />
+                            ) : (
+                                <User size={40} className="text-slate-500" />
+                            )}
+                        </div>
+
+                        {/* Name & ID */}
+                        <h2 className="text-2xl font-bold text-white text-center mb-1">{name}</h2>
+                        {user.username ? (
+                            <a
+                                href={profileUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-400 text-sm mb-4 hover:underline flex items-center gap-1"
+                            >
+                                @{user.username} <ExternalLink size={12} />
                             </a>
-                        </div>
-                    )}
-                </div>
+                        ) : (
+                            <div className="text-slate-500 text-xs mb-4">ID: {user._id || user.telegram_id}</div>
+                        )}
 
-                <div className="px-6 pb-6 space-y-4">
-                    {/* Key Stats Grid */}
-                    <div className="grid grid-cols-3 gap-2">
-                        <div className="bg-slate-800/50 p-2 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center">
-                            <span className="text-[10px] text-slate-400 mb-1">Played</span>
-                            <div className="text-base font-bold text-white flex items-center gap-1">
-                                <Gamepad2 size={14} className="text-purple-400" />
-                                {user.gamesPlayed || 0}
+                        {/* Referrer Info */}
+                        {user.referrer && (
+                            <div className="bg-slate-800/50 rounded-lg p-2 px-4 mb-6 flex items-center gap-2 text-sm border border-slate-700/50">
+                                <span className="text-slate-500">Invited by:</span>
+                                {referrerObj ? (
+                                    <button
+                                        onClick={() => handleUserClick(referrerObj)}
+                                        className="text-blue-300 font-bold hover:underline hover:text-blue-200 flex items-center gap-1"
+                                    >
+                                        @{referrerName}
+                                    </button>
+                                ) : (
+                                    <span className="text-slate-300 font-mono text-xs">{referrerName}</span>
+                                )}
+                            </div>
+                        )}
+
+
+                        {/* Tariff Badge */}
+                        <div className={`px-4 py-1.5 rounded-full border text-xs font-bold uppercase tracking-widest flex items-center gap-2 mb-6 ${tariffColor}`}>
+                            {tariff === 'MASTER' && <Medal size={14} />}
+                            {tariff === 'PARTNER' && <Trophy size={14} />}
+                            {tariff === 'PLAYER' && <User size={14} />}
+                            {tariff}
+                            {partnershipData?.level > 0 && <span className="opacity-70 ml-1">LVL {partnershipData.level}</span>}
+                        </div>
+
+                        {/* Stats Grid */}
+                        <div className="grid grid-cols-2 gap-3 w-full mb-6">
+                            <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
+                                <div className="text-slate-400 text-[10px] uppercase font-bold mb-1">Played</div>
+                                <div className="text-xl font-bold text-white flex items-center gap-1">
+                                    {user.gamesPlayed || 0}
+                                </div>
+                            </div>
+                            <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
+                                <div className="text-slate-400 text-[10px] uppercase font-bold mb-1">Referrals</div>
+                                <div className="text-xl font-bold text-blue-400 flex items-center gap-1">
+                                    <Users size={16} />
+                                    {user.referralsCount || 0}
+                                </div>
+                            </div>
+                            <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
+                                <div className="text-slate-400 text-[10px] uppercase font-bold mb-1">Wins</div>
+                                <div className="text-xl font-bold text-yellow-500 flex items-center gap-1">
+                                    <Trophy size={16} />
+                                    {user.wins || 0}
+                                </div>
+                            </div>
+                            <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700 flex flex-col items-center">
+                                <div className="text-slate-400 text-[10px] uppercase font-bold mb-1">Rating</div>
+                                <div className="text-xl font-bold text-purple-400 flex items-center gap-1">
+                                    <Medal size={16} />
+                                    {user.rating || 0}
+                                </div>
                             </div>
                         </div>
-                        <div className="bg-slate-800/50 p-2 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center">
-                            <span className="text-[10px] text-slate-400 mb-1">Referrals</span>
-                            <div className="text-base font-bold text-white flex items-center gap-1">
-                                <Users size={14} className="text-blue-400" />
-                                {user.referralsCount || 0}
+
+                        {/* Balances */}
+                        <div className="w-full bg-slate-950/50 rounded-xl p-4 border border-slate-800 space-y-3 mb-6">
+                            <div className="flex justify-between items-center">
+                                <div className="text-slate-400 text-xs uppercase font-bold">Green Balance</div>
+                                <div className="text-green-400 font-bold font-mono">${user.greenBalance || 0}</div>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <div className="text-slate-400 text-xs uppercase font-bold">Yellow Balance</div>
+                                <div className="text-yellow-400 font-bold font-mono">${user.yellowBalance || 0}</div>
+                            </div>
+                            <div className="flex justify-between items-center">
+                                <div className="text-slate-400 text-xs uppercase font-bold">Red Balance</div>
+                                <div className="text-red-400 font-bold font-mono">${user.balanceRed || 0}</div>
                             </div>
                         </div>
-                        <div className="bg-slate-800/50 p-2 rounded-xl border border-slate-700/50 flex flex-col items-center justify-center">
-                            <span className="text-[10px] text-slate-400 mb-1">Rating</span>
-                            <div className="text-base font-bold text-white flex items-center gap-1">
-                                <Trophy size={14} className="text-amber-400" />
-                                {user.rating || 0}
-                            </div>
+
+                        {/* Referrals List Section */}
+                        <div className="w-full">
+                            <button
+                                onClick={toggleReferrals}
+                                className="w-full flex items-center justify-between bg-slate-800 hover:bg-slate-700 p-3 rounded-xl border border-slate-700 transition-colors group"
+                            >
+                                <div className="flex items-center gap-2 font-bold text-slate-300 group-hover:text-white">
+                                    <Users size={16} />
+                                    Referrals List ({user.referralsCount || 0})
+                                </div>
+                                {isReferralsOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+                            </button>
+
+                            {isReferralsOpen && (
+                                <div className="mt-2 bg-slate-800/30 rounded-xl border border-slate-700/50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {isLoadingReferrals ? (
+                                        <div className="p-4 text-center text-slate-500 text-xs">Loading referrals...</div>
+                                    ) : referrals.length > 0 ? (
+                                        <div className="max-h-48 overflow-y-auto divide-y divide-slate-700/50 custom-scrollbar">
+                                            {referrals.map((ref: any, i) => (
+                                                <div
+                                                    key={i}
+                                                    onClick={() => handleUserClick(ref)}
+                                                    className="p-3 hover:bg-slate-700/50 transition cursor-pointer flex items-center justify-between group"
+                                                >
+                                                    <div className="flex items-center gap-3">
+                                                        <div className="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-xs font-bold text-slate-400 overflow-hidden">
+                                                            {ref.photoUrl ? (
+                                                                <img src={ref.photoUrl} className="w-full h-full object-cover" />
+                                                            ) : (
+                                                                (ref.username || ref.firstName || '?')[0].toUpperCase()
+                                                            )}
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-sm font-bold text-slate-200 group-hover:text-blue-300 transition-colors">
+                                                                {ref.username || ref.firstName || 'User'}
+                                                            </div>
+                                                            <div className="text-[10px] text-slate-500">
+                                                                Joined: {new Date(ref.joinedAt || ref.createdAt).toLocaleDateString()}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <ExternalLink size={12} className="opacity-0 group-hover:opacity-100 text-blue-400 transition-opacity" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="p-4 text-center text-slate-500 text-xs">No referrals found</div>
+                                    )}
+                                </div>
+                            )}
                         </div>
+
+                        {/* Avatars */}
+                        {partnershipData && (
+                            <div className="mt-6 w-full text-center">
+                                <div className="text-slate-500 text-xs uppercase font-bold mb-2">Avatar Level</div>
+                                <div className="inline-flex items-center gap-2 bg-slate-900 border border-slate-700 rounded-full px-4 py-1 text-sm font-bold text-white">
+                                    Level {partnershipData.level}
+                                    <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                                    {partnershipData.partners} partners
+                                </div>
+                            </div>
+                        )}
+
+                        <div className="text-slate-600 text-[10px] mt-6 flex items-center gap-1">
+                            Joined {new Date(user.createdAt).toLocaleDateString()}
+                        </div>
+
                     </div>
-
-                    {/* Matrix Info */}
-                    <div className="bg-slate-800/30 p-3 rounded-xl border border-slate-700/30">
-                        <div className="flex justify-between items-center mb-2">
-                            <span className="text-xs text-slate-400 flex items-center gap-1">
-                                <Award size={14} /> Avatars Owned
-                            </span>
-                            <span className="text-sm font-bold text-white">{user.avatarCounts?.total || 0}</span>
-                        </div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-xs text-slate-400 flex items-center gap-1">
-                                <Calendar size={14} /> Joined
-                            </span>
-                            <span className="text-xs text-slate-300">
-                                {user.createdAt ? new Date(user.createdAt).toLocaleDateString() : '-'}
-                            </span>
-                        </div>
-                    </div>
-
-                    {/* Balances */}
-                    <div className="space-y-2">
-                        <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-green-900/20 to-green-800/10 border border-green-500/20">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-green-500 shadow-[0_0_8px_rgba(34,197,94,0.5)]"></div>
-                                <span className="text-sm text-green-100">Green Balance</span>
-                            </div>
-                            <span className="font-mono font-bold text-green-400">${user.greenBalance || 0}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-yellow-900/20 to-yellow-800/10 border border-yellow-500/20">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-yellow-500 shadow-[0_0_8px_rgba(234,179,8,0.5)]"></div>
-                                <span className="text-sm text-yellow-100">Yellow Balance</span>
-                            </div>
-                            <span className="font-mono font-bold text-yellow-400">${user.yellowBalance || 0}</span>
-                        </div>
-
-                        <div className="flex items-center justify-between p-3 rounded-xl bg-gradient-to-r from-red-900/20 to-red-800/10 border border-red-500/20">
-                            <div className="flex items-center gap-2">
-                                <div className="w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]"></div>
-                                <span className="text-sm text-red-100">Red Balance</span>
-                            </div>
-                            <span className="font-mono font-bold text-red-400">${user.balanceRed || 0}</span>
-                        </div>
-                    </div>
-
                 </div>
             </div>
         </div>
