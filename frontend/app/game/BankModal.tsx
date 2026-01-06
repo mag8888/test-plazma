@@ -32,13 +32,6 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
         }
     }, [isOpen, initialRecipientId]);
 
-    if (!isOpen) return null;
-
-    // Dynamic Max Loan: Based on Cashflow (10% interest rule)
-    const maxNewLoan = Math.max(0, Math.floor((player.cashflow || 0) / 100) * 1000);
-    const currentLoan = player.loanDebt || 0;
-    const availableLoan = maxNewLoan;
-
     // Filter transactions for this player (either from or to)
     const myHistory = transactions.filter(t => t.from === player.name || t.to === player.name);
 
@@ -56,6 +49,13 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
 
     // Helper for sequential hints
     const showHint = (stepIndex: number) => isTutorial && localTutorialStep === stepIndex;
+
+    // Dynamic Max Loan: Based on Cashflow (10% interest rule)
+    const maxNewLoan = Math.max(0, Math.floor((player.cashflow || 0) / 100) * 1000);
+    const currentLoan = player.loanDebt || 0;
+    const availableLoan = maxNewLoan;
+
+    if (!isOpen) return null;
 
     const handleTakeLoan = () => {
         if (amount <= 0) return;
