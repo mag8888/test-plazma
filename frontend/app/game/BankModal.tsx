@@ -151,7 +151,8 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         <div className="flex justify-between items-center pb-2 border-b border-slate-700/50">
                             <span className="text-emerald-400 font-bold tracking-wide relative">
                                 ↗ ДОХОД
-                                {showHint(0) && <div className="absolute top-10 right-0 z-[3000] w-64 pointer-events-none"><TutorialTip text="1. Ваши Доходы и Расходы. Нажмите сюда, чтобы продолжить." position="right" arrow="top-[-6px] border-b-emerald-500 border-t-0 right-4" /></div>}
+                                ↗ ДОХОД
+                                {showHint(0) && <div className="absolute top-10 left-0 z-[3000] w-[280px] pointer-events-none"><TutorialTip text="1. Ваши Доходы и Расходы. Нажмите сюда, чтобы продолжить." position="bottom" arrow="top-[-6px] left-8 border-b-emerald-500 border-t-0" /></div>}
                             </span>
                             <span className="text-white font-mono text-lg">${player.income?.toLocaleString()}</span>
                         </div>
