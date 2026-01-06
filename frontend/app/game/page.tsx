@@ -7,6 +7,7 @@ import GameBoard from './board';
 import { DREAMS } from '../lib/dreams';
 import { useTelegram } from '../../components/TelegramProvider';
 import { ReadyModal } from './ReadyModal';
+import { ErrorBoundary } from './ErrorBoundary';
 
 interface Player {
     id: string; // Socket ID
@@ -340,7 +341,11 @@ function GameContent() {
             board: [],
             log: []
         };
-        return <GameBoard roomId={roomId} userId={myUserId} initialState={initialBoardState} isHost={isHost} isTutorial={effectiveIsTraining} />;
+        return (
+            <ErrorBoundary name="GameBoard">
+                <GameBoard roomId={roomId} userId={myUserId} initialState={initialBoardState} isHost={isHost} isTutorial={effectiveIsTraining} />
+            </ErrorBoundary>
+        );
     }
 
     return (

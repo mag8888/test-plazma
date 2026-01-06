@@ -219,7 +219,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
 
     // Initial State Sync & Version Check
     useEffect(() => {
-        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: FIX_HOOKS_V5 (Board Return Fixed) 🚀');
+        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: FIX_HOOKS_V7 (GameBoard ErrorBoundary) 🚀');
         if (initialState) {
             setState(initialState);
         }
