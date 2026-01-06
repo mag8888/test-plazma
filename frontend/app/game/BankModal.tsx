@@ -178,7 +178,10 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         </div>
                         <div className="flex justify-between items-center mb-4 text-xs">
                             <span className="text-slate-500">Лимит:</span>
-                            <span className="text-slate-500 font-mono text-emerald-400 font-bold bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-900/30">+${availableLoan.toLocaleString()}</span>
+                            <span className="text-slate-500 font-mono text-emerald-400 font-bold bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-900/30 relative">
+                                +${availableLoan.toLocaleString()}
+                                {isTutorial && <TutorialTip text="Лимит кредита = 10 * Payday. Каждый кредит уменьшает Payday." position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
+                            </span>
                         </div>
 
                         <input
@@ -190,6 +193,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                             value={amount || ''}
                             onChange={e => setAmount(Number(e.target.value))}
                         />
+                        {isTutorial && !amount && <div className="absolute top-[110px] left-1/2 -translate-x-1/2 pointer-events-none"><TutorialTip text="Введите 1000" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" /></div>}
 
                         <div className="grid grid-cols-2 gap-3">
                             <button onClick={handleRepayLoan} className="bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-900/20 active:scale-95 flex items-center justify-center gap-2">
@@ -201,8 +205,9 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                                     Кредит недоступен
                                 </button>
                             ) : (
-                                <button onClick={handleTakeLoan} className="bg-red-600 hover:bg-red-500 text-white py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-red-900/20">
+                                <button onClick={handleTakeLoan} className="bg-red-600 hover:bg-red-500 text-white py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-red-900/20 relative">
                                     Взять
+                                    {isTutorial && amount === 1000 && <TutorialTip text="Нажмите Взять" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
                                 </button>
                             )}
                         </div>
