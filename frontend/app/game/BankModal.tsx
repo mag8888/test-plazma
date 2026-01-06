@@ -229,8 +229,9 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                     {/* Transfer Section */}
                     <div className="bg-slate-800/40 p-6 rounded-3xl border border-slate-700/40 shadow-xl relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
-                        <h4 className="text-slate-300 font-bold mb-4 flex items-center gap-2 text-sm uppercase tracking-wider text-blue-300/80">
+                        <h4 className="text-slate-300 font-bold mb-4 flex items-center gap-2 text-sm uppercase tracking-wider text-blue-300/80 relative">
                             <span className="text-lg">💸</span> Перевод средств
+                            {isTutorial && <TutorialTip text="1. Здесь можно сделать перевод. Попробуйте передать $111" position="top-full mt-2" arrow="top-[-6px] border-b-emerald-500 border-t-0" />}
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 relative z-10">
                             <select
@@ -264,8 +265,9 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
 
                     {/* History Section */}
                     <div className="bg-slate-800/40 p-6 rounded-3xl border border-slate-700/40 flex-1 min-h-[200px] flex flex-col shadow-inner">
-                        <h4 className="text-slate-300 font-bold mb-4 flex items-center gap-3 text-sm uppercase tracking-wider">
+                        <h4 className="text-slate-300 font-bold mb-4 flex items-center gap-3 text-sm uppercase tracking-wider relative">
                             <span>🕒</span> История операций <span className="bg-slate-700/50 text-slate-300 text-[10px] px-2 py-0.5 rounded-full border border-slate-600/50">{myHistory.length}</span>
+                            {isTutorial && <TutorialTip text="2. Здесь отображаются ваши фин операции" position="top-full mt-2" arrow="top-[-6px] border-b-emerald-500 border-t-0" />}
                         </h4>
 
                         <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar flex-1">
