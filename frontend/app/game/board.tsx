@@ -1989,7 +1989,13 @@ function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState 
                                     }
                                 }}
                                 player={localPlayer}
-                                onConfirm={handleEnterFastTrack}
+                                onConfirm={() => {
+                                    handleEnterFastTrack();
+                                    setShowFastTrackModal(false);
+                                    if (isTutorial) {
+                                        socket.emit('set_tutorial_step', { roomId, step: 3 });
+                                    }
+                                }}
                             />
                         )
                     }
