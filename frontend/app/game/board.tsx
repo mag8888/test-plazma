@@ -1501,13 +1501,13 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                 zoom={zoom}
                                 onSquareClick={(sq: any) => setSquareInfo(sq)}
                                 showExitButton={showExitButton}
-                                onExitClick={() => {
-                                    if (localPlayer?.isFastTrack) {
-                                        setShowFastTrackInfo(true);
+                                if (localPlayer?.isFastTrack) {
+                                setShowFastTrackInfo(true);
                                     } else {
-                                        setShowFastTrackModal(true);
+                                setShowFastTrackModal(true);
                                     }
                                 }}
+                            isTutorial={isTutorial}
                             />
 
                             {/* ActiveCardZone Overlay - Center */}

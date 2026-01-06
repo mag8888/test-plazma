@@ -51,7 +51,9 @@ const getGradient = (type: string, isFT: boolean) => {
     return 'bg-gradient-to-br from-slate-800 to-slate-900 border-slate-700';
 };
 
-export const BoardVisualizer = React.memo(({ board, players, animatingPos, currentPlayerId, onSquareClick, zoom = 1, showExitButton, onExitClick }: any) => {
+import { TutorialTip } from './TutorialTip';
+
+export const BoardVisualizer = React.memo(({ board, players, animatingPos, currentPlayerId, onSquareClick, zoom = 1, showExitButton, onExitClick, isTutorial }: any) => {
 
     // Helper: Is Fast Track?
     const isFastTrackSquare = (index: number) => index >= 24;
@@ -212,7 +214,10 @@ export const BoardVisualizer = React.memo(({ board, players, animatingPos, curre
                                 `}
                             >
                                 <span className="text-[2cqw] filter drop-shadow-md group-hover:-translate-y-1 transition-transform">🚀</span>
-                                <span className="text-white font-black text-[1cqw] uppercase tracking-[0.2em] drop-shadow-md mt-1">FAST TRACK</span>
+                                <span className="text-white font-black text-[1cqw] uppercase tracking-[0.2em] drop-shadow-md mt-1 relative">
+                                    FAST TRACK
+                                    {isTutorial && <TutorialTip text="3. Кнопка выхода на Большой Круг" position="bottom-full mb-8" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
+                                </span>
                             </button>
                         )}
 
