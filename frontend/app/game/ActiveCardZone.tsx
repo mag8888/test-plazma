@@ -360,14 +360,23 @@ const FeedCardItem = ({
                                     >
                                         OK
                                     </button>
-                                ) : (card.type === 'EXPENSE' || card.type === 'LOSS') ? (
+                                ) : (card.type === 'EXPENSE' || card.type === 'LOSS') ? (<>
                                     <button
                                         onClick={onDismiss}
                                         className="w-full bg-gradient-to-r from-pink-600 to-rose-600 hover:from-pink-500 hover:to-rose-500 text-white font-bold py-3 rounded-xl text-lg uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
                                     >
                                         OK
                                     </button>
-                                ) : card.type === 'MARKET' ? (
+                                    {/* Expense Strategy Hint */}
+                                    {card.type === 'EXPENSE' && (
+                                        <div className="mt-2 bg-pink-900/20 border border-pink-500/20 p-2 rounded-lg flex gap-2 items-start animate-in fade-in slide-in-from-bottom-2">
+                                            <span className="text-pink-400 text-lg">💡</span>
+                                            <p className="text-[10px] text-pink-200/80 leading-relaxed">
+                                                <strong className="text-pink-200">Совет:</strong> Обратите внимание, куда уходят деньги. Обязательные траты и импульсные покупки часто мешают создать капитал.
+                                            </p>
+                                        </div>
+                                    )}
+                                </>) : card.type === 'MARKET' ? (
                                     <>
                                         {/* Market Card Actions */}
                                         {/* If it's a Stock, you can also BUY at this price - ONLY if you control the card */}
@@ -470,7 +479,7 @@ const FeedCardItem = ({
                             </div>
                         )}
                         {/* Deal Choice (Small/Big) Helper */}
-                        {isMyTurn && card.type === 'DEAL' && !card.id && (
+                        {isMyTurn && card.type === 'DEAL' && !card.id && (<>
                             <div className="grid grid-cols-2 gap-2 mt-1">
                                 <button onClick={() => { socket.emit('draw_deal', { roomId, type: 'SMALL' }); onDismiss(); }} disabled={me.cash < 500} className="bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white font-bold py-2 rounded-xl text-[10px] uppercase">
                                     Малая (до $5k)
@@ -480,7 +489,14 @@ const FeedCardItem = ({
                                     Крупная (от $6k)
                                 </button>
                             </div>
-                        )}
+                            {/* Strategy Hint */}
+                            <div className="mt-3 bg-blue-900/20 border border-blue-500/20 p-2 rounded-lg flex gap-2 items-start animate-in fade-in slide-in-from-bottom-2">
+                                <span className="text-blue-400 text-lg">💡</span>
+                                <p className="text-[10px] text-blue-200/80 leading-relaxed">
+                                    <strong className="text-blue-200">Совет:</strong> В начале игры лучше выбирать <span className="text-green-400 font-bold">Малые сделки</span> ($500-$5000), чтобы накопить стартовый капитал с минимальным риском.
+                                </p>
+                            </div>
+                        </>)}
                     </>
                 ) : viewMode === 'MLM_ROLL' ? (
                     <div className="bg-slate-900/40 p-3 rounded-lg border border-white/5 flex-1 flex flex-col items-center justify-center text-center animate-in zoom-in-95">
@@ -758,64 +774,66 @@ const FeedCardItem = ({
                 }}
             />
             {/* Transfer Deal Overlay */}
-            {showTransfer && (
-                <div className="absolute inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-center p-4 animate-in fade-in zoom-in-95">
-                    <h3 className="text-white font-bold mb-4">Выберите получателя</h3>
-                    <div className="flex flex-col gap-2 w-full max-h-[300px] overflow-y-auto px-1">
-                        {players?.filter((p: any) => p.id !== me.id && !p.isBankrupted).map((p: any) => (
-                            <button
-                                key={p.id}
-                                onClick={async () => {
-                                    try {
-                                        // Use new API endpoint
-                                        const res = await fetch(`${getGameServiceUrl()}/api/rooms/${roomId}/deal/transfer`, {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({
-                                                fromUserId: me.id,
-                                                targetPlayerId: p.id,
-                                                cardId: card.id
-                                            })
-                                        });
+            {
+                showTransfer && (
+                    <div className="absolute inset-0 bg-slate-900/95 z-50 flex flex-col items-center justify-center p-4 animate-in fade-in zoom-in-95">
+                        <h3 className="text-white font-bold mb-4">Выберите получателя</h3>
+                        <div className="flex flex-col gap-2 w-full max-h-[300px] overflow-y-auto px-1">
+                            {players?.filter((p: any) => p.id !== me.id && !p.isBankrupted).map((p: any) => (
+                                <button
+                                    key={p.id}
+                                    onClick={async () => {
+                                        try {
+                                            // Use new API endpoint
+                                            const res = await fetch(`${getGameServiceUrl()}/api/rooms/${roomId}/deal/transfer`, {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({
+                                                    fromUserId: me.id,
+                                                    targetPlayerId: p.id,
+                                                    cardId: card.id
+                                                })
+                                            });
 
-                                        if (!res.ok) {
-                                            const err = await res.json();
-                                            alert(err.error || 'Transfer failed');
-                                            return;
+                                            if (!res.ok) {
+                                                const err = await res.json();
+                                                alert(err.error || 'Transfer failed');
+                                                return;
+                                            }
+
+                                            setShowTransfer(false);
+                                            onDismiss();
+                                        } catch (e) {
+                                            console.error(e);
+                                            alert('Network error');
                                         }
-
-                                        setShowTransfer(false);
-                                        onDismiss();
-                                    } catch (e) {
-                                        console.error(e);
-                                        alert('Network error');
-                                    }
-                                }}
-                                className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl hover:bg-slate-700 transition active:scale-95 border border-slate-700 hover:border-blue-500/50"
-                            >
-                                <div className="w-8 h-8 rounded-full bg-slate-600 overflow-hidden relative shrink-0">
-                                    {(p.avatar || p.photo_url) ? (
-                                        <img src={p.avatar || p.photo_url} alt={p.name} className="w-full h-full object-cover" />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white uppercase">{p.name?.[0]}</div>
-                                    )}
-                                </div>
-                                <span className="text-white font-bold text-sm text-left truncate">{p.name}</span>
-                            </button>
-                        ))}
-                        {(!players || players.filter((p: any) => p.id !== me.id).length === 0) && (
-                            <div className="text-slate-500 text-xs text-center py-4">Нет доступных игроков</div>
-                        )}
+                                    }}
+                                    className="flex items-center gap-3 p-3 bg-slate-800 rounded-xl hover:bg-slate-700 transition active:scale-95 border border-slate-700 hover:border-blue-500/50"
+                                >
+                                    <div className="w-8 h-8 rounded-full bg-slate-600 overflow-hidden relative shrink-0">
+                                        {(p.avatar || p.photo_url) ? (
+                                            <img src={p.avatar || p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <div className="w-full h-full flex items-center justify-center text-xs font-bold text-white uppercase">{p.name?.[0]}</div>
+                                        )}
+                                    </div>
+                                    <span className="text-white font-bold text-sm text-left truncate">{p.name}</span>
+                                </button>
+                            ))}
+                            {(!players || players.filter((p: any) => p.id !== me.id).length === 0) && (
+                                <div className="text-slate-500 text-xs text-center py-4">Нет доступных игроков</div>
+                            )}
+                        </div>
+                        <button
+                            onClick={() => setShowTransfer(false)}
+                            className="mt-6 px-6 py-3 bg-slate-800 rounded-xl text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider transition-colors border border-slate-700"
+                        >
+                            Отмена
+                        </button>
                     </div>
-                    <button
-                        onClick={() => setShowTransfer(false)}
-                        className="mt-6 px-6 py-3 bg-slate-800 rounded-xl text-slate-300 hover:text-white text-xs font-bold uppercase tracking-wider transition-colors border border-slate-700"
-                    >
-                        Отмена
-                    </button>
-                </div>
-            )}
-        </div>
+                )
+            }
+        </div >
     );
 };
 
