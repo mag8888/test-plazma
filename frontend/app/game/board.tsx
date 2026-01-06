@@ -906,7 +906,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
         }
     }, [state?.phase, isAnimatingMove, state?.currentCard]);
 
-    if (!currentTurnPlayer) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold uppercase tracking-widest animate-pulse">Loading Game...</div>;
+    if (!currentTurnPlayer) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold uppercase tracking-widest animate-pulse">Загрузка игры...</div>;
 
 
 
@@ -915,7 +915,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
             <div className="h-[100dvh] w-full bg-[#0f172a] flex items-center justify-center text-white">
                 <div className="flex flex-col items-center gap-4">
                     <span className="text-4xl animate-spin">🎲</span>
-                    <span className="text-sm font-bold uppercase tracking-widest text-slate-400">Loading Game State...</span>
+                    <span className="text-sm font-bold uppercase tracking-widest text-slate-400">Загрузка состояния...</span>
                 </div>
             </div>
         ) : (
@@ -977,7 +977,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                                 }}
                                                 className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600/50 rounded-xl py-4 font-bold text-[10px] uppercase transition-colors"
                                             >
-                                                👢 Kick
+                                                👢 Выгнать
                                             </button>
                                             {isHost && (
                                                 <button
@@ -1314,7 +1314,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                                 ${state.isPaused ? 'bg-blue-600 text-white' : 'bg-slate-800 border border-slate-700 text-slate-300'}`}
                                         >
                                             <span>{state.isPaused ? '▶️' : '⏸'}</span>
-                                            <span>{state.isPaused ? 'RESUME GAME' : 'PAUSE GAME'}</span>
+                                            <span>{state.isPaused ? 'ПРОДОЛЖИТЬ' : 'ПАУЗА'}</span>
                                         </button>
                                     )}
                                 </div>
@@ -1495,7 +1495,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                                 <div className="flex items-center gap-2 text-[10px] text-slate-500">
                                                     {a.quantity > 0 && <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">{a.quantity} шт</span>}
                                                     {a.symbol && a.averageCost && <span className="text-blue-400">Ср: ${a.averageCost.toFixed(2)}</span>}
-                                                    {a.cost && <span>Pos: ${(a.cost * a.quantity).toLocaleString()}</span>}
+                                                    {a.cost && <span>Поз: ${(a.cost * a.quantity).toLocaleString()}</span>}
                                                 </div>
                                             </div>
                                             <div className="flex flex-col items-end gap-1">

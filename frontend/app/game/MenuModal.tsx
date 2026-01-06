@@ -58,10 +58,10 @@ export const MenuModal = ({
                     <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 mb-6 text-xs">
                         <h3 className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Состояние Колод</h3>
                         <div className="grid grid-cols-2 gap-2">
-                            <div className="flex justify-between"><span className="text-emerald-400">Small</span> <span className="font-mono text-white">{deckCounts.small?.remaining}/{deckCounts.small?.total}</span></div>
-                            <div className="flex justify-between"><span className="text-purple-400">Big</span> <span className="font-mono text-white">{deckCounts.big?.remaining}/{deckCounts.big?.total}</span></div>
-                            <div className="flex justify-between"><span className="text-blue-400">Market</span> <span className="font-mono text-white">{deckCounts.market?.remaining}/{deckCounts.market?.total}</span></div>
-                            <div className="flex justify-between"><span className="text-pink-400">Expense</span> <span className="font-mono text-white">{deckCounts.expense?.remaining}/{deckCounts.expense?.total}</span></div>
+                            <div className="flex justify-between"><span className="text-emerald-400">Мелкие</span> <span className="font-mono text-white">{deckCounts.small?.remaining}/{deckCounts.small?.total}</span></div>
+                            <div className="flex justify-between"><span className="text-purple-400">Крупные</span> <span className="font-mono text-white">{deckCounts.big?.remaining}/{deckCounts.big?.total}</span></div>
+                            <div className="flex justify-between"><span className="text-blue-400">Рынок</span> <span className="font-mono text-white">{deckCounts.market?.remaining}/{deckCounts.market?.total}</span></div>
+                            <div className="flex justify-between"><span className="text-pink-400">Расходы</span> <span className="font-mono text-white">{deckCounts.expense?.remaining}/{deckCounts.expense?.total}</span></div>
                         </div>
                     </div>
                 )}
@@ -194,7 +194,7 @@ export const MenuModal = ({
                                     onClick={onKickCurrent}
                                     className="bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600/50 rounded-xl py-3  font-bold text-[10px] uppercase transition-colors"
                                 >
-                                    Кикнуть
+                                    Выгнать
                                 </button>
                             </div>
 

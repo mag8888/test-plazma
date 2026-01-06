@@ -213,7 +213,7 @@ export const FeedCardItem = ({
                                 <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {card.cashflow !== undefined && card.cashflow !== 0 && (
                                         <div className="text-[9px] px-1.5 py-0.5 rounded bg-green-900/30 border border-green-500/30 text-green-300 font-mono flex items-center gap-1">
-                                            <span>Cashflow:</span> <b>{card.cashflow > 0 ? '+' : ''}${card.cashflow}</b>
+                                            <span>Поток:</span> <b>{card.cashflow > 0 ? '+' : ''}${card.cashflow}</b>
                                         </div>
                                     )}
                                     {card.roi && (
