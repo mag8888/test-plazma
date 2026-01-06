@@ -93,6 +93,7 @@ const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
     const prevCash = useRef(currentCash);
 
     useEffect(() => {
+        console.log('🚀 BOARD COMPONENT LOADED - VERSION: FIX_HOOKS_V2 🚀');
         if (prevCash.current !== currentCash) {
             const difference = currentCash - prevCash.current;
             setDiff(difference);
@@ -214,6 +215,15 @@ const TutorialTip: React.FC<{ text: string, position?: string, arrow?: string }>
 export default function GameBoard({ roomId, userId, initialState, isHost, isTutorial }: BoardProps) {
     const router = useRouter();
     const [state, setState] = useState(initialState);
+
+    // Initial State Sync & Version Check
+    useEffect(() => {
+        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: FIX_HOOKS_V3 (ActiveCardZone Fixed) 🚀');
+        if (initialState) {
+            setState(initialState);
+        }
+    }, []);
+
     const [showBank, setShowBank] = useState(false);
     const [showRules, setShowRules] = useState(false);
 
@@ -582,6 +592,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                 isRollingRef.current = false;
 
                 // Start Move
+                // Initial State Sync
                 setTimeout(() => {
                     setState(data.state);
                 }, 500);
