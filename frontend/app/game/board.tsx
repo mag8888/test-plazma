@@ -218,7 +218,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
 
     // Initial State Sync & Version Check
     useEffect(() => {
-        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: FIX_HOOKS_V4 (BabyRoll Order Fixed) 🚀');
+        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: FIX_HOOKS_V5 (Board Return Fixed) 🚀');
         if (initialState) {
             setState(initialState);
         }
@@ -840,19 +840,17 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
     // Calculate total asset yield
     const totalAssetYield = localPlayer?.assets?.reduce((sum: number, a: any) => sum + (a.cashflow || 0), 0) || 0;
 
-    if (!currentTurnPlayer) return <div>Loading...</div>; // Safety check
-
     // Animation State for Visualizer
     const [animatingPos, setAnimatingPos] = useState<Record<string, number>>({});
 
     useEffect(() => {
-        if (!state.players) return;
+        if (!state?.players) return;
         const newPosMap: Record<string, number> = {};
         state.players.forEach((p: any) => {
             newPosMap[p.id] = animatingPos[p.id] ?? p.position;
         });
         setAnimatingPos(prev => ({ ...prev, ...newPosMap }));
-    }, [state.players]);
+    }, [state?.players]);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -860,7 +858,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                 const next = { ...prev };
                 let changed = false;
 
-                state.players.forEach((p: PlayerState) => {
+                state?.players?.forEach((p: PlayerState) => {
                     const currentDisplayPos = prev[p.id] ?? p.position;
 
                     if (currentDisplayPos !== p.position) {
@@ -878,22 +876,22 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
         }, 500);
 
         return () => clearInterval(interval);
-    }, [state.players]);
+    }, [state?.players]);
     // Check if any player is currently animating (visual position != logical position)
-    const isAnimatingMove = state.players.some((p: any) =>
+    const isAnimatingMove = state?.players?.some((p: any) =>
         (animatingPos[p.id] !== undefined && animatingPos[p.id] !== p.position)
-    );
+    ) || false;
 
     // Card Reveal Delay Logic
     const [canShowCard, setCanShowCard] = useState(false);
 
     useEffect(() => {
         // If we are moving or rolling, hide card
-        if (state.phase === 'ROLL' || isAnimatingMove) {
+        if (state?.phase === 'ROLL' || isAnimatingMove) {
             setCanShowCard(false);
         } else {
             // User Request: Delay Expense/Market cards by 1s AFTER animation stops
-            const type = state.currentCard?.type || '';
+            const type = state?.currentCard?.type || '';
             const isDelayedType = type.includes('EXPENSE') || type === 'DOODAD' || type.includes('MARKET');
 
             if (isDelayedType && !canShowCard) { // prevent loop if already true
@@ -907,6 +905,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
             }
         }
     }, [state?.phase, isAnimatingMove, state?.currentCard]);
+
+    if (!currentTurnPlayer) return <div className="min-h-screen flex items-center justify-center text-slate-500 font-bold uppercase tracking-widest animate-pulse">Loading Game...</div>;
 
 
 
