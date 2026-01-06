@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Search, Users, Shield, Copy, Wand2, RefreshCw, Lock, Trash2, History, CreditCard, Calendar, BarChart, TreePine, Eye, XCircle } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Users, Shield, Copy, Wand2, RefreshCw, Lock, Trash2, History, CreditCard, Calendar, BarChart, TreePine, Eye, XCircle, DollarSign, Maximize } from 'lucide-react';
 import { AdminUserProfileModal } from './components/AdminUserProfileModal';
 import { partnershipApi } from '../../lib/partnershipApi';
 import { getBackendUrl, getGameServiceUrl } from '../../lib/config';
