@@ -856,17 +856,17 @@ export const ActiveCardZone = ({
     isTutorial,
     tutorialStep
 }: ActiveCardZoneProps) => {
-    // Safety Guards
-    if (!state || !me) return null;
-
     // Local Dismissal State to prevent closing for everyone
     const [locallyDismissedIds, setLocallyDismissedIds] = useState<string[]>([]);
 
     // Clear dismissed IDs only when turn changes (not on every state update)
-    const currentPlayerIndex = state.currentPlayerIndex;
+    const currentPlayerIndex = state?.currentPlayerIndex;
     useEffect(() => {
         setLocallyDismissedIds([]);
     }, [currentPlayerIndex]);
+
+    // Safety Guards (moved after hooks)
+    if (!state || !me) return null;
 
     const showPhaseContent = canShowCard;
 
