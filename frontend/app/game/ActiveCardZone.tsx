@@ -1209,12 +1209,12 @@ interface BabyRollViewProperties {
 }
 
 const BabyRollView = ({ roomId, isMyTurn, socket }: BabyRollViewProperties) => {
-    if (!isMyTurn) return <div className="flex flex-col items-center justify-center h-full text-slate-500 animate-pulse text-xs">👶 Ожидание броска...</div>;
-
     // Auto-Roll Logic
     const [timeLeft, setTimeLeft] = useState(30);
 
     useEffect(() => {
+        if (!isMyTurn) return; // Don't run effect if not my turn (optional optimization)
+
         if (timeLeft <= 0) {
             // Auto Roll
             fetch(`${getGameServiceUrl()}/api/rooms/${roomId}/baby/roll`, {
@@ -1225,7 +1225,9 @@ const BabyRollView = ({ roomId, isMyTurn, socket }: BabyRollViewProperties) => {
         }
         const timer = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
         return () => clearInterval(timer);
-    }, [timeLeft, roomId, socket]);
+    }, [timeLeft, roomId, socket, isMyTurn]);
+
+    if (!isMyTurn) return <div className="flex flex-col items-center justify-center h-full text-slate-500 animate-pulse text-xs">👶 Ожидание броска...</div>;
 
     return (
         <div className="flex flex-col h-full w-full relative bg-slate-900 rounded-2xl border border-slate-700/50 shadow-lg overflow-hidden">
