@@ -630,7 +630,51 @@ app.delete('/api/games/:id/players/:userId', async (req, res) => {
     }
 });
 
-// NEW: Global Admin Broadcast
+// NEW: Global
+// Cloudinary Stats Endpoint
+app.get('/api/admin/storage-stats', async (req, res) => {
+    if (!checkAdminAuth(req, res)) return;
+
+    try {
+        const cloudinary = require('cloudinary').v2;
+        // Ensure config is loaded (usually via .env)
+        // usage() returns a Promise
+        const usage = await cloudinary.api.usage();
+
+        // Usage object format:
+        // {
+        //   plan: 'Free',
+        //   last_updated: '2024-01-01',
+        //   transformations: { usage: 100, credits_usage: 0.1 },
+        //   objects: { usage: 500, limit: 1000 },
+        //   bandwidth: { usage: 1024, limit: 10000 },
+        //   storage: { usage: 52428800, limit: 104857600, used_percent: 50 } 
+        //   credits: { usage: 0, limit: 25, used_percent: 0 }
+        // }
+
+        const storageBytes = usage.storage?.usage || 0;
+        const storageLimit = usage.storage?.limit || 1; // avoid div by 0
+        const mbUsed = (storageBytes / (1024 * 1024)).toFixed(2);
+        const percent = ((storageBytes / storageLimit) * 100).toFixed(1);
+
+        res.json({
+            success: true,
+            storageUsed: `${mbUsed} MB`,
+            percentUsed: `${percent}%`,
+            details: usage.storage
+        });
+    } catch (error: any) {
+        console.error('Cloudinary Usage Error:', error);
+        // Fallback or error
+        res.status(500).json({
+            success: false,
+            storageUsed: 'Error',
+            error: error.message
+        });
+    }
+});
+
+// Admin Broadcast Endpoint
 app.post('/api/admin/broadcast', async (req, res) => {
     const secret = req.headers['x-admin-secret'];
     const validSecrets = (process.env.ADMIN_SECRET || '').split(',').map(s => s.trim());

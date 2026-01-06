@@ -421,7 +421,22 @@ export default function AdminPage() {
 
     const fetchStats = async (key: string = secret) => {
         try {
+            // 1. Partnership Stats
             const res = await fetchWithAuth('/stats', {}, key);
+
+            // 2. Cloudinary Stats (Game Service)
+            try {
+                const cloudRes = await fetchWithAuth('/storage-stats', {}, key, GAME_API_URL);
+                if (cloudRes && cloudRes.success) {
+                    if (res) {
+                        res.storageUsed = cloudRes.storageUsed;
+                        res.storagePercent = cloudRes.percentUsed;
+                    }
+                }
+            } catch (err) {
+                console.error("Cloudinary stats fetch error", err);
+            }
+
             if (res && !res.error) {
                 setStats(res);
             }
