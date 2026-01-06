@@ -11,6 +11,22 @@ interface CardHeaderProps {
     onDismiss: () => void;
 }
 
+// Helper to translate card types
+const getCardTypeLabel = (type: string) => {
+    switch (type) {
+        case 'DEAL_SMALL': return 'Малая сделка';
+        case 'DEAL_BIG': return 'Крупная сделка';
+        case 'MARKET': return 'Рынок';
+        case 'EXPENSE': return 'Расход';
+        case 'DOODAD': return 'Трата';
+        case 'PAYDAY': return 'Зарплата';
+        case 'CHARITY': return 'Благотворительность';
+        case 'DOWNSIZED': return 'Увольнение';
+        case 'BABY': return 'Ребенок';
+        default: return type;
+    }
+};
+
 export const CardHeader: React.FC<CardHeaderProps> = ({ card, cardNumber, isStock, ownedQty, timeLeft, formatTime, onDismiss }) => (
     <div className="flex items-start justify-between gap-2 mb-2 shrink-0 h-10">
         <div className="flex-1 min-w-0 flex flex-col gap-0.5">
@@ -25,7 +41,7 @@ export const CardHeader: React.FC<CardHeaderProps> = ({ card, cardNumber, isStoc
             </div>
             <div className="flex items-center gap-2 mt-0.5">
                 <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider opacity-70">
-                    {card.symbol || card.type}
+                    {card.symbol || getCardTypeLabel(card.type)}
                 </span>
                 {/* Show owned quantity for stocks */}
                 {isStock && ownedQty > 0 && (

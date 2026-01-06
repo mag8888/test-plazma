@@ -34,7 +34,7 @@ export const BabyRollView = ({ roomId, isMyTurn, socket }: BabyRollViewPropertie
         <div className="flex flex-col h-full w-full relative bg-slate-900 rounded-2xl border border-slate-700/50 shadow-lg overflow-hidden">
             <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-purple-500"></div>
             <div className="absolute top-2 right-2 text-[10px] text-slate-500 font-mono">
-                AUTO: {timeLeft}s
+                АВТО: {timeLeft}с
             </div>
             <div className="p-4 flex-1 flex flex-col items-center justify-center text-center">
                 <div className="text-5xl mb-3 animate-bounce">👶</div>
