@@ -865,15 +865,17 @@ export const ActiveCardZone = ({
         setLocallyDismissedIds([]);
     }, [currentPlayerIndex]);
 
-    // Safety Guards (moved after hooks)
+    // Safety Guards - FIRST (before any hooks or logic)
     if (!state || !me) return null;
 
     const showPhaseContent = canShowCard;
 
+    // Phase-specific rendering logic - stored in variables (NO early returns!)
+    let phaseContent: React.ReactElement | null = null;
 
     // 1. OPPORTUNITY CHOICE
     if (showPhaseContent && state.phase === 'OPPORTUNITY_CHOICE' && isMyTurn) {
-        return (
+        phaseContent = (
             <div className="flex flex-col h-full w-full relative overflow-hidden bg-slate-900 rounded-2xl shadow-2xl border border-slate-700/50">
                 {/* Header */}
                 <div className="absolute top-0 inset-x-0 h-16 bg-gradient-to-b from-slate-800 to-transparent z-0 pointer-events-none"></div>
@@ -924,9 +926,9 @@ export const ActiveCardZone = ({
     }
     // 2. CHARITY
     // 2. CHARITY CHOICE
-    if (showPhaseContent && state.phase === 'CHARITY_CHOICE') {
+    else if (showPhaseContent && state.phase === 'CHARITY_CHOICE') {
         if (!isMyTurn) {
-            return (
+            phaseContent = (
                 <div className="flex flex-col items-center justify-center h-full text-slate-500/80 animate-pulse bg-slate-900/40 rounded-2xl border border-slate-800/50">
                     <div className="text-3xl mb-2 grayscale opacity-50">❤️</div>
                     <div className="text-center">
@@ -935,114 +937,113 @@ export const ActiveCardZone = ({
                     </div>
                 </div>
             );
-        }
-        return (
-            <div className="flex flex-col h-full w-full relative bg-[#1e293b] rounded-2xl overflow-hidden border border-slate-700/50 shadow-lg">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-red-500 rounded-t-3xl"></div>
-                <div className="p-3 flex-1 flex flex-col items-center text-center justify-center h-full">
-                    <div className="text-3xl mb-2">❤️</div>
-                    <h2 className="text-sm font-bold text-white mb-2">Благотворительность</h2>
-                    <p className="text-slate-400 text-[10px] mb-4 leading-relaxed">
-                        Пожертвуйте <span className="text-pink-400 font-bold">{me?.isFastTrack ? '$100k' : '10%'}</span> <br />
-                        {me?.isFastTrack
-                            ? 'Выберите количество кубиков на 3 хода.'
-                            : 'для выбора 1 или 2 кубиков на 3 хода.'
-                        }
-                    </p>
+        } else {
+            phaseContent = (
+                <div className="flex flex-col h-full w-full relative bg-[#1e293b] rounded-2xl overflow-hidden border border-slate-700/50 shadow-lg">
+                    <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-pink-500 to-red-500 rounded-t-3xl"></div>
+                    <div className="p-3 flex-1 flex flex-col items-center text-center justify-center h-full">
+                        <div className="text-3xl mb-2">❤️</div>
+                        <h2 className="text-sm font-bold text-white mb-2">Благотворительность</h2>
+                        <p className="text-slate-400 text-[10px] mb-4 leading-relaxed">
+                            Пожертвуйте <span className="text-pink-400 font-bold">{me?.isFastTrack ? '$100k' : '10%'}</span> <br />
+                            {me?.isFastTrack
+                                ? 'Выберите количество кубиков на 3 хода.'
+                                : 'для выбора 1 или 2 кубиков на 3 хода.'
+                            }
+                        </p>
 
-                    {/* Fast Track: Show 1, 2, 3 dice options */}
-                    {me?.isFastTrack ? (
-                        <div className="w-full space-y-2">
-                            <div className="grid grid-cols-3 gap-2 mb-3">
+                        {/* Fast Track: Show 1, 2, 3 dice options */}
+                        {me?.isFastTrack ? (
+                            <div className="w-full space-y-2">
+                                <div className="grid grid-cols-3 gap-2 mb-3">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            socket.emit('donate_charity', { roomId, diceCount: 1 });
+                                        }}
+                                        className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
+                                    >
+                                        🎲 x1
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            socket.emit('donate_charity', { roomId, diceCount: 2 });
+                                        }}
+                                        className="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
+                                    >
+                                        🎲 x2
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            socket.emit('donate_charity', { roomId, diceCount: 3 });
+                                        }}
+                                        className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
+                                    >
+                                        🎲 x3
+                                    </button>
+                                </div>
+                                <div className="text-[9px] text-slate-500 mb-2">Стоимость: $100,000</div>
                                 <button
                                     onClick={(e) => {
                                         e.stopPropagation();
-                                        socket.emit('donate_charity', { roomId, diceCount: 1 });
+                                        socket.emit('skip_charity', { roomId });
                                     }}
-                                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
+                                    className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
                                 >
-                                    🎲 x1
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        socket.emit('donate_charity', { roomId, diceCount: 2 });
-                                    }}
-                                    className="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
-                                >
-                                    🎲 x2
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        socket.emit('donate_charity', { roomId, diceCount: 3 });
-                                    }}
-                                    className="bg-purple-600 hover:bg-purple-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
-                                >
-                                    🎲 x3
-                                </button>
-                            </div>
-                            <div className="text-[9px] text-slate-500 mb-2">Стоимость: $100,000</div>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    socket.emit('skip_charity', { roomId });
-                                }}
-                                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
-                            >
-                                Отказаться
-                            </button>
-                        </div>
-                    ) : (
-                        /* Rat Race: 1 or 2 dice */
-                        <div className="w-full space-y-2">
-                            <div className="grid grid-cols-2 gap-2 mb-2">
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        socket.emit('donate_charity', { roomId, diceCount: 1 });
-                                    }}
-                                    className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
-                                >
-                                    🎲 x1
-                                </button>
-                                <button
-                                    onClick={(e) => {
-                                        e.stopPropagation();
-                                        socket.emit('donate_charity', { roomId, diceCount: 2 });
-                                    }}
-                                    className="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
-                                >
-                                    🎲 x2
+                                    Отказаться
                                 </button>
                             </div>
-                            <div className="text-[9px] text-slate-500 mb-2">Стоимость: ${(Math.max(0, (me?.income || 0) * 0.1)).toLocaleString()}</div>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation();
-                                    socket.emit('skip_charity', { roomId });
-                                }}
-                                className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
-                            >
-                                Отказаться
-                            </button>
-                        </div>
-                    )}
+                        ) : (
+                            /* Rat Race: 1 or 2 dice */
+                            <div className="w-full space-y-2">
+                                <div className="grid grid-cols-2 gap-2 mb-2">
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            socket.emit('donate_charity', { roomId, diceCount: 1 });
+                                        }}
+                                        className="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
+                                    >
+                                        🎲 x1
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            socket.emit('donate_charity', { roomId, diceCount: 2 });
+                                        }}
+                                        className="bg-pink-600 hover:bg-pink-500 text-white font-bold py-3 rounded-xl text-[10px] uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
+                                    >
+                                        🎲 x2
+                                    </button>
+                                </div>
+                                <div className="text-[9px] text-slate-500 mb-2">Стоимость: ${(Math.max(0, (me?.income || 0) * 0.1)).toLocaleString()}</div>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        socket.emit('skip_charity', { roomId });
+                                    }}
+                                    className="w-full bg-slate-800 hover:bg-slate-700 text-slate-400 font-bold py-2 rounded-xl text-[10px] uppercase tracking-wider active:scale-95 transition-transform"
+                                >
+                                    Отказаться
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
-            </div>
-        );
+            );
+        }
     }
     // 3. BABY / DOWNSIZED (Simplified for Feed-like? No, these are events)
-    if (showPhaseContent && ['BABY_ROLL', 'DOWNSIZED_DECISION'].includes(state.phase)) {
+    else if (showPhaseContent && ['BABY_ROLL', 'DOWNSIZED_DECISION'].includes(state.phase)) {
         // ... (Keep existing logic short or rewrite. I'll rewrite to be safe)
         if (state.phase === 'BABY_ROLL') {
-            return <BabyRollView roomId={roomId} isMyTurn={isMyTurn} socket={socket} />;
-        }
-
-        if (state.phase === 'DOWNSIZED_DECISION') {
+            phaseContent = <BabyRollView roomId={roomId} isMyTurn={isMyTurn} socket={socket} />;
+        } else if (state.phase === 'DOWNSIZED_DECISION') {
             // Only show to the player whose turn it is (the downsized player)
             if (!isMyTurn) {
-                return (
+                phaseContent = (
                     <div className="flex flex-col items-center justify-center h-full text-slate-500/80 animate-pulse bg-slate-900/40 rounded-2xl border border-slate-800/50">
                         <div className="text-3xl mb-2 grayscale opacity-50">🤒</div>
                         <div className="text-center">
@@ -1051,13 +1052,17 @@ export const ActiveCardZone = ({
                         </div>
                     </div>
                 );
+            } else {
+                phaseContent = <FiredView roomId={roomId} me={me} isMyTurn={isMyTurn} socket={socket} />;
             }
-            return <FiredView roomId={roomId} me={me} isMyTurn={isMyTurn} socket={socket} />;
         }
 
     }
 
-    // MAIN FEED LOGIC
+    // If phase-specific content is set, return it (special phases like OPPORTUNITY_CHOICE, CHARITY_CHOICE, etc.)
+    if (phaseContent) return phaseContent;
+
+    // Otherwise, proceed with MAIN FEED LOGIC
     // Combine Market Cards + Active Card
     // User Request: "If card is open, new one lies UNDER".
     // This implies we should keep the "Focused" card top.
