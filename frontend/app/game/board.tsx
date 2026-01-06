@@ -1639,8 +1639,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                             {(isTutorial && isMyTurn && state.phase === 'ROLL' && state.tutorialStep <= 1) && (
                                                 <TutorialTip
                                                     text={state.tutorialStep === 0 ? "1. Бросайте кубик, чтобы ходить" : "7. Бросьте кубик снова!"}
-                                                    position="bottom-full mb-4"
-                                                    arrow="bottom-[-6px] border-t-emerald-500 border-b-0"
+                                                    position="right-full mr-4 top-1/2 -translate-y-1/2"
+                                                    arrow="right-[-6px] border-l-emerald-500 border-r-0 border-y-transparent border-y-[6px] top-1/2 -translate-y-1/2"
                                                 />
                                             )}
                                             {/* Dice Value Overlay */}

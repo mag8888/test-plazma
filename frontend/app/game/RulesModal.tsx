@@ -238,7 +238,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts, isTutor
                         <div className="flex gap-2 flex-wrap">
                             <button
                                 onClick={() => { setActiveTab('SMALL'); if (isTutorial) setHasViewedCards(true); }}
-                                className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'SMALL' ? 'bg-green-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                                className={`relative px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'SMALL' ? 'bg-green-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                             >
                                 <span>Малые</span>
                                 {counts && <span className="text-[9px] opacity-70">{counts.small.total}/{counts.small.remaining}</span>}
