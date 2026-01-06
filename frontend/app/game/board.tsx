@@ -88,92 +88,9 @@ import { GameTimer } from './GameTimer';
 import { TutorialOverlay } from './TutorialOverlay';
 // Helper for Cash Animation
 import { ErrorBoundary } from './ErrorBoundary';
-const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
-    const [diff, setDiff] = useState<number | null>(null);
-    const [visible, setVisible] = useState(false);
-    const prevCash = useRef(currentCash);
-
-    useEffect(() => {
-        console.log('🚀 BOARD COMPONENT LOADED - VERSION: FIX_HOOKS_V6 (ErrorBoundary) 🚀');
-        if (prevCash.current !== currentCash) {
-            const difference = currentCash - prevCash.current;
-            setDiff(difference);
-            setVisible(true);
-            prevCash.current = currentCash;
-
-            const timer = setTimeout(() => setVisible(false), 2000);
-            return () => clearTimeout(timer);
-        }
-    }, [currentCash]);
-
-    if (!visible || !diff) return null;
-
-    return (
-        <div className={`absolute top-0 right-0 transform -translate-y-full font-bold text-lg animate-out fade-out slide-out-to-top-4 duration-2000 pointer-events-none whitespace-nowrap z-50
-            ${diff > 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {diff > 0 ? '+' : ''}${Math.abs(diff).toLocaleString()}
-        </div>
-    );
-};
-
-const AnimatedNumber = ({ value, className = '' }: { value: number, className?: string }) => {
-    const [displayValue, setDisplayValue] = useState(value);
-    const [isAnimating, setIsAnimating] = useState(false);
-    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-    useEffect(() => {
-        if (value !== displayValue) {
-            const diff = value - displayValue;
-            const isIncrease = diff > 0;
-
-            // 1. Play Sound if Increase (HANDLED GLOBALLY NOW)
-            if (isIncrease) {
-                // sfx.play('cash'); // Disabled to avoid double sound
-                setIsAnimating(true);
-            }
-
-            // 2. Count Up Logic
-            const steps = 20;
-            const duration = 1000; // 1s
-            const increment = diff / steps;
-            let currentStep = 0;
-
-            const animate = () => {
-                currentStep++;
-                if (currentStep <= steps) {
-                    setDisplayValue(prev => Math.floor(prev + increment));
-                    timeoutRef.current = setTimeout(animate, duration / steps);
-                } else {
-                    setDisplayValue(value);
-                    setIsAnimating(false);
-                }
-            };
-
-            animate();
-
-            // Clear Pulse after animation
-            // setIsAnimating handles the class
-        }
-        return () => {
-            if (timeoutRef.current) clearTimeout(timeoutRef.current);
-        };
-    }, [value]);
-
-    return (
-        <span className={`${className} ${isAnimating ? 'text-emerald-300 scale-110 transition-transform duration-200' : ''} inline-block`}>
-            ${displayValue.toLocaleString()}
-        </span>
-    );
-};
-
-// Start of Mobile Menus (Keeping existng Mobile Menu logic if it was here, or just ensuring I don't break imports)
-// Wait, I am inserting this BEFORE line 144. Checking context...
-// Line 144 was `const [showFastTrackInfo, setShowFastTrackInfo] = useState(false);`
-// I should insert this BEFORE the Board helper components or just inside the file scope, but outside GameBoard.
-// `CashChangeIndicator` is at line 69. I should place `AnimatedNumber` near it.
-
-// Let's target line 95 (End of CashChangeIndicator) to Insert `AnimatedNumber`.
-
+import { AnimatedNumber } from './AnimatedNumber';
+import { CashChangeIndicator } from './CashChangeIndicator';
+import { TutorialTip } from './TutorialTip';
 
 const getAvatarColor = (id: string) => {
     const colors = [
@@ -204,22 +121,13 @@ const getInitials = (name: string) => {
     return name.substring(0, 2).toUpperCase();
 };
 
-const TutorialTip: React.FC<{ text: string, position?: string, arrow?: string }> = ({ text, position = "top-full mt-4", arrow = "top-[-6px] border-b-emerald-500 border-t-0" }) => (
-    <div className={`absolute ${position} left-1/2 -translate-x-1/2 z-[100] w-max max-w-[200px] pointer-events-none`}>
-        <div className="bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg shadow-emerald-900/40 relative text-center">
-            {text}
-            <div className={`absolute ${arrow} left-1/2 -translate-x-1/2 border-8 border-transparent`}></div>
-        </div>
-    </div>
-);
-
 export default function GameBoard({ roomId, userId, initialState, isHost, isTutorial }: BoardProps) {
     const router = useRouter();
     const [state, setState] = useState(initialState);
 
     // Initial State Sync & Version Check
     useEffect(() => {
-        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: FIX_HOOKS_V8 (No Early Return) 🚀');
+        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: FIX_HOOKS_V9 (Refactored Components) 🚀');
         if (initialState) {
             setState(initialState);
         }
@@ -1374,16 +1282,11 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                 <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс</span>
                                 <span className="text-sm font-black text-green-400 font-mono tracking-tight">${localPlayer?.cash?.toLocaleString() || 0}</span>
                                 {isTutorial && state.tutorialStep === 3 && (
-                                    (() => {
-                                        console.log('[Board-Render] Showing Bank Hint (Mobile)');
-                                        return (
-                                            <TutorialTip
-                                                text="Нажмите на банк"
-                                                position="top-full mt-2 left-1/2 -translate-x-1/2 absolute z-[3000] w-[200px]"
-                                                arrow="top-[-6px] border-b-emerald-500 border-t-0"
-                                            />
-                                        );
-                                    })()
+                                    <TutorialTip
+                                        text="Нажмите на банк"
+                                        position="top-full mt-2 left-1/2 -translate-x-1/2 absolute z-[3000] w-[200px]"
+                                        arrow="top-[-6px] border-b-emerald-500 border-t-0"
+                                    />
                                 )}
                             </div>
                             <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
