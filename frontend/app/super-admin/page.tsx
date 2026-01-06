@@ -917,6 +917,27 @@ export default function AdminPage() {
                                                 <td colSpan={9} className="p-2 px-4 pb-4">
                                                     <div className="flex gap-4 items-center pl-12 opacity-80 hover:opacity-100 transition-opacity">
                                                         <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mr-2">Actions:</span>
+                                                        {u.username && (
+                                                            <a
+                                                                href={`https://t.me/${u.username}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1 bg-blue-900/30 hover:bg-blue-800/50 text-blue-300 px-3 py-1.5 rounded-lg text-xs border border-blue-500/20 hover:border-blue-500/50 transition-all font-medium"
+                                                            >
+                                                                Profile ↗
+                                                            </a>
+                                                        )}
+                                                        {u.referrer && (u.referrer.username || typeof u.referrer === 'string') && (
+                                                            <a
+                                                                href={`https://t.me/${u.referrer.username || u.referrer}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1 bg-cyan-900/30 hover:bg-cyan-800/50 text-cyan-300 px-3 py-1.5 rounded-lg text-xs border border-cyan-500/20 hover:border-cyan-500/50 transition-all font-medium"
+                                                            >
+                                                                Referrer ↗
+                                                            </a>
+                                                        )}
+                                                        <div className="h-4 w-px bg-slate-700 mx-2"></div>
                                                         <button
                                                             onClick={() => handleViewHistory(u)}
                                                             className="flex items-center gap-1 bg-purple-900/30 hover:bg-purple-800/50 text-purple-300 px-3 py-1.5 rounded-lg text-xs border border-purple-500/20 hover:border-purple-500/50 transition-all font-medium"
