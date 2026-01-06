@@ -566,7 +566,7 @@ export default function AdminPage() {
                 <div className="max-w-6xl mx-auto flex justify-between items-center">
                     <div className="flex items-center gap-2 font-bold text-lg text-white">
                         <span className="bg-blue-600 text-white px-2 py-0.5 rounded text-xs">ADMIN</span>
-                        Partnership Panel
+                        Partnership Panel v5
                     </div>
                     <div className="flex gap-4">
                         <button onClick={() => setActiveTab('USERS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'USERS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
@@ -1069,10 +1069,10 @@ export default function AdminPage() {
                                             </td>
                                             <td className="p-4">
                                                 <span className={`px-2 py-1 rounded text-xs font-bold ${card.type === 'DEAL_SMALL' ? 'bg-blue-900/30 text-blue-400' :
-                                                        card.type === 'DEAL_BIG' ? 'bg-green-900/30 text-green-400' :
-                                                            card.type === 'MARKET' ? 'bg-yellow-900/30 text-yellow-400' :
-                                                                card.type === 'EXPENSE' ? 'bg-red-900/30 text-red-400' :
-                                                                    'bg-slate-700 text-slate-300'
+                                                    card.type === 'DEAL_BIG' ? 'bg-green-900/30 text-green-400' :
+                                                        card.type === 'MARKET' ? 'bg-yellow-900/30 text-yellow-400' :
+                                                            card.type === 'EXPENSE' ? 'bg-red-900/30 text-red-400' :
+                                                                'bg-slate-700 text-slate-300'
                                                     }`}>
                                                     {card.type}
                                                 </span>
