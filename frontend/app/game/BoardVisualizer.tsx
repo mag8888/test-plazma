@@ -216,7 +216,7 @@ export const BoardVisualizer = React.memo(({ board, players, animatingPos, curre
                                 <span className="text-[2cqw] filter drop-shadow-md group-hover:-translate-y-1 transition-transform">🚀</span>
                                 <span className="text-white font-black text-[1cqw] uppercase tracking-[0.2em] drop-shadow-md mt-1 relative">
                                     FAST TRACK
-                                    {isTutorial && !hideFastTrackHint && <TutorialTip text="Кнопка выхода на Большой Круг" position="bottom-full mb-16" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
+                                    {isTutorial && !hideFastTrackHint && <TutorialTip text="Кнопка выхода на Большой Круг" position="bottom-full mb-16 left-1/2 -translate-x-1/2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
                                 </span>
                             </button>
                         )}

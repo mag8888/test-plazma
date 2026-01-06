@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { SMALL_DEALS, BIG_DEALS, MARKET_CARDS, EXPENSE_CARDS, Card } from './cards_data';
 import { TutorialTip } from './TutorialTip';
 
@@ -18,6 +18,16 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts, isTutor
     const [activeTab, setActiveTab] = useState<'RULES' | 'SMALL' | 'BIG' | 'MARKET' | 'EXPENSE'>('RULES');
     const [hasRead, setHasRead] = useState(false);
     const [hasViewedCards, setHasViewedCards] = useState(false);
+    const [canConfirm, setCanConfirm] = useState(false);
+
+    useEffect(() => {
+        if (hasRead) {
+            const timer = setTimeout(() => {
+                setCanConfirm(true);
+            }, 5000);
+            return () => clearTimeout(timer);
+        }
+    }, [hasRead]);
 
     // ... (renderCard and getTabContent remain same)
     const renderCard = (card: Card) => (
@@ -232,45 +242,47 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts, isTutor
                 </div>
 
                 {/* Footer Navigation */}
-                <div className="p-4 border-t border-slate-700 bg-[#0f172a] rounded-b-2xl flex flex-wrap gap-2 justify-between items-center flex-shrink-0">
-                    <div className="flex flex-col gap-1">
-                        <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Карточки</span>
-                        <div className="flex gap-2 flex-wrap">
-                            <button
-                                onClick={() => { setActiveTab('SMALL'); if (isTutorial) setHasViewedCards(true); }}
-                                className={`relative px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'SMALL' ? 'bg-green-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                            >
-                                <span>Малые</span>
-                                {counts && <span className="text-[9px] opacity-70">{counts.small.total}/{counts.small.remaining}</span>}
-                                {isTutorial && !hasViewedCards && activeTab === 'RULES' && (
-                                    <TutorialTip
-                                        text="КАРТОЧКИ"
-                                        position="bottom-full mb-3"
-                                        arrow="bottom-[-6px] border-t-emerald-500 border-b-0"
-                                    />
-                                )}
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('BIG')}
-                                className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'BIG' ? 'bg-purple-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                            >
-                                <span>Крупные</span>
-                                {counts && <span className="text-[9px] opacity-70">{counts.big.total}/{counts.big.remaining}</span>}
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('MARKET')}
-                                className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'MARKET' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                            >
-                                <span>Рынок</span>
-                                {counts && <span className="text-[9px] opacity-70">{counts.market.total}/{counts.market.remaining}</span>}
-                            </button>
-                            <button
-                                onClick={() => setActiveTab('EXPENSE')}
-                                className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'EXPENSE' ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
-                            >
-                                <span>Расходы</span>
-                                {counts && <span className="text-[9px] opacity-70">{counts.expense.total}/{counts.expense.remaining}</span>}
-                            </button>
+                <div className="p-4 border-t border-slate-700 bg-[#0f172a] rounded-b-2xl flex flex-wrap gap-2 justify-between items-center flex-shrink-0 min-h-[80px]">
+                    <div className={`transition-all duration-700 ${hasRead ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
+                        <div className="flex flex-col gap-1">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest pl-1">Карточки</span>
+                            <div className="flex gap-2 flex-wrap">
+                                <button
+                                    onClick={() => { setActiveTab('SMALL'); if (isTutorial) setHasViewedCards(true); }}
+                                    className={`relative px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'SMALL' ? 'bg-green-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                                >
+                                    <span>Малые</span>
+                                    {counts && <span className="text-[9px] opacity-70">{counts.small.total}/{counts.small.remaining}</span>}
+                                    {isTutorial && !hasViewedCards && activeTab === 'RULES' && (
+                                        <TutorialTip
+                                            text="КАРТОЧКИ"
+                                            position="bottom-full mb-3"
+                                            arrow="bottom-[-6px] border-t-emerald-500 border-b-0"
+                                        />
+                                    )}
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('BIG')}
+                                    className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'BIG' ? 'bg-purple-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                                >
+                                    <span>Крупные</span>
+                                    {counts && <span className="text-[9px] opacity-70">{counts.big.total}/{counts.big.remaining}</span>}
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('MARKET')}
+                                    className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'MARKET' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                                >
+                                    <span>Рынок</span>
+                                    {counts && <span className="text-[9px] opacity-70">{counts.market.total}/{counts.market.remaining}</span>}
+                                </button>
+                                <button
+                                    onClick={() => setActiveTab('EXPENSE')}
+                                    className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'EXPENSE' ? 'bg-red-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
+                                >
+                                    <span>Расходы</span>
+                                    {counts && <span className="text-[9px] opacity-70">{counts.expense.total}/{counts.expense.remaining}</span>}
+                                </button>
+                            </div>
                         </div>
                     </div>
 
@@ -285,16 +297,25 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts, isTutor
                         )}
 
                         {isTutorial ? (
-                            <button
-                                onClick={handleConfirmClick}
-                                disabled={!hasRead}
-                                className={`px-6 py-2 rounded-xl font-bold transition-all flex items-center gap-2 ${hasRead
-                                    ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg animate-pulse'
-                                    : 'bg-slate-800 text-slate-500 cursor-not-allowed'
-                                    }`}
-                            >
-                                {hasRead ? '✅ Я прочитал!' : '📜 Пролистайте вниз'}
-                            </button>
+                            <div className={`transition-all duration-500 ${hasRead ? 'opacity-100' : 'opacity-50'}`}>
+                                {!hasRead ? (
+                                    <span className="text-slate-500 font-bold px-6 py-2 border border-slate-700 rounded-xl bg-slate-800/50">
+                                        📜 Пролистайте вниз
+                                    </span>
+                                ) : (
+                                    <button
+                                        onClick={handleConfirmClick}
+                                        disabled={!canConfirm}
+                                        className={`px-6 py-2 rounded-xl font-bold transition-all flex items-center gap-2 duration-500
+                                            ${canConfirm
+                                                ? 'bg-green-600 hover:bg-green-500 text-white shadow-lg transform scale-100 animate-pulse'
+                                                : 'bg-slate-800 text-slate-500 cursor-not-allowed transform scale-95 opacity-0 hidden'
+                                            }`} // Hidden until timer finishes to strictly match "appeared after 5 seconds"
+                                    >
+                                        ✅ Я прочитал!
+                                    </button>
+                                )}
+                            </div>
                         ) : (
                             <button
                                 onClick={onClose}

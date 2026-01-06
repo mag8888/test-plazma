@@ -483,7 +483,7 @@ const FeedCardItem = ({
                             <div className="grid grid-cols-2 gap-2 mt-1">
                                 <button onClick={() => { socket.emit('draw_deal', { roomId, type: 'SMALL' }); onDismiss(); }} disabled={me.cash < 500} className="bg-green-600 hover:bg-green-500 disabled:opacity-50 text-white font-bold py-2 rounded-xl text-[10px] uppercase">
                                     Малая (до $5k)
-                                    {isTutorial && tutorialStep === 0 && <TutorialTip text="Выберите малую сделку" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
+                                    {isTutorial && tutorialStep === 1 && <TutorialTip text="Выберите малую сделку" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
                                 </button>
                                 <button onClick={() => { socket.emit('draw_deal', { roomId, type: 'BIG' }); onDismiss(); }} disabled={me.cash < 2000} className="bg-yellow-600 hover:bg-yellow-500 disabled:opacity-50 text-white font-bold py-2 rounded-xl text-[10px] uppercase">
                                     Крупная (от $6k)

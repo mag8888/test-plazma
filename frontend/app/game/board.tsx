@@ -1022,9 +1022,16 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс</div>
                                         <div className="font-mono text-xl text-green-400 font-bold">${localPlayer.cash?.toLocaleString()}</div>
                                     </div>
-                                    <div onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800">
+                                    <div onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-xl border border-slate-800 relative">
                                         <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит</div>
                                         <div className="font-mono text-xl text-red-400 font-bold">${localPlayer.loanDebt?.toLocaleString()}</div>
+                                        {isTutorial && state.tutorialStep === 3 && (
+                                            <TutorialTip
+                                                text="Банк / Кредиты"
+                                                position="top-full mt-2 left-1/2 -translate-x-1/2"
+                                                arrow="top-[-6px] border-b-emerald-500 border-t-0"
+                                            />
+                                        )}
                                     </div>
                                 </div>
 
@@ -1357,9 +1364,16 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                 <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Выплата</span>
                                 <span className="text-sm font-black text-green-400 font-mono tracking-tight">+${(localPlayer?.cashflow || 0).toLocaleString()}</span>
                             </div>
-                            <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
+                            <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform relative">
                                 <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Кредит</span>
                                 <span className="text-sm font-black text-red-400 font-mono tracking-tight">-${localPlayer?.loanDebt?.toLocaleString() || 0}</span>
+                                {isTutorial && state.tutorialStep === 3 && (
+                                    <TutorialTip
+                                        text="Банк / Кредиты"
+                                        position="top-full mt-2 left-1/2 -translate-x-1/2"
+                                        arrow="top-[-6px] border-b-emerald-500 border-t-0"
+                                    />
+                                )}
                             </div>
                         </div>
                     </div>
