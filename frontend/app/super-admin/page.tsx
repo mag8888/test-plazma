@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
-import { Search, DollarSign, Users, BarChart, TreePine, Lock, History, ChevronLeft, ChevronRight, CreditCard, Trash2, Calendar, XCircle, RefreshCw, Maximize } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Users, Shield, Copy, Wand2, RefreshCw, Lock, Trash2, History, CreditCard, Calendar, BarChart, TreePine, Eye } from 'lucide-react';
+import { AdminUserProfileModal } from './components/AdminUserProfileModal';
 import { partnershipApi } from '../../lib/partnershipApi';
 import { getBackendUrl, getGameServiceUrl } from '../../lib/config';
 import CardEditor from './CardEditor';
@@ -69,8 +70,9 @@ export default function AdminPage() {
     const [treeData, setTreeData] = useState<any>(null);
 
     // Edit Referrer
-    const [editReferrerUser, setEditReferrerUser] = useState<any>(null);
-    const [newReferrer, setNewReferrer] = useState('');
+    const [editReferrerUser, setEditReferrerUser] = useState<any>(null); // New state for editing referrer
+    const [viewProfileUser, setViewProfileUser] = useState<any>(null); // New state for profile modal
+    const [newReferrerId, setNewReferrerId] = useState('');
 
     // Add Avatar Modal
     const [addAvatarUser, setAddAvatarUser] = useState<any>(null);
@@ -276,20 +278,20 @@ export default function AdminPage() {
 
     const updateReferrer = async () => {
         if (!editReferrerUser) return;
-        if (!confirm(`Change referrer for ${editReferrerUser.username} to ${newReferrer || 'Nobody'}?`)) return;
+        if (!confirm(`Change referrer for ${editReferrerUser.username} to ${newReferrerId || 'Nobody'}?`)) return;
 
         const res = await fetchWithAuth('/referrer', {
             method: 'POST',
             body: JSON.stringify({
                 userId: editReferrerUser._id,
-                referrerIdentifier: newReferrer
+                referrerIdentifier: newReferrerId
             })
         });
 
         if (res.success) {
             alert(res.message);
             setEditReferrerUser(null);
-            setNewReferrer('');
+            setNewReferrerId('');
             searchUsers(page);
         } else {
             alert(res.error || 'Error');
@@ -863,30 +865,34 @@ export default function AdminPage() {
                                 <tbody className="divide-y divide-slate-700">
                                     {users.map(u => (
                                         <Fragment key={u._id}>
-                                            <tr className="hover:bg-slate-700/50 transition">
-                                                <td className="p-4 font-bold text-white">
-                                                    {u.username ? (
-                                                        <a
-                                                            href={`https://t.me/${u.username}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="text-white hover:text-blue-400 hover:underline"
-                                                        >
-                                                            {u.username}
-                                                        </a>
-                                                    ) : 'No Name'}
-                                                    <div className="text-xs text-slate-500 font-mono">{u.telegram_id}</div>
+                                            <tr className="border-b border-slate-800 hover:bg-slate-800/20 transition-colors">
+                                                <td className="p-4">
+                                                    <div
+                                                        onClick={() => setViewProfileUser(u)}
+                                                        className="cursor-pointer hover:bg-slate-800 p-2 -m-2 rounded-lg transition-colors group"
+                                                    >
+                                                        <div className="font-bold text-blue-400 group-hover:text-blue-300 transition-colors flex items-center gap-1">
+                                                            {u.username || 'No Username'}
+                                                            <Eye size={12} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+                                                        </div>
+                                                        <div className="text-xs text-slate-500 font-mono">{u.telegram_id || u._id}</div>
+                                                    </div>
                                                 </td>
                                                 <td className="p-4 text-slate-300">
                                                     {u.referrer ? (
-                                                        <a
-                                                            href={`https://t.me/${u.referrer.username}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
-                                                            className="hover:text-blue-400 hover:underline"
+                                                        <div
+                                                            onClick={() => {
+                                                                if (typeof u.referrer === 'object') {
+                                                                    setViewProfileUser(u.referrer);
+                                                                } else {
+                                                                    alert(`Referrer ID: ${u.referrer}`);
+                                                                }
+                                                            }}
+                                                            className="cursor-pointer hover:text-blue-400 hover:underline flex items-center gap-1"
                                                         >
                                                             {u.referrer.username || u.referrer.telegram_id || u.referrer}
-                                                        </a>
+                                                            {(typeof u.referrer === 'object') && <Eye size={12} className="opacity-50" />}
+                                                        </div>
                                                     ) : (u.referredBy || '-')}
                                                 </td>
                                                 <td className="p-4 text-green-400 font-bold">${u.greenBalance}</td>
@@ -917,25 +923,19 @@ export default function AdminPage() {
                                                 <td colSpan={9} className="p-2 px-4 pb-4">
                                                     <div className="flex gap-4 items-center pl-12 opacity-80 hover:opacity-100 transition-opacity">
                                                         <span className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mr-2">Actions:</span>
-                                                        {u.username && (
-                                                            <a
-                                                                href={`https://t.me/${u.username}`}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
-                                                                className="flex items-center gap-1 bg-blue-900/30 hover:bg-blue-800/50 text-blue-300 px-3 py-1.5 rounded-lg text-xs border border-blue-500/20 hover:border-blue-500/50 transition-all font-medium"
-                                                            >
-                                                                Profile ↗
-                                                            </a>
-                                                        )}
-                                                        {u.referrer && (u.referrer.username || typeof u.referrer === 'string') && (
-                                                            <a
-                                                                href={`https://t.me/${u.referrer.username || u.referrer}`}
-                                                                target="_blank"
-                                                                rel="noopener noreferrer"
+                                                        <button
+                                                            onClick={() => setViewProfileUser(u)}
+                                                            className="flex items-center gap-1 bg-blue-900/30 hover:bg-blue-800/50 text-blue-300 px-3 py-1.5 rounded-lg text-xs border border-blue-500/20 hover:border-blue-500/50 transition-all font-medium"
+                                                        >
+                                                            Profile ↗
+                                                        </button>
+                                                        {u.referrer && (typeof u.referrer === 'object') && (
+                                                            <button
+                                                                onClick={() => setViewProfileUser(u.referrer)}
                                                                 className="flex items-center gap-1 bg-cyan-900/30 hover:bg-cyan-800/50 text-cyan-300 px-3 py-1.5 rounded-lg text-xs border border-cyan-500/20 hover:border-cyan-500/50 transition-all font-medium"
                                                             >
                                                                 Referrer ↗
-                                                            </a>
+                                                            </button>
                                                         )}
                                                         <div className="h-4 w-px bg-slate-700 mx-2"></div>
                                                         <button
@@ -1447,6 +1447,13 @@ export default function AdminPage() {
                 )
             }
 
+            {/* Profile Modal */}
+            <AdminUserProfileModal
+                isOpen={!!viewProfileUser}
+                onClose={() => setViewProfileUser(null)}
+                user={viewProfileUser}
+            />
+
             {/* BALANCE MODAL */}
             {
                 selectedUser && (
@@ -1598,8 +1605,8 @@ export default function AdminPage() {
                                 type="text"
                                 placeholder="Enter new referrer Username or Telegram ID"
                                 className="w-full bg-slate-950 text-white p-3 rounded-xl border border-slate-800 focus:border-blue-500 outline-none"
-                                value={newReferrer}
-                                onChange={(e) => setNewReferrer(e.target.value)}
+                                value={newReferrerId}
+                                onChange={(e) => setNewReferrerId(e.target.value)}
                             />
                             <div className="text-xs text-yellow-500">
                                 Leave empty to remove referrer.
