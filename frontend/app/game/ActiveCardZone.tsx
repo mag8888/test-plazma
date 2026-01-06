@@ -345,7 +345,10 @@ const FeedCardItem = ({
                                     <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-2 mb-2 animate-pulse">
                                         <div className="flex items-center gap-2">
                                             <span className="text-lg">⚠️</span>
-                                            <span className="text-[10px] text-red-300 font-bold uppercase">У вас нет этого актива</span>
+                                            <div className="flex flex-col gap-1">
+                                                <span className="text-[10px] text-red-300 font-bold uppercase">У вас нет этого актива</span>
+                                                <span className="text-[9px] text-red-400 leading-tight">Сначала нужно купить актив, чтобы его продать.</span>
+                                            </div>
                                         </div>
                                     </div>
                                 )}
