@@ -316,8 +316,8 @@ export default function AdminPage() {
     const fetchGames = useCallback(async (p: number = 1, key: string = secret) => {
         setGamesLoading(true);
         try {
-            // Uses GAME_API_URL
-            const res = await fetchWithAuth(`/games?page=${p}&limit=20`, {}, key, GAME_API_URL);
+            // Uses Default Backend URL (via ADMIN_PARTNERSHIP_URL) to hit /api/partnership/admin/games
+            const res = await fetchWithAuth(`/games?page=${p}&limit=20`, {}, key);
             if (res.games) {
                 setGames(res.games);
                 setGamesTotalPages(res.pages || 1);
@@ -335,8 +335,8 @@ export default function AdminPage() {
     const cancelGame = async (gameId: string) => {
         if (!confirm('Are you sure you want to CANCEL this game? Players will be notified.')) return;
         try {
-            // Uses GAME_API_URL
-            const res = await fetchWithAuth(`/games/${gameId}`, { method: 'DELETE' }, secret, GAME_API_URL);
+            // Uses Default Backend URL
+            const res = await fetchWithAuth(`/games/${gameId}`, { method: 'DELETE' }, secret);
             if (res.success) {
                 alert('Game cancelled successfully');
                 fetchGames(gamesPage);
@@ -446,7 +446,7 @@ export default function AdminPage() {
     const fetchCards = async () => {
         setCardsLoading(true);
         try {
-            const res = await fetchWithAuth('/admin/cards', {}, secret);
+            const res = await fetchWithAuth('/cards', {}, secret);
             if (res && res.cards) {
                 setCards(res.cards);
             }
