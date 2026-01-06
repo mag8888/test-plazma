@@ -1638,6 +1638,15 @@ function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState 
                             })()}
                         </div>
 
+                        {/* BANK BUTTON (Desktop) */}
+                        <button
+                            onClick={() => setShowBank(true)}
+                            className="w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0 mb-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white"
+                        >
+                            <span className="text-lg">🏦</span>
+                            <span>БАНК</span>
+                        </button>
+
                         {/* DESKTOP SKIP / PAUSE TOGGLE */}
                         {
                             !localPlayer?.isBankrupted && (

@@ -152,7 +152,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                             <span className="text-emerald-400 font-bold tracking-wide relative">
                                 ↗ ДОХОД
                                 ↗ ДОХОД
-                                {showHint(0) && <div className="absolute top-10 left-0 z-[3000] w-[280px] pointer-events-none"><TutorialTip text="1. Ваши Доходы и Расходы. Нажмите сюда, чтобы продолжить." position="bottom" arrow="top-[-6px] left-8 border-b-emerald-500 border-t-0" /></div>}
+                                {showHint(0) && <div className="absolute top-10 left-0 z-[3000] w-[200px] pointer-events-none"><TutorialTip text="1. Ваши Доходы и Расходы. Чтобы продолжить, попробуйте Взять Кредит или Сделать Перевод." position="bottom" arrow="top-[-6px] left-8 border-b-emerald-500 border-t-0" /></div>}
                             </span>
                             <span className="text-white font-mono text-lg">${player.income?.toLocaleString()}</span>
                         </div>

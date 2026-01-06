@@ -17,6 +17,7 @@ interface Room {
     creatorId: string; // Added for Delete Permission
     creatorUsername?: string; // Added for display
     gameMode?: 'ENGINEER' | 'ENTREPRENEUR';
+    password?: string;
 }
 
 import { useTelegram } from '../../components/TelegramProvider';
@@ -35,6 +36,7 @@ function LobbyContent() {
     // tgUser comes from backend /api/auth/login/telegram, so it should be the full user object.
 
     const user = tgUser;
+    const userId = user?.id?.toString() || user?._id?.toString();
 
     const [rooms, setRooms] = useState<Room[]>([]);
     const [myRooms, setMyRooms] = useState<Room[]>([]);
@@ -219,20 +221,25 @@ function LobbyContent() {
         setTimeout(() => createRoom(), 100);
     };
 
-    const joinRoom = (roomId: string) => {
-        // Check if user is already in another room
-        const currentRoom = myRooms.find(r => r.id !== roomId);
+    const deleteRoom = (roomId: string) => {
+        const userId = user?._id || user?.id;
+        if (!userId) return;
+        if (window.confirm('Вы уверены, что хотите удалить эту комнату?')) {
+            socket.emit('delete_room', { roomId, userId });
+        }
+    };
 
-        if (currentRoom) {
-            const isConfirm = confirm(`Вы сейчас в комнате "${currentRoom.name}". Хотите перейти? (Вы покинете текущую комнату)`);
-            if (isConfirm) {
-                if (user) {
-                    socket.emit('leave_room', { roomId: currentRoom.id, userId: user._id || user.id });
-                    // Optimistically remove from local state
-                    setMyRooms(prev => prev.filter(r => r.id !== currentRoom.id));
-                }
-                router.push(`/game?id=${roomId}`);
-            }
+    const joinRoom = (roomId: string) => {
+        const userId = user?._id || user?.id;
+        if (!userId) return;
+
+        // Optimistic check
+        const room = rooms.find(r => r.id === roomId);
+        if (room && room.password) {
+            // Prompt generic password
+            const pwd = prompt('Введите пароль:');
+            if (!pwd) return;
+            socket.emit('join_room', { roomId, password: pwd, playerName: user?.firstName || 'Guest', userId, token: '🦊', dream: DREAMS[0].name });
         } else {
             router.push(`/game?id=${roomId}`);
         }
@@ -622,19 +629,30 @@ function LobbyContent() {
                                             </div>
                                         </div>
 
-                                        <button
-                                            onClick={() => joinRoom(room.id)}
-                                            disabled={room.players.length >= room.maxPlayers}
-                                            className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${room.players.length >= room.maxPlayers
-                                                ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                                                : 'bg-slate-700 hover:bg-blue-600 text-white shadow-lg'
-                                                }`}
-                                        >
-                                            {room.status === 'playing'
-                                                ? (room.players.length >= room.maxPlayers ? 'Мест нет (Игра идет)' : 'Присоединиться (Игра идет)')
-                                                : (room.players.length >= room.maxPlayers ? 'Мест нет' : 'Присоединиться')
-                                            }
-                                        </button>
+                                        <div className="flex gap-2">
+                                            <button
+                                                onClick={() => joinRoom(room.id)}
+                                                disabled={room.players.length >= room.maxPlayers}
+                                                className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${room.players.length >= room.maxPlayers
+                                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                                                    : 'bg-slate-700 hover:bg-blue-600 text-white shadow-lg'
+                                                    }`}
+                                            >
+                                                {room.status === 'playing'
+                                                    ? (room.players.length >= room.maxPlayers ? 'Мест нет (Игра идет)' : 'Присоединиться (Игра идет)')
+                                                    : (room.players.length >= room.maxPlayers ? 'Мест нет' : 'Присоединиться')
+                                                }
+                                            </button>
+                                            {(String(room.creatorId) === String(userId) || room.creatorId === 'undefined') && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); deleteRoom(room.id); }}
+                                                    className="bg-red-900/40 hover:bg-red-900/60 text-red-400 border border-red-900 px-3 rounded-xl transition-all"
+                                                    title="Удалить комнату"
+                                                >
+                                                    🗑
+                                                </button>
+                                            )}
+                                        </div>
                                     </div>
                                 ))}
                             </div>
