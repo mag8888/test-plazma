@@ -1361,8 +1361,8 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                 <span className="text-sm font-black text-green-400 font-mono tracking-tight">${localPlayer?.cash?.toLocaleString() || 0}</span>
                                 {isTutorial && state.tutorialStep === 3 && (
                                     <TutorialTip
-                                        text="Нажмите, чтобы открыть банк"
-                                        position="top-full mt-2 left-1/2 -translate-x-1/2"
+                                        text="Нажмите на банк"
+                                        position="top-full mt-2 left-1/2 -translate-x-1/2 absolute z-[3000] w-[200px]"
                                         arrow="top-[-6px] border-b-emerald-500 border-t-0"
                                     />
                                 )}
@@ -1419,6 +1419,13 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                         <AnimatedNumber value={localPlayer?.cash || 0} />
                                         <CashChangeIndicator currentCash={localPlayer?.cash || 0} />
                                     </div>
+                                    {isTutorial && state.tutorialStep === 3 && (
+                                        <TutorialTip
+                                            text="Нажмите на банк"
+                                            position="top-full mt-4 left-1/2 -translate-x-1/2 absolute z-[3000] w-[200px]"
+                                            arrow="top-[-6px] border-b-emerald-500 border-t-0"
+                                        />
+                                    )}
                                 </button>
                                 <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group/btn">
                                     <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит 💳</div>
@@ -2050,14 +2057,20 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                     {
                         showFastTrackModal && (
                             <ExitToFastTrackModal
-                                onClose={() => setShowFastTrackModal(false)}
+                                onClose={() => {
+                                    setShowFastTrackModal(false);
+                                    if (isTutorial) socket.emit('set_tutorial_step', { roomId, step: 3 });
+                                }}
                                 player={localPlayer}
                                 onConfirm={handleEnterFastTrack}
                             />
                         )
                     }
 
-                    {showFastTrackInfo && <FastTrackInfoModal onClose={() => setShowFastTrackInfo(false)} player={localPlayer} />}
+                    {showFastTrackInfo && <FastTrackInfoModal onClose={() => {
+                        setShowFastTrackInfo(false);
+                        if (isTutorial) socket.emit('set_tutorial_step', { roomId, step: 3 });
+                    }} player={localPlayer} />}
 
                     {
                         transferAssetItem && (

@@ -783,6 +783,16 @@ export class GameGateway {
                 }
             });
 
+            // Tutorial: Manual Step Set
+            socket.on('set_tutorial_step', ({ roomId, step }) => {
+                const game = this.games.get(roomId);
+                if (game && game.state.isTutorial) {
+                    game.state.tutorialStep = step;
+                    this.io.to(roomId).emit('state_updated', { state: game.getState() });
+                    saveState(roomId, game);
+                }
+            });
+
             socket.on('transfer_funds', ({ roomId, toId, amount }) => {
                 const game = this.games.get(roomId);
                 if (game) {
