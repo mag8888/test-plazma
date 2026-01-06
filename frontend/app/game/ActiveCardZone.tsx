@@ -250,14 +250,14 @@ const FeedCardItem = ({
                     <div className="text-right bg-blue-900/40 px-2 py-1 rounded-lg border border-blue-500/30">
                         <div className="text-[8px] text-blue-400 uppercase font-bold">Предложение</div>
                         <div className="text-sm font-mono font-bold text-green-400">
-                            ${card.offerPrice.toLocaleString()}
+                            ${(card.offerPrice || 0).toLocaleString()}
                         </div>
                     </div>
                 ) : card.type !== 'MARKET' && (card.cost || card.price) ? (
                     <div className="text-right bg-slate-900/40 px-2 py-1 rounded-lg border border-slate-700/30">
                         <div className="text-[8px] text-slate-500 uppercase font-bold">Цена</div>
                         <div className="text-sm font-mono font-bold text-red-300">
-                            ${(card.cost || card.price).toLocaleString()}
+                            ${(card.cost || card.price || 0).toLocaleString()}
                         </div>
                     </div>
                 ) : null}
