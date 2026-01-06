@@ -1977,6 +1977,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                         transactions={state.transactions || []}
                         players={state.players}
                         initialRecipientId={bankRecipientId}
+                        isTutorial={isTutorial}
                     />
 
                     {

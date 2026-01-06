@@ -11,9 +11,12 @@ interface BankModalProps {
     transactions: any[];
     players: any[]; // List of all players for transfer
     initialRecipientId?: string;
+    isTutorial?: boolean;
 }
 
-export const BankModal = ({ isOpen, onClose, player, roomId, transactions, players, initialRecipientId }: BankModalProps) => {
+import { TutorialTip } from './TutorialTip';
+
+export const BankModal = ({ isOpen, onClose, player, roomId, transactions, players, initialRecipientId, isTutorial }: BankModalProps) => {
     const [amount, setAmount] = useState<number>(0);
     const [recipientId, setRecipientId] = useState<string>(initialRecipientId || '');
     const [transferAmount, setTransferAmount] = useState<number>(0);
@@ -96,18 +99,27 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                     </div>
 
                     <div className="relative z-10 p-5 rounded-2xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50">
-                        <div className="text-slate-400 text-[10px] uppercase tracking-wider mb-1">Баланс</div>
+                        <div className="text-slate-400 text-[10px] uppercase tracking-wider mb-1">
+                            Баланс
+                            {isTutorial && <TutorialTip text="1. Ваш текущий баланс" position="top-full mt-2" arrow="top-[-6px] border-b-emerald-500 border-t-0" />}
+                        </div>
                         <div className="text-4xl md:text-5xl font-mono font-bold text-emerald-400 tracking-tighter drop-shadow-lg break-all">${player.cash?.toLocaleString()}</div>
                     </div>
 
                     <div className="space-y-3 text-sm bg-slate-800/30 p-5 rounded-2xl border border-slate-700/30 relative z-10">
                         <div className="flex justify-between items-center pb-2 border-b border-slate-700/50">
-                            <span className="text-emerald-400 font-bold tracking-wide">↗ ДОХОД</span>
+                            <span className="text-emerald-400 font-bold tracking-wide relative">
+                                ↗ ДОХОД
+                                {isTutorial && <TutorialTip text="2. Ваша зарплата" position="left-full ml-4" arrow="left-[-6px] border-r-emerald-500 border-l-0" />}
+                            </span>
                             <span className="text-white font-mono text-lg">${player.income?.toLocaleString()}</span>
                         </div>
 
                         <div className="flex justify-between items-center pb-2 border-b border-slate-700/50">
-                            <span className="text-slate-400 font-bold tracking-wide text-xs">ПАССИВНЫЙ</span>
+                            <span className="text-slate-400 font-bold tracking-wide text-xs relative">
+                                ПАССИВНЫЙ
+                                {isTutorial && <TutorialTip text="5. Доход от активов" position="left-full ml-4" arrow="left-[-6px] border-r-emerald-500 border-l-0" />}
+                            </span>
                             <span className="text-emerald-400 font-mono text-lg">+${(player.passiveIncome || 0).toLocaleString()}</span>
                         </div>
 
@@ -116,8 +128,9 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                             onClick={() => setShowExpenses(!showExpenses)}
                             className="flex justify-between items-center cursor-pointer hover:bg-white/5 p-2 -mx-2 rounded-lg transition-colors group select-none"
                         >
-                            <span className="text-red-400 font-bold tracking-wide flex items-center gap-2">
+                            <span className="text-red-400 font-bold tracking-wide flex items-center gap-2 relative">
                                 ↘ РАСХОДЫ
+                                {isTutorial && <TutorialTip text="3. Ваши расходы" position="left-full ml-4" arrow="left-[-6px] border-r-emerald-500 border-l-0" />}
                                 <span className={`text-[10px] text-slate-500 transition-transform duration-300 ${showExpenses ? 'rotate-180' : ''}`}>▼</span>
                             </span>
                             <span className="text-white font-mono text-lg underline decoration-dashed decoration-slate-600 underline-offset-4 group-hover:decoration-slate-400 transition-all">
@@ -150,7 +163,10 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         )}
 
                         <div className="flex justify-between pt-3 border-t border-slate-700/50 items-center">
-                            <span className="text-yellow-400 font-black tracking-widest text-xs">PAYDAY</span>
+                            <span className="text-yellow-400 font-black tracking-widest text-xs relative">
+                                PAYDAY
+                                {isTutorial && <TutorialTip text="4. Доходы минус расходы" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
+                            </span>
                             <span className="text-white font-mono font-bold text-xl drop-shadow">${player.cashflow?.toLocaleString()}</span>
                         </div>
                     </div>
