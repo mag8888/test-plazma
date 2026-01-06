@@ -240,6 +240,9 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
     const [dismissedMarketCards, setDismissedMarketCards] = useState<string[]>([]);
     const [isMuted, setIsMuted] = useState(false);
 
+    // Tutorial State
+    const [hasClickedFastTrack, setHasClickedFastTrack] = useState(false);
+
     // Partnership Data
     const [partnershipUser, setPartnershipUser] = useState<any>(null);
 
@@ -1502,6 +1505,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                 onSquareClick={(sq: any) => setSquareInfo(sq)}
                                 showExitButton={showExitButton}
                                 onExitClick={() => {
+                                    setHasClickedFastTrack(true);
                                     if (localPlayer?.isFastTrack) {
                                         setShowFastTrackInfo(true);
                                     } else {
@@ -1509,6 +1513,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                     }
                                 }}
                                 isTutorial={isTutorial}
+                                hideFastTrackHint={hasClickedFastTrack}
                             />
 
                             {/* ActiveCardZone Overlay - Center */}
@@ -1633,7 +1638,7 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                                             </span>
                                             {(isTutorial && isMyTurn && state.phase === 'ROLL' && state.tutorialStep <= 1) && (
                                                 <TutorialTip
-                                                    text={state.tutorialStep === 0 ? "2. Бросайте кубик, чтобы ходить" : "7. Бросьте кубик снова!"}
+                                                    text={state.tutorialStep === 0 ? "1. Бросайте кубик, чтобы ходить" : "7. Бросьте кубик снова!"}
                                                     position="bottom-full mb-4"
                                                     arrow="bottom-[-6px] border-t-emerald-500 border-b-0"
                                                 />

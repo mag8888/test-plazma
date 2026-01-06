@@ -53,7 +53,7 @@ const getGradient = (type: string, isFT: boolean) => {
 
 import { TutorialTip } from './TutorialTip';
 
-export const BoardVisualizer = React.memo(({ board, players, animatingPos, currentPlayerId, onSquareClick, zoom = 1, showExitButton, onExitClick, isTutorial }: any) => {
+export const BoardVisualizer = React.memo(({ board, players, animatingPos, currentPlayerId, onSquareClick, zoom = 1, showExitButton, onExitClick, isTutorial, hideFastTrackHint }: any) => {
 
     // Helper: Is Fast Track?
     const isFastTrackSquare = (index: number) => index >= 24;
@@ -202,21 +202,20 @@ export const BoardVisualizer = React.memo(({ board, players, animatingPos, curre
                             <button
                                 onClick={onExitClick}
                                 className={`
-                                    absolute bottom-0
-                                    w-[60%] h-[30%]
+                                    absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2
+                                    w-[50%] h-[25%]
                                     bg-gradient-to-t from-[#be123c] to-[#f43f5e]
-                                    rounded-t-full
+                                    rounded-full
                                     flex flex-col items-center justify-center
-                                    cursor-pointer shadow-[0_-5px_20px_rgba(244,63,94,0.5)]
-                                    border-t-4 border-x-4 border-slate-900
-                                    transition-all transform hover:scale-105 active:scale-95 group z-20
-                                    hover:pb-2
+                                    cursor-pointer shadow-[0_0_20px_rgba(244,63,94,0.5)]
+                                    border-4 border-slate-900
+                                    transition-all transform hover:scale-110 active:scale-95 group z-20
                                 `}
                             >
                                 <span className="text-[2cqw] filter drop-shadow-md group-hover:-translate-y-1 transition-transform">🚀</span>
                                 <span className="text-white font-black text-[1cqw] uppercase tracking-[0.2em] drop-shadow-md mt-1 relative">
                                     FAST TRACK
-                                    {isTutorial && <TutorialTip text="3. Кнопка выхода на Большой Круг" position="bottom-full mb-8" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
+                                    {isTutorial && !hideFastTrackHint && <TutorialTip text="3. Кнопка выхода на Большой Круг" position="bottom-full mb-6" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
                                 </span>
                             </button>
                         )}
