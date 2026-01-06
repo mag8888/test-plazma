@@ -87,13 +87,14 @@ import { WinnerModal } from './WinnerModal';
 import { GameTimer } from './GameTimer';
 import { TutorialOverlay } from './TutorialOverlay';
 // Helper for Cash Animation
+import { ErrorBoundary } from './ErrorBoundary';
 const CashChangeIndicator = ({ currentCash }: { currentCash: number }) => {
     const [diff, setDiff] = useState<number | null>(null);
     const [visible, setVisible] = useState(false);
     const prevCash = useRef(currentCash);
 
     useEffect(() => {
-        console.log('🚀 BOARD COMPONENT LOADED - VERSION: FIX_HOOKS_V2 🚀');
+        console.log('🚀 BOARD COMPONENT LOADED - VERSION: FIX_HOOKS_V6 (ErrorBoundary) 🚀');
         if (prevCash.current !== currentCash) {
             const difference = currentCash - prevCash.current;
             setDiff(difference);
@@ -1533,50 +1534,54 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                     {/* CENTER BOARD (Responsive Square) */}
                     <div className={`${forceLandscape ? 'w-auto h-full' : 'w-full lg:w-auto lg:h-full'} aspect-square max-w-full flex-shrink-0 relative bg-[#0f172a] overflow-hidden flex flex-col lg:rounded-3xl lg:border border-slate-800/50 shadow-2xl max-h-full`}>
                         <div className="flex-1 relative overflow-hidden p-0 lg:p-4 flex items-center justify-center">
-                            <BoardVisualizer
-                                board={state.board}
-                                players={state.players}
-                                animatingPos={animatingPos}
-                                currentPlayerId={currentPlayer.id}
-                                zoom={zoom}
-                                onSquareClick={(sq: any) => setSquareInfo(sq)}
-                                showExitButton={showExitButton}
-                                onExitClick={() => {
-                                    setHasClickedFastTrack(true);
-                                    if (localPlayer?.isFastTrack) {
-                                        setShowFastTrackInfo(true);
-                                    } else {
-                                        setShowFastTrackModal(true);
-                                    }
-                                }}
-                                isTutorial={isTutorial}
-                                hideFastTrackHint={hasClickedFastTrack}
-                            />
+                            <ErrorBoundary name="BoardVisualizer">
+                                <BoardVisualizer
+                                    board={state.board}
+                                    players={state.players}
+                                    animatingPos={animatingPos}
+                                    currentPlayerId={currentPlayer.id}
+                                    zoom={zoom}
+                                    onSquareClick={(sq: any) => setSquareInfo(sq)}
+                                    showExitButton={showExitButton}
+                                    onExitClick={() => {
+                                        setHasClickedFastTrack(true);
+                                        if (localPlayer?.isFastTrack) {
+                                            setShowFastTrackInfo(true);
+                                        } else {
+                                            setShowFastTrackModal(true);
+                                        }
+                                    }}
+                                    isTutorial={isTutorial}
+                                    hideFastTrackHint={hasClickedFastTrack}
+                                />
+                            </ErrorBoundary>
 
                             {/* ActiveCardZone Overlay - Center */}
                             <div className="absolute inset-0 pointer-events-none flex items-center justify-center px-6 py-2 z-[60]">
                                 <div className="pointer-events-auto w-full max-w-xl mx-auto">
-                                    <ActiveCardZone
-                                        state={state}
-                                        isMyTurn={isMyTurn}
-                                        me={localPlayer}
-                                        roomId={roomId}
-                                        onDismissMarket={handleDismissCard}
-                                        onMarketCardClick={(card) => setSquareInfo({
-                                            type: 'MARKET',
-                                            card: card.card,
-                                            title: card.card.title,
-                                            description: card.card.description
-                                        })}
-                                        // Fix Animation Sync: Don't show card while animating move or rolling dice
-                                        canShowCard={canShowCard && !isAnimating && !showDice}
-                                        previewCard={squareInfo?.card ? squareInfo : null}
-                                        onDismissPreview={() => setSquareInfo(null)}
-                                        // Force remount on tutorial step change to avoid hook consistency issues
-                                        key={`acz-${isTutorial ? state.tutorialStep : 'main'}`}
-                                        isTutorial={isTutorial}
-                                        tutorialStep={state.tutorialStep}
-                                    />
+                                    <ErrorBoundary name="ActiveCardZone">
+                                        <ActiveCardZone
+                                            state={state}
+                                            isMyTurn={isMyTurn}
+                                            me={localPlayer}
+                                            roomId={roomId}
+                                            onDismissMarket={handleDismissCard}
+                                            onMarketCardClick={(card) => setSquareInfo({
+                                                type: 'MARKET',
+                                                card: card.card,
+                                                title: card.card.title,
+                                                description: card.card.description
+                                            })}
+                                            // Fix Animation Sync: Don't show card while animating move or rolling dice
+                                            canShowCard={canShowCard && !isAnimating && !showDice}
+                                            previewCard={squareInfo?.card ? squareInfo : null}
+                                            onDismissPreview={() => setSquareInfo(null)}
+                                            // Force remount on tutorial step change to avoid hook consistency issues
+                                            key={`acz-${isTutorial ? state.tutorialStep : 'main'}`}
+                                            isTutorial={isTutorial}
+                                            tutorialStep={state.tutorialStep}
+                                        />
+                                    </ErrorBoundary>
                                 </div>
                             </div>
                         </div>
