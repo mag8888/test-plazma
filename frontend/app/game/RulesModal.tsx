@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react';
 import { SMALL_DEALS, BIG_DEALS, MARKET_CARDS, EXPENSE_CARDS, Card } from './cards_data';
+import { TutorialTip } from './TutorialTip';
 
 interface RulesModalProps {
     onClose: () => void;
@@ -16,6 +17,7 @@ interface RulesModalProps {
 export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts, isTutorial, onConfirm }) => {
     const [activeTab, setActiveTab] = useState<'RULES' | 'SMALL' | 'BIG' | 'MARKET' | 'EXPENSE'>('RULES');
     const [hasRead, setHasRead] = useState(false);
+    const [hasViewedCards, setHasViewedCards] = useState(false);
 
     // ... (renderCard and getTabContent remain same)
     const renderCard = (card: Card) => (
@@ -233,11 +235,18 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts, isTutor
                 <div className="p-4 border-t border-slate-700 bg-[#0f172a] rounded-b-2xl flex flex-wrap gap-2 justify-between items-center flex-shrink-0">
                     <div className="flex gap-2 flex-wrap">
                         <button
-                            onClick={() => setActiveTab('SMALL')}
+                            onClick={() => { setActiveTab('SMALL'); if (isTutorial) setHasViewedCards(true); }}
                             className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-wider transition-all flex flex-col items-center leading-tight ${activeTab === 'SMALL' ? 'bg-green-600 text-white shadow-lg' : 'bg-slate-800 text-slate-400 hover:bg-slate-700'}`}
                         >
                             <span>Малые</span>
                             {counts && <span className="text-[9px] opacity-70">{counts.small.total}/{counts.small.remaining}</span>}
+                            {isTutorial && !hasViewedCards && activeTab === 'RULES' && (
+                                <TutorialTip
+                                    text="1. Посмотрите карточки"
+                                    position="bottom-full mb-3"
+                                    arrow="bottom-[-6px] border-t-emerald-500 border-b-0"
+                                />
+                            )}
                         </button>
                         <button
                             onClick={() => setActiveTab('BIG')}
