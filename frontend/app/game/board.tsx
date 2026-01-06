@@ -1356,9 +1356,16 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
 
                         {/* 2. Stats Grid */}
                         <div className="grid grid-cols-3 gap-2">
-                            <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform">
+                            <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform relative">
                                 <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Баланс</span>
                                 <span className="text-sm font-black text-green-400 font-mono tracking-tight">${localPlayer?.cash?.toLocaleString() || 0}</span>
+                                {isTutorial && state.tutorialStep === 3 && (
+                                    <TutorialTip
+                                        text="Нажмите, чтобы открыть банк"
+                                        position="top-full mt-2 left-1/2 -translate-x-1/2"
+                                        arrow="top-[-6px] border-b-emerald-500 border-t-0"
+                                    />
+                                )}
                             </div>
                             <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
                                 <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Выплата</span>
@@ -1367,13 +1374,6 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
                             <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform relative">
                                 <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Кредит</span>
                                 <span className="text-sm font-black text-red-400 font-mono tracking-tight">-${localPlayer?.loanDebt?.toLocaleString() || 0}</span>
-                                {isTutorial && state.tutorialStep === 3 && (
-                                    <TutorialTip
-                                        text="Банк / Кредиты"
-                                        position="top-full mt-2 left-1/2 -translate-x-1/2"
-                                        arrow="top-[-6px] border-b-emerald-500 border-t-0"
-                                    />
-                                )}
                             </div>
                         </div>
                     </div>

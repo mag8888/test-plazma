@@ -42,6 +42,21 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
     // Filter transactions for this player (either from or to)
     const myHistory = transactions.filter(t => t.from === player.name || t.to === player.name);
 
+    const [localTutorialStep, setLocalTutorialStep] = useState(0);
+
+    // Auto-advance tutorial steps
+    useEffect(() => {
+        if (isTutorial) {
+            const timer = setInterval(() => {
+                setLocalTutorialStep(prev => (prev < 6 ? prev + 1 : prev));
+            }, 2500); // 2.5 seconds per hint
+            return () => clearInterval(timer);
+        }
+    }, [isTutorial]);
+
+    // Helper for sequential hints
+    const showHint = (stepIndex: number) => isTutorial && localTutorialStep === stepIndex;
+
     const handleTakeLoan = () => {
         if (amount <= 0) return;
         socket.emit('take_loan', { roomId, amount });
@@ -68,7 +83,6 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                 <div className="absolute top-0 right-0 w-64 h-64 bg-green-500/10 rounded-full blur-3xl -mr-20 -mt-20 pointer-events-none"></div>
 
                 {/* Close Button Mobile */}
-                {/* Close Button Mobile - Sticky to ensure visibility */}
                 <button onClick={onClose} className="absolute top-4 right-4 md:hidden text-slate-400 hover:text-white z-50 bg-slate-900/50 rounded-full w-8 h-8 flex items-center justify-center backdrop-blur-sm">
                     ✕
                 </button>
@@ -99,9 +113,9 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                     </div>
 
                     <div className="relative z-10 p-5 rounded-2xl bg-gradient-to-br from-slate-800/50 to-slate-900/50 border border-slate-700/50">
-                        <div className="text-slate-400 text-[10px] uppercase tracking-wider mb-1">
+                        <div className="text-slate-400 text-[10px] uppercase tracking-wider mb-1 relative">
                             Баланс
-                            {isTutorial && <TutorialTip text="1. Ваш текущий баланс" position="top-full mt-2" arrow="top-[-6px] border-b-emerald-500 border-t-0" />}
+                            {showHint(0) && <div className="absolute top-full mt-2 left-0 z-[3000]"><TutorialTip text="1. Ваш текущий баланс" position="" arrow="top-[-6px] border-b-emerald-500 border-t-0" /></div>}
                         </div>
                         <div className="text-4xl md:text-5xl font-mono font-bold text-emerald-400 tracking-tighter drop-shadow-lg break-all">${player.cash?.toLocaleString()}</div>
                     </div>
@@ -110,7 +124,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         <div className="flex justify-between items-center pb-2 border-b border-slate-700/50">
                             <span className="text-emerald-400 font-bold tracking-wide relative">
                                 ↗ ДОХОД
-                                {isTutorial && <TutorialTip text="2. Ваша зарплата" position="left-full ml-4" arrow="left-[-6px] border-r-emerald-500 border-l-0" />}
+                                {showHint(1) && <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 z-[3000] min-w-[150px]"><TutorialTip text="2. Ваша зарплата" position="" arrow="left-[-6px] border-r-emerald-500 border-l-0" /></div>}
                             </span>
                             <span className="text-white font-mono text-lg">${player.income?.toLocaleString()}</span>
                         </div>
@@ -118,7 +132,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         <div className="flex justify-between items-center pb-2 border-b border-slate-700/50">
                             <span className="text-slate-400 font-bold tracking-wide text-xs relative">
                                 ПАССИВНЫЙ
-                                {isTutorial && <TutorialTip text="5. Доход от активов" position="left-full ml-4" arrow="left-[-6px] border-r-emerald-500 border-l-0" />}
+                                {showHint(4) && <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 z-[3000] min-w-[150px]"><TutorialTip text="5. Доход от активов" position="" arrow="left-[-6px] border-r-emerald-500 border-l-0" /></div>}
                             </span>
                             <span className="text-emerald-400 font-mono text-lg">+${(player.passiveIncome || 0).toLocaleString()}</span>
                         </div>
@@ -130,7 +144,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         >
                             <span className="text-red-400 font-bold tracking-wide flex items-center gap-2 relative">
                                 ↘ РАСХОДЫ
-                                {isTutorial && <TutorialTip text="3. Ваши расходы" position="left-full ml-4" arrow="left-[-6px] border-r-emerald-500 border-l-0" />}
+                                {showHint(2) && <div className="absolute left-full ml-4 top-1/2 -translate-y-1/2 z-[3000] min-w-[150px]"><TutorialTip text="3. Ваши расходы" position="" arrow="left-[-6px] border-r-emerald-500 border-l-0" /></div>}
                                 <span className={`text-[10px] text-slate-500 transition-transform duration-300 ${showExpenses ? 'rotate-180' : ''}`}>▼</span>
                             </span>
                             <span className="text-white font-mono text-lg underline decoration-dashed decoration-slate-600 underline-offset-4 group-hover:decoration-slate-400 transition-all">
@@ -165,7 +179,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         <div className="flex justify-between pt-3 border-t border-slate-700/50 items-center">
                             <span className="text-yellow-400 font-black tracking-widest text-xs relative">
                                 PAYDAY
-                                {isTutorial && <TutorialTip text="4. Доходы минус расходы" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
+                                {showHint(3) && <div className="absolute bottom-full mb-2 left-0 z-[3000] min-w-[200px]"><TutorialTip text="4. Доходы минус расходы" position="" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" /></div>}
                             </span>
                             <span className="text-white font-mono font-bold text-xl drop-shadow">${player.cashflow?.toLocaleString()}</span>
                         </div>
@@ -180,7 +194,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                             <span className="text-slate-500">Лимит:</span>
                             <span className="text-slate-500 font-mono text-emerald-400 font-bold bg-emerald-950/30 px-2 py-0.5 rounded border border-emerald-900/30 relative">
                                 +${availableLoan.toLocaleString()}
-                                {isTutorial && <TutorialTip text="Лимит кредита = 10 * Payday. Каждый кредит уменьшает Payday." position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
+                                {showHint(5) && <div className="absolute bottom-full mb-2 right-0 z-[3000] min-w-[200px]"><TutorialTip text="Лимит кредита = 10 * Payday. Каждый кредит уменьшает Payday." position="" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" /></div>}
                             </span>
                         </div>
 
@@ -193,7 +207,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                             value={amount || ''}
                             onChange={e => setAmount(Number(e.target.value))}
                         />
-                        {isTutorial && !amount && <div className="absolute top-[110px] left-1/2 -translate-x-1/2 pointer-events-none"><TutorialTip text="Введите 1000" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" /></div>}
+                        {showHint(6) && !amount && <div className="absolute top-[110px] left-1/2 -translate-x-1/2 pointer-events-none z-[3000]"><TutorialTip text="Введите 1000" position="" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" /></div>}
 
                         <div className="grid grid-cols-2 gap-3">
                             <button onClick={handleRepayLoan} className="bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-900/20 active:scale-95 flex items-center justify-center gap-2">
@@ -207,7 +221,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                             ) : (
                                 <button onClick={handleTakeLoan} className="bg-red-600 hover:bg-red-500 text-white py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-red-900/20 relative">
                                     Взять
-                                    {isTutorial && amount === 1000 && <TutorialTip text="Нажмите Взять" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
+                                    {isTutorial && amount === 1000 && <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 z-[3000]"><TutorialTip text="Нажмите Взять" position="" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" /></div>}
                                 </button>
                             )}
                         </div>
@@ -231,7 +245,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
                         <h4 className="text-slate-300 font-bold mb-4 flex items-center gap-2 text-sm uppercase tracking-wider text-blue-300/80 relative">
                             <span className="text-lg">💸</span> Перевод средств
-                            {isTutorial && <TutorialTip text="1. Здесь можно сделать перевод. Попробуйте передать $111" position="top-full mt-2" arrow="top-[-6px] border-b-emerald-500 border-t-0" />}
+                            {/* {isTutorial && <TutorialTip text="1. Здесь можно сделать перевод. Попробуйте передать $111" position="top-full mt-2" arrow="top-[-6px] border-b-emerald-500 border-t-0" />} */}
                         </h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 relative z-10">
                             <select
@@ -267,7 +281,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                     <div className="bg-slate-800/40 p-6 rounded-3xl border border-slate-700/40 flex-1 min-h-[200px] flex flex-col shadow-inner">
                         <h4 className="text-slate-300 font-bold mb-4 flex items-center gap-3 text-sm uppercase tracking-wider relative">
                             <span>🕒</span> История операций <span className="bg-slate-700/50 text-slate-300 text-[10px] px-2 py-0.5 rounded-full border border-slate-600/50">{myHistory.length}</span>
-                            {isTutorial && <TutorialTip text="2. Здесь отображаются ваши фин операции" position="top-full mt-2" arrow="top-[-6px] border-b-emerald-500 border-t-0" />}
+                            {/* {isTutorial && <TutorialTip text="2. Здесь отображаются ваши фин операции" position="top-full mt-2" arrow="top-[-6px] border-b-emerald-500 border-t-0" />} */}
                         </h4>
 
                         <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar flex-1">
