@@ -121,17 +121,12 @@ const getInitials = (name: string) => {
     return name.substring(0, 2).toUpperCase();
 };
 
-export default function GameBoard({ roomId, userId, initialState, isHost, isTutorial }: BoardProps) {
-    const router = useRouter();
-    const [state, setState] = useState(initialState);
 
-    // Initial State Sync & Version Check
-    useEffect(() => {
-        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: FIX_HOOKS_V9 (Refactored Components) 🚀');
-        if (initialState) {
-            setState(initialState);
-        }
-    }, []);
+// Logic extracted to Inner component to guarantee robust hook execution (Fixes #310)
+function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState }: BoardProps & { state: any, setState: (s: any) => void }) {
+    const router = useRouter();
+
+    // State is now passed from parent, initialized and safe.
 
     const [showBank, setShowBank] = useState(false);
     const [showRules, setShowRules] = useState(false);
@@ -2115,3 +2110,35 @@ export default function GameBoard({ roomId, userId, initialState, isHost, isTuto
         )
     );
 }
+
+export default function GameBoard(props: BoardProps) {
+    const [state, setState] = useState(props.initialState);
+
+    // Initial State Sync
+    useEffect(() => {
+        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: FIX_HOOKS_V10 (Container/Content Split) 🚀');
+        if (props.initialState) {
+            setState(props.initialState);
+        }
+    }, [props.initialState]);
+
+    // Derived check for loading
+    const currentTurnPlayer = state?.players?.[state?.currentPlayerIndex];
+
+    // Strict Loading Gate: Do not mount Content until we have valid state and player
+    if (!state || !currentTurnPlayer) {
+        return (
+            <div className="h-[100dvh] w-full bg-[#0f172a] flex items-center justify-center text-white">
+                <div className="flex flex-col items-center gap-4">
+                    <span className="text-4xl animate-spin">🎲</span>
+                    <span className="text-sm font-bold uppercase tracking-widest text-slate-400">
+                        {!state ? 'Загрузка состояния...' : 'Загрузка игры...'}
+                    </span>
+                </div>
+            </div>
+        );
+    }
+
+    return <GameBoardContent {...props} state={state} setState={setState} />;
+}
+
