@@ -2991,89 +2991,59 @@ export class GameEngine {
         // Assuming 'card' refers to this.state.currentCard and 'player' refers to the active player.
         const player = this.state.players[this.state.currentPlayerIndex]; // Assuming current player is the buyer
         const card = this.state.currentCard; // Assuming currentCard is the asset being bought out
+        // 2. Transfer Asset
+        // Find index of asset in seller inventory
+        const assetIndex = seller.assets.findIndex(a => a.title === card.title && a.type === card.type);
+        if (assetIndex !== -1) {
+            const asset = seller.assets[assetIndex];
 
-        if (card && card.isBuyout && card.ownerId && card.ownerId !== player.id) {
-            const seller = this.state.players.find(p => p.id === card.ownerId);
+            // Remove from Seller
+            seller.assets.splice(assetIndex, 1);
+            this.recalculateFinancials(seller);
 
-            if (seller) {
-                const buyoutPrice = (card.originalCost || card.cost) * 2;
-
-                if (player.cash < buyoutPrice) {
-                    this.addLog(`⚠️ ${player.name} недостаточно средств для выкупа ($${buyoutPrice})!`);
-                    return; // Exit transferCash if buyout fails due to funds
-                }
-
-                // 1. Pay Seller (Original Cost only) - Seller Profit = 0 (Gets back initial investment)
-                // Or user said: "Seller gets price they bought". 
-                // Wait, user said: "tot u kogo vykupayut vykupayut po cene kotoroy on pokupal" 
-                // -> "The one who is bought out [gets paid] at the price he bought."
-                // So Seller gets Cost. Buyer pays 2x Cost.
-                // Where does the other 1x go? Bank/Burned? Or maybe Seller gets 2x?
-                // Re-reading: "Hostile Takeover" pays the VICTIM well (Premium). 
-                // But user explicitly said "Seller gets price he bought". 
-                // AND "Buyer pays 2x".
-                // I will implement exactly as requested. Buyer pays 2x. Seller gets 1x.
-                const sellerPayout = card.originalCost || card.cost;
-
-                player.cash -= buyoutPrice;
-                seller.cash += sellerPayout;
-
-                this.addLog(`⚔️ ${player.name} совершил РЕЙДЕРСКИЙ ЗАХВАТ бизнеса у ${seller.name}!`);
-                this.addLog(`💰 ${player.name} заплатил $${buyoutPrice.toLocaleString()}. ${seller.name} вернул свои $${sellerPayout.toLocaleString()}.`);
-
-                // 2. Transfer Asset
-                // Find index of asset in seller inventory
-                const assetIndex = seller.assets.findIndex(a => a.title === card.title && a.type === card.type);
-                if (assetIndex !== -1) {
-                    const asset = seller.assets[assetIndex];
-
-                    // Remove from Seller
-                    seller.assets.splice(assetIndex, 1);
-                    this.recalculateFinancials(seller);
-
-                    // Add to Buyer (Upgraded)
-                    const newAsset = { ...asset };
-                    newAsset.ownerId = player.id; // Correct ID? Asset usually doesn't store ownerId inside player.assets (implicit).
-                    // Update Cashflow 1.5x
-                    // "dohod umnozhaetsya na 1.5" -> "income multiplied by 1.5"
-                    // "esli biznes prinosil 4000 to posle perevykupa prinosit 6000" (4000 * 1.5 = 6000). Correct.
-                    if (newAsset.cashflow) {
-                        newAsset.cashflow = Math.floor(newAsset.cashflow * 1.5);
-                    }
-                    newAsset.cost = buyoutPrice; // New basis?
-
-                    player.assets.push(newAsset);
-                    this.recalculateFinancials(player);
-
-                    this.addLog(`📈 ${newAsset.title} теперь приносит $${newAsset.cashflow}/мес!`);
-
-                    // Clear card state
-                    this.state.currentCard = undefined;
-                    this.state.phase = 'ACTION';
-                    this.endTurn();
-                    return; // Exit transferCash after successful buyout
-                } else {
-                    this.addLog(`⚠️ Ошибка: Актив не найден у продавца.`);
-                }
-            } else {
-                this.addLog(`⚠️ Продавец не найден.`);
+            // Add to Buyer (Upgraded)
+            const newAsset = { ...asset };
+            newAsset.ownerId = player.id; // Correct ID? Asset usually doesn't store ownerId inside player.assets (implicit).
+            // Update Cashflow 1.5x
+            // "dohod umnozhaetsya na 1.5" -> "income multiplied by 1.5"
+            // "esli biznes prinosil 4000 to posle perevykupa prinosit 6000" (4000 * 1.5 = 6000). Correct.
+            if (newAsset.cashflow) {
+                newAsset.cashflow = Math.floor(newAsset.cashflow * 1.5);
             }
+            newAsset.cost = buyoutPrice; // New basis?
+
+            player.assets.push(newAsset);
+            this.recalculateFinancials(player);
+
+            this.addLog(`📈 ${newAsset.title} теперь приносит $${newAsset.cashflow}/мес!`);
+
+            // Clear card state
+            this.state.currentCard = undefined;
+            this.state.phase = 'ACTION';
+            this.endTurn();
+            return; // Exit transferCash after successful buyout
+        } else {
+            this.addLog(`⚠️ Ошибка: Актив не найден у продавца.`);
         }
-        // --- End of inserted code block ---
+    } else {
+    this.addLog(`⚠️ Продавец не найден.`);
+}
+        }
+// --- End of inserted code block ---
 
-        // Standard Buy Logic (This part was in the original instruction snippet, but it's not a standard cash transfer logic)
-        // It seems the instruction is mixing `transferCash` with `buyAsset` or `handleCardAction` logic.
-        // I will comment out the 'Standard Buy Logic' as it doesn't fit `transferCash` and is not part of the original file.
-        // const totalCost = (card.cost || 0) * quantity;
-        // if (player.cash < totalCost) {
-        //     this.addLog(`⚠️ ${player.name} недостаточно средств! (Нужно: $${totalCost})`);
-        //     return;
-        // }
+// Standard Buy Logic (This part was in the original instruction snippet, but it's not a standard cash transfer logic)
+// It seems the instruction is mixing `transferCash` with `buyAsset` or `handleCardAction` logic.
+// I will comment out the 'Standard Buy Logic' as it doesn't fit `transferCash` and is not part of the original file.
+// const totalCost = (card.cost || 0) * quantity;
+// if (player.cash < totalCost) {
+//     this.addLog(`⚠️ ${player.name} недостаточно средств! (Нужно: $${totalCost})`);
+//     return;
+// }
 
-        fromPlayer.cash -= amount;
-        toPlayer.cash += amount;
+fromPlayer.cash -= amount;
+toPlayer.cash += amount;
 
-        this.addLog(`💸 ${fromPlayer.name} перевел $${amount.toLocaleString()} игроку ${toPlayer.name}`);
+this.addLog(`💸 ${fromPlayer.name} перевел $${amount.toLocaleString()} игроку ${toPlayer.name}`);
         // this.emitState(); // Usually called by gateway after action returns? No, gateway calls getState. 
         // Gateway: game.transferDeal -> state updated -> emit. 
         // So we don't need emitState here if gateway handles it. 
@@ -3083,90 +3053,90 @@ export class GameEngine {
         // I must fix gateway to emit state!
     }
 
-    resolveBabyRoll(): number | { total: number, values: number[] } {
-        const player = this.state.players[this.state.currentPlayerIndex];
-        const roll = Math.floor(Math.random() * 6) + 1;
-        const rollResult = { total: roll, values: [roll] };
+resolveBabyRoll(): number | { total: number, values: number[] } {
+    const player = this.state.players[this.state.currentPlayerIndex];
+    const roll = Math.floor(Math.random() * 6) + 1;
+    const rollResult = { total: roll, values: [roll] };
 
-        // User requested 100% success for now
-        const success = true;
+    // User requested 100% success for now
+    const success = true;
 
-        if (success) {
-            if (player.childrenCount < 3) {
-                player.childrenCount++;
-                const currentChild = player.childrenCount; // 1, 2, or 3
+    if (success) {
+        if (player.childrenCount < 3) {
+            player.childrenCount++;
+            const currentChild = player.childrenCount; // 1, 2, or 3
 
-                const expenseIncrease = 500;
-                this.recalculateFinancials(player);
+            const expenseIncrease = 500;
+            this.recalculateFinancials(player);
 
-                // 2. Cash Bonus Logic ($5k / $10k / $20k)
-                let bonus = 0;
-                if (currentChild === 1) bonus = 5000;
-                else if (currentChild === 2) bonus = 10000;
-                else if (currentChild === 3) bonus = 20000;
+            // 2. Cash Bonus Logic ($5k / $10k / $20k)
+            let bonus = 0;
+            if (currentChild === 1) bonus = 5000;
+            else if (currentChild === 2) bonus = 10000;
+            else if (currentChild === 3) bonus = 20000;
 
-                player.cash += bonus;
+            player.cash += bonus;
 
-                // 3. Add Non-Transferable Child Asset
-                // We define Asset interface here locally or use 'any' if global type missing. 
-                // Using 'any' to avoid build errors with missing import.
-                const childAsset: any = {
-                    id: `child_${Date.now()}_${currentChild}`,
-                    title: `Ребенок #${currentChild}`,
-                    type: 'OTHER',
-                    cost: 0,
-                    cashflow: 0,
-                    value: 0,
-                    quantity: 1,
-                    isTransferable: false
-                };
-                if (!player.assets) player.assets = [];
-                player.assets.push(childAsset);
+            // 3. Add Non-Transferable Child Asset
+            // We define Asset interface here locally or use 'any' if global type missing. 
+            // Using 'any' to avoid build errors with missing import.
+            const childAsset: any = {
+                id: `child_${Date.now()}_${currentChild}`,
+                title: `Ребенок #${currentChild}`,
+                type: 'OTHER',
+                cost: 0,
+                cashflow: 0,
+                value: 0,
+                quantity: 1,
+                isTransferable: false
+            };
+            if (!player.assets) player.assets = [];
+            player.assets.push(childAsset);
 
-                this.addLog(`👶 Поздравляем! Родился ребёнок #${currentChild}! (Кубик: ${roll})`);
-                this.addLog(`💰 Получен бонус: $${bonus.toLocaleString()}`);
-                this.addLog(`📉 Расходы увеличены на $${expenseIncrease}`);
+            this.addLog(`👶 Поздравляем! Родился ребёнок #${currentChild}! (Кубик: ${roll})`);
+            this.addLog(`💰 Получен бонус: $${bonus.toLocaleString()}`);
+            this.addLog(`📉 Расходы увеличены на $${expenseIncrease}`);
 
-                this.state.lastEvent = {
-                    type: 'BABY_BORN',
-                    payload: {
-                        player: player.name,
-                        playerId: player.id,
-                        roll,
-                        childCost: expenseIncrease,
-                        bonus: bonus,
-                        totalChildren: currentChild
-                    }
-                };
+            this.state.lastEvent = {
+                type: 'BABY_BORN',
+                payload: {
+                    player: player.name,
+                    playerId: player.id,
+                    roll,
+                    childCost: expenseIncrease,
+                    bonus: bonus,
+                    totalChildren: currentChild
+                }
+            };
 
 
-            } else {
-                this.addLog(`👶 У вас уже 3 детей! (Кубик: ${roll}). Больше 3 нельзя.`);
-                this.state.lastEvent = {
-                    type: 'BABY_BORN',
-                    payload: {
-                        player: player.name,
-                        playerId: player.id,
-                        roll,
-                        childCost: 0,
-                        message: "Максимум детей достигнут"
-                    }
-                };
-            }
         } else {
-            this.addLog(`🎲 ${player.name} выбросил ${roll}. Ребёнок не родился.`);
+            this.addLog(`👶 У вас уже 3 детей! (Кубик: ${roll}). Больше 3 нельзя.`);
+            this.state.lastEvent = {
+                type: 'BABY_BORN',
+                payload: {
+                    player: player.name,
+                    playerId: player.id,
+                    roll,
+                    childCost: 0,
+                    message: "Максимум детей достигнут"
+                }
+            };
         }
-
-        this.state.phase = 'ACTION'; // Enable Next
-        return rollResult;
+    } else {
+        this.addLog(`🎲 ${player.name} выбросил ${roll}. Ребёнок не родился.`);
     }
 
+    this.state.phase = 'ACTION'; // Enable Next
+    return rollResult;
+}
 
 
-    getState(): GameState {
-        return {
-            ...this.state,
-            deckCounts: this.cardManager.getDeckCounts()
-        };
-    }
+
+getState(): GameState {
+    return {
+        ...this.state,
+        deckCounts: this.cardManager.getDeckCounts()
+    };
+}
 }
