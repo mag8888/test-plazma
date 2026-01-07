@@ -1955,7 +1955,7 @@ export class GameEngine {
         if (player.isFastTrack) {
             amount = 100000;
         } else {
-            amount = Math.floor(player.income * 0.1);
+            amount = Math.max(1000, Math.floor(player.income * 0.1));
         }
 
         if (player.cash < amount) {
@@ -2886,13 +2886,20 @@ export class GameEngine {
     transferCash(fromId: string, toId: string, amount: number) {
         if (amount <= 0) return;
 
-        const fromPlayer = this.state.players.find(p => p.id === fromId);
-        const toPlayer = this.state.players.find(p => p.id === toId);
+        // Try finding by ID (socket) or userId
+        let fromPlayer = this.state.players.find(p => p.id === fromId);
+        if (!fromPlayer) fromPlayer = this.state.players.find(p => p.userId === fromId);
 
-        if (!fromPlayer || !toPlayer) return;
+        let toPlayer = this.state.players.find(p => p.id === toId);
+        if (!toPlayer) toPlayer = this.state.players.find(p => p.userId === toId);
+
+        if (!fromPlayer || !toPlayer) {
+            console.error(`[TransferCash] Player not found. From: ${fromId}, To: ${toId}`);
+            return;
+        }
 
         if (fromPlayer.cash < amount) {
-            // Should be handled by UI validation usually, but safety check
+            this.addLog(`⚠️ ${fromPlayer.name} не хватает денег для перевода ($${amount}).`);
             return;
         }
 

@@ -127,7 +127,7 @@ export const ActiveCardZone = ({
                         <div className="flex bg-slate-800/50 p-3 rounded-xl mb-6 items-center gap-3 border border-white/5">
                             <span className="text-xs text-slate-400 uppercase font-bold">Сумма:</span>
                             <span className="text-xl font-mono font-black text-rose-400">
-                                -${Math.ceil((me.totalIncome || 0) * 0.1).toLocaleString()}
+                                -${Math.max(1000, Math.ceil((me.totalIncome || 0) * 0.1)).toLocaleString()}
                             </span>
                         </div>
                         <div className="space-y-3 w-full">
