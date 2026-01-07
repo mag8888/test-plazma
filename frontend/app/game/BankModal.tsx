@@ -14,7 +14,8 @@ interface BankModalProps {
     isTutorial?: boolean;
 }
 
-import { TutorialTip } from './TutorialTip';
+import { useRef } from 'react';
+import { TutorialTip, PortalTutorialTip } from './TutorialTip';
 
 export const BankModal = ({ isOpen, onClose, player, roomId, transactions, players, initialRecipientId, isTutorial }: BankModalProps) => {
     const [amount, setAmount] = useState<number>(0);
@@ -34,6 +35,12 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
 
     // Filter transactions for this player (either from or to)
     const myHistory = transactions.filter(t => t.from === player.name || t.to === player.name);
+
+    // Tutorial Refs
+    const step0Ref = useRef<HTMLDivElement>(null);
+    const step1Ref = useRef<HTMLDivElement>(null);
+    const step2Ref = useRef<HTMLDivElement>(null);
+    const step3Ref = useRef<HTMLHeadingElement>(null);
 
     const [localTutorialStep, setLocalTutorialStep] = useState(0);
 
@@ -151,10 +158,9 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         <div className="flex justify-between items-center pb-2 border-b border-slate-700/50">
                             <span className="text-emerald-400 font-bold tracking-wide relative">
                                 ↗ ДОХОД
-                                ↗ ДОХОД
-                                {showHint(0) && <div className="absolute top-[-80px] left-0 z-[3000] w-[200px] pointer-events-none"><TutorialTip text="1. Ваши Доходы и Расходы. Чтобы продолжить, попробуйте Взять Кредит." position="top" arrow="bottom-[-6px] left-8 border-t-emerald-500 border-b-0" /></div>}
+                                {showHint(0) && <PortalTutorialTip text="1. Ваши Доходы и Расходы. Чтобы продолжить, попробуйте Взять Кредит." position="top" targetRef={step0Ref} />}
                             </span>
-                            <span className="text-white font-mono text-lg">${player.income?.toLocaleString()}</span>
+                            <span ref={step0Ref} className="text-white font-mono text-lg">${player.income?.toLocaleString()}</span>
                         </div>
 
                         <div className="flex justify-between items-center pb-2 border-b border-slate-700/50">
@@ -217,9 +223,9 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         <div className="flex justify-between items-center mb-4">
                             <span className="text-slate-400 text-xs font-bold uppercase tracking-wider relative">
                                 Текущий Кредит
-                                {showHint(1) && <div className="absolute top-8 left-0 z-[3000] w-64 pointer-events-none"><TutorialTip text="2. Управление кредитами. Нажмите, чтобы продолжить." position="left" arrow="top-[-6px] border-b-emerald-500 border-t-0 left-4" /></div>}
+                                {showHint(1) && <PortalTutorialTip text="2. Управление кредитами. Нажмите, чтобы продолжить." position="top" targetRef={step1Ref} />}
                             </span>
-                            <span className="text-red-400 font-mono font-black text-xl">${currentLoan.toLocaleString()}</span>
+                            <span ref={step1Ref} className="text-red-400 font-mono font-black text-xl">${currentLoan.toLocaleString()}</span>
                         </div>
                         <div className="flex justify-between items-center mb-4 text-xs">
                             <span className="text-slate-500">Лимит:</span>
@@ -277,9 +283,10 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
                         <h4 className="text-slate-300 font-bold mb-4 flex items-center gap-2 text-sm uppercase tracking-wider text-blue-300/80 relative">
                             <span className="text-lg">💸</span> Перевод средств
-                            {showHint(2) && <div className="absolute top-10 left-0 z-[3000] w-64 pointer-events-none"><TutorialTip text="3. Переводы другим игрокам. Нажмите, чтобы продолжить." position="left" arrow="top-[-6px] border-b-emerald-500 border-t-0 left-4" /></div>}
+                            <span className="text-lg">💸</span> Перевод средств
+                            {showHint(2) && <PortalTutorialTip text="3. Переводы другим игрокам. Нажмите, чтобы продолжить." position="top" targetRef={step2Ref} />}
                         </h4>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 relative z-10" onClick={e => e.stopPropagation()}>
+                        <div ref={step2Ref} className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4 relative z-10" onClick={e => e.stopPropagation()}>
                             <select
                                 className="bg-slate-950/50 border border-slate-700/50 rounded-xl px-4 py-3 text-white outline-none focus:border-blue-500 transition-all text-sm appearance-none"
                                 value={recipientId}
@@ -314,9 +321,9 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                         onClick={() => advanceTutorial(3)}
                         className="bg-slate-800/40 p-6 rounded-3xl border border-slate-700/40 flex-1 min-h-[200px] flex flex-col shadow-inner cursor-pointer hover:border-slate-500/50 transition-colors"
                     >
-                        <h4 className="text-slate-300 font-bold mb-4 flex items-center gap-3 text-sm uppercase tracking-wider relative">
+                        <h4 ref={step3Ref} className="text-slate-300 font-bold mb-4 flex items-center gap-3 text-sm uppercase tracking-wider relative">
                             <span>🕒</span> История операций <span className="bg-slate-700/50 text-slate-300 text-[10px] px-2 py-0.5 rounded-full border border-slate-600/50">{myHistory.length}</span>
-                            {showHint(3) && <div className="absolute right-full mr-4 top-1/2 -translate-y-1/2 z-[3000] min-w-[200px] pointer-events-none"><TutorialTip text="4. История операций. Нажмите, чтобы завершить." position="" arrow="right-[-6px] border-l-emerald-500 border-r-0" /></div>}
+                            {showHint(3) && <PortalTutorialTip text="4. История операций. Нажмите, чтобы завершить." position="top" targetRef={step3Ref} />}
                         </h4>
 
                         <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar flex-1">
