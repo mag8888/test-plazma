@@ -225,7 +225,13 @@ function LobbyContent() {
         const userId = user?._id || user?.id;
         if (!userId) return;
         if (window.confirm('Вы уверены, что хотите удалить эту комнату?')) {
-            socket.emit('delete_room', { roomId, userId });
+            socket.emit('delete_room', { roomId, userId }, (response: any) => {
+                if (response?.success) {
+                    // Success (Socket listeners will handle update)
+                } else {
+                    alert('Ошибка удаления: ' + (response?.error || 'Unknown error'));
+                }
+            });
         }
     };
 

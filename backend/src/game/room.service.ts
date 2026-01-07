@@ -331,7 +331,7 @@ export class RoomService {
         const room = await RoomModel.findById(roomId);
         if (!room) throw new Error("Room not found");
 
-        if (room.creatorId !== requesterUserId) {
+        if (String(room.creatorId) !== String(requesterUserId)) {
             throw new Error("Only the host can delete the room");
         }
 
