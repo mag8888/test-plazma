@@ -1932,9 +1932,16 @@ function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState 
                             {/* BANK BUTTON (Mobile) */}
                             <button
                                 onClick={() => setShowBank(true)}
-                                className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors"
+                                className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors relative"
                             >
                                 🏦
+                                {isTutorial && state.tutorialStep === 3 && (
+                                    <TutorialTip
+                                        text="Нажмите Банк 🏦"
+                                        position="bottom-full mb-3 left-1/2 -translate-x-1/2" // Adjusted to show ABOVE button
+                                        arrow="bottom-[-6px] left-1/2 -translate-x-1/2 border-t-emerald-500 border-b-0"
+                                    />
+                                )}
                             </button>
 
                             {/* MENU TOGGLE */}
