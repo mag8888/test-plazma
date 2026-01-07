@@ -1644,10 +1644,17 @@ function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState 
                         {/* BANK BUTTON (Desktop) */}
                         <button
                             onClick={() => setShowBank(true)}
-                            className="w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0 mb-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white"
+                            className="w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0 mb-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white relative"
                         >
                             <span className="text-lg">🏦</span>
                             <span>БАНК</span>
+                            {isTutorial && state.tutorialStep === 3 && (
+                                <TutorialTip
+                                    text="Нажмите Банк 🏦"
+                                    position="right-full mr-4 top-1/2 -translate-y-1/2"
+                                    arrow="right-[-6px] border-l-emerald-500 border-r-0 border-y-transparent border-y-[6px] top-1/2 -translate-y-1/2"
+                                />
+                            )}
                         </button>
 
                         {/* DESKTOP SKIP / PAUSE TOGGLE */}
