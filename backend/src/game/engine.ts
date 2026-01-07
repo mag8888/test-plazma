@@ -477,7 +477,13 @@ export class GameEngine {
                 let shouldBuy = false;
 
                 if (canAfford) {
-                    if (isHard) {
+                    // CRITICAL FIX: Always pay for Mandatory items (Expenses, Doodads)
+                    const isMandatory = c.type === 'EXPENSE' || c.mandatory;
+
+                    if (isMandatory) {
+                        shouldBuy = true;
+                        this.addLog(`🤖 ${player.name} оплачивает обязательный расход: ${c.title}`);
+                    } else if (isHard) {
                         // Smart Logic: Buy if Cashflow is positive OR it's a Big Deal/Dream worth it
                         // Always buy Assets that give cashflow
                         if ((c.cashflow || 0) > 0) shouldBuy = true;
@@ -487,6 +493,16 @@ export class GameEngine {
                     } else {
                         // Easy: Random
                         shouldBuy = Math.random() > 0.5;
+                    }
+                } else {
+                    // Cannot afford?
+                    const isMandatory = c.type === 'EXPENSE' || c.mandatory;
+                    if (isMandatory) {
+                        // If it's mandatory and we can't afford, we MUST still try to "buy" it 
+                        // because buyAsset -> forcePayment handles bankruptcy/loans.
+                        // If we just skip, we cheat death.
+                        shouldBuy = true;
+                        this.addLog(`🤖 ${player.name} пытается оплатить (нехватка средств): ${c.title}`);
                     }
                 }
 
