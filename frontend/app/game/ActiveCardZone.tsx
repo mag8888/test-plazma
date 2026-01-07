@@ -256,9 +256,10 @@ export const ActiveCardZone = ({
                                             return;
                                         }
 
-                                        // 2. Active Player Logic (Global - Ends Turn)
+                                        // 2. Active Player Logic (Global - Dismiss Card -> Backend handles logic (Pay/Penalty/Discard))
                                         if (item.source === 'CURRENT' && isMyTurn) {
-                                            socket.emit('end_turn', { roomId });
+                                            socket.emit('dismiss_card', { roomId });
+                                            // socket.emit('end_turn', { roomId }); // OLD: This bypassed payment logic!
                                             return;
                                         }
 

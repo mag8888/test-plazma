@@ -11,6 +11,7 @@ import { CardHeader } from './CardHeader';
 // TutorialTip is also used in Board.tsx. It should be its own file.
 // I will check if TutorialTip.tsx exists. Yes it does. (Step 3333).
 import { TutorialTip } from './TutorialTip';
+import { CryptoChart } from './CryptoChart';
 
 export const FeedCardItem = ({
     cardWrapper,
@@ -207,13 +208,34 @@ export const FeedCardItem = ({
                             </div>
                         ) : (
                             <div className="bg-slate-800/30 p-2 rounded-lg border border-slate-700/30 flex-1 overflow-y-auto custom-scrollbar">
+                                {/* Crypto Chart Integration */}
+                                {(() => {
+                                    const titleUpper = (card.title || '').toUpperCase();
+                                    const symbolUpper = (card.symbol || '').toUpperCase();
+                                    const isCrypto = symbolUpper === 'BTC' || symbolUpper === 'TON' || titleUpper.includes('BITCOIN') || titleUpper.includes('TON TOKEN');
+
+                                    if (isCrypto) {
+                                        const chartSymbol = symbolUpper === 'BTC' || titleUpper.includes('BITCOIN') ? 'BTC' : 'TON';
+                                        return <CryptoChart symbol={chartSymbol} />;
+                                    }
+                                    return null;
+                                })()}
+
                                 <p className="text-[10px] text-slate-300 leading-relaxed">
                                     {card.description}
                                 </p>
                                 <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2">
                                     {card.cashflow !== undefined && card.cashflow !== 0 && (
                                         <div className="text-[9px] px-1.5 py-0.5 rounded bg-green-900/30 border border-green-500/30 text-green-300 font-mono flex items-center gap-1">
-                                            <span>Поток:</span> <b>{card.cashflow > 0 ? '+' : ''}${card.cashflow}</b>
+                                            <span>Поток:</span>
+                                            {card.isBuyout ? (
+                                                <>
+                                                    <span className="line-through opacity-50 text-slate-400">${card.cashflow}</span>
+                                                    <span className="font-bold text-emerald-400 animate-pulse">+${Math.floor(card.cashflow * 1.5)}</span>
+                                                </>
+                                            ) : (
+                                                <b>{card.cashflow > 0 ? '+' : ''}${card.cashflow}</b>
+                                            )}
                                         </div>
                                     )}
                                     {card.roi && (

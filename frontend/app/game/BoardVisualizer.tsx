@@ -363,16 +363,16 @@ export const BoardVisualizer = React.memo(({ board, players, animatingPos, curre
                             >
                                 <div className={`
                                     w-[5cqw] h-[5cqw] rounded-full bg-slate-900 border-2 ${p.id === currentPlayerId ? 'border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-110' : 'border-slate-600 shadow-md'}
-                                    flex items-center justify-center relative overflow-hidden
+                                    flex items-center justify-center relative overflow-visible group
                                 `}>
                                     {p.photo_url ? (
-                                        <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                                        <img src={p.photo_url} alt={p.name} className="w-full h-full object-cover rounded-full" />
                                     ) : (
                                         <span className="text-[3.0cqw]">{p.token}</span>
                                     )}
 
                                     {/* Name Badge */}
-                                    <div className="absolute -top-[1.5cqw] bg-slate-900/80 text-white text-[0.6cqw] px-[0.5cqw] py-[0.1cqw] rounded-full whitespace-nowrap opacity-0 hover:opacity-100 transition-opacity pointer-events-auto">
+                                    <div className="absolute -top-[2cqw] bg-slate-900/90 text-white text-[0.8cqw] px-[0.6cqw] py-[0.2cqw] rounded-md whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none border border-slate-700 shadow-lg z-50">
                                         {p.name}
                                     </div>
                                 </div>
