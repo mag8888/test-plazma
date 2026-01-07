@@ -223,13 +223,18 @@ function LobbyContent() {
 
     const deleteRoom = (roomId: string) => {
         const userId = user?._id || user?.id;
-        if (!userId) return;
+        if (!userId) {
+            alert('Ошибка: User ID не найден. Попробуйте перезагрузить страницу.');
+            return;
+        }
         if (window.confirm('Вы уверены, что хотите удалить эту комнату?')) {
+            console.log('Sending delete_room', { roomId, userId });
             socket.emit('delete_room', { roomId, userId }, (response: any) => {
+                console.log('delete_room response', response);
                 if (response?.success) {
-                    // Success (Socket listeners will handle update)
+                    // Success, room list will update via socket
                 } else {
-                    alert('Ошибка удаления: ' + (response?.error || 'Unknown error'));
+                    alert('Ошибка удаления: ' + (response?.error || 'Неизвестная ошибка'));
                 }
             });
         }
