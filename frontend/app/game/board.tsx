@@ -12,6 +12,7 @@ import { Card } from './cards_data';
 import { partnershipApi } from '../../lib/partnershipApi';
 import { useTelegram } from '../../components/TelegramProvider';
 import { TutorialTip, PortalTutorialTip } from './TutorialTip';
+import { TutorialDebug } from './TutorialDebug';
 
 interface BoardProps {
     roomId: string;
@@ -142,6 +143,9 @@ function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState 
     const [transferAssetItem, setTransferAssetItem] = useState<{ item: any, index: number } | null>(null);
     const [adminAction, setAdminAction] = useState<{ type: AdminActionType; player: any } | null>(null);
     const [stockQty, setStockQty] = useState(1);
+
+    // Tutorial Refs
+    const bankButtonRef = useRef<HTMLButtonElement>(null);
 
     // Mobile Drawer State
     const [showMobileMenu, setShowMobileMenu] = useState(false);
@@ -455,10 +459,6 @@ function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState 
     // Track rolling state to prevent efficient handling of 'state_updated' race conditions
     const isRollingRef = useRef(false);
 
-    // Tutorial Refs
-    const desktopBankButtonRef = useRef<HTMLButtonElement>(null);
-
-    // --- SOUND EFFECTS ---
     const [showRankings, setShowRankings] = useState(false);
     const [rankings, setRankings] = useState<any[]>([]);
     const [transferTarget, setTransferTarget] = useState<any>(null);
@@ -1535,6 +1535,7 @@ function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState 
                         {/* 2. GAME CONTROLS GRID (Dice & Skip) */}
                         {/* 2. GAME CONTROLS GRID (Dice & Skip) */}
                         <div id="tutorial-roll-action" className="grid grid-cols-2 gap-3 shrink-0 h-[100px]">
+                            {/* Define local variable for render */}
                             {(() => {
                                 // Manual Draw Phases
                                 if (state.phase === 'MARKET_WAITING') {
@@ -1645,23 +1646,26 @@ function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState 
                             })()}
                         </div>
 
+                        {/* DEBUG OVERLAY */}
+                        <TutorialDebug step={state.tutorialStep} isTutorial={isTutorial || false} />
+
+                        {/* TOP BAR: HUD & Game Stats */}
                         {/* BANK BUTTON (Desktop) */}
                         <button
-                            ref={desktopBankButtonRef}
+                            ref={bankButtonRef}
                             onClick={() => setShowBank(true)}
                             className="w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0 mb-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white relative"
                         >
                             <span className="text-lg">🏦</span>
                             <span>БАНК</span>
-                            {isTutorial && state.tutorialStep === 3 && (
-                                <PortalTutorialTip
-                                    text="Нажмите Банк 🏦"
-                                    targetRef={desktopBankButtonRef}
-                                    position="left"
-                                    offset={16}
-                                />
-                            )}
                         </button>
+                        {isTutorial && state.tutorialStep === 3 && (
+                            <PortalTutorialTip
+                                text="Нажмите Банк 🏦"
+                                targetRef={bankButtonRef}
+                                position="left"
+                            />
+                        )}
 
                         {/* DESKTOP SKIP / PAUSE TOGGLE */}
                         {
