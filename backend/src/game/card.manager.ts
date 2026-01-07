@@ -1,7 +1,7 @@
 // Card Types
 export interface Card {
     id: string;
-    type: 'MARKET' | 'EXPENSE' | 'DEAL_SMALL' | 'DEAL_BIG' | 'BUSINESS' | 'DREAM';
+    type: 'MARKET' | 'EXPENSE' | 'DEAL_SMALL' | 'DEAL_BIG' | 'BUSINESS' | 'DREAM' | 'REAL_ESTATE' | 'OTHER' | 'STOCK';
     title: string;
     description: string;
     cost?: number; // Cost to buy or Pay
@@ -22,6 +22,12 @@ export interface Card {
     maxQuantity?: number;
     outcomeDescription?: string; // Revealed after purchase
     displayId?: number; // Visual ID (e.g. No 1)
+
+    // Buyout / Ownership flags
+    ownerId?: string;
+    ownerName?: string;
+    isBuyout?: boolean;
+    originalCost?: number;
 }
 
 // Expense Cards

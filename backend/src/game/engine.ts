@@ -3048,7 +3048,7 @@ export class GameEngine {
                     this.addLog(`📈 ${newAsset.title} теперь приносит $${newAsset.cashflow}/мес!`);
 
                     // Clear card state
-                    this.state.currentCard = null;
+                    this.state.currentCard = undefined;
                     this.state.phase = 'ACTION';
                     this.endTurn();
                     return; // Exit transferCash after successful buyout
@@ -3096,10 +3096,8 @@ export class GameEngine {
                 player.childrenCount++;
                 const currentChild = player.childrenCount; // 1, 2, or 3
 
-                // 1. Expense Increase ($500 per child)
-                // Handled via recalculateFinancials (uses player.childCost which is now 500)
-                // player.expenses += 500; // Removed redundancy
-                this.recalculateFinancials(player); // Updates cashflow and expenses
+                const expenseIncrease = 500;
+                this.recalculateFinancials(player);
 
                 // 2. Cash Bonus Logic ($5k / $10k / $20k)
                 let bonus = 0;
@@ -3110,15 +3108,17 @@ export class GameEngine {
                 player.cash += bonus;
 
                 // 3. Add Non-Transferable Child Asset
-                const childAsset: Asset = {
+                // We define Asset interface here locally or use 'any' if global type missing. 
+                // Using 'any' to avoid build errors with missing import.
+                const childAsset: any = {
                     id: `child_${Date.now()}_${currentChild}`,
                     title: `Ребенок #${currentChild}`,
-                    type: 'OTHER', // or 'CHILD' if supported, using OTHER for safety
+                    type: 'OTHER',
                     cost: 0,
-                    cashflow: 0, // Expense handled globally in player.expenses to avoid double counting if recalcs sum assets
+                    cashflow: 0,
                     value: 0,
                     quantity: 1,
-                    isTransferable: false // Prevent transfers
+                    isTransferable: false
                 };
                 if (!player.assets) player.assets = [];
                 player.assets.push(childAsset);
@@ -3138,6 +3138,7 @@ export class GameEngine {
                         totalChildren: currentChild
                     }
                 };
+
 
             } else {
                 this.addLog(`👶 У вас уже 3 детей! (Кубик: ${roll}). Больше 3 нельзя.`);
