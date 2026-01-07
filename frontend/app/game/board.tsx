@@ -1659,7 +1659,7 @@ function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState 
                             <span className="text-lg">🏦</span>
                             <span>БАНК</span>
                         </button>
-                        {isTutorial && state.tutorialStep === 3 && (
+                        {isTutorial && state.tutorialStep === 3 && !showBank && (
                             <PortalTutorialTip
                                 text="Нажмите Банк 🏦"
                                 targetRef={bankButtonRef}
