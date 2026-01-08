@@ -836,9 +836,9 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
             </div>
         ) : (
             <VoiceRoom
-                roomId={props.roomId || state.roomId}
-                userId={props.userId || 'anon'}
-                username={props.username}
+                roomId={roomId || state.roomId}
+                userId={userId || 'anon'}
+                username={username}
                 onActiveSpeakersChange={setActiveSpeakers}
                 onSpeakingChanged={setIsSpeaking}
             >
