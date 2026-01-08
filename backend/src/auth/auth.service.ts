@@ -91,6 +91,16 @@ export class AuthService {
                 // Find or create in DB
                 let user = await UserModel.findOne({ telegram_id: tgUser.id });
 
+                if (!user && tgUser.username) {
+                    // Try to link by username if not found by ID
+                    const existingUser = await UserModel.findOne({ username: tgUser.username });
+                    if (existingUser) {
+                        console.log(`[Auth] Linking Telegram ID ${tgUser.id} to existing user ${tgUser.username}`);
+                        existingUser.telegram_id = tgUser.id;
+                        user = await existingUser.save();
+                    }
+                }
+
                 // Cloudinary Avatar Logic
                 let photoUrl = tgUser.photo_url;
                 try {

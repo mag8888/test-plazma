@@ -2,39 +2,73 @@ import React, { useMemo } from 'react';
 
 interface CryptoChartProps {
     symbol: string;
+    currentPrice?: number;
 }
 
-// Mock Data Generators
-const generateCandles = (symbol: string, count = 20) => {
-    let price = symbol === 'BTC' ? 30000 : 5;
-    const volatility = symbol === 'BTC' ? 0.05 : 0.1; // 5% vs 10%
+// Mock Data Generators - Generate BACKWARDS from current price
+const generateCandles = (symbol: string, currentPrice: number, count = 20) => {
+    // Volatility: Stocks/Crypto in this game are volatile.
+    // Range typically $1 - $50.
+    // If Price is 10, we want history to wander around.
+
+    const volatility = 0.15; // 15% volatility per bar
 
     const candles = [];
-    for (let i = 0; i < count; i++) {
-        const move = (Math.random() - 0.45) * volatility; // Slight upward bias
-        const open = price;
-        const close = price * (1 + move);
-        const high = Math.max(open, close) * (1 + Math.random() * 0.01);
-        const low = Math.min(open, close) * (1 - Math.random() * 0.01);
+    let price = currentPrice;
 
-        candles.push({ open, close, high, low, id: i });
-        price = close;
+    // Generate BACKWARDS
+    const history = [];
+    for (let i = 0; i < count; i++) {
+        // Reverse random walk: prevPrice = price / (1 + move)
+        const move = (Math.random() - 0.5) * volatility;
+
+        // For the LAST candle (current), Close IS currentPrice.
+        // For others, we simulate.
+
+        // Let's generate a trend. 
+        // If Price is high ($30+), maybe bias towards uptrend history (so prev was lower).
+        // If Price is low ($5-), bias towards downtrend (so prev was higher).
+        // This makes $1 look like a "dip" (bottom of chart) and $40 look like "peak" (top).
+
+        // Bias factor:
+        // range [1, 50]. Center 25.
+        // If price > 30, value > 0 (Up bias -> Prev was lower).
+        // If price < 10, value < 0 (Down bias -> Prev was higher).
+
+        const bias = (price - 20) / 100; // e.g. 10 -> -0.1. 40 -> +0.2.
+        // But in REVERSE (generating backwards):
+        // If we want Uptrend (Low -> High), Prev needs to be Lower.
+        // So price = prev * (1+change). prev = price / (1+change).
+        // If bias is positive (High price), we want prev < price. So (1+change) > 1.
+
+        // Let's simplify: Just randomness + slight mean reversion to $20.
+
+        const open = price / (1 + move + (price > 30 ? 0.05 : price < 5 ? -0.05 : 0));
+        const close = price;
+        const high = Math.max(open, close) * (1 + Math.random() * 0.05);
+        const low = Math.min(open, close) * (1 - Math.random() * 0.05);
+
+        history.unshift({ open, close, high: Math.max(high, low), low: Math.min(high, low), id: count - 1 - i });
+
+        price = open; // Previous Close is roughly Next Open (gaps allowed)
     }
-    return candles;
+
+    return history;
 };
 
-export const CryptoChart = ({ symbol }: CryptoChartProps) => {
-    const data = useMemo(() => generateCandles(symbol), [symbol]);
+export const CryptoChart = ({ symbol, currentPrice = 10 }: CryptoChartProps) => {
+    // Memoize relative to currentPrice so it updates when price changes
+    const data = useMemo(() => generateCandles(symbol, currentPrice), [symbol, currentPrice]);
 
     // Dimensions
     const width = 300;
     const height = 150;
     const padding = 20;
 
-    // Scaling
-    const minPrice = Math.min(...data.map(d => d.low));
-    const maxPrice = Math.max(...data.map(d => d.high));
-    const priceRange = maxPrice - minPrice;
+    // Scaling - Auto Fit to Data
+    const minPrice = Math.min(...data.map(d => d.low)) * 0.95; // 5% padding
+    const maxPrice = Math.max(...data.map(d => d.high)) * 1.05;
+    const priceRange = maxPrice - minPrice || 1; // Prevent div by zero
 
     const getY = (price: number) => {
         return height - padding - ((price - minPrice) / priceRange) * (height - 2 * padding);
@@ -47,8 +81,8 @@ export const CryptoChart = ({ symbol }: CryptoChartProps) => {
             <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center gap-2">
                     <span className="text-xs font-bold text-slate-300 uppercase tracking-widest">{symbol}/USD</span>
-                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${data[data.length - 1].close > data[0].open ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
-                        {data[data.length - 1].close > data[0].open ? '+' : ''}{((data[data.length - 1].close / data[0].open - 1) * 100).toFixed(2)}%
+                    <span className={`text-[10px] font-mono px-1.5 py-0.5 rounded ${data[data.length - 1].close >= data[0].open ? 'bg-emerald-500/20 text-emerald-400' : 'bg-rose-500/20 text-rose-400'}`}>
+                        {data[data.length - 1].close >= data[0].open ? '+' : ''}{((data[data.length - 1].close / data[0].open - 1) * 100).toFixed(2)}%
                     </span>
                 </div>
                 <div className="text-[9px] text-slate-500 font-mono">1H</div>

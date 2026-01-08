@@ -177,6 +177,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
 
     // Chat State
+    const [showMobileChat, setShowMobileChat] = useState(false);
     const [chatMessage, setChatMessage] = useState('');
 
     // Bank Recipient State
@@ -1477,7 +1478,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
                             {/* CENTER BOARD (Responsive Square) */}
                             <div className={`${forceLandscape ? 'w-auto h-full' : 'w-full lg:w-auto lg:h-full'} aspect-square max-w-full flex-shrink-0 relative bg-[#0f172a] overflow-hidden flex flex-col lg:rounded-3xl lg:border border-slate-800/50 shadow-2xl max-h-full`}>
-                                <div className="flex-1 relative overflow-hidden p-0 lg:p-4 flex items-center justify-center">
+                                <div className="flex-1 relative overflow-hidden p-0 pb-[240px] lg:p-4 lg:pb-4 flex items-center justify-center">
                                     <ErrorBoundary name="BoardVisualizer">
                                         <BoardVisualizer
                                             board={state.board}
@@ -1797,12 +1798,24 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
                                 {/* VOICE CONTROLS (Mobile) */}
                                 {userId && (
-                                    <div className="flex items-center justify-between bg-[#151b2b] p-3 rounded-2xl border border-slate-800">
-                                        <span className="text-xs font-bold text-slate-400 uppercase flex items-center gap-2">
-                                            🎤 Голосовой чат
-                                            {isSpeaking && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />}
-                                        </span>
-                                        {isVoiceConnected ? <VoiceControls onSpeakingChanged={setIsSpeaking} players={state?.players || []} /> : <span className="text-[10px] animate-pulse text-yellow-500 px-2">⏳</span>}
+                                    <div className="flex items-center justify-between bg-[#151b2b] p-2 rounded-2xl border border-slate-800 gap-2">
+                                        {/* Mobile Chat Toggle Button */}
+                                        <button
+                                            onClick={() => setShowMobileChat(true)}
+                                            className="p-2 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white relative shadow-lg active:scale-95 transition-all w-12 h-10 flex items-center justify-center"
+                                        >
+                                            <span className="text-xl">💬</span>
+                                            {/* Unread badge logic could go here */}
+                                        </button>
+
+                                        {/* Voice Area (Mic + Avatars) - No Text Label */}
+                                        <div className="flex-1 flex justify-end">
+                                            {isVoiceConnected ? (
+                                                <VoiceControls onSpeakingChanged={setIsSpeaking} players={state?.players || []} />
+                                            ) : (
+                                                <span className="text-[10px] animate-pulse text-yellow-500 px-2">Подключение...</span>
+                                            )}
+                                        </div>
                                     </div>
                                 )}
 
@@ -2168,6 +2181,32 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                 />
                             )}
 
+                            {/* Mobile Chat Modal */}
+                            {showMobileChat && (
+                                <div className="fixed inset-0 z-[250] bg-black/80 backdrop-blur-md flex flex-col pt-[env(safe-area-inset-top)] animate-in fade-in slide-in-from-bottom-5 duration-300">
+                                    <div className="flex items-center justify-between p-4 border-b border-slate-700 bg-[#1e293b]">
+                                        <h3 className="text-white font-bold uppercase tracking-wider flex items-center gap-2">
+                                            💬 Чат Игроков
+                                        </h3>
+                                        <button
+                                            onClick={() => setShowMobileChat(false)}
+                                            className="p-2 bg-slate-800 rounded-full text-slate-400 hover:text-white"
+                                        >
+                                            ✕
+                                        </button>
+                                    </div>
+                                    <div className="flex-1 overflow-hidden relative bg-[#0f172a]">
+                                        <TextChat
+                                            roomId={roomId}
+                                            socket={socket}
+                                            messages={state.chat || []}
+                                            currentUser={localPlayer}
+                                            gameLogs={state.log || []}
+                                            className="w-full h-full"
+                                        />
+                                    </div>
+                                </div>
+                            )}
                             {transferTarget && (
                                 <TransferCashModal
                                     isOpen={!!transferTarget}

@@ -1624,42 +1624,52 @@ export class BotService {
                 }
             }
 
-            // ATOMIC UPSERT
-            // $setOnInsert fields only set if new document created
-            const result = await UserModel.findOneAndUpdate(
-                { telegram_id: telegramId },
-                {
-                    $setOnInsert: {
-                        username,
-                        first_name: firstName,
-                        referralBalance: 0,
-                        balanceRed: 0,
-                        referralsCount: 0,
-                        referredBy: referredByUsername,
-                        language: languageCode || 'ru',
-                        createdAt: new Date()
-                    },
-                    $set: {
-                        photo_url: photoUrl || undefined // Update photo if new one found, or set to undefined if photoUrl is empty
-                    }
-                },
-                {
-                    upsert: true,
-                    new: true,
-                    includeResultMetadata: true // Needed to check inside 'raw' or 'lastErrorObject' if it was inserted
+            // Manual Check for Linking
+            let user = await UserModel.findOne({ telegram_id: telegramId });
+
+            if (!user && username) {
+                // Try linking by username
+                const existingUser = await UserModel.findOne({ username });
+                if (existingUser) {
+                    console.log(`[Bot] Linking existing user ${username} to Telegram ID ${telegramId}`);
+                    existingUser.telegram_id = telegramId;
+                    // Update other fields
+                    existingUser.first_name = firstName;
+                    if (photoUrl) existingUser.photo_url = photoUrl;
+
+                    user = await existingUser.save();
                 }
-            );
+            }
 
-            const user = result.value;
-            // Check if inserted (requires 'includeResultMetadata' or 'rawResult' depending on driver version)
-            // Mongoose classic: rawResult: true -> lastErrorObject.updatedExisting
-            // Newer Mongoose: result is just doc if {new: true}.
-            // Let's use standard logic: compare createdAt? Or check a flag.
+            if (!user) {
+                // Create New
+                user = await UserModel.create({
+                    telegram_id: telegramId,
+                    username,
+                    first_name: firstName,
+                    referralBalance: 0,
+                    balanceRed: 0,
+                    referralsCount: 0,
+                    referredBy: referredByUsername,
+                    language: languageCode || 'ru',
+                    photo_url: photoUrl || undefined,
+                    createdAt: new Date()
+                });
+            } else {
+                // Update existing (Photo, Language, Name if changed)
+                let changed = false;
+                if (photoUrl && user.photo_url !== photoUrl) { user.photo_url = photoUrl; changed = true; }
+                if (languageCode && user.language !== languageCode) { user.language = languageCode; changed = true; }
+                if (firstName && user.first_name !== firstName) { user.first_name = firstName; changed = true; }
+                if (username && user.username !== username) { user.username = username; changed = true; }
 
-            // Standard approach with Mongoose 6+: check 'lastErrorObject' from raw result if option set?
-            // Actually 'includeResultMetadata' isn't standard in older versions. 
-            // Better check:
-            const isNew = result.lastErrorObject?.updatedExisting === false;
+                if (changed) await user.save();
+            }
+
+            const result = { value: user, lastErrorObject: { updatedExisting: true } }; // Emulate result structure for below logic
+            const isNew = user.createdAt && (new Date().getTime() - new Date(user.createdAt).getTime() < 5000); // Heuristic for 'new' check if we lost result meta
+
+            // Legacy Atomic Result parsing removed (handled above)
 
             if (isNew) {
                 console.log(`New user registered via bot (Atomic): ${username}`);

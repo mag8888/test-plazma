@@ -216,7 +216,7 @@ export const FeedCardItem = ({
 
                                     if (isCrypto) {
                                         const chartSymbol = symbolUpper === 'BTC' || titleUpper.includes('BITCOIN') ? 'BTC' : 'TON';
-                                        return <CryptoChart symbol={chartSymbol} />;
+                                        return <CryptoChart symbol={chartSymbol} currentPrice={card.cost || card.price || 10} />;
                                     }
                                     return null;
                                 })()}

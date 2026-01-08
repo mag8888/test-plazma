@@ -1787,7 +1787,22 @@ export class GameEngine {
                     // Do NOT force payment. Just Skip.
                 } else {
                     // Standard Expenses: Force Payment
-                    this.forcePayment(currentPlayer, expenseCost, this.state.currentCard.title);
+                    // Directly deduct if possible to avoid internal checks in forcePayment failing?
+                    // Or fix forcePayment.
+                    // Let's implement direct deduction here for safety, consistent with Charity logic.
+                    if (currentPlayer.cash >= expenseCost) {
+                        currentPlayer.cash -= expenseCost;
+                        this.addLog(`💸 ${currentPlayer.name} оплатил обязательный расход: ${this.state.currentCard.title} ($${expenseCost})`);
+                    } else {
+                        // Bankrupt logic or Debt?
+                        // Usually auto-loan or bankrupt.
+                        // Let's rely on takeLoan if possible, or just force negative cash?
+                        // Monopoly style: Force negative, must resolve before end turn?
+                        // But dismissCard IS end turn essentially.
+                        // Let's deduct into negative.
+                        currentPlayer.cash -= expenseCost;
+                        this.addLog(`💸 ${currentPlayer.name} оплатил (в долг) обязательный расход: ${this.state.currentCard.title} ($${expenseCost})`);
+                    }
                 }
 
                 // If Bankrupt, stop?
@@ -3053,16 +3068,30 @@ export class GameEngine {
 
         if (accept) {
             const cost = Math.max(1000, Math.ceil((player.salary + (player.passiveIncome || 0)) * 0.1));
-            if (player.cash < cost) throw new Error("Not enough cash");
+
+            // Double check validation
+            if (player.cash < cost) {
+                this.addLog(`⚠️ ${player.name} пытался пожертвовать $${cost}, но имеет только $${player.cash}`);
+                throw new Error("Not enough cash");
+            }
+
             player.cash -= cost;
             player.charityTurns = 3;
+
+            this.recordTransaction({
+                from: player.name,
+                to: 'Charity',
+                amount: cost,
+                description: 'Charity Donation',
+                type: 'EXPENSE'
+            });
+
             this.addLog(`💖 ${player.name} пожертвовал $${cost} на благотворительность! (2 кубика на 3 хода)`);
         } else {
             this.addLog(`🤷 ${player.name} отказался от благотворительности.`);
         }
 
-        // After choice, end turn immediately (or move to Roll? Usually Charity is end of turn action or pre-roll?)
-        // In Rat Race, Charity is a square. You land, choose, then turn ends.
+        // After choice, end turn immediately
         this.endTurn();
     }
 
