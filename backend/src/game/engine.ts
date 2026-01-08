@@ -27,6 +27,7 @@ export interface GameState {
     rankings?: { name: string; reason: string; place: number; id?: string; userId?: string }[];
     isGameEnded?: boolean;
     isPaused?: boolean;
+    pauseStartTime?: number;
     chat: ChatMessage[];
     activeMarketCards?: ActiveCard[]; // Cards currently on the board (Market Offers)
 
@@ -696,6 +697,18 @@ export class GameEngine {
         this.state.isPaused = !this.state.isPaused;
         const status = this.state.isPaused ? 'PAUSED ⏸' : 'RESUMED ▶️';
         this.addLog(`🛑 ADMIN ${status} THE GAME`);
+
+        if (this.state.isPaused) {
+            // Pausing: Save current time
+            this.state.pauseStartTime = Date.now();
+        } else {
+            // Resuming: Add elapsed time to expiration
+            if (this.state.pauseStartTime && this.state.turnExpiresAt) {
+                const elapsed = Date.now() - this.state.pauseStartTime;
+                this.state.turnExpiresAt += elapsed;
+            }
+            this.state.pauseStartTime = undefined;
+        }
     }
 
     calculateFinalRankings() {
@@ -2678,7 +2691,7 @@ export class GameEngine {
         }
 
         // Return true if state changed (turn ended)
-        if (this.state.turnExpiresAt && Date.now() > this.state.turnExpiresAt) {
+        if (!this.state.isPaused && this.state.turnExpiresAt && Date.now() > this.state.turnExpiresAt) {
             if (player) {
                 this.addLog(`⌛ Turn timeout for ${player.name}`);
 

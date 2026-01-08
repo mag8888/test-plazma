@@ -62,6 +62,9 @@ adminRouter.get('/users/:userId/avatars', AdminController.getUserAvatars as any)
 adminRouter.get('/avatars/root', AdminController.getRootAvatar as any);
 adminRouter.post('/audit', AdminController.auditBonuses as any);
 adminRouter.post('/audit/fix', AdminController.auditFix as any);
+adminRouter.get('/cards', AdminController.getCards as any);
+adminRouter.get('/games', AdminController.getGames as any);
+adminRouter.post('/broadcast', AdminController.broadcast as any);
 
 
 // Wallet Routes (Protected by Admin Secret or Internal Network)

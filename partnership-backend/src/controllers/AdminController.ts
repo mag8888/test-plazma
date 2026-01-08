@@ -3,6 +3,8 @@ import { User } from '../models/User';
 import { Transaction, TransactionType } from '../models/Transaction';
 import { AdminLog, AdminActionType } from '../models/AdminLog';
 import { Avatar } from '../models/Avatar';
+import { CardModel } from '../models/Card';
+import { RoomModel } from '../models/Room';
 import mongoose from 'mongoose';
 import { NotificationService } from '../services/NotificationService';
 
@@ -795,6 +797,106 @@ export class AdminController {
             res.json({ success: true, avatars });
         } catch (error: any) {
             console.error('getUserAvatars error:', error);
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    // Get All Cards
+    static async getCards(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const cards = await CardModel.find().sort({ id: 1 });
+            res.json(cards);
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    // Get All Games (Rooms)
+    static async getGames(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const rooms = await RoomModel.find().sort({ createdAt: -1 }).limit(50);
+            res.json(rooms);
+        } catch (error: any) {
+            res.status(500).json({ error: error.message });
+        }
+    }
+
+    // Broadcast Message
+    static async broadcast(req: ExpressRequest, res: ExpressResponse) {
+        try {
+            const { message, filters, dryRun } = req.body;
+            const secret = req.headers['x-admin-secret'] as string;
+            const adminName = secret.split(':')[0] || 'Unknown Admin';
+
+            if (!message) return res.status(400).json({ error: 'Message is required' });
+
+            // Build Filter Query
+            const query: any = {};
+
+            if (filters) {
+                if (filters.minRating !== undefined) query.rating = { $gte: Number(filters.minRating) };
+                if (filters.maxRating !== undefined) query.rating = { ...query.rating, $lte: Number(filters.maxRating) };
+
+                if (filters.minBalance !== undefined) query.greenBalance = { $gte: Number(filters.minBalance) };
+                if (filters.maxBalance !== undefined) query.greenBalance = { ...query.greenBalance, $lte: Number(filters.maxBalance) };
+
+                if (filters.minInvited !== undefined) {
+                    // This is hard to query directly without aggregation or denormalization.
+                    // Assuming 'referralsCount' is maintained on User.
+                    query.referralsCount = { $gte: Number(filters.minInvited) };
+                }
+
+                if (filters.hasAvatar === true) {
+                    // Check if user owns an active avatar. 
+                    // Since this is across collections, we might need a two-step process or aggregation.
+                    // Option 1: Find all avatars, get owners, use $in.
+                    const activeAvatars = await Avatar.find({ isActive: true }).distinct('owner');
+                    query._id = { $in: activeAvatars };
+                }
+            }
+
+            // Exclude users without telegram_id
+            query.telegram_id = { $exists: true, $ne: null };
+
+            console.log('[AdminBroadcast] Query:', query);
+
+            const users = await User.find(query).select('telegram_id username');
+
+            if (dryRun) {
+                return res.json({
+                    success: true,
+                    count: users.length,
+                    sample: users.slice(0, 5).map(u => u.username)
+                });
+            }
+
+            // START BROADCAST
+            let sent = 0;
+            let errors = 0;
+
+            // Use simple loop for now, maybe queue later
+            for (const user of users) {
+                try {
+                    await NotificationService.sendTelegramMessage(user.telegram_id, message);
+                    sent++;
+                } catch (e) {
+                    errors++;
+                    console.error(`Failed to send to ${user.username} (${user.telegram_id})`, e);
+                }
+                // Rate limit slightly? Telegram allows 30/sec.
+                // await new Promise(r => setTimeout(r, 35)); 
+            }
+
+            await AdminLog.create({
+                adminName,
+                action: AdminActionType.BALANCE_CHANGE, // Or add BROADCAST type
+                details: `Broadcast sent to ${sent} users. Filters: ${JSON.stringify(filters)}. Errors: ${errors}`
+            });
+
+            res.json({ success: true, sent, errors, total: users.length });
+
+        } catch (error: any) {
+            console.error('Broadcast Error:', error);
             res.status(500).json({ error: error.message });
         }
     }

@@ -1478,7 +1478,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
                             {/* CENTER BOARD (Responsive Square) */}
                             <div className={`${forceLandscape ? 'w-auto h-full' : 'w-full lg:w-auto lg:h-full'} aspect-square max-w-full flex-shrink-0 relative bg-[#0f172a] overflow-hidden flex flex-col lg:rounded-3xl lg:border border-slate-800/50 shadow-2xl max-h-full`}>
-                                <div className="flex-1 relative overflow-hidden p-0 pb-[240px] lg:p-4 lg:pb-4 flex items-center justify-center">
+                                <div className="flex-1 relative overflow-hidden p-0 lg:p-4 flex items-center justify-center">
                                     <ErrorBoundary name="BoardVisualizer">
                                         <BoardVisualizer
                                             board={state.board}

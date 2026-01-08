@@ -22,7 +22,10 @@ interface Room {
 
 import { useTelegram } from '../../components/TelegramProvider';
 
+import { useTranslations } from 'next-intl';
+
 function LobbyContent() {
+    const t = useTranslations();
     const router = useRouter();
     const searchParams = useSearchParams();
     const isTutorial = searchParams.get('tutorial') === 'true';
@@ -302,7 +305,7 @@ function LobbyContent() {
                                 {user.username?.[0]?.toUpperCase() || 'U'}
                             </div>
                             <div>
-                                <div className="text-xs text-slate-400 uppercase tracking-widest font-bold mb-1">Игрок</div>
+                                <div className="text-xs text-slate-400 uppercase tracking-widest font-bold mb-1">{t('Lobby.player')}</div>
                                 <div className="font-bold text-xl text-white tracking-wide">{user.username || 'Guest'}</div>
                             </div>
                         </div>
@@ -311,7 +314,7 @@ function LobbyContent() {
                             onClick={handleLogout}
                             className="w-full bg-slate-800 hover:bg-red-500/10 text-slate-400 hover:text-red-400 border border-slate-700 hover:border-red-500/50 py-3 rounded-xl font-bold text-xs uppercase tracking-widest transition-all"
                         >
-                            Выйти
+                            {t('Lobby.logout')}
                         </button>
                     </div>
 
@@ -320,13 +323,13 @@ function LobbyContent() {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-500/5 rounded-full blur-2xl -mr-10 -mt-10 pointer-events-none"></div>
 
                         <h3 className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-6 flex items-center gap-2">
-                            <span className="text-yellow-500 text-lg">🏆</span> Топ Игроков
+                            <span className="text-yellow-500 text-lg">🏆</span> {t('Lobby.top_players')}
                         </h3>
 
                         <div className="space-y-4">
                             {leaderboard.length === 0 ? (
                                 <div className="text-slate-500 text-xs text-center py-8 italic border border-dashed border-slate-800 rounded-xl">
-                                    История побед пишется сейчас...
+                                    {t('Lobby.history_empty')}
                                 </div>
                             ) : (
                                 leaderboard.map((player, idx) => (
@@ -349,11 +352,11 @@ function LobbyContent() {
                                                 </span>
                                                 <span className="w-px h-3 bg-slate-700"></span>
                                                 <span>
-                                                    Игр: <span className="text-slate-300">{player.gamesPlayed || 0}</span>
+                                                    {t('Lobby.games')}: <span className="text-slate-300">{player.gamesPlayed || 0}</span>
                                                 </span>
                                                 <span className="w-px h-3 bg-slate-700"></span>
                                                 <span>
-                                                    Побед: <span className="text-slate-300">{player.wins || 0}</span>
+                                                    {t('Lobby.wins')}: <span className="text-slate-300">{player.wins || 0}</span>
                                                 </span>
                                             </div>
                                         </div>
@@ -370,13 +373,13 @@ function LobbyContent() {
                     {/* NEW ROOM & ACTIONS */}
                     <div className={`flex justify-between items-center bg-[#1e293b]/50 p-4 rounded-2xl border border-slate-800/50 backdrop-blur-sm ${isTutorial && !isCreating ? 'relative z-50' : ''}`}>
                         <h1 className="text-2xl font-black text-white tracking-tight flex items-center gap-3">
-                            <span className="text-3xl">🎲</span> Лобби
+                            <span className="text-3xl">🎲</span> {t('Lobby.title')}
                         </h1>
                         <button
                             onClick={() => setIsCreating(!isCreating)}
                             className={`bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white px-6 py-3 rounded-xl font-bold text-sm shadow-lg shadow-blue-900/30 hover:-translate-y-0.5 active:scale-95 transition-all flex items-center gap-2 relative ${isTutorial && !isCreating ? 'z-50 ring-4 ring-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.6)] animate-pulse' : ''}`}
                         >
-                            <span>+</span> Создать комнату
+                            <span>+</span> {t('Lobby.create_room')}
                         </button>
                     </div>
 
@@ -385,7 +388,7 @@ function LobbyContent() {
                         <div className="fixed inset-0 bg-black/80 z-40 flex items-center justify-center backdrop-blur-sm">
                             <div className="text-center relative">
                                 <div className="text-4xl md:text-6xl font-black text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-green-300 drop-shadow-2xl animate-bounce mb-8">
-                                    1. Создайте комнату
+                                    {t('Lobby.create_room_tutorial')}
                                 </div>
                                 <div className="absolute -top-20 right-[-100px] md:right-[-200px] text-emerald-400 animate-pulse hidden md:block">
                                     <svg width="150" height="150" viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="3" className="transform rotate-12">
@@ -414,7 +417,7 @@ function LobbyContent() {
                         <div className="bg-gradient-to-br from-indigo-900/20 to-purple-900/20 rounded-3xl p-6 border border-indigo-500/20 relative overflow-hidden">
                             <div className="absolute inset-0 bg-grid-slate-800/[0.1] bg-[size:20px_20px]"></div>
                             <h2 className="text-lg font-bold text-indigo-300 mb-4 flex items-center gap-2 relative z-10">
-                                <span className="animate-spin-slow">🔄</span> Ваши активные игры
+                                <span className="animate-spin-slow">🔄</span> {t('Lobby.active_games')}
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 relative z-10">
                                 {myRooms.map((room) => {
@@ -446,7 +449,7 @@ function LobbyContent() {
                                                     <div className="flex items-center gap-2 mt-1">
                                                         <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider ${room.status === 'playing' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'
                                                             }`}>
-                                                            {room.status === 'playing' ? '🟢 Идет игра' : '🟡 Ожидание'}
+                                                            {room.status === 'playing' ? `🟢 ${t('Lobby.playing')}` : `🟡 ${t('Lobby.waiting')}`}
                                                         </span>
                                                     </div>
                                                 </div>
@@ -458,7 +461,7 @@ function LobbyContent() {
                                                 onClick={() => joinRoom(room.id)}
                                                 className="w-full bg-indigo-600 hover:bg-indigo-500 text-white py-3 rounded-xl font-bold text-sm shadow-lg shadow-indigo-900/20 transition-all transform hover:scale-[1.02] active:scale-[0.98]"
                                             >
-                                                Вернуться в игру ➡
+                                                {t('Lobby.return')} ➡
                                             </button>
                                         </div>
                                     );
@@ -517,7 +520,7 @@ function LobbyContent() {
 
 
                                 <div>
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 block">Режим Игры</label>
+                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-4 block">{t('Lobby.game_mode')}</label>
                                     <div className="grid grid-cols-2 gap-3">
                                         <div
                                             onClick={() => setGameMode('ENGINEER')}
@@ -528,22 +531,22 @@ function LobbyContent() {
                                         >
                                             <div className="flex items-center gap-2 mb-2">
                                                 <span className="text-xl">👷</span>
-                                                <span className={`font-bold ${gameMode === 'ENGINEER' ? 'text-white' : 'text-slate-400'}`}>Менеджер</span>
+                                                <span className={`font-bold ${gameMode === 'ENGINEER' ? 'text-white' : 'text-slate-400'}`}>{t('Lobby.manager')}</span>
                                             </div>
                                             <div className="space-y-1 text-[10px] font-mono text-slate-400">
                                                 <div className="flex justify-between">
-                                                    <span>Старт:</span>
+                                                    <span>{t('Lobby.start_capital')}:</span>
                                                     <span className="text-emerald-400">$2,000</span>
                                                 </div>
                                                 <div className="flex justify-between">
-                                                    <span>Зарплата:</span>
+                                                    <span>{t('Lobby.salary')}:</span>
                                                     <span className="text-emerald-400">$10,000</span>
                                                 </div>
                                                 <div className="flex justify-between">
-                                                    <span>Расходы:</span>
+                                                    <span>{t('Lobby.expenses')}:</span>
                                                     <span className="text-red-400">$5,800</span>
                                                 </div>
-                                                <div className="text-slate-500 mt-1">Классический старт</div>
+                                                <div className="text-slate-500 mt-1">{t('Lobby.classic_start')}</div>
                                             </div>
                                         </div>
 
@@ -556,22 +559,22 @@ function LobbyContent() {
                                         >
                                             <div className="flex items-center gap-2 mb-2">
                                                 <span className="text-xl">🚀</span>
-                                                <span className={`font-bold ${gameMode === 'ENTREPRENEUR' ? 'text-white' : 'text-slate-400'}`}>Предпр.</span>
+                                                <span className={`font-bold ${gameMode === 'ENTREPRENEUR' ? 'text-white' : 'text-slate-400'}`}>{t('Lobby.entrepreneur')}</span>
                                             </div>
                                             <div className="space-y-1 text-[10px] font-mono text-slate-400">
                                                 <div className="flex justify-between">
-                                                    <span>Старт:</span>
+                                                    <span>{t('Lobby.start_capital')}:</span>
                                                     <span className="text-emerald-400">$250,000</span>
                                                 </div>
                                                 <div className="flex justify-between">
-                                                    <span>Зарплата:</span>
+                                                    <span>{t('Lobby.salary')}:</span>
                                                     <span className="text-red-400">$0</span>
                                                 </div>
                                                 <div className="flex justify-between">
-                                                    <span>Расходы:</span>
+                                                    <span>{t('Lobby.expenses')}:</span>
                                                     <span className="text-red-400">$5,800</span>
                                                 </div>
-                                                <div className="text-slate-500 mt-1 leading-tight">Кредиты только при Cashflow &gt; 0</div>
+                                                <div className="text-slate-500 mt-1 leading-tight">{t('Lobby.credits_condition')}</div>
                                             </div>
                                         </div>
                                     </div>
@@ -587,11 +590,11 @@ function LobbyContent() {
                                 >
                                     {isTutorial && (
                                         <div className="absolute -top-12 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs font-bold px-3 py-2 rounded-xl animate-bounce shadow-lg z-50 whitespace-nowrap">
-                                            2. Нажмите Старт 👇
+                                            {t('Lobby.click_start_tutorial')}
                                             <div className="absolute bottom-[-6px] left-1/2 -translate-x-1/2 border-l-4 border-r-4 border-t-4 border-l-transparent border-r-transparent border-t-emerald-500"></div>
                                         </div>
                                     )}
-                                    {isSubmitting ? 'Создание...' : '🚀 Запустить Игру'}
+                                    {isSubmitting ? '...' : `🚀 ${t('Lobby.start_game')}`}
                                 </button>
                             </div>
                         </div>

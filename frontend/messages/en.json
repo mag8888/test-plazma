@@ -17,19 +17,53 @@
         "tutorial": "Tutorial",
         "take_tutorial": "Take the tutorial",
         "income": "Income",
-        "rules": "Rules"
-    },
-    "Navigation": {
-        "home": "Home",
-        "games": "Games",
-        "earn": "Earn",
-        "profile": "Profile"
-    },
-    "Language": {
-        "select": "Select Language",
-        "ru": "Russian",
-        "en": "English",
-        "tr": "Turkish",
-        "ar": "Arabic"
+        "rules": "Rules",
+        "Lobby": {
+            "title": "Lobby",
+            "create_room": "Create Room",
+            "active_games": "Your Active Games",
+            "playing": "Playing",
+            "waiting": "Waiting",
+            "return": "Return to Game",
+            "new_room": "New Room",
+            "room_name": "Name",
+            "room_name_placeholder": "Ex: Billionaire Battle",
+            "players_count": "Players Count",
+            "game_mode": "Game Mode",
+            "start_game": "Start Game",
+            "manager": "Manager",
+            "entrepreneur": "Entrepreneur",
+            "start_capital": "Start",
+            "salary": "Salary",
+            "expenses": "Expenses",
+            "credits_condition": "Loans only if Cashflow > 0",
+            "classic_start": "Classic Start",
+            "top_players": "Top Players",
+            "games": "Games",
+            "wins": "Wins",
+            "history_empty": "History is being written...",
+            "available_rooms": "Available Rooms",
+            "delete_room": "Delete Room",
+            "leave_room": "Leave Game",
+            "join": "Join",
+            "join_playing": "Join (Playing)",
+            "player": "Player",
+            "logout": "Logout",
+            "create_room_tutorial": "1. Create a room",
+            "enter_name_tutorial": "1. Enter name 👇",
+            "click_start_tutorial": "2. Click Start 👇"
+        },
+        "Navigation": {
+            "home": "Home",
+            "games": "Games",
+            "earn": "Earn",
+            "profile": "Profile"
+        },
+        "Language": {
+            "select": "Select Language",
+            "ru": "Russian",
+            "en": "English",
+            "tr": "Turkish",
+            "ar": "Arabic"
+        }
     }
-}
