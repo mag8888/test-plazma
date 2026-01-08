@@ -9,6 +9,7 @@ import { RoomEvent, Participant } from 'livekit-client';
 import '@livekit/components-styles';
 import { useState, useEffect } from 'react';
 import { VoiceControls } from './VoiceControls';
+import { getGameServiceUrl } from '../../lib/config';
 
 interface VoiceRoomProps {
     roomId: string;
@@ -52,8 +53,9 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
     useEffect(() => {
         const fetchToken = async () => {
             try {
-                // Use relative path for same-origin (production/railway)
-                const response = await fetch('/api/voice/token', {
+                // Use absolute URL from config (Next.js Static Export requires full URL)
+                const baseUrl = getGameServiceUrl();
+                const response = await fetch(`${baseUrl}/api/voice/token`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ roomId, userId, username }),
