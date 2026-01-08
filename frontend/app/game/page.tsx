@@ -346,7 +346,14 @@ function GameContent() {
         };
         return (
             <ErrorBoundary name="GameBoard">
-                <GameBoard roomId={roomId} userId={myUserId} initialState={initialBoardState} isHost={isHost} isTutorial={effectiveIsTraining} />
+                <GameBoard
+                    roomId={roomId}
+                    userId={myUserId}
+                    initialState={initialBoardState}
+                    isHost={isHost}
+                    isTutorial={effectiveIsTraining}
+                    username={user?.first_name || user?.username || 'Player'}
+                />
             </ErrorBoundary>
         );
     }
