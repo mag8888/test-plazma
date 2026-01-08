@@ -89,7 +89,8 @@ function GameContent() {
 
     const [hasSelectedToken, setHasSelectedToken] = useState(false);
     const [hasSelectedDream, setHasSelectedDream] = useState(false);
-    const [isSpeaking, setIsSpeaking] = useState(false); // [NEW] Voice State
+    const [isSpeaking, setIsSpeaking] = useState(false); // Local user speaking
+    const [activeSpeakers, setActiveSpeakers] = useState<string[]>([]); // All active speakers IDs
 
     // Initial Join & Socket Setup
     useEffect(() => {
@@ -375,7 +376,8 @@ function GameContent() {
                                     roomId={roomId}
                                     userId={user.id?.toString() || user.telegram_id?.toString() || ''}
                                     username={user.first_name || 'Player'}
-                                    onSpeakingChanged={setIsSpeaking} // [NEW]
+                                    onSpeakingChanged={setIsSpeaking}
+                                    onActiveSpeakersChange={setActiveSpeakers}
                                 />
                             </div>
                         ) : null}
@@ -410,6 +412,13 @@ function GameContent() {
                                                 </div>
                                             )}
                                         </div>
+                                        {/* Speaking Indicator Ring */}
+                                        {activeSpeakers.includes(player.userId || player.id) && (
+                                            <>
+                                                <div className="absolute top-4 left-4 w-10 h-10 rounded-full border-2 border-green-500 animate-ping opacity-75 pointer-events-none"></div>
+                                                <div className="absolute top-4 left-4 w-10 h-10 rounded-full border border-green-400 opacity-20 animate-pulse pointer-events-none"></div>
+                                            </>
+                                        )}
                                         <div className="flex-1 min-w-0">
                                             <div className="font-bold flex items-center justify-between text-slate-200">
                                                 {player.name}

@@ -3,7 +3,9 @@ import {
     RoomAudioRenderer,
     StartAudio,
     useToken,
+    useRoomContext,
 } from '@livekit/components-react';
+import { RoomEvent, Participant } from 'livekit-client';
 import '@livekit/components-styles';
 import { useState, useEffect } from 'react';
 import { VoiceControls } from './VoiceControls';
@@ -13,9 +15,36 @@ interface VoiceRoomProps {
     userId: string;
     username: string;
     onSpeakingChanged?: (speaking: boolean) => void;
+    onActiveSpeakersChange?: (speakers: string[]) => void;
 }
 
-export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged }: VoiceRoomProps) => {
+const ActiveSpeakersObserver = ({ onActiveSpeakersChange }: { onActiveSpeakersChange?: (speakers: string[]) => void }) => {
+    const room = useRoomContext();
+    const [speakingIds, setSpeakingIds] = useState<string[]>([]);
+
+    useEffect(() => {
+        if (!room) return;
+
+        const onActiveSpeakersChanged = (speakers: Participant[]) => {
+            const ids = speakers.map(s => s.identity);
+            setSpeakingIds(ids);
+            if (onActiveSpeakersChange) onActiveSpeakersChange(ids);
+        };
+
+        room.on(RoomEvent.ActiveSpeakersChanged, onActiveSpeakersChanged);
+
+        // Initial check?
+        // speakers is empty initially usually.
+
+        return () => {
+            room.off(RoomEvent.ActiveSpeakersChanged, onActiveSpeakersChanged);
+        };
+    }, [room, onActiveSpeakersChange]);
+
+    return null;
+};
+
+export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiveSpeakersChange }: VoiceRoomProps) => {
     const [token, setToken] = useState('');
     const [url, setUrl] = useState('');
 
@@ -58,6 +87,7 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged }: Voice
         >
             <StartAudio label="Click to allow audio" className="bg-blue-500 text-white px-2 py-1 rounded mb-2 text-xs" />
             <RoomAudioRenderer />
+            <ActiveSpeakersObserver onActiveSpeakersChange={onActiveSpeakersChange} />
             <VoiceControls onSpeakingChanged={onSpeakingChanged} />
         </LiveKitRoom>
     );
