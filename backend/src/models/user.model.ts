@@ -22,6 +22,7 @@ export interface IUser extends Document {
     rating: { type: Number, default: 0 };
     isMaster?: { type: Boolean, default: false };
     masterExpiresAt?: Date;
+    language?: 'ru' | 'en' | 'tr' | 'ar';
 }
 
 const UserSchema: Schema = new Schema({
@@ -47,6 +48,7 @@ const UserSchema: Schema = new Schema({
     rating: { type: Number, default: 0 },
     isMaster: { type: Boolean, default: false },
     masterExpiresAt: { type: Date },
+    language: { type: String, default: 'ru' },
     preferences: {
         dream: String,
         token: String,

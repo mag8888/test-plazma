@@ -8,9 +8,14 @@ import { Zap, DollarSign, BookOpen, Presentation, ChevronRight, LogOut } from 'l
 import { RulesModal } from '../game/RulesModal';
 import PresentationModal from './PresentationModal';
 
+import { useTranslations } from 'next-intl';
+import LanguageSwitcher from '../../components/LanguageSwitcher';
+
 export default function HomePage() {
     const router = useRouter();
     const { webApp, user, isReady } = useTelegram();
+    const t = useTranslations('Home');
+    const common = useTranslations('Common');
 
     // Redirect if not logged in
     useEffect(() => {
@@ -37,17 +42,22 @@ export default function HomePage() {
 
             <div className="relative z-10 p-6 flex flex-col min-h-screen pb-24">
 
+                {/* Header Actions */}
+                <div className="absolute top-4 right-4 z-50">
+                    <LanguageSwitcher />
+                </div>
+
                 {/* Greeting */}
                 <div className="mt-8 mb-8 animate-in slide-in-from-top-4 duration-700">
                     <h1 className="text-3xl font-black tracking-tight text-white mb-1">
-                        Привет, <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">{user?.first_name || 'Гость'}</span>!
+                        {t('welcome').split('MONEO')[0]} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">{user?.first_name || 'Гость'}</span>!
                     </h1>
                     <p className="text-slate-400 text-sm font-medium mb-3">Готов приумножить капитал?</p>
 
                     {/* Logout / Exit Button */}
                     <button
                         onClick={() => {
-                            if (confirm('Выйти из приложения?')) {
+                            if (confirm(common('cancel') + '?')) {
                                 // Unified Logout Logic for both Browser and Telegram
                                 localStorage.clear();
                                 localStorage.removeItem('moneo_auth_code'); // Explicitly clear magic link code
@@ -58,7 +68,7 @@ export default function HomePage() {
                         className="flex items-center gap-1.5 text-xs font-bold text-red-400/80 hover:text-red-400 bg-red-500/10 hover:bg-red-500/20 px-3 py-1.5 rounded-lg transition-colors border border-red-500/20"
                     >
                         <LogOut size={12} />
-                        Выйти
+                        {common('back')}
                     </button>
                 </div>
 
@@ -79,7 +89,7 @@ export default function HomePage() {
                             <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-500 rounded-2xl flex items-center justify-center mb-3 shadow-lg shadow-blue-500/30 group-hover:scale-110 transition-transform duration-300">
                                 <Zap size={32} className="text-white fill-white" />
                             </div>
-                            <h2 className="text-2xl font-black uppercase tracking-wider text-white group-hover:text-blue-200 transition-colors">Играть</h2>
+                            <h2 className="text-2xl font-black uppercase tracking-wider text-white group-hover:text-blue-200 transition-colors">{t('start')}</h2>
                             <div className="flex items-center gap-1 text-[10px] bg-black/30 px-3 py-1 rounded-full mt-2 text-blue-200/80 font-mono uppercase tracking-widest border border-white/5">
                                 Вход в лобби <ChevronRight size={10} />
                             </div>

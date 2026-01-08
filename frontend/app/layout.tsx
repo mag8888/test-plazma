@@ -2,6 +2,7 @@ import { Suspense } from "react";
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { TelegramProvider } from "../components/TelegramProvider";
+import LanguageProvider from "../components/LanguageProvider";
 import { BottomNav } from "../components/BottomNav";
 import "./globals.css";
 
@@ -31,10 +32,12 @@ export default function RootLayout({
         className={`${inter.variable} ${jetbrainsMono.variable} antialiased`}
       >
         <TelegramProvider>
-          {children}
-          <Suspense fallback={null}>
-            <BottomNav />
-          </Suspense>
+          <LanguageProvider>
+            {children}
+            <Suspense fallback={null}>
+              <BottomNav />
+            </Suspense>
+          </LanguageProvider>
         </TelegramProvider>
       </body>
     </html>

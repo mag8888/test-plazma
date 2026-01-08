@@ -1,0 +1,21 @@
+{
+    "Common": {
+        "loading": "Yükleniyor...",
+        "error": "Hata",
+        "save": "Kaydet",
+        "cancel": "İptal",
+        "back": "Geri"
+    },
+    "Home": {
+        "welcome": "MONEO'ya Hoşgeldiniz",
+        "start": "Oyuna Başla",
+        "connect_wallet": "Cüzdanı Bağla"
+    },
+    "Language": {
+        "select": "Dil Seçin",
+        "ru": "Rusça",
+        "en": "İngilizce",
+        "tr": "Türkçe",
+        "ar": "Arapça"
+    }
+}

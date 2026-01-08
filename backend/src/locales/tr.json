@@ -1,0 +1,13 @@
+{
+    "welcome": "👋 Merhaba, {name}! 👑\n\nMONEO'ya Hoşgeldiniz ✨\n— oyunun kuantum alanındaki gerçek fırsatlarla buluştuğu bir alan.\n\nBurada yapabilecekleriniz:\n🫂 Arkadaş bul\n💰 Gelirini artır\n🤝 Müşteri bul\n🎲 Oyna ve geliş\n\n🎯 Şu anda neyle ilgilendiğini seç 👇",
+    "language_selected": "✅ Dil Türkçe olarak değiştirildi",
+    "menu": {
+        "start": "🏡 Ana Sayfa",
+        "game": "🎮 Oyna",
+        "app": "📱 Uygulama",
+        "about": "ℹ️ Hakkında"
+    },
+    "errors": {
+        "generic": "❌ Bir hata oluştu."
+    }
+}

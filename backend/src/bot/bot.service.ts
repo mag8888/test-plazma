@@ -5,6 +5,7 @@ import { CloudinaryService } from '../services/cloudinary.service';
 import { UserModel } from '../models/user.model';
 import { AuthService } from '../auth/auth.service';
 import { ScheduledGameModel } from '../models/scheduled-game.model';
+import { I18nService } from '../services/i18n.service';
 
 // Transfer State
 type TransferState = {
@@ -48,10 +49,12 @@ export class BotService {
     depositStates: Map<number, DepositState> = new Map();
     cloudinaryService: CloudinaryService;
     authService: AuthService;
+    i18n: I18nService;
 
     constructor(polling = true) {
         this.cloudinaryService = new CloudinaryService();
         this.authService = new AuthService();
+        this.i18n = new I18nService();
 
         // Safety Override via Env Var
         if (process.env.DISABLE_BOT_POLLING === 'true') {
@@ -106,6 +109,7 @@ export class BotService {
         await this.bot.setMyCommands([
             { command: 'start', description: '🏠 Главное меню' },
             { command: 'game', description: '🎮 Играть' },
+            { command: 'language', description: '🌐 Язык / Language' },
             { command: 'app', description: '📱 Приложение MONEO' },
             { command: 'about', description: 'ℹ️ О проекте' }
         ]);
@@ -171,6 +175,53 @@ export class BotService {
         if (!this.bot) return;
 
         // /game Command
+        this.bot.onText(/\/language/, async (msg) => {
+            const chatId = msg.chat.id;
+            const telegramId = msg.from?.id;
+            if (!telegramId) return;
+
+            this.bot?.sendMessage(chatId, "Select Language / Выберите язык:", {
+                reply_markup: {
+                    inline_keyboard: [
+                        [{ text: '🇷🇺 Русский', callback_data: 'lang_ru' }, { text: '🇬🇧 English', callback_data: 'lang_en' }],
+                        [{ text: '🇹🇷 Türkçe', callback_data: 'lang_tr' }, { text: '🇸🇦 العربية', callback_data: 'lang_ar' }]
+                    ]
+                }
+            });
+        });
+
+        // Callback Query for Language
+        this.bot.on('callback_query', async (query) => {
+            const chatId = query.message?.chat.id;
+            const data = query.data;
+            if (!chatId || !data) return;
+
+            if (data.startsWith('lang_')) {
+                const lang = data.split('_')[1];
+                const telegramId = query.from.id;
+
+                try {
+                    const { UserModel } = await import('../models/user.model');
+                    const user = await UserModel.findOneAndUpdate(
+                        { telegram_id: telegramId },
+                        { language: lang },
+                        { new: true }
+                    );
+
+                    const confirmText = this.i18n.t(lang, 'language_selected');
+                    await this.bot?.answerCallbackQuery(query.id, { text: confirmText });
+                    await this.bot?.sendMessage(chatId, confirmText);
+
+                    // Refresh Main Menu
+                    const welcomeText = this.i18n.t(lang, 'welcome', { name: query.from.first_name });
+                    await this.sendMainMenu(chatId, welcomeText, lang);
+
+                } catch (e) {
+                    console.error("Language change error:", e);
+                }
+            }
+        });
+
         this.bot.onText(/\/game/, async (msg) => {
             const chatId = msg.chat.id;
             const telegramId = msg.from?.id;
@@ -380,22 +431,19 @@ export class BotService {
 
             // Check for referral code
             const referralCode = match && match[1] ? match[1].trim() : null;
+            const languageCode = msg.from?.language_code;
 
             if (telegramId) {
-                await this.handleUserRegistration(telegramId, username, firstName, referralCode);
+                await this.handleUserRegistration(telegramId, username, firstName, referralCode, languageCode);
             }
 
-            const welcomeText = `👋 Привет, ${firstName}! 👑\n\n` +
-                `Добро пожаловать в MONEO ✨\n` +
-                `— пространство, где игра соединяется с реальными возможностями в квантовом поле.\n\n` +
-                `Здесь ты сможешь:\n` +
-                `🫂 Найти друзей\n` +
-                `💰 Увеличить доход\n` +
-                `🤝 Получить клиентов\n` +
-                `🎲 Играть и развиваться\n\n` +
-                `🎯 Выбирай, что интересно прямо сейчас 👇`;
+            const { UserModel } = await import('../models/user.model');
+            const user = await UserModel.findOne({ telegram_id: telegramId });
+            const lang = user?.language || languageCode || 'ru';
 
-            await this.sendMainMenu(chatId, welcomeText);
+            const welcomeText = this.i18n.t(lang, 'welcome', { name: firstName });
+
+            await this.sendMainMenu(chatId, welcomeText, lang);
         });
 
         // /upload_photo command
@@ -1528,20 +1576,21 @@ export class BotService {
         this.bot.on('animation', (msg) => handleUpload(msg));
     }
 
-    sendMainMenu(chatId: number, text: string) {
+    sendMainMenu(chatId: number, text: string, lang: string = 'ru') {
+        const t = (k: string) => this.i18n.t(lang, `menu.${k}`);
         this.bot?.sendMessage(chatId, text, {
             reply_markup: {
                 keyboard: [
-                    [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
+                    [{ text: t('game') }, { text: '💸 Заработать' }], // 'Earn' not yet in basic locales, keeping hardcoded for safety or update locales
                     [{ text: '🤝 Получить клиентов' }],
-                    [{ text: '🌐 Сообщество' }, { text: 'ℹ️ О проекте' }]
+                    [{ text: t('start') }, { text: t('about') }] // Swapped Community/Home mapping slightly for demo or exact match? 'start' -> 'Main Menu/Home'
                 ],
                 resize_keyboard: true
             }
         });
     }
 
-    async handleUserRegistration(telegramId: number, username: string, firstName: string, referralCode: string | null) {
+    async handleUserRegistration(telegramId: number, username: string, firstName: string, referralCode: string | null, languageCode?: string) {
         try {
             const { UserModel } = await import('../models/user.model');
 
@@ -1587,6 +1636,7 @@ export class BotService {
                         balanceRed: 0,
                         referralsCount: 0,
                         referredBy: referredByUsername,
+                        language: languageCode || 'ru',
                         createdAt: new Date()
                     },
                     $set: {

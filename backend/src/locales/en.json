@@ -1,0 +1,13 @@
+{
+    "welcome": "👋 Hello, {name}! 👑\n\nWelcome to MONEO ✨\n— a space where gaming meets real opportunities in the quantum field.\n\nHere you can:\n🫂 Find friends\n💰 Increase income\n🤝 Get clients\n🎲 Play and grow\n\n🎯 Choose what interests you right now 👇",
+    "language_selected": "✅ Language changed to English",
+    "menu": {
+        "start": "🏡 Home",
+        "game": "🎮 Play",
+        "app": "📱 App",
+        "about": "ℹ️ About"
+    },
+    "errors": {
+        "generic": "❌ An error occurred."
+    }
+}

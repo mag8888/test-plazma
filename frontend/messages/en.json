@@ -1,0 +1,21 @@
+{
+    "Common": {
+        "loading": "Loading...",
+        "error": "Error",
+        "save": "Save",
+        "cancel": "Cancel",
+        "back": "Back"
+    },
+    "Home": {
+        "welcome": "Welcome to MONEO",
+        "start": "Start Game",
+        "connect_wallet": "Connect Wallet"
+    },
+    "Language": {
+        "select": "Select Language",
+        "ru": "Russian",
+        "en": "English",
+        "tr": "Turkish",
+        "ar": "Arabic"
+    }
+}
