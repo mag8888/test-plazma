@@ -20,6 +20,7 @@ interface BoardProps {
     initialState: any;
     isHost?: boolean;
     isTutorial?: boolean;
+    username: string;
 }
 
 // ... (existing code top)
@@ -125,7 +126,7 @@ const getInitials = (name: string) => {
 
 
 // Logic extracted to Inner component to guarantee robust hook execution (Fixes #310)
-function GameBoardContent({ roomId, userId, isHost, isTutorial, state, setState }: BoardProps & { state: any, setState: (s: any) => void }) {
+function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state, setState }: BoardProps & { state: any, setState: (s: any) => void }) {
     const router = useRouter();
 
     // State is now passed from parent, initialized and safe.
