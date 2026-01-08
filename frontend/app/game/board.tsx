@@ -2223,7 +2223,7 @@ export default function GameBoard(props: BoardProps) {
 
     // Initial State Sync
     useEffect(() => {
-        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: V19_LOCK_ROOM (Host Control) 🚀');
+        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: V20_VOICE_RESTORED (Dev DB + Mic) 🚀');
         if (props.initialState) {
             setState(props.initialState);
         }

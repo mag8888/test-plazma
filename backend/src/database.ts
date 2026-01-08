@@ -26,8 +26,19 @@ export const connectDatabase = async () => {
         }
 
         mongoose.set('strictQuery', false);
-        // Use database from connection string (Railway standard)
-        await mongoose.connect(mongoUrl);
+
+        // V19 DB ISOLATION: Check Environment
+        const envName = (process.env.RAILWAY_ENVIRONMENT_NAME || '').toLowerCase();
+        let dbOptions: mongoose.ConnectOptions = {};
+
+        if (envName.includes('dev')) {
+            console.log(`[Database] Detected DEV environment (${envName}). Switching to 'moneo_dev' database.`);
+            dbOptions = { dbName: 'moneo_dev' };
+        } else {
+            console.log(`[Database] Detected PROD/DEFAULT environment. Using default database.`);
+        }
+
+        await mongoose.connect(mongoUrl, dbOptions);
         console.log(`Successfully connected to MongoDB`);
 
         // Seed users after connection
