@@ -2208,7 +2208,7 @@ export default function GameBoard(props: BoardProps) {
     // Initial State Sync
     useEffect(() => {
         useEffect(() => {
-            console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: V11_VOICE_FIX (Frontend Config Fix) 🚀');
+            console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: V12_VOICE_STABLE (Refactored VoiceRoom) 🚀');
         }, []);
         if (props.initialState) {
             setState(props.initialState);
