@@ -507,6 +507,67 @@ export class GameGateway {
                 }
             });
 
+            // Host Force Move (Turn for him)
+            socket.on('host_force_move', async (data, callback) => {
+                try {
+                    const { roomId, userId, targetPlayerId } = data;
+                    const game = this.games.get(roomId);
+                    if (!game) return callback?.({ success: false, error: "Game not found" });
+
+                    // Verify Host
+                    const room = await this.roomService.getRoom(roomId);
+                    if (!room || room.creatorId !== userId) {
+                        return callback?.({ success: false, error: "Only host can force move" });
+                    }
+
+                    const currentPlayer = game.state.players[game.state.currentPlayerIndex];
+                    if (currentPlayer.id !== targetPlayerId) {
+                        return callback?.({ success: false, error: "It is not this player's turn" });
+                    }
+
+                    game.addLog(`🎲 Host forced move for ${currentPlayer.name}`);
+
+                    // Handle different phases
+                    if (game.getState().phase === 'BABY_ROLL') {
+                        const result: any = game.resolveBabyRoll();
+                        const state = game.getState();
+                        const message = result.total <= 4 ? "Baby Born! +$5000" : "No Baby.";
+
+                        this.io.to(roomId).emit('dice_rolled', {
+                            roll: result.total || result,
+                            diceValues: result.values || [result],
+                            state,
+                            message
+                        });
+                        this.saveState(roomId, game);
+                    } else if (game.getState().phase === 'ROLL') {
+                        // Default to 1 die for forced move
+                        const result = game.rollDice(1);
+
+                        let roll = 0;
+                        let diceValues: number[] = [];
+
+                        if (typeof result === 'object') {
+                            roll = result.total;
+                            diceValues = result.values;
+                        } else {
+                            roll = result;
+                        }
+
+                        const state = game.getState();
+                        this.io.to(roomId).emit('dice_rolled', { roll, diceValues, state });
+                        this.saveState(roomId, game);
+                    } else {
+                        return callback?.({ success: false, error: "Cannot roll in current phase" });
+                    }
+
+                    if (callback) callback({ success: true });
+                } catch (e: any) {
+                    console.error("Force Move Error:", e);
+                    if (callback) callback({ success: false, error: e.message });
+                }
+            });
+
             // Host Force End Game
             socket.on('host_end_game', async (data, callback) => {
                 try {
