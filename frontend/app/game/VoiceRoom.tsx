@@ -19,36 +19,13 @@ interface VoiceRoomProps {
     onActiveSpeakersChange?: (speakers: string[]) => void;
 }
 
-const ActiveSpeakersObserver = ({ onActiveSpeakersChange }: { onActiveSpeakersChange?: (speakers: string[]) => void }) => {
-    const room = useRoomContext();
-    const [speakingIds, setSpeakingIds] = useState<string[]>([]);
-
-    useEffect(() => {
-        if (!room) return;
-
-        const onActiveSpeakersChanged = (speakers: Participant[]) => {
-            const ids = speakers.map(s => s.identity);
-            setSpeakingIds(ids);
-            if (onActiveSpeakersChange) onActiveSpeakersChange(ids);
-        };
-
-        room.on(RoomEvent.ActiveSpeakersChanged, onActiveSpeakersChanged);
-
-        // Initial check?
-        // speakers is empty initially usually.
-
-        return () => {
-            room.off(RoomEvent.ActiveSpeakersChanged, onActiveSpeakersChanged);
-        };
-    }, [room, onActiveSpeakersChange]);
-
-    return null;
-};
+// REMOVED ActiveSpeakersObserver to fix React Error #321 (Invalid Hook Call)
+// We will restore it once basic connectivity is stable.
 
 export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiveSpeakersChange, children }: VoiceRoomProps & { children?: React.ReactNode | ((isConnected: boolean) => React.ReactNode) }) => {
     const [token, setToken] = useState('');
     const [url, setUrl] = useState('');
-    const [isConnected, setIsConnected] = useState(false);
+    // const [isConnected, setIsConnected] = useState(false); // Unused
 
     useEffect(() => {
         const fetchToken = async () => {
@@ -61,12 +38,14 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
                     body: JSON.stringify({ roomId, userId, username }),
                 });
                 const data = await response.json();
-                setToken(data.token);
-                setUrl(data.url);
-                setIsConnected(true);
+                if (data.token && data.url) {
+                    setToken(data.token);
+                    setUrl(data.url);
+                } else {
+                    console.error("Invalid token response:", data);
+                }
             } catch (e) {
                 console.error("Failed to fetch voice token:", e);
-                // Retry?
             }
         };
 
@@ -78,7 +57,7 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
     // Safe content rendering
     const content = typeof children === 'function' ? children(!!(token && url)) : children;
 
-    // 1. If no token/url, render logic-only wrapper (avoid LiveKitRoom entirely to prevent context errors if it mounts/unmounts)
+    // 1. If no token/url, render logic-only wrapper (avoid LiveKitRoom)
     if (!token || !url) {
         return (
             <div className="w-full h-full flex flex-col voice-room-wrapper-disconnected">
@@ -88,8 +67,6 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
     }
 
     // 2. If token exists, render LiveKitRoom
-    // IMPORTANT: Ensure LiveKitRoom doesn't flip-flop.
-    // We use a key to force remount only if critical props change, but standard diffing should handle it.
     return (
         <LiveKitRoom
             token={token}
@@ -102,7 +79,7 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
         >
             <StartAudio label="Включить звук" className="absolute top-2 left-1/2 -translate-x-1/2 z-[200] bg-blue-600 text-white px-4 py-2 rounded-full shadow-xl animate-bounce cursor-pointer border-2 border-white" />
             <RoomAudioRenderer />
-            <ActiveSpeakersObserver onActiveSpeakersChange={onActiveSpeakersChange} />
+            {/* <ActiveSpeakersObserver ... /> REMOVED */}
 
             {/* Render children inside the Context Provider */}
             {content}
