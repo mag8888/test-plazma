@@ -10,13 +10,11 @@ export const getBackendUrl = () => {
         return url.replace(/\/$/, '');
     }
 
-    // 2. Try Relative (Same Origin) - Fallback for Monolith/Unconfigured
-    if (typeof window !== 'undefined' && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
-        const origin = window.location.origin;
-        return origin;
-    }
+    // 2. Try Relative (Same Origin) - ONLY if running in legacy monolith mode or localhost
+    // For separated Production Frontend, we MUST NOT default to origin (it's static)
+    // We should fallback to the known Live Backend.
 
-    // 3. No configuration found - Default to Live Backend
+    // 3. Default to Live Backend (Primary Fallback)
     console.warn("Backend URL not configured. Defaulting to Live.");
     return 'https://moneo-live.up.railway.app';
 };
