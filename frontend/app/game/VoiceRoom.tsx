@@ -1,4 +1,5 @@
 import { LiveKitRoom, RoomAudioRenderer, useRoomContext, useParticipants, useLocalParticipant } from '@livekit/components-react';
+import { RoomEvent } from 'livekit-client';
 import { useEffect, useState } from 'react';
 import '@livekit/components-styles';
 import { VoiceControls } from './VoiceControls';
@@ -25,12 +26,12 @@ const VoiceRoomInner = ({ onActiveSpeakersChange, children, onSpeakingChanged }:
             setIsConnected(true);
         }
 
-        const onStateChanged = (state: string) => {
+        const onStateChanged = (state: any) => {
             setIsConnected(state === 'connected');
         };
 
-        room.on('stateChanged', onStateChanged);
-        return () => { room.off('stateChanged', onStateChanged); };
+        room.on(RoomEvent.StateChanged, onStateChanged);
+        return () => { room.off(RoomEvent.StateChanged, onStateChanged); };
     }, [room]);
 
     // Active Speakers Logic
