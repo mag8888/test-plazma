@@ -9,6 +9,8 @@ import { connectDatabase } from './database';
 import path from 'path';
 import fs from 'fs';
 import mongoose from 'mongoose';
+import { Server } from 'socket.io'; // RESTORED
+import { GameGateway } from './game/game.gateway'; // RESTORED
 
 dotenv.config();
 // Force Backend Rebuild 2026-01-08
@@ -1769,7 +1771,28 @@ const bootstrap = async () => {
         });
 
 
-        // 3. Game Gateway - REMOVED (Moved to Game Service)
+        // 3. Game Gateway - RESTORED
+        // Fixes WebSocket connection failure
+        try {
+            console.log('🎮 Initializing Game Gateway...');
+            const io = new Server(httpServer, {
+                cors: {
+                    origin: true, // Allow all origins (including frontend)
+                    methods: ["GET", "POST"],
+                    credentials: true
+                },
+                transports: ['websocket', 'polling'] // Support both
+            });
+
+            const gameGateway = new GameGateway(io);
+            await gameGateway.initialize();
+            console.log('✅ Game Gateway Active (Socket.io listening).');
+
+            // Assign to global if needed for debugging or other access
+            // global.gameGateway = gameGateway; 
+        } catch (gameErr) {
+            console.error('Game Gateway Init Failed:', gameErr);
+        }
 
         // 3.1 Backup Service
         try {
