@@ -1744,6 +1744,22 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                     </div>
                                 </div>
 
+                                {/* HOST: LOCK ROOM BUTTON */}
+                                {isHost && (
+                                    <button
+                                        onClick={() => {
+                                            socket.emit('toggle_lock', { roomId, userId });
+                                        }}
+                                        className={`w-full py-3 mb-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0
+                                        ${state.isLocked
+                                                ? 'bg-rose-600 hover:bg-rose-500 text-white animate-pulse'
+                                                : 'bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white'}`}
+                                    >
+                                        <span className="text-lg">{state.isLocked ? '🔒' : '🔓'}</span>
+                                        <span>{state.isLocked ? 'ОТКРЫТЬ КОМНАТУ' : 'ЗАКРЫТЬ КОМНАТУ'}</span>
+                                    </button>
+                                )}
+
                                 {/* 4. CHAT (Fills remaining) */}
                                 <div className="flex-1 bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden flex flex-col shadow-inner relative">
                                     <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-[#1e293b] to-transparent z-10 pointer-events-none"></div>
@@ -2207,7 +2223,7 @@ export default function GameBoard(props: BoardProps) {
 
     // Initial State Sync
     useEffect(() => {
-        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: V18_DYNAMIC_ENV (Smart Routing) 🚀');
+        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: V19_LOCK_ROOM (Host Control) 🚀');
         if (props.initialState) {
             setState(props.initialState);
         }

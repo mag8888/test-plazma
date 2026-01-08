@@ -404,6 +404,34 @@ export class GameGateway {
                 this.io.emit('rooms_updated', rooms);
             });
 
+            // Toggle Lock Room (Host Only)
+            socket.on('toggle_lock', async (data, callback) => {
+                try {
+                    const { roomId, userId } = data;
+                    const isLocked = await this.roomService.toggleLock(roomId, userId);
+
+                    // Sync with active game engine if exists
+                    const game = this.games.get(roomId);
+                    if (game) {
+                        game.state.isLocked = isLocked;
+                        this.saveState(roomId, game);
+                        // Emit state update so clients see the lock status immediately
+                        this.io.to(roomId).emit('state_updated', { state: game.getState() });
+                    }
+
+                    // Broadcast room update to lobby (so people see lock icon)
+                    const rooms = await this.roomService.getRooms();
+                    this.io.emit('rooms_updated', rooms);
+
+                    // Respond to sender
+                    if (callback) callback({ success: true, isLocked });
+
+                } catch (e: any) {
+                    console.error("Toggle Lock Error:", e);
+                    if (callback) callback({ success: false, error: e.message });
+                }
+            });
+
             // Kick Player
             socket.on('kick_player', async (data, callback) => {
                 try {

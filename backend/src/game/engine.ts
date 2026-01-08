@@ -34,6 +34,7 @@ export interface GameState {
     isTutorial?: boolean;
     tutorialStep?: number; // 0: Start, 1: Bought Stock (Ready to Sell)
     gameMode?: 'ENGINEER' | 'ENTREPRENEUR';
+    isLocked?: boolean;
 }
 export interface ActiveCard {
     id: string;
@@ -262,7 +263,8 @@ export class GameEngine {
             turnExpiresAt: Date.now() + 120000, // Init first turn timer
             isTutorial: options.isTutorial || false,
             tutorialStep: 0,
-            gameMode: options.gameMode || 'ENGINEER'
+            gameMode: options.gameMode || 'ENGINEER',
+            isLocked: false,
         };
     }
 

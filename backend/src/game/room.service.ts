@@ -147,6 +147,7 @@ export class RoomService {
             throw new Error("Room not found");
         }
         if (roomCheck.password && roomCheck.password !== password) throw new Error("Invalid password");
+        if (roomCheck.isLocked) throw new Error("Комната закрыта ведущим");
 
         // Allow rejoin if player is already in the list
         // Use loose equality or string conversion to handle potential Type Mismatches (String vs Number)
@@ -511,6 +512,17 @@ export class RoomService {
 
         room.status = 'playing';
         await room.save();
+    }
+
+    async toggleLock(roomId: string, requesterUserId: string): Promise<boolean> {
+        const room = await RoomModel.findById(roomId);
+        if (!room) throw new Error("Room not found");
+
+        if (room.creatorId !== requesterUserId) throw new Error("Only host can lock room");
+
+        room.isLocked = !room.isLocked;
+        await room.save();
+        return room.isLocked || false;
     }
 
     async saveGameState(roomId: string, state: any): Promise<void> {

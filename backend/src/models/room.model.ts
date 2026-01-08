@@ -25,6 +25,7 @@ export interface IRoom extends Document {
     gameState?: any;
     isTraining?: boolean;
     gameMode?: 'ENGINEER' | 'ENTREPRENEUR';
+    isLocked?: boolean;
 }
 
 const RoomSchema: Schema = new Schema({
@@ -47,7 +48,8 @@ const RoomSchema: Schema = new Schema({
         isBankrupted: { type: Boolean, default: false },
         photo_url: String
     }],
-    createdAt: { type: Date, expires: '12h', default: Date.now }
+    createdAt: { type: Date, expires: '12h', default: Date.now },
+    isLocked: { type: Boolean, default: false }
 }, { timestamps: true });
 
 // Prevent multiple waiting rooms for the same creator
