@@ -3,8 +3,10 @@ import { User } from '../models/User';
 import { Transaction, TransactionType } from '../models/Transaction';
 import { AdminLog, AdminActionType } from '../models/AdminLog';
 import { Avatar } from '../models/Avatar';
+
 import { CardModel } from '../models/Card';
 import { RoomModel } from '../models/Room';
+import { EXPENSE_CARDS, SMALL_DEALS, BIG_DEALS, MARKET_CARDS } from '../data/DefaultCards';
 import mongoose from 'mongoose';
 import { NotificationService } from '../services/NotificationService';
 
@@ -804,8 +806,20 @@ export class AdminController {
     // Get All Cards
     static async getCards(req: ExpressRequest, res: ExpressResponse) {
         try {
+            const count = await CardModel.countDocuments();
+            if (count === 0) {
+                console.log('[AdminController] Seeding Cards DB...');
+                const allCards = [
+                    ...EXPENSE_CARDS,
+                    ...SMALL_DEALS,
+                    ...BIG_DEALS,
+                    ...MARKET_CARDS
+                ];
+                await CardModel.insertMany(allCards);
+            }
+
             const cards = await CardModel.find().sort({ id: 1 });
-            res.json(cards);
+            res.json({ cards });
         } catch (error: any) {
             res.status(500).json({ error: error.message });
         }
