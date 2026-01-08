@@ -127,15 +127,22 @@ export const ActiveCardZone = ({
                         <div className="flex bg-slate-800/50 p-3 rounded-xl mb-6 items-center gap-3 border border-white/5">
                             <span className="text-xs text-slate-400 uppercase font-bold">Сумма:</span>
                             <span className="text-xl font-mono font-black text-rose-400">
-                                -${Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1).toLocaleString()}
+                                -${Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1)).toLocaleString()}
                             </span>
                         </div>
                         <div className="space-y-3 w-full">
                             <button
                                 onClick={() => socket.emit('charity_choice', { roomId, accept: true })}
-                                className="w-full bg-rose-600 hover:bg-rose-500 text-white font-bold py-3.5 rounded-xl text-sm uppercase tracking-wider shadow-lg active:scale-95 transition-transform"
+                                disabled={me.cash < Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1))}
+                                className={`w-full font-bold py-3.5 rounded-xl text-sm uppercase tracking-wider shadow-lg transition-all ${me.cash >= Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1))
+                                    ? 'bg-rose-600 hover:bg-rose-500 text-white active:scale-95 shadow-rose-900/20'
+                                    : 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                                    }`}
                             >
-                                Пожертвовать
+                                {me.cash < Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1))
+                                    ? `Не хватает кэша ($${Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1))})`
+                                    : 'Пожертвовать'
+                                }
                             </button>
                             <button
                                 onClick={() => socket.emit('charity_choice', { roomId, accept: false })}
