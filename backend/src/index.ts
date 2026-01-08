@@ -11,6 +11,7 @@ import fs from 'fs';
 import mongoose from 'mongoose';
 
 dotenv.config();
+// Force Backend Rebuild 2026-01-08
 
 // Global type augmentation
 declare global {
