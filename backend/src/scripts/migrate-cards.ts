@@ -18,7 +18,7 @@ async function migrateCards() {
         if (!mongoUrl) {
             throw new Error('MONGO_URL not found in environment');
         }
-        await mongoose.connect(mongoUrl, { dbName: 'test' });
+        await mongoose.connect(mongoUrl);
         console.log('✅ Connected to MongoDB');
 
         // Clear existing cards
