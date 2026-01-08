@@ -17,7 +17,7 @@ export interface Profession {
 
 export const PROFESSIONS: Profession[] = [
     {
-        name: 'Engineer',
+        name: 'Manager',
         salary: 10000,
         savings: 2000,
         perChildCost: 500,
@@ -33,7 +33,7 @@ export const PROFESSIONS: Profession[] = [
     {
         name: 'Entrepreneur',
         salary: 0,
-        savings: 100000,
+        savings: 250000,
         perChildCost: 500,
         expenses: 5800,
         taxes: 1200, // Taxes might need to be 0 or dynamic if salary is 0? User said "such expenses". Taxes usually % of income. But let's keep fixed if user said "same expenses". But 1200 tax on 0 income is harsh.

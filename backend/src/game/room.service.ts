@@ -399,7 +399,7 @@ export class RoomService {
         return room ? this.sanitizeRoom(room) : null;
     }
 
-    async setPlayerReady(roomId: string, playerId: string, userId: string, isReady: boolean, dream?: string, token?: string): Promise<any> {
+    async setPlayerReady(roomId: string, playerId: string, userId: string, isReady: boolean, dream?: string, token?: string, name?: string): Promise<any> {
         // 1. Fetch room to validate Logic (Token uniqueness, existence)
         const roomCheck = await RoomModel.findById(roomId).lean();
         if (!roomCheck) throw new Error("Room not found");
@@ -457,6 +457,7 @@ export class RoomService {
 
         if (dream) updateOp.$set["players.$[elem].dream"] = dream;
         if (finalToken) updateOp.$set["players.$[elem].token"] = finalToken;
+        if (name) updateOp.$set["players.$[elem].name"] = name;
 
         // Match the player by userId preference, then socketId
         // We need to know WHICH one to match.

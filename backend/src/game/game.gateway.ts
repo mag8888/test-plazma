@@ -705,14 +705,15 @@ export class GameGateway {
             socket.on('player_ready', async (data, callback) => {
                 try {
                     console.log('socket event: player_ready', JSON.stringify(data));
-                    const { roomId, isReady, dream, token, userId } = data; // Expect userId
+                    const { roomId, isReady, dream, token, userId, name } = data; // Expect name and userId
                     const room = await this.roomService.setPlayerReady(
                         roomId,
                         socket.id,
                         userId, // Pass userId for JIT check
                         isReady,
                         dream,
-                        token
+                        token,
+                        name
                     );
                     this.io.to(roomId).emit('room_state_updated', room);
                     callback({ success: true });
@@ -778,6 +779,34 @@ export class GameGateway {
             const saveState = (roomId: string, game: GameEngine) => {
                 this.roomService.saveGameState(roomId, game.getState()).catch(err => console.error("Persist Error:", err));
             };
+
+
+            // Charity Choice
+            socket.on('charity_choice', ({ roomId, accept }) => {
+                const game = this.games.get(roomId);
+                if (!game) return;
+                try {
+                    game.handleCharityChoice(socket.id, accept);
+                    const state = game.getState();
+                    this.io.to(roomId).emit('game_state_update', state);
+                    this.saveState(roomId, game);
+                } catch (e: any) {
+                    socket.emit('error', e.message);
+                }
+            });
+
+            // Dismiss Market Card
+            socket.on('dismiss_market_card', ({ roomId, cardId }) => {
+                const game = this.games.get(roomId);
+                if (!game) return;
+                try {
+                    game.dismissMarketCard(socket.id, cardId);
+                    this.io.to(roomId).emit('game_state_update', game.getState());
+                    this.saveState(roomId, game);
+                } catch (e: any) {
+                    console.error("Dismiss Market Card Error:", e);
+                }
+            });
 
             socket.on('roll_dice', ({ roomId, diceCount }) => {
                 const game = this.games.get(roomId);

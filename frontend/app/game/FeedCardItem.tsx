@@ -261,7 +261,7 @@ export const FeedCardItem = ({
                         )}
 
                         {/* Actions */}
-                        {(isMyTurn || isOwner || canControl) && (
+                        {(isMyTurn || isOwner || canControl || (isStock && ownedQty > 0)) && (
                             <div className="grid grid-cols-1 gap-2 mt-1 w-full">
                                 {/* Asset Ownership Warning */}
                                 {card.offerPrice && isOffer && !hasAsset && (

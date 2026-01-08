@@ -241,13 +241,7 @@ function GameContent() {
             dream,
             token,
             userId: myUserId,
-            // Pass name if we want to update it on Ready (Requires backend support in setPlayerReady?)
-            // setPlayerReady in backend doesn't take 'name' argument yet. 
-            // Wait, request said: "так же записываем и в будущем подтягиваем" (name).
-            // Backend setPlayerReady updates preferences.displayName.
-            // But does it update the active Player List Object name?
-            // Checking setPlayerReady in backend... it mainly updates isReady, dream, token.
-            // I should verify/add name update there too if needed.
+            name: finalName // Pass updated name
         }, (res: any) => {
             if (!res.success) alert(res.error);
         });
@@ -385,6 +379,7 @@ function GameContent() {
                                     username={user.first_name || 'Player'}
                                     onSpeakingChanged={setIsSpeaking}
                                     onActiveSpeakersChange={setActiveSpeakers}
+                                    players={room.players}
                                 />
                             </div>
                         ) : null}

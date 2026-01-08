@@ -968,7 +968,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                 <span className="text-[10px] text-slate-400 uppercase font-bold tracking-wider">Профессия</span>
                                                 <div className="text-xl font-bold text-white">
                                                     {localPlayer.professionName === 'Entrepreneur' || localPlayer.professionName === 'ENTREPRENEUR' ? 'Предприниматель' :
-                                                        (localPlayer.professionName === 'Engineer' || localPlayer.professionName === 'ENGINEER' ? 'Инженер' : localPlayer.professionName)}
+                                                        (localPlayer.professionName === 'Manager' || localPlayer.professionName === 'MANAGER' ? 'Менеджер' : localPlayer.professionName)}
                                                 </div>
                                             </div>
                                         </div>

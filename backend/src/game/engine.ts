@@ -270,14 +270,14 @@ export class GameEngine {
 
     initPlayer(p: IPlayer, gameMode: string = 'ENGINEER'): PlayerState {
         // Assign Profession based on Mode
-        let profession = PROFESSIONS.find(prof => prof.name === 'Engineer'); // Default
+        let profession = PROFESSIONS.find(prof => prof.name === 'Manager'); // Default
 
         if (gameMode === 'ENTREPRENEUR') {
             const ent = PROFESSIONS.find(prof => prof.name === 'Entrepreneur');
             if (ent) profession = ent;
         } else {
-            // Ensure Engineer
-            const eng = PROFESSIONS.find(prof => prof.name === 'Engineer');
+            // Ensure Manager
+            const eng = PROFESSIONS.find(prof => prof.name === 'Manager');
             if (eng) profession = eng;
         }
 
@@ -3045,4 +3045,26 @@ export class GameEngine {
             deckCounts: this.cardManager.getDeckCounts()
         };
     }
+    // --- Charity Logic ---
+    handleCharityChoice(socketId: string, accept: boolean) {
+        if (this.state.phase !== 'CHARITY_CHOICE') throw new Error("Not in charity phase");
+        const player = this.state.players[this.state.currentPlayerIndex];
+        if (player.id !== socketId) throw new Error("Not your turn");
+
+        if (accept) {
+            const cost = Math.max(1000, Math.ceil((player.salary + (player.passiveIncome || 0)) * 0.1));
+            if (player.cash < cost) throw new Error("Not enough cash");
+            player.cash -= cost;
+            player.charityTurns = 3;
+            this.addLog(`💖 ${player.name} пожертвовал $${cost} на благотворительность! (2 кубика на 3 хода)`);
+        } else {
+            this.addLog(`🤷 ${player.name} отказался от благотворительности.`);
+        }
+
+        // After choice, end turn immediately (or move to Roll? Usually Charity is end of turn action or pre-roll?)
+        // In Rat Race, Charity is a square. You land, choose, then turn ends.
+        this.endTurn();
+    }
+
+
 }

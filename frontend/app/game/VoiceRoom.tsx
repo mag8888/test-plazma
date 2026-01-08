@@ -15,7 +15,7 @@ interface VoiceRoomProps {
 }
 
 // Inner component to use Hooks safely inside LiveKitRoom context
-const VoiceRoomInner = ({ onActiveSpeakersChange, children, onSpeakingChanged }: any) => {
+const VoiceRoomInner = ({ onActiveSpeakersChange, children, onSpeakingChanged, players }: any) => {
     const room = useRoomContext();
     const participants = useParticipants();
     const { localParticipant } = useLocalParticipant();
@@ -59,14 +59,14 @@ const VoiceRoomInner = ({ onActiveSpeakersChange, children, onSpeakingChanged }:
             {/* Only show if we are NOT using a render prop (which implies custom UI) */}
             {typeof children !== 'function' && isConnected && (
                 <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50">
-                    <VoiceControls onSpeakingChanged={onSpeakingChanged} />
+                    <VoiceControls onSpeakingChanged={onSpeakingChanged} players={players} />
                 </div>
             )}
         </div>
     );
 };
 
-export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiveSpeakersChange, children }: VoiceRoomProps) => {
+export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiveSpeakersChange, children, players }: VoiceRoomProps & { players: any[] }) => {
     const [token, setToken] = useState('');
     const [url, setUrl] = useState('');
 
@@ -112,6 +112,7 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
                 onSpeakingChanged={onSpeakingChanged}
                 onActiveSpeakersChange={onActiveSpeakersChange}
                 children={children}
+                players={players}
             />
         </LiveKitRoom>
     );
