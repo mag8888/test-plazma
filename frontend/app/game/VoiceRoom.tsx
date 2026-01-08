@@ -44,25 +44,27 @@ const ActiveSpeakersObserver = ({ onActiveSpeakersChange }: { onActiveSpeakersCh
     return null;
 };
 
-export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiveSpeakersChange, children }: VoiceRoomProps & { children?: React.ReactNode }) => {
+export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiveSpeakersChange, children }: VoiceRoomProps & { children?: React.ReactNode | ((isConnected: boolean) => React.ReactNode) }) => {
     const [token, setToken] = useState('');
     const [url, setUrl] = useState('');
+    const [isConnected, setIsConnected] = useState(false);
 
     useEffect(() => {
         const fetchToken = async () => {
             try {
-                // Using relative path assuming Next.js proxy rewrite or direct call
-                const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/api/voice/token`, {
+                // Use relative path for same-origin (production/railway)
+                const response = await fetch('/api/voice/token', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ roomId, userId, username }),
                 });
                 const data = await response.json();
                 setToken(data.token);
-                // Use backend provided URL or fallback env
                 setUrl(data.url);
+                setIsConnected(true);
             } catch (e) {
                 console.error("Failed to fetch voice token:", e);
+                // Retry?
             }
         };
 
@@ -71,13 +73,13 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
         }
     }, [roomId, userId, username]);
 
+    const content = typeof children === 'function' ? children(!!token) : children;
+
     if (!token || !url) {
-        // While connecting, we still want to render the game! 
-        // Just show children. Audio will kick in later.
+        // Render content (Board) but connected=false
         return (
             <div className="relative w-full h-full flex flex-col">
-                {/* Show loading indicator purely for debug if needed, but better silent */}
-                {children}
+                {content}
             </div>
         );
     }
@@ -95,9 +97,8 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
             <StartAudio label="Включить звук" className="absolute top-2 left-1/2 -translate-x-1/2 z-[200] bg-blue-600 text-white px-4 py-2 rounded-full shadow-xl animate-bounce cursor-pointer border-2 border-white" />
             <RoomAudioRenderer />
             <ActiveSpeakersObserver onActiveSpeakersChange={onActiveSpeakersChange} />
-            {/* We no longer force <VoiceControls /> here. We let children decide where to put them. */}
 
-            {children}
+            {content}
         </LiveKitRoom>
     );
 };
