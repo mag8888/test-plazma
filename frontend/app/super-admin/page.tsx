@@ -1092,6 +1092,7 @@ export default function AdminPage() {
                                     <tr>
                                         <th className="p-4">ID</th>
                                         <th className="p-4">Type</th>
+                                        <th className="p-4">Description</th>
                                         <th className="p-4">Trigger</th>
                                         <th className="p-4">Rarity/Value</th>
                                         <th className="p-4">Function</th>
@@ -1112,6 +1113,9 @@ export default function AdminPage() {
                                                     }`}>
                                                     {card.type}
                                                 </span>
+                                            </td>
+                                            <td className="p-4 text-slate-300 text-xs max-w-xs truncate" title={card.description}>
+                                                {card.description || '-'}
                                             </td>
                                             <td className="p-4 text-slate-300 text-sm">
                                                 {card.triggerType || '-'}
