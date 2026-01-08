@@ -11,9 +11,10 @@ interface VoiceRoomProps {
     roomId: string;
     userId: string;
     username: string;
+    onSpeakingChanged?: (speaking: boolean) => void;
 }
 
-export const VoiceRoom = ({ roomId, userId, username }: VoiceRoomProps) => {
+export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged }: VoiceRoomProps) => {
     const [token, setToken] = useState('');
     const [url, setUrl] = useState('');
 
@@ -55,7 +56,7 @@ export const VoiceRoom = ({ roomId, userId, username }: VoiceRoomProps) => {
             className="w-full flex flex-col items-center"
         >
             <RoomAudioRenderer />
-            <VoiceControls />
+            <VoiceControls onSpeakingChanged={onSpeakingChanged} />
         </LiveKitRoom>
     );
 };

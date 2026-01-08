@@ -89,6 +89,7 @@ function GameContent() {
 
     const [hasSelectedToken, setHasSelectedToken] = useState(false);
     const [hasSelectedDream, setHasSelectedDream] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false); // [NEW] Voice State
 
     // Initial Join & Socket Setup
     useEffect(() => {
@@ -370,7 +371,12 @@ function GameContent() {
                         {/* Voice Room Integration */}
                         {(user && roomId) ? (
                             <div className="mt-2">
-                                <VoiceRoom roomId={roomId} userId={user.id?.toString() || user.telegram_id?.toString() || ''} username={user.first_name || 'Player'} />
+                                <VoiceRoom
+                                    roomId={roomId}
+                                    userId={user.id?.toString() || user.telegram_id?.toString() || ''}
+                                    username={user.first_name || 'Player'}
+                                    onSpeakingChanged={setIsSpeaking} // [NEW]
+                                />
                             </div>
                         ) : null}
                     </div>
@@ -512,7 +518,7 @@ function GameContent() {
                                                             updateSettings(t, dream);
                                                         }
                                                     }}
-                                                    className={`aspect-square rounded-2xl flex items-center justify-center text-4xl relative transition-all duration-300 ${isSelected ? 'bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border-indigo-400 ring-2 ring-indigo-500/50 shadow-[0_0_30px_rgba(99,102,241,0.3)] scale-110' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:scale-105 border'} ${(isTaken || isReady) ? 'opacity-50 grayscale cursor-not-allowed scale-90' : 'cursor-pointer'}`}
+                                                    className={`aspect-square rounded-2xl flex items-center justify-center text-4xl relative transition-all duration-300 ${isSelected ? 'bg-gradient-to-br from-indigo-500/20 to-purple-500/20 border-indigo-400 ring-2 ring-indigo-500/50 shadow-[0_0_30px_rgba(99,102,241,0.3)] scale-110' : 'bg-white/5 border-white/10 hover:bg-white/10 hover:border-white/20 hover:scale-105 border'} ${(isTaken || isReady) ? 'opacity-50 grayscale cursor-not-allowed scale-90' : 'cursor-pointer'} ${isSelected && isSpeaking ? 'ring-4 ring-emerald-500/70 shadow-[0_0_40px_rgba(16,185,129,0.5)] scale-125' : ''}`} // [NEW] Pulse Effect
                                                 >
                                                     <span className={`drop-shadow-lg ${isSelected ? 'animate-bounce-subtle' : ''}`}>{t}</span>
                                                     {isSelected && <div className="absolute -top-3 -right-3 w-8 h-8 flex items-center justify-center"><div className="absolute inset-0 bg-blue-500 rounded-full blur-[2px]"></div><div className="relative bg-blue-500 bg-gradient-to-br from-blue-400 to-indigo-600 text-white rounded-full w-7 h-7 flex items-center justify-center border-2 border-slate-900 shadow-xl"><svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7"></path></svg></div></div>}
