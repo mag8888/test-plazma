@@ -159,6 +159,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
     const [showFastTrackInfo, setShowFastTrackInfo] = useState(false);
     const [dismissedMarketCards, setDismissedMarketCards] = useState<string[]>([]);
     const [isMuted, setIsMuted] = useState(false);
+    const [isSpeaking, setIsSpeaking] = useState(false);
 
     // Tutorial State
     const [hasClickedFastTrack, setHasClickedFastTrack] = useState(false);
