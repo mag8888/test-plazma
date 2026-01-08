@@ -28,14 +28,20 @@ export const connectDatabase = async () => {
         mongoose.set('strictQuery', false);
 
         // V19 DB ISOLATION: Check Environment
+        // V19 DB ISOLATION: Check Environment and Service Name
         const envName = (process.env.RAILWAY_ENVIRONMENT_NAME || '').toLowerCase();
+        const serviceName = (process.env.RAILWAY_SERVICE_NAME || '').toLowerCase();
+
+        console.log(`[Database] Init Check: Env='${envName}', Service='${serviceName}'`);
+
         let dbOptions: mongoose.ConnectOptions = {};
 
-        if (envName.includes('dev')) {
-            console.log(`[Database] Detected DEV environment (${envName}). Switching to 'moneo_dev' database.`);
+        // Check if ANY indicator suggests Development
+        if (envName.includes('dev') || serviceName.includes('dev')) {
+            console.log(`[Database] Detected DEV mode (Env: ${envName}, Service: ${serviceName}). Switching to 'moneo_dev' database.`);
             dbOptions = { dbName: 'moneo_dev' };
         } else {
-            console.log(`[Database] Detected PROD/DEFAULT environment. Using default database.`);
+            console.log(`[Database] Detected PROD/DEFAULT mode. Using default database from MONGO_URL.`);
         }
 
         await mongoose.connect(mongoUrl, dbOptions);
