@@ -2207,7 +2207,7 @@ export default function GameBoard(props: BoardProps) {
 
     // Initial State Sync
     useEffect(() => {
-        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: V14_NUCLEAR (Explicit URL) 🚀');
+        console.log('🚀 MAIN BOARD COMPONENT MOUNTED - VERSION: V15_SAFE_MODE (Voice Disabled) 🚀');
         if (props.initialState) {
             setState(props.initialState);
         }
