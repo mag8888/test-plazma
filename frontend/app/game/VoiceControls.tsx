@@ -2,7 +2,11 @@ import { useLocalParticipant, useRoomContext } from '@livekit/components-react';
 import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
-export const VoiceControls = () => {
+interface VoiceControlsProps {
+    onSpeakingChanged?: (speaking: boolean) => void;
+}
+
+export const VoiceControls = ({ onSpeakingChanged }: VoiceControlsProps) => {
     const { localParticipant } = useLocalParticipant();
     const room = useRoomContext();
     const [isMuted, setIsMuted] = useState(false);
@@ -22,13 +26,14 @@ export const VoiceControls = () => {
 
         const onIsSpeakingChanged = (speaking: boolean) => {
             setIsSpeaking(speaking);
+            if (onSpeakingChanged) onSpeakingChanged(speaking);
         };
 
         localParticipant.on('isSpeakingChanged', onIsSpeakingChanged);
         return () => {
             localParticipant.off('isSpeakingChanged', onIsSpeakingChanged);
         };
-    }, [localParticipant]);
+    }, [localParticipant, onSpeakingChanged]);
 
     return (
         <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
