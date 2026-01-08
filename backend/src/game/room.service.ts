@@ -5,7 +5,30 @@ import mongoose from 'mongoose';
 
 export class RoomService {
 
-    constructor() { }
+    // Automatic cleanup of stale rooms
+    startCleanupInterval() {
+        setInterval(async () => {
+            try {
+                const thirtyMinutesAgo = Date.now() - 30 * 60 * 1000;
+
+                // delete OLD TRAINING rooms
+                const result = await RoomModel.deleteMany({
+                    isTraining: true,
+                    createdAt: { $lt: thirtyMinutesAgo }
+                });
+
+                if (result.deletedCount > 0) {
+                    console.log(`[RoomCleanup] Deleted ${result.deletedCount} expired training rooms.`);
+                }
+            } catch (e) {
+                console.error("[RoomCleanup] Error during cleanup:", e);
+            }
+        }, 60 * 1000); // Check every minute
+    }
+
+    constructor() {
+        this.startCleanupInterval();
+    }
 
     async createRoom(creatorId: string, userId: string, playerName: string, name: string, maxPlayers: number = 6, timer: number = 120, password?: string, token?: string, dream?: string, isTraining: boolean = false, gameMode: 'ENGINEER' | 'ENTREPRENEUR' = 'ENGINEER'): Promise<any> {
         // 0. Strict Isolation: Check if user is already in a PLAYING room
