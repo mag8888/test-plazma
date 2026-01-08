@@ -3,6 +3,7 @@ import { createServer } from 'http';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import { BotService } from './bot/bot.service';
+import { VoiceService } from './services/voice.service';
 import { AuthController } from './auth/auth.controller';
 import { connectDatabase } from './database';
 import path from 'path';
@@ -39,6 +40,7 @@ app.use(cors({
 let dbStatus = 'pending';
 let botStatus = 'pending';
 let botService: any = null; // Changed type to any to support Proxy
+let voiceService = new VoiceService();
 
 const isGameServiceOnly = process.env.MICROSERVICE_MODE === 'game';
 
@@ -82,6 +84,22 @@ const httpServer = createServer(app);
 // const io = new Server(httpServer, { ... });
 
 app.use(express.json());
+
+// [NEW] Voice Token Endpoint
+app.post('/api/voice/token', async (req, res) => {
+    try {
+        const { roomId, userId, username } = req.body;
+        if (!roomId || !userId || !username) {
+            return res.status(400).json({ error: 'Missing parameters' });
+        }
+
+        const token = await voiceService.generateToken(roomId, userId, username);
+        res.json({ token, url: process.env.LIVEKIT_URL });
+    } catch (e: any) {
+        console.error("Voice Token Error:", e);
+        res.status(500).json({ error: e.message });
+    }
+});
 
 // Middleware: Restrict /admin access to specific host (MOVED TO TOP)
 // Middleware: Restrict /admin access to specific host (REMOVED REQUESTED BY USER)

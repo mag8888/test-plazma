@@ -8,6 +8,7 @@ import { DREAMS } from '../lib/dreams';
 import { useTelegram } from '../../components/TelegramProvider';
 import { ReadyModal } from './ReadyModal';
 import { ErrorBoundary } from './ErrorBoundary';
+import { VoiceRoom } from './VoiceRoom';
 
 interface Player {
     id: string; // Socket ID
@@ -366,6 +367,12 @@ function GameContent() {
                             {room.name}
                         </h1>
                         <span className="text-xs font-mono text-slate-500 uppercase tracking-widest pl-1">Room #{room.id} | T: {String(effectiveIsTraining)}</span>
+                        {/* Voice Room Integration */}
+                        {(user && roomId) ? (
+                            <div className="mt-2">
+                                <VoiceRoom roomId={roomId} userId={user.id?.toString() || user.telegram_id?.toString() || ''} username={user.first_name || 'Player'} />
+                            </div>
+                        ) : null}
                     </div>
                 </header>
 
