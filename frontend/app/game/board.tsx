@@ -1782,6 +1782,48 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                     {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */}
                     <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pt-2 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 z-[150] flex flex-col gap-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
 
+                        {/* VOICE CONTROLS (Mobile) */}
+                        {userId && (
+                            <div className="flex items-center justify-between bg-[#151b2b] p-2 rounded-xl mb-1">
+                                <span className="text-[10px] uppercase text-slate-500 font-bold ml-2">Голосовой чат</span>
+                                {/* We render VoiceRoom here again? No, VoiceRoom handles connection.
+                                    If we render another VoiceRoom, it will try to connect again (duplicate).
+                                    We need to lift VoiceRoom UP so it encompasses the whole board?
+                                    Or finding a way to render CONTROLS without re-connecting.
+                                    
+                                    Actually, VoiceRoom renders children.
+                                    It renders <VoiceControls />.
+                                    
+                                    PROBLEM: VoiceRoom is currently inside "RIGHT SIDEBAR" which is hidden on mobile.
+                                    This means on mobile, VoiceRoom is NOT MOUNTED.
+                                    So NO AUDIO on mobile.
+                                    
+                                    SOLUTION: Move VoiceRoom OUT of the sidebar to a always-mounted location (e.g. top of the component or hidden div),
+                                    and use a Portal or context to render controls in sidebar/mobile?
+                                    
+                                    Easier: Render VoiceRoom in a hidden div always.
+                                    AND render separate "Controls" UI that interacts with the room?
+                                    
+                                    But VoiceControls needs `useRoomContext` which must be inside LiveKitRoom.
+                                    
+                                    Plan:
+                                    1. Wrap the ENTIRE `GameBoardContent` return with `LiveKitRoom` (via VoiceRoom)?
+                                    No, VoiceRoom has its own useEffect for token.
+                                    
+                                    2. Render `VoiceRoom` at the top level of `GameBoardContent` (always visible, or hidden style).
+                                    Pass `children` to `VoiceRoom`?
+                                    
+                                    Modified VoiceRoom to accept children?
+                                    Currently it returns `LiveKitRoom`. 
+                                    If I wrap the whole board in it, layout might break (flex col).
+                                    But LiveKitRoom renders a div. I can style it `h-full w-full`.
+                                    
+                                    Let's modify `VoiceRoom.tsx` to accept children and render them inside `LiveKitRoom`.
+                                    Then wrap the entire Board content in `VoiceRoom`.
+                                 */}
+                            </div>
+                        )}
+
                         {/* 1. MINI PLAYERS STRIP */}
                         <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-1 pb-2">
                             {state.players.map((p: any) => {

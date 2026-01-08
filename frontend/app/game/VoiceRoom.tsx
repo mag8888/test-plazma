@@ -44,7 +44,7 @@ const ActiveSpeakersObserver = ({ onActiveSpeakersChange }: { onActiveSpeakersCh
     return null;
 };
 
-export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiveSpeakersChange }: VoiceRoomProps) => {
+export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiveSpeakersChange, children }: VoiceRoomProps & { children?: React.ReactNode }) => {
     const [token, setToken] = useState('');
     const [url, setUrl] = useState('');
 
@@ -72,7 +72,14 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
     }, [roomId, userId, username]);
 
     if (!token || !url) {
-        return <div className="text-xs text-white/50">Connecting audio...</div>;
+        // While connecting, we still want to render the game! 
+        // Just show children. Audio will kick in later.
+        return (
+            <div className="relative w-full h-full flex flex-col">
+                {/* Show loading indicator purely for debug if needed, but better silent */}
+                {children}
+            </div>
+        );
     }
 
     return (
@@ -83,12 +90,14 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
             audio={true}
             video={false}
             data-lk-theme="default"
-            className="w-full flex flex-col items-center"
+            className="w-full h-full flex flex-col"
         >
-            <StartAudio label="Click to allow audio" className="bg-blue-500 text-white px-2 py-1 rounded mb-2 text-xs" />
+            <StartAudio label="Включить звук" className="absolute top-2 left-1/2 -translate-x-1/2 z-[200] bg-blue-600 text-white px-4 py-2 rounded-full shadow-xl animate-bounce cursor-pointer border-2 border-white" />
             <RoomAudioRenderer />
             <ActiveSpeakersObserver onActiveSpeakersChange={onActiveSpeakersChange} />
-            <VoiceControls onSpeakingChanged={onSpeakingChanged} />
+            {/* We no longer force <VoiceControls /> here. We let children decide where to put them. */}
+
+            {children}
         </LiveKitRoom>
     );
 };
