@@ -9,7 +9,21 @@
     "Home": {
         "welcome": "MONEO'ya Hoşgeldiniz",
         "start": "Oyuna Başla",
-        "connect_wallet": "Cüzdanı Bağla"
+        "connect_wallet": "Cüzdanı Bağla",
+        "ready_to_multiply": "Sermayenizi katlamaya hazır mısınız?",
+        "enter_lobby": "Lobiye Gir",
+        "presentation": "Sunum",
+        "learn_about_game": "Oyun hakkında bilgi edinin",
+        "tutorial": "Eğitim",
+        "take_tutorial": "Eğitimi tamamla",
+        "income": "Gelir",
+        "rules": "Kurallar"
+    },
+    "Navigation": {
+        "home": "Ana Sayfa",
+        "games": "Oyunlar",
+        "earn": "Kazan",
+        "profile": "Profil"
     },
     "Language": {
         "select": "Dil Seçin",

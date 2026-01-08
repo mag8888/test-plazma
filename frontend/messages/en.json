@@ -9,7 +9,21 @@
     "Home": {
         "welcome": "Welcome to MONEO",
         "start": "Start Game",
-        "connect_wallet": "Connect Wallet"
+        "connect_wallet": "Connect Wallet",
+        "ready_to_multiply": "Ready to multiply your capital?",
+        "enter_lobby": "Enter Lobby",
+        "presentation": "Presentation",
+        "learn_about_game": "Learn about the game",
+        "tutorial": "Tutorial",
+        "take_tutorial": "Take the tutorial",
+        "income": "Income",
+        "rules": "Rules"
+    },
+    "Navigation": {
+        "home": "Home",
+        "games": "Games",
+        "earn": "Earn",
+        "profile": "Profile"
     },
     "Language": {
         "select": "Select Language",

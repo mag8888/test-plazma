@@ -9,7 +9,21 @@
     "Home": {
         "welcome": "Добро пожаловать в MONEO",
         "start": "Начать игру",
-        "connect_wallet": "Подключить кошелек"
+        "connect_wallet": "Подключить кошелек",
+        "ready_to_multiply": "Готов приумножить капитал?",
+        "enter_lobby": "Вход в лобби",
+        "presentation": "Презентация",
+        "learn_about_game": "Узнать об игре",
+        "tutorial": "Обучение",
+        "take_tutorial": "Пройти обучение",
+        "income": "Доход",
+        "rules": "Правила"
+    },
+    "Navigation": {
+        "home": "Главная",
+        "games": "Игры",
+        "earn": "Заработок",
+        "profile": "Профиль"
     },
     "Language": {
         "select": "Выберите язык",

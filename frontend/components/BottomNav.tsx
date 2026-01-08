@@ -6,10 +6,13 @@ import { Home, Calendar, CircleDollarSign, User, Gamepad2 } from 'lucide-react';
 import { useTelegram } from './TelegramProvider';
 import { clsx } from 'clsx'; // Simple class utility if installed, or just template strings
 
+import { useTranslations } from 'next-intl';
+
 export const BottomNav = () => {
     const pathname = usePathname();
     const searchParams = useSearchParams();
     const { webApp } = useTelegram();
+    const t = useTranslations('Navigation');
 
     // Hide on Game Board to save space (only during active game with roomId)
     // Show in lobby
@@ -19,10 +22,10 @@ export const BottomNav = () => {
     }
 
     const tabs = [
-        { name: 'Главная', path: '/home', icon: Home },
-        { name: 'Игры', path: '/schedule', icon: Calendar },
-        { name: 'Заработок', path: '/earn', icon: CircleDollarSign },
-        { name: 'Профиль', path: '/profile', icon: User },
+        { name: t('home'), path: '/home', icon: Home },
+        { name: t('games'), path: '/schedule', icon: Calendar },
+        { name: t('earn'), path: '/earn', icon: CircleDollarSign },
+        { name: t('profile'), path: '/profile', icon: User },
     ];
 
     return (

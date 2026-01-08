@@ -9,7 +9,21 @@
     "Home": {
         "welcome": "مرحبًا بكم في MONEO",
         "start": "بذء اللعبة",
-        "connect_wallet": "ربط المحفظة"
+        "connect_wallet": "ربط المحفظة",
+        "ready_to_multiply": "هل أنت مستعد لمضاعفة رأس مالك؟",
+        "enter_lobby": "دخول الردهة",
+        "presentation": "عرض تقديمي",
+        "learn_about_game": "تعرف على اللعبة",
+        "tutorial": "تعليمي",
+        "take_tutorial": "ابدأ التدريب",
+        "income": "أرباح",
+        "rules": "قواعد"
+    },
+    "Navigation": {
+        "home": "الرئيسية",
+        "games": "ألعاب",
+        "earn": "كسب",
+        "profile": "الملف الشخصي"
     },
     "Language": {
         "select": "اختر اللغة",

@@ -52,7 +52,7 @@ export default function HomePage() {
                     <h1 className="text-3xl font-black tracking-tight text-white mb-1">
                         {t('welcome').split('MONEO')[0]} <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-400">{user?.first_name || 'Гость'}</span>!
                     </h1>
-                    <p className="text-slate-400 text-sm font-medium mb-3">Готов приумножить капитал?</p>
+                    <p className="text-slate-400 text-sm font-medium mb-3">{t('ready_to_multiply')}</p>
 
                     {/* Logout / Exit Button */}
                     <button
@@ -91,7 +91,7 @@ export default function HomePage() {
                             </div>
                             <h2 className="text-2xl font-black uppercase tracking-wider text-white group-hover:text-blue-200 transition-colors">{t('start')}</h2>
                             <div className="flex items-center gap-1 text-[10px] bg-black/30 px-3 py-1 rounded-full mt-2 text-blue-200/80 font-mono uppercase tracking-widest border border-white/5">
-                                Вход в лобби <ChevronRight size={10} />
+                                {t('enter_lobby')} <ChevronRight size={10} />
                             </div>
                         </div>
                     </Link>
@@ -111,8 +111,8 @@ export default function HomePage() {
                                 <Presentation size={24} />
                             </div>
                             <div className="text-left">
-                                <h3 className="text-lg font-bold text-amber-100 group-hover:text-white transition-colors">Презентация</h3>
-                                <p className="text-xs text-amber-200/50 uppercase tracking-wider font-bold">Узнать об игре</p>
+                                <h3 className="text-lg font-bold text-amber-100 group-hover:text-white transition-colors">{t('presentation')}</h3>
+                                <p className="text-xs text-amber-200/50 uppercase tracking-wider font-bold">{t('learn_about_game')}</p>
                             </div>
                             <div className="ml-auto text-amber-500/50 group-hover:translate-x-1 transition-transform">
                                 <ChevronRight />
@@ -135,8 +135,8 @@ export default function HomePage() {
                                 <BookOpen size={24} />
                             </div>
                             <div className="text-left">
-                                <h3 className="text-lg font-bold text-emerald-100 group-hover:text-white transition-colors">Обучение</h3>
-                                <p className="text-xs text-emerald-200/50 uppercase tracking-wider font-bold">Пройти обучение</p>
+                                <h3 className="text-lg font-bold text-emerald-100 group-hover:text-white transition-colors">{t('tutorial')}</h3>
+                                <p className="text-xs text-emerald-200/50 uppercase tracking-wider font-bold">{t('take_tutorial')}</p>
                             </div>
                             <div className="ml-auto text-emerald-500/50 group-hover:translate-x-1 transition-transform">
                                 <ChevronRight />
@@ -155,7 +155,7 @@ export default function HomePage() {
                             <div className="w-10 h-10 bg-emerald-500/10 rounded-xl flex items-center justify-center text-emerald-400 group-hover:bg-emerald-500 group-hover:text-white transition-colors">
                                 <DollarSign size={20} />
                             </div>
-                            <span className="font-bold text-sm text-slate-300 group-hover:text-white transition-colors">Доход</span>
+                            <span className="font-bold text-sm text-slate-300 group-hover:text-white transition-colors">{t('income')}</span>
                         </Link>
 
                         {/* RULES */}
@@ -169,7 +169,7 @@ export default function HomePage() {
                             <div className="w-10 h-10 bg-slate-700/50 rounded-xl flex items-center justify-center text-slate-400 group-hover:bg-white group-hover:text-black transition-colors">
                                 <BookOpen size={20} />
                             </div>
-                            <span className="font-bold text-sm text-slate-300 group-hover:text-white transition-colors">Правила</span>
+                            <span className="font-bold text-sm text-slate-300 group-hover:text-white transition-colors">{t('rules')}</span>
                         </button>
                     </div>
 

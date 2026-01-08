@@ -1,6 +1,7 @@
 import {
     LiveKitRoom,
     RoomAudioRenderer,
+    StartAudio,
     useToken,
 } from '@livekit/components-react';
 import '@livekit/components-styles';
@@ -55,6 +56,7 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged }: Voice
             data-lk-theme="default"
             className="w-full flex flex-col items-center"
         >
+            <StartAudio label="Click to allow audio" className="bg-blue-500 text-white px-2 py-1 rounded mb-2 text-xs" />
             <RoomAudioRenderer />
             <VoiceControls onSpeakingChanged={onSpeakingChanged} />
         </LiveKitRoom>
