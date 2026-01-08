@@ -1369,8 +1369,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
                                     {/* Stats Grid: Cash & Credit */}
                                     <div className="grid grid-cols-2 gap-3" id="tutorial-balance">
-                                        <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group/btn relative">
-                                            <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Баланс 🏦</div>
+                                        <button ref={bankButtonRef} onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group/btn relative">
+                                            <div className="text-[9px] text-blue-400 font-bold uppercase tracking-wider mb-1">БАНК (Баланс) 🏦</div>
                                             <div className="font-mono text-xl text-green-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left relative">
                                                 <AnimatedNumber value={localPlayer?.cash || 0} />
                                                 <CashChangeIndicator currentCash={localPlayer?.cash || 0} />
@@ -1664,14 +1664,22 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
                                 {/* TOP BAR: HUD & Game Stats */}
                                 {/* BANK BUTTON (Desktop) */}
-                                <button
-                                    ref={bankButtonRef}
-                                    onClick={() => setShowBank(true)}
-                                    className="w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0 mb-2 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white relative"
-                                >
-                                    <span className="text-lg">🏦</span>
-                                    <span>БАНК</span>
-                                </button>
+                                {/* 2. VOICE CHAT CONTROLS (Desktop) */}
+                                {userId && (
+                                    <div className="mb-2 shrink-0">
+                                        <div className="bg-[#1e293b] rounded-xl p-3 border border-slate-700 flex items-center justify-between shadow-sm">
+                                            <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-2">
+                                                🎤 Голосовой чат
+                                                {isSpeaking && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />}
+                                            </span>
+                                            {isVoiceConnected ? (
+                                                <VoiceControls onSpeakingChanged={setIsSpeaking} />
+                                            ) : (
+                                                <span className="text-[10px] text-yellow-500 animate-pulse">Подключение...</span>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                                 {isTutorial && state.tutorialStep === 3 && !showBank && (
                                     <PortalTutorialTip
                                         text="Нажмите Банк 🏦"
@@ -1680,85 +1688,57 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                     />
                                 )}
 
-                                {/* DESKTOP SKIP / PAUSE TOGGLE */}
-                                {
-                                    !localPlayer?.isBankrupted && (
-                                        <button
-                                            onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
-                                            className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0
-                                    ${localPlayer.isSkippingTurns
-                                                    ? 'bg-blue-600 hover:bg-blue-500 text-white animate-pulse'
-                                                    : 'bg-slate-800 hover:bg-indigo-600/50 border border-slate-700 text-slate-400 hover:text-white'}`}
-                                        >
-                                            <span className="text-sm">{localPlayer.isSkippingTurns ? '▶️' : '⏸'}</span>
-                                            <span>{localPlayer.isSkippingTurns ? 'ВЕРНУТЬСЯ В ИГРУ' : 'ОТОЙТИ (AFK)'}</span>
-                                        </button>
-                                    )
-                                }
-
-                                {/* HOST PAUSE CONTROL */}
-                                {
-                                    isHost && (
-                                        <button
-                                            onClick={handleTogglePause}
-                                            className={`w-full py-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0 mb-2
-                                    ${state.isPaused
-                                                    ? 'bg-blue-600 hover:bg-blue-500 text-white animate-pulse'
-                                                    : 'bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white'}`}
-                                        >
-                                            <span className="text-sm">{state.isPaused ? '▶️' : '⏸'}</span>
-                                            <span>{state.isPaused ? 'RESUME GAME' : 'PAUSE GAME'}</span>
-                                        </button>
-                                    )
-                                }
-
-                                {/* 3. PLAYERS GRID (Small Cards) */}
-                                <div className="grid grid-cols-2 gap-2 shrink-0 max-h-[160px] overflow-y-auto custom-scrollbar pr-1">
-                                    {state.players.filter((p: any) => p.id !== localPlayer?.id).map((p: any) => {
-                                        const isCurrent = p.id === currentPlayer.id;
-                                        return (
-                                            <div
-                                                key={p.id}
-                                                onClick={() => setSelectedPlayerForMenu(p)}
-                                                className={`bg-[#1e293b] rounded-2xl p-2.5 border flex items-center gap-3 cursor-pointer hover:border-slate-500 transition-all
-                                        ${isCurrent ? 'border-green-500 ring-1 ring-green-500/20 shadow-lg shadow-green-900/10' : 'border-slate-700/50'}
-                                    `}
+                                {/* 3. GAME CONTROLS ROW (AFK, PAUSE, LOCK) */}
+                                <div className="grid grid-cols-4 gap-2 mb-2 shrink-0">
+                                    {/* AFK / SKIP TURN (Always Visible) - Takes full width if not host, else 2 cols */}
+                                    {
+                                        !localPlayer?.isBankrupted && (
+                                            <button
+                                                onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
+                                                className={`rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg border py-2
+                                                ${isHost ? 'col-span-2' : 'col-span-4'}
+                                                ${localPlayer.isSkippingTurns
+                                                        ? 'bg-blue-600 hover:bg-blue-500 text-white animate-pulse border-blue-500'
+                                                        : 'bg-slate-800 hover:bg-indigo-600/50 border-slate-700 text-slate-400 hover:text-white'}`}
+                                                title={localPlayer.isSkippingTurns ? "Вернуться в игру" : "Отойти (AFK)"}
                                             >
-                                                <div className={`w-8 h-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white shadow-sm shrink-0 ${getAvatarColor(p.id)}`}>
-                                                    {p.photo_url ? <img src={p.photo_url} className="w-full h-full rounded-full object-cover" /> : getInitials(p.name)}
-                                                </div>
-                                                <div className="flex flex-col min-w-0">
-                                                    <span className="text-xs font-bold text-slate-200 truncate">{p.name}</span>
-                                                    <span className="text-[10px] text-green-400 font-mono">${p.cash?.toLocaleString()}</span>
-                                                </div>
-                                            </div>
-                                        );
-                                    })}
-                                    {/* Placeholder for "Myself" if I want to see localPlayer in list? Probably duplicate. User asked for "Players" grid. */}
-                                    <div
-                                        className="bg-[#1e293b]/50 rounded-2xl p-2.5 border border-slate-700/30 flex items-center justify-center gap-2 text-slate-500 italic text-[10px] cursor-help"
-                                        title="Это вы"
-                                    >
-                                        <span className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-xs">👤</span>
-                                        <span>Вы (Баланс выше)</span>
-                                    </div>
-                                </div>
+                                                <span className="text-sm">{localPlayer.isSkippingTurns ? '▶️' : '⏸'}</span>
+                                                <span>AFK</span>
+                                            </button>
+                                        )
+                                    }
 
-                                {/* HOST: LOCK ROOM BUTTON */}
-                                {isHost && (
-                                    <button
-                                        onClick={() => {
-                                            socket.emit('toggle_lock', { roomId, userId });
-                                        }}
-                                        className={`w-full py-3 mb-2 rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg shrink-0
-                                        ${state.isLocked
-                                                ? 'bg-rose-600 hover:bg-rose-500 text-white animate-pulse'
-                                                : 'bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white'}`}
-                                    >
-                                        <span className="text-lg">{state.isLocked ? '🔒' : '🔓'}</span>
-                                        <span>{state.isLocked ? 'ОТКРЫТЬ КОМНАТУ' : 'ЗАКРЫТЬ КОМНАТУ'}</span>
-                                    </button>
-                                )}
+                                    {/* HOST ONLY CONTROLS */}
+                                    {isHost && (
+                                        <>
+                                            {/* PAUSE */}
+                                            <button
+                                                onClick={handleTogglePause}
+                                                className={`col-span-1 rounded-xl flex items-center justify-center text-[10px] font-bold transition-all shadow-lg border py-2
+                                                ${state.isPaused
+                                                        ? 'bg-yellow-600 hover:bg-yellow-500 text-white animate-pulse border-yellow-500'
+                                                        : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-400 hover:text-white'}`}
+                                                title={state.isPaused ? "Продолжить игру" : "Пауза"}
+                                            >
+                                                <span className="text-xl">{state.isPaused ? '▶️' : '⏸'}</span>
+                                            </button>
+
+                                            {/* LOCK ROOM */}
+                                            <button
+                                                onClick={() => {
+                                                    socket.emit('toggle_lock', { roomId, userId });
+                                                }}
+                                                className={`col-span-1 rounded-xl flex items-center justify-center text-[10px] font-bold transition-all shadow-lg border py-2
+                                                ${state.isLocked
+                                                        ? 'bg-rose-600 hover:bg-rose-500 text-white animate-pulse border-rose-500'
+                                                        : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-400 hover:text-white'}`}
+                                                title={state.isLocked ? "Открыть комнату" : "Закрыть комнату"}
+                                            >
+                                                <span className="text-xl">{state.isLocked ? '🔒' : '🔓'}</span>
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
 
                                 {/* 4. CHAT (Fills remaining) */}
                                 <div className="flex-1 bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden flex flex-col shadow-inner relative">
