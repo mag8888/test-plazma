@@ -17,6 +17,7 @@ interface MenuModalProps {
     onKickCurrent?: () => void;
     onToggleOrientation?: () => void; // New Prop
     onCancelGame?: () => void;
+    onReshuffle?: () => void;
     deckCounts?: any; // Pass deck counts
     greenBalance?: number; // Partnership green balance
 }
@@ -38,6 +39,7 @@ export const MenuModal = ({
     onKickCurrent,
     onToggleOrientation,
     onCancelGame,
+    onReshuffle,
     deckCounts,
     greenBalance
 }: MenuModalProps) => {
@@ -58,10 +60,34 @@ export const MenuModal = ({
                     <div className="bg-slate-800/50 p-3 rounded-xl border border-slate-700/50 mb-6 text-xs">
                         <h3 className="text-[10px] uppercase font-bold text-slate-500 tracking-wider mb-2">Состояние Колод</h3>
                         <div className="grid grid-cols-2 gap-2">
-                            <div className="flex justify-between"><span className="text-emerald-400">Мелкие</span> <span className="font-mono text-white">{deckCounts.small?.remaining}/{deckCounts.small?.total}</span></div>
-                            <div className="flex justify-between"><span className="text-purple-400">Крупные</span> <span className="font-mono text-white">{deckCounts.big?.remaining}/{deckCounts.big?.total}</span></div>
-                            <div className="flex justify-between"><span className="text-blue-400">Рынок</span> <span className="font-mono text-white">{deckCounts.market?.remaining}/{deckCounts.market?.total}</span></div>
-                            <div className="flex justify-between"><span className="text-pink-400">Расходы</span> <span className="font-mono text-white">{deckCounts.expense?.remaining}/{deckCounts.expense?.total}</span></div>
+                            <div className="flex flex-col">
+                                <span className="text-emerald-400 font-bold mb-0.5">Мелкие Deals</span>
+                                <div className="flex justify-between text-[10px] text-slate-400">
+                                    <span>Left: {deckCounts.small?.remaining}</span>
+                                    <span>Discard: {deckCounts.small?.discarded}</span>
+                                </div>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-purple-400 font-bold mb-0.5">Крупные Deals</span>
+                                <div className="flex justify-between text-[10px] text-slate-400">
+                                    <span>Left: {deckCounts.big?.remaining}</span>
+                                    <span>Discard: {deckCounts.big?.discarded}</span>
+                                </div>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-blue-400 font-bold mb-0.5">Рынок Market</span>
+                                <div className="flex justify-between text-[10px] text-slate-400">
+                                    <span>Left: {deckCounts.market?.remaining}</span>
+                                    <span>Discard: {deckCounts.market?.discarded}</span>
+                                </div>
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-pink-400 font-bold mb-0.5">Расходы Expense</span>
+                                <div className="flex justify-between text-[10px] text-slate-400">
+                                    <span>Left: {deckCounts.expense?.remaining}</span>
+                                    <span>Discard: {deckCounts.expense?.discarded}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}
@@ -199,22 +225,19 @@ export const MenuModal = ({
                             </div>
 
                             {/* Reshuffle Button */}
-                            <button
-                                onClick={() => {
-                                    if (window.confirm('Перетасовать все колоды? (Все карты вернутся в колоды и перемешаются)')) {
-                                        const userId = localStorage.getItem('userId');
-                                        const socket = (window as any).socket;
-                                        const roomId = (window as any).currentRoomId;
-                                        if (socket && userId && roomId) {
-                                            socket.emit('host_reshuffle_decks', { roomId, userId });
+                            {onReshuffle && (
+                                <button
+                                    onClick={() => {
+                                        if (window.confirm('Перетасовать все колоды? (Все карты вернутся в колоды и перемешаются)')) {
+                                            onReshuffle();
                                         }
-                                    }
-                                }}
-                                className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-[10px] uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
-                            >
-                                <span>🔄</span>
-                                <span>Перетасовать карты</span>
-                            </button>
+                                    }}
+                                    className="w-full py-3 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-[10px] uppercase tracking-widest shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98] flex items-center justify-center gap-2"
+                                >
+                                    <span>🔄</span>
+                                    <span>Перетасовать карты</span>
+                                </button>
+                            )}
                         </div>
                     )}
                 </div>

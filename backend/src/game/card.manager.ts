@@ -378,10 +378,10 @@ export class CardManager {
 
     getDeckCounts() {
         return {
-            small: { remaining: this.smallDeals.length, total: this.smallDeals.length + this.smallDealsDiscard.length },
-            big: { remaining: this.bigDeals.length, total: this.bigDeals.length + this.bigDealsDiscard.length },
-            market: { remaining: this.marketDeck.length, total: this.marketDeck.length + this.marketDeckDiscard.length },
-            expense: { remaining: this.expenseDeck.length, total: this.expenseDeck.length + this.expenseDeckDiscard.length }
+            small: { remaining: this.smallDeals.length, discarded: this.smallDealsDiscard.length, total: this.smallDeals.length + this.smallDealsDiscard.length },
+            big: { remaining: this.bigDeals.length, discarded: this.bigDealsDiscard.length, total: this.bigDeals.length + this.bigDealsDiscard.length },
+            market: { remaining: this.marketDeck.length, discarded: this.marketDeckDiscard.length, total: this.marketDeck.length + this.marketDeckDiscard.length },
+            expense: { remaining: this.expenseDeck.length, discarded: this.expenseDeckDiscard.length, total: this.expenseDeck.length + this.expenseDeckDiscard.length }
         };
     }
 }

@@ -678,6 +678,33 @@ export class GameGateway {
                 }
             });
 
+            // Admin: Reshuffle Cards
+            socket.on('admin_reshuffle_cards', async (data, callback) => {
+                try {
+                    const { roomId, userId } = data;
+                    const game = this.games.get(roomId);
+                    if (!game) return callback({ success: false, error: "Game not found" });
+
+                    // Verify Host
+                    const room = await this.roomService.getRoom(roomId);
+                    if (!room || room.creatorId !== userId) {
+                        return callback({ success: false, error: "Only host can reshuffle cards" });
+                    }
+
+                    game.reshuffleCards();
+                    const state = game.getState();
+
+                    // Emit to everyone
+                    this.io.to(roomId).emit('state_updated', { state });
+                    this.saveState(roomId, game);
+
+                    callback({ success: true });
+                } catch (e: any) {
+                    console.error("Reshuffle Error:", e);
+                    callback({ success: false, error: e.message });
+                }
+            });
+
             // Delete Room (Host)
             socket.on('delete_room', async (data, callback) => {
                 try {

@@ -19,10 +19,10 @@ export interface GameState {
     turnExpiresAt?: number;
     lastEvent?: { type: string, payload?: any };
     deckCounts?: {
-        small: { remaining: number; total: number };
-        big: { remaining: number; total: number };
-        market: { remaining: number; total: number };
-        expense: { remaining: number; total: number };
+        small: { remaining: number; discarded: number; total: number };
+        big: { remaining: number; discarded: number; total: number };
+        market: { remaining: number; discarded: number; total: number };
+        expense: { remaining: number; discarded: number; total: number };
     };
     rankings?: { name: string; reason: string; place: number; id?: string; userId?: string }[];
     isGameEnded?: boolean;
@@ -709,6 +709,11 @@ export class GameEngine {
             }
             this.state.pauseStartTime = undefined;
         }
+    }
+
+    reshuffleCards() {
+        this.addLog(`🔄 ADMIN reshuffled all decks! (Discarded cards returned to deck)`);
+        this.cardManager.reshuffleAllDecks();
     }
 
     calculateFinalRankings() {

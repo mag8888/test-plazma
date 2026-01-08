@@ -704,6 +704,11 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
         socket.emit('admin_toggle_pause', { roomId, userId: localPlayer?.userId || localPlayer?.id });
     };
 
+    const handleReshuffleCards = () => {
+        if (!localPlayer) return;
+        socket.emit('admin_reshuffle_cards', { roomId, userId: localPlayer?.userId || localPlayer?.id });
+    };
+
     // Correctly identify local player
     // PRIORITY: Socket ID -> User ID -> Matching Name (fallback if strictly necessary, but risky)
     const localPlayer = state.players.find((p: any) => p.id === socket.id || (userId && p.userId === userId));
@@ -1253,7 +1258,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                 <span>⚙️</span> Полные Настройки
                                             </button>
 
-                                            {isHost && (
+                                            {isHost && (<>
                                                 <button
                                                     onClick={() => {
                                                         setShowMobileMenu(false);
@@ -1265,6 +1270,18 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                     <span>{state.isPaused ? '▶️' : '⏸'}</span>
                                                     <span>{state.isPaused ? 'ПРОДОЛЖИТЬ' : 'ПАУЗА'}</span>
                                                 </button>
+                                                <button
+                                                    onClick={() => {
+                                                        if (window.confirm('Перетасовать все колоды?')) {
+                                                            setShowMobileMenu(false);
+                                                            handleReshuffleCards();
+                                                        }
+                                                    }}
+                                                    className="w-full py-4 rounded-xl bg-orange-900/40 border border-orange-500/30 text-orange-400 font-bold uppercase tracking-widest text-xs flex items-center justify-center gap-2"
+                                                >
+                                                    <span>🔄</span> ПЕРЕТАСОВАТЬ
+                                                </button>
+                                            </>
                                             )}
                                         </div>
 
@@ -2047,6 +2064,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                 socket.emit('delete_room', { roomId, userId: localPlayer?.userId || localPlayer?.id });
                                             }
                                         }}
+                                        onReshuffle={handleReshuffleCards}
                                     />
                                 )
                             }
@@ -2237,7 +2255,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                         </div>
                     </div>
                 )}
-            </VoiceRoom>
+            </VoiceRoom >
         )
     );
 }
