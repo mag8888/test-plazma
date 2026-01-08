@@ -55,37 +55,94 @@ export const EXPENSE_CARDS: Card[] = [
 ];
 
 export const SMALL_DEALS: Card[] = [
-    { id: 'sd_tsla_5', title: 'Акции: Tesla', symbol: 'TSLA', cost: 5, description: 'Цена $5. Колебания $5-$40.', assetType: 'STOCK', type: 'DEAL_SMALL' },
-    ...expand(2, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 10, description: 'Цена $10. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 20, description: 'Цена $20. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Акции: Tesla', symbol: 'TSLA', cost: 30, description: 'Цена $30. Колебания $5-$40.', assetType: 'STOCK' }, 'DEAL_SMALL'),
-    { id: 'sd_tsla_40', title: 'Акции: Tesla', symbol: 'TSLA', cost: 40, description: 'Цена $40. Колебания $5-$40.', assetType: 'STOCK', type: 'DEAL_SMALL' },
-    { id: 'small_006', title: 'TON Token ($1)', cost: 1, cashflow: 0, description: 'TON Token (криптовалюта)', type: 'DEAL_SMALL', assetType: 'STOCK', maxQuantity: 100000, symbol: 'TON' },
-    { id: 'small_007', title: 'TON Token ($2)', cost: 2, cashflow: 0, description: 'TON Token (криптовалюта)', type: 'DEAL_SMALL', assetType: 'STOCK', maxQuantity: 100000, symbol: 'TON' },
-    { id: 'small_008', title: 'TON Token ($3)', cost: 3, cashflow: 0, description: 'TON Token (криптовалюта)', type: 'DEAL_SMALL', assetType: 'STOCK', maxQuantity: 100000, symbol: 'TON' },
-    { id: 'small_009', title: 'TON Token ($5)', cost: 5, cashflow: 0, description: 'TON Token (криптовалюта)', type: 'DEAL_SMALL', assetType: 'STOCK', maxQuantity: 100000, symbol: 'TON' },
-    { id: 'small_010', title: 'TON Token ($10)', cost: 10, cashflow: 0, description: 'TON Token (криптовалюта)', type: 'DEAL_SMALL', assetType: 'STOCK', maxQuantity: 100000, symbol: 'TON' },
+    // 1-8 Stocks: Tesla
+    { id: 'sd_tsla_15', title: 'Акции: Tesla', symbol: 'TSLA', cost: 15, description: 'Цена $15. Колебания $15-$200.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { id: 'sd_tsla_20', title: 'Акции: Tesla', symbol: 'TSLA', cost: 20, description: 'Цена $20. Колебания $15-$200.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { id: 'sd_tsla_40', title: 'Акции: Tesla', symbol: 'TSLA', cost: 40, description: 'Цена $40. Колебания $15-$200.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { id: 'sd_tsla_60', title: 'Акции: Tesla', symbol: 'TSLA', cost: 60, description: 'Цена $60. Колебания $15-$200.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { id: 'sd_tsla_80', title: 'Акции: Tesla', symbol: 'TSLA', cost: 80, description: 'Цена $80. Колебания $15-$200.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { id: 'sd_tsla_160', title: 'Акции: Tesla', symbol: 'TSLA', cost: 160, description: 'Цена $160. Колебания $15-$200.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { id: 'sd_tsla_180', title: 'Акции: Tesla', symbol: 'TSLA', cost: 180, description: 'Цена $180. Колебания $15-$200.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { id: 'sd_tsla_200', title: 'Акции: Tesla', symbol: 'TSLA', cost: 200, description: 'Цена $200. Колебания $15-$200.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+
+    // 9-13 TON Token
+    { id: 'sd_ton_1', title: 'TON Token ($1)', symbol: 'TON', cost: 1, description: 'TON Token (криптовалюта)', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { id: 'sd_ton_2', title: 'TON Token ($2)', symbol: 'TON', cost: 2, description: 'TON Token (криптовалюта)', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { id: 'sd_ton_3', title: 'TON Token ($3)', symbol: 'TON', cost: 3, description: 'TON Token (криптовалюта)', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { id: 'sd_ton_5', title: 'TON Token ($5)', symbol: 'TON', cost: 5, description: 'TON Token (криптовалюта)', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { id: 'sd_ton_10', title: 'TON Token ($10)', symbol: 'TON', cost: 10, description: 'TON Token (криптовалюта)', assetType: 'STOCK', type: 'DEAL_SMALL' },
+
+    // 14-19 Bitcoin
     { id: 'sd_btc_4k', title: 'Bitcoin', symbol: 'BTC', cost: 4000, description: 'Криптовалюта на дне. Цена $4,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
     { id: 'sd_btc_10k', title: 'Bitcoin', symbol: 'BTC', cost: 10000, description: 'Крипто-зима. Цена $10,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
-    { id: 'sd_btc_20k', title: 'Bitcoin', symbol: 'BTC', cost: 20000, description: 'Биткоин на хайпе. Цена $20,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { id: 'sd_btc_20k', title: 'Bitcoin', symbol: 'BTC', cost: 20000, description: 'Биткоин на хайпе. Цена $20,000', assetType: 'STOCK', type: 'DEAL_SMALL' },
     { id: 'sd_btc_30k', title: 'Bitcoin', symbol: 'BTC', cost: 30000, description: 'Биткоин штурмует максимумы. Цена $30,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
     { id: 'sd_btc_50k', title: 'Bitcoin', symbol: 'BTC', cost: 50000, description: 'Биткоин растет! Цена $50,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
     { id: 'sd_btc_100k', title: 'Bitcoin', symbol: 'BTC', cost: 100000, description: 'To The Moon! Цена $100,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
-    ...expand(2, { title: 'Акции: AT&T (Pref)', symbol: 'T', cost: 2500, cashflow: 50, maxQuantity: 1000, description: 'Привилегированные акции AT&T. Дивиденды $50/акцию. Макс 1000 шт.', assetType: 'STOCK' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Акции: P&G (Pref)', symbol: 'PG', cost: 500, cashflow: 10, maxQuantity: 1000, description: 'Привилегированные акции P&G. Дивиденды $10/акцию. Макс 1000 шт.', assetType: 'STOCK' }, 'DEAL_SMALL'),
-    ...expand(3, { title: 'Комната в пригороде', cost: 8000, cashflow: 250, description: 'Сдача в аренду. ROI ~35%.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Студия маникюра', cost: 7000, cashflow: 200, description: 'Студия маникюра на 1 место.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Кофейня', cost: 3500, cashflow: 100, description: 'Небольшая кофейня.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Партнёрство в автомастерской', cost: 12000, cashflow: 350, description: 'Доля в бизнесе.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Участок земли 20га', cost: 20000, cashflow: 0, description: 'Земля без дохода.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
-    ...expand(1, { title: 'Покупка дрона', cost: 1500, cashflow: 50, description: 'Дрон для съёмок.', assetType: 'OTHER' }, 'DEAL_SMALL'),
-    ...expand(3, { title: 'Флипинг студии', cost: 1500, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Бизнес: MONEO', cost: 1000, cashflow: 0, description: 'Сетевой бизнес. Цена входа $1,000. Бросьте кубик: +$500 пассив за каждого партнера.', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
-    ...expand(2, { title: 'Бизнес: Plazma Water', cost: 200, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
-    { id: 'sd_friend_loss', title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Увы, друг прогорел. Деньги потеряны!', mandatory: true, type: 'DEAL_SMALL' },
-    { id: 'sd_friend_biz', title: 'Друг просит в займ', cost: 5000, cashflow: 500, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Ура! Друг раскрутился! Вы получаете долю в бизнесе.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
-    { id: 'sd_friend_luck', title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Друг вернул долг уроком мудрости! +2 кубика на 3 хода.', mandatory: true, type: 'DEAL_SMALL', subtype: 'CHARITY_ROLL' },
-    { id: 'sd_roof_1', title: 'Крыша протекла', cost: 5000, cashflow: 0, description: 'Обновить крышу. Платите $5000 ЕСЛИ есть недвижимость.', mandatory: true, type: 'DEAL_SMALL' },
+
+    // 20-23 Preferred Stocks (with Limits)
+    ...expand(2, { title: 'Акции: AT&T (Pref)', cost: 5000, cashflow: 50, description: 'Привилегированные акции AT&T. Дивиденды $50/акцию. Макс 1000 шт.', maxQuantity: 1000, assetType: 'STOCK', symbol: 'T' }, 'DEAL_SMALL'),
+    ...expand(2, { title: 'Акции: P&G (Pref)', cost: 2000, cashflow: 10, description: 'Привилегированные акции P&G. Дивиденды $10/акцию. Макс 1000 шт.', maxQuantity: 1000, assetType: 'STOCK', symbol: 'PG' }, 'DEAL_SMALL'),
+
+    // 24-28 Real Estate (Room)
+    ...expand(5, { title: 'Комната в пригороде', cost: 15000, cashflow: 250, description: 'Сдача в аренду. ROI ~100%.', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
+
+    // 29 Nail Studio
+    { id: 'sd_nail', title: 'Студия маникюра', cost: 5000, cashflow: 200, description: 'Студия маникюра на 1 место.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+
+    // 30 Shawarma (Roll)
+    { id: 'sd_shawarma', title: 'Шаверма', cost: 5000, cashflow: 200, description: 'Откройте бизнес (шаурма). Бросок кубика = кол-во точек. ($200/точку)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+
+    // 31 Coffee
+    { id: 'sd_coffee', title: 'Кофейня', cost: 3000, cashflow: 100, description: 'Небольшая кофейня.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+
+    // 32 Sushi (Roll)
+    { id: 'sd_sushi', title: 'Суши/Ролы', cost: 5000, cashflow: 200, description: 'Откройте бизнес. Бросок кубика определяет масштаб. ($200 x Кубик)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+
+    // 33-34 Partnerships
+    { id: 'sd_auto', title: 'Партнёрство в автомастерской', cost: 7000, cashflow: 350, description: 'Доля в бизнесе.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { id: 'sd_vet', title: 'Ветеринарный центр', cost: 15000, cashflow: 700, description: 'Доля в бизнесе.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+
+    // 35-36 Land
+    { id: 'sd_land_5k', title: 'Участок земли 20га', cost: 5000, cashflow: 0, description: 'Земля без дохода.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL' },
+    { id: 'sd_land_6k', title: 'Участок земли 20га', cost: 6000, cashflow: 0, description: 'Земля без дохода.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL' },
+
+    // 37 Drone
+    { id: 'sd_drone', title: 'Покупка дрона', cost: 2000, cashflow: 50, description: 'Дрон для съёмок.', assetType: 'OTHER', type: 'DEAL_SMALL' },
+
+    // 38-42 Flipping
+    ...expand(5, { title: 'Флипинг студии', cost: 5000, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход).', assetType: 'REAL_ESTATE' }, 'DEAL_SMALL'),
+
+    // 43-45 Network
+    ...expand(3, { title: 'Сетевой бизнес', cost: 500, cashflow: 100, description: 'Старт в MLM компании.', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
+
+    // 46-48 Plazma
+    ...expand(3, { title: 'Сетевой бизнес: Plazma Water', cost: 200, cashflow: 100, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS' }, 'DEAL_SMALL'),
+
+    // 49-51 MONEO
+    { id: 'sd_moneo_100', title: 'Сетевой бизнес: MONEO', cost: 100, cashflow: 50, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($50/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { id: 'sd_moneo_1000', title: 'Сетевой бизнес: MONEO', cost: 1000, cashflow: 200, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($200/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { id: 'sd_moneo_10000', title: 'Сетевой бизнес: MONEO', cost: 10000, cashflow: 500, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($500/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+
+    // 52-54 Friend (Loan)
+    { id: 'sd_friend_loss1', title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000. Помочь?', outcomeDescription: 'Друг прогорел. Деньги потеряны.', type: 'DEAL_SMALL', mandatory: true },
+    { id: 'sd_friend_win', title: 'Друг просит в займ', cost: 5000, cashflow: 500, description: 'Ваш друг просит $5,000. Помочь?', outcomeDescription: 'Успех! Доля в бизнесе.', type: 'DEAL_SMALL', assetType: 'BUSINESS' },
+    { id: 'sd_friend_loss2', title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000. Помочь?', outcomeDescription: 'Друг прогорел. Деньги потеряны.', type: 'DEAL_SMALL', mandatory: true },
+
+    // 55 Insurance
+    { id: 'sd_insurance', title: 'Страховка', cost: 1000, cashflow: 0, description: 'Международная страховая компания. В случае болезни покроет расходы.', type: 'DEAL_SMALL', assetType: 'OTHER' },
+
+    // 56 Small Biz
+    { id: 'sd_guide', title: 'Малый бизнес', cost: 0, cashflow: 100, description: 'Вы отлично знаете живописные места... Туризм.', type: 'DEAL_SMALL', assetType: 'BUSINESS' },
+
+    // 57 Health Center (Roll)
+    { id: 'sd_health', title: 'Оздоровительный центр', cost: 5000, cashflow: 300, description: 'Откройте франшизу оздоровительного Центра. Успех = Бросок кубика. ($300 x Кубик)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+
+    // 58 Boutique
+    { id: 'sd_boutique', title: 'Бутик одежды', cost: 10000, cashflow: 800, description: 'Откройте франшизу бутика дизайнерской одежды.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+
+    // 59 Laser
+    { id: 'sd_laser', title: 'Франшиза Лазерной эпиляции', cost: 15000, cashflow: 2000, description: 'Откройте франшизу сети студий лазерной эпиляции.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 ];
 
 export const BIG_DEALS: Card[] = [

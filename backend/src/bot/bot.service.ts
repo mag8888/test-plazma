@@ -1017,7 +1017,8 @@ export class BotService {
                         reply_markup: {
                             inline_keyboard: [
                                 [{ text: '👥 Users', callback_data: 'admin_users' }, { text: '💰 Balance', callback_data: 'admin_balance' }],
-                                [{ text: '👑 Set Master', callback_data: 'admin_set_master' }, { text: '📤 Upload', callback_data: 'admin_upload' }]
+                                [{ text: '👑 Set Master', callback_data: 'admin_set_master' }, { text: '📤 Upload', callback_data: 'admin_upload' }],
+                                [{ text: '📢 Broadcast', callback_data: 'admin_broadcast' }]
                             ]
                         }
                     });
@@ -1222,6 +1223,16 @@ export class BotService {
                 }
             } else if (data === 'admin_upload') {
                 this.bot?.sendMessage(chatId, "Send me a photo to upload it to Cloudinary.");
+            } else if (data === 'admin_broadcast') {
+                const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => id.trim());
+                if (process.env.TELEGRAM_ADMIN_ID) adminIds.push(process.env.TELEGRAM_ADMIN_ID.trim());
+
+                if (adminIds.includes(String(userId))) {
+                    this.broadcastStates.set(chatId, { state: 'WAITING_TEXT' });
+                    this.bot?.sendMessage(chatId, "📢 **Рассылка**\\n\\nВведите текст сообщения:", { parse_mode: 'Markdown' });
+                } else {
+                    this.bot?.sendMessage(chatId, "⛔ Access Denied");
+                }
             } else if (data === 'start_add_game') {
                 await this.handleAddGameStart(chatId, userId);
             } else if (data.startsWith('date_select_')) {

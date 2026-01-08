@@ -140,8 +140,11 @@ export const FeedCardItem = ({
     const maxBuyCash = Math.floor((me?.cash || 0) / (price || 1));
     const maxBuyCredit = Math.floor(availableLoan / (price || 1));
 
+    const maxBuyCalculated = Math.max(1, maxBuyCash + maxBuyCredit);
+    const maxBuyWithLimit = card.maxQuantity ? Math.min(maxBuyCalculated, card.maxQuantity) : maxBuyCalculated;
+
     const maxVal = transactionMode === 'BUY'
-        ? (isStock ? Math.max(1, maxBuyCash + maxBuyCredit) : 1)
+        ? (isStock ? maxBuyWithLimit : 1)
         : ownedQty;
 
     const total = price * stockQty;
