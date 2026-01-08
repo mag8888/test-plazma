@@ -75,17 +75,21 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
         }
     }, [roomId, userId, username]);
 
-    const content = typeof children === 'function' ? children(!!token) : children;
+    // Safe content rendering
+    const content = typeof children === 'function' ? children(!!(token && url)) : children;
 
+    // 1. If no token/url, render logic-only wrapper (avoid LiveKitRoom entirely to prevent context errors if it mounts/unmounts)
     if (!token || !url) {
-        // Render content (Board) but connected=false
         return (
-            <div className="relative w-full h-full flex flex-col">
+            <div className="w-full h-full flex flex-col voice-room-wrapper-disconnected">
                 {content}
             </div>
         );
     }
 
+    // 2. If token exists, render LiveKitRoom
+    // IMPORTANT: Ensure LiveKitRoom doesn't flip-flop.
+    // We use a key to force remount only if critical props change, but standard diffing should handle it.
     return (
         <LiveKitRoom
             token={token}
@@ -94,12 +98,13 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
             audio={true}
             video={false}
             data-lk-theme="default"
-            className="w-full h-full flex flex-col"
+            className="w-full h-full flex flex-col voice-room-wrapper-connected"
         >
             <StartAudio label="Включить звук" className="absolute top-2 left-1/2 -translate-x-1/2 z-[200] bg-blue-600 text-white px-4 py-2 rounded-full shadow-xl animate-bounce cursor-pointer border-2 border-white" />
             <RoomAudioRenderer />
             <ActiveSpeakersObserver onActiveSpeakersChange={onActiveSpeakersChange} />
 
+            {/* Render children inside the Context Provider */}
             {content}
         </LiveKitRoom>
     );
