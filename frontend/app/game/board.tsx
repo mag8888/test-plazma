@@ -1096,7 +1096,9 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                                         {a.cost && <span className="text-slate-500">Позиция: ${(a.cost * a.quantity).toLocaleString()}</span>}
                                                                     </div>
                                                                 )}
-                                                                <span className="font-mono text-green-400 font-bold text-[10px]">+$ {a.cashflow}</span>
+                                                                <span className={`font-mono font-bold text-[10px] ${a.cashflow < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                                                    {a.cashflow < 0 ? '-' : '+'}${Math.abs(a.cashflow)}
+                                                                </span>
                                                             </div>
                                                             <button
                                                                 onClick={() => setTransferAssetItem({ item: a, index: i })}
@@ -1439,7 +1441,9 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                         </div>
                                                     </div>
                                                     <div className="flex flex-col items-end gap-1">
-                                                        <span className="font-mono text-green-400 font-black text-xs">+${a.cashflow}</span>
+                                                        <span className={`font-mono font-black text-xs ${a.cashflow < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                                            {a.cashflow < 0 ? '-' : '+'}${Math.abs(a.cashflow)}
+                                                        </span>
                                                         <button
                                                             className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
                                                             title="Передать актив"
@@ -1673,7 +1677,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                 {isSpeaking && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />}
                                             </span>
                                             {isVoiceConnected ? (
-                                                <VoiceControls onSpeakingChanged={setIsSpeaking} />
+                                                <VoiceControls onSpeakingChanged={setIsSpeaking} players={state.players} />
                                             ) : (
                                                 <span className="text-[10px] text-yellow-500 animate-pulse">Подключение...</span>
                                             )}

@@ -76,7 +76,7 @@ export const ActiveCardZone = ({
 
                     <div className="flex flex-col gap-3 w-full max-w-[280px]">
                         <button
-                            onClick={() => socket.emit('choose_opportunity', { roomId, choice: 'SMALL_DEAL' })}
+                            onClick={() => socket.emit('draw_deal', { roomId, type: 'SMALL' })}
                             className="bg-slate-800 hover:bg-slate-700 p-4 rounded-xl border border-slate-700 hover:border-emerald-500/50 transition-all group relative overflow-hidden"
                         >
                             <div className="absolute inset-0 bg-emerald-500/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
@@ -90,7 +90,7 @@ export const ActiveCardZone = ({
                         </button>
 
                         <button
-                            onClick={() => socket.emit('choose_opportunity', { roomId, choice: 'BIG_DEAL' })}
+                            onClick={() => socket.emit('draw_deal', { roomId, type: 'BIG' })}
                             disabled={me.cash < 6000}
                             className={`bg-slate-800 p-4 rounded-xl border border-slate-700 transition-all group relative overflow-hidden text-left
                                 ${me.cash >= 6000 ? 'hover:bg-slate-700 hover:border-purple-500/50 cursor-pointer' : 'opacity-50 cursor-not-allowed'}
