@@ -16,7 +16,7 @@ type TransferState = {
 
 // Broadcast State
 type BroadcastState = {
-    state: 'WAITING_TEXT' | 'WAITING_PHOTO' | 'SELECTING_CATEGORY' | 'SELECTING_USERS';
+    state: 'WAITING_TEXT' | 'WAITING_PHOTO' | 'SELECTING_CATEGORY' | 'SELECTING_USERS' | 'WAITING_CUSTOM_LIST' | 'WAITING_EXCLUDE_LIST';
     text?: string;
     photoId?: string;
     category?: 'all' | 'avatars' | 'balance' | 'custom';
@@ -789,6 +789,30 @@ export class BotService {
                     broadcastState.state = 'SELECTING_CATEGORY';
                     this.showCategorySelection(chatId);
                     return;
+                } else if (broadcastState.state === 'WAITING_CUSTOM_LIST' || broadcastState.state === 'WAITING_EXCLUDE_LIST') {
+                    const parts = text.split(/[\s,\n]+/).map(s => s.trim().replace('@', '')).filter(s => s);
+                    const { UserModel } = await import('../models/user.model');
+
+                    const userIdsFound: string[] = [];
+                    for (const p of parts) {
+                        let user = await UserModel.findOne({ username: p });
+                        if (!user && !isNaN(Number(p))) user = await UserModel.findOne({ telegram_id: Number(p) });
+                        if (user) userIdsFound.push(user._id.toString());
+                    }
+
+                    if (broadcastState.state === 'WAITING_CUSTOM_LIST') {
+                        broadcastState.selectedUsers = Array.from(new Set(userIdsFound));
+                        this.bot?.sendMessage(chatId, `✅ Найдено пользователей: ${broadcastState.selectedUsers.length} из ${parts.length}`);
+                    } else {
+                        // Exclude
+                        const initialCount = broadcastState.selectedUsers?.length || 0;
+                        broadcastState.selectedUsers = (broadcastState.selectedUsers || []).filter(id => !userIdsFound.includes(id));
+                        const removed = initialCount - broadcastState.selectedUsers.length;
+                        this.bot?.sendMessage(chatId, `✅ Исключено пользователей: ${removed}`);
+                    }
+
+                    await this.showBroadcastConfirmation(chatId, broadcastState.selectedUsers?.length || 0);
+                    return;
                 }
             }
 
@@ -1291,6 +1315,23 @@ export class BotService {
                 // Category selection
                 const category = data.replace('broadcast_category_', '');
                 await this.executeBroadcast(chatId, category);
+            } else if (data === 'broadcast_view_list') {
+                const state = this.broadcastStates.get(chatId);
+                if (state && state.selectedUsers && state.selectedUsers.length > 0) {
+                    const { UserModel } = await import('../models/user.model');
+                    const users = await UserModel.find({ _id: { $in: state.selectedUsers } });
+                    const content = users.map((u: any) => `@${u.username || 'NoName'} (ID: ${u.telegram_id})`).join('\n');
+                    const buffer = Buffer.from(content, 'utf-8');
+                    await this.bot?.sendDocument(chatId, buffer, {}, { filename: 'recipients_list.txt', contentType: 'text/plain' });
+                } else {
+                    this.bot?.answerCallbackQuery(query.id, { text: "Список пуст" });
+                }
+            } else if (data === 'broadcast_exclude') {
+                const state = this.broadcastStates.get(chatId);
+                if (state) {
+                    state.state = 'WAITING_EXCLUDE_LIST';
+                    this.bot?.sendMessage(chatId, "⛔ **Исключение пользователей**\n\nВведите **Username** или **ID** тех, кого нужно убрать из рассылки (через пробел):", { parse_mode: 'Markdown' });
+                }
             } else if (data.startsWith('broadcast_confirm_')) {
                 // Confirm and send
                 const category = data.replace('broadcast_confirm_', '');
@@ -2625,6 +2666,13 @@ export class BotService {
             return;
         }
 
+        if (category === 'custom') {
+            state.category = 'custom';
+            state.state = 'WAITING_CUSTOM_LIST';
+            this.bot?.sendMessage(chatId, "✍️ **Ручной выбор**\n\nВведите список **Username** (с @ или без) или **Telegram ID** получателей через пробел или с новой строки:", { parse_mode: 'Markdown' });
+            return;
+        }
+
         try {
             const { UserModel } = await import('../models/user.model');
             let users: any[] = [];
@@ -2635,7 +2683,6 @@ export class BotService {
                     users = await UserModel.find({});
                     break;
                 case 'avatars':
-                    // Users with avatars (has partnership balance or avatar data)
                     users = await UserModel.find({
                         $or: [
                             { hasAvatar: true },
@@ -2644,7 +2691,6 @@ export class BotService {
                     });
                     break;
                 case 'balance':
-                    // Users with any balance
                     users = await UserModel.find({
                         $or: [
                             { referralBalance: { $gt: 0 } },
@@ -2652,35 +2698,41 @@ export class BotService {
                         ]
                     });
                     break;
-                case 'custom':
-                    // TODO: Implement custom selection UI
-                    this.bot?.sendMessage(chatId, "⚠️ Ручной выбор пока не реализован. Используйте другие категории.");
-                    return;
                 default:
                     this.bot?.sendMessage(chatId, "❌ Неизвестная категория.");
                     return;
             }
 
-            // Confirm before sending
-            this.bot?.sendMessage(chatId, `📊 Найдено получателей: ${users.length}\\n\\nОтправить рассылку?`, {
-                reply_markup: {
-                    inline_keyboard: [
-                        [
-                            { text: '✅ Отправить', callback_data: `broadcast_confirm_${category}` },
-                            { text: '❌ Отменить', callback_data: 'broadcast_cancel' }
-                        ]
-                    ]
-                }
-            });
-
-            // Store users temporarily
+            // Update State
             state.category = category as any;
             state.selectedUsers = users.map(u => u._id.toString());
+
+            await this.showBroadcastConfirmation(chatId, users.length);
 
         } catch (e) {
             console.error("Broadcast error:", e);
             this.bot?.sendMessage(chatId, "❌ Ошибка при подготовке рассылки.");
         }
+    }
+
+    async showBroadcastConfirmation(chatId: number, count: number) {
+        const state = this.broadcastStates.get(chatId);
+        const category = state?.category || 'all';
+
+        this.bot?.sendMessage(chatId, `📊 Найдено получателей: ${count}\n\nОтправить рассылку?`, {
+            reply_markup: {
+                inline_keyboard: [
+                    [
+                        { text: '📄 Посмотреть список', callback_data: 'broadcast_view_list' },
+                        { text: '⛔ Исключить', callback_data: 'broadcast_exclude' }
+                    ],
+                    [
+                        { text: '✅ Отправить', callback_data: `broadcast_confirm_${category}` },
+                        { text: '❌ Отменить', callback_data: 'broadcast_cancel' }
+                    ]
+                ]
+            }
+        });
     }
 
     async sendBroadcast(chatId: number) {
