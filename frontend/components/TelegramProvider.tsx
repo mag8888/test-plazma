@@ -6,13 +6,7 @@ import type { WebApp as WebAppType } from '@twa-dev/types';
 import { getBackendUrl } from '../lib/config';
 import { socket } from '../app/socket';
 
-declare global {
-    interface Window {
-        Telegram: {
-            WebApp: WebAppType;
-        };
-    }
-}
+// Global declaration moved to types/telegram.d.ts
 
 interface TelegramContextType {
     webApp: WebAppType | null;
