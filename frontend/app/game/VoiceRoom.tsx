@@ -30,8 +30,8 @@ const VoiceRoomInner = ({ onActiveSpeakersChange, children, onSpeakingChanged }:
             setIsConnected(state === 'connected');
         };
 
-        room.on(RoomEvent.StateChanged, onStateChanged);
-        return () => { room.off(RoomEvent.StateChanged, onStateChanged); };
+        room.on(RoomEvent.ConnectionStateChanged, onStateChanged);
+        return () => { room.off(RoomEvent.ConnectionStateChanged, onStateChanged); };
     }, [room]);
 
     // Active Speakers Logic
