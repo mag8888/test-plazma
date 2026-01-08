@@ -528,7 +528,7 @@ function LobbyContent() {
                                         >
                                             <div className="flex items-center gap-2 mb-2">
                                                 <span className="text-xl">👷</span>
-                                                <span className={`font-bold ${gameMode === 'ENGINEER' ? 'text-white' : 'text-slate-400'}`}>Инженер</span>
+                                                <span className={`font-bold ${gameMode === 'ENGINEER' ? 'text-white' : 'text-slate-400'}`}>Менеджер</span>
                                             </div>
                                             <div className="space-y-1 text-[10px] font-mono text-slate-400">
                                                 <div className="flex justify-between">
@@ -538,6 +538,10 @@ function LobbyContent() {
                                                 <div className="flex justify-between">
                                                     <span>Зарплата:</span>
                                                     <span className="text-emerald-400">$10,000</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Расходы:</span>
+                                                    <span className="text-red-400">$5,800</span>
                                                 </div>
                                                 <div className="text-slate-500 mt-1">Классический старт</div>
                                             </div>
@@ -557,11 +561,15 @@ function LobbyContent() {
                                             <div className="space-y-1 text-[10px] font-mono text-slate-400">
                                                 <div className="flex justify-between">
                                                     <span>Старт:</span>
-                                                    <span className="text-emerald-400">$100,000</span>
+                                                    <span className="text-emerald-400">$250,000</span>
                                                 </div>
                                                 <div className="flex justify-between">
                                                     <span>Зарплата:</span>
                                                     <span className="text-red-400">$0</span>
+                                                </div>
+                                                <div className="flex justify-between">
+                                                    <span>Расходы:</span>
+                                                    <span className="text-red-400">$5,800</span>
                                                 </div>
                                                 <div className="text-slate-500 mt-1 leading-tight">Кредиты только при Cashflow &gt; 0</div>
                                             </div>
