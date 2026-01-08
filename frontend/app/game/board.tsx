@@ -841,6 +841,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                 username={username}
                 onActiveSpeakersChange={setActiveSpeakers}
                 onSpeakingChanged={setIsSpeaking}
+                players={state?.players || []}
             >
                 {(isVoiceConnected) => (
                     <div className="h-[100dvh] max-h-[100dvh] bg-[#0f172a] text-white font-sans flex flex-col overflow-hidden relative">
