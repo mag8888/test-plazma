@@ -600,12 +600,25 @@ export class GameGateway {
                         this.saveState(roomId, game);
                     } else if (game.getState().phase === 'ROLL') {
                         // Standard Roll
-                        const result = game.handleRoll();
+                        const result = game.handleRoll(socket.id);
+
+                        // Handle Union Return (number | {total, values})
+                        let total = 0;
+                        let values: number[] = [];
+
+                        if (typeof result === 'number') {
+                            total = result;
+                            values = [result];
+                        } else {
+                            total = result.total;
+                            values = result.values;
+                        }
+
                         const state = game.getState();
 
                         this.io.to(roomId).emit('dice_rolled', {
-                            roll: result.total || result,
-                            diceValues: result.values || [result],
+                            roll: total,
+                            diceValues: values,
                             state
                         });
                         this.saveState(roomId, game);
