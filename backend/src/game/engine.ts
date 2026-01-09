@@ -360,59 +360,8 @@ export class GameEngine {
     }
 
     initializeBoardWithDreams(availableDreams?: string[]): BoardSquare[] {
-        // deep clone first level of objects to avoid mutating static FULL_BOARD
-        const board = FULL_BOARD.map(sq => ({ ...sq }));
-
-        // lazy import to avoid circular dependency issues if any
-        try {
-            const { DREAMS_LIST } = require('./constants/dreams');
-            if (!DREAMS_LIST || DREAMS_LIST.length === 0) return board;
-
-            // Prepare Dreams List
-            let sourceDreams: any[] = [];
-            if (availableDreams && availableDreams.length > 0) {
-                // Map names to full objects
-                sourceDreams = availableDreams.map(name => DREAMS_LIST.find((d: any) => d.name === name)).filter((d: any) => !!d);
-            }
-
-            // Fallback if no availableDreams or mapping failed (e.g. invalid names)
-            if (sourceDreams.length === 0) {
-                sourceDreams = [...DREAMS_LIST].sort(() => 0.5 - Math.random());
-            }
-
-            // Shuffle NOT needed if using availableDreams (assuming random order in array) 
-            // - ACTUALLY, availableDreams order matches selection, but board assignment loop is sequential (Board Index order).
-            // Do we want randomized placement? Yes, usually. But availableDreams are just a set.
-            // If they were shuffled at creation, they are already random? Yes.
-            // But let's shuffle just in case to decouple position from selection index if needed?
-            // No, keep it simple. If we use sourceDreams as the list to pop from.
-
-            const shuffled = sourceDreams; // Rename for consistency with loop below
-            let dreamIndex = 0;
-
-            for (let i = 0; i < board.length; i++) {
-                if (board[i].type === 'DREAM') {
-                    if (dreamIndex < shuffled.length) {
-                        const dream = shuffled[dreamIndex];
-                        board[i].name = dream.name;
-                        board[i].description = dream.description || board[i].description;
-                        board[i].cost = dream.cost;
-                        dreamIndex++;
-                    } else {
-                        // Recycle if we run out (unlikely with 34 dreams vs ~15 spots)
-                        dreamIndex = 0;
-                        const dream = shuffled[dreamIndex];
-                        board[i].name = dream.name;
-                        board[i].description = dream.description;
-                        board[i].cost = dream.cost;
-                        dreamIndex++;
-                    }
-                }
-            }
-        } catch (e) {
-            console.error("Failed to init dreams:", e);
-        }
-        return board;
+        // Return static board with fixed dreams (no shuffling/overwriting)
+        return FULL_BOARD.map(sq => ({ ...sq }));
     }
 
     getDeckContent(type: string) {
