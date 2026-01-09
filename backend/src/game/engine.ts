@@ -562,27 +562,8 @@ export class GameEngine {
         }
 
         if (this.state.phase === 'DOWNSIZED_DECISION') {
-            // Hard bot pays if can
-            const cost2 = player.expenses * 2;
-            if (player.cash >= cost2) {
-                this.handleDownsizedDecision(player.id, 'PAY_2M');
-            } else {
-                // Try pay 1m?
-                const cost1 = player.expenses;
-                if (player.cash >= cost1) {
-                    this.handleDownsizedDecision(player.id, 'PAY_1M');
-                } else {
-                    // Skip
-                    // Logic handles auto skip if no choice? 
-                    // `handleDownsizedDecision` ... wait, if I can't pay, do I just sit?
-                    // If I can't pay, I must skip turns?
-                    // Let's just force End Turn if can't pay.
-                    // Actually, `handleDownsizedDecision` doesn't support 'SKIP' explicit?
-                    // If I just `endTurn`, what happens?
-                    // Downsized puts turns on us.
-                    this.endTurn();
-                }
-            }
+            // Default Action on Timeout: Option 1 (Skip 2 turns, Free)
+            this.handleDownsizedDecision(player.id, 'SKIP_TURNS');
             return;
         }
 
@@ -938,31 +919,37 @@ export class GameEngine {
         return { total, values };
     }
 
-    handleDownsizedDecision(playerId: string, decision: 'PAY_1M' | 'PAY_2M' | 'BANKRUPT') {
+    handleDownsizedDecision(playerId: string, decision: 'SKIP_TURNS' | 'PAY_1M' | 'PAY_2M' | 'BANKRUPT') {
         const player = this.state.players.find(p => p.id === playerId);
         if (!player || player.id !== this.state.players[this.state.currentPlayerIndex].id) return;
         if (this.state.phase !== 'DOWNSIZED_DECISION') return;
 
         const expenses = player.expenses;
 
-        if (decision === 'PAY_1M') {
-            const cost = expenses * 1; // User Request: "заплатить мес 1 расход"
+        if (decision === 'SKIP_TURNS') {
+            // Option 1: Free, Skip 2 turns
+            player.skippedTurns = 2;
+            this.addLog(`🤒 ${player.name} пропускает 2 хода (Заболел).`);
+            this.endTurn();
+
+        } else if (decision === 'PAY_1M') {
+            const cost = expenses * 1;
 
             if (player.cash >= cost) {
                 player.cash -= cost;
-                player.skippedTurns = 2; // "пропустить 2 хода"
-                this.addLog(`📉 ${player.name} Оплатил расходы за месяц ($${cost}) и пропускает 2 хода.`);
+                player.skippedTurns = 1; // "pay 1 month, skip 1 turn"
+                this.addLog(`📉 ${player.name} Оплатил расходы за месяц ($${cost}) и пропускает 1 ход.`);
                 this.endTurn();
             } else {
                 this.addLog(`⚠️ Не может оплатить 1 месяц ($${cost}). Недостаточно средств.`);
             }
 
         } else if (decision === 'PAY_2M') {
-            const cost = expenses * 2; // User Request: "платит 2 расхода"
+            const cost = expenses * 2;
 
             if (player.cash >= cost) {
                 player.cash -= cost;
-                player.skippedTurns = 0; // "не пропускать ход"
+                player.skippedTurns = 0; // "pay 2 months, skip 0"
                 this.addLog(`🛡️ ${player.name} Оплатил расходы за 2 месяца ($${cost}), чтобы не пропускать ходы!`);
                 this.state.phase = 'ACTION';
                 this.endTurn();

@@ -26,7 +26,7 @@ export const FiredView = ({ roomId, me, isMyTurn, socket }: FiredViewProps) => {
         );
     }
 
-    const handleChoice = (type: 'PAY_1M' | 'PAY_2M' | 'BANKRUPT') => {
+    const handleChoice = (type: 'SKIP_TURNS' | 'PAY_1M' | 'PAY_2M' | 'BANKRUPT') => {
         if (type === 'BANKRUPT') {
             if (confirm('Вы уверены, что хотите объявить банкротство? Это сбросит ваши активы.')) {
                 socket.emit('decision_downsized', { roomId, choice: 'BANKRUPT' });
@@ -34,12 +34,14 @@ export const FiredView = ({ roomId, me, isMyTurn, socket }: FiredViewProps) => {
             return;
         }
 
-        const is2M = type === 'PAY_2M';
+        let msg = '';
+        if (type === 'PAY_2M') msg = 'Вы оплатили расходы за 2 месяца. Вы продолжаете игру!';
+        else if (type === 'PAY_1M') msg = 'Вы оплатили расходы за 1 месяц. Вы пропускаете 1 ход.';
+        else if (type === 'SKIP_TURNS') msg = 'Вы пропускаете 2 хода.';
+
         setChoice({
             type,
-            label: is2M
-                ? 'Вы оплатили расходы за 2 месяца. Вы продолжаете игру!'
-                : 'Вы оплатили расходы за 1 месяц. Вы пропускаете 2 хода.'
+            label: msg
         });
         setStep('RESULT');
     };
@@ -84,6 +86,19 @@ export const FiredView = ({ roomId, me, isMyTurn, socket }: FiredViewProps) => {
                 </div>
 
                 <div className="flex flex-col gap-2 mt-auto w-full">
+                    {/* Option 1: Skip 2 Turns (Free) */}
+                    <button
+                        onClick={() => handleChoice('SKIP_TURNS')}
+                        className="w-full bg-slate-700 hover:bg-slate-600 p-3 rounded-xl flex justify-between items-center group transition-all border border-slate-600 hover:border-slate-500 active:scale-[0.98]"
+                    >
+                        <div className="text-left">
+                            <div className="text-slate-200 text-[10px] font-bold uppercase">Пропустить</div>
+                            <div className="text-slate-400 text-[9px]">Пропуск 2 ходов (Бесплатно)</div>
+                        </div>
+                        <span className="text-emerald-400 font-mono font-bold text-xs">$0</span>
+                    </button>
+
+                    {/* Option 2: Pay 1 Month, Skip 1 Turn */}
                     <button
                         onClick={() => handleChoice('PAY_1M')}
                         disabled={(me?.cash || 0) < (me?.expenses || 0)}
@@ -91,11 +106,12 @@ export const FiredView = ({ roomId, me, isMyTurn, socket }: FiredViewProps) => {
                     >
                         <div className="text-left">
                             <div className="text-slate-200 text-[10px] font-bold uppercase">1 Месяц</div>
-                            <div className="text-slate-400 text-[9px]">Пропуск 2 ходов</div>
+                            <div className="text-slate-400 text-[9px]">Пропуск 1 хода</div>
                         </div>
                         <span className="text-red-400 font-mono font-bold text-xs group-hover:text-red-300">-${(me?.expenses || 0).toLocaleString()}</span>
                     </button>
 
+                    {/* Option 3: Pay 2 Months, Skip 0 Turns */}
                     <button
                         onClick={() => handleChoice('PAY_2M')}
                         disabled={(me?.cash || 0) < (me?.expenses || 0) * 2}
@@ -103,7 +119,7 @@ export const FiredView = ({ roomId, me, isMyTurn, socket }: FiredViewProps) => {
                     >
                         <div className="text-left">
                             <div className="text-slate-200 text-[10px] font-bold uppercase">2 Месяца</div>
-                            <div className="text-slate-400 text-[9px]">Продолжить игру</div>
+                            <div className="text-slate-400 text-[9px]">Продолжить игру (Без пропуска)</div>
                         </div>
                         <span className="text-red-400 font-mono font-bold text-xs group-hover:text-red-300">-${((me?.expenses || 0) * 2).toLocaleString()}</span>
                     </button>
