@@ -369,7 +369,7 @@ function GameContent() {
             isHost={isHost}
             onKickPlayer={initiateKick}
         >
-            {(isConnected: boolean) => {
+            {(isConnected: boolean, voiceError?: string | null) => {
                 // RENDER GAME BOARD IF PLAYING
                 if (room.status === 'playing') {
                     const initialBoardState = gameState || {
@@ -421,19 +421,28 @@ function GameContent() {
                                 {/* LEFT COLUMN: Player List */}
                                 <div className="lg:col-span-5 space-y-4">
                                     {/* Voice Controls Block */}
-                                    {isConnected && (
-                                        <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-lg flex flex-col gap-2">
-                                            <div className="flex items-center justify-between">
-                                                <span className="text-xs uppercase tracking-widest text-slate-400 font-bold flex items-center gap-2">
-                                                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                                                    Голосовой чат
-                                                </span>
-                                            </div>
-                                            <div className="flex justify-center">
-                                                <VoiceControls onSpeakingChanged={setIsSpeaking} players={room.players} />
-                                            </div>
+                                    {/* Voice Controls Block */}
+                                    <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-lg flex flex-col gap-2">
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-xs uppercase tracking-widest text-slate-400 font-bold flex items-center gap-2">
+                                                <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse' : voiceError ? 'bg-red-500' : 'bg-yellow-500 animate-pulse'}`}></span>
+                                                Голосовой чат
+                                            </span>
                                         </div>
-                                    )}
+                                        <div className="flex justify-center w-full">
+                                            {voiceError ? (
+                                                <div className="text-red-400 text-xs text-center px-2 py-1 bg-red-500/10 rounded border border-red-500/20 w-full">
+                                                    {voiceError}
+                                                </div>
+                                            ) : isConnected ? (
+                                                <VoiceControls onSpeakingChanged={setIsSpeaking} players={room.players} />
+                                            ) : (
+                                                <div className="text-slate-500 text-xs text-center italic py-1">
+                                                    Подключение...
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
 
                                     <div className="bg-slate-900/60 backdrop-blur-xl rounded-3xl p-6 border border-white/10 shadow-2xl">
                                         <h2 className="text-sm uppercase tracking-widest text-slate-400 font-bold mb-6 flex items-center gap-2">

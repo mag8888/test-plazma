@@ -12,7 +12,7 @@ interface VoiceRoomProps {
     username: string;
     onSpeakingChanged?: (speaking: boolean) => void;
     onActiveSpeakersChange?: (speakers: string[]) => void;
-    children?: React.ReactNode | ((isConnected: boolean) => React.ReactNode);
+    children?: React.ReactNode | ((isConnected: boolean, error?: string | null) => React.ReactNode);
 }
 
 // Inner component to use Hooks safely inside LiveKitRoom context
@@ -74,7 +74,7 @@ const VoiceRoomInner = ({ onActiveSpeakersChange, children, onSpeakingChanged, p
         return () => clearInterval(interval);
     }, [participants, onActiveSpeakersChange]);
 
-    const content = typeof children === 'function' ? children(isConnected) : children;
+    const content = typeof children === 'function' ? children(isConnected, error) : children;
 
     // Provide Real State
     const voiceState = {
@@ -161,7 +161,7 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
             participants: [],
             error: tokenError
         };
-        const content = typeof children === 'function' ? children(false) : children;
+        const content = typeof children === 'function' ? children(false, tokenError) : children;
         return (
             <VoiceProvider value={errorState}>
                 <div className="voice-error">{content}</div>
@@ -171,7 +171,7 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
 
     if (!token || !url) {
         // Render children with false state while loading
-        const content = typeof children === 'function' ? children(false) : children;
+        const content = typeof children === 'function' ? children(false, null) : children;
         // Provide Disconnected State
         const defaultVoiceState = {
             isConnected: false,
