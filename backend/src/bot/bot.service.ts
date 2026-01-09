@@ -475,8 +475,12 @@ export class BotService {
                 });
             }
 
+            // Photo / Profile Handler (Text Equivalent)
+            // Note: Handled in on('message') for Text Buttons, but here if needed as callback.
+            // ...
         });
 
+        // Handle Text Messages
         this.bot.onText(/\/game/, async (msg) => {
             const chatId = msg.chat.id;
             const telegramId = msg.from?.id;
@@ -924,9 +928,34 @@ export class BotService {
                 return;
             }
 
+            // 📸 Photo Button Handler
+            if (text === '📸 Моё фото') {
+                // Check if user has photo
+                const { UserModel } = await import('../models/user.model');
+                const user = await UserModel.findOne({ telegram_id: chatId });
+
+                let caption = "📸 **Ваше фото профиля**\n\n";
+                if (user?.photo_url) {
+                    caption += "Текущее фото установлено! ✅\nХотите изменить?";
+                    await this.bot?.sendPhoto(chatId, user.photo_url, {
+                        caption: caption,
+                        parse_mode: 'Markdown'
+                    });
+                } else {
+                    caption += "Фото еще не установлено. ❌";
+                    await this.bot?.sendMessage(chatId, caption, { parse_mode: 'Markdown' });
+                }
+
+                this.photoUploadStates.set(chatId, { state: 'WAITING_PHOTO' });
+                this.bot?.sendMessage(chatId, "📤 **Загрузите новое фото**\n\nПросто отправьте картинку в этот чат, и я установлю её как ваш аватар в игре.", {
+                    parse_mode: 'Markdown'
+                });
+                return;
+            }
+
             // 0. GLOBAL COMMAND OVERRIDE
             // If user clicks a Menu Button while in a "Waiting" state, we must prioritize the Menu Button
-            const GLOBAL_COMMANDS = ['💸 Заработать', '🎲 Играть', '🤝 Получить клиентов', '🌐 Сообщество', 'ℹ️ О проекте', '📋 Мои игры', '/app', '🔑 Получить пароль'];
+            const GLOBAL_COMMANDS = ['💸 Заработать', '🎲 Играть', '🤝 Получить клиентов', '🌐 Сообщество', 'ℹ️ О проекте', '📋 Мои игры', '/app', '🔑 Получить пароль', '📸 Моё фото'];
             if (GLOBAL_COMMANDS.includes(text)) {
                 this.adminStates.delete(chatId);
                 this.transferStates.delete(chatId);
@@ -1987,7 +2016,7 @@ export class BotService {
             reply_markup: {
                 keyboard: [
                     [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
-                    [{ text: '🤝 Получить клиентов' }],
+                    [{ text: '🤝 Получить клиентов' }, { text: '📸 Моё фото' }],
                     [{ text: '🌐 Сообщество' }, { text: 'ℹ️ О проекте' }]
                 ],
                 resize_keyboard: true
