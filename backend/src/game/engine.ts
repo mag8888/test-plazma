@@ -225,7 +225,7 @@ export const FAST_TRACK_SQUARES: BoardSquare[] = [
     // 42
     { index: 65, type: 'DREAM', name: 'Белоснежная Яхта', cost: 300000, description: 'Роскошная яхта для путешествий.' },
     // 43
-    { index: 66, type: 'BUSINESS', name: 'Франшиза', cost: 100000, cashflow: 10000, description: 'Франшиза "Поток денег"' },
+    { index: 66, type: 'BUSINESS', name: 'Франшиза', cost: 100000, cashflow: 10000, description: 'Франшиза MONEO' },
     // 44
     { index: 67, type: 'DREAM', name: 'Полёт в космос', cost: 250000, description: 'Туристический полет на орбиту.' },
     // 45
@@ -256,7 +256,7 @@ export class GameEngine {
             currentPlayerIndex: 0,
             currentTurnTime: 120,
             phase: 'ROLL',
-            isPaused: false,
+            isPaused: true,
             board: this.initializeBoardWithDreams(),
             log: ['Game Started'],
             chat: [],
@@ -283,6 +283,19 @@ export class GameEngine {
             }
         });
     }
+
+    startGame() {
+        if (!this.state.isPaused) return; // Already started
+        this.state.isPaused = false;
+        this.addLog(`🏁 Игра запущена Хостом!`);
+        // Ensure phase is ROLL or valid start phase
+        if (this.state.phase !== 'ROLL') {
+            this.state.phase = 'ROLL';
+        }
+        // Init timer for first turn
+        this.state.turnExpiresAt = Date.now() + (this.state.currentTurnTime * 1000);
+    }
+
 
     initPlayer(p: IPlayer, gameMode: string = 'ENGINEER'): PlayerState {
         // Assign Profession based on Mode
@@ -382,7 +395,10 @@ export class GameEngine {
 
     // --- Helper for Consistency ---
     recalculateFinancials(player: PlayerState) {
-        if (player.isFastTrack) return; // Fast Track logic is different
+        if (player.isFastTrack) {
+            this.recalculateFastTrackFinancials(player);
+            return;
+        }
 
         // 1. Calculate Passive Income from Assets
         let totalPassive = 0;
@@ -700,6 +716,13 @@ export class GameEngine {
                 userId: player.userId
             });
 
+            this.state.lastEvent = {
+                type: 'WINNER',
+                payload: {
+                    player: player.name,
+                    reason: incomeGoalMet ? 'Достиг цели по доходу' : 'Купил Мечту и бизнесы'
+                }
+            };
             this.addLog(`🏆 ${player.name} ЗАНЯЛ ${place}-Е МЕСТО! (${this.state.rankings[this.state.rankings.length - 1].reason})`);
             this.addLog(`✨ Игра продолжается для остальных! ✨`);
 
@@ -790,7 +813,96 @@ export class GameEngine {
         });
 
         this.state.rankings = finalRankings;
+        this.state.rankings = finalRankings;
         return finalRankings;
+    }
+
+    checkFastTrackVictory(player: PlayerState) {
+        // Income goal: +50k passive income compared to start of Fast Track OR absolute 50k if startIncome is missing
+        const incomeGoalMet = player.isFastTrack
+            ? (player.passiveIncome >= (player.fastTrackStartIncome || 0) + 50000)
+            : (player.passiveIncome >= 50000);
+
+        const businessCount = player.assets.filter(a => a.sourceType === 'BUSINESS' || a.type === 'BUSINESS').length;
+        const dreamBought = player.assets.some(a => (a.sourceType === 'DREAM' || a.type === 'DREAM') && a.title === player.dream);
+
+        // Win Condition: +50k Income OR (Buy Dream + 2 Businesses)
+        let won = false;
+        if (incomeGoalMet || (dreamBought && businessCount >= 2)) {
+            won = true;
+        }
+
+        if (won) {
+            player.hasWon = true;
+            // Initialize rankings if missing (should be in constructor/interface)
+            if (!this.state.rankings) this.state.rankings = [];
+
+            const place = this.state.rankings.length + 1;
+            // distinct reasons
+            const reason = incomeGoalMet ? 'Достиг цели по доходу' : 'Купил Мечту и бизнесы';
+
+            // Check if already in rankings?
+            if (!this.state.rankings.some(r => r.id === player.id)) {
+                this.state.rankings.push({
+                    name: player.name,
+                    reason: reason,
+                    place: place,
+                    id: player.id,
+                    userId: player.userId
+                });
+
+                this.state.lastEvent = {
+                    type: 'WINNER',
+                    payload: {
+                        player: player.name,
+                        reason: reason
+                    }
+                };
+                this.addLog(`🏆 ${player.name} ЗАНЯЛ ${place}-Е МЕСТО! (${reason})`);
+                this.addLog(`✨ Игра продолжается для остальных! ✨`);
+            }
+
+            player.isSkippingTurns = false;
+        }
+    }
+
+
+    recalculateFastTrackFinancials(player: PlayerState) {
+        // Base: Start Income + Sum of Fast Track Business/Dream Cashflows
+        const startIncome = player.fastTrackStartIncome || 0;
+
+        let additionalIncome = 0;
+        player.assets.forEach(a => {
+            // Identify Fast Track assets by sourceType (BUSINESS/DREAM)
+            // Note: Rat Race assets usually have type DEAL_SMALL / DEAL_BIG / REAL_ESTATE
+            // FAST_TRACK_SQUARES use type 'BUSINESS' or 'DREAM'
+            if (a.sourceType === 'BUSINESS' || a.sourceType === 'DREAM') {
+                additionalIncome += (Number(a.cashflow) || 0);
+            }
+        });
+
+        player.passiveIncome = startIncome + additionalIncome;
+
+        // Fast Track: Expenses are 0 (unless specific events add them temporarily?)
+        // Standard rule: Cashflow = Passive Income (since Expenses 0)
+        // Ensure manual expense additions (like Tax Audit?) are preserved?
+        // Usually Expenses are reset to 0 in enterFastTrack.
+        // If we have dynamic Fast Track expenses (suits, etc.), we should sum them.
+        // For now, assuming expenses are 0 or controlled elsewhere.
+        // But `recalculateFinancials` typically overwrites derived stats.
+        // Let's keep `player.expenses` if it was set by events?
+        // Or should we recalcluate liabilities? 
+        // Fast Track Liabilities? "Mortgage (Biz)"?
+        // If we added Mortgage, we should sum it.
+
+        let totalExpenses = 0;
+        player.liabilities.forEach(l => {
+            totalExpenses += (Number(l.expense) || 0);
+        });
+        player.expenses = totalExpenses;
+
+        player.income = player.passiveIncome;
+        player.cashflow = player.income - player.expenses;
     }
 
 
@@ -2469,10 +2581,16 @@ export class GameEngine {
             });
 
             // Update player income stats
-            if (assetCashflow > 0) {
-                player.passiveIncome += assetCashflow;
-                player.income = player.salary + player.passiveIncome;
-                player.cashflow = player.income - player.expenses;
+            // Standard Rat Race assets handled by recalculateFinancials (called below).
+            // Fast Track assets also handled by recalculateFinancials (via new method).
+            // So we can remove manual delta updates if we are sure recalculateFinancials is called.
+            // It IS called at end of buyCard.
+            // So, just trigger victory check.
+
+            this.recalculateFinancials(player);
+
+            if (player.isFastTrack) {
+                this.checkFastTrackVictory(player);
             }
         }
 
@@ -3159,7 +3277,12 @@ export class GameEngine {
         if (player.id !== socketId) throw new Error("Not your turn");
 
         if (accept) {
-            const cost = Math.max(1000, Math.ceil((player.salary + (player.passiveIncome || 0)) * 0.1));
+            let cost = 0;
+            if (player.isFastTrack) {
+                cost = 100000;
+            } else {
+                cost = Math.max(1000, Math.ceil((player.salary + (player.passiveIncome || 0)) * 0.1));
+            }
 
             // Double check validation
             if (player.cash < cost) {
@@ -3168,17 +3291,18 @@ export class GameEngine {
             }
 
             player.cash -= cost;
-            player.charityTurns = 3;
+            player.charityTurns = 3; // >0 enables bonus. For FT, it doesn't decrement.
 
             this.recordTransaction({
                 from: player.name,
                 to: 'Charity',
                 amount: cost,
-                description: 'Charity Donation',
+                description: player.isFastTrack ? 'Charity (Fast Track)' : 'Charity Donation',
                 type: 'EXPENSE'
             });
 
-            this.addLog(`💖 ${player.name} пожертвовал $${cost} на благотворительность! (2 кубика на 3 хода)`);
+            const bonusText = player.isFastTrack ? "1-3 кубика навсегда" : "2 кубика на 3 хода";
+            this.addLog(`💖 ${player.name} пожертвовал $${cost} на благотворительность! (${bonusText})`);
         } else {
             this.addLog(`🤷 ${player.name} отказался от благотворительности.`);
         }

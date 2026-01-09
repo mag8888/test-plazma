@@ -33,6 +33,9 @@ export class DbCardManager {
             if (count === 0) {
                 console.log('⚠️ DB is empty. Seeding default cards...');
                 await this.seedCards();
+            } else {
+                // Ensure updates are applied to existing DB
+                await this.migrateCards();
             }
 
             const allCards = await CardModel.find({}).lean();
@@ -113,6 +116,38 @@ export class DbCardManager {
         if (ops.length > 0) {
             await CardModel.bulkWrite(ops);
         }
+    }
+
+    private async migrateCards() {
+        console.log('🔄 DbCardManager: Running Migrations...');
+
+        // 1. Update Plazma Values ($1000 cost, $500/partner desc)
+        const plazmaRes = await CardModel.updateMany(
+            { id: { $in: ['sd_plazma_1', 'sd_plazma_2', 'sd_plazma_3'] } },
+            {
+                $set: {
+                    cost: 1000,
+                    description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($500/партнер)'
+                }
+            }
+        );
+        console.log('   - Plazma updated:', plazmaRes.modifiedCount);
+
+        // 2. Update BTC Descriptions (Range info)
+        const btcUpdates = [
+            { id: 'sd_btc_4k', desc: 'Криптовалюта на дне. Цена $4,000. Колебания $4k-$100k.' },
+            { id: 'sd_btc_10k', desc: 'Крипто-зима. Цена $10,000. Колебания $4k-$100k.' },
+            { id: 'sd_btc_20k', desc: 'Биткоин на хайпе. Цена $20,000. Колебания $4k-$100k.' },
+            { id: 'sd_btc_30k', desc: 'Биткоин штурмует максимумы. Цена $30,000. Колебания $4k-$100k.' },
+            { id: 'sd_btc_50k', desc: 'Биткоин растет! Цена $50,000. Колебания $4k-$100k.' },
+            { id: 'sd_btc_100k', desc: 'To The Moon! Цена $100,000. Колебания $4k-$100k.' },
+            { id: 'sd_tsla_15', desc: 'Цена $15. Колебания $15-$200.' }
+        ];
+
+        for (const update of btcUpdates) {
+            await CardModel.updateOne({ id: update.id }, { $set: { description: update.desc } });
+        }
+        console.log('   - BTC Descriptions updated');
     }
 
     // Return COPIES for shuffling

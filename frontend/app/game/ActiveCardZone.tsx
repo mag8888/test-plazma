@@ -122,25 +122,37 @@ export const ActiveCardZone = ({
                         <div className="text-5xl mb-4 animate-pulse">💝</div>
                         <h2 className="text-xl font-bold text-white mb-2">Благотворительность</h2>
                         <p className="text-slate-300 text-xs mb-8 leading-relaxed max-w-[240px]">
-                            Пожертвуйте <span className="text-yellow-400 font-bold">10%</span> от общего дохода, чтобы использовать <span className="text-white font-bold">2 кубика</span> следующие 3 хода.
+                            {me.isFastTrack ? (
+                                <>
+                                    Пожертвуйте <span className="text-yellow-400 font-bold">$100,000</span>, чтобы использовать <span className="text-white font-bold">1, 2 или 3 кубика</span> до конца игры.
+                                </>
+                            ) : (
+                                <>
+                                    Пожертвуйте <span className="text-yellow-400 font-bold">10%</span> от общего дохода, чтобы использовать <span className="text-white font-bold">2 кубика</span> следующие 3 хода.
+                                </>
+                            )}
                         </p>
                         <div className="flex bg-slate-800/50 p-3 rounded-xl mb-6 items-center gap-3 border border-white/5">
                             <span className="text-xs text-slate-400 uppercase font-bold">Сумма:</span>
                             <span className="text-xl font-mono font-black text-rose-400">
-                                -${Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1)).toLocaleString()}
+                                {me.isFastTrack ? (
+                                    <span>$100,000</span>
+                                ) : (
+                                    <span>-${Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1)).toLocaleString()}</span>
+                                )}
                             </span>
                         </div>
                         <div className="space-y-3 w-full">
                             <button
                                 onClick={() => socket.emit('charity_choice', { roomId, accept: true })}
-                                disabled={me.cash < Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1))}
-                                className={`w-full font-bold py-3.5 rounded-xl text-sm uppercase tracking-wider shadow-lg transition-all ${me.cash >= Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1))
+                                disabled={me.cash < (me.isFastTrack ? 100000 : Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1)))}
+                                className={`w-full font-bold py-3.5 rounded-xl text-sm uppercase tracking-wider shadow-lg transition-all ${me.cash >= (me.isFastTrack ? 100000 : Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1)))
                                     ? 'bg-rose-600 hover:bg-rose-500 text-white active:scale-95 shadow-rose-900/20'
                                     : 'bg-slate-700 text-slate-500 cursor-not-allowed'
                                     }`}
                             >
-                                {me.cash < Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1))
-                                    ? `Не хватает кэша ($${Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1))})`
+                                {me.cash < (me.isFastTrack ? 100000 : Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1)))
+                                    ? `Не хватает кэша ($${(me.isFastTrack ? 100000 : Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1))).toLocaleString()})`
                                     : 'Пожертвовать'
                                 }
                             </button>

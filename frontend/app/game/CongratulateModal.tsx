@@ -28,7 +28,7 @@ const CongratulateModal = ({ isOpen, onClose, targetPlayerName, targetPlayerId, 
             <div className="bg-slate-900 border border-slate-700/50 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-scaleIn relative">
                 {/* Header with Confetti Visual */}
                 <div className="relative bg-gradient-to-r from-pink-500 to-purple-600 p-6 text-center">
-                    <div className="absolute top-0 left-0 w-full h-full bg-[url('/effects/confetti.png')] opacity-20 btn-background-animate"></div>
+                    <div className="absolute top-0 left-0 w-full h-full opacity-20 btn-background-animate"></div>
                     <div className="relative z-10 text-5xl mb-2 animate-bounce">👶</div>
                     <h2 className="relative z-10 text-xl font-bold text-white">У {targetPlayerName} родился ребенок!</h2>
                     <p className="relative z-10 text-white/80 text-xs mt-1">Поздравьте игрока с этим событием</p>

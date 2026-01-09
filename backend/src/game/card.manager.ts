@@ -88,12 +88,13 @@ export const SMALL_DEALS: Card[] = [
     { displayId: 13, id: 'sd_ton_10', title: 'TON Token ($10)', symbol: 'TON', cost: 10, description: 'TON Token (криптовалюта)', assetType: 'STOCK', type: 'DEAL_SMALL' },
 
     // 14-19 Bitcoin
-    { displayId: 14, id: 'sd_btc_4k', title: 'Bitcoin', symbol: 'BTC', cost: 4000, description: 'Криптовалюта на дне. Цена $4,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
-    { displayId: 15, id: 'sd_btc_10k', title: 'Bitcoin', symbol: 'BTC', cost: 10000, description: 'Крипто-зима. Цена $10,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
-    { displayId: 16, id: 'sd_btc_20k', title: 'Bitcoin', symbol: 'BTC', cost: 20000, description: 'Биткоин на хайпе. Цена $20,000', assetType: 'STOCK', type: 'DEAL_SMALL' },
-    { displayId: 17, id: 'sd_btc_30k', title: 'Bitcoin', symbol: 'BTC', cost: 30000, description: 'Биткоин штурмует максимумы. Цена $30,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
-    { displayId: 18, id: 'sd_btc_50k', title: 'Bitcoin', symbol: 'BTC', cost: 50000, description: 'Биткоин растет! Цена $50,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
-    { displayId: 19, id: 'sd_btc_100k', title: 'Bitcoin', symbol: 'BTC', cost: 100000, description: 'To The Moon! Цена $100,000.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    // 14-19 Bitcoin
+    { displayId: 14, id: 'sd_btc_4k', title: 'Bitcoin', symbol: 'BTC', cost: 4000, description: 'Криптовалюта на дне. Цена $4,000. Колебания $4k-$100k.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { displayId: 15, id: 'sd_btc_10k', title: 'Bitcoin', symbol: 'BTC', cost: 10000, description: 'Крипто-зима. Цена $10,000. Колебания $4k-$100k.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { displayId: 16, id: 'sd_btc_20k', title: 'Bitcoin', symbol: 'BTC', cost: 20000, description: 'Биткоин на хайпе. Цена $20,000. Колебания $4k-$100k.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { displayId: 17, id: 'sd_btc_30k', title: 'Bitcoin', symbol: 'BTC', cost: 30000, description: 'Биткоин штурмует максимумы. Цена $30,000. Колебания $4k-$100k.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { displayId: 18, id: 'sd_btc_50k', title: 'Bitcoin', symbol: 'BTC', cost: 50000, description: 'Биткоин растет! Цена $50,000. Колебания $4k-$100k.', assetType: 'STOCK', type: 'DEAL_SMALL' },
+    { displayId: 19, id: 'sd_btc_100k', title: 'Bitcoin', symbol: 'BTC', cost: 100000, description: 'To The Moon! Цена $100,000. Колебания $4k-$100k.', assetType: 'STOCK', type: 'DEAL_SMALL' },
 
     // 20-23 Preferred Stocks
     { displayId: 20, id: 'sd_att_pref_1', title: 'Акции: AT&T (Pref)', symbol: 'T', cost: 5000, cashflow: 50, description: 'Привилегированные акции AT&T. Дивиденды $50/акцию. Макс 1000 шт.', maxQuantity: 1000, assetType: 'STOCK', type: 'DEAL_SMALL' },
@@ -146,9 +147,10 @@ export const SMALL_DEALS: Card[] = [
     { displayId: 45, id: 'sd_mlm_3', title: 'Сетевой бизнес', cost: 500, cashflow: 100, description: 'Старт в MLM компании.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 
     // 46-48 Plazma
-    { displayId: 46, id: 'sd_plazma_1', title: 'Сетевой бизнес: Plazma Water', cost: 200, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
-    { displayId: 47, id: 'sd_plazma_2', title: 'Сетевой бизнес: Plazma Water', cost: 200, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
-    { displayId: 48, id: 'sd_plazma_3', title: 'Сетевой бизнес: Plazma Water', cost: 200, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    // 46-48 Plazma
+    { displayId: 46, id: 'sd_plazma_1', title: 'Сетевой бизнес: Plazma Water', cost: 1000, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($500/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 47, id: 'sd_plazma_2', title: 'Сетевой бизнес: Plazma Water', cost: 1000, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($500/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 48, id: 'sd_plazma_3', title: 'Сетевой бизнес: Plazma Water', cost: 1000, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($500/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 
     // 49-51 MONEO
     { displayId: 49, id: 'sd_moneo_100', title: 'Сетевой бизнес: MONEO', cost: 100, cashflow: 0, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($50/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },

@@ -485,6 +485,19 @@ export const FeedCardItem = ({
                             </div>
                         </div>
 
+                        {/* SALE DETAILS (User Feedback) */}
+                        {transactionMode === 'SELL' && ownedStock && (
+                            <div className="bg-blue-900/30 border border-blue-500/30 p-2 rounded mb-2">
+                                <div className="text-[9px] text-blue-300 uppercase font-bold mb-1">Продажа актива:</div>
+                                <div className="font-bold text-white text-xs">{ownedStock.title}</div>
+                                {ownedStock.cost > 0 && (
+                                    <div className="text-[9px] text-slate-400 mt-1">
+                                        Куплено за: <span className="text-slate-200 font-mono">${ownedStock.cost.toLocaleString()}</span>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
                         {/* Logic for Slider/Calc */}
                         <div className="flex flex-col gap-2 mb-2">
                             {/* Hide quantity controls if MLM (Locked by roll) or Expense (Qty 1) */}

@@ -245,12 +245,23 @@ export class RoomService {
                 const fixedRoom = await RoomModel.findById(roomId);
                 if (fixedRoom) return this.sanitizeRoom(fixedRoom);
             }
+            return this.sanitizeRoom(room);
         }
-
         return this.sanitizeRoom(room);
     }
 
-    async addBot(roomId: string, difficulty: 'easy' | 'hard' = 'easy'): Promise<any> {
+    async startGame(roomId: string, userId: string): Promise<IRoom> {
+        const room = await RoomModel.findById(roomId);
+        if (!room) throw new Error("Room not found");
+        if (room.creatorId !== userId) throw new Error("Only host can start game");
+
+        room.status = 'playing';
+        room.startTime = Date.now();
+        await room.save();
+        return this.sanitizeRoom(room);
+    }
+
+    async addBot(roomId: string, difficulty: 'easy' | 'hard'): Promise<IRoom> {
         const room = await RoomModel.findById(roomId);
         if (!room) throw new Error("Room not found");
         if (room.players.length >= room.maxPlayers) throw new Error("Room is full");
@@ -503,17 +514,6 @@ export class RoomService {
         return room.players.every((p: IPlayer) => p.isReady);
     }
 
-    async startGame(roomId: string, requesterUserId: string): Promise<void> {
-        const room = await RoomModel.findById(roomId);
-        if (!room) throw new Error("Room not found");
-
-        if (room.creatorId !== requesterUserId) {
-            throw new Error("Only the host can start the game");
-        }
-
-        room.status = 'playing';
-        await room.save();
-    }
 
     async toggleLock(roomId: string, requesterUserId: string): Promise<boolean> {
         const room = await RoomModel.findById(roomId);

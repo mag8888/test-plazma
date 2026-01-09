@@ -300,6 +300,53 @@ export class GameGateway {
                 }
             });
 
+            // Start Game (Host)
+            socket.on('start_game', async (data) => {
+                try {
+                    const { roomId, userId } = data;
+                    // Update Room Status
+                    const room = await this.roomService.startGame(roomId, userId);
+                    this.io.emit('rooms_updated', await this.roomService.getRooms());
+                    this.io.to(roomId).emit('room_state_updated', room);
+                } catch (e: any) {
+                    console.error("Start Game Error:", e);
+                }
+            });
+
+            // Toggle Pause
+            socket.on('toggle_pause', (data) => {
+                const { roomId, userId } = data;
+                const game = this.games.get(roomId);
+                if (game) {
+                    // Host check? Usually only host can pause.
+                    if (game.state.creatorId !== userId) return;
+                    game.togglePause();
+                    this.io.to(roomId).emit('state_updated', { state: game.getState() });
+                    this.saveState(roomId, game);
+                }
+            });
+
+            // Charity Actions
+            socket.on('donate_charity', (data) => {
+                const { roomId, userId } = data;
+                const game = this.games.get(roomId);
+                if (game) {
+                    game.donateCharity(userId);
+                    this.io.to(roomId).emit('state_updated', { state: game.getState() });
+                    this.saveState(roomId, game);
+                }
+            });
+
+            socket.on('skip_charity', (data) => {
+                const { roomId, userId } = data;
+                const game = this.games.get(roomId);
+                if (game) {
+                    game.skipCharity(userId);
+                    this.io.to(roomId).emit('state_updated', { state: game.getState() });
+                    this.saveState(roomId, game);
+                }
+            });
+
             // Join Room
             socket.on('join_room', async (data, callback) => {
                 try {
