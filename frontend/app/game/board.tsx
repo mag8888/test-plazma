@@ -1334,7 +1334,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
                     {/* MAIN GRID */}
                     {/* MAIN LAYOUT CONTAINER - CSS GRID with Auto Columns for Safety */}
-                    <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-0 lg:gap-4 h-full overflow-hidden items-start lg:items-stretch">
+                    {/* MAIN LAYOUT CONTAINER - Center Priority (Square), Sides Remainder */}
+                    <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-0 lg:gap-4 h-full overflow-hidden items-start lg:items-center justify-center">
 
                         {/* 📱 MOBILE TOP ZONE (Cards + Stats) */}
                         <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-40 max-h-[30vh] overflow-y-auto">
@@ -1382,163 +1383,165 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                         </div>
                     </div>
 
-                    {/* LEFT SIDEBAR (Redesigned) - Grid Cell 1 (Fixed Width) */}
-                    <div id="tutorial-players" className="hidden lg:flex flex-col w-full lg:w-[350px] h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4 min-h-0">
+                    {/* LEFT SIDEBAR (Redesigned) - Grid Cell 1 (Remainder) */}
+                    <div id="tutorial-players" className="hidden lg:flex flex-col w-full h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4 min-h-0 items-end">
+                        <div className="flex flex-col gap-4 w-full max-w-[350px] h-full">
 
-                        {/* 1. PROFILE PANEL (TOP) */}
-                        <div className="bg-[#1e293b] rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex flex-col gap-4 relative overflow-hidden group shrink-0">
-                            {/* Glow effect */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500" ></div>
+                            {/* 1. PROFILE PANEL (TOP) */}
+                            <div className="bg-[#1e293b] rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex flex-col gap-4 relative overflow-hidden group shrink-0">
+                                {/* Glow effect */}
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500" ></div>
 
-                            {/* Header: Profession + Payday */}
-                            <div className="flex justify-between items-start relative z-10" >
-                                <div className="flex items-center gap-3">
-                                    <span className="text-3xl filter drop-shadow-md">👷</span>
-                                    <div>
-                                        <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Профессия</span>
-                                        <div className="text-lg font-bold text-white leading-tight tracking-tight max-w-[140px] truncate" title={localPlayer?.professionName || ''}>{localPlayer?.professionName || 'Загрузка...'}</div>
+                                {/* Header: Profession + Payday */}
+                                <div className="flex justify-between items-start relative z-10" >
+                                    <div className="flex items-center gap-3">
+                                        <span className="text-3xl filter drop-shadow-md">👷</span>
+                                        <div>
+                                            <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider block mb-0.5">Профессия</span>
+                                            <div className="text-lg font-bold text-white leading-tight tracking-tight max-w-[140px] truncate" title={localPlayer?.professionName || ''}>{localPlayer?.professionName || 'Загрузка...'}</div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div >
+                                </div >
 
-                            {/* Payday Bar */}
-                            <div className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800/80 relative overflow-hidden" >
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-[9px] text-blue-400 uppercase font-bold tracking-wider">PAYDAY</span>
-                                    <span className={`font-mono ${localPlayer?.cashflow < 0 ? 'text-red-400' : 'text-green-400'} font-bold text-lg leading-none`}>
-                                        {localPlayer?.cashflow > 0 ? '+' : ''}${localPlayer?.cashflow?.toLocaleString() || 0}
-                                    </span>
-                                </div>
-                                <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
-                                        style={{ width: '100%' }} // Always full for Cashflow? Or progress?
-                                    ></div>
-                                </div>
-                            </div >
-
-                            {/* Stats Grid: Cash & Credit */}
-                            <div className="grid grid-cols-2 gap-3" id="tutorial-balance" >
-                                <button ref={bankButtonRef} onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group/btn relative">
-                                    <div className="text-[9px] text-blue-400 font-bold uppercase tracking-wider mb-1">БАНК (Баланс) 🏦</div>
-                                    <div className="font-mono text-xl text-green-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left relative">
-                                        <AnimatedNumber value={localPlayer?.cash || 0} />
-                                        <CashChangeIndicator currentCash={localPlayer?.cash || 0} />
+                                {/* Payday Bar */}
+                                <div className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800/80 relative overflow-hidden" >
+                                    <div className="flex justify-between items-center mb-2">
+                                        <span className="text-[9px] text-blue-400 uppercase font-bold tracking-wider">PAYDAY</span>
+                                        <span className={`font-mono ${localPlayer?.cashflow < 0 ? 'text-red-400' : 'text-green-400'} font-bold text-lg leading-none`}>
+                                            {localPlayer?.cashflow > 0 ? '+' : ''}${localPlayer?.cashflow?.toLocaleString() || 0}
+                                        </span>
                                     </div>
-                                    {isTutorial && state.tutorialStep === 3 && (
-                                        <TutorialTip
-                                            text="Нажмите на банк"
-                                            position="top-full mt-4 left-1/2 -translate-x-1/2 absolute z-[3000] w-[200px]"
-                                            arrow="top-[-6px] border-b-emerald-500 border-t-0"
-                                        />
-                                    )}
-                                </button>
-                                <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group/btn">
-                                    <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит 💳</div>
-                                    <div className="font-mono text-xl text-red-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left">
-                                        ${localPlayer?.loanDebt?.toLocaleString() || 0}
+                                    <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"
+                                            style={{ width: '100%' }} // Always full for Cashflow? Or progress?
+                                        ></div>
                                     </div>
-                                </button>
-                            </div >
+                                </div >
 
-                            {/* Income/Expense Mini Grid */}
-                            <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/50" >
-                                <div className="flex justify-between items-center">
-                                    <span className="text-[9px] text-slate-500 uppercase font-bold">Доход</span>
-                                    <span className="font-mono text-slate-300 font-bold">${localPlayer?.income?.toLocaleString() || 0}</span>
-                                </div>
-                                <div className="flex justify-between items-center">
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => setShowExpenseBreakdown(true)}
-                                            className="w-4 h-4 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-[10px] text-slate-300 transition-colors"
-                                        >
-                                            ?
-                                        </button>
-                                        <span className="text-[9px] text-slate-500 uppercase font-bold">Расходы</span>
+                                {/* Stats Grid: Cash & Credit */}
+                                <div className="grid grid-cols-2 gap-3" id="tutorial-balance" >
+                                    <button ref={bankButtonRef} onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group/btn relative">
+                                        <div className="text-[9px] text-blue-400 font-bold uppercase tracking-wider mb-1">БАНК (Баланс) 🏦</div>
+                                        <div className="font-mono text-xl text-green-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left relative">
+                                            <AnimatedNumber value={localPlayer?.cash || 0} />
+                                            <CashChangeIndicator currentCash={localPlayer?.cash || 0} />
+                                        </div>
+                                        {isTutorial && state.tutorialStep === 3 && (
+                                            <TutorialTip
+                                                text="Нажмите на банк"
+                                                position="top-full mt-4 left-1/2 -translate-x-1/2 absolute z-[3000] w-[200px]"
+                                                arrow="top-[-6px] border-b-emerald-500 border-t-0"
+                                            />
+                                        )}
+                                    </button>
+                                    <button onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-red-500/30 transition-all text-left group/btn">
+                                        <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider mb-1">Кредит 💳</div>
+                                        <div className="font-mono text-xl text-red-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left">
+                                            ${localPlayer?.loanDebt?.toLocaleString() || 0}
+                                        </div>
+                                    </button>
+                                </div >
+
+                                {/* Income/Expense Mini Grid */}
+                                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/50" >
+                                    <div className="flex justify-between items-center">
+                                        <span className="text-[9px] text-slate-500 uppercase font-bold">Доход</span>
+                                        <span className="font-mono text-slate-300 font-bold">${localPlayer?.income?.toLocaleString() || 0}</span>
                                     </div>
-                                    <span className="font-mono text-slate-400 font-bold">${localPlayer?.expenses?.toLocaleString() || 0}</span>
-                                </div>
-                            </div >
-
-                            {/* VOICE CONTROLS (Desktop) */}
-                            <div className="bg-[#1e293b] rounded-2xl p-2 border border-slate-700/50 shadow-lg shrink-0">
-                                <div className="flex items-center justify-between mb-1 px-2">
-                                    <span className="text-[9px] uppercase tracking-widest text-slate-400 font-bold flex items-center gap-2">
-                                        <span className={`w-1.5 h-1.5 rounded-full ${isVoiceConnected ? 'bg-emerald-500 animate-pulse' : 'bg-yellow-500'}`}></span>
-                                        Голосовой чат
-                                    </span>
-                                </div>
-                                <div className="flex justify-center">
-                                    <VoiceControls onSpeakingChanged={setIsSpeaking} players={state?.players || []} />
-                                </div>
-                            </div>
-                        </div >
-
-                        {/* 2. ASSETS PANEL (BOTTOM, Fills Remaining) */}
-                        <div className="bg-[#151b2b] rounded-3xl p-5 border border-slate-800 shadow-lg flex flex-col min-h-0 flex-1 relative overflow-hidden" >
-                            <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2 flex-shrink-0">
-                                <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
-                                <span className="font-mono text-green-400 bg-green-900/20 px-2 py-0.5 rounded-lg">+${totalAssetYield}</span>
-                            </h3>
-
-                            {
-                                localPlayer?.assets?.length > 0 ? (
-                                    <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1 -mr-2">
-                                        {localPlayer.assets.map((a: any, i: number) => (
-                                            <div
-                                                key={i}
-                                                onClick={() => setTransferAssetItem({ item: a, index: i })}
-                                                className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-500 active:scale-[0.98] transition-all cursor-pointer group"
+                                    <div className="flex justify-between items-center">
+                                        <div className="flex items-center gap-1">
+                                            <button
+                                                onClick={() => setShowExpenseBreakdown(true)}
+                                                className="w-4 h-4 rounded-full bg-slate-700 hover:bg-slate-600 flex items-center justify-center text-[10px] text-slate-300 transition-colors"
                                             >
-                                                <div className="flex flex-col gap-1">
-                                                    <span className="text-slate-200 font-bold text-sm leading-tight">
-                                                        {a.title}
-                                                    </span>
-                                                    <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                                                        {a.quantity > 0 && <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">{a.quantity} шт</span>}
-                                                        {a.symbol && a.averageCost && <span className="text-blue-400">Ср: ${a.averageCost.toFixed(2)}</span>}
-                                                        {a.cost && <span>Поз: ${(a.cost * a.quantity).toLocaleString()}</span>}
+                                                ?
+                                            </button>
+                                            <span className="text-[9px] text-slate-500 uppercase font-bold">Расходы</span>
+                                        </div>
+                                        <span className="font-mono text-slate-400 font-bold">${localPlayer?.expenses?.toLocaleString() || 0}</span>
+                                    </div>
+                                </div >
+
+                                {/* VOICE CONTROLS (Desktop) */}
+                                <div className="bg-[#1e293b] rounded-2xl p-2 border border-slate-700/50 shadow-lg shrink-0">
+                                    <div className="flex items-center justify-between mb-1 px-2">
+                                        <span className="text-[9px] uppercase tracking-widest text-slate-400 font-bold flex items-center gap-2">
+                                            <span className={`w-1.5 h-1.5 rounded-full ${isVoiceConnected ? 'bg-emerald-500 animate-pulse' : 'bg-yellow-500'}`}></span>
+                                            Голосовой чат
+                                        </span>
+                                    </div>
+                                    <div className="flex justify-center">
+                                        <VoiceControls onSpeakingChanged={setIsSpeaking} players={state?.players || []} />
+                                    </div>
+                                </div>
+                            </div >
+
+                            {/* 2. ASSETS PANEL (BOTTOM, Fills Remaining) */}
+                            <div className="bg-[#151b2b] rounded-3xl p-5 border border-slate-800 shadow-lg flex flex-col min-h-0 flex-1 relative overflow-hidden" >
+                                <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2 flex-shrink-0">
+                                    <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
+                                    <span className="font-mono text-green-400 bg-green-900/20 px-2 py-0.5 rounded-lg">+${totalAssetYield}</span>
+                                </h3>
+
+                                {
+                                    localPlayer?.assets?.length > 0 ? (
+                                        <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1 -mr-2">
+                                            {localPlayer.assets.map((a: any, i: number) => (
+                                                <div
+                                                    key={i}
+                                                    onClick={() => setTransferAssetItem({ item: a, index: i })}
+                                                    className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-500 active:scale-[0.98] transition-all cursor-pointer group"
+                                                >
+                                                    <div className="flex flex-col gap-1">
+                                                        <span className="text-slate-200 font-bold text-sm leading-tight">
+                                                            {a.title}
+                                                        </span>
+                                                        <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                                                            {a.quantity > 0 && <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">{a.quantity} шт</span>}
+                                                            {a.symbol && a.averageCost && <span className="text-blue-400">Ср: ${a.averageCost.toFixed(2)}</span>}
+                                                            {a.cost && <span>Поз: ${(a.cost * a.quantity).toLocaleString()}</span>}
+                                                        </div>
+                                                    </div>
+                                                    <div className="flex flex-col items-end gap-1">
+                                                        <span className={`font-mono font-black text-xs ${a.cashflow < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                                            {a.cashflow < 0 ? '-' : '+'}${Math.abs(a.cashflow)}
+                                                        </span>
+                                                        <button
+                                                            className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
+                                                            title="Передать актив"
+                                                        >
+                                                            Передать
+                                                        </button>
                                                     </div>
                                                 </div>
-                                                <div className="flex flex-col items-end gap-1">
-                                                    <span className={`font-mono font-black text-xs ${a.cashflow < 0 ? 'text-red-400' : 'text-green-400'}`}>
-                                                        {a.cashflow < 0 ? '-' : '+'}${Math.abs(a.cashflow)}
-                                                    </span>
-                                                    <button
-                                                        className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
-                                                        title="Передать актив"
-                                                    >
-                                                        Передать
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="flex-1 flex flex-col items-center justify-center text-slate-600 italic gap-2 opacity-50">
-                                        <span className="text-3xl grayscale">📉</span>
-                                        <span className="text-xs">Нет активов</span>
-                                    </div>
-                                )
-                            }
-                        </div >
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="flex-1 flex flex-col items-center justify-center text-slate-600 italic gap-2 opacity-50">
+                                            <span className="text-3xl grayscale">📉</span>
+                                            <span className="text-xs">Нет активов</span>
+                                        </div>
+                                    )
+                                }
+                            </div >
 
-                        {/* 3. MENU BUTTON (Fixed Bottom Sidebar) */}
-                        <button
-                            id="tutorial-menu"
-                            onClick={() => setShowMenuModal(true)
-                            }
-                            className="bg-[#1e293b] hover:bg-slate-700 text-slate-300 py-4 rounded-3xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-all border border-slate-700/50 shadow-lg hover:shadow-xl hover:border-slate-600 group shrink-0"
-                        >
-                            <span className="text-xl group-hover:rotate-90 transition-transform duration-500">⚙️</span>
-                            <span>Меню Игры</span>
-                        </button >
+                            {/* 3. MENU BUTTON (Fixed Bottom Sidebar) */}
+                            <button
+                                id="tutorial-menu"
+                                onClick={() => setShowMenuModal(true)
+                                }
+                                className="bg-[#1e293b] hover:bg-slate-700 text-slate-300 py-4 rounded-3xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-all border border-slate-700/50 shadow-lg hover:shadow-xl hover:border-slate-600 group shrink-0"
+                            >
+                                <span className="text-xl group-hover:rotate-90 transition-transform duration-500">⚙️</span>
+                                <span>Меню Игры</span>
+                            </button >
 
+                        </div>
                     </div >
 
-                    {/* CENTER BOARD (Responsive Square) */}
-                    <div className={`${forceLandscape ? 'w-auto h-full' : 'w-full h-full'} max-w-full flex-shrink-1 relative bg-[#0f172a] overflow-hidden flex flex-col lg:rounded-3xl lg:border border-slate-800/50 shadow-2xl max-h-screen lg:max-h-full min-h-0 self-center min-w-0`
+                    {/* CENTER BOARD (Priority Square) */}
+                    <div className={`${forceLandscape ? 'w-auto h-full' : 'w-auto h-full aspect-square'} max-w-full flex-shrink-1 relative bg-[#0f172a] overflow-hidden flex flex-col lg:rounded-3xl lg:border border-slate-800/50 shadow-2xl max-h-screen lg:max-h-full min-h-0 self-center min-w-0`
                     }>
                         <div className="flex-1 relative overflow-hidden p-0 lg:p-4 flex items-center justify-center">
                             <ErrorBoundary name="BoardVisualizer">
@@ -1805,27 +1808,29 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                         </div>
                     </div >
 
-                    {/* 4. CHAT (Grid Cell 3) - Fixed Width on Desktop */}
-                    <div className="hidden lg:flex flex-col w-full lg:w-[350px] h-full bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden shadow-inner relative" >
-                        <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-[#1e293b] to-transparent z-10 pointer-events-none"></div>
+                    {/* 4. CHAT (Grid Cell 3) - Remainder Width, Aligned Left */}
+                    <div className="hidden lg:flex flex-col w-full h-full items-start justify-start relative z-40" >
+                        <div className="flex flex-col w-full max-w-[350px] h-full bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden shadow-inner relative">
+                            <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-[#1e293b] to-transparent z-10 pointer-events-none"></div>
 
-                        <div className="flex-1 overflow-hidden relative">
-                            <TextChat
-                                roomId={roomId}
-                                socket={socket}
-                                messages={state.chat || []}
-                                currentUser={localPlayer}
-                                gameLogs={state.log || []}
-                                className="w-full h-full"
-                            />
-                        </div>
+                            <div className="flex-1 overflow-hidden relative">
+                                <TextChat
+                                    roomId={roomId}
+                                    socket={socket}
+                                    messages={state.chat || []}
+                                    currentUser={localPlayer}
+                                    gameLogs={state.log || []}
+                                    className="w-full h-full"
+                                />
+                            </div>
 
-                        {/* Chat Input Area Inside TextChat Usually, but if TextChat handles it, good. 
+                            {/* Chat Input Area Inside TextChat Usually, but if TextChat handles it, good. 
                             Wait, TextChat typically has input. 
                             Let's check TextChat usage previously.
                             It was just <TextChat ... />. 
                             So it should be self-contained. 
                         */}
+                        </div>
                     </div >
 
                     {
