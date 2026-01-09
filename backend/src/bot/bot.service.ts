@@ -732,7 +732,7 @@ export class BotService {
                     if (game) {
                         const card = await this.renderGameCard(game, telegramId!);
                         await this.bot?.sendMessage(chatId, card.text, {
-                            parse_mode: 'Markdown',
+                            parse_mode: 'HTML',
                             reply_markup: card.reply_markup as any
                         });
                         return; // Skip Main Menu if deep linked? Or show both?
@@ -2495,7 +2495,7 @@ export class BotService {
             for (const game of games) {
                 const cardData = await this.renderGameCard(game, chatId);
                 this.bot?.sendMessage(chatId, cardData.text, {
-                    parse_mode: 'Markdown',
+                    parse_mode: 'HTML',
                     reply_markup: cardData.reply_markup
                 });
             }
@@ -2886,14 +2886,19 @@ export class BotService {
             timeZone: 'Europe/Moscow'
         });
 
-        // Helper to escape Markdown
-        const escapeMd = (s: string) => s.replace(/[_*[`]/g, '\\$&');
+        // Helper to escape HTML
+        const escapeHtml = (s: string) => s
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
 
         // Fetch Host
         const host = await UserModel.findById(game.hostId);
-        const hostName = host ? (host.username ? `@${escapeMd(host.username)}` : escapeMd(host.first_name || '')) : 'Неизвестно';
+        const hostName = host ? (host.username ? `@${host.username}` : escapeHtml(host.first_name || '')) : 'Неизвестно';
 
-        let text = `🎲 **Игра: ${dateStr} (МСК)**\n`;
+        let text = `🎲 <b>Игра: ${dateStr} (МСК)</b>\n`;
         text += `👑 Мастер: ${hostName}\n`;
         text += `👥 Игроков: ${totalParticipants}/${game.maxPlayers}\n`;
         text += `🎟 Промо (Free): ${freeSpots > 0 ? freeSpots : '❌ Нет мест'}\n`;
@@ -2914,10 +2919,10 @@ export class BotService {
             game.participants.forEach((p: any, i: number) => {
                 const verifiedMark = p.isVerified ? '✅' : '';
                 // Privacy Logic
-                let name = escapeMd(p.firstName || 'Игрок');
+                let name = escapeHtml(p.firstName || 'Игрок');
                 let line = `${i + 1}. ${name} ${verifiedMark}`;
                 if (isRequesterMaster) {
-                    const uname = p.username ? `@${escapeMd(p.username)}` : 'no\\_user';
+                    const uname = p.username ? `@${escapeHtml(p.username)}` : 'no_user';
                     line += ` (${uname})`;
                 }
                 text += `${line}\n`;
