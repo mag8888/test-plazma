@@ -3004,7 +3004,9 @@ export class BotService {
                     // Password Logic
                     let passwordInfo = "";
                     if (game.password) {
-                        passwordInfo = `\n🔑 **Пароль комнаты:** ${game.password}\n*(Вводится при входе в игру)*`;
+                        // Escape HTML in password just in case (simple replace)
+                        const safePass = game.password.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+                        passwordInfo = `\n🔑 <b>Пароль комнаты:</b> ${safePass}\n<i>(Вводится при входе в игру)</i>`;
                     }
 
                     // Get Bot Name for Link
@@ -3015,13 +3017,16 @@ export class BotService {
                     } catch (e) { }
                     const link = `https://t.me/${botName}?start=game_${game._id}`;
 
+                    const messageText = `🚀 Игра начинается через 5 минут!\n\n🔗 <a href="${link}">Подключиться к игре</a>${passwordInfo}`;
+                    const hostMessage = `🚀 Напоминание Мастеру: Игра начинается через 5 минут! Пора запускать комнату!${passwordInfo}`;
+
                     for (const p of game.participants) {
                         const user = await UserModel.findById(p.userId);
-                        if (user) this.bot?.sendMessage(user.telegram_id, `🚀 Игра начинается через 5 минут!\n\n🔗 Ссылка: ${link}${passwordInfo}`, { parse_mode: 'Markdown' });
+                        if (user) this.bot?.sendMessage(user.telegram_id, messageText, { parse_mode: 'HTML' });
                     }
                     // Validate Host
                     const host = await UserModel.findById(game.hostId);
-                    if (host) this.bot?.sendMessage(host.telegram_id, `🚀 Напоминание Мастеру: Игра начинается через 5 минут! Пора запускать комнату!${passwordInfo}`, { parse_mode: 'Markdown' });
+                    if (host) this.bot?.sendMessage(host.telegram_id, hostMessage, { parse_mode: 'HTML' });
 
                     game.reminderStartSent = true;
                     gameModified = true;
