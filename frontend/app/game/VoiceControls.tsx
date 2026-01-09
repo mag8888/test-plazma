@@ -26,7 +26,7 @@ const VoiceAvatar = ({ participant, player, isHost, onKick }: { participant?: an
     const [showMenu, setShowMenu] = useState(false);
 
     return (
-        <div className="relative group cursor-pointer" title={player?.name || participant?.identity} onClick={() => setShowMenu(!showMenu)}>
+        <div className="relative group cursor-pointer" title={player?.name || participant?.identity} onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}>
             {/* Avatar */}
             <div className={`w-10 h-10 rounded-full border-2 transition-all duration-300 overflow-hidden bg-slate-800
                 ${isSpeaking ? 'border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)] scale-110' :
@@ -55,32 +55,38 @@ const VoiceAvatar = ({ participant, player, isHost, onKick }: { participant?: an
                 </div>
             )}
 
-            {/* Balance Display */}
+            {/* Balance Display (Always visible below) */}
             <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-slate-900/80 px-1 rounded text-[8px] font-mono text-emerald-400 pointer-events-none whitespace-nowrap">
                 ${(player.cash || 0).toLocaleString()}
             </div>
 
             {/* Menu */}
-            {showMenu && isHost && onKick && (
-                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-1 z-50 flex flex-col gap-1 min-w-[80px]">
-                    <div className="text-[10px] text-slate-400 px-2 py-1 border-b border-white/5 truncate max-w-[100px] font-bold">
+            {showMenu && (
+                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-1 z-50 flex flex-col gap-1 min-w-[100px]" onClick={(e) => e.stopPropagation()}>
+                    <div className="text-[10px] text-slate-400 px-2 py-1 border-b border-white/5 truncate font-bold text-center">
                         {player.name}
                     </div>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            onKick(player.id);
-                            setShowMenu(false);
-                        }}
-                        className="text-[10px] text-red-400 hover:bg-red-500/20 px-2 py-1.5 rounded text-left transition-colors font-bold uppercase"
-                    >
-                        Исключить
-                    </button>
+
+                    <div className="px-2 py-1 text-center">
+                        <span className="text-xs font-mono text-emerald-400 font-bold">${(player.cash || 0).toLocaleString()}</span>
+                    </div>
+
+                    {isHost && onKick && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onKick(player.id);
+                                setShowMenu(false);
+                            }}
+                            className="w-full text-[10px] text-red-400 hover:bg-red-500/20 px-2 py-1.5 rounded text-center transition-colors font-bold uppercase"
+                        >
+                            Исключить
+                        </button>
+                    )}
                 </div>
             )}
 
-            {/* Click Outside to close (Simple hack: auto-close after 3s or depend on global click) */}
-            {/* Ideally use a hook, but for now rely on toggle or just time out */}
+            {/* Click Outside to close */}
             {showMenu && <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowMenu(false); }} />}
         </div>
     );
