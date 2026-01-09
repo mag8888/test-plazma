@@ -358,8 +358,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                     targetName: state.lastEvent.payload?.player,
                     targetId: state.lastEvent.payload?.playerId
                 });
-                // Hide notification after 3s but keep modal
-                setTimeout(() => setBabyNotification(null), 3000);
+                // Hide notification after 15s (was 3s)
+                setTimeout(() => setBabyNotification(null), 15000);
             } else {
                 // I am the parent
                 // Auto End Turn Logic (4s delay to allow sound/visual to finish)
