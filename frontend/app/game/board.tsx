@@ -1721,7 +1721,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                             </div>
 
                             {/* DEBUG OVERLAY */}
-                            <TutorialDebug step={state.tutorialStep} isTutorial={isTutorial || false} />
+
 
                             {/* TOP BAR: HUD & Game Stats */}
                             {/* BANK BUTTON (Desktop) */}
@@ -1750,6 +1750,14 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                 if (target) {
                                                     setShowAssetSelectForPlayer(target.id);
                                                 }
+                                            }}
+                                            onSkipTurn={(targetId) => {
+                                                console.log('Host skipping:', targetId);
+                                                socket.emit('host_skip_turn', { roomId, userId, targetPlayerId: targetId });
+                                            }}
+                                            onForceMove={(targetId) => {
+                                                console.log('Host force move:', targetId);
+                                                socket.emit('host_force_move', { roomId, userId, targetPlayerId: targetId });
                                             }}
                                         />
                                     </div>

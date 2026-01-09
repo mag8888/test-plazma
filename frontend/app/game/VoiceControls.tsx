@@ -9,17 +9,21 @@ interface VoiceControlsProps {
     onKickPlayer?: (playerId: string) => void;
     onTransferCash?: (playerId: string) => void;
     onTransferAsset?: (playerId: string) => void;
+    onSkipTurn?: (playerId: string) => void;
+    onForceMove?: (playerId: string) => void;
     myId?: string;
 }
 
 // Sub-component for individual avatar to handle speaking state efficiently
-const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTransferAsset, isMe }: {
+const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTransferAsset, onSkip, onForceMove, isMe }: {
     participant?: any,
     player: any,
     isHost?: boolean,
     onKick?: (id: string) => void,
     onTransferCash?: (id: string) => void,
     onTransferAsset?: (id: string) => void,
+    onSkip?: (id: string) => void,
+    onForceMove?: (id: string) => void,
     isMe?: boolean
 }) => {
     // We rely on parent updates or participant property being present
@@ -108,6 +112,36 @@ const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTr
                         </>
                     )}
 
+                    {isHost && !isMe && (
+                        <>
+                            <div className="h-px bg-slate-700/50 my-1"></div>
+                            {onSkip && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onSkip(player.id);
+                                        setShowMenu(false);
+                                    }}
+                                    className="w-full text-[10px] text-blue-400 hover:bg-blue-500/20 px-2 py-1.5 rounded text-center transition-colors font-bold uppercase"
+                                >
+                                    Пропустить
+                                </button>
+                            )}
+                            {onForceMove && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onForceMove(player.id);
+                                        setShowMenu(false);
+                                    }}
+                                    className="w-full text-[10px] text-yellow-400 hover:bg-yellow-500/20 px-2 py-1.5 rounded text-center transition-colors font-bold uppercase"
+                                >
+                                    Бросок
+                                </button>
+                            )}
+                        </>
+                    )}
+
                     {isHost && onKick && !isMe && (
                         <button
                             onClick={(e) => {
@@ -129,7 +163,7 @@ const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTr
     );
 };
 
-export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickPlayer, onTransferCash, onTransferAsset, myId }: VoiceControlsProps) => {
+export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickPlayer, onTransferCash, onTransferAsset, onSkipTurn, onForceMove, myId }: VoiceControlsProps) => {
     // SAFELY consume context instead of direct hooks
     const { localParticipant, participants, room, isConnected, error } = useVoice();
 
@@ -169,10 +203,10 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
                 disabled={!isConnected}
                 title={isConnected ? (isMuted ? "Включить микрофон" : "Выключить микрофон") : (error || "Голосовой чат недоступен")}
                 className={`p-2 rounded-full transition-all ${!isConnected
-                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                        : isMuted
-                            ? 'bg-red-500/20 text-red-400'
-                            : 'bg-emerald-500/20 text-emerald-400'
+                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                    : isMuted
+                        ? 'bg-red-500/20 text-red-400'
+                        : 'bg-emerald-500/20 text-emerald-400'
                     } ${isSpeaking && !isMuted ? 'ring-2 ring-emerald-400/50 scale-105' : ''}`}
             >
                 {isDirectoryConnected(isConnected) ? (isMuted ? <MicOff size={16} /> : <Mic size={16} />) : <MicOff size={16} />}
@@ -194,6 +228,8 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
                             onKick={onKickPlayer}
                             onTransferCash={onTransferCash}
                             onTransferAsset={onTransferAsset}
+                            onSkip={onSkipTurn}
+                            onForceMove={onForceMove}
                             isMe={player.id === myId || player.userId === myId}
                         />
                     );
