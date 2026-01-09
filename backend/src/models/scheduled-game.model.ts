@@ -14,6 +14,7 @@ export interface IScheduledGame extends Document {
         joinedAt: Date;
     }[];
     description?: string;
+    password?: string;
     status: 'SCHEDULED' | 'COMPLETED' | 'CANCELLED';
     createdAt: Date;
 }
@@ -39,7 +40,8 @@ const ScheduledGameSchema: Schema = new Schema({
     status: { type: String, enum: ['SCHEDULED', 'COMPLETED', 'CANCELLED'], default: 'SCHEDULED' },
     reminder24hSent: { type: Boolean, default: false },
     reminder30mSent: { type: Boolean, default: false },
-    reminderStartSent: { type: Boolean, default: false }
+    reminderStartSent: { type: Boolean, default: false },
+    password: { type: String }
 }, { timestamps: true });
 
 export const ScheduledGameModel = mongoose.models.ScheduledGame || mongoose.model<IScheduledGame>('ScheduledGame', ScheduledGameSchema);

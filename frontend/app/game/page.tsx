@@ -72,6 +72,11 @@ function GameContent() {
 
     const [isReadyModalOpen, setIsReadyModalOpen] = useState(false);
 
+    // Password Logic
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+    const [passwordInput, setPasswordInput] = useState('');
+    const [savedPassword, setSavedPassword] = useState<string | undefined>(undefined);
+
     const [isKickModalOpen, setIsKickModalOpen] = useState(false);
     const [playerToKick, setPlayerToKick] = useState<string | null>(null);
     const [gameState, setGameState] = useState<any>(null);
@@ -119,22 +124,28 @@ function GameContent() {
 
         setMyUserId(userId);
 
-        const joinGame = (retries = 0) => {
+        const joinGame = (pwd?: string, retries = 0) => {
             console.log(`Joining room... (Attempt ${retries + 1})`, { roomId, playerName: prefName, userId });
             socket.emit('join_room', {
                 roomId,
                 playerName: prefName,
                 userId,
                 token: prefToken,
-                dream: prefDream
+                dream: prefDream,
+                password: pwd
             }, (response: any) => {
                 if (!response.success) {
                     console.error("Join failed:", response.error);
 
+                    if (response.error === "Invalid password") {
+                        setIsPasswordModalOpen(true);
+                        return;
+                    }
+
                     // Retry logic for "Room not found" or other transient errors
-                    if (retries < 3) {
+                    if (retries < 3 && response.error !== "Invalid password") {
                         console.log(`Retrying join in 1s... (${retries + 1}/3)`);
-                        setTimeout(() => joinGame(retries + 1), 1000);
+                        setTimeout(() => joinGame(pwd, retries + 1), 1000);
                         return;
                     }
 
@@ -146,26 +157,34 @@ function GameContent() {
                     }
                 } else {
                     setError(''); // Clear error on success
+                    setIsPasswordModalOpen(false); // Close modal if open
                 }
             });
         };
 
         if (socket.connected) {
-            joinGame();
+            joinGame(savedPassword);
         } else {
             socket.connect();
         }
 
         const onConnect = () => {
-            joinGame();
+            joinGame(savedPassword);
         };
 
         const handleConnect = () => {
             console.log("Reconnected. Re-joining...");
-            joinGame();
+            joinGame(savedPassword);
         };
 
         socket.on('connect', handleConnect);
+
+        // Expose joinGame to outer scope if needed, or trigger via savedPassword change?
+        // Simpler: trigger effect on savedPassword change?
+        // No, savedPassword isn't dependency of this effect to avoid loops.
+        // We need a stable join reference.
+        // Let's assign it to a Ref or use a separate effect for re-triggering?
+        // Actually, simplest is to use `savedPassword` dependency.
 
         socket.on('room_state_updated', (updatedRoom: Room) => {
             console.log("Room updated:", updatedRoom);
@@ -216,7 +235,12 @@ function GameContent() {
             // Do NOT leave room explicitly on unmount, relies on disconnect
             // preventing accidental drops on simple nav
         };
-    }, [roomId, router, user]);
+    }, [roomId, router, user, savedPassword]);
+
+    const handlePasswordSubmit = (pwd: string) => {
+        setSavedPassword(pwd);
+        // Effect will re-run joinGame
+    };
 
     const handleReadyClick = () => {
         if (!isReady) {
@@ -631,6 +655,35 @@ function GameContent() {
                                 onConfirm={confirmReady}
                                 onCancel={() => setIsReadyModalOpen(false)}
                             />
+                        )}
+
+                        {isPasswordModalOpen && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
+                                <form
+                                    onSubmit={(e) => {
+                                        e.preventDefault();
+                                        handlePasswordSubmit(passwordInput);
+                                    }}
+                                    className="bg-slate-800 p-8 rounded-2xl max-w-sm w-full border border-slate-700 shadow-2xl animate-in zoom-in-95 duration-200"
+                                >
+                                    <h3 className="text-xl font-bold mb-4 text-white">🔐 Введите пароль</h3>
+                                    <p className="text-slate-400 mb-6 text-sm">Эта комната защищена паролем. Введите его, чтобы войти.</p>
+
+                                    <input
+                                        type="text"
+                                        autoFocus
+                                        placeholder="Пароль..."
+                                        value={passwordInput}
+                                        onChange={(e) => setPasswordInput(e.target.value)}
+                                        className="w-full bg-slate-900 border border-slate-600 rounded-lg px-4 py-3 text-white mb-6 focus:border-blue-500 outline-none"
+                                    />
+
+                                    <div className="flex gap-4">
+                                        <button type="button" onClick={() => router.push('/lobby')} className="flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg font-medium transition-colors">Назад</button>
+                                        <button type="submit" className="flex-1 bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-lg font-medium shadow-lg shadow-blue-500/20 transition-colors">Войти</button>
+                                    </div>
+                                </form>
+                            </div>
                         )}
 
                         {playerToKick && (

@@ -41,7 +41,7 @@ if (!token) {
 export class BotService {
     bot: TelegramBot | null = null;
     adminStates: Map<number, { state: string, targetUser?: any }> = new Map();
-    masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_TIME' | 'WAITING_MAX' | 'WAITING_PROMO' | 'WAITING_ANNOUNCEMENT_TEXT' | 'WAITING_EDIT_TIME' | 'WAITING_EDIT_MAX' | 'WAITING_EDIT_PROMO' | 'WAITING_ADD_PLAYER', gameData?: any, gameId?: string }> = new Map();
+    masterStates: Map<number, { state: 'WAITING_DATE' | 'WAITING_TIME' | 'WAITING_MAX' | 'WAITING_PROMO' | 'WAITING_PASS' | 'WAITING_ANNOUNCEMENT_TEXT' | 'WAITING_EDIT_TIME' | 'WAITING_EDIT_MAX' | 'WAITING_EDIT_PROMO' | 'WAITING_ADD_PLAYER', gameData?: any, gameId?: string }> = new Map();
     transferStates: Map<number, TransferState> = new Map();
     broadcastStates: Map<number, BroadcastState> = new Map();
     participantStates: Map<number, { state: 'WAITING_POST_LINK', gameId: string }> = new Map();
@@ -1188,12 +1188,19 @@ export class BotService {
                     masterState.state = 'WAITING_PROMO';
                     this.bot?.sendMessage(chatId, "Сколько промо-мест?");
                     return;
-                } else if (masterState.state === 'WAITING_PROMO') {
                     const promo = Number(text);
                     if (isNaN(promo) || promo < 0) {
                         this.bot?.sendMessage(chatId, "Введите число.");
                         return;
                     }
+
+                    masterState.gameData.promoSpots = promo;
+                    masterState.state = 'WAITING_PASS';
+                    this.bot?.sendMessage(chatId, "🔐 Введите пароль для входа (или отправьте '-', если пароль не нужен):");
+                    return;
+                } else if (masterState.state === 'WAITING_PASS') {
+                    const passwordInput = text.trim();
+                    const password = (passwordInput === '-' || passwordInput === 'нет') ? undefined : passwordInput;
 
                     const { ScheduledGameModel } = await import('../models/scheduled-game.model');
                     const { UserModel } = await import('../models/user.model');
@@ -1203,13 +1210,18 @@ export class BotService {
                         hostId: user._id,
                         startTime: masterState.gameData.startTime,
                         maxPlayers: masterState.gameData.maxPlayers,
-                        promoSpots: promo,
+                        promoSpots: masterState.gameData.promoSpots,
                         price: 20,
-                        participants: []
+                        participants: [],
+                        password: password
                     });
                     await newGame.save();
                     this.masterStates.delete(chatId);
-                    this.bot?.sendMessage(chatId, `✅ Игра создана! ${newGame.startTime.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`);
+
+                    let msgText = `✅ Игра создана! ${newGame.startTime.toLocaleString('ru-RU', { timeZone: 'Europe/Moscow' })}`;
+                    if (password) msgText += `\n🔑 Пароль: ${password}`;
+
+                    this.bot?.sendMessage(chatId, msgText);
                     return;
                 } else if (masterState.state === 'WAITING_ANNOUNCEMENT_TEXT') {
                     const gameId = masterState.gameId;
@@ -2555,7 +2567,15 @@ export class BotService {
                 day: 'numeric', month: 'long', hour: '2-digit', minute: '2-digit', timeZone: 'Europe/Moscow'
             });
 
-            const text = `⚙️ **Управление игрой**\n\n🗓 ${dateStr} (МСК)\n👥 Мест: ${game.participants.length}/${game.maxPlayers}\n🎟 Промо: ${game.participants.filter((p: any) => p.type === 'PROMO').length}/${game.promoSpots}`;
+            // Get Bot Username
+            let botName = 'moneo_game_bot';
+            try {
+                const me = await this.bot?.getMe();
+                if (me && me.username) botName = me.username;
+            } catch (e) { }
+            const link = `https://t.me/${botName}?start=game_${game._id}`;
+
+            const text = `⚙️ **Управление игрой**\n\n🗓 ${dateStr} (МСК)\n👥 Мест: ${game.participants.length}/${game.maxPlayers}\n🎟 Промо: ${game.participants.filter((p: any) => p.type === 'PROMO').length}/${game.promoSpots}\n\n🔗 Ссылка: ${link}`;
 
             this.bot?.sendMessage(chatId, text, {
                 parse_mode: 'Markdown',
@@ -2878,6 +2898,15 @@ export class BotService {
         text += `🎟 Промо (Free): ${freeSpots > 0 ? freeSpots : '❌ Нет мест'}\n`;
         text += `💰 Платные ($20): ${paidSpots > 0 ? paidSpots : '❌ Нет мест'}\n`;
 
+        // Add Link
+        let botName = 'moneo_game_bot';
+        try {
+            const me = await this.bot?.getMe();
+            if (me && me.username) botName = me.username;
+        } catch (e) { }
+        const link = `https://t.me/${botName}?start=game_${game._id}`;
+        text += `\n🔗 Ссылка: ${link}\n`;
+
         // Participants List
         if (totalParticipants > 0) {
             text += `\nУчастники:\n`;
@@ -2969,15 +2998,29 @@ export class BotService {
                     gameModified = true;
                 }
 
-                // 3. Start Reminder (0-5m window or slightly past?)
-                if (!game.reminderStartSent && diffMinutes <= 0 && diffMinutes > -10) {
+                // 3. Start Reminder (5 minutes before)
+                if (!game.reminderStartSent && diffMinutes <= 5 && diffMinutes > 0) {
+                    // Password Logic
+                    let passwordInfo = "";
+                    if (game.password) {
+                        passwordInfo = `\n🔑 **Пароль комнаты:** ${game.password}\n*(Вводится при входе в игру)*`;
+                    }
+
+                    // Get Bot Name for Link
+                    let botName = 'moneo_game_bot';
+                    try {
+                        const me = await this.bot?.getMe();
+                        if (me && me.username) botName = me.username;
+                    } catch (e) { }
+                    const link = `https://t.me/${botName}?start=game_${game._id}`;
+
                     for (const p of game.participants) {
                         const user = await UserModel.findById(p.userId);
-                        if (user) this.bot?.sendMessage(user.telegram_id, `🚀 Игра начинается! Ссылка на подключение: [Здесь будет ссылка] (Свяжитесь с мастером)`);
+                        if (user) this.bot?.sendMessage(user.telegram_id, `🚀 Игра начинается через 5 минут!\n\n🔗 Ссылка: ${link}${passwordInfo}`, { parse_mode: 'Markdown' });
                     }
                     // Validate Host
                     const host = await UserModel.findById(game.hostId);
-                    if (host) this.bot?.sendMessage(host.telegram_id, `🚀 Напоминание Мастеру: Игра начинается! Пора запускать комнату!`);
+                    if (host) this.bot?.sendMessage(host.telegram_id, `🚀 Напоминание Мастеру: Игра начинается через 5 минут! Пора запускать комнату!${passwordInfo}`, { parse_mode: 'Markdown' });
 
                     game.reminderStartSent = true;
                     gameModified = true;
