@@ -1335,7 +1335,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                     {/* MAIN GRID */}
                     {/* MAIN LAYOUT CONTAINER - CSS GRID with Auto Columns for Safety */}
                     {/* MAIN LAYOUT CONTAINER - Center Priority (Square), Sides Remainder */}
-                    <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 grid grid-cols-1 lg:grid-cols-[1fr_auto_1fr] gap-0 lg:gap-4 h-full overflow-hidden items-start lg:items-center justify-center">
+                    {/* MAIN LAYOUT CONTAINER - Flexbox for robust aspect-ratio handling */}
+                    <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-full overflow-hidden items-start lg:items-center justify-center">
 
                         {/* 📱 MOBILE TOP ZONE (Cards + Stats) */}
                         <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-40 max-h-[30vh] overflow-y-auto">
@@ -1383,8 +1384,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                         </div>
                     </div>
 
-                    {/* LEFT SIDEBAR (Redesigned) - Grid Cell 1 (Remainder) */}
-                    <div id="tutorial-players" className="hidden lg:flex flex-col w-full h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4 min-h-0 items-end">
+                    {/* LEFT SIDEBAR (Redesigned) - Flex Child (Remainder) */}
+                    <div id="tutorial-players" className="hidden lg:flex flex-col flex-1 h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4 min-w-0 items-end">
                         <div className="flex flex-col gap-4 w-full max-w-[350px] h-full">
 
                             {/* 1. PROFILE PANEL (TOP) */}
@@ -1540,8 +1541,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                         </div>
                     </div >
 
-                    {/* CENTER BOARD (Priority Square) */}
-                    <div className={`${forceLandscape ? 'w-auto h-full' : 'w-auto h-full aspect-square'} max-w-full flex-shrink-1 relative bg-[#0f172a] overflow-hidden flex flex-col lg:rounded-3xl lg:border border-slate-800/50 shadow-2xl max-h-screen lg:max-h-full min-h-0 self-center min-w-0`
+                    {/* CENTER BOARD (Priority Square) - Flex Item (Rigid) */}
+                    <div className={`${forceLandscape ? 'w-auto h-full' : 'h-full aspect-square shrink-0'} max-w-full flex-shrink-1 relative bg-[#0f172a] overflow-hidden flex flex-col lg:rounded-3xl lg:border border-slate-800/50 shadow-2xl max-h-screen lg:max-h-full min-h-0 self-center min-w-0 z-50`
                     }>
                         <div className="flex-1 relative overflow-hidden p-0 lg:p-4 flex items-center justify-center">
                             <ErrorBoundary name="BoardVisualizer">
@@ -1808,8 +1809,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                         </div>
                     </div >
 
-                    {/* 4. CHAT (Grid Cell 3) - Remainder Width, Aligned Left */}
-                    <div className="hidden lg:flex flex-col w-full h-full items-start justify-start relative z-40" >
+                    {/* 4. CHAT (Right Sidebar) - Flex Child (Remainder) */}
+                    <div className="hidden lg:flex flex-col flex-1 h-full items-start justify-start relative z-40 min-w-0" >
                         <div className="flex flex-col w-full max-w-[350px] h-full bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden shadow-inner relative">
                             <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-[#1e293b] to-transparent z-10 pointer-events-none"></div>
 
