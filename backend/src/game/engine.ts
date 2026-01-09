@@ -1844,7 +1844,8 @@ export class GameEngine {
                     id: `${this.state.currentCard.id}_mkt_${Date.now()}`,
                     card: this.state.currentCard,
                     sourcePlayerId: currentPlayer.id,
-                    expiresAt: Date.now() + 120000 // 2 Minutes
+                    expiresAt: Date.now() + 120000, // 2 Minutes
+                    dismissedBy: [currentPlayer.id] // CRITICAL FIX: Don't show to the person who just dismissed it
                 });
                 this.addLog(`📢 ${this.state.currentCard.title} доступна всем 2 минуты!`);
             } else if (!isPersistent) {
@@ -2765,6 +2766,24 @@ export class GameEngine {
     }
 
     endTurn() {
+        // CRITICAL FIX: If user clicks "Next" (Skip) on a Mandatory Card (Expense/Doodad), force payment!
+        if (this.state.currentCard && (this.state.currentCard.type === 'EXPENSE' || this.state.currentCard.mandatory)) {
+            const player = this.state.players[this.state.currentPlayerIndex];
+            const cost = this.state.currentCard.cost || 0;
+
+            // Force Deduct
+            player.cash -= cost;
+
+            this.addLog(`⚠️ ${player.name} пропустил оплату, списание: ${this.state.currentCard.title} (-$${cost})`);
+
+            this.recordTransaction({
+                from: player.name,
+                to: 'Bank',
+                amount: cost,
+                description: `Forced Payment: ${this.state.currentCard.title}`,
+                type: 'EXPENSE'
+            });
+        }
         // 1. Clean up expired Active Cards
         if (this.state.activeMarketCards) {
             // Find expired ones to discard properly
