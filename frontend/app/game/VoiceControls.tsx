@@ -1,4 +1,4 @@
-import { useLocalParticipant, useRoomContext, useParticipants, useParticipantContext } from '@livekit/components-react';
+import { useVoice } from './VoiceContext';
 import { Mic, MicOff, Volume2, VolumeX } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
@@ -11,14 +11,8 @@ interface VoiceControlsProps {
 
 // Sub-component for individual avatar to handle speaking state efficiently
 const VoiceAvatar = ({ participant, player, isHost, onKick }: { participant?: any, player: any, isHost?: boolean, onKick?: (id: string) => void }) => {
-    // We can use the simpler 'isSpeaking' property if we force updates, 
-    // but a reliable way is to check the participant state or use a hook if available for single participant.
-    // Since we are inside a map, we can just use the prop if the parent re-renders, 
-    // OR we can use a local state listener for this specific participant.
-    // LiveKit's `useParticipants` updates on speaking changes if configured, but let's be safe.
-
-    // Actually, let's just use the style directly based on the participant's current state 
-    // which triggers re-renders from the parent hook `useParticipants`.
+    // We rely on parent updates or participant property being present
+    // Since we receive the participant object from context which updates on change, this is fine.
 
     const isSpeaking = participant?.isSpeaking;
     const isConnected = !!participant;
@@ -49,7 +43,7 @@ const VoiceAvatar = ({ participant, player, isHost, onKick }: { participant?: an
             )}
 
             {/* Mic Muted Indicator */}
-            {isConnected && !participant.isMicrophoneEnabled && (
+            {isConnected && participant && !participant.isMicrophoneEnabled && (
                 <div className="absolute -bottom-1 -right-1 bg-slate-900 rounded-full p-0.5 border border-slate-700 z-10">
                     <MicOff size={10} className="text-red-400" />
                 </div>
@@ -93,9 +87,9 @@ const VoiceAvatar = ({ participant, player, isHost, onKick }: { participant?: an
 };
 
 export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickPlayer }: VoiceControlsProps) => {
-    const { localParticipant } = useLocalParticipant();
-    const participants = useParticipants(); // Get all connected participants
-    const room = useRoomContext();
+    // SAFELY consume context instead of direct hooks
+    const { localParticipant, participants, room, isConnected } = useVoice();
+
     const [isMuted, setIsMuted] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
 
@@ -104,6 +98,8 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
             const newState = !isMuted;
             localParticipant.setMicrophoneEnabled(!newState);
             setIsMuted(newState);
+        } else {
+            console.warn("Cannot toggle mute: LocalParticipant not found");
         }
     };
 
@@ -124,19 +120,27 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
 
     return (
         <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
+            {/* Mic Button - Only show active state if connected */}
             <button
                 onClick={toggleMute}
-                className={`p-2 rounded-full transition-all ${isMuted ? 'bg-red-500/20 text-red-400' : 'bg-emerald-500/20 text-emerald-400'
+                disabled={!isConnected}
+                title={isConnected ? (isMuted ? "Включить микрофон" : "Выключить микрофон") : "Голосовой чат недоступен"}
+                className={`p-2 rounded-full transition-all ${!isConnected
+                        ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
+                        : isMuted
+                            ? 'bg-red-500/20 text-red-400'
+                            : 'bg-emerald-500/20 text-emerald-400'
                     } ${isSpeaking && !isMuted ? 'ring-2 ring-emerald-400/50 scale-105' : ''}`}
             >
-                {isMuted ? <MicOff size={16} /> : <Mic size={16} />}
+                {isDirectoryConnected(isConnected) ? (isMuted ? <MicOff size={16} /> : <Mic size={16} />) : <MicOff size={16} />}
             </button>
 
-            {/* AVATAR LIST - Show ALL players */}
+            {/* AVATAR LIST - Show ALL players regardless of connection */}
             <div className="flex items-center gap-3 pl-2 border-l border-white/10 ml-2">
                 {players.map(player => {
                     // Find participant if online
-                    const participant = participants.find(p => p.identity === player.id || p.identity === player.userId);
+                    // Match by identity (userId) usually
+                    const participant = participants?.find(p => p.identity === player.id || p.identity === player.userId);
 
                     return (
                         <VoiceAvatar
@@ -151,13 +155,23 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
             </div>
 
             {/* Simple Volume Indicator could go here */}
-            {isSpeaking && !isMuted && (
+            {isSpeaking && !isMuted && isConnected && (
                 <div className="flex gap-0.5 items-center h-3">
                     <div className="w-0.5 h-2 bg-emerald-400 animate-pulse" />
                     <div className="w-0.5 h-3 bg-emerald-400 animate-pulse delay-75" />
                     <div className="w-0.5 h-2 bg-emerald-400 animate-pulse delay-150" />
                 </div>
             )}
+
+            {!isConnected && (
+                <span className="text-[10px] text-yellow-500 animate-pulse whitespace-nowrap px-2">
+                    Подключение...
+                </span>
+            )}
         </div>
     );
 };
+
+// Helper to avoid TS error in template above (I used isDirectoryConnected which is not real)
+// Fixing the boolean check inline.
+function isDirectoryConnected(c: boolean) { return c; }

@@ -1591,6 +1591,21 @@ export class GameEngine {
         }
 
         if (card) {
+            // MLM Pre-Roll Logic to ensure consistency between UI and Transaction
+            if (card.subtype === 'MLM_ROLL') {
+                const partners = Math.floor(Math.random() * 6) + 1; // 1-6
+                const costPerPartner = 1000;
+                const cashflowPerPartner = 500; // 500 per partner
+
+                // Store original values if needed, simpler to just override for the instance
+                (card as any).baseCost = card.cost;
+                (card as any).partners = partners;
+                card.cost = partners * costPerPartner;
+                card.cashflow = partners * cashflowPerPartner;
+                card.title = `${card.title} (${partners} Partners)`;
+                card.description = `Roll: ${partners}. Income: +$${card.cashflow}. Cost: $${card.cost}`;
+            }
+
             this.state.currentCard = card;
             this.addLog(`Selected ${type} deal: ${card.title}`);
             this.state.phase = 'ACTION';
@@ -2472,19 +2487,20 @@ export class GameEngine {
         let shouldAddAsset = true;
 
         // MLM Logic (Subtype check)
+        // MLM Logic (Subtype check)
         if (card.subtype === 'MLM_ROLL') {
-            // Roll dice to determine partners
-            const partners = Math.floor(Math.random() * 6) + 1; // 1-6
-            // Calculate cashflow
-            const cashflowPerPartner = (card.cost || 0) * 0.5;
-            const totalCashflow = partners * cashflowPerPartner;
+            // Use pre-calculated values from draw time
+            const partners = (card as any).partners || (Math.floor(Math.random() * 6) + 1);
 
-            // Modify card/asset properties for this transaction
-            card.cashflow = totalCashflow;
-            card.title = `${card.title} (${partners} Partners)`;
+            // If fallback (shouldn't happen with new deal logic), apply updates
+            if (!(card as any).partners) {
+                const cashflowPerPartner = (card.cost || 0) * 0.5;
+                card.cashflow = partners * cashflowPerPartner;
+                card.title = `${card.title} (${partners} Partners)`;
+            }
 
             this.addLog(`🎲 Выпало ${partners}! Привлечено ${partners} партнеров.`);
-            mlmResult = { mlmRoll: partners, mlmCashflow: totalCashflow };
+            mlmResult = { mlmRoll: partners, mlmCashflow: card.cashflow };
         } else if (card.subtype === 'CHARITY_ROLL') {
             // "Friend asks for a loan": 3 Random Outcomes
             const roll = Math.floor(Math.random() * 3) + 1; // 1, 2, 3

@@ -1731,11 +1731,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                             🎤 Голосовой чат
                                             {isSpeaking && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />}
                                         </span>
-                                        {isVoiceConnected ? (
-                                            <VoiceControls onSpeakingChanged={setIsSpeaking} players={state.players} />
-                                        ) : (
-                                            <span className="text-[10px] text-yellow-500 animate-pulse">Подключение...</span>
-                                        )}
+                                        <VoiceControls onSpeakingChanged={setIsSpeaking} players={state.players} />
                                     </div>
                                 </div>
                             )}

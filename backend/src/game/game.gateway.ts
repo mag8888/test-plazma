@@ -327,25 +327,7 @@ export class GameGateway {
             });
 
             // Charity Actions
-            socket.on('donate_charity', (data) => {
-                const { roomId, userId } = data;
-                const game = this.games.get(roomId);
-                if (game) {
-                    game.donateCharity(userId);
-                    this.io.to(roomId).emit('state_updated', { state: game.getState() });
-                    this.saveState(roomId, game);
-                }
-            });
 
-            socket.on('skip_charity', (data) => {
-                const { roomId, userId } = data;
-                const game = this.games.get(roomId);
-                if (game) {
-                    game.skipCharity(userId);
-                    this.io.to(roomId).emit('state_updated', { state: game.getState() });
-                    this.saveState(roomId, game);
-                }
-            });
 
             // Join Room
             socket.on('join_room', async (data, callback) => {
@@ -573,7 +555,7 @@ export class GameGateway {
                     game.giveCash(targetPlayerId, amount);
 
                     const state = game.getState();
-                    this.io.to(roomId).emit('game_state_update', state);
+                    this.io.to(roomId).emit('state_updated', { state });
                     this.saveState(roomId, game);
 
                     callback({ success: true });
@@ -862,7 +844,7 @@ export class GameGateway {
                 try {
                     game.handleCharityChoice(socket.id, accept);
                     const state = game.getState();
-                    this.io.to(roomId).emit('game_state_update', state);
+                    this.io.to(roomId).emit('state_updated', { state });
                     this.saveState(roomId, game);
                 } catch (e: any) {
                     socket.emit('error', e.message);
@@ -875,7 +857,7 @@ export class GameGateway {
                 if (!game) return;
                 try {
                     game.dismissMarketCard(socket.id, cardId);
-                    this.io.to(roomId).emit('game_state_update', game.getState());
+                    this.io.to(roomId).emit('state_updated', { state: game.getState() });
                     this.saveState(roomId, game);
                 } catch (e: any) {
                     console.error("Dismiss Market Card Error:", e);
@@ -959,25 +941,7 @@ export class GameGateway {
                 saveState(roomId, game);
             });
 
-            socket.on('donate_charity', ({ roomId }) => {
-                const game = this.games.get(roomId);
-                if (game) {
-                    game.donateCharity(socket.id);
-                    const state = game.getState();
-                    this.io.to(roomId).emit('state_updated', { state });
-                    saveState(roomId, game);
-                }
-            });
 
-            socket.on('skip_charity', ({ roomId }) => {
-                const game = this.games.get(roomId);
-                if (game) {
-                    game.skipCharity(socket.id);
-                    const state = game.getState();
-                    this.io.to(roomId).emit('state_updated', { state }); // Or turn_ended if it ends turn
-                    saveState(roomId, game);
-                }
-            });
 
             socket.on('take_loan', ({ roomId, amount }) => {
                 const game = this.games.get(roomId);

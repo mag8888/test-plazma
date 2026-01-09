@@ -55,7 +55,9 @@ const VoiceRoomInner = ({ onActiveSpeakersChange, children, onSpeakingChanged, p
     const voiceState = {
         isConnected: connectionState === ConnectionState.Connected,
         connectionState,
-        participants
+        participants,
+        room,
+        localParticipant
     };
 
     return (
