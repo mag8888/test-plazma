@@ -864,8 +864,9 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
             // Only render board if we have state
             // We reuse isVoiceConnected logic derived above
             (
-                // Responsive Layout Wrapper
-                <div className="h-[100dvh] w-full bg-[#0f172a] text-white font-sans flex flex-col lg:flex-row overflow-hidden relative">
+                // Fragment or Div wrapper if needed? 
+                // The child is a div with h-[100dvh]. We can just return it.
+                <div className="h-[100dvh] max-h-[100dvh] bg-[#0f172a] text-white font-sans flex flex-col overflow-hidden relative">
 
                     {/* PLAYER ACTION MENU (Skip, Kick, Gift) */}
                     {
@@ -943,16 +944,6 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                         className="bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors"
                                                     >
                                                         🤝 Передать сделку
-                                                    </button>
-
-                                                    <button
-                                                        onClick={() => {
-                                                            setShowAssetSelectForPlayer(selectedPlayerForMenu.id);
-                                                            setSelectedPlayerForMenu(null);
-                                                        }}
-                                                        className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors"
-                                                    >
-                                                        🏠 Передать актив
                                                     </button>
 
                                                     <button
@@ -1333,10 +1324,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
 
                     {/* MAIN GRID */}
-                    {/* MAIN LAYOUT CONTAINER - CSS GRID with Auto Columns for Safety */}
-                    {/* MAIN LAYOUT CONTAINER - Center Priority (Square), Sides Remainder */}
-                    {/* MAIN LAYOUT CONTAINER - Flexbox for robust aspect-ratio handling */}
-                    <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-full overflow-hidden items-start lg:items-center justify-center">
+                    {/* MAIN LAYOUT CONTAINER - FLEXBOX for Aspect Ratio Control */}
+                    <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 flex flex-col lg:flex-row gap-0 lg:gap-4 h-full overflow-hidden justify-start lg:justify-center items-center">
 
                         {/* 📱 MOBILE TOP ZONE (Cards + Stats) */}
                         <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-40 max-h-[30vh] overflow-y-auto">
@@ -1382,19 +1371,17 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                 </div>
                             </div>
                         </div>
-                    </div>
 
-                    {/* LEFT SIDEBAR (Redesigned) - Flex Child (Remainder) */}
-                    <div id="tutorial-players" className="hidden lg:flex flex-col flex-1 h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4 min-w-0">
-                        <div className="flex flex-col gap-4 w-full h-full">
+                        {/* LEFT SIDEBAR - PLAYER INFO (Fills remaining space) */}
+                        <div className="hidden lg:flex flex-col gap-4 h-full overflow-hidden w-[350px] pt-0 shrink-0">
 
                             {/* 1. PROFILE PANEL (TOP) */}
                             <div className="bg-[#1e293b] rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex flex-col gap-4 relative overflow-hidden group shrink-0">
                                 {/* Glow effect */}
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500" ></div>
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[60px] pointer-events-none -translate-y-1/2 translate-x-1/2 group-hover:bg-blue-500/20 transition-all duration-500"></div>
 
                                 {/* Header: Profession + Payday */}
-                                <div className="flex justify-between items-start relative z-10" >
+                                <div className="flex justify-between items-start relative z-10">
                                     <div className="flex items-center gap-3">
                                         <span className="text-3xl filter drop-shadow-md">👷</span>
                                         <div>
@@ -1402,10 +1389,10 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                             <div className="text-lg font-bold text-white leading-tight tracking-tight max-w-[140px] truncate" title={localPlayer?.professionName || ''}>{localPlayer?.professionName || 'Загрузка...'}</div>
                                         </div>
                                     </div>
-                                </div >
+                                </div>
 
                                 {/* Payday Bar */}
-                                <div className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800/80 relative overflow-hidden" >
+                                <div className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800/80 relative overflow-hidden">
                                     <div className="flex justify-between items-center mb-2">
                                         <span className="text-[9px] text-blue-400 uppercase font-bold tracking-wider">PAYDAY</span>
                                         <span className={`font-mono ${localPlayer?.cashflow < 0 ? 'text-red-400' : 'text-green-400'} font-bold text-lg leading-none`}>
@@ -1418,10 +1405,10 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                             style={{ width: '100%' }} // Always full for Cashflow? Or progress?
                                         ></div>
                                     </div>
-                                </div >
+                                </div>
 
                                 {/* Stats Grid: Cash & Credit */}
-                                <div className="grid grid-cols-2 gap-3" id="tutorial-balance" >
+                                <div className="grid grid-cols-2 gap-3" id="tutorial-balance">
                                     <button ref={bankButtonRef} onClick={() => setShowBank(true)} className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800 hover:bg-slate-800 hover:border-green-500/30 transition-all text-left group/btn relative">
                                         <div className="text-[9px] text-blue-400 font-bold uppercase tracking-wider mb-1">БАНК (Баланс) 🏦</div>
                                         <div className="font-mono text-xl text-green-400 font-black tracking-tight group-hover/btn:scale-105 transition-transform origin-left relative">
@@ -1442,10 +1429,10 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                             ${localPlayer?.loanDebt?.toLocaleString() || 0}
                                         </div>
                                     </button>
-                                </div >
+                                </div>
 
                                 {/* Income/Expense Mini Grid */}
-                                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/50" >
+                                <div className="grid grid-cols-2 gap-3 pt-2 border-t border-slate-800/50">
                                     <div className="flex justify-between items-center">
                                         <span className="text-[9px] text-slate-500 uppercase font-bold">Доход</span>
                                         <span className="font-mono text-slate-300 font-bold">${localPlayer?.income?.toLocaleString() || 0}</span>
@@ -1462,850 +1449,833 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         </div>
                                         <span className="font-mono text-slate-400 font-bold">${localPlayer?.expenses?.toLocaleString() || 0}</span>
                                     </div>
-                                </div >
-
-                                {/* VOICE CONTROLS (Desktop) */}
-                                <div className="bg-[#1e293b] rounded-2xl p-2 border border-slate-700/50 shadow-lg shrink-0">
-                                    <div className="flex items-center justify-between mb-1 px-2">
-                                        <span className="text-[9px] uppercase tracking-widest text-slate-400 font-bold flex items-center gap-2">
-                                            <span className={`w-1.5 h-1.5 rounded-full ${isVoiceConnected ? 'bg-emerald-500 animate-pulse' : 'bg-yellow-500'}`}></span>
-                                            Голосовой чат
-                                        </span>
-                                    </div>
-                                    <div className="flex justify-center">
-                                        <VoiceControls onSpeakingChanged={setIsSpeaking} players={state?.players || []} />
-                                    </div>
                                 </div>
-                            </div >
+
+                            </div>
 
                             {/* 2. ASSETS PANEL (BOTTOM, Fills Remaining) */}
-                            <div className="bg-[#151b2b] rounded-3xl p-5 border border-slate-800 shadow-lg flex flex-col min-h-0 flex-1 relative overflow-hidden" >
+                            <div className="bg-[#151b2b] rounded-3xl p-5 border border-slate-800 shadow-lg flex flex-col min-h-0 flex-1 relative overflow-hidden">
                                 <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2 flex-shrink-0">
                                     <span className="flex items-center gap-2"><span>🏠</span> Ваши Активы</span>
                                     <span className="font-mono text-green-400 bg-green-900/20 px-2 py-0.5 rounded-lg">+${totalAssetYield}</span>
                                 </h3>
 
-                                {
-                                    localPlayer?.assets?.length > 0 ? (
-                                        <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1 -mr-2">
-                                            {localPlayer.assets.map((a: any, i: number) => (
-                                                <div
-                                                    key={i}
-                                                    onClick={() => setTransferAssetItem({ item: a, index: i })}
-                                                    className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-500 active:scale-[0.98] transition-all cursor-pointer group"
-                                                >
-                                                    <div className="flex flex-col gap-1">
-                                                        <span className="text-slate-200 font-bold text-sm leading-tight">
-                                                            {a.title}
-                                                        </span>
-                                                        <div className="flex items-center gap-2 text-[10px] text-slate-500">
-                                                            {a.quantity > 0 && <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">{a.quantity} шт</span>}
-                                                            {a.symbol && a.averageCost && <span className="text-blue-400">Ср: ${a.averageCost.toFixed(2)}</span>}
-                                                            {a.cost && <span>Поз: ${(a.cost * a.quantity).toLocaleString()}</span>}
-                                                        </div>
-                                                    </div>
-                                                    <div className="flex flex-col items-end gap-1">
-                                                        <span className={`font-mono font-black text-xs ${a.cashflow < 0 ? 'text-red-400' : 'text-green-400'}`}>
-                                                            {a.cashflow < 0 ? '-' : '+'}${Math.abs(a.cashflow)}
-                                                        </span>
-                                                        <button
-                                                            className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
-                                                            title="Передать актив"
-                                                        >
-                                                            Передать
-                                                        </button>
+                                {localPlayer?.assets?.length > 0 ? (
+                                    <div className="space-y-2 overflow-y-auto custom-scrollbar pr-1 flex-1 -mr-2">
+                                        {localPlayer.assets.map((a: any, i: number) => (
+                                            <div
+                                                key={i}
+                                                onClick={() => setTransferAssetItem({ item: a, index: i })}
+                                                className="flex justify-between items-center text-xs p-3 bg-slate-900/50 rounded-xl border border-slate-800/50 hover:border-slate-500 active:scale-[0.98] transition-all cursor-pointer group"
+                                            >
+                                                <div className="flex flex-col gap-1">
+                                                    <span className="text-slate-200 font-bold text-sm leading-tight">
+                                                        {a.title}
+                                                    </span>
+                                                    <div className="flex items-center gap-2 text-[10px] text-slate-500">
+                                                        {a.quantity > 0 && <span className="bg-slate-800 px-1.5 py-0.5 rounded text-slate-400">{a.quantity} шт</span>}
+                                                        {a.symbol && a.averageCost && <span className="text-blue-400">Ср: ${a.averageCost.toFixed(2)}</span>}
+                                                        {a.cost && <span>Поз: ${(a.cost * a.quantity).toLocaleString()}</span>}
                                                     </div>
                                                 </div>
-                                            ))}
-                                        </div>
-                                    ) : (
-                                        <div className="flex-1 flex flex-col items-center justify-center text-slate-600 italic gap-2 opacity-50">
-                                            <span className="text-3xl grayscale">📉</span>
-                                            <span className="text-xs">Нет активов</span>
-                                        </div>
-                                    )
-                                }
-                            </div >
+                                                <div className="flex flex-col items-end gap-1">
+                                                    <span className={`font-mono font-black text-xs ${a.cashflow < 0 ? 'text-red-400' : 'text-green-400'}`}>
+                                                        {a.cashflow < 0 ? '-' : '+'}${Math.abs(a.cashflow)}
+                                                    </span>
+                                                    <button
+                                                        className="text-[10px] text-blue-400 opacity-0 group-hover:opacity-100 transition-opacity hover:underline"
+                                                        title="Передать актив"
+                                                    >
+                                                        Передать
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="flex-1 flex flex-col items-center justify-center text-slate-600 italic gap-2 opacity-50">
+                                        <span className="text-3xl grayscale">📉</span>
+                                        <span className="text-xs">Нет активов</span>
+                                    </div>
+                                )}
+                            </div>
 
                             {/* 3. MENU BUTTON (Fixed Bottom Sidebar) */}
                             <button
                                 id="tutorial-menu"
-                                onClick={() => setShowMenuModal(true)
-                                }
+                                onClick={() => setShowMenuModal(true)}
                                 className="bg-[#1e293b] hover:bg-slate-700 text-slate-300 py-4 rounded-3xl font-bold text-xs uppercase tracking-widest flex items-center justify-center gap-3 transition-all border border-slate-700/50 shadow-lg hover:shadow-xl hover:border-slate-600 group shrink-0"
                             >
                                 <span className="text-xl group-hover:rotate-90 transition-transform duration-500">⚙️</span>
                                 <span>Меню Игры</span>
-                            </button >
+                            </button>
 
                         </div>
-                    </div >
 
-                    {/* CENTER BOARD (Priority Square) - Flex Item (Rigid) */}
-                    <div className={`${forceLandscape ? 'w-auto h-full' : 'h-full aspect-square shrink-0'} max-w-full flex-shrink-1 relative bg-[#0f172a] overflow-hidden flex flex-col lg:rounded-3xl lg:border border-slate-800/50 shadow-2xl max-h-screen lg:max-h-full min-h-0 self-center min-w-0 z-50`
-                    }>
-                        <div className="flex-1 relative overflow-hidden p-0 lg:p-4 flex items-center justify-center">
-                            <ErrorBoundary name="BoardVisualizer">
-                                <BoardVisualizer
-                                    board={state.board}
-                                    players={state.players}
-                                    animatingPos={animatingPos}
-                                    currentPlayerId={currentPlayer.id}
-                                    zoom={zoom}
-                                    onSquareClick={(sq: any) => setSquareInfo(sq)}
-                                    onPlayerClick={(p: any) => {
-                                        const isMe = p.id === localPlayer?.id || p.userId === userId;
-                                        const isHost = localPlayer?.id === state.creatorId;
-                                        if (isMe) {
-                                            setShowBank(true);
-                                        } else if (isHost) {
-                                            setSelectedPlayerForMenu(p);
-                                        } else {
-                                            setTransferTarget(p);
-                                        }
-                                    }}
-                                    showExitButton={showExitButton}
-                                    onExitClick={() => {
-                                        setHasClickedFastTrack(true);
-                                        if (localPlayer?.isFastTrack) {
-                                            setShowFastTrackInfo(true);
-                                        } else {
-                                            setShowFastTrackModal(true);
-                                        }
-                                    }}
-                                    isTutorial={isTutorial}
-                                    hideFastTrackHint={hasClickedFastTrack}
-                                />
-                            </ErrorBoundary>
-
-                            {/* ActiveCardZone Overlay - Center */}
-                            <div className="absolute inset-0 pointer-events-none flex items-center justify-center px-6 py-2 z-[60]">
-                                <div className="pointer-events-auto w-full max-w-xl mx-auto">
-                                    <ErrorBoundary name="ActiveCardZone">
-                                        <ActiveCardZone
-                                            state={state}
-                                            isMyTurn={isMyTurn}
-                                            me={localPlayer}
-                                            roomId={roomId}
-                                            onDismissMarket={handleDismissCard}
-                                            onMarketCardClick={(card) => setSquareInfo({
-                                                type: 'MARKET',
-                                                card: card.card,
-                                                title: card.card.title,
-                                                description: card.card.description
-                                            })}
-                                            // Fix Animation Sync: Don't show card while animating move or rolling dice
-                                            canShowCard={canShowCard && !isAnimating && !showDice}
-                                            previewCard={squareInfo?.card ? squareInfo : null}
-                                            onDismissPreview={() => setSquareInfo(null)}
-                                            // Force remount on tutorial step change to avoid hook consistency issues
-                                            key={`acz-${isTutorial ? state.tutorialStep : 'main'}`}
-                                            isTutorial={isTutorial}
-                                            tutorialStep={state.tutorialStep}
-                                        />
-                                    </ErrorBoundary>
-
-
-                                    {/* 2. GAME CONTROLS GRID (Dice & Skip) */}
-                                    {/* 2. GAME CONTROLS GRID (Dice & Skip) */}
-                                    <div id="tutorial-roll-action" className="grid grid-cols-2 gap-3 shrink-0 h-[100px]">
-                                        {/* Define local variable for render */}
-                                        {(() => {
-                                            // Manual Draw Phases
-                                            if (state.phase === 'MARKET_WAITING') {
-                                                return (
-                                                    <button
-                                                        onClick={() => socket.emit('draw_card', { roomId, type: 'MARKET' })}
-                                                        disabled={!isMyTurn}
-                                                        className="col-span-2 rounded-3xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-xl font-black uppercase tracking-widest"
-                                                    >
-                                                        <span>🏪</span>
-                                                        <span>Открыть Рынок</span>
-                                                    </button>
-                                                );
+                        {/* CENTER BOARD (Responsive Square) */}
+                        <div className={`${forceLandscape ? 'w-auto h-full' : 'w-full lg:w-auto lg:h-full'} aspect-square max-w-full flex-shrink-0 relative bg-[#0f172a] overflow-hidden flex flex-col lg:rounded-3xl lg:border border-slate-800/50 shadow-2xl max-h-full`}>
+                            <div className="flex-1 relative overflow-hidden p-0 lg:p-4 flex items-center justify-center">
+                                <ErrorBoundary name="BoardVisualizer">
+                                    <BoardVisualizer
+                                        board={state.board}
+                                        players={state.players}
+                                        animatingPos={animatingPos}
+                                        currentPlayerId={currentPlayer.id}
+                                        zoom={zoom}
+                                        onSquareClick={(sq: any) => setSquareInfo(sq)}
+                                        showExitButton={showExitButton}
+                                        onExitClick={() => {
+                                            setHasClickedFastTrack(true);
+                                            if (localPlayer?.isFastTrack) {
+                                                setShowFastTrackInfo(true);
+                                            } else {
+                                                setShowFastTrackModal(true);
                                             }
-                                            if (state.phase === 'OPPORTUNITY_CHOICE') {
-                                                return (
-                                                    <>
-                                                        <button
-                                                            onClick={() => socket.emit('draw_deal', { roomId, type: 'SMALL' })}
-                                                            disabled={!isMyTurn || (localPlayer?.cash || 0) < 0} // Allow even if low cash, engine checks cost? Small Deal usually cost $0 to draw but >0 to buy.
-                                                            className="rounded-3xl bg-green-700 hover:bg-green-600 text-white flex flex-col items-center justify-center gap-1 shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
-                                                        >
-                                                            <span className="text-xl">🟢</span>
-                                                            <span className="text-[10px] font-black uppercase tracking-widest">Small Deal</span>
-                                                            <span className="text-[9px] opacity-70">Cost &lt; $5k</span>
-                                                        </button>
-                                                        <button
-                                                            onClick={() => socket.emit('draw_deal', { roomId, type: 'BIG' })}
-                                                            disabled={!isMyTurn || (localPlayer?.cash || 0) < 6000} // Big Deal requires $6000 cash at hand usually? Rule: "You can only do Big Deal if you have $6000"
-                                                            className={`rounded-3xl flex flex-col items-center justify-center gap-1 shadow-lg transition-all
-                                        ${(localPlayer?.cash || 0) >= 6000
-                                                                    ? 'bg-yellow-600 hover:bg-yellow-500 text-white hover:scale-[1.02] active:scale-95'
-                                                                    : 'bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed opacity-50'}`}
-                                                        >
-                                                            <span className="text-xl">🟡</span>
-                                                            <span className="text-[10px] font-black uppercase tracking-widest">Big Deal</span>
-                                                            <span className="text-[9px] opacity-70">Cost &gt; $6k</span>
-                                                        </button>
-                                                    </>
-                                                );
-                                            }
-                                            if (state.phase === 'EXPENSE_WAITING') {
-                                                return (
-                                                    <button
-                                                        onClick={() => socket.emit('draw_card', { roomId, type: 'EXPENSE' })}
-                                                        disabled={!isMyTurn}
-                                                        className="col-span-2 rounded-3xl bg-pink-600 hover:bg-pink-500 text-white flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-xl font-black uppercase tracking-widest"
-                                                    >
-                                                        <span>💸</span>
-                                                        <span>Открыть Трату</span>
-                                                    </button>
-                                                );
-                                            }
+                                        }}
+                                        isTutorial={isTutorial}
+                                        hideFastTrackHint={hasClickedFastTrack}
+                                    />
+                                </ErrorBoundary>
 
-                                            const diceCount = (localPlayer?.charityTurns > 0 || localPlayer?.isFastTrack) ? 2 : 1;
-                                            return (
-                                                <>
-                                                    {/* ROLL BUTTON (Left, Big) */}
-                                                    {/* ROLL BUTTON (Left, Big) - UPDATED FOR CHARITY CHOICE */}
-                                                    {(localPlayer?.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !isRollingRef.current) ? (
-                                                        <div className="col-span-1 grid grid-cols-2 gap-1 h-full">
-                                                            <button onClick={() => handleRoll(1)} className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold flex flex-col items-center justify-center shadow-lg active:scale-95 transition-all">
-                                                                <span className="text-xl">🎲</span>
-                                                                <span className="text-[9px]">1</span>
-                                                            </button>
-                                                            <button onClick={() => handleRoll(2)} className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold flex flex-col items-center justify-center shadow-lg active:scale-95 transition-all">
-                                                                <span className="text-xl">🎲🎲</span>
-                                                                <span className="text-[9px]">2</span>
-                                                            </button>
-                                                            {localPlayer?.isFastTrack && (
-                                                                <button onClick={() => handleRoll(3)} className="col-span-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold flex flex-col items-center justify-center shadow-lg active:scale-95 transition-all h-8 mt-1">
-                                                                    <span className="text-xs flex items-center gap-1">🎲🎲🎲 <span className="text-[9px]">3 Кубика</span></span>
-                                                                </button>
-                                                            )}
-                                                        </div>
-                                                    ) : (
-                                                        <button
-                                                            onClick={() => handleRoll()}
-                                                            disabled={!isMyTurn || state.phase !== 'ROLL' || isRollingRef.current}
-                                                            className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative overflow-hidden group
-                                                        ${isMyTurn && state.phase === 'ROLL' && !isRollingRef.current
-                                                                    ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500/50 text-white hover:scale-[1.02] active:scale-95'
-                                                                    : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
-                                                        >
-                                                            <span className="text-3xl group-hover:rotate-12 transition-transform">🎲</span>
-                                                            <span className="text-[10px] font-black uppercase tracking-widest">
-                                                                {diceCount > 1 ? `Бросить (${diceCount})` : 'Бросить'}
-                                                            </span>
-                                                            {(isTutorial && isMyTurn && state.phase === 'ROLL' && state.tutorialStep <= 1) && (
-                                                                <TutorialTip
-                                                                    text={state.tutorialStep === 0 ? "1. Бросайте кубик, чтобы ходить" : "7. Бросьте кубик снова!"}
-                                                                    position="right-full mr-4 top-1/2 -translate-y-1/2"
-                                                                    arrow="right-[-6px] border-l-emerald-500 border-r-0 border-y-transparent border-y-[6px] top-1/2 -translate-y-1/2"
-                                                                />
-                                                            )}
-                                                            {/* Dice Value Overlay */}
-                                                            {showDice && diceValue && (
-                                                                <div className="absolute inset-0 bg-emerald-600 flex flex-col items-center justify-center z-10 animate-in fade-in zoom-in duration-200">
-                                                                    <span className="text-4xl font-black text-white">{diceValue}</span>
-                                                                    {diceBreakdown && <span className="text-xs font-mono text-emerald-200 font-bold mt-1">({diceBreakdown})</span>}
-                                                                </div>
-                                                            )}
-                                                        </button>
-                                                    )}
-
-                                                    {/* SKIP / NEXT BUTTON (Right, Big) */}
-                                                    <button
-                                                        onClick={handleEndTurn}
-                                                        disabled={!isMyTurn || (state.phase === 'ROLL') || isAnimating}
-                                                        className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative
-                                 ${isMyTurn && state.phase !== 'ROLL' && !isAnimating
-                                                                ? 'bg-blue-600 hover:bg-blue-500 border-blue-500/50 text-white hover:scale-[1.02] active:scale-95'
-                                                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
-                                                    >
-                                                        <span className="text-3xl">⏭</span>
-                                                        <span className="text-[10px] font-black uppercase tracking-widest">Далее</span>
-                                                        {isTutorial && isMyTurn && (state.phase === 'ACTION' || state.phase === 'MARKET' || state.phase === 'RESOLVE') && (
-                                                            <TutorialTip
-                                                                text="Нажмите, чтобы продолжить"
-                                                                position="top-full mt-4"
-                                                                arrow="top-[-6px] border-b-emerald-500 border-t-0"
-                                                            />
-                                                        )}
-                                                    </button>
-                                                </>
-                                            );
-                                        })()}
-                                    </div>
-
-                                    {/* DEBUG OVERLAY REMOVED */}
-
-                                    {/* TOP BAR: HUD & Game Stats */}
-                                    {/* BANK BUTTON (Desktop) */}
-                                    {/* 2. VOICE CHAT CONTROLS (Desktop) */}
-
-                                    {isTutorial && state.tutorialStep === 3 && !showBank && (
-                                        <PortalTutorialTip
-                                            text="Нажмите Банк 🏦"
-                                            targetRef={bankButtonRef}
-                                            position="left"
-                                        />
-                                    )}
-
-                                    {/* 3. GAME CONTROLS ROW (AFK, PAUSE, LOCK) */}
-                                    <div className="grid grid-cols-4 gap-2 mb-2 shrink-0">
-                                        {/* AFK / SKIP TURN (Always Visible) - Takes full width if not host, else 2 cols */}
-                                        {
-                                            !localPlayer?.isBankrupted && (
-                                                <button
-                                                    onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
-                                                    className={`rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg border py-2
-                                                ${isHost ? 'col-span-2' : 'col-span-4'}
-                                                ${localPlayer.isSkippingTurns
-                                                            ? 'bg-blue-600 hover:bg-blue-500 text-white animate-pulse border-blue-500'
-                                                            : 'bg-slate-800 hover:bg-indigo-600/50 border-slate-700 text-slate-400 hover:text-white'}`}
-                                                    title={localPlayer.isSkippingTurns ? "Вернуться в игру" : "Отойти (AFK)"}
-                                                >
-                                                    <span className="text-sm">{localPlayer.isSkippingTurns ? '▶️' : '⏸'}</span>
-                                                    <span>AFK</span>
-                                                </button>
-                                            )
-                                        }
-
-                                        {/* HOST ONLY CONTROLS */}
-                                        {isHost && (
-                                            <>
-                                                {/* PAUSE */}
-                                                <button
-                                                    onClick={handleTogglePause}
-                                                    className={`col-span-1 rounded-xl flex items-center justify-center text-[10px] font-bold transition-all shadow-lg border py-2
-                                                ${state.isPaused
-                                                            ? 'bg-yellow-600 hover:bg-yellow-500 text-white animate-pulse border-yellow-500'
-                                                            : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-400 hover:text-white'}`}
-                                                    title={state.isPaused ? "Продолжить игру" : "Пауза"}
-                                                >
-                                                    <span className="text-xl">{state.isPaused ? '▶️' : '⏸'}</span>
-                                                </button>
-
-                                                {/* LOCK ROOM */}
-                                                <button
-                                                    onClick={() => {
-                                                        socket.emit('toggle_lock', { roomId, userId });
-                                                    }}
-                                                    className={`col-span-1 rounded-xl flex items-center justify-center text-[10px] font-bold transition-all shadow-lg border py-2
-                                                ${state.isLocked
-                                                            ? 'bg-rose-600 hover:bg-rose-500 text-white animate-pulse border-rose-500'
-                                                            : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-400 hover:text-white'}`}
-                                                    title={state.isLocked ? "Открыть комнату" : "Закрыть комнату"}
-                                                >
-                                                    <span className="text-xl">{state.isLocked ? '🔒' : '🔓'}</span>
-                                                </button>
-                                            </>
-                                        )}
+                                {/* ActiveCardZone Overlay - Center */}
+                                <div className="absolute inset-0 pointer-events-none flex items-center justify-center px-6 py-2 z-[60]">
+                                    <div className="pointer-events-auto w-full max-w-xl mx-auto">
+                                        <ErrorBoundary name="ActiveCardZone">
+                                            <ActiveCardZone
+                                                state={state}
+                                                isMyTurn={isMyTurn}
+                                                me={localPlayer}
+                                                roomId={roomId}
+                                                onDismissMarket={handleDismissCard}
+                                                onMarketCardClick={(card) => setSquareInfo({
+                                                    type: 'MARKET',
+                                                    card: card.card,
+                                                    title: card.card.title,
+                                                    description: card.card.description
+                                                })}
+                                                // Fix Animation Sync: Don't show card while animating move or rolling dice
+                                                canShowCard={canShowCard && !isAnimating && !showDice}
+                                                previewCard={squareInfo?.card ? squareInfo : null}
+                                                onDismissPreview={() => setSquareInfo(null)}
+                                                // Force remount on tutorial step change to avoid hook consistency issues
+                                                key={`acz-${isTutorial ? state.tutorialStep : 'main'}`}
+                                                isTutorial={isTutorial}
+                                                tutorialStep={state.tutorialStep}
+                                            />
+                                        </ErrorBoundary>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div >
 
-                    {/* 4. CHAT (Right Sidebar) - Flex Child (Remainder) */}
-                    <div className="hidden lg:flex flex-col flex-1 h-full items-start justify-start relative z-40 min-w-0" >
-                        <div className="flex flex-col w-full h-full bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden shadow-inner relative">
-                            <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-[#1e293b] to-transparent z-10 pointer-events-none"></div>
+                        {/* RIGHT SIDEBAR (Redesigned) - Flex Column */}
+                        <div id="tutorial-players" className="hidden lg:flex flex-col w-[350px] h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4">
 
-                            <div className="flex-1 overflow-hidden relative">
-                                <TextChat
-                                    roomId={roomId}
-                                    socket={socket}
-                                    messages={state.chat || []}
-                                    currentUser={localPlayer}
-                                    gameLogs={state.log || []}
-                                    className="w-full h-full"
+                            {/* 1. TURN INFO & TIMER */}
+                            <div id="tutorial-turn-timer" className="bg-[#151b2b] rounded-3xl p-6 border border-slate-800 shadow-lg flex items-center justify-between shrink-0">
+                                <div className="flex flex-col">
+                                    <div className="flex items-center gap-2 mb-1">
+                                        <span className={`w-2 h-2 rounded-full ${state.turnExpiresAt && (new Date(state.turnExpiresAt).getTime() - Date.now()) / 1000 < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
+                                        <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">ХОД ИГРОКА</span>
+                                    </div>
+                                    <div className="text-xl font-black text-white leading-none truncate max-w-[180px]">{currentPlayer.name}</div>
+                                </div>
+                                <GameTimer
+                                    expiresAt={state.turnExpiresAt}
+                                    currentTurnTime={state.currentTurnTime}
+                                    className="text-4xl font-mono font-black text-slate-200"
                                 />
                             </div>
 
-                            {/* Chat Input Area Inside TextChat Usually, but if TextChat handles it, good. 
+                            {/* 2. GAME CONTROLS GRID (Dice & Skip) */}
+                            {/* 2. GAME CONTROLS GRID (Dice & Skip) */}
+                            <div id="tutorial-roll-action" className="grid grid-cols-2 gap-3 shrink-0 h-[100px]">
+                                {/* Define local variable for render */}
+                                {(() => {
+                                    // Manual Draw Phases
+                                    if (state.phase === 'MARKET_WAITING') {
+                                        return (
+                                            <button
+                                                onClick={() => socket.emit('draw_card', { roomId, type: 'MARKET' })}
+                                                disabled={!isMyTurn}
+                                                className="col-span-2 rounded-3xl bg-blue-600 hover:bg-blue-500 text-white flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-xl font-black uppercase tracking-widest"
+                                            >
+                                                <span>🏪</span>
+                                                <span>Открыть Рынок</span>
+                                            </button>
+                                        );
+                                    }
+                                    if (state.phase === 'OPPORTUNITY_CHOICE') {
+                                        return (
+                                            <>
+                                                <button
+                                                    onClick={() => socket.emit('draw_deal', { roomId, type: 'SMALL' })}
+                                                    disabled={!isMyTurn || (localPlayer?.cash || 0) < 0} // Allow even if low cash, engine checks cost? Small Deal usually cost $0 to draw but >0 to buy.
+                                                    className="rounded-3xl bg-green-700 hover:bg-green-600 text-white flex flex-col items-center justify-center gap-1 shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+                                                >
+                                                    <span className="text-xl">🟢</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Small Deal</span>
+                                                    <span className="text-[9px] opacity-70">Cost &lt; $5k</span>
+                                                </button>
+                                                <button
+                                                    onClick={() => socket.emit('draw_deal', { roomId, type: 'BIG' })}
+                                                    disabled={!isMyTurn || (localPlayer?.cash || 0) < 6000} // Big Deal requires $6000 cash at hand usually? Rule: "You can only do Big Deal if you have $6000"
+                                                    className={`rounded-3xl flex flex-col items-center justify-center gap-1 shadow-lg transition-all
+                                        ${(localPlayer?.cash || 0) >= 6000
+                                                            ? 'bg-yellow-600 hover:bg-yellow-500 text-white hover:scale-[1.02] active:scale-95'
+                                                            : 'bg-slate-800 border-slate-700 text-slate-500 cursor-not-allowed opacity-50'}`}
+                                                >
+                                                    <span className="text-xl">🟡</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">Big Deal</span>
+                                                    <span className="text-[9px] opacity-70">Cost &gt; $6k</span>
+                                                </button>
+                                            </>
+                                        );
+                                    }
+                                    if (state.phase === 'EXPENSE_WAITING') {
+                                        return (
+                                            <button
+                                                onClick={() => socket.emit('draw_card', { roomId, type: 'EXPENSE' })}
+                                                disabled={!isMyTurn}
+                                                className="col-span-2 rounded-3xl bg-pink-600 hover:bg-pink-500 text-white flex items-center justify-center gap-2 shadow-lg hover:scale-[1.02] active:scale-95 transition-all text-xl font-black uppercase tracking-widest"
+                                            >
+                                                <span>💸</span>
+                                                <span>Открыть Трату</span>
+                                            </button>
+                                        );
+                                    }
+
+                                    const diceCount = (localPlayer?.charityTurns > 0 || localPlayer?.isFastTrack) ? 2 : 1;
+                                    return (
+                                        <>
+                                            {/* ROLL BUTTON (Left, Big) */}
+                                            {/* ROLL BUTTON (Left, Big) - UPDATED FOR CHARITY CHOICE */}
+                                            {(localPlayer?.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !isRollingRef.current) ? (
+                                                <div className="col-span-1 grid grid-cols-2 gap-1 h-full">
+                                                    <button onClick={() => handleRoll(1)} className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold flex flex-col items-center justify-center shadow-lg active:scale-95 transition-all">
+                                                        <span className="text-xl">🎲</span>
+                                                        <span className="text-[9px]">1</span>
+                                                    </button>
+                                                    <button onClick={() => handleRoll(2)} className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold flex flex-col items-center justify-center shadow-lg active:scale-95 transition-all">
+                                                        <span className="text-xl">🎲🎲</span>
+                                                        <span className="text-[9px]">2</span>
+                                                    </button>
+                                                    {localPlayer?.isFastTrack && (
+                                                        <button onClick={() => handleRoll(3)} className="col-span-2 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold flex flex-col items-center justify-center shadow-lg active:scale-95 transition-all h-8 mt-1">
+                                                            <span className="text-xs flex items-center gap-1">🎲🎲🎲 <span className="text-[9px]">3 Кубика</span></span>
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <button
+                                                    onClick={() => handleRoll()}
+                                                    disabled={!isMyTurn || state.phase !== 'ROLL' || isRollingRef.current}
+                                                    className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative overflow-hidden group
+                                                        ${isMyTurn && state.phase === 'ROLL' && !isRollingRef.current
+                                                            ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500/50 text-white hover:scale-[1.02] active:scale-95'
+                                                            : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
+                                                >
+                                                    <span className="text-3xl group-hover:rotate-12 transition-transform">🎲</span>
+                                                    <span className="text-[10px] font-black uppercase tracking-widest">
+                                                        {diceCount > 1 ? `Бросить (${diceCount})` : 'Бросить'}
+                                                    </span>
+                                                    {(isTutorial && isMyTurn && state.phase === 'ROLL' && state.tutorialStep <= 1) && (
+                                                        <TutorialTip
+                                                            text={state.tutorialStep === 0 ? "1. Бросайте кубик, чтобы ходить" : "7. Бросьте кубик снова!"}
+                                                            position="right-full mr-4 top-1/2 -translate-y-1/2"
+                                                            arrow="right-[-6px] border-l-emerald-500 border-r-0 border-y-transparent border-y-[6px] top-1/2 -translate-y-1/2"
+                                                        />
+                                                    )}
+                                                    {/* Dice Value Overlay */}
+                                                    {showDice && diceValue && (
+                                                        <div className="absolute inset-0 bg-emerald-600 flex flex-col items-center justify-center z-10 animate-in fade-in zoom-in duration-200">
+                                                            <span className="text-4xl font-black text-white">{diceValue}</span>
+                                                            {diceBreakdown && <span className="text-xs font-mono text-emerald-200 font-bold mt-1">({diceBreakdown})</span>}
+                                                        </div>
+                                                    )}
+                                                </button>
+                                            )}
+
+                                            {/* SKIP / NEXT BUTTON (Right, Big) */}
+                                            <button
+                                                onClick={handleEndTurn}
+                                                disabled={!isMyTurn || (state.phase === 'ROLL') || isAnimating}
+                                                className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative
+                                 ${isMyTurn && state.phase !== 'ROLL' && !isAnimating
+                                                        ? 'bg-blue-600 hover:bg-blue-500 border-blue-500/50 text-white hover:scale-[1.02] active:scale-95'
+                                                        : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
+                                            >
+                                                <span className="text-3xl">⏭</span>
+                                                <span className="text-[10px] font-black uppercase tracking-widest">Далее</span>
+                                                {isTutorial && isMyTurn && (state.phase === 'ACTION' || state.phase === 'MARKET' || state.phase === 'RESOLVE') && (
+                                                    <TutorialTip
+                                                        text="Нажмите, чтобы продолжить"
+                                                        position="top-full mt-4"
+                                                        arrow="top-[-6px] border-b-emerald-500 border-t-0"
+                                                    />
+                                                )}
+                                            </button>
+                                        </>
+                                    );
+                                })()}
+                            </div>
+
+                            {/* DEBUG OVERLAY */}
+                            <TutorialDebug step={state.tutorialStep} isTutorial={isTutorial || false} />
+
+                            {/* TOP BAR: HUD & Game Stats */}
+                            {/* BANK BUTTON (Desktop) */}
+                            {/* 2. VOICE CHAT CONTROLS (Desktop) */}
+                            {userId && (
+                                <div className="mb-2 shrink-0 relative z-[200]">
+                                    <div className="bg-[#1e293b] rounded-xl p-3 border border-slate-700 flex items-center justify-between shadow-sm">
+                                        <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-2">
+                                            🎤 Голосовой чат
+                                            {isSpeaking && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />}
+                                        </span>
+                                        <VoiceControls
+                                            onSpeakingChanged={setIsSpeaking}
+                                            players={state.players}
+                                            isHost={localPlayer?.id === state.creatorId}
+                                            onKickPlayer={handleKickPlayer}
+                                            myId={localPlayer?.id || localPlayer?.userId}
+                                            onTransferCash={(targetId) => {
+                                                const target = state.players.find((p: any) => p.id === targetId);
+                                                if (target) {
+                                                    setTransferTarget(target);
+                                                }
+                                            }}
+                                            onTransferAsset={(targetId) => {
+                                                const target = state.players.find((p: any) => p.id === targetId);
+                                                if (target) {
+                                                    setShowAssetSelectForPlayer(target.id);
+                                                }
+                                            }}
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            {isTutorial && state.tutorialStep === 3 && !showBank && (
+                                <PortalTutorialTip
+                                    text="Нажмите Банк 🏦"
+                                    targetRef={bankButtonRef}
+                                    position="left"
+                                />
+                            )}
+
+                            {/* 3. GAME CONTROLS ROW (AFK, PAUSE, LOCK) */}
+                            <div className="grid grid-cols-4 gap-2 mb-2 shrink-0">
+                                {/* AFK / SKIP TURN (Always Visible) - Takes full width if not host, else 2 cols */}
+                                {
+                                    !localPlayer?.isBankrupted && (
+                                        <button
+                                            onClick={() => socket.emit('toggle_skip_turns', { roomId, userId })}
+                                            className={`rounded-xl flex items-center justify-center gap-2 text-[10px] font-bold uppercase tracking-widest transition-all shadow-lg border py-2
+                                                ${isHost ? 'col-span-2' : 'col-span-4'}
+                                                ${localPlayer.isSkippingTurns
+                                                    ? 'bg-blue-600 hover:bg-blue-500 text-white animate-pulse border-blue-500'
+                                                    : 'bg-slate-800 hover:bg-indigo-600/50 border-slate-700 text-slate-400 hover:text-white'}`}
+                                            title={localPlayer.isSkippingTurns ? "Вернуться в игру" : "Отойти (AFK)"}
+                                        >
+                                            <span className="text-sm">{localPlayer.isSkippingTurns ? '▶️' : '⏸'}</span>
+                                            <span>AFK</span>
+                                        </button>
+                                    )
+                                }
+
+                                {/* HOST ONLY CONTROLS */}
+                                {isHost && (
+                                    <>
+                                        {/* PAUSE */}
+                                        <button
+                                            onClick={handleTogglePause}
+                                            className={`col-span-1 rounded-xl flex items-center justify-center text-[10px] font-bold transition-all shadow-lg border py-2
+                                                ${state.isPaused
+                                                    ? 'bg-yellow-600 hover:bg-yellow-500 text-white animate-pulse border-yellow-500'
+                                                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-400 hover:text-white'}`}
+                                            title={state.isPaused ? "Продолжить игру" : "Пауза"}
+                                        >
+                                            <span className="text-xl">{state.isPaused ? '▶️' : '⏸'}</span>
+                                        </button>
+
+                                        {/* LOCK ROOM */}
+                                        <button
+                                            onClick={() => {
+                                                socket.emit('toggle_lock', { roomId, userId });
+                                            }}
+                                            className={`col-span-1 rounded-xl flex items-center justify-center text-[10px] font-bold transition-all shadow-lg border py-2
+                                                ${state.isLocked
+                                                    ? 'bg-rose-600 hover:bg-rose-500 text-white animate-pulse border-rose-500'
+                                                    : 'bg-slate-800 hover:bg-slate-700 border-slate-700 text-slate-400 hover:text-white'}`}
+                                            title={state.isLocked ? "Открыть комнату" : "Закрыть комнату"}
+                                        >
+                                            <span className="text-xl">{state.isLocked ? '🔒' : '🔓'}</span>
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* 4. CHAT (Fills remaining) */}
+                            <div className="flex-1 bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden flex flex-col shadow-inner relative">
+                                <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-[#1e293b] to-transparent z-10 pointer-events-none"></div>
+
+                                <div className="flex-1 overflow-hidden relative">
+                                    <TextChat
+                                        roomId={roomId}
+                                        socket={socket}
+                                        messages={state.chat || []}
+                                        currentUser={localPlayer}
+                                        gameLogs={state.log || []}
+                                        className="w-full h-full"
+                                    />
+                                </div>
+
+                                {/* Chat Input Area Inside TextChat Usually, but if TextChat handles it, good. 
                             Wait, TextChat typically has input. 
                             Let's check TextChat usage previously.
                             It was just <TextChat ... />. 
                             So it should be self-contained. 
                         */}
+                            </div>
+
+                            {
+                                state.isPaused && (
+                                    <div className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-in fade-in duration-300">
+                                        <div className="bg-[#1e293b] p-8 rounded-3xl border border-slate-700 shadow-2xl flex flex-col items-center max-w-md w-full text-center">
+                                            <div className="text-6xl mb-4 animate-bounce">⏸</div>
+                                            <h2 className="text-2xl font-black text-white uppercase tracking-widest mb-2">Game Paused</h2>
+                                            <p className="text-slate-400 mb-8">Игра приостановлена администратором. Пожалуйста, ожидайте.</p>
+
+                                            {isHost && (
+                                                <button
+                                                    onClick={handleTogglePause}
+                                                    className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+                                                >
+                                                    ▶️ Resume Game
+                                                </button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )
+                            }
                         </div>
-                    </div >
 
-                    {
-                        state.isPaused && (
-                            <div className="absolute inset-0 z-[200] bg-black/80 backdrop-blur-md flex flex-col items-center justify-center p-4 animate-in fade-in duration-300">
-                                <div className="bg-[#1e293b] p-8 rounded-3xl border border-slate-700 shadow-2xl flex flex-col items-center max-w-md w-full text-center">
-                                    <div className="text-6xl mb-4 animate-bounce">⏸</div>
-                                    <h2 className="text-2xl font-black text-white uppercase tracking-widest mb-2">Game Paused</h2>
-                                    <p className="text-slate-400 mb-8">Игра приостановлена администратором. Пожалуйста, ожидайте.</p>
 
-                                    {isHost && (
+
+                        {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */}
+                        <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pt-2 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 z-[150] flex flex-col gap-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
+
+                            {/* VOICE CONTROLS (Mobile) */}
+                            {userId && (
+                                <div className="flex items-center justify-between bg-[#151b2b] p-2 rounded-2xl border border-slate-800 gap-2">
+                                    {/* Mobile Chat Toggle Button */}
+                                    <button
+                                        onClick={() => setShowMobileChat(true)}
+                                        className="p-2 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white relative shadow-lg active:scale-95 transition-all w-12 h-10 flex items-center justify-center"
+                                    >
+                                        <span className="text-xl">💬</span>
+                                        {/* Unread badge logic could go here */}
+                                    </button>
+
+                                    {/* Voice Area (Mic + Avatars) - No Text Label */}
+                                    <div className="flex-1 flex justify-end">
+                                        {isVoiceConnected ? (
+                                            <VoiceControls onSpeakingChanged={setIsSpeaking} players={state?.players || []} />
+                                        ) : (
+                                            <span className="text-[10px] animate-pulse text-yellow-500 px-2">Подключение...</span>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 1. MINI PLAYERS STRIP */}
+                            <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-1 pb-2">
+                                {state.players.map((p: any) => {
+                                    const isCurrent = p.id === currentPlayer?.id;
+                                    const isMe = p.id === localPlayer?.id;
+                                    return (
                                         <button
-                                            onClick={handleTogglePause}
-                                            className="w-full py-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold uppercase tracking-widest shadow-lg hover:scale-[1.02] active:scale-95 transition-all"
+                                            key={p.id}
+                                            onClick={() => {
+                                                if (isMe) {
+                                                    setShowBank(true);
+                                                } else if (isHost) {
+                                                    // Host: Open Menu (Skip/Kick/Transfer)
+                                                    setSelectedPlayerForMenu(p);
+                                                } else {
+                                                    // User: Direct Transfer
+                                                    setTransferTarget(p);
+                                                }
+                                            }}
+                                            className={`flex items-center gap-2 p-1.5 pr-3 rounded-full border shrink-0 transition-all cursor-pointer ${isCurrent
+                                                ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
+                                                : 'bg-slate-800/50 border-slate-700'
+                                                } active:scale-95`}
                                         >
-                                            ▶️ Resume Game
-                                        </button>
-                                    )}
-                                </div>
-                            </div>
-                        )
-                    }
-
-
-
-
-                    {/* 📱 MOBILE CONTROLS (Floating Bottom Bar) */}
-                    <div className="lg:hidden fixed bottom-0 left-0 right-0 p-4 pt-2 bg-slate-900/95 backdrop-blur-xl border-t border-slate-700/50 z-[150] flex flex-col gap-3 pb-[calc(1rem+env(safe-area-inset-bottom))]">
-
-                        {/* VOICE CONTROLS (Mobile) */}
-                        {userId && (
-                            <div className="flex items-center justify-between bg-[#151b2b] p-2 rounded-2xl border border-slate-800 gap-2">
-                                {/* Mobile Chat Toggle Button */}
-                                <button
-                                    onClick={() => setShowMobileChat(true)}
-                                    className="p-2 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white relative shadow-lg active:scale-95 transition-all w-12 h-10 flex items-center justify-center"
-                                >
-                                    <span className="text-xl">💬</span>
-                                    {/* Unread badge logic could go here */}
-                                </button>
-
-                                {/* Voice Area (Mic + Avatars) - No Text Label */}
-                                <div className="flex-1 flex justify-end">
-                                    {isVoiceConnected ? (
-                                        <VoiceControls onSpeakingChanged={setIsSpeaking} players={state?.players || []} />
-                                    ) : (
-                                        <span className="text-[10px] animate-pulse text-yellow-500 px-2">Подключение...</span>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* 1. MINI PLAYERS STRIP */}
-                        <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-1 pb-2">
-                            {state.players.map((p: any) => {
-                                const isCurrent = p.id === currentPlayer?.id;
-                                const isMe = p.id === localPlayer?.id;
-                                return (
-                                    <button
-                                        key={p.id}
-                                        onClick={() => {
-                                            if (isMe) {
-                                                setShowBank(true);
-                                            } else if (isHost) {
-                                                // Host: Open Menu (Skip/Kick/Transfer)
-                                                setSelectedPlayerForMenu(p);
-                                            } else {
-                                                // User: Direct Transfer
-                                                setTransferTarget(p);
-                                            }
-                                        }}
-                                        className={`flex items-center gap-2 p-1.5 pr-3 rounded-full border shrink-0 transition-all cursor-pointer ${isCurrent
-                                            ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
-                                            : 'bg-slate-800/50 border-slate-700'
-                                            } active:scale-95`}
-                                    >
-                                        <div className="relative">
-                                            <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-700 relative">
-                                                {(p.avatar || p.photo_url) ? (
-                                                    <img src={p.avatar || p.photo_url} alt={p.name} className="w-full h-full object-cover" />
-                                                ) : (
-                                                    <div className="w-full h-full flex items-center justify-center text-xs font-bold">{p.name?.[0]}</div>
-                                                )}
+                                            <div className="relative">
+                                                <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-700 relative">
+                                                    {(p.avatar || p.photo_url) ? (
+                                                        <img src={p.avatar || p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-xs font-bold">{p.name?.[0]}</div>
+                                                    )}
+                                                </div>
+                                                {isCurrent && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>}
                                             </div>
-                                            {isCurrent && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>}
-                                        </div>
-                                        <div className="flex flex-col text-left">
-                                            <span className={`text-[10px] font-bold leading-none ${isCurrent ? 'text-white' : 'text-slate-400'}`}>
-                                                {isMe ? 'Вы' : p.name}
-                                            </span>
-                                            <span className="text-[10px] font-mono text-green-400 leading-none">
-                                                ${(p.cash || 0).toLocaleString()}
-                                            </span>
-                                        </div>
-                                    </button>
-                                );
-                            })}
-                        </div>
-
-                        {/* 2. MAIN CONTROLS */}
-                        <div className="flex gap-3">
-                            {/* Roll / Action Logic */}
-                            {state.phase === 'MARKET_WAITING' ? (
-                                <button
-                                    onClick={() => socket.emit('draw_card', { roomId, type: 'MARKET' })}
-                                    disabled={!isMyTurn}
-                                    className="flex-1 bg-blue-600 active:bg-blue-500 text-white rounded-xl font-bold text-sm shadow-lg flex flex-col items-center justify-center gap-1 transition-all"
-                                >
-                                    <span className="text-2xl">🏪</span>
-                                    <span>ОТКРЫТЬ</span>
-                                </button>
-                            ) : state.phase === 'OPPORTUNITY_CHOICE' ? (
-                                <div className="flex gap-2 flex-1">
-                                    <button
-                                        onClick={() => socket.emit('draw_deal', { roomId, type: 'SMALL' })}
-                                        disabled={!isMyTurn}
-                                        className="flex-1 bg-green-700 active:bg-green-600 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all"
-                                    >
-                                        <span className="text-xl">🟢</span>
-                                        <span>SMALL</span>
-                                        <span className="text-[9px] opacity-80">{'< $5k'}</span>
-                                    </button>
-                                    <button
-                                        onClick={() => socket.emit('draw_deal', { roomId, type: 'BIG' })}
-                                        disabled={!isMyTurn || (localPlayer?.cash || 0) < 6000} // Rule Check
-                                        className={`flex-1 rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all
-                                        ${(localPlayer?.cash || 0) >= 6000
-                                                ? 'bg-yellow-600 active:bg-yellow-500 text-white'
-                                                : 'bg-slate-800 text-slate-500 border border-slate-700'}`}
-                                    >
-                                        <span className="text-xl">🟡</span>
-                                        <span>BIG</span>
-                                        <span className="text-[9px] opacity-80">{'> $6k'}</span>
-                                    </button>
-                                </div>
-                            ) : state.phase === 'EXPENSE_WAITING' ? (
-                                <button
-                                    onClick={() => socket.emit('draw_card', { roomId, type: 'EXPENSE' })}
-                                    disabled={!isMyTurn}
-                                    className="flex-1 bg-pink-600 active:bg-pink-500 text-white rounded-xl font-bold text-sm shadow-lg flex flex-col items-center justify-center gap-1 transition-all"
-                                >
-                                    <span className="text-2xl">💸</span>
-                                    <span>ОТКРЫТЬ</span>
-                                </button>
-                            ) : (localPlayer?.charityTurns || 0) > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
-                                <div className="flex gap-2 flex-1 h-16">
-                                    <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                        <span className="text-xl">🎲</span>
-                                        <span>1</span>
-                                    </button>
-                                    <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                        <span className="text-xl">🎲🎲</span>
-                                        <span>2</span>
-                                    </button>
-                                    {(localPlayer?.isFastTrack) && (
-                                        <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
-                                            <span className="text-xl">🎲×3</span>
-                                            <span>3</span>
+                                            <div className="flex flex-col text-left">
+                                                <span className={`text-[10px] font-bold leading-none ${isCurrent ? 'text-white' : 'text-slate-400'}`}>
+                                                    {isMe ? 'Вы' : p.name}
+                                                </span>
+                                                <span className="text-[10px] font-mono text-green-400 leading-none">
+                                                    ${(p.cash || 0).toLocaleString()}
+                                                </span>
+                                            </div>
                                         </button>
-                                    )}
-                                </div>
-                            ) : (
-                                <button
-                                    onClick={() => handleRoll()}
-                                    disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
-                                    className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg relative overflow-hidden
+                                    );
+                                })}
+                            </div>
+
+                            {/* 2. MAIN CONTROLS */}
+                            <div className="flex gap-3">
+                                {/* Roll / Action Logic */}
+                                {state.phase === 'MARKET_WAITING' ? (
+                                    <button
+                                        onClick={() => socket.emit('draw_card', { roomId, type: 'MARKET' })}
+                                        disabled={!isMyTurn}
+                                        className="flex-1 bg-blue-600 active:bg-blue-500 text-white rounded-xl font-bold text-sm shadow-lg flex flex-col items-center justify-center gap-1 transition-all"
+                                    >
+                                        <span className="text-2xl">🏪</span>
+                                        <span>ОТКРЫТЬ</span>
+                                    </button>
+                                ) : state.phase === 'OPPORTUNITY_CHOICE' ? (
+                                    <div className="flex gap-2 flex-1">
+                                        <button
+                                            onClick={() => socket.emit('draw_deal', { roomId, type: 'SMALL' })}
+                                            disabled={!isMyTurn}
+                                            className="flex-1 bg-green-700 active:bg-green-600 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all"
+                                        >
+                                            <span className="text-xl">🟢</span>
+                                            <span>SMALL</span>
+                                            <span className="text-[9px] opacity-80">{'< $5k'}</span>
+                                        </button>
+                                        <button
+                                            onClick={() => socket.emit('draw_deal', { roomId, type: 'BIG' })}
+                                            disabled={!isMyTurn || (localPlayer?.cash || 0) < 6000} // Rule Check
+                                            className={`flex-1 rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all
+                                        ${(localPlayer?.cash || 0) >= 6000
+                                                    ? 'bg-yellow-600 active:bg-yellow-500 text-white'
+                                                    : 'bg-slate-800 text-slate-500 border border-slate-700'}`}
+                                        >
+                                            <span className="text-xl">🟡</span>
+                                            <span>BIG</span>
+                                            <span className="text-[9px] opacity-80">{'> $6k'}</span>
+                                        </button>
+                                    </div>
+                                ) : state.phase === 'EXPENSE_WAITING' ? (
+                                    <button
+                                        onClick={() => socket.emit('draw_card', { roomId, type: 'EXPENSE' })}
+                                        disabled={!isMyTurn}
+                                        className="flex-1 bg-pink-600 active:bg-pink-500 text-white rounded-xl font-bold text-sm shadow-lg flex flex-col items-center justify-center gap-1 transition-all"
+                                    >
+                                        <span className="text-2xl">💸</span>
+                                        <span>ОТКРЫТЬ</span>
+                                    </button>
+                                ) : (localPlayer?.charityTurns || 0) > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+                                    <div className="flex gap-2 flex-1 h-16">
+                                        <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                            <span className="text-xl">🎲</span>
+                                            <span>1</span>
+                                        </button>
+                                        <button onClick={() => handleRoll(2)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                            <span className="text-xl">🎲🎲</span>
+                                            <span>2</span>
+                                        </button>
+                                        {(localPlayer?.isFastTrack) && (
+                                            <button onClick={() => handleRoll(3)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
+                                                <span className="text-xl">🎲×3</span>
+                                                <span>3</span>
+                                            </button>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <button
+                                        onClick={() => handleRoll()}
+                                        disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
+                                        className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg relative overflow-hidden
                                 ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
-                                            ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
+                                                ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
+                                                : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
+                                    >
+                                        {/* Dice Value Overlay - Mobile */}
+                                        {showDice && diceValue && (
+                                            <div className="absolute inset-0 bg-emerald-600 flex flex-col items-center justify-center z-20 animate-in fade-in zoom-in duration-200">
+                                                <span className="text-4xl font-black text-white leading-none">{diceValue}</span>
+                                                {diceBreakdown && <span className="text-xs font-mono text-emerald-200 font-bold mt-1">({diceBreakdown})</span>}
+                                            </div>
+                                        )}
+
+                                        {hasRolled ? (
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-2xl font-black">{diceValue}</span>
+                                                <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
+                                            </div>
+                                        ) : (
+                                            <>
+                                                <span className="text-2xl">🎲</span>
+                                                <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+
+                                <button
+                                    onClick={handleEndTurn}
+                                    disabled={
+                                        !isMyTurn ||
+                                        isAnimating ||
+                                        state.phase === 'BABY_ROLL' ||
+                                        (state.phase === 'ROLL' && !state.currentCard && !hasRolled)
+                                    }
+                                    className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+                        ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
+                                            ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
                                             : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
                                 >
-                                    {/* Dice Value Overlay - Mobile */}
-                                    {showDice && diceValue && (
-                                        <div className="absolute inset-0 bg-emerald-600 flex flex-col items-center justify-center z-20 animate-in fade-in zoom-in duration-200">
-                                            <span className="text-4xl font-black text-white leading-none">{diceValue}</span>
-                                            {diceBreakdown && <span className="text-xs font-mono text-emerald-200 font-bold mt-1">({diceBreakdown})</span>}
-                                        </div>
-                                    )}
-
-                                    {hasRolled ? (
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-2xl font-black">{diceValue}</span>
-                                            <span className="text-[10px] uppercase font-bold tracking-wider opacity-70">Выпало</span>
-                                        </div>
-                                    ) : (
-                                        <>
-                                            <span className="text-2xl">🎲</span>
-                                            <span className="text-sm font-black uppercase tracking-widest">БРОСОК</span>
-                                        </>
-                                    )}
+                                    <span className="text-2xl">➡</span>
+                                    <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
                                 </button>
-                            )}
 
-                            <button
-                                onClick={handleEndTurn}
-                                disabled={
-                                    !isMyTurn ||
-                                    isAnimating ||
-                                    state.phase === 'BABY_ROLL' ||
-                                    (state.phase === 'ROLL' && !state.currentCard && !hasRolled)
-                                }
-                                className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
-                        ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
-                                        ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
-                                        : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
-                            >
-                                <span className="text-2xl">➡</span>
-                                <span className="text-sm font-black uppercase tracking-widest">ДАЛЕЕ</span>
-                            </button>
-
-                            {/* Fast Track Button (Mobile) */}
-                            {localPlayer?.canEnterFastTrack && isMyTurn && (
-                                <button
-                                    onClick={() => setShowFastTrackModal(true)}
-                                    className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
-                                >
-                                    🚀
-                                </button>
-                            )}
-
-                            {/* Sandbox Toggle Removed per user request */}
-
-                            {/* BANK BUTTON (Mobile) */}
-                            <button
-                                onClick={() => setShowBank(true)}
-                                className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors relative"
-                            >
-                                🏦
-                                {isTutorial && state.tutorialStep === 3 && (
-                                    <TutorialTip
-                                        text="Нажмите Банк 🏦"
-                                        position="bottom-full mb-3 left-1/2 -translate-x-1/2" // Adjusted to show ABOVE button
-                                        arrow="bottom-[-6px] left-1/2 -translate-x-1/2 border-t-emerald-500 border-b-0"
-                                    />
+                                {/* Fast Track Button (Mobile) */}
+                                {localPlayer?.canEnterFastTrack && isMyTurn && (
+                                    <button
+                                        onClick={() => setShowFastTrackModal(true)}
+                                        className="w-16 h-16 rounded-xl bg-gradient-to-br from-green-500 to-emerald-600 text-white flex items-center justify-center text-2xl shadow-lg animate-pulse"
+                                    >
+                                        🚀
+                                    </button>
                                 )}
-                            </button>
 
-                            {/* MENU TOGGLE */}
-                            <button
-                                onClick={() => setShowMobileMenu(true)}
-                                className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center text-2xl"
-                            >
-                                🍔
-                            </button>
+                                {/* Sandbox Toggle Removed per user request */}
+
+                                {/* BANK BUTTON (Mobile) */}
+                                <button
+                                    onClick={() => setShowBank(true)}
+                                    className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-2xl transition-colors relative"
+                                >
+                                    🏦
+                                    {isTutorial && state.tutorialStep === 3 && (
+                                        <TutorialTip
+                                            text="Нажмите Банк 🏦"
+                                            position="bottom-full mb-3 left-1/2 -translate-x-1/2" // Adjusted to show ABOVE button
+                                            arrow="bottom-[-6px] left-1/2 -translate-x-1/2 border-t-emerald-500 border-b-0"
+                                        />
+                                    )}
+                                </button>
+
+                                {/* MENU TOGGLE */}
+                                <button
+                                    onClick={() => setShowMobileMenu(true)}
+                                    className="w-16 h-16 rounded-xl bg-slate-800 border border-slate-700 text-slate-400 flex items-center justify-center text-2xl"
+                                >
+                                    🍔
+                                </button>
+                            </div>
                         </div>
-                    </div>
 
 
-                    {/* --- MODALS --- */}
-                    <BankModal
-                        isOpen={showBank}
-                        onClose={() => { setShowBank(false); setBankRecipientId(''); }}
-                        player={localPlayer}
-                        roomId={roomId}
-                        transactions={state.transactions || []}
-                        players={state.players}
-                        initialRecipientId={bankRecipientId}
-                        isTutorial={isTutorial}
-                    />
+                        {/* --- MODALS --- */}
+                        <BankModal
+                            isOpen={showBank}
+                            onClose={() => { setShowBank(false); setBankRecipientId(''); }}
+                            player={localPlayer}
+                            roomId={roomId}
+                            transactions={state.transactions || []}
+                            players={state.players}
+                            initialRecipientId={bankRecipientId}
+                            isTutorial={isTutorial}
+                        />
 
-                    {
-                        showMenuModal && (
-                            <MenuModal
-                                onClose={() => setShowMenuModal(false)}
-                                onExit={handleExit}
-                                onEndGame={() => socket.emit('end_game_host', { roomId, userId })}
-                                toggleMute={toggleMute}
-                                isMuted={isMuted}
-                                volume={volume}
-                                deckCounts={state.deckCounts}
-                                greenBalance={partnershipUser?.greenBalance}
-                                setVolume={handleVolumeChange}
-                                onShowRules={() => setShowRules(true)}
-                                zoom={zoom}
-                                setZoom={setZoom}
-                                isHost={!!isHost}
-                                hasWinner={state.players.some((p: any) => p.hasWon)}
-                                onSkipTurn={handleForceSkip}
-                                onKickCurrent={() => handleKickPlayer(currentPlayer.id)}
-                                onToggleOrientation={() => setForceLandscape(!forceLandscape)}
-                                onCancelGame={() => {
-                                    if (window.confirm("Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.")) {
-                                        socket.emit('delete_room', { roomId, userId: localPlayer?.userId || localPlayer?.id });
-                                    }
-                                }}
-                                onReshuffle={handleReshuffleCards}
-                            />
-                        )
-                    }
+                        {
+                            showMenuModal && (
+                                <MenuModal
+                                    onClose={() => setShowMenuModal(false)}
+                                    onExit={handleExit}
+                                    onEndGame={() => socket.emit('end_game_host', { roomId, userId })}
+                                    toggleMute={toggleMute}
+                                    isMuted={isMuted}
+                                    volume={volume}
+                                    deckCounts={state.deckCounts}
+                                    greenBalance={partnershipUser?.greenBalance}
+                                    setVolume={handleVolumeChange}
+                                    onShowRules={() => setShowRules(true)}
+                                    zoom={zoom}
+                                    setZoom={setZoom}
+                                    isHost={!!isHost}
+                                    hasWinner={state.players.some((p: any) => p.hasWon)}
+                                    onSkipTurn={handleForceSkip}
+                                    onKickCurrent={() => handleKickPlayer(currentPlayer.id)}
+                                    onToggleOrientation={() => setForceLandscape(!forceLandscape)}
+                                    onCancelGame={() => {
+                                        if (window.confirm("Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.")) {
+                                            socket.emit('delete_room', { roomId, userId: localPlayer?.userId || localPlayer?.id });
+                                        }
+                                    }}
+                                    onReshuffle={handleReshuffleCards}
+                                />
+                            )
+                        }
 
-                    {
-                        showRules && (
-                            <RulesModal
-                                onClose={() => setShowRules(false)}
-                                isTutorial={isTutorial}
-                                onConfirm={() => setShowRules(false)}
-                            />
-                        )
-                    }
+                        {
+                            showRules && (
+                                <RulesModal
+                                    onClose={() => setShowRules(false)}
+                                    isTutorial={isTutorial}
+                                    onConfirm={() => setShowRules(false)}
+                                />
+                            )
+                        }
 
-                    {
-                        showExpenseBreakdown && (
+                        {showExpenseBreakdown && (
                             <ExpenseBreakdownModal
                                 breakdown={localPlayer?.expenseBreakdown}
                                 totalExpenses={localPlayer?.expenses || 0}
                                 onClose={() => setShowExpenseBreakdown(false)}
                             />
-                        )
-                    }
+                        )}
 
-                    {
-                        showFastTrackModal && (
-                            <ExitToFastTrackModal
-                                onClose={() => {
-                                    console.log('[Board] Closing FastTrackModal, triggering step 3');
-                                    setShowFastTrackModal(false);
-                                    if (isTutorial) {
-                                        console.log('[Board] Emitting set_tutorial_step: 3');
-                                        socket.emit('set_tutorial_step', { roomId, step: 3 });
-                                    }
-                                }}
-                                player={localPlayer}
-                                onConfirm={() => {
-                                    handleEnterFastTrack();
-                                    setShowFastTrackModal(false);
-                                    if (isTutorial) {
-                                        socket.emit('set_tutorial_step', { roomId, step: 3 });
-                                    }
-                                }}
-                            />
-                        )
-                    }
+                        {
+                            showFastTrackModal && (
+                                <ExitToFastTrackModal
+                                    onClose={() => {
+                                        console.log('[Board] Closing FastTrackModal, triggering step 3');
+                                        setShowFastTrackModal(false);
+                                        if (isTutorial) {
+                                            console.log('[Board] Emitting set_tutorial_step: 3');
+                                            socket.emit('set_tutorial_step', { roomId, step: 3 });
+                                        }
+                                    }}
+                                    player={localPlayer}
+                                    onConfirm={() => {
+                                        handleEnterFastTrack();
+                                        setShowFastTrackModal(false);
+                                        if (isTutorial) {
+                                            socket.emit('set_tutorial_step', { roomId, step: 3 });
+                                        }
+                                    }}
+                                />
+                            )
+                        }
 
-                    {
-                        showFastTrackInfo && <FastTrackInfoModal onClose={() => {
+                        {showFastTrackInfo && <FastTrackInfoModal onClose={() => {
                             console.log('[Board] Closing FastTrackInfoModal, triggering step 3');
                             setShowFastTrackInfo(false);
                             if (isTutorial) {
                                 console.log('[Board] Emitting set_tutorial_step: 3');
                                 socket.emit('set_tutorial_step', { roomId, step: 3 });
                             }
-                        }} player={localPlayer} />
-                    }
+                        }} player={localPlayer} />}
 
-                    {
-                        transferAssetItem && (
-                            <TransferModal
-                                isOpen={true}
-                                onClose={() => setTransferAssetItem(null)}
-                                asset={transferAssetItem.item}
-                                players={state.players}
-                                myId={localPlayer?.id}
-                                onTransfer={(toId, quantity) => {
-                                    // CHECK FOR ADMIN TRANSFER
-                                    const ownerId = (transferAssetItem as any).ownerId;
-                                    const isHost = localPlayer?.id === state.creatorId;
+                        {
+                            transferAssetItem && (
+                                <TransferModal
+                                    isOpen={true}
+                                    onClose={() => setTransferAssetItem(null)}
+                                    asset={transferAssetItem.item}
+                                    players={state.players}
+                                    myId={localPlayer?.id}
+                                    onTransfer={handleTransferAsset}
+                                    initialRecipientId={(transferAssetItem as any).recipientId}
+                                />
+                            )
+                        }
 
-                                    if (isHost && ownerId && ownerId !== localPlayer?.id) {
-                                        // Admin Transfer
-                                        socket.emit('host_transfer_asset', {
-                                            roomId,
-                                            userId: localPlayer?.userId || localPlayer?.id, // Host Auth
-                                            fromPlayerId: ownerId,
-                                            toPlayerId: toId,
-                                            assetIndex: transferAssetItem.index
-                                        });
-                                        setTransferAssetItem(null);
-                                    } else {
-                                        // Normal Transfer
-                                        handleTransferAsset(toId, quantity);
-                                    }
+                        {/* New Asset Selector Modal */}
+                        {showAssetSelectForPlayer && (
+                            <SelectAssetModal
+                                isOpen={!!showAssetSelectForPlayer}
+                                onClose={() => setShowAssetSelectForPlayer(null)}
+                                assets={localPlayer?.assets || []}
+                                recipientName={state.players.find((p: any) => p.id === showAssetSelectForPlayer)?.name || 'Unknown'}
+                                onSelect={(asset, index) => {
+                                    setShowAssetSelectForPlayer(null);
+                                    setTransferAssetItem({
+                                        item: asset,
+                                        index,
+                                        recipientId: showAssetSelectForPlayer
+                                    } as any);
                                 }}
-                                initialRecipientId={(transferAssetItem as any).recipientId}
                             />
-                        )
-                    }
+                        )}
 
-                    {/* New Asset Selector Modal */}
-                    {
-                        showAssetSelectForPlayer && (() => {
-                            const targetPlayer = state.players.find((p: any) => p.id === showAssetSelectForPlayer);
-                            return (
-                                <SelectAssetModal
-                                    isOpen={!!showAssetSelectForPlayer}
-                                    onClose={() => setShowAssetSelectForPlayer(null)}
-                                    assets={targetPlayer?.assets || []}
-                                    recipientName={targetPlayer?.name || 'Unknown'}
-                                    onSelect={(asset, index) => {
-                                        setShowAssetSelectForPlayer(null);
-                                        setTransferAssetItem({
-                                            item: asset,
-                                            index,
-                                            recipientId: undefined, // Recipient selected in next step
-                                            ownerId: showAssetSelectForPlayer // Track Owner for Admin Transfer
-                                        } as any);
+
+
+                        {
+                            adminAction && (
+                                <AdminActionModal
+                                    isOpen={!!adminAction}
+                                    onClose={() => setAdminAction(null)}
+                                    type={adminAction.type}
+                                    targetPlayer={adminAction.player}
+                                    players={state.players}
+                                    onConfirm={(amount, targetId) => {
+                                        if (adminAction.type === 'SKIP') {
+                                            // Use 'userId' prop (Persistent ID) for permission check
+                                            socket.emit('host_skip_turn', { roomId, userId }, (response: any) => {
+                                                if (!response.success) {
+                                                    alert(`Ошибка: ${response.error}`);
+                                                }
+                                            });
+                                        } else if (adminAction.type === 'KICK') {
+                                            handleKickPlayer(adminAction.player.id);
+                                        } else if (adminAction.type === 'GIFT' && amount) {
+                                            // Use 'userId' prop for Host Auth, and adminAction.player.id as target
+                                            socket.emit('host_give_cash', { roomId, userId, targetPlayerId: adminAction.player.id, amount }, (response: any) => {
+                                                if (!response?.success) {
+                                                    console.error('Gift failed:', response?.error);
+                                                }
+                                            });
+                                        } else if (adminAction.type === 'FORCE_MOVE') {
+                                            socket.emit('host_force_move', { roomId, userId, targetPlayerId: adminAction.player.id });
+                                        } else if (adminAction.type === 'TRANSFER_DEAL' && targetId) {
+                                            socket.emit('host_transfer_deal', { roomId, userId, targetPlayerId: adminAction.player.id, recipientId: targetId });
+                                        }
+                                        setAdminAction(null);
                                     }}
                                 />
-                            );
-                        })()
-                    }
+                            )
+                        }
+                        {
+                            congratulateData && (
+                                <CongratulateModal
+                                    isOpen={congratulateData.isOpen}
+                                    onClose={() => setCongratulateData(null)}
+                                    targetPlayerName={congratulateData.targetName}
+                                    targetPlayerId={congratulateData.targetId}
+                                    me={state.players.find((p: any) => p.id === socket.id) || state.players[0]}
+                                    roomId={roomId}
+                                    socket={socket}
+                                />
+                            )
+                        }
 
-
-
-                    {
-                        adminAction && (
-                            <AdminActionModal
-                                isOpen={!!adminAction}
-                                onClose={() => setAdminAction(null)}
-                                type={adminAction.type}
-                                targetPlayer={adminAction.player}
-                                players={state.players}
-                                onConfirm={(amount, targetId) => {
-                                    if (adminAction.type === 'SKIP') {
-                                        // Use 'userId' prop (Persistent ID) for permission check
-                                        socket.emit('host_skip_turn', { roomId, userId }, (response: any) => {
-                                            if (!response.success) {
-                                                alert(`Ошибка: ${response.error}`);
-                                            }
-                                        });
-                                    } else if (adminAction.type === 'KICK') {
-                                        handleKickPlayer(adminAction.player.id);
-                                    } else if (adminAction.type === 'GIFT' && amount) {
-                                        // Use 'userId' prop for Host Auth, and adminAction.player.id as target
-                                        socket.emit('host_give_cash', { roomId, userId, targetPlayerId: adminAction.player.id, amount }, (response: any) => {
-                                            if (!response?.success) {
-                                                console.error('Gift failed:', response?.error);
-                                            }
-                                        });
-                                    } else if (adminAction.type === 'FORCE_MOVE') {
-                                        socket.emit('host_force_move', { roomId, userId, targetPlayerId: adminAction.player.id });
-                                    } else if (adminAction.type === 'TRANSFER_DEAL' && targetId) {
-                                        socket.emit('host_transfer_deal', { roomId, userId, targetPlayerId: adminAction.player.id, recipientId: targetId });
-                                    }
-                                    setAdminAction(null);
-                                }}
-                            />
-                        )
-                    }
-                    {
-                        congratulateData && (
-                            <CongratulateModal
-                                isOpen={congratulateData.isOpen}
-                                onClose={() => setCongratulateData(null)}
-                                targetPlayerName={congratulateData.targetName}
-                                targetPlayerId={congratulateData.targetId}
-                                me={state.players.find((p: any) => p.id === socket.id) || state.players[0]}
-                                roomId={roomId}
-                                socket={socket}
-                            />
-                        )
-                    }
-
-                    {/* Victory Modal */}
-                    {
-                        showVictory && victoryPlayer && (
+                        {/* Victory Modal */}
+                        {showVictory && victoryPlayer && (
                             <VictoryModal
                                 player={victoryPlayer}
                                 onClose={() => setShowVictory(false)}
                             />
-                        )
-                    }
+                        )}
 
-                    {
-                        showRankings && (
+                        {showRankings && (
                             <RankingsModal
                                 rankings={rankings}
                                 onClose={() => router.push('/lobby')}
                                 isOpen={showRankings} // Pass isOpen prop
                             />
-                        )
-                    }
+                        )}
 
-                    {/* Mobile Chat Modal */}
-                    {
-                        showMobileChat && (
+                        {/* Mobile Chat Modal */}
+                        {showMobileChat && (
                             <div className="fixed inset-0 z-[250] bg-black/80 backdrop-blur-md flex flex-col pt-[env(safe-area-inset-top)] animate-in fade-in slide-in-from-bottom-5 duration-300">
                                 <div className="flex items-center justify-between p-4 border-b border-slate-700 bg-[#1e293b]">
                                     <h3 className="text-white font-bold uppercase tracking-wider flex items-center gap-2">
@@ -2329,10 +2299,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                     />
                                 </div>
                             </div>
-                        )
-                    }
-                    {
-                        transferTarget && (
+                        )}
+                        {transferTarget && (
                             <TransferCashModal
                                 isOpen={!!transferTarget}
                                 onClose={() => setTransferTarget(null)}
@@ -2348,22 +2316,19 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                     setTransferTarget(null);
                                 }}
                             />
-                        )
-                    }
+                        )}
 
-                    {/* Square Info Modal (Interactive Board Cells) */}
-                    {
-                        squareInfo && !squareInfo.card && (
+                        {/* Square Info Modal (Interactive Board Cells) */}
+                        {squareInfo && !squareInfo.card && (
                             <SquareInfoModal
                                 square={squareInfo}
                                 onClose={() => setSquareInfo(null)}
                                 player={localPlayer}
                                 roomId={roomId}
                             />
-                        )
-                    }
+                        )}
+                    </div>
                 </div >
-
             )
         )
     );
