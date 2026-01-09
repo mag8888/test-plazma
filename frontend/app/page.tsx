@@ -17,62 +17,17 @@ function HomeContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [mode, setMode] = useState<'LOGIN' | 'REGISTER'>('LOGIN');
-  const [hasAuthParam, setHasAuthParam] = useState(false);
 
-  // Check for auth parameter in URL
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const authCode = urlParams.get('auth');
-    if (authCode) {
-      console.log('🔐 Auth parameter detected, attempting magic login...');
-      setHasAuthParam(true);
 
-      // Perform Magic Login
-      const performMagicLogin = async () => {
-        try {
-          // Use absolute path to Backend since Frontend is separate
-          const res = await fetch(`${getBackendUrl()}/api/auth/magic-login`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ code: authCode })
-          });
-          const data = await res.json();
+  // Auth is handled globally by TelegramProvider now
 
-          if (res.ok) {
-            console.log('✅ Magic Login Success:', data.user?.username);
-            localStorage.setItem('moneo_user_auth', JSON.stringify({
-              user: data.user,
-              token: data.token
-            }));
-            localStorage.removeItem('moneo_is_logged_out');
-
-            if (data.user?.isAdmin) {
-              window.location.href = '/admin';
-            } else {
-              window.location.href = '/home';
-            }
-          } else {
-            console.error('❌ Magic Login Failed:', data.error);
-            setError(data.error || 'Invalid Link');
-            setHasAuthParam(false);
-          }
-        } catch (e: any) {
-          console.error('Network Error during magic login:', e);
-          setError(`Auth Error: ${e.message || 'Network'}`);
-          setHasAuthParam(false);
-        }
-      };
-
-      performMagicLogin();
-    }
-  }, []);
 
   useEffect(() => {
-    console.log('📍 [page.tsx] isReady:', isReady, 'user:', !!user, 'hasAuthParam:', hasAuthParam);
+    console.log('📍 [page.tsx] isReady:', isReady, 'user:', !!user);
     if (isReady && user) {
       router.replace('/home');
     }
-  }, [user, isReady, router, hasAuthParam]);
+  }, [user, isReady, router]);
 
   const handleUserLogin = async () => {
     if (!username || !password) {
@@ -143,7 +98,7 @@ function HomeContent() {
           <p className="text-slate-400 text-sm">Финансовая стратегия</p>
         </div>
 
-        {isReady && !user && !hasAuthParam ? (
+        {isReady && !user ? (
           <div className="w-full bg-slate-900/80 backdrop-blur-xl border border-white/5 p-6 rounded-3xl shadow-2xl animate-in zoom-in-95 duration-300">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-white">{mode === 'LOGIN' ? 'Вход' : 'Регистрация'}</h2>
@@ -207,7 +162,9 @@ function HomeContent() {
         ) : (
           <div className="flex flex-col items-center gap-3 animate-pulse">
             <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-slate-500 text-xs">{hasAuthParam ? 'Авторизация...' : 'Загрузка...'}</p>
+            <p className="text-slate-500 text-xs text-center mt-2">
+              {isReady && user ? 'Redirecting...' : 'Загрузка...'}
+            </p>
           </div>
         )}
       </div>
