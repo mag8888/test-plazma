@@ -84,6 +84,20 @@ export class DbCardManager {
             ...MARKET_CARDS
         ];
 
+        // 1. Remove Stale Cards (Fix for duplication)
+        // We only remove cards of the types we are syncing to avoid deleting Dreams, etc.
+        const managedTypes = ['EXPENSE', 'DEAL_SMALL', 'DEAL_BIG', 'MARKET'];
+        const idsToKeep = allCards.map(c => c.id);
+
+        const deleteRes = await CardModel.deleteMany({
+            type: { $in: managedTypes },
+            id: { $nin: idsToKeep }
+        });
+        if (deleteRes.deletedCount > 0) {
+            console.log(`🗑️ Removed ${deleteRes.deletedCount} stale cards from DB.`);
+        }
+
+        // 2. Upsert New/Updated Cards
         const ops = allCards.map(card => ({
             updateOne: {
                 filter: { id: card.id },
