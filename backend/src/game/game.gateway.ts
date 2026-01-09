@@ -1117,23 +1117,24 @@ export class GameGateway {
             });
 
             // HOST: Transfer Asset (Admin Override)
+            // HOST: Transfer Asset (Admin Override)
             socket.on('host_transfer_asset', async ({ roomId, userId, fromPlayerId, toPlayerId, assetIndex }) => {
-                const room = this.rooms.get(roomId);
-                if (room) {
+                const game = this.games.get(roomId);
+                if (game) {
                     try {
                         // 1. Verify Host
-                        if (room.creatorId !== userId) { // Use persistent ID
+                        if (game.state.creatorId !== userId) { // Use persistent ID
                             socket.emit('error', { message: 'Only host can transfer assets.' });
                             return;
                         }
 
                         // 2. Execute Transfer
-                        room.engine.transferAsset(fromPlayerId, toPlayerId, assetIndex);
+                        game.transferAsset(fromPlayerId, toPlayerId, assetIndex);
 
                         // 3. Update State
-                        this.io.to(roomId).emit('game_update', room.engine.getState());
+                        this.io.to(roomId).emit('game_update', game.getState());
                         this.io.to(roomId).emit('log_message', {
-                            text: `👮 ADMIN transferred asset from ${room.engine.state.players.find(p => p.id === fromPlayerId)?.name} to ${room.engine.state.players.find(p => p.id === toPlayerId)?.name}`,
+                            text: `👮 ADMIN transferred asset from ${game.state.players.find((p: any) => p.id === fromPlayerId)?.name} to ${game.state.players.find((p: any) => p.id === toPlayerId)?.name}`,
                             type: 'info'
                         });
 
