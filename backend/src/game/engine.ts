@@ -296,6 +296,21 @@ export class GameEngine {
         this.state.turnExpiresAt = Date.now() + (this.state.currentTurnTime * 1000);
     }
 
+    getCurrentPlayer(): PlayerState {
+        return this.state.players[this.state.currentPlayerIndex];
+    }
+
+    // Alias for consistency if Gateway calls handleRoll
+    handleRoll(callerId: string) {
+        const player = this.getCurrentPlayer();
+        if (player.id !== callerId) {
+            throw new Error("Not your turn");
+        }
+        return this.rollDice(2);
+    }
+
+
+
 
     initPlayer(p: IPlayer, gameMode: string = 'ENGINEER'): PlayerState {
         // Assign Profession based on Mode
