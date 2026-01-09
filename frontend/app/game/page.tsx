@@ -613,7 +613,7 @@ function GameContent() {
                                                         className="w-full bg-black/20 border border-white/10 rounded-2xl px-6 py-4 appearance-none outline-none focus:border-blue-500/50 focus:bg-black/40 transition-all text-lg font-medium text-slate-200 shadow-inner"
                                                         disabled={isReady}
                                                     >
-                                                        {DREAMS.filter(d => !room?.availableDreams || room.availableDreams.includes(d.name)).map(d => (
+                                                        {DREAMS.filter(d => !room?.availableDreams || room.availableDreams.length === 0 || room.availableDreams.includes(d.name)).map(d => (
                                                             <option key={d.id} value={d.name}>
                                                                 {d.name} (${d.cost.toLocaleString()})
                                                             </option>
