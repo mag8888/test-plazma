@@ -107,11 +107,15 @@ export const BoardVisualizer = React.memo(({ board, players, animatingPos, curre
         positionGroups[pos].push(p.id);
     });
 
+    if (!board || board.length === 0) {
+        return <div className="text-white text-center p-4 bg-red-900/50 rounded-xl">ERR: No Board Data</div>;
+    }
+
     return (
         <div className="w-full h-full relative p-2 flex items-center justify-center">
 
             {/* STICT SQUARE CONTAINER */}
-            <div className="relative aspect-square h-full max-h-full max-w-full" style={{ containerType: 'size' }}>
+            <div className="relative aspect-square h-auto w-full max-h-full max-w-full" style={{ containerType: 'inline-size' }}>
 
                 {/* 1. OUTER TRACK (GRID) */}
                 <div className="absolute inset-0 grid grid-cols-[repeat(13,minmax(0,1fr))] grid-rows-[repeat(13,minmax(0,1fr))] pointer-events-none">
