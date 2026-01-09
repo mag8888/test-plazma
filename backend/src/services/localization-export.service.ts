@@ -156,6 +156,17 @@ export class LocalizationExportService {
             console.error('Error extracting cards:', e);
         }
 
+        // 3. Dreams (New)
+        const { DREAMS_LIST } = require('../game/constants/dreams');
+        if (DREAMS_LIST) {
+            DREAMS_LIST.forEach((dream: any) => {
+                rows.push(`Dream,DREAM_NAME_${this.escapeCsv(dream.name)},${this.escapeCsv(dream.name)},,,,`);
+                if (dream.description) {
+                    rows.push(`Dream,DREAM_DESC_${this.escapeCsv(dream.name)},${this.escapeCsv(dream.description)},,,,`);
+                }
+            });
+        }
+
         // 3. Frontend Strings (Regex Extraction)
         try {
             const frontendDir = path.join(__dirname, '../../../frontend/app');
