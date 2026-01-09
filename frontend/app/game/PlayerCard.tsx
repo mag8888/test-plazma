@@ -24,8 +24,8 @@ export const PlayerCard = ({ player, isCurrentTurn, index }: PlayerCardProps) =>
 
     return (
         <div className={`relative bg-[#1e293b]/80 backdrop-blur-sm rounded-xl p-3 border transition-all ${isCurrentTurn
-                ? 'border-green-500/60 shadow-lg shadow-green-500/20 ring-2 ring-green-500/30'
-                : 'border-slate-700/50'
+            ? 'border-green-500/60 shadow-lg shadow-green-500/20 ring-2 ring-green-500/30'
+            : 'border-slate-700/50'
             }`}>
             {/* Turn Indicator */}
             {isCurrentTurn && (
@@ -59,7 +59,9 @@ export const PlayerCard = ({ player, isCurrentTurn, index }: PlayerCardProps) =>
                 </div>
                 <div className="bg-[#0f172a]/60 rounded px-1.5 py-1">
                     <div className="text-slate-500 uppercase font-bold">ДП</div>
-                    <div className="text-blue-400 font-mono font-bold">+${(player.cashflow || 0).toLocaleString()}</div>
+                    <div className={`${(player.cashflow || 0) < 0 ? 'text-red-400' : 'text-blue-400'} font-mono font-bold`}>
+                        {(player.cashflow || 0) > 0 ? '+' : ''}${(player.cashflow || 0).toLocaleString()}
+                    </div>
                 </div>
             </div>
 

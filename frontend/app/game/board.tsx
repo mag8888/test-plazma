@@ -1378,7 +1378,9 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                     <div className="bg-[#0B0E14]/50 p-3 rounded-2xl border border-slate-800/80 relative overflow-hidden">
                                         <div className="flex justify-between items-center mb-2">
                                             <span className="text-[9px] text-blue-400 uppercase font-bold tracking-wider">PAYDAY</span>
-                                            <span className="font-mono text-green-400 font-bold text-lg leading-none">+${(localPlayer?.cashflow || 0).toLocaleString()}</span>
+                                            <span className={`font-mono ${localPlayer?.cashflow < 0 ? 'text-red-400' : 'text-green-400'} font-bold text-lg leading-none`}>
+                                                {localPlayer?.cashflow > 0 ? '+' : ''}${localPlayer?.cashflow?.toLocaleString() || 0}
+                                            </span>
                                         </div>
                                         <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                                             <div
