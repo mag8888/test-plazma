@@ -2358,7 +2358,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                         )
                     }
                 </div >
-                </div >
+
             )
         )
     );
