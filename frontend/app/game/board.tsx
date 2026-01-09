@@ -1731,7 +1731,26 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                             🎤 Голосовой чат
                                             {isSpeaking && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />}
                                         </span>
-                                        <VoiceControls onSpeakingChanged={setIsSpeaking} players={state.players} />
+                                        <VoiceControls
+                                            onSpeakingChanged={setIsSpeaking}
+                                            players={state.players}
+                                            isHost={localPlayer?.id === state.creatorId}
+                                            onKickPlayer={handleKickPlayer}
+                                            myId={localPlayer?.id || localPlayer?.userId}
+                                            onTransferCash={(targetId) => {
+                                                const target = state.players.find((p: any) => p.id === targetId);
+                                                if (target) {
+                                                    setTransferTarget(target);
+                                                }
+                                            }}
+                                            onTransferAsset={(targetId) => {
+                                                const target = state.players.find((p: any) => p.id === targetId);
+                                                if (target) {
+                                                    // For now, redirect user to asset list as per current architecture
+                                                    alert(`Чтобы передать актив игроку ${target.name}, выберите актив в вашем портфеле и нажмите "Передать".`);
+                                                }
+                                            }}
+                                        />
                                     </div>
                                 </div>
                             )}

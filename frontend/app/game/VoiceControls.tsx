@@ -7,10 +7,21 @@ interface VoiceControlsProps {
     players: any[]; // Game players list to match photos
     isHost?: boolean;
     onKickPlayer?: (playerId: string) => void;
+    onTransferCash?: (playerId: string) => void;
+    onTransferAsset?: (playerId: string) => void;
+    myId?: string;
 }
 
 // Sub-component for individual avatar to handle speaking state efficiently
-const VoiceAvatar = ({ participant, player, isHost, onKick }: { participant?: any, player: any, isHost?: boolean, onKick?: (id: string) => void }) => {
+const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTransferAsset, isMe }: {
+    participant?: any,
+    player: any,
+    isHost?: boolean,
+    onKick?: (id: string) => void,
+    onTransferCash?: (id: string) => void,
+    onTransferAsset?: (id: string) => void,
+    isMe?: boolean
+}) => {
     // We rely on parent updates or participant property being present
     // Since we receive the participant object from context which updates on change, this is fine.
 
@@ -18,6 +29,9 @@ const VoiceAvatar = ({ participant, player, isHost, onKick }: { participant?: an
     const isConnected = !!participant;
 
     const [showMenu, setShowMenu] = useState(false);
+
+    // Close menu when clicking outside is wired in parent/global usually, 
+    // but here we have a local backdrop.
 
     return (
         <div className="relative group cursor-pointer" title={player?.name || participant?.identity} onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}>
@@ -56,7 +70,7 @@ const VoiceAvatar = ({ participant, player, isHost, onKick }: { participant?: an
 
             {/* Menu */}
             {showMenu && (
-                <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-1 z-50 flex flex-col gap-1 min-w-[100px]" onClick={(e) => e.stopPropagation()}>
+                <div className="absolute top-full mt-2 left-1/2 -translate-x-1/2 bg-slate-800 border border-slate-700 rounded-lg shadow-xl p-1 z-[9999] flex flex-col gap-1 min-w-[120px]" onClick={(e) => e.stopPropagation()}>
                     <div className="text-[10px] text-slate-400 px-2 py-1 border-b border-white/5 truncate font-bold text-center">
                         {player.name}
                     </div>
@@ -65,14 +79,43 @@ const VoiceAvatar = ({ participant, player, isHost, onKick }: { participant?: an
                         <span className="text-xs font-mono text-emerald-400 font-bold">${(player.cash || 0).toLocaleString()}</span>
                     </div>
 
-                    {isHost && onKick && (
+                    {!isMe && (
+                        <>
+                            {onTransferCash && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onTransferCash(player.id);
+                                        setShowMenu(false);
+                                    }}
+                                    className="w-full text-[10px] text-white hover:bg-slate-700 px-2 py-1.5 rounded text-center transition-colors font-bold uppercase border border-slate-600/50"
+                                >
+                                    Перевести $
+                                </button>
+                            )}
+                            {onTransferAsset && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onTransferAsset(player.id);
+                                        setShowMenu(false);
+                                    }}
+                                    className="w-full text-[10px] text-white hover:bg-slate-700 px-2 py-1.5 rounded text-center transition-colors font-bold uppercase border border-slate-600/50"
+                                >
+                                    Передать Актив
+                                </button>
+                            )}
+                        </>
+                    )}
+
+                    {isHost && onKick && !isMe && (
                         <button
                             onClick={(e) => {
                                 e.stopPropagation();
                                 onKick(player.id);
                                 setShowMenu(false);
                             }}
-                            className="w-full text-[10px] text-red-400 hover:bg-red-500/20 px-2 py-1.5 rounded text-center transition-colors font-bold uppercase"
+                            className="w-full text-[10px] text-red-400 hover:bg-red-500/20 px-2 py-1.5 rounded text-center transition-colors font-bold uppercase mt-1"
                         >
                             Исключить
                         </button>
@@ -81,12 +124,12 @@ const VoiceAvatar = ({ participant, player, isHost, onKick }: { participant?: an
             )}
 
             {/* Click Outside to close */}
-            {showMenu && <div className="fixed inset-0 z-40" onClick={(e) => { e.stopPropagation(); setShowMenu(false); }} />}
+            {showMenu && <div className="fixed inset-0 z-[9990]" onClick={(e) => { e.stopPropagation(); setShowMenu(false); }} />}
         </div>
     );
 };
 
-export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickPlayer }: VoiceControlsProps) => {
+export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickPlayer, onTransferCash, onTransferAsset, myId }: VoiceControlsProps) => {
     // SAFELY consume context instead of direct hooks
     const { localParticipant, participants, room, isConnected } = useVoice();
 
@@ -149,6 +192,9 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
                             player={player}
                             isHost={isHost}
                             onKick={onKickPlayer}
+                            onTransferCash={onTransferCash}
+                            onTransferAsset={onTransferAsset}
+                            isMe={player.id === myId || player.userId === myId}
                         />
                     );
                 })}
