@@ -99,6 +99,7 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
                     body: JSON.stringify({ roomId, userId, username })
                 });
                 const data = await res.json();
+                console.log("[VoiceRoom] Token Response:", data);
                 if (data.token) {
                     setToken(data.token);
                     setUrl(data.url);
