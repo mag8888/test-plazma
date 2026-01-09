@@ -363,6 +363,8 @@ function GameContent() {
             onSpeakingChanged={setIsSpeaking}
             onActiveSpeakersChange={setActiveSpeakers}
             players={room.players}
+            isHost={isHost}
+            onKickPlayer={initiateKick}
 
         >
             {(isConnected: boolean) => (
