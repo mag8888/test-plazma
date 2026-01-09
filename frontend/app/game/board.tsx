@@ -1451,6 +1451,19 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                 </div>
                             </div >
 
+                            {/* VOICE CONTROLS (Desktop) */}
+                            <div className="bg-[#1e293b] rounded-2xl p-2 border border-slate-700/50 shadow-lg shrink-0">
+                                <div className="flex items-center justify-between mb-1 px-2">
+                                    <span className="text-[9px] uppercase tracking-widest text-slate-400 font-bold flex items-center gap-2">
+                                        <span className={`w-1.5 h-1.5 rounded-full ${isVoiceConnected ? 'bg-emerald-500 animate-pulse' : 'bg-yellow-500'}`}></span>
+                                        Голосовой чат
+                                    </span>
+                                </div>
+                                <div className="flex justify-center">
+                                    <VoiceControls onSpeakingChanged={setIsSpeaking} players={state?.players || []} />
+                                </div>
+                            </div>
+
                             {/* 2. ASSETS PANEL (BOTTOM, Fills Remaining) */}
                             <div className="bg-[#151b2b] rounded-3xl p-5 border border-slate-800 shadow-lg flex flex-col min-h-0 flex-1 relative overflow-hidden" >
                                 <h3 className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold mb-4 flex items-center justify-between gap-2 flex-shrink-0">
@@ -1706,35 +1719,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         {/* TOP BAR: HUD & Game Stats */}
                                         {/* BANK BUTTON (Desktop) */}
                                         {/* 2. VOICE CHAT CONTROLS (Desktop) */}
-                                        {userId && (
-                                            <div className="mb-2 shrink-0 relative z-[200]">
-                                                <div className="bg-[#1e293b] rounded-xl p-3 border border-slate-700 flex items-center justify-between shadow-sm">
-                                                    <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-2">
-                                                        🎤 Голосовой чат
-                                                        {isSpeaking && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />}
-                                                    </span>
-                                                    <VoiceControls
-                                                        onSpeakingChanged={setIsSpeaking}
-                                                        players={state.players}
-                                                        isHost={localPlayer?.id === state.creatorId}
-                                                        onKickPlayer={handleKickPlayer}
-                                                        myId={localPlayer?.id || localPlayer?.userId}
-                                                        onTransferCash={(targetId) => {
-                                                            const target = state.players.find((p: any) => p.id === targetId);
-                                                            if (target) {
-                                                                setTransferTarget(target);
-                                                            }
-                                                        }}
-                                                        onTransferAsset={(targetId) => {
-                                                            const target = state.players.find((p: any) => p.id === targetId);
-                                                            if (target) {
-                                                                setShowAssetSelectForPlayer(target.id);
-                                                            }
-                                                        }}
-                                                    />
-                                                </div>
-                                            </div>
-                                        )}
+
                                         {isTutorial && state.tutorialStep === 3 && !showBank && (
                                             <PortalTutorialTip
                                                 text="Нажмите Банк 🏦"
