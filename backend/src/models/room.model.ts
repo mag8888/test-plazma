@@ -26,6 +26,7 @@ export interface IRoom extends Document {
     isTraining?: boolean;
     gameMode?: 'ENGINEER' | 'ENTREPRENEUR';
     isLocked?: boolean;
+    availableDreams?: string[]; // Pre-selected dreams for this board
 }
 
 const RoomSchema: Schema = new Schema({
@@ -49,7 +50,8 @@ const RoomSchema: Schema = new Schema({
         photo_url: String
     }],
     createdAt: { type: Date, expires: '12h', default: Date.now },
-    isLocked: { type: Boolean, default: false }
+    isLocked: { type: Boolean, default: false },
+    availableDreams: { type: [String], default: [] }
 }, { timestamps: true });
 
 // Prevent multiple waiting rooms for the same creator

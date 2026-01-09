@@ -28,11 +28,11 @@ export class GameGateway {
         for (const room of activeRooms) {
             try {
                 if (room.gameState) {
-                    const engine = new GameEngine(room.id, room.players, room.creatorId, { isTutorial: room.isTraining });
+                    const engine = new GameEngine(room.id, room.players, room.creatorId, { isTutorial: room.isTraining, availableDreams: room.availableDreams });
                     // Hydrate state but FORCE UPDATE BOARD structure
                     Object.assign(engine.state, room.gameState);
-                    // CRITICAL FIX: Overwrite the restored board
-                    engine.state.board = FULL_BOARD;
+                    // CRITICAL FIX: Overwrite the restored board but RESPECT availableDreams
+                    engine.state.board = engine.initializeBoardWithDreams(room.availableDreams);
                     this.games.set(room.id, engine);
                     console.log(`Restored game ${room.id} (Turn: ${room.gameState.currentTurnTime}) | Board Updated`);
                 }
@@ -590,6 +590,7 @@ export class GameGateway {
                         const state = game.getState();
                         const message = result.total <= 4 ? "Baby Born! +$5000" : "No Baby.";
 
+
                         this.io.to(roomId).emit('dice_rolled', {
                             roll: result.total || result,
                             diceValues: result.values || [result],
@@ -598,21 +599,15 @@ export class GameGateway {
                         });
                         this.saveState(roomId, game);
                     } else if (game.getState().phase === 'ROLL') {
-                        // Default to 1 die for forced move
-                        const result = game.rollDice(1);
-
-                        let roll = 0;
-                        let diceValues: number[] = [];
-
-                        if (typeof result === 'object') {
-                            roll = result.total;
-                            diceValues = result.values;
-                        } else {
-                            roll = result;
-                        }
-
+                        // Standard Roll
+                        const result = game.handleRoll();
                         const state = game.getState();
-                        this.io.to(roomId).emit('dice_rolled', { roll, diceValues, state });
+
+                        this.io.to(roomId).emit('dice_rolled', {
+                            roll: result.total || result,
+                            diceValues: result.values || [result],
+                            state
+                        });
                         this.saveState(roomId, game);
                     } else {
                         return callback?.({ success: false, error: "Cannot roll in current phase" });
@@ -798,7 +793,11 @@ export class GameGateway {
                     }
 
                     // 2. Init Engine with Shuffled Players
-                    const engine = new GameEngine(roomId, shuffledPlayers, room.creatorId, { isTutorial: room.isTraining, gameMode: room.gameMode });
+                    const engine = new GameEngine(roomId, shuffledPlayers, room.creatorId, {
+                        isTutorial: room.isTraining,
+                        gameMode: room.gameMode,
+                        availableDreams: room.availableDreams
+                    });
 
                     // 3. Log the result
                     const orderNames = shuffledPlayers.map(p => p.name).join(' -> ');

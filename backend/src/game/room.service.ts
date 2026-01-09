@@ -2,6 +2,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { RoomModel, IRoom, IPlayer } from '../models/room.model';
 import { UserModel } from '../models/user.model';
 import mongoose from 'mongoose';
+import { DREAMS_LIST } from './constants/dreams';
 
 export class RoomService {
 
@@ -66,6 +67,10 @@ export class RoomService {
         } catch (e) { }
 
         // 4. Create proper new room
+        // Pre-select dreams
+        const shuffledDreams = [...DREAMS_LIST].sort(() => 0.5 - Math.random());
+        const selectedDreams = shuffledDreams.slice(0, 16).map(d => d.name);
+
         const room = await RoomModel.create({
             name,
             creatorId: userId, // Persistent User ID
@@ -74,6 +79,7 @@ export class RoomService {
             password,
             isTraining,
             gameMode,
+            availableDreams: selectedDreams, // Store pre-selected dreams
             players: [{
                 id: creatorId, // Socket ID
                 userId: userId,
@@ -91,12 +97,20 @@ export class RoomService {
     }
 
     async joinRoom(roomId: string, playerId: string, userId: string, playerName: string, password?: string, token?: string, dream?: string): Promise<any> {
-        // 0. Strict Isolation: Check if user is already in a PLAYING room (unless re-joining THIS room)
+        // 0. Auto-Switch: If user is already in a PLAYING room, remove them from it (unless re-joining THIS room)
         const playing = await RoomModel.findOne({ status: 'playing', 'players.userId': userId });
         if (playing) {
-            // Allow re-joining the SAME room if connection lost
-            if (playing._id.toString() !== roomId) {
-                throw new Error("Вы уже находитесь в другой активной игре!");
+            // Allow re-joining the SAME room if user just refreshed
+            if (playing._id.toString() === roomId) {
+                // Proceed to rejoin logic below
+            } else {
+                // Auto-Leave the OLD room
+                console.log(`[JoinRoom] User ${userId} switching from ${playing._id} to ${roomId}. Auto-leaving old room.`);
+
+                // We need to pass the OLD playerId if possible, but we might only know userId.
+                // RoomService.leaveRoom handles removal by userId if provided.
+                // We pass 'auto_switch' as dummy socketId fallback if needed, relying on userId match.
+                await this.leaveRoom(playing._id.toString(), 'auto_switch', userId);
             }
         }
 

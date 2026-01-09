@@ -150,6 +150,43 @@ export const FeedCardItem = ({
     const total = price * stockQty;
     const loanNeeded = Math.max(0, total - (me?.cash || 0));
 
+    // AUTO-PAY EXPENSES (User Request: Auto-open, deduct, show 10s, close)
+    useEffect(() => {
+        if (card.type === 'EXPENSE' && viewMode === 'DETAILS' && isMyTurn && !locallyDismissedIds.includes(card.id)) {
+            const timer = setTimeout(() => {
+                if (loanNeeded > 0) {
+                    // If loan is needed, we might still need manual confirmation? 
+                    // Or auto-take loan if manageable? 
+                    // User said "spiryvaye summu" (deducts amount). 
+                    // Let's try to auto-pay if possible. If loan needed, maybe show confirm?
+                    // For now, let's trigger the "Buy/Pay" button click logic.
+                    console.log('[AutoPay] Triggering Expense Payment');
+                    handleAutoPay();
+                } else {
+                    handleAutoPay();
+                }
+            }, 1500); // 1.5s delay to let user see "Expense" title
+            return () => clearTimeout(timer);
+        }
+    }, [card.type, viewMode, isMyTurn, loanNeeded]);
+
+    const handleAutoPay = () => {
+        if (loanNeeded > 0) {
+            const amount = Math.ceil(loanNeeded / 1000) * 1000;
+            setPendingLoan({ amount, quantity: 1 });
+            setShowLoanConfirm(true); // Still prompt for loan if needed
+        } else {
+            socket.emit('buy_asset', { roomId, quantity: 1, cardId: card.id }); // Expenses use buy_asset logic currently? Or just 'pay_expense'? 
+            // Logic in button (line 660) uses 'buy_asset'.
+            setViewMode('RESULT');
+            setTimeLeft(10); // Show for 10s
+            setTimeout(() => {
+                onDismiss(); // Auto-close
+                // socket.emit('end_turn', { roomId }); // End turn if not auto-handled by backend?
+                // Usually dismissing card allows end turn.
+            }, 10000);
+        }
+    };
     // Ensure default is reasonable
     useEffect(() => {
         // Safe to run effect here as it's top level
@@ -246,19 +283,14 @@ export const FeedCardItem = ({
                                             ROI: {card.roi}%
                                         </div>
                                     )}
-                                    {/* Market Card: Show asset ownership status */}
-                                    {card.type === 'MARKET' && (
-                                        <div className={`text-[9px] px-1.5 py-0.5 rounded font-mono flex items-center gap-1 sm:col-span-2 ${ownedQty > 0
-                                            ? 'bg-green-900/30 border border-green-500/30 text-green-300'
-                                            : 'bg-red-900/30 border border-red-500/30 text-red-300'
-                                            }`}>
-                                            {ownedQty > 0 ? (
-                                                <><span>✓</span> <b>У вас есть ({ownedQty} шт)</b></>
-                                            ) : (
-                                                <><span>✕</span> <b>У вас нет такого актива</b></>
-                                            )}
+
+                                    {/* Market Card: Show asset ownership status ONLY if owned */}
+                                    {card.type === 'MARKET' && ownedQty > 0 && (
+                                        <div className="text-[9px] px-1.5 py-0.5 rounded font-mono flex items-center gap-1 sm:col-span-2 bg-green-900/30 border border-green-500/30 text-green-300">
+                                            <span>✓</span> <b>У вас есть ({ownedQty} шт)</b>
                                         </div>
                                     )}
+
                                 </div>
                             </div>
                         )}

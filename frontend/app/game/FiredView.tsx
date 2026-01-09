@@ -27,6 +27,8 @@ export const FiredView = ({ roomId, me, isMyTurn, socket }: FiredViewProps) => {
     }
 
     const handleChoice = (type: 'SKIP_TURNS' | 'PAY_1M' | 'PAY_2M' | 'BANKRUPT') => {
+        console.log(`[FiredView] User choice: ${type}`);
+
         if (type === 'BANKRUPT') {
             if (confirm('Вы уверены, что хотите объявить банкротство? Это сбросит ваши активы.')) {
                 socket.emit('decision_downsized', { roomId, choice: 'BANKRUPT' });
@@ -34,10 +36,16 @@ export const FiredView = ({ roomId, me, isMyTurn, socket }: FiredViewProps) => {
             return;
         }
 
+        if (type === 'SKIP_TURNS') {
+            // Direct emit for smoother UX
+            socket.emit('decision_downsized', { roomId, choice: 'SKIP_TURNS' });
+            // Optimistic update locally? Or just wait for state update.
+            return;
+        }
+
         let msg = '';
         if (type === 'PAY_2M') msg = 'Вы оплатили расходы за 2 месяца. Вы продолжаете игру!';
         else if (type === 'PAY_1M') msg = 'Вы оплатили расходы за 1 месяц. Вы пропускаете 1 ход.';
-        else if (type === 'SKIP_TURNS') msg = 'Вы пропускаете 2 хода.';
 
         setChoice({
             type,

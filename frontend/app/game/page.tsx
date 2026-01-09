@@ -28,6 +28,9 @@ interface Room {
     creatorId: string;
     maxPlayers?: number;
     isTraining?: boolean;
+    gameMode?: 'ENGINEER' | 'ENTREPRENEUR';
+    isLocked?: boolean;
+    availableDreams?: string[];
 }
 
 const TutorialTip: React.FC<{ text: string, position?: string, arrow?: string, colorClass?: string, arrowColorClass?: string }> = ({
@@ -610,12 +613,18 @@ function GameContent() {
                                                         className="w-full bg-black/20 border border-white/10 rounded-2xl px-6 py-4 appearance-none outline-none focus:border-blue-500/50 focus:bg-black/40 transition-all text-lg font-medium text-slate-200 shadow-inner"
                                                         disabled={isReady}
                                                     >
-                                                        {DREAMS.map(d => (
+                                                        {DREAMS.filter(d => !room?.availableDreams || room.availableDreams.includes(d.name)).map(d => (
                                                             <option key={d.id} value={d.name}>
                                                                 {d.name} (${d.cost.toLocaleString()})
                                                             </option>
                                                         ))}
                                                     </select>
+                                                    {/* Price Display */}
+                                                    {dream && (
+                                                        <div className="absolute right-0 top-full mt-2 text-xs font-mono text-emerald-400 font-bold bg-emerald-900/30 px-3 py-1 rounded-lg border border-emerald-500/20">
+                                                            Стоимость: ${DREAMS.find(d => d.name === dream)?.cost.toLocaleString() || 0}
+                                                        </div>
+                                                    )}
                                                     <div className="absolute right-6 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">▼</div>
                                                     {/* Step 2: Dream Hint */}
                                                     {effectiveIsTraining && hasSelectedToken && !hasSelectedDream && !isReady && (
