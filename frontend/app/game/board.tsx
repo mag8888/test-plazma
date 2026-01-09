@@ -13,7 +13,7 @@ import { partnershipApi } from '../../lib/partnershipApi';
 import { useTelegram } from '../../components/TelegramProvider';
 import { TutorialTip, PortalTutorialTip } from './TutorialTip';
 import { TutorialDebug } from './TutorialDebug';
-import { useConnectionState, useParticipants } from '@livekit/components-react';
+import { useVoice } from './VoiceContext';
 import { ConnectionState } from 'livekit-client';
 // import { VoiceRoom } from './VoiceRoom'; // Removed to avoid nesting
 import { VoiceControls } from './VoiceControls';
@@ -136,9 +136,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
     // State is now passed from parent, initialized and safe.
 
     // Voice & Connection Logic Replacement (LiveKit)
-    const roomConnState = useConnectionState();
-    const isVoiceConnected = roomConnState === ConnectionState.Connected;
-    const participants = useParticipants();
+    const { connectionState, participants } = useVoice();
+    const isVoiceConnected = connectionState === ConnectionState.Connected;
 
     // Sync active speakers
     useEffect(() => {

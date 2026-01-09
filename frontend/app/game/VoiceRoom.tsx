@@ -1,9 +1,10 @@
-import { LiveKitRoom, RoomAudioRenderer, useRoomContext, useParticipants, useLocalParticipant } from '@livekit/components-react';
-import { RoomEvent } from 'livekit-client';
+import { LiveKitRoom, RoomAudioRenderer, useRoomContext, useParticipants, useLocalParticipant, useConnectionState } from '@livekit/components-react';
+import { RoomEvent, ConnectionState } from 'livekit-client';
 import { useEffect, useState } from 'react';
 import '@livekit/components-styles';
 import { VoiceControls } from './VoiceControls';
 import { getBackendUrl } from '../../lib/config';
+import { VoiceProvider } from './VoiceContext';
 
 interface VoiceRoomProps {
     roomId: string;
@@ -18,6 +19,7 @@ interface VoiceRoomProps {
 const VoiceRoomInner = ({ onActiveSpeakersChange, children, onSpeakingChanged, players, isHost, onKickPlayer }: any) => {
     const room = useRoomContext();
     const participants = useParticipants();
+    const connectionState = useConnectionState();
     const { localParticipant } = useLocalParticipant();
     const [isConnected, setIsConnected] = useState(false);
 
@@ -49,25 +51,34 @@ const VoiceRoomInner = ({ onActiveSpeakersChange, children, onSpeakingChanged, p
 
     const content = typeof children === 'function' ? children(isConnected) : children;
 
-    return (
-        <div className="w-full h-full flex flex-col relative voice-room-active">
-            {content}
-            {/* Audio Renderer handles incoming audio */}
-            <RoomAudioRenderer />
+    // Provide Real State
+    const voiceState = {
+        isConnected: connectionState === ConnectionState.Connected,
+        connectionState,
+        participants
+    };
 
-            {/* Built-in Controls overlay if not provided by children manually */}
-            {/* Only show if we are NOT using a render prop (which implies custom UI) */}
-            {typeof children !== 'function' && isConnected && (
-                <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50">
-                    <VoiceControls
-                        onSpeakingChanged={onSpeakingChanged}
-                        players={players}
-                        isHost={isHost}
-                        onKickPlayer={onKickPlayer}
-                    />
-                </div>
-            )}
-        </div>
+    return (
+        <VoiceProvider value={voiceState}>
+            <div className="w-full h-full flex flex-col relative voice-room-active">
+                {content}
+                {/* Audio Renderer handles incoming audio */}
+                <RoomAudioRenderer />
+
+                {/* Built-in Controls overlay if not provided by children manually */}
+                {/* Only show if we are NOT using a render prop (which implies custom UI) */}
+                {typeof children !== 'function' && isConnected && (
+                    <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-50">
+                        <VoiceControls
+                            onSpeakingChanged={onSpeakingChanged}
+                            players={players}
+                            isHost={isHost}
+                            onKickPlayer={onKickPlayer}
+                        />
+                    </div>
+                )}
+            </div>
+        </VoiceProvider>
     );
 };
 
@@ -98,10 +109,21 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
         if (roomId && userId) fetchToken();
     }, [roomId, userId, username]);
 
+
     if (!token || !url) {
         // Render children with false state while loading
         const content = typeof children === 'function' ? children(false) : children;
-        return <div className="voice-loading">{content}</div>;
+        // Provide Disconnected State
+        const defaultVoiceState = {
+            isConnected: false,
+            connectionState: ConnectionState.Disconnected,
+            participants: []
+        };
+        return (
+            <VoiceProvider value={defaultVoiceState}>
+                <div className="voice-loading">{content}</div>
+            </VoiceProvider>
+        );
     }
 
     return (
