@@ -2064,6 +2064,14 @@ export class GameEngine {
             : `❤️ ${player.name} donated $${amount}. Can now roll extra dice for 3 turns!`;
         this.addLog(message);
 
+        this.recordTransaction({
+            from: player.name,
+            to: 'Charity',
+            amount: amount,
+            description: 'Благотворительность (10% от дохода)',
+            type: 'EXPENSE'
+        });
+
         this.state.phase = 'ROLL'; // Re-enable roll? No, Charity replaces turn action usually?
         // Wait, rule: "Land on Charity -> Donate -> End Turn. Next turns you roll extra."
         // Or "Donate -> Roll"? 
