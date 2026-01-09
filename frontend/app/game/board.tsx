@@ -1334,7 +1334,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
                     {/* MAIN GRID */}
                     {/* MAIN LAYOUT CONTAINER - CSS GRID for Robust 3-Column Layout */}
-                    <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 grid grid-cols-1 lg:grid-cols-[350px_minmax(0,1fr)_350px] gap-0 lg:gap-4 h-full overflow-hidden items-start lg:items-stretch">
+                    <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 grid grid-cols-1 lg:grid-cols-[350px_1fr_350px] gap-0 lg:gap-4 h-full overflow-hidden items-start lg:items-stretch">
 
                         {/* 📱 MOBILE TOP ZONE (Cards + Stats) */}
                         <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-40 max-h-[30vh] overflow-y-auto">
