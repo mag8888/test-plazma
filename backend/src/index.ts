@@ -97,7 +97,13 @@ app.post('/api/voice/token', async (req, res) => {
         }
 
         const token = await voiceService.generateToken(roomId, userId, username);
-        res.json({ token, url: process.env.LIVEKIT_URL });
+
+        // Use Public URL if available (for external clients), else fallback
+        const url = process.env.LIVEKIT_PUBLIC_URL || process.env.LIVEKIT_URL;
+
+        console.log(`[Voice] Generated token for ${username} in room ${roomId}. Client URL: ${url}`);
+
+        res.json({ token, url });
     } catch (e: any) {
         console.error("Voice Token Error:", e);
         res.status(500).json({ error: e.message });
