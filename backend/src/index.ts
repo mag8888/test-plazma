@@ -1205,7 +1205,48 @@ app.post('/api/games/:id/join', async (req, res) => {
 });
 
 
+// Add Promo Link (Step 2 of Join)
+app.post('/api/games/:id/promo-link', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { initData, repostLink } = req.body;
 
+        if (!initData) return res.status(401).json({ error: "No auth data" });
+        const { AuthService } = await import('./auth/auth.service');
+        const auth = new AuthService();
+        const user = await auth.verifyTelegramAuth(initData);
+        if (!user) return res.status(401).json({ error: "Invalid auth" });
+
+        const { ScheduledGameModel } = await import('./models/scheduled-game.model');
+        const game = await ScheduledGameModel.findById(id);
+        if (!game) return res.status(404).json({ error: "Game not found" });
+
+        const pIndex = game.participants.findIndex((p: any) => p.userId.toString() === user._id.toString());
+        if (pIndex === -1) return res.status(400).json({ error: "Not registered" });
+
+        // Update Link
+        game.participants[pIndex].repostLink = repostLink;
+        await game.save();
+
+        // Notify Host
+        if (botService) {
+            const { UserModel } = await import('./models/user.model');
+            const host = await UserModel.findById(game.hostId);
+            if (host?.telegram_id) {
+                botService.bot?.sendMessage(host.telegram_id,
+                    `🔗 Игрок ${user.first_name} (@${user.username}) добавил ссылку на репост для игры ${new Date(game.startTime).toLocaleDateString()}:\n\n${repostLink}`,
+                    { disable_web_page_preview: true }
+                );
+            }
+        }
+
+        res.json({ success: true });
+
+    } catch (e) {
+        console.error("Promo link failed:", e);
+        res.status(500).json({ error: "Failed to update link" });
+    }
+});
 // Cancel Game Participation
 app.post('/api/games/:id/cancel', async (req, res) => {
     try {
