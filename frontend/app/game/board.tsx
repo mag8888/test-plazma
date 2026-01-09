@@ -1736,7 +1736,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         <VoiceControls
                                             onSpeakingChanged={setIsSpeaking}
                                             players={state.players}
-                                            isHost={localPlayer?.id === state.creatorId}
+                                            isHost={isHost}
                                             onKickPlayer={handleKickPlayer}
                                             myId={localPlayer?.id || localPlayer?.userId}
                                             onTransferCash={(targetId) => {
