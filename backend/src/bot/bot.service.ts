@@ -678,16 +678,41 @@ export class BotService {
             this.bot?.sendMessage(chatId, "📢 **Рассылка**\\n\\nВведите текст сообщения:", { parse_mode: 'Markdown' });
         });
 
-        // /start command (supports ?start=referrerId)
-        this.bot.onText(/\/start(.*)/, async (msg, match) => {
+        // /start command (supports ?start=referrerId or game_GAMEID)
+        this.bot.onText(/\/start(?: (.+))?/, async (msg, match) => {
             const chatId = msg.chat.id;
             const telegramId = msg.from?.id;
             const firstName = msg.from?.first_name || 'Friend';
             const username = msg.from?.username || `user_${telegramId}`;
 
-            // Check for referral code
-            const referralCode = match && match[1] ? match[1].trim() : null;
+            // Check for referral code or payload
+            let inputParam = match && match[1] ? match[1].trim() : null;
             const languageCode = msg.from?.language_code;
+
+            let referralCode = inputParam;
+            let targetGameId: string | null = null;
+
+            // Handle Deep Link for Game
+            if (inputParam && inputParam.startsWith('game_')) {
+                const gameId = inputParam.replace('game_', '');
+                targetGameId = gameId;
+
+                // Resolve Game Host for Referral
+                try {
+                    const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                    const game = await ScheduledGameModel.findById(gameId);
+                    if (game && game.hostId) {
+                        const { UserModel } = await import('../models/user.model');
+                        const host = await UserModel.findById(game.hostId);
+                        if (host) {
+                            // Use Host as referrer
+                            referralCode = host.username || String(host.telegram_id);
+                        }
+                    }
+                } catch (e) {
+                    console.error("Deep link game fetch error:", e);
+                }
+            }
 
             if (telegramId) {
                 await this.handleUserRegistration(telegramId, username, firstName, referralCode, languageCode);
@@ -698,6 +723,28 @@ export class BotService {
             const lang = user?.language || languageCode || 'ru';
 
             const welcomeText = this.i18n.t(lang, 'welcome', { name: firstName });
+
+            // If Deep Linked to Game -> Show Game Card immediately
+            if (targetGameId) {
+                try {
+                    const { ScheduledGameModel } = await import('../models/scheduled-game.model');
+                    const game = await ScheduledGameModel.findById(targetGameId);
+                    if (game) {
+                        const card = await this.renderGameCard(game, telegramId!);
+                        await this.bot?.sendMessage(chatId, card.text, {
+                            parse_mode: 'Markdown',
+                            reply_markup: card.reply_markup as any
+                        });
+                        return; // Skip Main Menu if deep linked? Or show both?
+                        // Better to just show card. User can type /start for menu.
+                        // Actually showing menu + card is better context.
+                    } else {
+                        await this.bot?.sendMessage(chatId, "⚠️ Игра не найдена.");
+                    }
+                } catch (e) {
+                    console.error("Deep link render error:", e);
+                }
+            }
 
             await this.sendMainMenu(chatId, welcomeText, lang);
         });
@@ -2474,7 +2521,16 @@ export class BotService {
                 });
                 const participantsCount = game.participants.length;
 
-                this.bot?.sendMessage(chatId, `🗓 ${dateStr} (МСК)\n👥 ${participantsCount}/${game.maxPlayers}`, {
+                // Get Bot Username for Link
+                let botName = 'moneo_game_bot';
+                try {
+                    const me = await this.bot?.getMe();
+                    if (me && me.username) botName = me.username;
+                } catch (e) { }
+
+                const link = `https://t.me/${botName}?start=game_${game._id}`;
+
+                this.bot?.sendMessage(chatId, `🗓 ${dateStr} (МСК)\n👥 ${participantsCount}/${game.maxPlayers}\n🔗 Ссылка: ${link}`, {
                     reply_markup: {
                         inline_keyboard: [[{ text: '⚙️ Управление', callback_data: `manage_game_${game._id}` }]]
                     }
