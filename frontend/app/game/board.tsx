@@ -947,6 +947,16 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
                                                     <button
                                                         onClick={() => {
+                                                            setShowAssetSelectForPlayer(selectedPlayerForMenu.id);
+                                                            setSelectedPlayerForMenu(null);
+                                                        }}
+                                                        className="bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/20 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors"
+                                                    >
+                                                        🏠 Передать актив
+                                                    </button>
+
+                                                    <button
+                                                        onClick={() => {
                                                             setAdminAction({ type: 'GIFT', player: selectedPlayerForMenu });
                                                             setSelectedPlayerForMenu(null);
                                                         }}
@@ -1538,6 +1548,17 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         currentPlayerId={currentPlayer.id}
                                         zoom={zoom}
                                         onSquareClick={(sq: any) => setSquareInfo(sq)}
+                                        onPlayerClick={(p: any) => {
+                                            const isMe = p.id === localPlayer?.id || p.userId === userId;
+                                            const isHost = localPlayer?.id === state.creatorId;
+                                            if (isMe) {
+                                                setShowBank(true);
+                                            } else if (isHost) {
+                                                setSelectedPlayerForMenu(p);
+                                            } else {
+                                                setTransferTarget(p);
+                                            }
+                                        }}
                                         showExitButton={showExitButton}
                                         onExitClick={() => {
                                             setHasClickedFastTrack(true);
@@ -2156,7 +2177,26 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                     asset={transferAssetItem.item}
                                     players={state.players}
                                     myId={localPlayer?.id}
-                                    onTransfer={handleTransferAsset}
+                                    onTransfer={(toId, quantity) => {
+                                        // CHECK FOR ADMIN TRANSFER
+                                        const ownerId = (transferAssetItem as any).ownerId;
+                                        const isHost = localPlayer?.id === state.creatorId;
+
+                                        if (isHost && ownerId && ownerId !== localPlayer?.id) {
+                                            // Admin Transfer
+                                            socket.emit('host_transfer_asset', {
+                                                roomId,
+                                                userId: localPlayer?.userId || localPlayer?.id, // Host Auth
+                                                fromPlayerId: ownerId,
+                                                toPlayerId: toId,
+                                                assetIndex: transferAssetItem.index
+                                            });
+                                            setTransferAssetItem(null);
+                                        } else {
+                                            // Normal Transfer
+                                            handleTransferAsset(toId, quantity);
+                                        }
+                                    }}
                                     initialRecipientId={(transferAssetItem as any).recipientId}
                                 />
                             )
@@ -2164,22 +2204,26 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
                         {/* New Asset Selector Modal */}
                         {
-                            showAssetSelectForPlayer && (
-                                <SelectAssetModal
-                                    isOpen={!!showAssetSelectForPlayer}
-                                    onClose={() => setShowAssetSelectForPlayer(null)}
-                                    assets={localPlayer?.assets || []}
-                                    recipientName={state.players.find((p: any) => p.id === showAssetSelectForPlayer)?.name || 'Unknown'}
-                                    onSelect={(asset, index) => {
-                                        setShowAssetSelectForPlayer(null);
-                                        setTransferAssetItem({
-                                            item: asset,
-                                            index,
-                                            recipientId: showAssetSelectForPlayer
-                                        } as any);
-                                    }}
-                                />
-                            )
+                            showAssetSelectForPlayer && (() => {
+                                const targetPlayer = state.players.find((p: any) => p.id === showAssetSelectForPlayer);
+                                return (
+                                    <SelectAssetModal
+                                        isOpen={!!showAssetSelectForPlayer}
+                                        onClose={() => setShowAssetSelectForPlayer(null)}
+                                        assets={targetPlayer?.assets || []}
+                                        recipientName={targetPlayer?.name || 'Unknown'}
+                                        onSelect={(asset, index) => {
+                                            setShowAssetSelectForPlayer(null);
+                                            setTransferAssetItem({
+                                                item: asset,
+                                                index,
+                                                recipientId: undefined, // Recipient selected in next step
+                                                ownerId: showAssetSelectForPlayer // Track Owner for Admin Transfer
+                                            } as any);
+                                        }}
+                                    />
+                                );
+                            })()
                         }
 
 

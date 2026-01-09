@@ -1112,10 +1112,38 @@ export class GameGateway {
                         saveState(roomId, game);
                     } catch (e: any) {
                         console.error('[transfer_asset] Error:', e);
-                        socket.emit('error', e.message);
                     }
                 }
             });
+
+            // HOST: Transfer Asset (Admin Override)
+            socket.on('host_transfer_asset', async ({ roomId, userId, fromPlayerId, toPlayerId, assetIndex }) => {
+                const room = this.rooms.get(roomId);
+                if (room) {
+                    try {
+                        // 1. Verify Host
+                        if (room.creatorId !== userId) { // Use persistent ID
+                            socket.emit('error', { message: 'Only host can transfer assets.' });
+                            return;
+                        }
+
+                        // 2. Execute Transfer
+                        room.engine.transferAsset(fromPlayerId, toPlayerId, assetIndex);
+
+                        // 3. Update State
+                        this.io.to(roomId).emit('game_update', room.engine.getState());
+                        this.io.to(roomId).emit('log_message', {
+                            text: `👮 ADMIN transferred asset from ${room.engine.state.players.find(p => p.id === fromPlayerId)?.name} to ${room.engine.state.players.find(p => p.id === toPlayerId)?.name}`,
+                            type: 'info'
+                        });
+
+                    } catch (e: any) {
+                        console.error('[host_transfer_asset] Error:', e);
+                        socket.emit('error', { message: e.message || 'Transfer failed' });
+                    }
+                }
+            });
+
 
             socket.on('sell_asset', ({ roomId }) => {
                 const game = this.games.get(roomId);

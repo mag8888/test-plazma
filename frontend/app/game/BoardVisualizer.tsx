@@ -53,7 +53,7 @@ const getGradient = (type: string, isFT: boolean) => {
 
 import { TutorialTip } from './TutorialTip';
 
-export const BoardVisualizer = React.memo(({ board, players, animatingPos, currentPlayerId, onSquareClick, zoom = 1, showExitButton, onExitClick, isTutorial, hideFastTrackHint }: any) => {
+export const BoardVisualizer = React.memo(({ board, players, animatingPos, currentPlayerId, onSquareClick, onPlayerClick, zoom = 1, showExitButton, onExitClick, isTutorial, hideFastTrackHint }: any) => {
 
     // Helper: Is Fast Track?
     const isFastTrackSquare = (index: number) => index >= 24;
@@ -362,8 +362,12 @@ export const BoardVisualizer = React.memo(({ board, players, animatingPos, curre
                         return (
                             <div
                                 key={p.id}
-                                className={`absolute w-12 h-12 z-50 flex items-center justify-center transition-all duration-300 ease-in-out`}
+                                className={`absolute w-12 h-12 z-50 flex items-center justify-center transition-all duration-300 ease-in-out cursor-pointer pointer-events-auto hover:z-[60]`}
                                 style={style}
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    onPlayerClick && onPlayerClick(p);
+                                }}
                             >
                                 <div className={`
                                     w-[5cqw] h-[5cqw] rounded-full bg-slate-900 border-2 ${p.id === currentPlayerId ? 'border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.5)] scale-110' : 'border-slate-600 shadow-md'}
