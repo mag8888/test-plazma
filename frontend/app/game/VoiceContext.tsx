@@ -7,16 +7,17 @@ import { ConnectionState } from 'livekit-client';
 interface VoiceContextState {
     isConnected: boolean;
     connectionState: ConnectionState;
-    participants: Participant[];
+    participants: any[];
     room?: Room;
     localParticipant?: LocalParticipant;
-    error?: Error;
+    error?: string | null;
 }
 
 const defaultState: VoiceContextState = {
     isConnected: false,
     connectionState: ConnectionState.Disconnected,
     participants: [],
+    error: null,
 };
 
 const VoiceContext = createContext<VoiceContextState>(defaultState);

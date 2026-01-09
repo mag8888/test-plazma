@@ -1725,7 +1725,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                             {/* BANK BUTTON (Desktop) */}
                             {/* 2. VOICE CHAT CONTROLS (Desktop) */}
                             {userId && (
-                                <div className="mb-2 shrink-0">
+                                <div className="mb-2 shrink-0 relative z-[200]">
                                     <div className="bg-[#1e293b] rounded-xl p-3 border border-slate-700 flex items-center justify-between shadow-sm">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-2">
                                             🎤 Голосовой чат

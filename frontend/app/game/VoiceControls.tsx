@@ -131,7 +131,7 @@ const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTr
 
 export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickPlayer, onTransferCash, onTransferAsset, myId }: VoiceControlsProps) => {
     // SAFELY consume context instead of direct hooks
-    const { localParticipant, participants, room, isConnected } = useVoice();
+    const { localParticipant, participants, room, isConnected, error } = useVoice();
 
     const [isMuted, setIsMuted] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
@@ -167,7 +167,7 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
             <button
                 onClick={toggleMute}
                 disabled={!isConnected}
-                title={isConnected ? (isMuted ? "Включить микрофон" : "Выключить микрофон") : "Голосовой чат недоступен"}
+                title={isConnected ? (isMuted ? "Включить микрофон" : "Выключить микрофон") : (error || "Голосовой чат недоступен")}
                 className={`p-2 rounded-full transition-all ${!isConnected
                         ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
                         : isMuted
@@ -210,8 +210,8 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
             )}
 
             {!isConnected && (
-                <span className="text-[10px] text-yellow-500 animate-pulse whitespace-nowrap px-2">
-                    Подключение...
+                <span className={`text-[10px] animate-pulse whitespace-nowrap px-2 font-bold ${error ? 'text-red-400' : 'text-yellow-500'}`}>
+                    {error ? (error === 'Timeout' ? 'ERR: Timeout' : 'ERR: Conn') : 'Подключение...'}
                 </span>
             )}
         </div>

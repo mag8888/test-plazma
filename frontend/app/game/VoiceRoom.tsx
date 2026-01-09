@@ -22,19 +22,44 @@ const VoiceRoomInner = ({ onActiveSpeakersChange, children, onSpeakingChanged, p
     const connectionState = useConnectionState();
     const { localParticipant } = useLocalParticipant();
     const [isConnected, setIsConnected] = useState(false);
+    const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
         if (room.state === 'connected') {
             setIsConnected(true);
+            setError(null);
         }
 
         const onStateChanged = (state: any) => {
             setIsConnected(state === 'connected');
+            if (state === 'connected') setError(null);
         };
 
+        const onDisconnected = (reason?: any) => {
+            console.log("Disconnected:", reason);
+            // Don't show error on normal disconnect, but maybe on failure
+        };
+
+        // Listen for specific failures if possible, generally `Disconnected` with reason
         room.on(RoomEvent.ConnectionStateChanged, onStateChanged);
-        return () => { room.off(RoomEvent.ConnectionStateChanged, onStateChanged); };
+        room.on(RoomEvent.Disconnected, onDisconnected);
+        return () => {
+            room.off(RoomEvent.ConnectionStateChanged, onStateChanged);
+            room.off(RoomEvent.Disconnected, onDisconnected);
+        };
     }, [room]);
+
+    // Safety timeout: If connecting for too long (>10s), show error
+    useEffect(() => {
+        if (connectionState === ConnectionState.Connecting) {
+            const timer = setTimeout(() => {
+                if (connectionState === ConnectionState.Connecting) {
+                    setError("Timeout");
+                }
+            }, 10000);
+            return () => clearTimeout(timer);
+        }
+    }, [connectionState]);
 
     // Active Speakers Logic
     useEffect(() => {
@@ -57,7 +82,8 @@ const VoiceRoomInner = ({ onActiveSpeakersChange, children, onSpeakingChanged, p
         connectionState,
         participants,
         room,
-        localParticipant
+        localParticipant,
+        error
     };
 
     return (
@@ -87,10 +113,12 @@ const VoiceRoomInner = ({ onActiveSpeakersChange, children, onSpeakingChanged, p
 export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiveSpeakersChange, children, players, isHost, onKickPlayer }: VoiceRoomProps & { players: any[], isHost?: boolean, onKickPlayer?: (id: string) => void }) => {
     const [token, setToken] = useState('');
     const [url, setUrl] = useState('');
+    const [tokenError, setTokenError] = useState<string | null>(null);
 
     useEffect(() => {
         const fetchToken = async () => {
             try {
+                setTokenError(null);
                 // Use Dynamic Backend URL
                 const backend = getBackendUrl();
                 const res = await fetch(`${backend}/api/voice/token`, {
@@ -98,20 +126,40 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ roomId, userId, username })
                 });
+                if (!res.ok) throw new Error(`Status ${res.status}`);
+
                 const data = await res.json();
                 console.log("[VoiceRoom] Token Response:", data);
                 if (data.token) {
                     setToken(data.token);
                     setUrl(data.url);
+                } else {
+                    throw new Error("No token");
                 }
-            } catch (e) {
+            } catch (e: any) {
                 console.error("Failed to fetch voice token:", e);
+                setTokenError(e.message || "Auth Error");
             }
         };
 
         if (roomId && userId) fetchToken();
     }, [roomId, userId, username]);
 
+
+    if (tokenError) {
+        const errorState = {
+            isConnected: false,
+            connectionState: ConnectionState.Disconnected,
+            participants: [],
+            error: tokenError
+        };
+        const content = typeof children === 'function' ? children(false) : children;
+        return (
+            <VoiceProvider value={errorState}>
+                <div className="voice-error">{content}</div>
+            </VoiceProvider>
+        );
+    }
 
     if (!token || !url) {
         // Render children with false state while loading
@@ -120,7 +168,8 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
         const defaultVoiceState = {
             isConnected: false,
             connectionState: ConnectionState.Disconnected,
-            participants: []
+            participants: [],
+            error: null
         };
         return (
             <VoiceProvider value={defaultVoiceState}>
@@ -137,6 +186,7 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
             options={{ adaptiveStream: true }}
             data-lk-theme="default"
             style={{ height: '100%', width: '100%' }} // Ensure full size
+            onError={(e) => { console.error("LiveKit Error:", e); setTokenError(e.message); }}
         >
             <VoiceRoomInner
                 onSpeakingChanged={onSpeakingChanged}
