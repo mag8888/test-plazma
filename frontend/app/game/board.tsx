@@ -1385,8 +1385,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                     </div>
 
                     {/* LEFT SIDEBAR (Redesigned) - Flex Child (Remainder) */}
-                    <div id="tutorial-players" className="hidden lg:flex flex-col flex-1 h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4 min-w-0 items-end">
-                        <div className="flex flex-col gap-4 w-full max-w-[350px] h-full">
+                    <div id="tutorial-players" className="hidden lg:flex flex-col flex-1 h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4 min-w-0">
+                        <div className="flex flex-col gap-4 w-full h-full">
 
                             {/* 1. PROFILE PANEL (TOP) */}
                             <div className="bg-[#1e293b] rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex flex-col gap-4 relative overflow-hidden group shrink-0">
@@ -1811,7 +1811,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
                     {/* 4. CHAT (Right Sidebar) - Flex Child (Remainder) */}
                     <div className="hidden lg:flex flex-col flex-1 h-full items-start justify-start relative z-40 min-w-0" >
-                        <div className="flex flex-col w-full max-w-[350px] h-full bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden shadow-inner relative">
+                        <div className="flex flex-col w-full h-full bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden shadow-inner relative">
                             <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-[#1e293b] to-transparent z-10 pointer-events-none"></div>
 
                             <div className="flex-1 overflow-hidden relative">
