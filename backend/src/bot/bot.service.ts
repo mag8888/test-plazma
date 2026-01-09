@@ -1188,6 +1188,7 @@ export class BotService {
                     masterState.state = 'WAITING_PROMO';
                     this.bot?.sendMessage(chatId, "Сколько промо-мест?");
                     return;
+                } else if (masterState.state === 'WAITING_PROMO') {
                     const promo = Number(text);
                     if (isNaN(promo) || promo < 0) {
                         this.bot?.sendMessage(chatId, "Введите число.");
