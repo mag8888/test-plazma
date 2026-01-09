@@ -324,6 +324,21 @@ export class MatrixService {
         // Charge Green Wallet
         await WalletService.charge(userId, Currency.GREEN, config.cost, `Purchase ${type}`);
 
+        // USER REQUEST: Auto-Activate "Master" status for Advanced (100) and Premium (1000)
+        if (type === AvatarType.ADVANCED || type === AvatarType.PREMIUM) {
+            user.isMaster = true;
+            if (config.subscriptionMonths) {
+                // Set expiry to NOW + Months (e.g. 1 year for Advanced)
+                user.masterExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 30 * config.subscriptionMonths);
+            } else {
+                // Lifetime (Premium) -> 100 Years
+                user.masterExpiresAt = new Date(Date.now() + 1000 * 60 * 60 * 24 * 365 * 100);
+            }
+            await user.save();
+            console.log(`[Matrix] Master Activated for ${user.username} (${type})`);
+            // Note: NotificationService notification could be added here if needed
+        }
+
         // 1. Immediate 50% Bonus to Direct Inviter
         const halfCost = config.cost / 2;
         let referrerBonusSent = 0;
