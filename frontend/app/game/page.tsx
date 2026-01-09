@@ -363,8 +363,7 @@ function GameContent() {
             onSpeakingChanged={setIsSpeaking}
             onActiveSpeakersChange={setActiveSpeakers}
             players={room.players}
-            onActiveSpeakersChange={setActiveSpeakers}
-            players={room.players}
+
         >
             {(isConnected: boolean) => (
                 <div className="min-h-screen bg-[#0b0e14] text-white flex flex-col items-center justify-center p-4 selection:bg-blue-500/30">
