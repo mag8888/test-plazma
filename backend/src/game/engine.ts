@@ -257,9 +257,7 @@ export class GameEngine {
             currentTurnTime: 120,
             phase: 'ROLL',
             isPaused: false,
-            isPaused: false,
             board: this.initializeBoardWithDreams(),
-            log: ['Game Started'],
             log: ['Game Started'],
             chat: [],
             transactions: [],
@@ -331,6 +329,44 @@ export class GameEngine {
             isBankrupted: false,
             loanLimitFactor: 1
         };
+    }
+
+    initializeBoardWithDreams(): BoardSquare[] {
+        // deep clone first level of objects to avoid mutating static FULL_BOARD
+        const board = FULL_BOARD.map(sq => ({ ...sq }));
+
+        // lazy import to avoid circular dependency issues if any
+        try {
+            const { DREAMS_LIST } = require('./constants/dreams');
+            if (!DREAMS_LIST || DREAMS_LIST.length === 0) return board;
+
+            // Shuffle Dreams
+            const shuffled = [...DREAMS_LIST].sort(() => 0.5 - Math.random());
+            let dreamIndex = 0;
+
+            for (let i = 0; i < board.length; i++) {
+                if (board[i].type === 'DREAM') {
+                    if (dreamIndex < shuffled.length) {
+                        const dream = shuffled[dreamIndex];
+                        board[i].name = dream.name;
+                        board[i].description = dream.description || board[i].description;
+                        board[i].cost = dream.cost;
+                        dreamIndex++;
+                    } else {
+                        // Recycle if we run out (unlikely with 34 dreams vs ~15 spots)
+                        dreamIndex = 0;
+                        const dream = shuffled[dreamIndex];
+                        board[i].name = dream.name;
+                        board[i].description = dream.description;
+                        board[i].cost = dream.cost;
+                        dreamIndex++;
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Failed to init dreams:", e);
+        }
+        return board;
     }
 
     getDeckContent(type: string) {
