@@ -132,7 +132,15 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
                 console.log("[VoiceRoom] Token Response:", data);
                 if (data.token) {
                     setToken(data.token);
-                    setUrl(data.url);
+                    let finalUrl = data.url;
+
+                    // Auto-upgrade to WSS if we are on HTTPS
+                    if (typeof window !== 'undefined' && window.location.protocol === 'https:' && finalUrl.startsWith('ws:')) {
+                        finalUrl = finalUrl.replace('ws:', 'wss:');
+                        console.warn("[Voice] Auto-upgraded Voice URL to WSS (Secure) for HTTPS context:", finalUrl);
+                    }
+
+                    setUrl(finalUrl);
                 } else {
                     throw new Error("No token");
                 }

@@ -17,6 +17,7 @@ import { useVoice } from './VoiceContext';
 import { ConnectionState } from 'livekit-client';
 // import { VoiceRoom } from './VoiceRoom'; // Removed to avoid nesting
 import { VoiceControls } from './VoiceControls';
+import { SelectAssetModal } from './SelectAssetModal'; // Add import
 
 interface BoardProps {
     roomId: string;
@@ -161,6 +162,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
     const [showExpenseBreakdown, setShowExpenseBreakdown] = useState(false);
     const [showTransfer, setShowTransfer] = useState(false);
     const [transferAssetItem, setTransferAssetItem] = useState<{ item: any, index: number } | null>(null);
+    const [showAssetSelectForPlayer, setShowAssetSelectForPlayer] = useState<string | null>(null); // New State
     const [adminAction, setAdminAction] = useState<{ type: AdminActionType; player: any } | null>(null);
     const [stockQty, setStockQty] = useState(1);
 
@@ -1746,8 +1748,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                             onTransferAsset={(targetId) => {
                                                 const target = state.players.find((p: any) => p.id === targetId);
                                                 if (target) {
-                                                    // For now, redirect user to asset list as per current architecture
-                                                    alert(`Чтобы передать актив игроку ${target.name}, выберите актив в вашем портфеле и нажмите "Передать".`);
+                                                    setShowAssetSelectForPlayer(target.id);
                                                 }
                                             }}
                                         />
@@ -2183,9 +2184,28 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                     players={state.players}
                                     myId={localPlayer?.id}
                                     onTransfer={handleTransferAsset}
+                                    initialRecipientId={(transferAssetItem as any).recipientId}
                                 />
                             )
                         }
+
+                        {/* New Asset Selector Modal */}
+                        {showAssetSelectForPlayer && (
+                            <SelectAssetModal
+                                isOpen={!!showAssetSelectForPlayer}
+                                onClose={() => setShowAssetSelectForPlayer(null)}
+                                assets={localPlayer?.assets || []}
+                                recipientName={state.players.find((p: any) => p.id === showAssetSelectForPlayer)?.name || 'Unknown'}
+                                onSelect={(asset, index) => {
+                                    setShowAssetSelectForPlayer(null);
+                                    setTransferAssetItem({
+                                        item: asset,
+                                        index,
+                                        recipientId: showAssetSelectForPlayer
+                                    } as any);
+                                }}
+                            />
+                        )}
 
 
 

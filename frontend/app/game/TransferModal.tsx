@@ -9,10 +9,11 @@ interface TransferModalProps {
     players: any[];
     myId: string;
     onTransfer: (toId: string, quantity?: number) => void;
+    initialRecipientId?: string;
 }
 
-export const TransferModal = ({ isOpen, onClose, asset, players, myId, onTransfer }: TransferModalProps) => {
-    const [selectedPlayerId, setSelectedPlayerId] = useState('');
+export const TransferModal = ({ isOpen, onClose, asset, players, myId, onTransfer, initialRecipientId }: TransferModalProps) => {
+    const [selectedPlayerId, setSelectedPlayerId] = useState(initialRecipientId || '');
     const [quantity, setQuantity] = useState(1);
 
     const handleConfirm = () => {
