@@ -115,7 +115,7 @@ export const BoardVisualizer = React.memo(({ board, players, animatingPos, curre
         <div className="w-full h-full relative p-2 flex items-center justify-center">
 
             {/* STICT SQUARE CONTAINER */}
-            <div className="relative aspect-square h-auto w-full max-h-full max-w-full" style={{ containerType: 'inline-size' }}>
+            <div className="relative aspect-square h-full w-full max-h-full max-w-full min-h-[300px] min-w-[300px]" style={{ containerType: 'size' }}>
 
                 {/* 1. OUTER TRACK (GRID) */}
                 <div className="absolute inset-0 grid grid-cols-[repeat(13,minmax(0,1fr))] grid-rows-[repeat(13,minmax(0,1fr))] pointer-events-none">
