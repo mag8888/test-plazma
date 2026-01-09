@@ -704,7 +704,6 @@ function GameContent() {
                     </div>
                 );
             }}
-            }
         </VoiceRoom >
     );
 }
