@@ -1,0 +1,1719 @@
+Context,ID,RU (Original),EN,ES,TR,AR
+Square (Rat Race),RR_SQ_0_NAME,Opportunity,,,,
+Square (Rat Race),RR_SQ_0_DESC,Возможность: Малая или Крупная сделка.,,,,
+Square (Rat Race),RR_SQ_1_NAME,Doodad,,,,
+Square (Rat Race),RR_SQ_1_DESC,Трата: Ненужные расходы.,,,,
+Square (Rat Race),RR_SQ_2_NAME,Opportunity,,,,
+Square (Rat Race),RR_SQ_2_DESC,Возможность: Малая или Крупная сделка.,,,,
+Square (Rat Race),RR_SQ_3_NAME,Charity,,,,
+Square (Rat Race),RR_SQ_3_DESC,Благотворительность: Пожертвуйте 10% дохода для ускорения.,,,,
+Square (Rat Race),RR_SQ_4_NAME,Opportunity,,,,
+Square (Rat Race),RR_SQ_4_DESC,Возможность: Малая или Крупная сделка.,,,,
+Square (Rat Race),RR_SQ_5_NAME,Payday,,,,
+Square (Rat Race),RR_SQ_5_DESC,Деньги: Получите ваш месячный денежный поток.,,,,
+Square (Rat Race),RR_SQ_6_NAME,Opportunity,,,,
+Square (Rat Race),RR_SQ_6_DESC,Возможность: Малая или Крупная сделка.,,,,
+Square (Rat Race),RR_SQ_7_NAME,Market,,,,
+Square (Rat Race),RR_SQ_7_DESC,Рынок: Возможность продать активы.,,,,
+Square (Rat Race),RR_SQ_8_NAME,Opportunity,,,,
+Square (Rat Race),RR_SQ_8_DESC,Возможность: Малая или Крупная сделка.,,,,
+Square (Rat Race),RR_SQ_9_NAME,Doodad,,,,
+Square (Rat Race),RR_SQ_9_DESC,Трата: Ненужные расходы.,,,,
+Square (Rat Race),RR_SQ_10_NAME,Opportunity,,,,
+Square (Rat Race),RR_SQ_10_DESC,Возможность: Малая или Крупная сделка.,,,,
+Square (Rat Race),RR_SQ_11_NAME,Baby,,,,
+Square (Rat Race),RR_SQ_11_DESC,Ребенок: Новые расходы и радость в семье.,,,,
+Square (Rat Race),RR_SQ_12_NAME,Opportunity,,,,
+Square (Rat Race),RR_SQ_12_DESC,Возможность: Малая или Крупная сделка.,,,,
+Square (Rat Race),RR_SQ_13_NAME,Payday,,,,
+Square (Rat Race),RR_SQ_13_DESC,Деньги: Получите ваш месячный денежный поток.,,,,
+Square (Rat Race),RR_SQ_14_NAME,Opportunity,,,,
+Square (Rat Race),RR_SQ_14_DESC,Возможность: Малая или Крупная сделка.,,,,
+Square (Rat Race),RR_SQ_15_NAME,Market,,,,
+Square (Rat Race),RR_SQ_15_DESC,Рынок: Возможность продать активы.,,,,
+Square (Rat Race),RR_SQ_16_NAME,Opportunity,,,,
+Square (Rat Race),RR_SQ_16_DESC,Возможность: Малая или Крупная сделка.,,,,
+Square (Rat Race),RR_SQ_17_NAME,Doodad,,,,
+Square (Rat Race),RR_SQ_17_DESC,Трата: Ненужные расходы.,,,,
+Square (Rat Race),RR_SQ_18_NAME,Opportunity,,,,
+Square (Rat Race),RR_SQ_18_DESC,Возможность: Малая или Крупная сделка.,,,,
+Square (Rat Race),RR_SQ_19_NAME,Sick,,,,
+Square (Rat Race),RR_SQ_19_DESC,Заболел: Пропуск 2 ходов и оплата расходов.,,,,
+Square (Rat Race),RR_SQ_20_NAME,Opportunity,,,,
+Square (Rat Race),RR_SQ_20_DESC,Возможность: Малая или Крупная сделка.,,,,
+Square (Rat Race),RR_SQ_21_NAME,Payday,,,,
+Square (Rat Race),RR_SQ_21_DESC,Деньги: Получите ваш месячный денежный поток.,,,,
+Square (Rat Race),RR_SQ_22_NAME,Opportunity,,,,
+Square (Rat Race),RR_SQ_22_DESC,Возможность: Малая или Крупная сделка.,,,,
+Square (Rat Race),RR_SQ_23_NAME,Market,,,,
+Square (Rat Race),RR_SQ_23_DESC,Рынок: Возможность продать активы.,,,,
+Square (Fast Track),FT_SQ_24_NAME,CASHFLOW Day,,,,
+Square (Fast Track),FT_SQ_24_DESC,Вам выплачивается доход от ваших инвестиций,,,,
+Square (Fast Track),FT_SQ_25_NAME,Дом мечты,,,,
+Square (Fast Track),FT_SQ_25_DESC,Построить дом мечты для семьи,,,,
+Square (Fast Track),FT_SQ_26_NAME,Кофейня,,,,
+Square (Fast Track),FT_SQ_26_DESC,Кофейня в центре города,,,,
+Square (Fast Track),FT_SQ_27_NAME,Аудит,,,,
+Square (Fast Track),FT_SQ_27_DESC,Налоговая проверка. Вы теряете 50% наличных.,,,,
+Square (Fast Track),FT_SQ_28_NAME,Центр здоровья и спа,,,,
+Square (Fast Track),FT_SQ_28_DESC,Элитный спа-комплекс.,,,,
+Square (Fast Track),FT_SQ_29_NAME,Посетить Антарктиду,,,,
+Square (Fast Track),FT_SQ_29_DESC,Экспедиция к Южному полюсу.,,,,
+Square (Fast Track),FT_SQ_30_NAME,Мобильное приложение,,,,
+Square (Fast Track),FT_SQ_30_DESC,Сервис по подписке,,,,
+Square (Fast Track),FT_SQ_31_NAME,Благотворительность,,,,
+Square (Fast Track),FT_SQ_31_DESC,Пожертвуйте 10% от общего дохода,,,,
+Square (Fast Track),FT_SQ_32_NAME,Агентство маркетинга,,,,
+Square (Fast Track),FT_SQ_32_DESC,Агентство цифрового маркетинга,,,,
+Square (Fast Track),FT_SQ_33_NAME,Кража,,,,
+Square (Fast Track),FT_SQ_33_DESC,Вас обокрали! Вы теряете 100% наличных.,,,,
+Square (Fast Track),FT_SQ_34_NAME,Мини-отель,,,,
+Square (Fast Track),FT_SQ_34_DESC,Бутик-гостиница,,,,
+Square (Fast Track),FT_SQ_35_NAME,CASHFLOW Day,,,,
+Square (Fast Track),FT_SQ_35_DESC,Вам выплачивается доход от ваших инвестиций,,,,
+Square (Fast Track),FT_SQ_36_NAME,Ресторан,,,,
+Square (Fast Track),FT_SQ_36_DESC,Франшиза популярного ресторана,,,,
+Square (Fast Track),FT_SQ_37_NAME,Высочайшие вершины,,,,
+Square (Fast Track),FT_SQ_37_DESC,Подняться на все высочайшие вершины мира,,,,
+Square (Fast Track),FT_SQ_38_NAME,Мини-отель,,,,
+Square (Fast Track),FT_SQ_38_DESC,Бутик-гостиница,,,,
+Square (Fast Track),FT_SQ_39_NAME,Автор бестселлера,,,,
+Square (Fast Track),FT_SQ_39_DESC,Стать автором книги-бестселлера,,,,
+Square (Fast Track),FT_SQ_40_NAME,Йога-центр,,,,
+Square (Fast Track),FT_SQ_40_DESC,Йога- и медитационный центр,,,,
+Square (Fast Track),FT_SQ_41_NAME,Развод,,,,
+Square (Fast Track),FT_SQ_41_DESC,Раздел имущества. Вы теряете 50% наличных.,,,,
+Square (Fast Track),FT_SQ_42_NAME,Автомойки,,,,
+Square (Fast Track),FT_SQ_42_DESC,Сеть автомоек самообслуживания,,,,
+Square (Fast Track),FT_SQ_43_NAME,Яхта в Средиземном,,,,
+Square (Fast Track),FT_SQ_43_DESC,Жить год на яхте в Средиземном море,,,,
+Square (Fast Track),FT_SQ_44_NAME,Салон красоты,,,,
+Square (Fast Track),FT_SQ_44_DESC,Салон красоты / Барбершоп,,,,
+Square (Fast Track),FT_SQ_45_NAME,Мировой фестиваль,,,,
+Square (Fast Track),FT_SQ_45_DESC,Организовать мировой фестиваль,,,,
+Square (Fast Track),FT_SQ_46_NAME,Пожар,,,,
+Square (Fast Track),FT_SQ_46_DESC,Вы теряете бизнес с минимальным доходом.,,,,
+Square (Fast Track),FT_SQ_47_NAME,Онлайн-магазин,,,,
+Square (Fast Track),FT_SQ_47_DESC,Онлайн-магазин одежды,,,,
+Square (Fast Track),FT_SQ_48_NAME,CASHFLOW Day,,,,
+Square (Fast Track),FT_SQ_48_DESC,Вам выплачивается доход от ваших инвестиций,,,,
+Square (Fast Track),FT_SQ_49_NAME,Фонд талантов,,,,
+Square (Fast Track),FT_SQ_49_DESC,Создать фонд поддержки талантов,,,,
+Square (Fast Track),FT_SQ_50_NAME,Ретрит-центр,,,,
+Square (Fast Track),FT_SQ_50_DESC,Построить ретрит-центр,,,,
+Square (Fast Track),FT_SQ_51_NAME,Кругосветка,,,,
+Square (Fast Track),FT_SQ_51_DESC,Кругосветное плавание на паруснике,,,,
+Square (Fast Track),FT_SQ_52_NAME,Эко-ранчо,,,,
+Square (Fast Track),FT_SQ_52_DESC,Туристический комплекс (эко-ранчо),,,,
+Square (Fast Track),FT_SQ_53_NAME,Кругосветка (Люкс),,,,
+Square (Fast Track),FT_SQ_53_DESC,Кругосветное плавание на паруснике (Premium),,,,
+Square (Fast Track),FT_SQ_54_NAME,Биржа,,,,
+Square (Fast Track),FT_SQ_54_DESC,"Бросьте кубик. Если выпадет 5 или 6, вы получите $500,000.",,,,
+Square (Fast Track),FT_SQ_55_NAME,Частный самолёт,,,,
+Square (Fast Track),FT_SQ_55_DESC,Купить частный самолёт,,,,
+Square (Fast Track),FT_SQ_56_NAME,NFT-платформа,,,,
+Square (Fast Track),FT_SQ_56_DESC,Платформа для торговли цифровым искусством.,,,,
+Square (Fast Track),FT_SQ_57_NAME,CASHFLOW Day,,,,
+Square (Fast Track),FT_SQ_57_DESC,Вам выплачивается доход от ваших инвестиций,,,,
+Square (Fast Track),FT_SQ_58_NAME,Школа языков,,,,
+Square (Fast Track),FT_SQ_58_DESC,Школа иностранных языков,,,,
+Square (Fast Track),FT_SQ_59_NAME,Коллекция суперкаров,,,,
+Square (Fast Track),FT_SQ_59_DESC,Гараж с редкими автомобилями.,,,,
+Square (Fast Track),FT_SQ_60_NAME,Школа будущего,,,,
+Square (Fast Track),FT_SQ_60_DESC,Создать школу будущего для детей,,,,
+Square (Fast Track),FT_SQ_61_NAME,Снять фильм,,,,
+Square (Fast Track),FT_SQ_61_DESC,Снять полнометражный фильм,,,,
+Square (Fast Track),FT_SQ_62_NAME,Рейдерский захват,,,,
+Square (Fast Track),FT_SQ_62_DESC,Вы теряете бизнес с самым крупным доходом.,,,,
+Square (Fast Track),FT_SQ_63_NAME,Лидер мнений,,,,
+Square (Fast Track),FT_SQ_63_DESC,Стать мировым лидером мнений,,,,
+Square (Fast Track),FT_SQ_64_NAME,Автомойки,,,,
+Square (Fast Track),FT_SQ_64_DESC,Сеть автомоек самообслуживания,,,,
+Square (Fast Track),FT_SQ_65_NAME,Белоснежная Яхта,,,,
+Square (Fast Track),FT_SQ_65_DESC,Роскошная яхта для путешествий.,,,,
+Square (Fast Track),FT_SQ_66_NAME,Франшиза,,,,
+Square (Fast Track),FT_SQ_66_DESC,"Франшиза ""Поток денег""",,,,
+Square (Fast Track),FT_SQ_67_NAME,Полёт в космос,,,,
+Square (Fast Track),FT_SQ_67_DESC,Туристический полет на орбиту.,,,,
+Square (Fast Track),FT_SQ_68_NAME,Пекарня,,,,
+Square (Fast Track),FT_SQ_68_DESC,Пекарня с доставкой,,,,
+Square (Fast Track),FT_SQ_69_NAME,Благотворительный фонд,,,,
+Square (Fast Track),FT_SQ_69_DESC,Организовать благотворительный фонд,,,,
+Square (Fast Track),FT_SQ_70_NAME,Образовательная платформа,,,,
+Square (Fast Track),FT_SQ_70_DESC,Онлайн-образовательная платформа,,,,
+Square (Fast Track),FT_SQ_71_NAME,Лотерея,,,,
+Square (Fast Track),FT_SQ_71_DESC,Выпадет любая сделка внешнего круга.,,,,
+CARD_EXPENSE,e1_TITLE,Обед в ресторане,,,,
+CARD_EXPENSE,e1_DESC,С друзьями.,,,,
+CARD_EXPENSE,e2_TITLE,Ремонт кофемашины,,,,
+CARD_EXPENSE,e2_DESC,Поломка.,,,,
+CARD_EXPENSE,e3_TITLE,Новые кроссовки,,,,
+CARD_EXPENSE,e3_DESC,Спорт.,,,,
+CARD_EXPENSE,e4_TITLE,Штраф ПДД,,,,
+CARD_EXPENSE,e4_DESC,Превышение скорости.,,,,
+CARD_EXPENSE,e5_TITLE,Ужин премиум,,,,
+CARD_EXPENSE,e5_DESC,Гастрономический сет.,,,,
+CARD_EXPENSE,e6_TITLE,Концерт,,,,
+CARD_EXPENSE,e6_DESC,Обычные места.,,,,
+CARD_EXPENSE,e7_TITLE,Подписки на сервисы,,,,
+CARD_EXPENSE,e7_DESC,Годовая подписка.,,,,
+CARD_EXPENSE,e8_TITLE,Абонемент в фитнес,,,,
+CARD_EXPENSE,e8_DESC,Квартальный.,,,,
+CARD_EXPENSE,e9_TITLE,Благотворительность,,,,
+CARD_EXPENSE,e9_DESC,Пожертвование.,,,,
+CARD_EXPENSE,e10_TITLE,Ветеринар,,,,
+CARD_EXPENSE,e10_DESC,Лечение питомца.,,,,
+CARD_EXPENSE,e11_TITLE,Новый смартфон,,,,
+CARD_EXPENSE,e11_DESC,Бюджетная модель.,,,,
+CARD_EXPENSE,e12_TITLE,ТО Автомобиля,,,,
+CARD_EXPENSE,e12_DESC,Замена масла и фильтров.,,,,
+CARD_EXPENSE,e13_TITLE,Шопинг,,,,
+CARD_EXPENSE,e13_DESC,Одежда (сезонная).,,,,
+CARD_EXPENSE,e14_TITLE,Бытовая техника,,,,
+CARD_EXPENSE,e14_DESC,Посудомоечная машина.,,,,
+CARD_EXPENSE,e15_TITLE,Ремонт машины,,,,
+CARD_EXPENSE,e15_DESC,Замена деталей.,,,,
+CARD_EXPENSE,e16_TITLE,Стоматолог,,,,
+CARD_EXPENSE,e16_DESC,Лечение зубов.,,,,
+CARD_EXPENSE,e17_TITLE,Страховка,,,,
+CARD_EXPENSE,e17_DESC,Страхование жизни.,,,,
+CARD_EXPENSE,e18_TITLE,Новый ноутбук,,,,
+CARD_EXPENSE,e18_DESC,Рабочий инструмент.,,,,
+CARD_EXPENSE,e19_TITLE,Отпуск,,,,
+CARD_EXPENSE,e19_DESC,Тур на море.,,,,
+CARD_EXPENSE,e20_TITLE,Брендовая сумка,,,,
+CARD_EXPENSE,e20_DESC,Подарок.,,,,
+CARD_EXPENSE,e21_TITLE,Ремонт дома,,,,
+CARD_EXPENSE,e21_DESC,Косметический ремонт.,,,,
+CARD_EXPENSE,e22_TITLE,Обслуживание катера,,,,
+CARD_EXPENSE,e22_DESC,Сезонное обслуживание.,,,,
+CARD_EXPENSE,e23_TITLE,Подарок на свадьбу,,,,
+CARD_EXPENSE,e23_DESC,Щедрый подарок.,,,,
+CARD_EXPENSE,e24_TITLE,Аренда виллы,,,,
+CARD_EXPENSE,e24_DESC,Вечеринка для друзей.,,,,
+CARD,sd_tsla_15_TITLE,Акции: Tesla,,,,
+CARD,sd_tsla_15_DESC,Цена $15. Колебания $15-$200.,,,,
+CARD,sd_tsla_20_TITLE,Акции: Tesla,,,,
+CARD,sd_tsla_20_DESC,Цена $20. Колебания $15-$200.,,,,
+CARD,sd_tsla_40_TITLE,Акции: Tesla,,,,
+CARD,sd_tsla_40_DESC,Цена $40. Колебания $15-$200.,,,,
+CARD,sd_tsla_60_TITLE,Акции: Tesla,,,,
+CARD,sd_tsla_60_DESC,Цена $60. Колебания $15-$200.,,,,
+CARD,sd_tsla_80_TITLE,Акции: Tesla,,,,
+CARD,sd_tsla_80_DESC,Цена $80. Колебания $15-$200.,,,,
+CARD,sd_tsla_160_TITLE,Акции: Tesla,,,,
+CARD,sd_tsla_160_DESC,Цена $160. Колебания $15-$200.,,,,
+CARD,sd_tsla_180_TITLE,Акции: Tesla,,,,
+CARD,sd_tsla_180_DESC,Цена $180. Колебания $15-$200.,,,,
+CARD,sd_tsla_200_TITLE,Акции: Tesla,,,,
+CARD,sd_tsla_200_DESC,Цена $200. Колебания $15-$200.,,,,
+CARD,sd_ton_1_TITLE,TON Token ($1),,,,
+CARD,sd_ton_1_DESC,TON Token (криптовалюта),,,,
+CARD,sd_ton_2_TITLE,TON Token ($2),,,,
+CARD,sd_ton_2_DESC,TON Token (криптовалюта),,,,
+CARD,sd_ton_3_TITLE,TON Token ($3),,,,
+CARD,sd_ton_3_DESC,TON Token (криптовалюта),,,,
+CARD,sd_ton_5_TITLE,TON Token ($5),,,,
+CARD,sd_ton_5_DESC,TON Token (криптовалюта),,,,
+CARD,sd_ton_10_TITLE,TON Token ($10),,,,
+CARD,sd_ton_10_DESC,TON Token (криптовалюта),,,,
+CARD,sd_btc_4k_TITLE,Bitcoin,,,,
+CARD,sd_btc_4k_DESC,"Криптовалюта на дне. Цена $4,000.",,,,
+CARD,sd_btc_10k_TITLE,Bitcoin,,,,
+CARD,sd_btc_10k_DESC,"Крипто-зима. Цена $10,000.",,,,
+CARD,sd_btc_20k_TITLE,Bitcoin,,,,
+CARD,sd_btc_20k_DESC,"Биткоин на хайпе. Цена $20,000",,,,
+CARD,sd_btc_30k_TITLE,Bitcoin,,,,
+CARD,sd_btc_30k_DESC,"Биткоин штурмует максимумы. Цена $30,000.",,,,
+CARD,sd_btc_50k_TITLE,Bitcoin,,,,
+CARD,sd_btc_50k_DESC,"Биткоин растет! Цена $50,000.",,,,
+CARD,sd_btc_100k_TITLE,Bitcoin,,,,
+CARD,sd_btc_100k_DESC,"To The Moon! Цена $100,000.",,,,
+CARD,sd_att_pref_1_TITLE,Акции: AT&T (Pref),,,,
+CARD,sd_att_pref_1_DESC,Привилегированные акции AT&T. Дивиденды $50/акцию. Макс 1000 шт.,,,,
+CARD,sd_att_pref_2_TITLE,Акции: AT&T (Pref),,,,
+CARD,sd_att_pref_2_DESC,Привилегированные акции AT&T. Дивиденды $50/акцию. Макс 1000 шт.,,,,
+CARD,sd_pg_pref_1_TITLE,Акции: P&G (Pref),,,,
+CARD,sd_pg_pref_1_DESC,Привилегированные акции P&G. Дивиденды $10/акцию. Макс 1000 шт.,,,,
+CARD,sd_pg_pref_2_TITLE,Акции: P&G (Pref),,,,
+CARD,sd_pg_pref_2_DESC,Привилегированные акции P&G. Дивиденды $10/акцию. Макс 1000 шт.,,,,
+CARD,sd_room_1_TITLE,Комната в пригороде,,,,
+CARD,sd_room_1_DESC,Сдача в аренду. ROI ~100%.,,,,
+CARD,sd_room_2_TITLE,Комната в пригороде,,,,
+CARD,sd_room_2_DESC,Сдача в аренду. ROI ~100%.,,,,
+CARD,sd_room_3_TITLE,Комната в пригороде,,,,
+CARD,sd_room_3_DESC,Сдача в аренду. ROI ~100%.,,,,
+CARD,sd_room_4_TITLE,Комната в пригороде,,,,
+CARD,sd_room_4_DESC,Сдача в аренду. ROI ~100%.,,,,
+CARD,sd_room_5_TITLE,Комната в пригороде,,,,
+CARD,sd_room_5_DESC,Сдача в аренду. ROI ~100%.,,,,
+CARD,sd_nail_TITLE,Студия маникюра,,,,
+CARD,sd_nail_DESC,Студия маникюра на 1 место.,,,,
+CARD,sd_shawarma_TITLE,Шаверма,,,,
+CARD,sd_shawarma_DESC,Откройте бизнес по продаже шаурмы. Бросок кубика = 200 пассивного дохода.,,,,
+CARD,sd_coffee_TITLE,Кофейня,,,,
+CARD,sd_coffee_DESC,Небольшая кофейня.,,,,
+CARD,sd_sushi_TITLE,Суши/Ролы,,,,
+CARD,sd_sushi_DESC,Откройте бизнес. Бросок кубика = 200 пассивного дохода.,,,,
+CARD,sd_auto_TITLE,Партнёрство в автомастерской,,,,
+CARD,sd_auto_DESC,Доля в бизнесе.,,,,
+CARD,sd_vet_TITLE,Ветеринарный центр,,,,
+CARD,sd_vet_DESC,Доля в бизнесе.,,,,
+CARD,sd_land_20_TITLE,Участок земли 20га,,,,
+CARD,sd_land_20_DESC,Земля без дохода.,,,,
+CARD,sd_land_25_TITLE,Участок земли 20га,,,,
+CARD,sd_land_25_DESC,Земля без дохода.,,,,
+CARD,sd_drone_TITLE,Покупка дрона,,,,
+CARD,sd_drone_DESC,Дрон для съёмок.,,,,
+CARD,sd_flip_1_TITLE,Флипинг студии,,,,
+CARD,sd_flip_1_DESC,Покупка и быстрая перепродажа (или доход).,,,,
+CARD,sd_flip_2_TITLE,Флипинг студии,,,,
+CARD,sd_flip_2_DESC,Покупка и быстрая перепродажа (или доход).,,,,
+CARD,sd_flip_3_TITLE,Флипинг студии,,,,
+CARD,sd_flip_3_DESC,Покупка и быстрая перепродажа (или доход).,,,,
+CARD,sd_flip_4_TITLE,Флипинг студии,,,,
+CARD,sd_flip_4_DESC,Покупка и быстрая перепродажа (или доход).,,,,
+CARD,sd_flip_5_TITLE,Флипинг студии,,,,
+CARD,sd_flip_5_DESC,"Покупка и быстрая перепродажа (или доход). Есть покупатель на рынке за $15,000.",,,,
+CARD,sd_mlm_1_TITLE,Сетевой бизнес,,,,
+CARD,sd_mlm_1_DESC,Старт в MLM компании.,,,,
+CARD,sd_mlm_2_TITLE,Сетевой бизнес,,,,
+CARD,sd_mlm_2_DESC,Старт в MLM компании.,,,,
+CARD,sd_mlm_3_TITLE,Сетевой бизнес,,,,
+CARD,sd_mlm_3_DESC,Старт в MLM компании.,,,,
+CARD,sd_plazma_1_TITLE,Сетевой бизнес: Plazma Water,,,,
+CARD,sd_plazma_1_DESC,Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер),,,,
+CARD,sd_plazma_2_TITLE,Сетевой бизнес: Plazma Water,,,,
+CARD,sd_plazma_2_DESC,Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер),,,,
+CARD,sd_plazma_3_TITLE,Сетевой бизнес: Plazma Water,,,,
+CARD,sd_plazma_3_DESC,Plazma Water. Кол-во партнеров = Бросок кубика. ($100/партнер),,,,
+CARD,sd_moneo_100_TITLE,Сетевой бизнес: MONEO,,,,
+CARD,sd_moneo_100_DESC,MONEO Network. Кол-во партнеров = Бросок кубика. ($50/партнер),,,,
+CARD,sd_moneo_1000_TITLE,Сетевой бизнес: MONEO,,,,
+CARD,sd_moneo_1000_DESC,MONEO Network. Кол-во партнеров = Бросок кубика. ($200/партнер),,,,
+CARD,sd_moneo_10000_TITLE,Сетевой бизнес: MONEO,,,,
+CARD,sd_moneo_10000_DESC,MONEO Network. Кол-во партнеров = Бросок кубика. ($500/партнер),,,,
+CARD,sd_friend_l1_TITLE,Друг просит в займ,,,,
+CARD,sd_friend_l1_DESC,"Ваш друг просит $5,000 на ""верное дело"". Помочь?",,,,
+CARD,sd_friend_w1_TITLE,Друг просит в займ,,,,
+CARD,sd_friend_w1_DESC,"Ваш друг просит $5,000 на ""верное дело"". Помочь?",,,,
+CARD,sd_friend_l2_TITLE,Друг просит в займ,,,,
+CARD,sd_friend_l2_DESC,"Ваш друг просит $5,000 на ""верное дело"". Помочь?",,,,
+CARD,sd_insurance_TITLE,Страховка,,,,
+CARD,sd_insurance_DESC,Международная страховая компания в случае серьезной болезни или аварии возьмет на себя все расходы.,,,,
+CARD,sd_guide_TITLE,Малый бизнес,,,,
+CARD,sd_guide_DESC,"Вы отлично знаете живописные места, вы составили маршрут и провели по нему туристов.",,,,
+CARD,sd_health_TITLE,Оздоровительный центр,,,,
+CARD,sd_health_DESC,Откройте франшизу оздоровительного Центра = Бросок кубика. ($300/доход),,,,
+CARD,sd_boutique_TITLE,Бутик одежды,,,,
+CARD,sd_boutique_DESC,Откройте франшизу бутика дизайнерской одежды.,,,,
+CARD,sd_laser_TITLE,Франшиза Лазерной эпиляции,,,,
+CARD,sd_laser_DESC,"Откройте франшизу сети студий лазерной эпиляции, уже больше 50 филиалов в СНГ.",,,,
+CARD,bd_house_ex_TITLE,Дом (3Br/2Ba),,,,
+CARD,bd_house_ex_DESC,Дом под сдачу. Цена $7000-10000. Доход $200.,,,,
+CARD,bd_8plex_3_TITLE,"ЖК ""Заря""",,,,
+CARD,bd_8plex_3_DESC,Эконом класс.,,,,
+CARD,bd_moneo_franchise_TITLE,Франшиза MONEO,,,,
+CARD,bd_moneo_franchise_DESC,Франшиза MONEO. Стабильный доход при минимальной вовлеченности.,,,,Frontend Label,deposit/page.tsx,Заявка отправлена!,,,,
+Frontend Label,deposit/page.tsx,Мы проверим ваш платеж в ближайшее время. Скриншот отправлен администратору.,,,,
+Frontend Label,deposit/page.tsx,"router.back()}
+                    className=""w-full py-3 bg-blue-600 rounded-xl font-bold text-white hover:bg-blue-500""
+                >
+                    Вернуться назад",,,,
+Frontend Label,deposit/page.tsx,"{step === 'METHOD' && 'Выберите способ'}
+                    {step === 'AMOUNT' && 'Введите сумму'}
+                    {step === 'PROOF' && 'Подтверждение'}",,,,
+Frontend Label,deposit/page.tsx,Ваша сумма ($),,,,
+Frontend Label,deposit/page.tsx,"{
+                                setAmount('');
+                                setCustomAmount(e.target.value);
+                            }}
+                            placeholder=""Введите сумму""
+                            className=""w-full p-4 bg-slate-800 border border-slate-700 rounded-xl text-white outline-none focus:border-blue-500""
+                        />",,,,
+Frontend Label,deposit/page.tsx,Далее,,,,
+Frontend Label,deposit/page.tsx,К оплате,,,,
+Frontend Label,deposit/page.tsx,Кошелек / Реквизиты:,,,,
+Frontend Label,deposit/page.tsx,Скопировано,,,,
+Frontend Label,deposit/page.tsx,Прикрепите скриншот,,,,
+Frontend Label,deposit/page.tsx,Нажмите чтобы загрузить,,,,
+Frontend Label,deposit/page.tsx,"router.back()}
+                            className=""flex-1 py-4 bg-slate-700 rounded-xl font-bold text-white hover:bg-slate-600""
+                        >
+                            Отмена",,,,
+Frontend Label,deposit/page.tsx,{loading ? 'Отправка...' : 'Отправить'},,,,
+Frontend Label,deposit/page.tsx,Сбербанк (RUB),,,,
+Frontend Label,deposit/page.tsx,+79164632850 (Роман Богданович П.),,,,
+Frontend Label,deposit/page.tsx,Ошибка авторизации. Зайдите через Telegram.,,,,
+Frontend Label,deposit/page.tsx,Ошибка отправки,,,,
+Frontend Label,deposit/page.tsx,Выберите способ,,,,
+Frontend Label,deposit/page.tsx,Введите сумму,,,,
+Frontend Label,deposit/page.tsx,Подтверждение,,,,
+Frontend Label,deposit/page.tsx,Отправка...,,,,
+Frontend Label,deposit/page.tsx,Отправить,,,,
+Frontend Label,earn/AvatarPurchase.tsx,Аватары Матрицы,,,,
+Frontend Label,earn/AvatarPurchase.tsx,{myAvatars.length} аватаров,,,,
+Frontend Label,earn/AvatarPurchase.tsx,Мои Аватары,,,,
+Frontend Label,earn/AvatarPurchase.tsx,✓ Закрыто,,,,
+Frontend Label,earn/AvatarPurchase.tsx,{avatar.hasActiveSubscription ? 'Активна' : 'Истекла'},,,,
+Frontend Label,earn/AvatarPurchase.tsx,Доход аватара:,,,,
+Frontend Label,earn/AvatarPurchase.tsx,Базовый Аватар,,,,
+Frontend Label,earn/AvatarPurchase.tsx,1 месяц,,,,
+Frontend Label,earn/AvatarPurchase.tsx,Продвинутый Аватар,,,,
+Frontend Label,earn/AvatarPurchase.tsx,1 год,,,,
+Frontend Label,earn/AvatarPurchase.tsx,Премиум Аватар,,,,
+Frontend Label,earn/AvatarPurchase.tsx,Навсегда,,,,
+Frontend Label,earn/AvatarPurchase.tsx,"Недостаточно зеленого баланса! Нужно $${cost}, у вас $${balance}",,,,
+Frontend Label,earn/AvatarPurchase.tsx,Превышен лимит премиум аватаров (25 max),,,,
+Frontend Label,earn/AvatarPurchase.tsx,Купить ${AVATAR_TYPES.find(a => a.type === type)?.name} за $${cost}?,,,,
+Frontend Label,earn/AvatarPurchase.tsx,✅ Аватар куплен!,,,,
+Frontend Label,earn/AvatarPurchase.tsx,Ошибка: ${data.error},,,,
+Frontend Label,earn/AvatarPurchase.tsx,Ошибка покупки,,,,
+Frontend Label,earn/AvatarPurchase.tsx,">
+                            Общий доход: <span className=",,,,
+Frontend Label,earn/AvatarPurchase.tsx,Бессрочно,,,,
+Frontend Label,earn/AvatarPurchase.tsx,Активна,,,,
+Frontend Label,earn/AvatarPurchase.tsx,Истекла,,,,
+Frontend Label,earn/AvatarPurchase.tsx,Посмотреть матрицу,,,,
+Frontend Label,earn/BalanceModal.tsx,Управление балансом,,,,
+Frontend Label,earn/BalanceModal.tsx,Пополнить,,,,
+Frontend Label,earn/BalanceModal.tsx,Вывести,,,,
+Frontend Label,earn/BalanceModal.tsx,Зеленый Баланс,,,,
+Frontend Label,earn/BalanceModal.tsx,"Доступно для покупки аватаров, подписок и вывода средств.",,,,
+Frontend Label,earn/BalanceModal.tsx,Пополните баланс криптовалютой или переводом через банк.,,,,
+Frontend Label,earn/BalanceModal.tsx,"setStep('AMOUNT')}
+                                    className=""text-slate-400 hover:text-white text-xs flex items-center gap-1 mb-2""
+                                >
+                                    ← Назад к сумме",,,,
+Frontend Label,earn/BalanceModal.tsx,Ваш тариф:,,,,
+Frontend Label,earn/BalanceModal.tsx,Сумма вывода,,,,
+Frontend Label,earn/BalanceModal.tsx,"setWithdrawAmount(balance.toString())}
+                                                className=""absolute right-2 top-1/2 -translate-y-1/2 text-[10px] bg-slate-800 text-blue-400 px-2 py-1 rounded hover:bg-slate-700 transition""
+                                            >
+                                                МАКС",,,,
+Frontend Label,earn/BalanceModal.tsx,Сумма вывода:,,,,
+Frontend Label,earn/BalanceModal.tsx,Комиссия MONEO ({(commissionRate * 100).toFixed(0)}%):,,,,
+Frontend Label,earn/BalanceModal.tsx,Повысьте тариф для снижения,,,,
+Frontend Label,earn/BalanceModal.tsx,Вы получите:,,,,
+Frontend Label,earn/BalanceModal.tsx,"balance}
+                                        className=""w-full bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl shadow-lg shadow-indigo-900/20 transition-all""
+                                    >
+                                        {amountNum > balance ? 'Недостаточно средств' : 'Запросить вывод'}",,,,
+Frontend Label,earn/BalanceModal.tsx,Сумма к получению (USDT BEP20),,,,
+Frontend Label,earn/BalanceModal.tsx,Ваш кошелек USDT (BEP20),,,,
+Frontend Label,earn/BalanceModal.tsx,"Пожалуйста, убедитесь, что адрес сети BNB Smart Chain (BEP20).",,,,
+Frontend Label,earn/BalanceModal.tsx,: 'Подтвердить вывод'},,,,
+Frontend Label,earn/BalanceModal.tsx,Вывод средств обрабатывается в ручном режиме администратором. Обычно занимает от 15 минут до 24 часов.,,,,
+Frontend Label,earn/BalanceModal.tsx,Успешно синхронизировано: $${res.synced},,,,
+Frontend Label,earn/BalanceModal.tsx,Нет средств для синхронизации,,,,
+Frontend Label,earn/BalanceModal.tsx,Ошибка синхронизации:,,,,
+Frontend Label,earn/BalanceModal.tsx,Ошибка сети,,,,
+Frontend Label,earn/BalanceModal.tsx,Введите корректный адрес кошелька BEP20,,,,
+Frontend Label,earn/BalanceModal.tsx,"Заявка на вывод $${amountNum} создана!\nКошелек: ${walletAddress.slice(0, 6)}...${walletAddress.slice(-4)}",,,,
+Frontend Label,earn/BalanceModal.tsx,Ошибка вывода,,,,
+Frontend Label,earn/BalanceModal.tsx,Сбой сети:,,,,
+Frontend Label,earn/BalanceModal.tsx,Синхронизировать старый баланс,,,,
+Frontend Label,earn/BalanceModal.tsx,Недостаточно средств,,,,
+Frontend Label,earn/BalanceModal.tsx,Запросить вывод,,,,
+Frontend Label,earn/BalanceModal.tsx,Подтвердить вывод,,,,
+Frontend Label,earn/PartnersModal.tsx,Ваши Партнеры,,,,
+Frontend Label,earn/PartnersModal.tsx,Загрузка списка...,,,,
+Frontend Label,earn/PartnersModal.tsx,У вас пока нет партнеров.,,,,
+Frontend Label,earn/PartnersModal.tsx,Приглашайте друзей по вашей ссылке!,,,,
+Frontend Label,earn/PartnersModal.tsx,{p.first_name || p.username || 'Без имени'},,,,
+Frontend Label,earn/PartnersModal.tsx,B = Бонусный доход (в структуру),,,,
+Frontend Label,earn/PartnersModal.tsx,Без имени,,,,
+Frontend Label,earn/ProgramDescription.tsx,Подробнее о программе,,,,
+Frontend Label,earn/ProgramDescription.tsx,Как работает Тринар и распределение,,,,
+Frontend Label,earn/ProgramDescription.tsx,Ключевая идея модели,,,,
+Frontend Label,earn/ProgramDescription.tsx,100% денег,,,,
+Frontend Label,earn/ProgramDescription.tsx,работают внутри системы,,,,
+Frontend Label,earn/ProgramDescription.tsx,Подписка = актив,,,,
+Frontend Label,earn/ProgramDescription.tsx,Аватар = автономный доходный модуль,,,,
+Frontend Label,earn/ProgramDescription.tsx,Чем выше тариф:,,,,
+Frontend Label,earn/ProgramDescription.tsx,тем выше доход,,,,
+Frontend Label,earn/ProgramDescription.tsx,тем больше доступный вывод,,,,
+Frontend Label,earn/ProgramDescription.tsx,Всё автоматизировано • прозрачно • масштабируемо,,,,
+Frontend Label,earn/ProgramDescription.tsx,Маркетинг «Тринар»,,,,
+Frontend Label,earn/ProgramDescription.tsx,1️⃣ Распределение оплат (ключевой принцип),,,,
+Frontend Label,earn/ProgramDescription.tsx,С каждой оплаты приглашённого пользователя 100% суммы распределяется внутри системы — деньги не выводятся из оборота.,,,,
+Frontend Label,earn/ProgramDescription.tsx,На Ваш Зеленый баланс,,,,
+Frontend Label,earn/ProgramDescription.tsx,Доступно к выводу согласно тарифу,,,,
+Frontend Label,earn/ProgramDescription.tsx,В Желтый бонус,,,,
+Frontend Label,earn/ProgramDescription.tsx,Накапливается в структуре. При закрытии 5-го уровня → конвертируется в деньги владельца.,,,,
+Frontend Label,earn/ProgramDescription.tsx,2️⃣ Подписка = Аватар,,,,
+Frontend Label,earn/ProgramDescription.tsx,При покупке любой платной подписки пользователь автоматически получает аватара.,,,,
+Frontend Label,earn/ProgramDescription.tsx,Сразу размещается в своей тринарной сетке,,,,
+Frontend Label,earn/ProgramDescription.tsx,Начинает работать на доход владельца,,,,
+Frontend Label,earn/ProgramDescription.tsx,Система автоматически ставит аватара под первого незаполненного в структуре,,,,
+Frontend Label,earn/ProgramDescription.tsx,3️⃣ Тарифы участия,,,,
+Frontend Label,earn/ProgramDescription.tsx,🟢 Тариф «Гость» — 0$,,,,
+Frontend Label,earn/ProgramDescription.tsx,Аватар не предоставляется,,,,
+Frontend Label,earn/ProgramDescription.tsx,Можно играть и приглашать друзей,,,,
+Frontend Label,earn/ProgramDescription.tsx,🔵 Тариф «Игрок» — 20$,,,,
+Frontend Label,earn/ProgramDescription.tsx,Номинал аватара:,,,,
+Frontend Label,earn/ProgramDescription.tsx,Доход (при закрытии 5ур):,,,,
+Frontend Label,earn/ProgramDescription.tsx,Доступный вывод:,,,,
+Frontend Label,earn/ProgramDescription.tsx,🟣 Тариф «Мастер» — 100$,,,,
+Frontend Label,earn/ProgramDescription.tsx,🔶 Тариф «Партнёр» — 1000$,,,,
+Frontend Label,earn/ProgramDescription.tsx,Логика работы аватара,,,,
+Frontend Label,earn/ProgramDescription.tsx,Каждый аватар:,,,,
+Frontend Label,earn/ProgramDescription.tsx,Имеет максимум 3 партнёра в первой линии,,,,
+Frontend Label,earn/ProgramDescription.tsx,Развивается автономно в тринарной структуре,,,,
+Frontend Label,earn/ProgramDescription.tsx,🔥 Условие выплаты:,,,,
+Frontend Label,earn/ProgramDescription.tsx,3 партнёра 4-го уровня,,,,
+Frontend Label,earn/ProgramDescription.tsx,весь желтый бонус,,,,
+Frontend Label,earn/ProgramDescription.tsx,"владельцу, после чего завершает работу.",,,,
+Frontend Label,earn/RedBalanceModal.tsx,Красный баланс,,,,
+Frontend Label,earn/RedBalanceModal.tsx,🔴 Зачем приглашать друзей?,,,,
+Frontend Label,earn/RedBalanceModal.tsx,"среду, связи и стратегию роста",,,,
+Frontend Label,earn/RedBalanceModal.tsx,Бонус за друга,,,,
+Frontend Label,earn/RedBalanceModal.tsx,на красный баланс.,,,,
+Frontend Label,earn/RedBalanceModal.tsx,игровой капитал,,,,
+Frontend Label,earn/RedBalanceModal.tsx,", который открывает доступ к более высоким уровням игры.",,,,
+Frontend Label,earn/RedBalanceModal.tsx,Что даёт красный баланс?,,,,
+Frontend Label,earn/RedBalanceModal.tsx,"""Красный баланс — это энергия вашей сети. Чем она сильнее, тем дальше вы проходите в игре.""",,,,
+Frontend Label,earn/RedBalanceModal.tsx,🟢 Как заработать реальные деньги?,,,,
+Frontend Label,earn/RedBalanceModal.tsx,зелёный баланс,,,,
+Frontend Label,earn/RedBalanceModal.tsx,— это реальные деньги для вывода.,,,,
+Frontend Label,earn/RedBalanceModal.tsx,Вход в турнир:,,,,
+Frontend Label,earn/RedBalanceModal.tsx,Второй этап:,,,,
+Frontend Label,earn/RedBalanceModal.tsx,Призовой фонд (Март):,,,,
+Frontend Label,earn/RedBalanceModal.tsx,История начислений,,,,
+Frontend Label,earn/RedBalanceModal.tsx,"Всего: ${partners.reduce((acc, p) => acc + (p.incomeRed || 0), 0)}",,,,
+Frontend Label,earn/RedBalanceModal.tsx,Игрок,,,,
+Frontend Label,earn/RedBalanceModal.tsx,Нет приглашенных друзей,,,,
+Frontend Label,earn/RedBalanceModal.tsx,"Пригласите друзей, чтобы получить бонус!",,,,
+Frontend Label,earn/RedBalanceModal.tsx,">
+                                    Игра «Монео» — это не просто про деньги. Это про <span className=",,,,
+Frontend Label,earn/RedBalanceModal.tsx,>Каждый приглашённый вами друг — это <span className=,,,,
+Frontend Label,earn/RedBalanceModal.tsx,Участие в турнирах,,,,
+Frontend Label,earn/RedBalanceModal.tsx,Переход на следующие этапы,,,,
+Frontend Label,earn/RedBalanceModal.tsx,Доступ к призовым фондам,,,,
+Frontend Label,earn/RedBalanceModal.tsx,Игра без личных вложений,,,,
+Frontend Label,earn/RedBalanceModal.tsx,"Красный баланс — это энергия вашей сети. Чем она сильнее, тем дальше вы проходите в игре.",,,,
+Frontend Label,earn/RedBalanceModal.tsx,">
+                                    В турнирах разыгрывается <span className=",,,,
+Frontend Label,earn/page.tsx,Партнерская программа,,,,
+Frontend Label,earn/page.tsx,Найдены старые средства,,,,
+Frontend Label,earn/page.tsx,"{
+                            if (!webApp?.initData) return;
+                            setIsLoading(true);
+                            try {
+                                const res = await partnershipApi.syncLegacyBalance(webApp.initData);
+                                if (res.success) {
+                                    webApp.showAlert(`Успешно перенесено: $${res.synced}`);
+                                    window.location.reload();
+                                } else {
+                                    webApp.showAlert(""Ошибка синхронизации. Попробуйте позже."");
+                                }
+                            } catch (e) {
+                                webApp.showAlert(""Ошибка сети"");
+                            } finally {
+                                setIsLoading(false);
+                            }
+                        }}
+                        disabled={isLoading}
+                        className=""bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-lg text-sm""
+                    >
+                        {isLoading ? '...' : 'Получить'}",,,,
+Frontend Label,earn/page.tsx,Всего участников,,,,
+Frontend Label,earn/page.tsx,Пригласи друга,,,,
+Frontend Label,earn/page.tsx,Получай 50% бонус от их оплат навсегда!,,,,
+Frontend Label,earn/page.tsx,Цель,,,,
+Frontend Label,earn/page.tsx,Распределение средств,,,,
+Frontend Label,earn/page.tsx,В игре (призовой фонд),,,,
+Frontend Label,earn/page.tsx,Доступно к выводу,,,,
+Frontend Label,earn/page.tsx,Тариф Игрок ($20/мес),,,,
+Frontend Label,earn/page.tsx,Тариф Мастер ($100/год),,,,
+Frontend Label,earn/page.tsx,Тариф Франчайзи ($1000),,,,
+Frontend Label,earn/page.tsx,Осталось 22 места (бессрочно),,,,
+Frontend Label,earn/page.tsx,Твоя ссылка,,,,
+Frontend Label,earn/page.tsx,Друзей,,,,
+Frontend Label,earn/page.tsx,Управление,,,,
+Frontend Label,earn/page.tsx,Аватары (Доходные модули),,,,
+Frontend Label,earn/page.tsx,Купить,,,,
+Frontend Label,earn/page.tsx,Мастер,,,,
+Frontend Label,earn/page.tsx,Партнер,,,,
+Frontend Label,earn/page.tsx,для покупки этого аватара.,,,,
+Frontend Label,earn/page.tsx,Ваш баланс:,,,,
+Frontend Label,earn/page.tsx,Купить тариф ${tariff} за $${price}?,,,,
+Frontend Label,earn/page.tsx,Успешно! Аватар активирован.,,,,
+Frontend Label,earn/page.tsx,Сбой сети,,,,
+Frontend Label,earn/page.tsx,Ссылка скопирована!,,,,
+Frontend Label,earn/page.tsx,Успешно перенесено: $${res.synced},,,,
+Frontend Label,earn/page.tsx,Ошибка синхронизации. Попробуйте позже.,,,,
+Frontend Label,earn/page.tsx,Получить,,,,
+Frontend Label,earn/page.tsx,">
+                            Доход (Игровой)
+                            <span className=",,,,
+Frontend Label,earn/page.tsx,">
+                        Зеленый баланс
+                        <span className=",,,,
+Frontend Label,earn/page.tsx,">
+                                    Вам не хватает <span className=",,,,
+Frontend Label,game/ActiveCardZone.tsx,Выберите Возможность,,,,
+Frontend Label,game/ActiveCardZone.tsx,Куда инвестировать?,,,,
+Frontend Label,game/ActiveCardZone.tsx,Мелкая Сделка,,,,
+Frontend Label,game/ActiveCardZone.tsx,"Стоимость до $5,000",,,,
+Frontend Label,game/ActiveCardZone.tsx,Крупная Сделка,,,,
+Frontend Label,game/ActiveCardZone.tsx,"Стоимость от $6,000",,,,
+Frontend Label,game/ActiveCardZone.tsx,Нужен кэш $6k+,,,,
+Frontend Label,game/ActiveCardZone.tsx,Благотворительность,,,,
+Frontend Label,game/ActiveCardZone.tsx,2 кубика,,,,
+Frontend Label,game/ActiveCardZone.tsx,следующие 3 хода.,,,,
+Frontend Label,game/ActiveCardZone.tsx,Сумма:,,,,
+Frontend Label,game/ActiveCardZone.tsx,"socket.emit('charity_choice', { roomId, accept: false })}
+                                className=""w-full bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-3.5 rounded-xl text-sm uppercase tracking-wider active:scale-95 transition-transform""
+                            >
+                                Отказаться",,,,
+Frontend Label,game/ActiveCardZone.tsx,">
+                            Пожертвуйте <span className=",,,,
+Frontend Label,game/ActiveCardZone.tsx,"Не хватает кэша ($${Math.max(1000, Math.ceil((me.salary + (me.passiveIncome || 0)) * 0.1))})",,,,
+Frontend Label,game/ActiveCardZone.tsx,Пожертвовать,,,,
+Frontend Label,game/AdminActionModal.tsx,Выберите игрока,,,,
+Frontend Label,game/AdminActionModal.tsx,Отмена,,,,
+Frontend Label,game/AdminActionModal.tsx,{type === 'GIFT' ? 'Подарить' : 'Подтвердить'},,,,
+Frontend Label,game/AdminActionModal.tsx,Пропустить ход?,,,,
+Frontend Label,game/AdminActionModal.tsx,Выгнать игрока?,,,,
+Frontend Label,game/AdminActionModal.tsx,Подарить деньги,,,,
+Frontend Label,game/AdminActionModal.tsx,Сделать ход за игрока?,,,,
+Frontend Label,game/AdminActionModal.tsx,Передать сделку,,,,
+Frontend Label,game/AdminActionModal.tsx,"Вы уверены, что хотите пропустить ход игрока ${targetPlayer.name}?",,,,
+Frontend Label,game/AdminActionModal.tsx,"Вы уверены, что хотите кикнуть игрока ${targetPlayer.name}? Это действие нельзя отменить.",,,,
+Frontend Label,game/AdminActionModal.tsx,"Введите сумму, которую хотите подарить игроку ${targetPlayer.name}. Деньги будут добавлены к его балансу.",,,,
+Frontend Label,game/AdminActionModal.tsx,Вы выполните действие (бросок кубика или принятие решения) за игрока ${targetPlayer.name}.,,,,
+Frontend Label,game/AdminActionModal.tsx,"Выберите игрока, которому хотите передать текущую активную сделку (карточку) от ${targetPlayer.name}.",,,,
+Frontend Label,game/AdminActionModal.tsx,Подарить,,,,
+Frontend Label,game/AdminActionModal.tsx,Подтвердить,,,,
+Frontend Label,game/AudioChat.tsx,Вы,,,,
+Frontend Label,game/BabyRollView.tsx,👶 Ожидание броска...,,,,
+Frontend Label,game/BabyRollView.tsx,АВТО: {timeLeft}с,,,,
+Frontend Label,game/BabyRollView.tsx,Пополнение в семье!,,,,
+Frontend Label,game/BabyRollView.tsx,Бросьте кубик чтобы узнать родился ли ребенок,,,,
+Frontend Label,game/BabyRollView.tsx,"{
+                        try {
+                            const res = await fetch(`${getGameServiceUrl()}/api/rooms/${roomId}/baby/roll`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' }
+                            });
+                            if (!res.ok) throw new Error('Failed to roll');
+                        } catch (e) {
+                            console.error(e);
+                            socket.emit('roll_dice', { roomId });
+                        }
+                    }}
+                    className=""w-full bg-gradient-to-r from-pink-600 to-purple-600 hover:from-pink-500 hover:to-purple-500 text-white font-bold py-4 rounded-xl text-sm uppercase shadow-lg active:scale-95 transition-all""
+                >
+                    🎲 Бросить кубик",,,,
+Frontend Label,game/BankModal.tsx,Назад,,,,
+Frontend Label,game/BankModal.tsx,Банк,,,,
+Frontend Label,game/BankModal.tsx,"socket.emit('request_state', { roomId })}
+                                className=""w-8 h-8 rounded-full bg-slate-800/80 flex items-center justify-center text-slate-400 hover:bg-slate-700 hover:text-white transition-all active:rotate-180 duration-300""
+                                title=""Обновить баланс""
+                            >
+                                🔄",,,,
+Frontend Label,game/BankModal.tsx,Система активна,,,,
+Frontend Label,game/BankModal.tsx,"Баланс
+                            {/* Removed Hint from here, moving focus to Income Block */}",,,,
+Frontend Label,game/BankModal.tsx,ПАССИВНЫЙ,,,,
+Frontend Label,game/BankModal.tsx,Налоги и Жизнь:,,,,
+Frontend Label,game/BankModal.tsx,Дети ({player.childrenCount}):,,,,
+Frontend Label,game/BankModal.tsx,Лимит:,,,,
+Frontend Label,game/BankModal.tsx,"{ handleRepayLoan(); }} className=""bg-emerald-600 hover:bg-emerald-500 text-white py-3 rounded-xl font-bold text-xs uppercase tracking-wider transition-all shadow-lg shadow-emerald-900/20 active:scale-95 flex items-center justify-center gap-2"">
+                                Погасить",,,,
+Frontend Label,game/BankModal.tsx,Кредит недоступен,,,,
+Frontend Label,game/BankModal.tsx,"{ handleTakeLoan(); }} className=""bg-red-600 hover:bg-red-500 text-white py-2 rounded-lg font-bold text-sm transition-colors shadow-lg shadow-red-900/20 relative"">
+                                    Взять",,,,
+Frontend Label,game/BankModal.tsx,"Сумма должна быть кратна $1,000",,,,
+Frontend Label,game/BankModal.tsx,Превышен лимит по денежному потоку,,,,
+Frontend Label,game/BankModal.tsx,Банковские кредиты недоступны на Скоростной Дорожке,,,,
+Frontend Label,game/BankModal.tsx,Операции,,,,
+Frontend Label,game/BankModal.tsx,Выберите получателя,,,,
+Frontend Label,game/BankModal.tsx,"{ setTransferAmount(0); setRecipientId(''); }} className=""px-5 py-2.5 rounded-xl border border-slate-600/50 text-slate-400 hover:bg-slate-700/50 hover:text-white transition-colors text-xs font-bold uppercase tracking-wider"">Сбросить",,,,
+Frontend Label,game/BankModal.tsx,История пуста,,,,
+Frontend Label,game/BankModal.tsx,{t.type === 'TRANSFER' ? (t.from === player.name ? `Перевод игроку ${t.to}` : `Перевод от ${t.from}`) : t.description},,,,
+Frontend Label,game/BankModal.tsx,{t.from === player.name ? 'Списание' : 'Пополнение'} • {new Date(t.timestamp).toLocaleTimeString()},,,,
+Frontend Label,game/BankModal.tsx,Обновить баланс,,,,
+Frontend Label,game/BankModal.tsx,">
+                                ↗ ДОХОД
+                                ↗ ДОХОД
+                                {showHint(0) && <PortalTutorialTip text=",,,,
+Frontend Label,game/BankModal.tsx,">
+                                ↘ РАСХОДЫ
+                                <span className={",,,,
+Frontend Label,game/BankModal.tsx,">
+                                Текущий Кредит
+                                {showHint(1) && <PortalTutorialTip text=",,,,
+Frontend Label,game/BankModal.tsx,Сумма (кратно 1000),,,,
+Frontend Label,game/BankModal.tsx,Сумма,,,,
+Frontend Label,game/BankModal.tsx,">
+                                Выполнить <span className=",,,,
+Frontend Label,game/BankModal.tsx,"4. История операций. Нажмите, чтобы завершить.",,,,
+Frontend Label,game/BankModal.tsx,Перевод игроку ${t.to},,,,
+Frontend Label,game/BankModal.tsx,Перевод от ${t.from},,,,
+Frontend Label,game/BankModal.tsx,Списание,,,,
+Frontend Label,game/BankModal.tsx,Пополнение,,,,
+Frontend Label,game/BoardVisualizer.tsx,Мечта {p.name},,,,
+Frontend Label,game/BoardVisualizer.tsx,Аудит,,,,
+Frontend Label,game/BoardVisualizer.tsx,Кража,,,,
+Frontend Label,game/BoardVisualizer.tsx,Развод,,,,
+Frontend Label,game/BoardVisualizer.tsx,Пожар,,,,
+Frontend Label,game/BoardVisualizer.tsx,Рейдер,,,,
+Frontend Label,game/BoardVisualizer.tsx,Мечта игрока ${p.name},,,,
+Frontend Label,game/BoardVisualizer.tsx,Владелец: ${owner.name},,,,
+Frontend Label,game/BoardVisualizer.tsx,Кнопка выхода на Большой Круг,,,,
+Frontend Label,game/CardGalleryModal.tsx,{getDescription()} • Всего карт: {cards.length},,,,
+Frontend Label,game/CardGalleryModal.tsx,Загрузка карт...,,,,
+Frontend Label,game/CardGalleryModal.tsx,Нет карт в этой колоде.,,,,
+Frontend Label,game/CardGalleryModal.tsx,Малые Сделки,,,,
+Frontend Label,game/CardGalleryModal.tsx,Крупные Сделки,,,,
+Frontend Label,game/CardGalleryModal.tsx,Рынок (Активные),,,,
+Frontend Label,game/CardGalleryModal.tsx,Карты,,,,
+Frontend Label,game/CardGalleryModal.tsx,"Карты, доступные для покупки другими игроками",,,,
+Frontend Label,game/CardHeader.tsx,{ownedQty} шт,,,,
+Frontend Label,game/CardHeader.tsx,Предложение,,,,
+Frontend Label,game/CardHeader.tsx,Цена,,,,
+Frontend Label,game/CardHeader.tsx,"{
+                        e.stopPropagation();
+                        onDismiss();
+                    }}
+                    className=""w-6 h-6 rounded-lg bg-slate-700/50 hover:bg-red-600/80 text-slate-400 hover:text-white flex items-center justify-center transition-all text-sm font-bold""
+                    title=""Закрыть""
+                >
+                    ✕",,,,
+Frontend Label,game/CardHeader.tsx,Малая сделка,,,,
+Frontend Label,game/CardHeader.tsx,Крупная сделка,,,,
+Frontend Label,game/CardHeader.tsx,Рынок,,,,
+Frontend Label,game/CardHeader.tsx,Расход,,,,
+Frontend Label,game/CardHeader.tsx,Трата,,,,
+Frontend Label,game/CardHeader.tsx,Зарплата,,,,
+Frontend Label,game/CardHeader.tsx,Увольнение,,,,
+Frontend Label,game/CardHeader.tsx,Ребенок,,,,
+Frontend Label,game/CardHeader.tsx,Закрыть,,,,
+Frontend Label,game/CongratulateModal.tsx,У {targetPlayerName} родился ребенок!,,,,
+Frontend Label,game/CongratulateModal.tsx,Поздравьте игрока с этим событием,,,,
+Frontend Label,game/CongratulateModal.tsx,Сумма подарка (Макс: ${maxGift.toLocaleString()}),,,,
+Frontend Label,game/CongratulateModal.tsx,Пропустить,,,,
+Frontend Label,game/CongratulateModal.tsx,"maxGift}
+                            className=""flex-3 w-3/5 bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-3 rounded-xl text-sm uppercase shadow-lg active:scale-95 transition-all""
+                        >
+                            🎁 Подарить",,,,
+Frontend Label,game/ExitToFastTrackModal.tsx,Выход на Большой Трек,,,,
+Frontend Label,game/ExitToFastTrackModal.tsx,Выполните условия для победы в крысиных бегах,,,,
+Frontend Label,game/ExitToFastTrackModal.tsx,Погасить кредит,,,,
+Frontend Label,game/ExitToFastTrackModal.tsx,{reqLoan ? 'Готово' : `-${player.loanDebt.toLocaleString()}`},,,,
+Frontend Label,game/ExitToFastTrackModal.tsx,Пассивный доход,,,,
+Frontend Label,game/ExitToFastTrackModal.tsx,"Цель: $10,000",,,,
+Frontend Label,game/ExitToFastTrackModal.tsx,Накопить деньги,,,,
+Frontend Label,game/ExitToFastTrackModal.tsx,"Цель: $200,000",,,,
+Frontend Label,game/ExitToFastTrackModal.tsx,{allReady ? 'ВЫЙТИ НА БОЛЬШОЙ ТРЕК 🚀' : 'Условия не выполнены'},,,,
+Frontend Label,game/ExitToFastTrackModal.tsx,>Текущий долг: <span className=,,,,
+Frontend Label,game/ExitToFastTrackModal.tsx,Готово,,,,
+Frontend Label,game/ExitToFastTrackModal.tsx,ВЫЙТИ НА БОЛЬШОЙ ТРЕК 🚀,,,,
+Frontend Label,game/ExitToFastTrackModal.tsx,Условия не выполнены,,,,
+Frontend Label,game/ExpenseBreakdownModal.tsx,📉 Структура расходов,,,,
+Frontend Label,game/ExpenseBreakdownModal.tsx,Налоги,,,,
+Frontend Label,game/ExpenseBreakdownModal.tsx,Ипотека,,,,
+Frontend Label,game/ExpenseBreakdownModal.tsx,Учеба,,,,
+Frontend Label,game/ExpenseBreakdownModal.tsx,Автокредит,,,,
+Frontend Label,game/ExpenseBreakdownModal.tsx,Кредитка,,,,
+Frontend Label,game/ExpenseBreakdownModal.tsx,Магазины,,,,
+Frontend Label,game/ExpenseBreakdownModal.tsx,Прочие,,,,
+Frontend Label,game/ExpenseBreakdownModal.tsx,Дети,,,,
+Frontend Label,game/ExpenseBreakdownModal.tsx,Кредит банка (10%),,,,
+Frontend Label,game/ExpenseBreakdownModal.tsx,Расходы активов,,,,
+Frontend Label,game/ExpenseBreakdownModal.tsx,Итого,,,,
+Frontend Label,game/FastTrackInfoModal.tsx,Как победить?,,,,
+Frontend Label,game/FastTrackInfoModal.tsx,Способ 1,,,,
+Frontend Label,game/FastTrackInfoModal.tsx,МЕЧТУ,,,,
+Frontend Label,game/FastTrackInfoModal.tsx,Попадите на розовую клетку с вашей мечтой и купите её.,,,,
+Frontend Label,game/FastTrackInfoModal.tsx,Ваша мечта:,,,,
+Frontend Label,game/FastTrackInfoModal.tsx,ИЛИ,,,,
+Frontend Label,game/FastTrackInfoModal.tsx,Способ 2,,,,
+Frontend Label,game/FastTrackInfoModal.tsx,Увеличить Ден.Поток,,,,
+Frontend Label,game/FastTrackInfoModal.tsx,Старт: ${player.fastTrackStartIncome?.toLocaleString() || 0},,,,
+Frontend Label,game/FastTrackInfoModal.tsx,Цель: ${((player.fastTrackStartIncome || 0) + 50000).toLocaleString()},,,,
+Frontend Label,game/FastTrackInfoModal.tsx,Осталось: ${needed.toLocaleString()},,,,
+Frontend Label,game/FastTrackInfoModal.tsx,Все понятно!,,,,
+Frontend Label,game/FastTrackInfoModal.tsx,>Купить свою <span className=,,,,
+Frontend Label,game/FastTrackInfoModal.tsx,">
+                                Добавьте <span className=",,,,
+Frontend Label,game/FeedCardItem.tsx,Ваш денежный поток,,,,
+Frontend Label,game/FeedCardItem.tsx,Зачислен на баланс,,,,
+Frontend Label,game/FeedCardItem.tsx,Поток:,,,,
+Frontend Label,game/FeedCardItem.tsx,У вас есть ({ownedQty} шт),,,,
+Frontend Label,game/FeedCardItem.tsx,У вас нет такого актива,,,,
+Frontend Label,game/FeedCardItem.tsx,У вас нет этого актива,,,,
+Frontend Label,game/FeedCardItem.tsx,"Сначала нужно купить актив, чтобы его продать.",,,,
+Frontend Label,game/FeedCardItem.tsx,Совет:,,,,
+Frontend Label,game/FeedCardItem.tsx,"Обратите внимание, куда уходят деньги. Обязательные траты и импульсные покупки часто мешают создать капитал.",,,,
+Frontend Label,game/FeedCardItem.tsx,"{
+                                                    setTransactionMode('BUY');
+                                                    const price = card.offerPrice || card.cost || card.price || 0;
+                                                    // const maxBuy = price > 0 ? Math.floor(me.cash / price) : 1; // Unused
+                                                    setStockQty(1);
+                                                    setViewMode('TRANSACTION');
+                                                }}
+                                                className=""flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]""
+                                            >
+                                                Купить",,,,
+Frontend Label,game/FeedCardItem.tsx,"{
+                                                    setTransactionMode('SELL');
+                                                    setStockQty(ownedQty);
+                                                    setViewMode('TRANSACTION');
+                                                }}
+                                                className=""flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]""
+                                            >
+                                                Продать",,,,
+Frontend Label,game/FeedCardItem.tsx,"setShowTransfer(true)}
+                                                className=""px-3 bg-cyan-700 hover:bg-cyan-600 text-cyan-200 font-bold py-2 rounded-lg text-xl flex items-center justify-center""
+                                                title=""Передать сделку""
+                                            >
+                                                ➜",,,,
+Frontend Label,game/FeedCardItem.tsx,"onDismiss()}
+                                                className=""flex-1 bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider""
+                                            >
+                                                {isOffer ? 'Закрыть' : 'Отказаться'}",,,,
+Frontend Label,game/FeedCardItem.tsx,Крупная (от $6k),,,,
+Frontend Label,game/FeedCardItem.tsx,Малые сделки,,,,
+Frontend Label,game/FeedCardItem.tsx,"($500-$5000), чтобы накопить стартовый капитал с минимальным риском.",,,,
+Frontend Label,game/FeedCardItem.tsx,Сетевой Бизнес,,,,
+Frontend Label,game/FeedCardItem.tsx,"Бросьте кубик, чтобы определить количество партнеров в вашей структуре.",,,,
+Frontend Label,game/FeedCardItem.tsx,"{
+                                const roll = Math.floor(Math.random() * 6) + 1;
+                                setMlmRoll(roll);
+                                setStockQty(roll); // Set partners count
+                                setTransactionMode('BUY');
+                                setTimeout(() => setViewMode('TRANSACTION'), 1000); // Small delay to show result?
+                                // For now immediate
+                            }}
+                            className=""w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg""
+                        >
+                            Бросить кубик",,,,
+Frontend Label,game/FeedCardItem.tsx,{transactionMode === 'SELL' ? 'Продано!' : card.type === 'EXPENSE' ? 'Оплачено!' : 'Успешно!'},,,,
+Frontend Label,game/FeedCardItem.tsx,"{transactionMode === 'SELL'
+                                ? `Вы успешно продали ${card.title || card.symbol || 'актив'}`
+                                : card.type === 'EXPENSE'
+                                    ? `Вы оплатили: ${card.title || 'расход'}`
+                                    : `Вы приобрели: ${card.title || card.symbol || 'актив'}`
+                            }",,,,
+Frontend Label,game/FeedCardItem.tsx,"Закрытие через {formatTime(Math.max(0, timeLeft))}",,,,
+Frontend Label,game/FeedCardItem.tsx,Закрыть сейчас,,,,
+Frontend Label,game/FeedCardItem.tsx,"{ e.stopPropagation(); setViewMode('DETAILS'); }} className=""text-slate-400 hover:text-white text-[9px] uppercase font-bold flex items-center gap-1 h-full px-1 hover:bg-white/5 rounded"">← Назад",,,,
+Frontend Label,game/FeedCardItem.tsx,{transactionMode === 'BUY' ? 'Покупка' : 'Продажа'},,,,
+Frontend Label,game/FeedCardItem.tsx,"{ e.stopPropagation(); setTransactionMode('BUY'); }}
+                                                disabled={!canControl} // Bystander cannot switch to BUY
+                                                className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all
+                                                    ${transactionMode === 'BUY' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-300'}
+                                                    ${!canControl ? 'opacity-50 cursor-not-allowed' : ''}
+                                                `}
+                                            >
+                                                Купить",,,,
+Frontend Label,game/FeedCardItem.tsx,"{ e.stopPropagation(); setTransactionMode('SELL'); }}
+                                                className={`flex-1 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-md transition-all
+                                                    ${transactionMode === 'SELL' ? 'bg-emerald-600 text-white shadow-md' : 'text-slate-400 hover:text-slate-300'}
+                                                `}
+                                            >
+                                                Продать",,,,
+Frontend Label,game/FeedCardItem.tsx,Количество,,,,
+Frontend Label,game/FeedCardItem.tsx,Партнеры,,,,
+Frontend Label,game/FeedCardItem.tsx,Цена {isMLM ? 'за партнера' : 'за шт.'},,,,
+Frontend Label,game/FeedCardItem.tsx,Требуется Кредит,,,,
+Frontend Label,game/FeedCardItem.tsx,Лимит превышен,,,,
+Frontend Label,game/FeedCardItem.tsx,"{
+                                // CRITICAL: Only card owner can buy (except when selling)
+                                if (transactionMode === 'BUY' && !canControl) return true;
+
+                                const maxLoan = Math.max(0, Math.floor((me?.cashflow || 0) / 100) * 1000);
+                                const loanAmount = Math.ceil(loanNeeded / 1000) * 1000;
+
+                                // Validation: Disable if unaffordable loan AND NOT Mandatory
+                                // Mandatory cards must allow clicking to trigger ""Force Pay / Bankrupt"" backend logic
+                                const isMandatory = card.type === 'EXPENSE' || card.mandatory;
+
+                                return transactionMode === 'BUY' && loanNeeded > 0 && loanAmount > maxLoan && !me?.isFastTrack && !isMandatory;
+                            })()}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                console.log(`[Transaction] Button Clicked. Mode: ${transactionMode}, Qty: ${stockQty}`);
+                                if (transactionMode === 'BUY') {
+                                    if (loanNeeded > 0) {
+                                        console.log('[Transaction] Loan Needed');
+                                        if (card.type === 'EXPENSE') {
+                                            alert('У вас недостаточно средств! (Требуется кредит)');
+                                        }
+                                        const amount = Math.ceil(loanNeeded / 1000) * 1000;
+                                        setPendingLoan({ amount, quantity: stockQty });
+                                        setShowLoanConfirm(true);
+                                    } else {
+                                        console.log('[Transaction] Direct Buy');
+                                        socket.emit('buy_asset', { roomId, quantity: stockQty, cardId: card.id });
+                                        // Switch to RESULT view for feedback
+                                        setViewMode('RESULT');
+                                        setTimeLeft(10); // 10s countdown
+                                        // Delay dismiss
+                                        setTimeout(() => {
+                                            // onDismiss will be called by user or timer?
+                                            // Actually timer is running.
+                                            // Result view has ""Close"" button.
+                                        }, 10000);
+                                    }
+                                } else {
+                                    // MARKET SELL or STOCK SELL
+                                    console.log('[Transaction] Selling');
+                                    if (card.type === 'MARKET') {
+                                        socket.emit('sell_asset', { roomId });
+                                    } else {
+                                        socket.emit('sell_stock', { roomId, quantity: stockQty });
+                                    }
+
+                                    // Switch to RESULT view like Buy does - don't auto-dismiss
+                                    setViewMode('RESULT');
+                                    setTimeLeft(10); // 10s countdown
+                                }
+                            }}
+                            className={`w-full py-2.5 rounded-lg text-xs font-black uppercase tracking-widest shadow-lg transition-transform active:scale-[0.98] disabled:opacity-50 disabled:grayscale disabled:pointer-events-none
+                                ${transactionMode === 'SELL' ? 'bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white' : loanNeeded > 0 ? 'bg-gradient-to-r from-yellow-600 to-amber-600 hover:from-yellow-500 hover:to-amber-500 text-white' : 'bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-500 hover:to-emerald-500 text-white'}\n                            `}
+                        >
+                            {transactionMode === 'SELL' ? '💵 Продать' : loanNeeded > 0 ? '💰 Кредит и Купить' : '✅ Подтвердить'}",,,,
+Frontend Label,game/FeedCardItem.tsx,"setShowTransfer(false)}
+                            className=""mt-4 text-slate-500 hover:text-white text-xs underline""
+                        >
+                            Отмена",,,,
+Frontend Label,game/FeedCardItem.tsx,сетевой,,,,
+Frontend Label,game/FeedCardItem.tsx,партнер,,,,
+Frontend Label,game/FeedCardItem.tsx,">
+                                                Продать
+                                                {isTutorial && tutorialStep === 2 && <TutorialTip text=",,,,
+Frontend Label,game/FeedCardItem.tsx,🎲 Бросить,,,,
+Frontend Label,game/FeedCardItem.tsx,1. Купите акции!,,,,
+Frontend Label,game/FeedCardItem.tsx,Отказаться,,,,
+Frontend Label,game/FeedCardItem.tsx,">
+                                    Малая (до $5k)
+                                    {isTutorial && tutorialStep === 1 && <TutorialTip text=",,,,
+Frontend Label,game/FeedCardItem.tsx,Продано!,,,,
+Frontend Label,game/FeedCardItem.tsx,Оплачено!,,,,
+Frontend Label,game/FeedCardItem.tsx,Успешно!,,,,
+Frontend Label,game/FeedCardItem.tsx,Вы успешно продали ${card.title || card.symbol ||,,,,
+Frontend Label,game/FeedCardItem.tsx,Вы оплатили: ${card.title ||,,,,
+Frontend Label,game/FeedCardItem.tsx,Вы приобрели: ${card.title || card.symbol ||,,,,
+Frontend Label,game/FeedCardItem.tsx,Покупка,,,,
+Frontend Label,game/FeedCardItem.tsx,Продажа,,,,
+Frontend Label,game/FeedCardItem.tsx,>Цена {isMLM ?,,,,
+Frontend Label,game/FeedCardItem.tsx,за шт.,,,,
+Frontend Label,game/FeedCardItem.tsx,">
+                                                            Макс. кредит: <span className=",,,,
+Frontend Label,game/FeedCardItem.tsx,У вас недостаточно средств! (Требуется кредит),,,,
+Frontend Label,game/FeedCardItem.tsx,💵 Продать,,,,
+Frontend Label,game/FeedCardItem.tsx,💰 Кредит и Купить,,,,
+Frontend Label,game/FeedCardItem.tsx,✅ Подтвердить,,,,
+Frontend Label,game/FeedCardItem.tsx,Подтвердите действие,,,,
+Frontend Label,game/FeedCardItem.tsx,Взять кредит $${pendingLoan?.amount.toLocaleString()} для покупки?,,,,
+Frontend Label,game/FeedCardItem.tsx,Взять кредит,,,,
+Frontend Label,game/FiredView.tsx,Заболел,,,,
+Frontend Label,game/FiredView.tsx,Другой игрок принимает решение...,,,,
+Frontend Label,game/FiredView.tsx,Оплата прошла,,,,
+Frontend Label,game/FiredView.tsx,Продолжить,,,,
+Frontend Label,game/FiredView.tsx,Заболел!,,,,
+Frontend Label,game/FiredView.tsx,Непредвиденные расходы,,,,
+Frontend Label,game/FiredView.tsx,Вам необходимо оплатить расходы для продолжения игры.,,,,
+Frontend Label,game/FiredView.tsx,Пропуск 2 ходов (Бесплатно),,,,
+Frontend Label,game/FiredView.tsx,1 Месяц,,,,
+Frontend Label,game/FiredView.tsx,Пропуск 1 хода,,,,
+Frontend Label,game/FiredView.tsx,2 Месяца,,,,
+Frontend Label,game/FiredView.tsx,Продолжить игру (Без пропуска),,,,
+Frontend Label,game/FiredView.tsx,"handleChoice('BANKRUPT')} className=""text-red-500/50 text-[9px] mt-2 uppercase hover:text-red-400 transition-colors py-1"">
+                        Объявить банкротство",,,,
+Frontend Label,game/FiredView.tsx,"Вы уверены, что хотите объявить банкротство? Это сбросит ваши активы.",,,,
+Frontend Label,game/FiredView.tsx,Вы оплатили расходы за 2 месяца. Вы продолжаете игру!,,,,
+Frontend Label,game/FiredView.tsx,Вы оплатили расходы за 1 месяц. Вы пропускаете 1 ход.,,,,
+Frontend Label,game/FiredView.tsx,Вы пропускаете 2 хода.,,,,
+Frontend Label,game/MenuModal.tsx,Настройки,,,,
+Frontend Label,game/MenuModal.tsx,Состояние Колод,,,,
+Frontend Label,game/MenuModal.tsx,Мелкие Deals,,,,
+Frontend Label,game/MenuModal.tsx,Крупные Deals,,,,
+Frontend Label,game/MenuModal.tsx,Рынок Market,,,,
+Frontend Label,game/MenuModal.tsx,Расходы Expense,,,,
+Frontend Label,game/MenuModal.tsx,Зеленый баланс,,,,
+Frontend Label,game/MenuModal.tsx,Купить аватар,,,,
+Frontend Label,game/MenuModal.tsx,Звук эффектов,,,,
+Frontend Label,game/MenuModal.tsx,{isMuted ? 'Выключен' : 'Включен'},,,,
+Frontend Label,game/MenuModal.tsx,Масштаб текста,,,,
+Frontend Label,game/MenuModal.tsx,Правила Игры,,,,
+Frontend Label,game/MenuModal.tsx,Перевернуть экран,,,,
+Frontend Label,game/MenuModal.tsx,Покинуть Комнату,,,,
+Frontend Label,game/MenuModal.tsx,Меню Организатора,,,,
+Frontend Label,game/MenuModal.tsx,ЗАВЕРШИТЬ ИГРУ,,,,
+Frontend Label,game/MenuModal.tsx,❌ ОТМЕНИТЬ ИГРУ,,,,
+Frontend Label,game/MenuModal.tsx,Пропустить ход,,,,
+Frontend Label,game/MenuModal.tsx,Выгнать,,,,
+Frontend Label,game/MenuModal.tsx,Перетасовать карты,,,,
+Frontend Label,game/MenuModal.tsx,Выключен,,,,
+Frontend Label,game/MenuModal.tsx,Включен,,,,
+Frontend Label,game/PlayerCard.tsx,{player.professionName || 'Игрок'},,,,
+Frontend Label,game/PlayerCard.tsx,Нал,,,,
+Frontend Label,game/PlayerCard.tsx,ДП,,,,
+Frontend Label,game/PlayerCard.tsx,РАЗОРЕН,,,,
+Frontend Label,game/ReadyModal.tsx,Вы готовы? 🚀,,,,
+Frontend Label,game/ReadyModal.tsx,Ваша Мечта,,,,
+Frontend Label,game/ReadyModal.tsx,Ваше Имя в игре,,,,
+Frontend Label,game/ReadyModal.tsx,"setName(e.target.value)}
+                            className=""w-full bg-slate-900 border border-slate-700 focus:border-green-500 rounded-xl px-4 py-3 text-white outline-none transition-all font-bold text-lg""
+                            placeholder=""Введите имя...""
+                        />",,,,
+Frontend Label,game/ReadyModal.tsx,"onConfirm(name)}
+                            className=""w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white py-4 rounded-xl font-black text-lg shadow-lg shadow-green-900/20 transform hover:-translate-y-0.5 active:scale-95 transition-all""
+                        >
+                            ПОГНАЛИ!",,,,
+Frontend Label,game/ReadyModal.tsx,Введите имя...,,,,
+Frontend Label,game/RulesModal.tsx,"{card.type === 'DEAL_SMALL' ? 'Малая сделка' :
+                            card.type === 'DEAL_BIG' ? 'Крупная сделка' :
+                                card.type === 'MARKET' ? 'Рынок' : 'Расход'}",,,,
+Frontend Label,game/RulesModal.tsx,Предлагают: ${card.offerPrice.toLocaleString()},,,,
+Frontend Label,game/RulesModal.tsx,+${card.cashflow}/мес,,,,
+Frontend Label,game/RulesModal.tsx,💡 Философия MONEO,,,,
+Frontend Label,game/RulesModal.tsx,"— это симулятор жизни и финансов. За одну игру вы сможете осознать то, что в обычной жизни требует долгих лет опыта.",,,,
+Frontend Label,game/RulesModal.tsx,нет жестких скриптов,,,,
+Frontend Label,game/RulesModal.tsx,". Правила существуют лишь как механика, но каждый сам решает, как ими пользоваться и какую стратегию выбирать.",,,,
+Frontend Label,game/RulesModal.tsx,Каждая игра уникальна,,,,
+Frontend Label,game/RulesModal.tsx,ВАС,,,,
+Frontend Label,game/RulesModal.tsx,". Вы сами создаете игру, которая нужна вам именно сейчас, наилучшим образом.",,,,
+Frontend Label,game/RulesModal.tsx,«Почему ты так поступил?»,,,,
+Frontend Label,game/RulesModal.tsx,". И в отличие от обычной жизни, вам честно объяснят причины, подсвечивая важные уроки.""",,,,
+Frontend Label,game/RulesModal.tsx,🎯 Техническая Цель,,,,
+Frontend Label,game/RulesModal.tsx,Ваша задача — вырваться из «Крысиных бегов» на «Скоростную дорожку».,,,,
+Frontend Label,game/RulesModal.tsx,💰 Финансы,,,,
+Frontend Label,game/RulesModal.tsx,"Каждый раз, проходя или останавливаясь на клетке Payday, вы получаете свой Денежный Поток (Cashflow). (это как месяц вашей жизни)",,,,
+Frontend Label,game/RulesModal.tsx,Кредит:,,,,
+Frontend Label,game/RulesModal.tsx,"Вы можете брать кредит в банке (с шагом $1,000) под 10% в месяц. Кнопка «Банк» доступна в любой момент.",,,,
+Frontend Label,game/RulesModal.tsx,Банкротство:,,,,
+Frontend Label,game/RulesModal.tsx,"Если вы не можете оплатить долги и кредит недоступен — вы банкрот. Все ваши активы сгорают, и вы начинаете заново, но уже без возможности брать кредит.",,,,
+Frontend Label,game/RulesModal.tsx,🎲 Клетки,,,,
+Frontend Label,game/RulesModal.tsx,Сделка (Deal):,,,,
+Frontend Label,game/RulesModal.tsx,"Возможность купить актив (Бизнес, Недвижимость, Акции). Малые сделки дешевле, Крупные — дороже, но доходнее.",,,,
+Frontend Label,game/RulesModal.tsx,Рынок (Market):,,,,
+Frontend Label,game/RulesModal.tsx,Возможность продать активы.,,,,
+Frontend Label,game/RulesModal.tsx,Расходы (Doodad):,,,,
+Frontend Label,game/RulesModal.tsx,Обязательные траты.,,,,
+Frontend Label,game/RulesModal.tsx,Ребенок:,,,,
+Frontend Label,game/RulesModal.tsx,Увеличивает ваши расходы на содержание семьи.,,,,
+Frontend Label,game/RulesModal.tsx,🚀 Скоростная дорожка (Fast Track),,,,
+Frontend Label,game/RulesModal.tsx,Как выйти:,,,,
+Frontend Label,game/RulesModal.tsx,Пассивный Доход,,,,
+Frontend Label,game/RulesModal.tsx,"Наличные: $200,000+",,,,
+Frontend Label,game/RulesModal.tsx,После выполнения условий появится кнопка выхода.,,,,
+Frontend Label,game/RulesModal.tsx,Условия Победы:,,,,
+Frontend Label,game/RulesModal.tsx,2. Купить 2 бизнеса и свою Мечту.,,,,
+Frontend Label,game/RulesModal.tsx,Рейтинг:,,,,
+Frontend Label,game/RulesModal.tsx,"Игра продолжается даже после победы первого игрока!
+                                Организатор завершает игру вручную, после чего формируется итоговая таблица лидеров (1-е место, 2-е место и т.д.).",,,,
+Frontend Label,game/RulesModal.tsx,💰 Карточки и Бонусы,,,,
+Frontend Label,game/RulesModal.tsx,Благотворительность:,,,,
+Frontend Label,game/RulesModal.tsx,"Пожертвуйте 10% от общего дохода, чтобы бросать 1 или 2 кубика следующие 3 хода.",,,,
+Frontend Label,game/RulesModal.tsx,А вы точно прочитали?,,,,
+Frontend Label,game/RulesModal.tsx,очень помогут,,,,
+Frontend Label,game/RulesModal.tsx,в игре.,,,,
+Frontend Label,game/RulesModal.tsx,"setShowFastReadWarning(false)}
+                                    className=""px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold shadow-lg transition-all transform hover:scale-105""
+                                >
+                                    📖 Вернуться и дочитать",,,,
+Frontend Label,game/RulesModal.tsx,"onConfirm && onConfirm()}
+                                    className=""px-6 py-3 bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 border border-slate-700 hover:border-red-500/50 rounded-xl font-bold transition-all text-sm""
+                                >
+                                    Да, я профи",,,,
+Frontend Label,game/RulesModal.tsx,Карточки,,,,
+Frontend Label,game/RulesModal.tsx,Малые,,,,
+Frontend Label,game/RulesModal.tsx,Крупные,,,,
+Frontend Label,game/RulesModal.tsx,Расходы,,,,
+Frontend Label,game/RulesModal.tsx,"setActiveTab('RULES')}
+                                className=""px-6 py-2 bg-slate-700 hover:bg-slate-600 text-white rounded-xl font-bold transition-all text-sm""
+                            >
+                                📜 Правила",,,,
+Frontend Label,game/RulesModal.tsx,📜 Пролистайте вниз,,,,
+Frontend Label,game/RulesModal.tsx,✅ Я прочитал!,,,,
+Frontend Label,game/RulesModal.tsx,Игроки могут мешать или помогать — прямо как в жизни. Но в MONEO у вас есть преимущество: вы всегда можете спросить <span className=,,,,
+Frontend Label,game/RulesModal.tsx,">
+                                <li>Накопить Пассивный Доход <strong className=",,,,
+Frontend Label,game/RulesModal.tsx,">
+                                У нас будут опытные игроки, и эти знания вам <strong className=",,,,
+Frontend Label,game/RulesModal.tsx,КАРТОЧКИ,,,,
+Frontend Label,game/SquareInfoModal.tsx,{square.title || 'Клетка поля'},,,,
+Frontend Label,game/SquareInfoModal.tsx,{square.description || 'Нет описания'},,,,
+Frontend Label,game/SquareInfoModal.tsx,"Здесь вы можете купить или продать активы, если у вас есть соответствующие карточки.",,,,
+Frontend Label,game/SquareInfoModal.tsx,"setGalleryType('MARKET')}
+                                        className=""w-full text-[10px] bg-blue-600 hover:bg-blue-500 text-white py-2 rounded-lg transition-colors font-bold uppercase tracking-wider""
+                                    >
+                                        👀 Посмотреть рынок",,,,
+Frontend Label,game/SquareInfoModal.tsx,Выберите тип сделки:,,,,
+Frontend Label,game/SquareInfoModal.tsx,Малая Сделка,,,,
+Frontend Label,game/SquareInfoModal.tsx,"setGalleryType('SMALL')}
+                                            className=""text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg transition-colors border border-slate-700 hover:text-white hover:border-slate-500""
+                                        >
+                                            👀 Посмотреть карты",,,,
+Frontend Label,game/SquareInfoModal.tsx,"setGalleryType('BIG')}
+                                            className=""text-[10px] bg-slate-800 hover:bg-slate-700 text-slate-300 py-2 rounded-lg transition-colors border border-slate-700 hover:text-white hover:border-slate-500""
+                                        >
+                                            👀 Посмотреть карты",,,,
+Frontend Label,game/SquareInfoModal.tsx,Клетка поля,,,,
+Frontend Label,game/SquareInfoModal.tsx,Нет описания,,,,
+Frontend Label,game/TextChat.tsx,Чат комнаты,,,,
+Frontend Label,game/TextChat.tsx,История игры,,,,
+Frontend Label,game/TextChat.tsx,История событий,,,,
+Frontend Label,game/TextChat.tsx,Написать сообщение...,,,,
+Frontend Label,game/TransferCashModal.tsx,Перевод Денег,,,,
+Frontend Label,game/TransferCashModal.tsx,Отправьте деньги другому игроку,,,,
+Frontend Label,game/TransferCashModal.tsx,Ваш Баланс,,,,
+Frontend Label,game/TransferCashModal.tsx,Получатель,,,,
+Frontend Label,game/TransferCashModal.tsx,Сумма перевода,,,,
+Frontend Label,game/TransferCashModal.tsx,"maxCash}
+                    className=""w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 disabled:opacity-50 disabled:cursor-not-allowed hover:from-blue-500 hover:to-indigo-500 text-white font-bold rounded-xl shadow-lg transition-all active:scale-[0.98] uppercase tracking-wider""
+                >
+                    Отправить",,,,
+Frontend Label,game/TransferModal.tsx,Передача Актива,,,,
+Frontend Label,game/TransferModal.tsx,Актив:,,,,
+Frontend Label,game/TransferModal.tsx,+${asset.cashflow} / мес,,,,
+Frontend Label,game/TransferModal.tsx,Кол-во для передачи:,,,,
+Frontend Label,game/TransferModal.tsx,Кому передать?,,,,
+Frontend Label,game/TransferModal.tsx,Нет других игроков,,,,
+Frontend Label,game/TransferModal.tsx,Передать,,,,
+Frontend Label,game/TutorialOverlay.tsx,{step.actionText || 'Далее'},,,,
+Frontend Label,game/TutorialOverlay.tsx,Ход и Время,,,,
+Frontend Label,game/TutorialOverlay.tsx,Здесь отображается чей сейчас ход и сколько времени осталось.,,,,
+Frontend Label,game/TutorialOverlay.tsx,Бросок кубика,,,,
+Frontend Label,game/TutorialOverlay.tsx,Нажмите,,,,
+Frontend Label,game/TutorialOverlay.tsx,", чтобы сделать ход.",,,,
+Frontend Label,game/TutorialOverlay.tsx,Игроки,,,,
+Frontend Label,game/TutorialOverlay.tsx,"Нажмите на игрока, чтобы передать деньги или посмотреть профиль.",,,,
+Frontend Label,game/TutorialOverlay.tsx,Баланс и Кредиты,,,,
+Frontend Label,game/TutorialOverlay.tsx,"Ваш текущий баланс. Нажмите, чтобы открыть Банк, взять кредит или посмотреть расходы.",,,,
+Frontend Label,game/TutorialOverlay.tsx,Активы,,,,
+Frontend Label,game/TutorialOverlay.tsx,Здесь ваши бизнесы и недвижимость. В обучении вы можете получить случайный актив бесплатно!,,,,
+Frontend Label,game/TutorialOverlay.tsx,Понятно,,,,
+Frontend Label,game/TutorialOverlay.tsx,Меню,,,,
+Frontend Label,game/TutorialOverlay.tsx,Здесь настройки звука и выход из игры.,,,,
+Frontend Label,game/TutorialOverlay.tsx,Завершить,,,,
+Frontend Label,game/VictoryModal.tsx,ПОБЕДА!,,,,
+Frontend Label,game/VictoryModal.tsx,🎉 ПОЗДРАВЛЯЕМ! 🎉,,,,
+Frontend Label,game/VictoryModal.tsx,Победитель,,,,
+Frontend Label,game/VictoryModal.tsx,Денежный Поток,,,,
+Frontend Label,game/VictoryModal.tsx,Наличные,,,,
+Frontend Label,game/VictoryModal.tsx,"""Вы достигли финансовой свободы и осуществили свою мечту!""",,,,
+Frontend Label,game/VictoryModal.tsx,Продолжить игру,,,,
+Frontend Label,game/VictoryModal.tsx,Вы достигли финансовой свободы и осуществили свою мечту!,,,,
+Frontend Label,game/VoiceControls.tsx,"{
+                                e.stopPropagation();
+                                onKick(player.id);
+                                setShowMenu(false);
+                            }}
+                            className=""w-full text-[10px] text-red-400 hover:bg-red-500/20 px-2 py-1.5 rounded text-center transition-colors font-bold uppercase""
+                        >
+                            Исключить",,,,
+Frontend Label,game/WinnerModal.tsx,{rank}-е место,,,,
+Frontend Label,game/WinnerModal.tsx,ПРОДОЛЖИТЬ ИГРУ,,,,
+Frontend Label,game/WinnerModal.tsx,"Вы можете остаться наблюдать или продолжить игру в ""песочнице""",,,,
+Frontend Label,game/WinnerModal.tsx,">
+                    Вы можете остаться наблюдать или продолжить игру в",,,,
+Frontend Label,game/board.tsx,Загрузка игры...,,,,
+Frontend Label,game/board.tsx,{!state ? 'Загрузка состояния...' : 'Загрузка игры...'},,,,
+Frontend Label,game/board.tsx,Это ваш профиль,,,,
+Frontend Label,game/board.tsx,"{
+                                                            setAdminAction({ type: 'SKIP', player: selectedPlayerForMenu });
+                                                            setSelectedPlayerForMenu(null);
+                                                        }}
+                                                        className=""bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/20 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors""
+                                                    >
+                                                        🚫 Пропустить",,,,
+Frontend Label,game/board.tsx,"{
+                                                            setAdminAction({ type: 'KICK', player: selectedPlayerForMenu });
+                                                            setSelectedPlayerForMenu(null);
+                                                        }}
+                                                        className=""bg-slate-700/50 hover:bg-slate-700 text-slate-300 border border-slate-600/50 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors""
+                                                    >
+                                                        👢 Выгнать",,,,
+Frontend Label,game/board.tsx,"{
+                                                            setAdminAction({ type: 'FORCE_MOVE', player: selectedPlayerForMenu });
+                                                            setSelectedPlayerForMenu(null);
+                                                        }}
+                                                        className=""bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 border border-blue-500/20 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors""
+                                                    >
+                                                        🎲 Ход за него",,,,
+Frontend Label,game/board.tsx,"{
+                                                            setAdminAction({ type: 'TRANSFER_DEAL', player: selectedPlayerForMenu });
+                                                            setSelectedPlayerForMenu(null);
+                                                        }}
+                                                        className=""bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors""
+                                                    >
+                                                        🤝 Передать сделку",,,,
+Frontend Label,game/board.tsx,"{
+                                                            setAdminAction({ type: 'GIFT', player: selectedPlayerForMenu });
+                                                            setSelectedPlayerForMenu(null);
+                                                        }}
+                                                        className=""bg-green-500/10 hover:bg-green-500/20 text-green-400 border border-green-500/20 rounded-xl py-3 font-bold text-[10px] uppercase transition-colors col-span-2""
+                                                    >
+                                                        💵 Подарить деньги",,,,
+Frontend Label,game/board.tsx,Профессия,,,,
+Frontend Label,game/board.tsx,"{localPlayer.professionName === 'Entrepreneur' || localPlayer.professionName === 'ENTREPRENEUR' ? 'Предприниматель' :
+                                                        (localPlayer.professionName === 'Manager' || localPlayer.professionName === 'MANAGER' ? 'Менеджер' : localPlayer.professionName)}",,,,
+Frontend Label,game/board.tsx,Баланс,,,,
+Frontend Label,game/board.tsx,Кредит,,,,
+Frontend Label,game/board.tsx,Денежный поток,,,,
+Frontend Label,game/board.tsx,Доход,,,,
+Frontend Label,game/board.tsx,PAYDAY (Денежный поток),,,,
+Frontend Label,game/board.tsx,/мес,,,,
+Frontend Label,game/board.tsx,"Цель: +$50,000 (Нужно еще)",,,,
+Frontend Label,game/board.tsx,Финансовая свобода,,,,
+Frontend Label,game/board.tsx,Ваши Активы,,,,
+Frontend Label,game/board.tsx,"socket.emit('tutorial_add_asset', { roomId })}
+                                                    className=""w-full mb-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-black font-bold py-2 rounded-lg text-xs uppercase shadow-lg shadow-amber-500/20 active:scale-95 transition-all""
+                                                >
+                                                    🎲 Получить актив (Обучение)",,,,
+Frontend Label,game/board.tsx,{a.quantity} шт,,,,
+Frontend Label,game/board.tsx,Позиция: ${(a.cost * a.quantity).toLocaleString()},,,,
+Frontend Label,game/board.tsx,"setTransferAssetItem({ item: a, index: i })}
+                                                                className=""ml-2 p-1.5 hover:bg-slate-700/50 rounded-lg transition-colors text-slate-500 hover:text-blue-400""
+                                                                title=""Передать актив""
+                                                            >
+                                                                ➡️",,,,
+Frontend Label,game/board.tsx,Нет активов,,,,
+Frontend Label,game/board.tsx,Ходит,,,,
+Frontend Label,game/board.tsx,Лог событий,,,,
+Frontend Label,game/board.tsx,Звук,,,,
+Frontend Label,game/board.tsx,Полные Настройки,,,,
+Frontend Label,game/board.tsx,{state.isPaused ? 'ПРОДОЛЖИТЬ' : 'ПАУЗА'},,,,
+Frontend Label,game/board.tsx,ПЕРЕТАСОВАТЬ,,,,
+Frontend Label,game/board.tsx,Выйти из игры,,,,
+Frontend Label,game/board.tsx,Ход,,,,
+Frontend Label,game/board.tsx,Выплата,,,,
+Frontend Label,game/board.tsx,{localPlayer?.professionName || 'Загрузка...'},,,,
+Frontend Label,game/board.tsx,БАНК (Баланс) 🏦,,,,
+Frontend Label,game/board.tsx,Кредит 💳,,,,
+Frontend Label,game/board.tsx,Ср: ${a.averageCost.toFixed(2)},,,,
+Frontend Label,game/board.tsx,Поз: ${(a.cost * a.quantity).toLocaleString()},,,,
+Frontend Label,game/board.tsx,Меню Игры,,,,
+Frontend Label,game/board.tsx,ХОД ИГРОКА,,,,
+Frontend Label,game/board.tsx,Открыть Рынок,,,,
+Frontend Label,game/board.tsx,Открыть Трату,,,,
+Frontend Label,game/board.tsx,{diceCount > 1 ? `Бросить (${diceCount})` : 'Бросить'},,,,
+Frontend Label,game/board.tsx,Подключение...,,,,
+Frontend Label,game/board.tsx,"Игра приостановлена администратором. Пожалуйста, ожидайте.",,,,
+Frontend Label,game/board.tsx,{isMe ? 'Вы' : p.name},,,,
+Frontend Label,game/board.tsx,ОТКРЫТЬ,,,,
+Frontend Label,game/board.tsx,Выпало,,,,
+Frontend Label,game/board.tsx,БРОСОК,,,,
+Frontend Label,game/board.tsx,ДАЛЕЕ,,,,
+Frontend Label,game/board.tsx,💬 Чат Игроков,,,,
+Frontend Label,game/board.tsx,👶 Поздравляем! В семье ${state.lastEvent.payload?.player} пополнение!,,,,
+Frontend Label,game/board.tsx,🎲 Семья ${state.lastEvent.payload?.player} пока не растет.,,,,
+Frontend Label,game/board.tsx,Вы выиграли этот актив в лотерею! ${wonCard.description ||,,,,
+Frontend Label,game/board.tsx,🚫 ${state.lastEvent.payload?.player} пропускает ход! (Осталось: ${state.lastEvent.payload?.remaining}),,,,
+Frontend Label,game/board.tsx,🏆 ${state.lastEvent.payload?.player} ПОБЕДИЛ!,,,,
+Frontend Label,game/board.tsx,🏆 ${data.state.lastEvent.payload?.player} ЗАНЯЛ ${data.state.rankings?.length || 1}-Е МЕСТО!,,,,
+Frontend Label,game/board.tsx,Игра была отменена организатором.,,,,
+Frontend Label,game/board.tsx,"Вы уверены, что хотите выйти? Если вы организатор, комната будет удалена.",,,,
+Frontend Label,game/board.tsx,"Вы уверены, что хотите принудительно завершить игру и подсчитать рейтинги?",,,,
+Frontend Label,game/board.tsx,Вы действительно хотите удалить этого игрока из игры?,,,,
+Frontend Label,game/board.tsx,Принудительно завершить ход текущего игрока?,,,,
+Frontend Label,game/board.tsx,Загрузка состояния...,,,,
+Frontend Label,game/board.tsx,Предприниматель,,,,
+Frontend Label,game/board.tsx,Менеджер,,,,
+Frontend Label,game/board.tsx,Передать актив,,,,
+Frontend Label,game/board.tsx,Пропуск хода,,,,
+Frontend Label,game/board.tsx,Сообщение...,,,,
+Frontend Label,game/board.tsx,ПРОДОЛЖИТЬ,,,,
+Frontend Label,game/board.tsx,ПАУЗА,,,,
+Frontend Label,game/board.tsx,Перетасовать все колоды?,,,,
+Frontend Label,game/board.tsx,Нажмите на банк,,,,
+Frontend Label,game/board.tsx,Загрузка...,,,,
+Frontend Label,game/board.tsx,Бросить (${diceCount}),,,,
+Frontend Label,game/board.tsx,Бросить,,,,
+Frontend Label,game/board.tsx,"1. Бросайте кубик, чтобы ходить",,,,
+Frontend Label,game/board.tsx,7. Бросьте кубик снова!,,,,
+Frontend Label,game/board.tsx,"Нажмите, чтобы продолжить",,,,
+Frontend Label,game/board.tsx,">
+                                                🎤 Голосовой чат
+                                                {isSpeaking && <span className=",,,,
+Frontend Label,game/board.tsx,Вернуться в игру,,,,
+Frontend Label,game/board.tsx,Отойти (AFK),,,,
+Frontend Label,game/board.tsx,Пауза,,,,
+Frontend Label,game/board.tsx,Открыть комнату,,,,
+Frontend Label,game/board.tsx,Закрыть комнату,,,,
+Frontend Label,game/board.tsx,Нажмите Банк 🏦,,,,
+Frontend Label,game/board.tsx,"Вы уверены, что хотите отменить (удалить) игру? Все участники будут исключены.",,,,
+Frontend Label,game/board.tsx,Ошибка: ${response.error},,,,
+Frontend Label,game/cards_data.ts,Обед в ресторане,,,,
+Frontend Label,game/cards_data.ts,С друзьями.,,,,
+Frontend Label,game/cards_data.ts,Ремонт кофемашины,,,,
+Frontend Label,game/cards_data.ts,Поломка.,,,,
+Frontend Label,game/cards_data.ts,Новые кроссовки,,,,
+Frontend Label,game/cards_data.ts,Спорт.,,,,
+Frontend Label,game/cards_data.ts,Штраф ПДД,,,,
+Frontend Label,game/cards_data.ts,Превышение скорости.,,,,
+Frontend Label,game/cards_data.ts,Ужин премиум,,,,
+Frontend Label,game/cards_data.ts,Гастрономический сет.,,,,
+Frontend Label,game/cards_data.ts,Концерт,,,,
+Frontend Label,game/cards_data.ts,Обычные места.,,,,
+Frontend Label,game/cards_data.ts,Подписки на сервисы,,,,
+Frontend Label,game/cards_data.ts,Годовая подписка.,,,,
+Frontend Label,game/cards_data.ts,Абонемент в фитнес,,,,
+Frontend Label,game/cards_data.ts,Квартальный.,,,,
+Frontend Label,game/cards_data.ts,Пожертвование.,,,,
+Frontend Label,game/cards_data.ts,Ветеринар,,,,
+Frontend Label,game/cards_data.ts,Лечение питомца.,,,,
+Frontend Label,game/cards_data.ts,Новый смартфон,,,,
+Frontend Label,game/cards_data.ts,Бюджетная модель.,,,,
+Frontend Label,game/cards_data.ts,ТО Автомобиля,,,,
+Frontend Label,game/cards_data.ts,Замена масла и фильтров.,,,,
+Frontend Label,game/cards_data.ts,Шопинг,,,,
+Frontend Label,game/cards_data.ts,Одежда (сезонная).,,,,
+Frontend Label,game/cards_data.ts,Бытовая техника,,,,
+Frontend Label,game/cards_data.ts,Посудомоечная машина.,,,,
+Frontend Label,game/cards_data.ts,Ремонт машины,,,,
+Frontend Label,game/cards_data.ts,Замена деталей.,,,,
+Frontend Label,game/cards_data.ts,Стоматолог,,,,
+Frontend Label,game/cards_data.ts,Лечение зубов.,,,,
+Frontend Label,game/cards_data.ts,Страховка,,,,
+Frontend Label,game/cards_data.ts,Страхование жизни.,,,,
+Frontend Label,game/cards_data.ts,Новый ноутбук,,,,
+Frontend Label,game/cards_data.ts,Рабочий инструмент.,,,,
+Frontend Label,game/cards_data.ts,Отпуск,,,,
+Frontend Label,game/cards_data.ts,Тур на море.,,,,
+Frontend Label,game/cards_data.ts,Брендовая сумка,,,,
+Frontend Label,game/cards_data.ts,Подарок.,,,,
+Frontend Label,game/cards_data.ts,Ремонт дома,,,,
+Frontend Label,game/cards_data.ts,Косметический ремонт.,,,,
+Frontend Label,game/cards_data.ts,Обслуживание катера,,,,
+Frontend Label,game/cards_data.ts,Сезонное обслуживание.,,,,
+Frontend Label,game/cards_data.ts,Подарок на свадьбу,,,,
+Frontend Label,game/cards_data.ts,Щедрый подарок.,,,,
+Frontend Label,game/cards_data.ts,Аренда виллы,,,,
+Frontend Label,game/cards_data.ts,Вечеринка для друзей.,,,,
+Frontend Label,game/cards_data.ts,Акции: Tesla,,,,
+Frontend Label,game/cards_data.ts,Цена $5. Колебания $5-$40.,,,,
+Frontend Label,game/cards_data.ts,Цена $10. Колебания $5-$40.,,,,
+Frontend Label,game/cards_data.ts,Цена $20. Колебания $5-$40.,,,,
+Frontend Label,game/cards_data.ts,Цена $30. Колебания $5-$40.,,,,
+Frontend Label,game/cards_data.ts,Цена $40. Колебания $5-$40.,,,,
+Frontend Label,game/cards_data.ts,TON Token (криптовалюта),,,,
+Frontend Label,game/cards_data.ts,"Криптовалюта на дне. Цена $4,000.",,,,
+Frontend Label,game/cards_data.ts,"Крипто-зима. Цена $10,000.",,,,
+Frontend Label,game/cards_data.ts,"Биткоин на хайпе. Цена $20,000.",,,,
+Frontend Label,game/cards_data.ts,"Биткоин штурмует максимумы. Цена $30,000.",,,,
+Frontend Label,game/cards_data.ts,"Биткоин растет! Цена $50,000.",,,,
+Frontend Label,game/cards_data.ts,"To The Moon! Цена $100,000.",,,,
+Frontend Label,game/cards_data.ts,Акции: AT&T (Pref),,,,
+Frontend Label,game/cards_data.ts,Акции: P&G (Pref),,,,
+Frontend Label,game/cards_data.ts,Комната в пригороде,,,,
+Frontend Label,game/cards_data.ts,Сдача в аренду. ROI ~100%.,,,,
+Frontend Label,game/cards_data.ts,Студия маникюра,,,,
+Frontend Label,game/cards_data.ts,Студия маникюра на 1 место.,,,,
+Frontend Label,game/cards_data.ts,Кофейня,,,,
+Frontend Label,game/cards_data.ts,Небольшая кофейня.,,,,
+Frontend Label,game/cards_data.ts,Партнёрство в автомастерской,,,,
+Frontend Label,game/cards_data.ts,Доля в бизнесе.,,,,
+Frontend Label,game/cards_data.ts,Участок земли 20га,,,,
+Frontend Label,game/cards_data.ts,Земля без дохода.,,,,
+Frontend Label,game/cards_data.ts,Покупка дрона,,,,
+Frontend Label,game/cards_data.ts,Дрон для съёмок.,,,,
+Frontend Label,game/cards_data.ts,Флипинг студии,,,,
+Frontend Label,game/cards_data.ts,Покупка и быстрая перепродажа (или доход).,,,,
+Frontend Label,game/cards_data.ts,Сетевой бизнес,,,,
+Frontend Label,game/cards_data.ts,Старт в MLM компании.,,,,
+Frontend Label,game/cards_data.ts,Сетевой бизнес: Plazma Water,,,,
+Frontend Label,game/cards_data.ts,Сетевой бизнес: MONEO,,,,
+Frontend Label,game/cards_data.ts,Друг просит в займ,,,,
+Frontend Label,game/cards_data.ts,"Ваш друг просит $5,000 на",,,,
+Frontend Label,game/cards_data.ts,. Помочь?,,,,
+Frontend Label,game/cards_data.ts,"Увы, друг прогорел. Деньги потеряны!",,,,
+Frontend Label,game/cards_data.ts,Ура! Друг раскрутился! Вы получаете долю в бизнесе.,,,,
+Frontend Label,game/cards_data.ts,Друг вернул долг уроком мудрости! +2 кубика на 3 хода.,,,,
+Frontend Label,game/cards_data.ts,Крыша протекла,,,,
+Frontend Label,game/cards_data.ts,Обновить крышу. Платите $5000 ЕСЛИ есть недвижимость.,,,,
+Frontend Label,game/cards_data.ts,Прорыв канализации,,,,
+Frontend Label,game/cards_data.ts,Починить канализацию. Платите $2000 ЕСЛИ есть недвижимость.,,,,
+Frontend Label,game/cards_data.ts,Дом под сдачу. Цена $7000-10000. Доход $200.,,,,
+Frontend Label,game/cards_data.ts,Дуплекс в хорошем районе.,,,,
+Frontend Label,game/cards_data.ts,4-квартирный дом,,,,
+Frontend Label,game/cards_data.ts,Многоквартирный дом. Стабильные жильцы.,,,,
+Frontend Label,game/cards_data.ts,8-квартирный комплекс,,,,
+Frontend Label,game/cards_data.ts,Жилой комплекс с управляющим.,,,,
+Frontend Label,game/cards_data.ts,ЖК,,,,
+Frontend Label,game/cards_data.ts,Эконом класс.,,,,
+Frontend Label,game/cards_data.ts,Мини-отель,,,,
+Frontend Label,game/cards_data.ts,"Бутик-отель на 10 номеров, стабильно приносит доход.",,,,
+Frontend Label,game/cards_data.ts,Сеть кафе быстрого питания,,,,
+Frontend Label,game/cards_data.ts,"Прибыльный бизнес, несколько точек в центре города.",,,,
+Frontend Label,game/cards_data.ts,Ферма органических овощей,,,,
+Frontend Label,game/cards_data.ts,Экологичное хозяйство с контрактами на поставку.,,,,
+Frontend Label,game/cards_data.ts,Сеть автомоек,,,,
+Frontend Label,game/cards_data.ts,"Хорошее расположение, стабильный трафик клиентов.",,,,
+Frontend Label,game/cards_data.ts,Коворкинг-центр,,,,
+Frontend Label,game/cards_data.ts,Большое пространство для аренды под стартапы и фрилансеров.,,,,
+Frontend Label,game/cards_data.ts,Франшиза: Plazma Water,,,,
+Frontend Label,game/cards_data.ts,Франшиза Plazma Water. Стабильный доход.,,,,
+Frontend Label,game/cards_data.ts,Франшиза: MONEO,,,,
+Frontend Label,game/cards_data.ts,Франшиза MONEO. Стабильный доход.,,,,
+Frontend Label,game/cards_data.ts,Акции TSLA: $40,,,,
+Frontend Label,game/cards_data.ts,Рост на новостях о новой батарее. Рынок покупает по $40.,,,,
+Frontend Label,game/cards_data.ts,Акции TSLA: $5,,,,
+Frontend Label,game/cards_data.ts,Проблемы с автопилотом. Рынок падает до $5.,,,,
+Frontend Label,game/cards_data.ts,Акции MSFT: $40,,,,
+Frontend Label,game/cards_data.ts,Акции: Microsoft,,,,
+Frontend Label,game/cards_data.ts,Рекордная прибыль облачного сегмента. Рынок $40.,,,,
+Frontend Label,game/cards_data.ts,Акции MSFT: $5,,,,
+Frontend Label,game/cards_data.ts,Антимонопольный иск. Рынок падает до $5.,,,,
+Frontend Label,game/cards_data.ts,Сплит Акций TSLA,,,,
+Frontend Label,game/cards_data.ts,Сплит 2 к 1. Увеличьте кол-во акций в 2 раза.,,,,
+Frontend Label,game/cards_data.ts,Сплит Акций MSFT,,,,
+Frontend Label,game/cards_data.ts,Покупатель дома,,,,
+Frontend Label,game/cards_data.ts,"Семья ищет дом. Предлагают $13,000.",,,,
+Frontend Label,game/cards_data.ts,Инвестор в недвижимость,,,,
+Frontend Label,game/cards_data.ts,"Инвестор скупает районы. $25,500.",,,,
+Frontend Label,game/cards_data.ts,Отельная сеть (M),,,,
+Frontend Label,game/cards_data.ts,"Сеть расширяется. Предлагают $120,000.",,,,
+Frontend Label,game/cards_data.ts,Крупный игрок,,,,
+Frontend Label,game/cards_data.ts,"Фонд хочет ваш отель. $240,000.",,,,
+Frontend Label,game/cards_data.ts,Монополист,,,,
+Frontend Label,game/cards_data.ts,"Предложение, от которого нельзя отказаться. $400,000!",,,,
+Frontend Label,game/cards_data.ts,Конкурент (FastFood),,,,
+Frontend Label,game/cards_data.ts,"Конкурент выкупает точки. $300,000.",,,,
+Frontend Label,game/cards_data.ts,Мировой бренд,,,,
+Frontend Label,game/cards_data.ts,"Глобальная корпорация поглощает вас. $1,000,000!",,,,
+Frontend Label,game/cards_data.ts,Эко-ритейлер,,,,
+Frontend Label,game/cards_data.ts,"Сеть супермаркетов покупает производство. $240,000.",,,,
+Frontend Label,game/cards_data.ts,Агрохолдинг,,,,
+Frontend Label,game/cards_data.ts,"Крупный агрохолдинг. $600,000!",,,,
+Frontend Label,game/cards_data.ts,Франчайзинг,,,,
+Frontend Label,game/cards_data.ts,"Вас хотят сделать частью франшизы. $450,000.",,,,
+Frontend Label,game/cards_data.ts,Девелопер,,,,
+Frontend Label,game/cards_data.ts,"Земля под мойками нужна под застройку. $600,000.",,,,
+Frontend Label,game/cards_data.ts,IT-Стартап,,,,
+Frontend Label,game/cards_data.ts,"Единорог покупает офис. $500,000.",,,,
+Frontend Label,game/cards_data.ts,"Техногигант открывает штаб-квартиру. $1,250,000!",,,,
+Frontend Label,game/cards_data.ts,Выкуп франшизы,,,,
+Frontend Label,game/cards_data.ts,"Головная компания выкупает точку. $25,000.",,,,
+Frontend Label,game/cards_data.ts,Слияние сетей,,,,
+Frontend Label,game/cards_data.ts,"Выкуп сети. $25,000.",,,,
+Frontend Label,game/cards_data.ts,Покупатель бизнеса,,,,
+Frontend Label,game/cards_data.ts,"Инвестор. $15,000.",,,,
+Frontend Label,game/cards_data.ts,Застройщик,,,,
+Frontend Label,game/cards_data.ts,"Цена земли взлетела до $150,000.",,,,
+Frontend Label,game/cards_data.ts,Покупатель студии,,,,
+Frontend Label,game/cards_data.ts,"Покупатель квартиры студии (субаренда) за $7,000.",,,,
+Frontend Label,game/cards_data.ts,Выкуп доли,,,,
+Frontend Label,game/cards_data.ts,"Есть покупатель на партнерство за $50,000.",,,,
+Frontend Label,game/cards_data.ts,Покупатель жилья,,,,
+Frontend Label,game/cards_data.ts,"Старое жилье идет под снос. Предлагают $25,000 за комнату.",,,,
+Frontend Label,game/cards_data.ts,Скам на криптобирже,,,,
+Frontend Label,game/cards_data.ts,Биржа рухнула. Все ваши BTC сгорают (Цена $0).,,,,
+Frontend Label,game/page.tsx,Загрузка данных комнаты...,,,,
+Frontend Label,game/page.tsx,🚫 Ошибка,,,,
+Frontend Label,game/page.tsx,"router.push('/lobby')}
+                        className=""px-6 py-3 bg-slate-800 hover:bg-slate-700 text-white rounded-xl font-bold transition-colors border border-slate-700 w-full""
+                    >
+                        ⬅ Вернуться в Лобби",,,,
+Frontend Label,game/page.tsx,Голосовой чат,,,,
+Frontend Label,game/page.tsx,ВЫ,,,,
+Frontend Label,game/page.tsx,Мечта: {player.dream || '...'},,,,
+Frontend Label,game/page.tsx,Ожидание игрока...,,,,
+Frontend Label,game/page.tsx,+ Добавить бота,,,,
+Frontend Label,game/page.tsx,") : (
+                                                    ""Ожидание игрока...""
+                                                )}",,,,
+Frontend Label,game/page.tsx,Настройка персонажа,,,,
+Frontend Label,game/page.tsx,Выберите фишку и определите свою мечту,,,,
+Frontend Label,game/page.tsx,ВЫБЕРИТЕ ФИШКУ,,,,
+Frontend Label,game/page.tsx,Удалить игрока?,,,,
+Frontend Label,game/page.tsx,"Вы уверены, что хотите исключить этого игрока из комнаты?",,,,
+Frontend Label,game/page.tsx,"setPlayerToKick(null)} className=""flex-1 bg-slate-700 hover:bg-slate-600 text-white py-3 rounded-lg font-medium transition-colors"">Отмена",,,,
+Frontend Label,game/page.tsx,Удалить,,,,
+Frontend Label,game/page.tsx,Вы были исключены из комнаты организатором.,,,,
+Frontend Label,game/page.tsx,Ошибка при добавлении бота:,,,,
+Frontend Label,game/page.tsx,">
+                                                        Мечта: {player.dream ||",,,,
+Frontend Label,game/page.tsx,Удалить из комнаты,,,,
+Frontend Label,game/page.tsx,">
+                                                    5. Запустите игру! 🚀
+                                                    <div className=",,,,
+Frontend Label,game/page.tsx,1. Выберите фишку,,,,
+Frontend Label,game/page.tsx,2. Выберите мечту 👇,,,,
+Frontend Label,game/page.tsx,✖ Отменить готовность,,,,
+Frontend Label,game/page.tsx,✨ Я Готов!,,,,
+Frontend Label,game/page.tsx,3. Нажмите Готов! ✨,,,,
+Frontend Label,home/page.tsx,{user?.first_name || 'Гость'},,,,
+Frontend Label,home/page.tsx,Гость,,,,
+Frontend Label,layout.tsx,Финансовый тренажер,,,,
+Frontend Label,lib/dreams.ts,Дом мечты,,,,
+Frontend Label,lib/dreams.ts,Построить дом мечты для семьи,,,,
+Frontend Label,lib/dreams.ts,Посетить Антарктиду,,,,
+Frontend Label,lib/dreams.ts,Экспедиция к Южному полюсу.,,,,
+Frontend Label,lib/dreams.ts,Высочайшие вершины,,,,
+Frontend Label,lib/dreams.ts,Подняться на все высочайшие вершины мира,,,,
+Frontend Label,lib/dreams.ts,Автор бестселлера,,,,
+Frontend Label,lib/dreams.ts,Стать автором книги-бестселлера,,,,
+Frontend Label,lib/dreams.ts,Яхта в Средиземном,,,,
+Frontend Label,lib/dreams.ts,Жить год на яхте в Средиземном море,,,,
+Frontend Label,lib/dreams.ts,Мировой фестиваль,,,,
+Frontend Label,lib/dreams.ts,Организовать мировой фестиваль,,,,
+Frontend Label,lib/dreams.ts,Фонд талантов,,,,
+Frontend Label,lib/dreams.ts,Создать фонд поддержки талантов,,,,
+Frontend Label,lib/dreams.ts,Кругосветка,,,,
+Frontend Label,lib/dreams.ts,Кругосветное плавание на паруснике,,,,
+Frontend Label,lib/dreams.ts,Кругосветка (Люкс),,,,
+Frontend Label,lib/dreams.ts,Кругосветное плавание на паруснике (Premium),,,,
+Frontend Label,lib/dreams.ts,Частный самолёт,,,,
+Frontend Label,lib/dreams.ts,Купить частный самолёт,,,,
+Frontend Label,lib/dreams.ts,Коллекция суперкаров,,,,
+Frontend Label,lib/dreams.ts,Гараж с редкими автомобилями.,,,,
+Frontend Label,lib/dreams.ts,Снять фильм,,,,
+Frontend Label,lib/dreams.ts,Снять полнометражный фильм,,,,
+Frontend Label,lib/dreams.ts,Лидер мнений,,,,
+Frontend Label,lib/dreams.ts,Стать мировым лидером мнений,,,,
+Frontend Label,lib/dreams.ts,Белоснежная Яхта,,,,
+Frontend Label,lib/dreams.ts,Роскошная яхта для путешествий.,,,,
+Frontend Label,lib/dreams.ts,Полёт в космос,,,,
+Frontend Label,lib/dreams.ts,Туристический полет на орбиту.,,,,
+Frontend Label,lib/dreams.ts,Благотворительный фонд,,,,
+Frontend Label,lib/dreams.ts,Организовать благотворительный фонд,,,,
+Frontend Label,lobby/RoomErrorModal.tsx,Внимание,,,,
+Frontend Label,lobby/RoomErrorModal.tsx,Обработка...,,,,
+Frontend Label,lobby/RoomErrorModal.tsx,Покинуть и создать,,,,
+Frontend Label,lobby/page.tsx,"{
+                                                    e.stopPropagation();
+                                                    if (isHost) {
+                                                        if (confirm('Удалить комнату?')) handleDeleteRoom(room.id);
+                                                    } else {
+                                                        if (confirm('Покинуть игру?')) handleLeaveRoom(room.id);
+                                                    }
+                                                }}
+                                                className=""absolute top-2 right-2 w-8 h-8 flex items-center justify-center rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white transition-colors z-20""
+                                                title={isHost ? ""Удалить комнату"" : ""Покинуть игру""}
+                                            >
+                                                {isHost ? '🗑' : '🚪'}",,,,
+Frontend Label,lobby/page.tsx,Новая комната,,,,
+Frontend Label,lobby/page.tsx,Название,,,,
+Frontend Label,lobby/page.tsx,Количество игроков,,,,
+Frontend Label,lobby/page.tsx,Доступные комнаты,,,,
+Frontend Label,lobby/page.tsx,Нет доступных комнат,,,,
+Frontend Label,lobby/page.tsx,Будьте первыми — создайте игру!,,,,
+Frontend Label,lobby/page.tsx,Идет игра,,,,
+Frontend Label,lobby/page.tsx,{room.gameMode === 'ENTREPRENEUR' ? 'Предпр.' : 'Инженер'},,,,
+Frontend Label,lobby/page.tsx,⏱ {Math.floor(room.timer / 60)} мин/ход,,,,
+Frontend Label,lobby/page.tsx,"joinRoom(room.id)}
+                                                disabled={room.players.length >= room.maxPlayers}
+                                                className={`w-full py-3 rounded-xl font-bold text-sm transition-all flex items-center justify-center gap-2 ${room.players.length >= room.maxPlayers
+                                                    ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                                                    : 'bg-slate-700 hover:bg-blue-600 text-white shadow-lg'
+                                                    }`}
+                                            >
+                                                {room.status === 'playing'
+                                                    ? (room.players.length >= room.maxPlayers ? 'Мест нет (Игра идет)' : 'Присоединиться (Игра идет)')
+                                                    : (room.players.length >= room.maxPlayers ? 'Мест нет' : 'Присоединиться')
+                                                }",,,,
+Frontend Label,lobby/page.tsx,"{ e.stopPropagation(); deleteRoom(room.id); }}
+                                                    className=""bg-red-900/40 hover:bg-red-900/60 text-red-400 border border-red-900 px-3 rounded-xl transition-all""
+                                                    title=""Удалить комнату""
+                                                >
+                                                    🗑",,,,
+Frontend Label,lobby/page.tsx,"setShowRules(true)}
+                className=""fixed bottom-6 left-6 z-50 bg-slate-800/80 hover:bg-slate-700 backdrop-blur-md border border-slate-700 text-slate-400 hover:text-white px-4 py-2 rounded-full font-bold text-xs uppercase tracking-widest transition-all shadow-lg hover:shadow-xl""
+            >
+                📜 Правила",,,,
+Frontend Label,lobby/page.tsx,"Пожалуйста, войдите в систему",,,,
+Frontend Label,lobby/page.tsx,"Пожалуйста, введите название комнаты",,,,
+Frontend Label,lobby/page.tsx,Вы уже находитесь в комнате,,,,
+Frontend Label,lobby/page.tsx,Игра идет,,,,
+Frontend Label,lobby/page.tsx,Ожидание,,,,
+Frontend Label,lobby/page.tsx,Вы уже находитесь,,,,
+Frontend Label,lobby/page.tsx,Не удалось создать комнату:,,,,
+Frontend Label,lobby/page.tsx,Ошибка: User ID не найден. Попробуйте перезагрузить страницу.,,,,
+Frontend Label,lobby/page.tsx,"Вы уверены, что хотите удалить эту комнату?",,,,
+Frontend Label,lobby/page.tsx,Ошибка удаления:,,,,
+Frontend Label,lobby/page.tsx,Неизвестная ошибка,,,,
+Frontend Label,lobby/page.tsx,Введите пароль:,,,,
+Frontend Label,lobby/page.tsx,Не удалось удалить комнату:,,,,
+Frontend Label,lobby/page.tsx,Удалить комнату?,,,,
+Frontend Label,lobby/page.tsx,Покинуть игру?,,,,
+Frontend Label,lobby/page.tsx,Удалить комнату,,,,
+Frontend Label,lobby/page.tsx,Покинуть игру,,,,
+Frontend Label,lobby/page.tsx,Например: Битва Миллиардеров,,,,
+Frontend Label,lobby/page.tsx,">
+                                            1. Введите название 👇
+                                            <div className=",,,,
+Frontend Label,lobby/page.tsx,Предпр.,,,,
+Frontend Label,lobby/page.tsx,Инженер,,,,
+Frontend Label,lobby/page.tsx,Мест нет (Игра идет),,,,
+Frontend Label,lobby/page.tsx,Присоединиться (Игра идет),,,,
+Frontend Label,lobby/page.tsx,Мест нет,,,,
+Frontend Label,lobby/page.tsx,Присоединиться,,,,
+Frontend Label,page.tsx,Финансовая стратегия,,,,
+Frontend Label,page.tsx,{mode === 'LOGIN' ? 'Вход' : 'Регистрация'},,,,
+Frontend Label,page.tsx,Логин,,,,
+Frontend Label,page.tsx,Пароль,,,,
+Frontend Label,page.tsx,: (mode === 'LOGIN' ? 'Войти' : 'Создать аккаунт')},,,,
+Frontend Label,page.tsx,"{
+                    setMode(mode === 'LOGIN' ? 'REGISTER' : 'LOGIN');
+                    setError('');
+                  }}
+                  className=""text-xs text-slate-400 hover:text-blue-400 transition""
+                >
+                  {mode === 'LOGIN' ? 'Нет аккаунта? Зарегистрироваться' : 'Есть аккаунт? Войти'}",,,,
+Frontend Label,page.tsx,{isReady && user ? 'Redirecting...' : 'Загрузка...'},,,,
+Frontend Label,page.tsx,Заполните все поля,,,,
+Frontend Label,page.tsx,Ошибка входа,,,,
+Frontend Label,page.tsx,Вход,,,,
+Frontend Label,page.tsx,Регистрация,,,,
+Frontend Label,page.tsx,Войти,,,,
+Frontend Label,page.tsx,Создать аккаунт,,,,
+Frontend Label,page.tsx,Нет аккаунта? Зарегистрироваться,,,,
+Frontend Label,page.tsx,Есть аккаунт? Войти,,,,
+Frontend Label,profile/UserProfileModal.tsx,Побед,,,,
+Frontend Label,profile/UserProfileModal.tsx,Игровой счет,,,,
+Frontend Label,profile/UserProfileModal.tsx,Уровень Аватара,,,,
+Frontend Label,profile/UserProfileModal.tsx,{partnershipData.level} уровень ({partnershipData.partners} партнеров),,,,
+Frontend Label,profile/page.tsx,{user?.firstName || user?.first_name || 'Гость'},,,,
+Frontend Label,profile/page.tsx,"setActiveTab('stats')}
+                        className={`flex-1 py-2 rounded-lg text-sm font-bold transition-all ${activeTab === 'stats' ? 'bg-slate-700 text-white shadow-sm' : 'text-slate-400 hover:text-slate-200'}`}
+                    >
+                        Статистика",,,,
+Frontend Label,profile/page.tsx,Рейтинг,,,,
+Frontend Label,profile/page.tsx,Реальный счет,,,,
+Frontend Label,profile/page.tsx,История операций,,,,
+Frontend Label,profile/page.tsx,{loadingHistory ? 'Загрузка...' : 'История пока пуста...'},,,,
+Frontend Label,profile/page.tsx,Топ Игроков,,,,
+Frontend Label,profile/page.tsx,Лидеры по количеству побед и накопленному капиталу,,,,
+Frontend Label,profile/page.tsx,">
+                                                                от{",,,,
+Frontend Label,profile/page.tsx,История пока пуста...,,,,
+Frontend Label,profile/page.tsx,">
+                                                        Побед: <span className=",,,,
+Frontend Label,schedule/CreateGameModal.tsx,Создать игру,,,,
+Frontend Label,schedule/CreateGameModal.tsx,Время (МСК),,,,
+Frontend Label,schedule/CreateGameModal.tsx,Мест всего,,,,
+Frontend Label,schedule/CreateGameModal.tsx,Промо мест,,,,
+Frontend Label,schedule/CreateGameModal.tsx,Цена (вход),,,,
+Frontend Label,schedule/CreateGameModal.tsx,Описание / Примечание,,,,
+Frontend Label,schedule/CreateGameModal.tsx,"setDescription(e.target.value)}
+                            placeholder=""Добавьте примечание для участников...""
+                        />",,,,
+Frontend Label,schedule/CreateGameModal.tsx,Создать Игру,,,,
+Frontend Label,schedule/CreateGameModal.tsx,✅ Игра создана!,,,,
+Frontend Label,schedule/CreateGameModal.tsx,❌ Ошибка создания,,,,
+Frontend Label,schedule/CreateGameModal.tsx,Добавьте примечание для участников...,,,,
+Frontend Label,schedule/CreateGameModal.tsx,Создание...,,,,
+Frontend Label,schedule/EditGameModal.tsx,Редактирование,,,,
+Frontend Label,schedule/EditGameModal.tsx,Изменение времени автоматически уведомит участников (soon),,,,
+Frontend Label,schedule/EditGameModal.tsx,✅ Игра обновлена!,,,,
+Frontend Label,schedule/EditGameModal.tsx,❌ Ошибка обновления,,,,
+Frontend Label,schedule/EditGameModal.tsx,Ошибка,,,,
+Frontend Label,schedule/EditGameModal.tsx,Сохранение...,,,,
+Frontend Label,schedule/EditGameModal.tsx,Сохранить,,,,
+Frontend Label,schedule/JoinGameModal.tsx,Запись на игру,,,,
+Frontend Label,schedule/JoinGameModal.tsx,Платное участие гарантирует место.,,,,
+Frontend Label,schedule/JoinGameModal.tsx,Promo (Бесплатно),,,,
+Frontend Label,schedule/JoinGameModal.tsx,Нужен репост,,,,
+Frontend Label,schedule/JoinGameModal.tsx,Красный баланс (${game.price}),,,,
+Frontend Label,schedule/JoinGameModal.tsx,Бонусный счет,,,,
+Frontend Label,schedule/JoinGameModal.tsx,Зеленый баланс (${game.price}),,,,
+Frontend Label,schedule/JoinGameModal.tsx,Основной счет,,,,
+Frontend Label,schedule/JoinGameModal.tsx,Оплата на месте,,,,
+Frontend Label,schedule/JoinGameModal.tsx,Наличные / Карта,,,,
+Frontend Label,schedule/JoinGameModal.tsx,Вы записаны!,,,,
+Frontend Label,schedule/JoinGameModal.tsx,Мастер получил уведомление.,,,,
+Frontend Label,schedule/JoinGameModal.tsx,"Вы можете добавить ссылку на репост сейчас, чтобы мастер быстрее одобрил заявку.",,,,
+Frontend Label,schedule/JoinGameModal.tsx,{repostLink.trim() ? 'Отправить ссылку' : 'Пропустить и закрыть'},,,,
+Frontend Label,schedule/JoinGameModal.tsx,Оплата мастеру при игре,,,,
+Frontend Label,schedule/JoinGameModal.tsx,Оплата прошла успешно! Вы записаны.,,,,
+Frontend Label,schedule/JoinGameModal.tsx,Ошибка записи,,,,
+Frontend Label,schedule/JoinGameModal.tsx,Отправить ссылку,,,,
+Frontend Label,schedule/JoinGameModal.tsx,Пропустить и закрыть,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Управление игрой,,,,
+Frontend Label,schedule/ManageGameModal.tsx,"setActiveTab('settings')}
+                    className={clsx(""flex-1 py-2 rounded-lg text-sm font-bold transition-colors"", activeTab === 'settings' ? ""bg-blue-600 text-white"" : ""bg-slate-800 text-slate-400"")}
+                >
+                    Настройки",,,,
+Frontend Label,schedule/ManageGameModal.tsx,"setActiveTab('users')}
+                    className={clsx(""flex-1 py-2 rounded-lg text-sm font-bold transition-colors"", activeTab === 'users' ? ""bg-blue-600 text-white"" : ""bg-slate-800 text-slate-400"")}
+                >
+                    Игроки ({game?.participants?.length || 0})",,,,
+Frontend Label,schedule/ManageGameModal.tsx,"setActiveTab('broadcast')}
+                    className={clsx(""flex-1 py-2 rounded-lg text-sm font-bold transition-colors"", activeTab === 'broadcast' ? ""bg-blue-600 text-white"" : ""bg-slate-800 text-slate-400"")}
+                >
+                    Рассылка",,,,
+Frontend Label,schedule/ManageGameModal.tsx,"setDescription(e.target.value)}
+                                placeholder=""Добавьте примечание для участников...""
+                            />",,,,
+Frontend Label,schedule/ManageGameModal.tsx,Добавить игрока,,,,
+Frontend Label,schedule/ManageGameModal.tsx,+ Пригласить,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Нет участников,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Это сообщение будет отправлено каждому участнику игры в личку от имени бота.,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Отправить ({game?.participants?.length}),,,,
+Frontend Label,schedule/ManageGameModal.tsx,Профиль игрока,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Игр,,,,
+Frontend Label,schedule/ManageGameModal.tsx,В игре с:,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Написать сообщение,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Сообщение игроку,,,,
+Frontend Label,schedule/ManageGameModal.tsx,"setDmTarget(null)}
+                                className=""flex-1 py-3 bg-slate-700 hover:bg-slate-600 rounded-xl font-bold""
+                            >
+                                Отмена",,,,
+Frontend Label,schedule/ManageGameModal.tsx,✅ Настройки сохранены!,,,,
+Frontend Label,schedule/ManageGameModal.tsx,❌ Ошибка сохранения,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Исключить игрока ${name}?,,,,
+Frontend Label,schedule/ManageGameModal.tsx,🚫 ${name} исключен,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Ошибка удаления,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Подтвердить участие ${name}?,,,,
+Frontend Label,schedule/ManageGameModal.tsx,✅ ${name} подтвержден,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Ошибка подтверждения,,,,
+Frontend Label,schedule/ManageGameModal.tsx,📨 Сообщение отправлено ${dmTarget.first_name},,,,
+Frontend Label,schedule/ManageGameModal.tsx,❌ Ошибка отправки,,,,
+Frontend Label,schedule/ManageGameModal.tsx,❌ Ошибка сети,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Отправить сообщение всем участникам?,,,,
+Frontend Label,schedule/ManageGameModal.tsx,📨 Отправлено ${d.sent} участникам,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Введите имя пользователя,,,,
+Frontend Label,schedule/ManageGameModal.tsx,✅ ${data.playerName} приглашен!,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Ошибка приглашения,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Введите @username или имя...,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Написать,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Исключить,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Введите текст объявления...,,,,
+Frontend Label,schedule/ManageGameModal.tsx,Введите сообщение...,,,,
+Frontend Label,schedule/ParticipantsModal.tsx,Участники ({participants.length}/{game.max}),,,,
+Frontend Label,schedule/ParticipantsModal.tsx,На проверке,,,,
+Frontend Label,schedule/ParticipantsModal.tsx,Подтвержден,,,,
+Frontend Label,schedule/ParticipantsModal.tsx,Пока никого нет...,,,,
+Frontend Label,schedule/page.tsx,{viewMode === 'history' ? 'История игр' : 'Расписание'},,,,
+Frontend Label,schedule/page.tsx,"setShowCreateModal(true)}
+                        className=""bg-green-600 hover:bg-green-500 text-white p-2 text-sm rounded-lg font-bold flex items-center gap-1 shadow-lg shadow-green-900/20""
+                    >
+                        + Создать",,,,
+Frontend Label,schedule/page.tsx,{viewMode === 'history' ? 'История пуста' : 'Нет запланированных игр'},,,,
+Frontend Label,schedule/page.tsx,"{(user?.isMaster && viewMode === 'upcoming')
+                                ? 'Нажмите ""Создать"", чтобы запланировать игру'
+                                : (viewMode === 'history' ? 'Вы еще не участвовали в играх' : 'Загляните позже')
+                            }",,,,
+Frontend Label,schedule/page.tsx,"setShowCreateModal(true)}
+                                className=""mt-4 bg-slate-800 text-blue-400 border border-slate-700 px-4 py-2 rounded-lg font-bold hover:bg-slate-700 transition""
+                            >
+                                Создать игру",,,,
+Frontend Label,schedule/page.tsx,(МСК),,,,
+Frontend Label,schedule/page.tsx,{game.localTime} (Ваше время),,,,
+Frontend Label,schedule/page.tsx,"setEditingGame(game)}
+                                            className=""w-full bg-slate-700 hover:bg-slate-600 py-3 rounded-lg font-bold flex items-center justify-center gap-2 transition-colors active:scale-95 border border-slate-600""
+                                        >
+                                            ⚙️ Редактировать",,,,
+Frontend Label,schedule/page.tsx,Отменить запись,,,,
+Frontend Label,schedule/page.tsx,"Вы уверены, что хотите отменить запись?",,,,
+Frontend Label,schedule/page.tsx,Запись отменена,,,,
+Frontend Label,schedule/page.tsx,Ошибка отмены,,,,
+Frontend Label,schedule/page.tsx,История игр,,,,
+Frontend Label,schedule/page.tsx,Расписание,,,,
+Frontend Label,schedule/page.tsx,Нет запланированных игр,,,,
+Frontend Label,schedule/page.tsx,", чтобы запланировать игру",,,,
+Frontend Label,schedule/page.tsx,Вы еще не участвовали в играх,,,,
+Frontend Label,schedule/page.tsx,Загляните позже,,,,
+Frontend Label,super-admin/CardEditor.tsx,карточек,,,,
+Frontend Label,super-admin/CardEditor.tsx,For MLM: Income per partner (с каждого партнера),,,,
+Frontend Label,super-admin/CardEditor.tsx,">
+                        Всего: <span className=",,,,
+Frontend Label,super-admin/page.tsx,Выйти,,,,

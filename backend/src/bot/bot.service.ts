@@ -756,6 +756,38 @@ export class BotService {
             }
         });
 
+        // /get_locales command - Admin export localization
+        this.bot.onText(/\/get_locales/, async (msg) => {
+            const chatId = msg.chat.id;
+            const telegramId = msg.from?.id;
+            const isAdmin = process.env.ADMIN_IDS?.split(',').includes(String(telegramId)) || String(telegramId) === process.env.TELEGRAM_ADMIN_ID;
+
+            if (!isAdmin) {
+                this.bot?.sendMessage(chatId, "⛔ Доступ запрещен.");
+                return;
+            }
+
+            this.bot?.sendMessage(chatId, "⏳ Генерация файла локализации...");
+
+            try {
+                // Dynamic import to avoid init checks
+                const { LocalizationExportService } = await import('../services/localization-export.service');
+                const service = new LocalizationExportService();
+                const csvContent = service.generateCsv();
+                const buffer = Buffer.from(csvContent, 'utf-8');
+
+                await this.bot?.sendDocument(chatId, buffer, {
+                    caption: `📄 Файл локализации (CSV)\nДата: ${new Date().toLocaleString()}`
+                }, {
+                    filename: `moneo_locales_${new Date().toISOString().split('T')[0]}.csv`,
+                    contentType: 'text/csv'
+                });
+            } catch (e: any) {
+                console.error("Export Error:", e);
+                this.bot?.sendMessage(chatId, `❌ Ошибка экспорта: ${e.message}`);
+            }
+        });
+
         // Handle Documents (Backup Restore)
         this.bot.on('document', async (msg) => {
             const chatId = msg.chat.id;
