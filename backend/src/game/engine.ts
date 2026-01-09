@@ -61,7 +61,7 @@ export interface Transaction {
     to: string;   // Player Name or 'Bank'
     amount: number;
     description: string;
-    type: 'TRANSFER' | 'LOAN' | 'REPAY' | 'PAYDAY' | 'EXPENSE';
+    type: 'TRANSFER' | 'LOAN' | 'REPAY' | 'PAYDAY' | 'EXPENSE' | 'INCOME';
 }
 
 export interface PlayerState extends IPlayer {
@@ -267,6 +267,21 @@ export class GameEngine {
             gameMode: options.gameMode || 'ENGINEER',
             isLocked: false,
         };
+
+        // USER REQUEST 1: Initial Savings Transaction
+        this.state.players.forEach(p => {
+            if (p.cash > 0) {
+                this.state.transactions.push({
+                    id: Math.random().toString(36).substr(2, 9),
+                    timestamp: Date.now(),
+                    from: 'Bank',
+                    to: p.name,
+                    amount: p.cash,
+                    description: 'Стартовый капитал',
+                    type: 'INCOME'
+                });
+            }
+        });
     }
 
     initPlayer(p: IPlayer, gameMode: string = 'ENGINEER'): PlayerState {
@@ -3034,6 +3049,13 @@ export class GameEngine {
                 else if (currentChild === 3) bonus = 20000;
 
                 player.cash += bonus;
+                this.recordTransaction({
+                    from: 'Bank',
+                    to: player.name,
+                    amount: bonus,
+                    description: `Выплата на ребенка #${currentChild}`,
+                    type: 'INCOME'
+                });
 
                 // 3. Add Non-Transferable Child Asset
                 // We define Asset interface here locally or use 'any' if global type missing. 

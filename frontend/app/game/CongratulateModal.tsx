@@ -24,8 +24,8 @@ const CongratulateModal = ({ isOpen, onClose, targetPlayerName, targetPlayerId, 
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
-            <div className="bg-slate-900 border border-slate-700/50 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-scaleIn">
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn overflow-y-auto">
+            <div className="bg-slate-900 border border-slate-700/50 rounded-2xl w-full max-w-sm overflow-hidden shadow-2xl animate-scaleIn relative">
                 {/* Header with Confetti Visual */}
                 <div className="relative bg-gradient-to-r from-pink-500 to-purple-600 p-6 text-center">
                     <div className="absolute top-0 left-0 w-full h-full bg-[url('/effects/confetti.png')] opacity-20 btn-background-animate"></div>

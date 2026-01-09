@@ -710,28 +710,19 @@ export const FeedCardItem = ({
                                     key={p.id}
                                     onClick={async () => {
                                         try {
-                                            // Use new API endpoint
-                                            const res = await fetch(`${getGameServiceUrl()}/api/rooms/${roomId}/deal/transfer`, {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({
-                                                    cardId: card.id,
-                                                    targetPlayerId: p.id
-                                                })
+                                            // Socket.IO Emit
+                                            console.log(`[Transfer] Emitting transfer_deal to ${p.id} for card ${card.id}`);
+                                            socket.emit('transfer_deal', {
+                                                roomId,
+                                                targetPlayerId: p.id,
+                                                cardId: card.id
                                             });
 
-                                            if (!res.ok) {
-                                                const err = await res.json();
-                                                alert(err.message || 'Ошибка передачи');
-                                                return;
-                                            }
-
-                                            // Success
+                                            // Close Modal & Dismiss Card locally
                                             setShowTransfer(false);
-                                            onDismiss(); // Close card for current user
+                                            onDismiss();
                                         } catch (e) {
-                                            console.error(e);
-                                            alert('Ошибка сети при передаче сделки');
+                                            console.error('Transfer error:', e);
                                         }
                                     }}
                                     className="w-full bg-slate-800 hover:bg-slate-700 p-4 rounded-xl flex items-center justify-between border border-slate-700 hover:border-cyan-500/50 transition-all group"
