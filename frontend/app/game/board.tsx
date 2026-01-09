@@ -1333,8 +1333,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
 
                     {/* MAIN GRID */}
-                    {/* MAIN LAYOUT CONTAINER - CSS GRID for Robust 3-Column Layout */}
-                    <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 grid grid-cols-1 lg:grid-cols-[350px_1fr_350px] gap-0 lg:gap-4 h-full overflow-hidden items-start lg:items-stretch">
+                    {/* MAIN LAYOUT CONTAINER - CSS GRID with Auto Columns for Safety */}
+                    <div className="flex-1 w-full max-w-[1920px] mx-auto p-0 lg:p-4 grid grid-cols-1 lg:grid-cols-[auto_1fr_auto] gap-0 lg:gap-4 h-full overflow-hidden items-start lg:items-stretch">
 
                         {/* 📱 MOBILE TOP ZONE (Cards + Stats) */}
                         <div className="lg:hidden w-full bg-[#1e293b]/90 backdrop-blur-md border-b border-white/5 p-2 flex flex-col gap-2 shrink-0 z-40 max-h-[30vh] overflow-y-auto">
@@ -1382,8 +1382,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                         </div>
                     </div>
 
-                    {/* LEFT SIDEBAR (Redesigned) - Grid Cell 1 */}
-                    <div id="tutorial-players" className="hidden lg:flex flex-col w-full h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4 min-h-0">
+                    {/* LEFT SIDEBAR (Redesigned) - Grid Cell 1 (Fixed Width) */}
+                    <div id="tutorial-players" className="hidden lg:flex flex-col w-full lg:w-[350px] h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4 min-h-0">
 
                         {/* 1. PROFILE PANEL (TOP) */}
                         <div className="bg-[#1e293b] rounded-3xl p-6 border border-slate-700/50 shadow-2xl flex flex-col gap-4 relative overflow-hidden group shrink-0">
@@ -1805,8 +1805,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                         </div>
                     </div >
 
-                    {/* 4. CHAT (Grid Cell 3) - Hidden on Mobile, Visible on Desktop Grid */}
-                    <div className="hidden lg:flex flex-col w-full h-full bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden shadow-inner relative" >
+                    {/* 4. CHAT (Grid Cell 3) - Fixed Width on Desktop */}
+                    <div className="hidden lg:flex flex-col w-full lg:w-[350px] h-full bg-[#1e293b] rounded-3xl border border-slate-700/50 overflow-hidden shadow-inner relative" >
                         <div className="absolute top-0 inset-x-0 h-4 bg-gradient-to-b from-[#1e293b] to-transparent z-10 pointer-events-none"></div>
 
                         <div className="flex-1 overflow-hidden relative">
