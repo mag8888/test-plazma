@@ -213,27 +213,29 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
             </button>
 
             {/* AVATAR LIST - Show ALL players regardless of connection */}
-            <div className="flex items-center gap-3 pl-2 border-l border-white/10 ml-2">
-                {players.map(player => {
-                    // Find participant if online
-                    // Match by identity (userId) usually
-                    const participant = participants?.find(p => p.identity === player.id || p.identity === player.userId);
+            <div className="flex-1 overflow-x-auto custom-scrollbar mx-2 max-w-[calc(100vw-120px)] sm:max-w-none">
+                <div className="flex items-center gap-3 pl-2 border-l border-white/10 min-w-max py-1">
+                    {players.map(player => {
+                        // Find participant if online
+                        // Match by identity (userId) usually
+                        const participant = participants?.find(p => p.identity === player.id || p.identity === player.userId);
 
-                    return (
-                        <VoiceAvatar
-                            key={player.id}
-                            participant={participant} // Valid or undefined
-                            player={player}
-                            isHost={isHost}
-                            onKick={onKickPlayer}
-                            onTransferCash={onTransferCash}
-                            onTransferAsset={onTransferAsset}
-                            onSkip={onSkipTurn}
-                            onForceMove={onForceMove}
-                            isMe={player.id === myId || player.userId === myId}
-                        />
-                    );
-                })}
+                        return (
+                            <VoiceAvatar
+                                key={player.id}
+                                participant={participant} // Valid or undefined
+                                player={player}
+                                isHost={isHost}
+                                onKick={onKickPlayer}
+                                onTransferCash={onTransferCash}
+                                onTransferAsset={onTransferAsset}
+                                onSkip={onSkipTurn}
+                                onForceMove={onForceMove}
+                                isMe={player.id === myId || player.userId === myId}
+                            />
+                        );
+                    })}
+                </div>
             </div>
 
             {/* Simple Volume Indicator could go here */}
