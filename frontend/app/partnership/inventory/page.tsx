@@ -21,8 +21,13 @@ export default function InventoryPage() {
 
     const getUserId = () => {
         if (typeof window !== 'undefined') {
-            const stored = localStorage.getItem('partnership_user');
-            if (stored) return JSON.parse(stored)._id;
+            const stored = localStorage.getItem('moneo_user_id') || localStorage.getItem('user_id');
+            if (stored) return stored; // Standard storage stores raw ID strings usually, or object?
+            // In partnership/page.tsx: localStorage.setItem('moneo_user_id', demoId); (STRING)
+            // In gifts/page.tsx: was partnership_user (object).
+            // I need to be careful.
+            // Let's assume STRING for moneo_user_id.
+
         }
         return null;
     };

@@ -3,8 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { giftsApi } from '../../../lib/giftsApi';
-import { usePartnership } from '../../../lib/partnershipContext'; // Assuming context exists or we use local storage/api
-// If no context, we'll fetch ID from localStorage for now as per previous patterns
 import { Loader2 } from 'lucide-react';
 
 interface GiftTemplate {
@@ -23,12 +21,11 @@ export default function GiftShopPage() {
     const [loading, setLoading] = useState(true);
     const [buying, setBuying] = useState<string | null>(null);
 
-    // Temp User ID retrieval (Fallback to localStorage 'user_id' or similar if Context not ready)
-    // For MVP we assume we can get it.
+    // Temp User ID retrieval
     const getUserId = () => {
         if (typeof window !== 'undefined') {
-            const stored = localStorage.getItem('partnership_user');
-            if (stored) return JSON.parse(stored)._id; // Check schema
+            // Try standard key first, fallback to demo or other keys
+            return localStorage.getItem('moneo_user_id') || localStorage.getItem('user_id');
         }
         return null;
     };
