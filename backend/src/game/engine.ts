@@ -10,7 +10,7 @@ export interface GameState {
     players: PlayerState[];
     currentPlayerIndex: number;
     currentTurnTime: number;
-    phase: 'ROLL' | 'ACTION' | 'END' | 'OPPORTUNITY_CHOICE' | 'CHARITY_CHOICE' | 'BABY_ROLL' | 'DOWNSIZED_DECISION' | 'MARKET_WAITING' | 'EXPENSE_WAITING';
+    phase: 'ROLL' | 'ACTION' | 'END' | 'OPPORTUNITY_CHOICE' | 'CHARITY_CHOICE' | 'BABY_ROLL' | 'DOWNSIZED_DECISION' | 'MARKET_WAITING' | 'EXPENSE_WAITING' | 'MLM_ROLL';
     board: BoardSquare[];
     currentCard?: Card;
     log: string[];
@@ -974,6 +974,43 @@ export class GameEngine {
         // Baby Roll Logic
         if (this.state.phase === 'BABY_ROLL') {
             return this.resolveBabyRoll();
+        }
+
+        // MLM ROLL Logic
+        if (this.state.phase === 'MLM_ROLL') {
+            const roll = Math.floor(Math.random() * 6) + 1;
+            const card = this.state.currentCard;
+
+            if (!card) {
+                this.addLog("Error: No MLM Card found for roll.");
+                this.state.phase = 'ACTION';
+                return 0; // Or handle error
+            }
+
+            const partners = roll;
+            const cost = card.cost || 0;
+            const incomePerPartner = cost * 0.5;
+            const totalCashflow = partners * incomePerPartner;
+
+            // Add Asset
+            player.assets.push({
+                title: `${card.title} (${partners} Partners)`,
+                cost: cost,
+                cashflow: totalCashflow,
+                downPayment: 0,
+                type: card.assetType || 'BUSINESS',
+                businessType: card.businessType,
+                subtype: card.subtype
+            });
+
+            this.recalculateFinancials(player);
+            this.addLog(`🎲 Выпало ${roll}! Привлечено ${partners} партнеров.`);
+            this.addLog(`👥 Партнеры: ${partners}. Доход: +$${totalCashflow}/мес ($${incomePerPartner} за партнера).`);
+
+            this.cardManager.discard(card);
+            this.state.currentCard = undefined;
+            this.state.phase = 'ACTION';
+            return { total: roll, values: [roll] };
         }
 
         if (player.skippedTurns > 0) {
@@ -2488,19 +2525,21 @@ export class GameEngine {
 
         // MLM Logic (Subtype check)
         // MLM Logic (Subtype check)
+        // MLM Logic (Subtype check)
         if (card.subtype === 'MLM_ROLL') {
-            // Use pre-calculated values from draw time
-            const partners = (card as any).partners || (Math.floor(Math.random() * 6) + 1);
-
-            // If fallback (shouldn't happen with new deal logic), apply updates
-            if (!(card as any).partners) {
-                const cashflowPerPartner = (card.cost || 0) * 0.5;
-                card.cashflow = partners * cashflowPerPartner;
-                card.title = `${card.title} (${partners} Partners)`;
+            // NEW LOGIC: Charge now, Roll later.
+            if (player.cash < costToPay) {
+                this.addLog(`${player.name} cannot afford ${card.title} ($${costToPay})`);
+                return;
             }
 
-            this.addLog(`🎲 Выпало ${partners}! Привлечено ${partners} партнеров.`);
-            mlmResult = { mlmRoll: partners, mlmCashflow: card.cashflow };
+            player.cash -= costToPay; // Charge immediately
+            this.addLog(`🤝 ${player.name} инвестировал в ${card.title} (-$${costToPay}). Бросаем кубик на количество партнеров...`);
+
+            this.state.phase = 'MLM_ROLL';
+            // Do NOT add asset yet.
+            // Do NOT discard card yet (keep it as currentCard for the roll).
+            return;
         } else if (card.subtype === 'CHARITY_ROLL') {
             // "Friend asks for a loan": 3 Random Outcomes
             const roll = Math.floor(Math.random() * 3) + 1; // 1, 2, 3
@@ -2613,7 +2652,7 @@ export class GameEngine {
         // Handling Discard/Clean up after buy
         // Keep card visible for other players - move to activeMarketCards if it's currentCard
         // EXCEPT for private cards (MLM, CHARITY_ROLL) which should only be visible to buyer
-        const isPrivateCard = card.subtype === 'MLM_ROLL' || card.subtype === 'CHARITY_ROLL';
+        const isPrivateCard = card.subtype === 'CHARITY_ROLL';
 
         if (this.state.currentCard?.id === card.id && !isPrivateCard && (card.assetType === 'STOCK' || card.symbol)) {
             // Check if it's already in activeMarketCards
