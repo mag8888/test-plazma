@@ -10,7 +10,12 @@ export interface GameState {
     players: PlayerState[];
     currentPlayerIndex: number;
     currentTurnTime: number;
-    phase: 'ROLL' | 'ACTION' | 'END' | 'OPPORTUNITY_CHOICE' | 'CHARITY_CHOICE' | 'BABY_ROLL' | 'DOWNSIZED_DECISION' | 'MARKET_WAITING' | 'EXPENSE_WAITING' | 'MLM_ROLL' | 'MLM_RESULT';
+    phase: 'ROLL' | 'ACTION' | 'END' | 'OPPORTUNITY_CHOICE' | 'CHARITY_CHOICE' | 'BABY_ROLL' | 'DOWNSIZED_DECISION' | 'MARKET_WAITING' | 'EXPENSE_WAITING' | 'MLM_ROLL' | 'MLM_RESULT' | 'MLM_PLACEMENT';
+    mlmState?: { // Current MLM Session state
+        cardId: string;
+        inviterId: string;
+        slots: { status: 'EMPTY' | 'PENDING' | 'ACCEPTED' | 'DECLINED', playerId?: string, timestamp?: number }[];
+    };
     board: BoardSquare[];
     currentCard?: Card;
     log: string[];
@@ -1135,17 +1140,7 @@ export class GameEngine {
 
         // Relaxed Check: Currently phase is likely DOWNSIZED_DECISION, but let's log if mismatch
         if (this.state.phase !== 'DOWNSIZED_DECISION') {
-            console.warn(`[Downsized] Phase mismatch: ${this.state.phase}. Proceeding anyway if logically consistent.`);
-            // Force allow if it looks like we are stuck? 
-            // But normally strictly enforced.
-            // Let's strict return but with log to identify issue.
-            // return; 
-            // Actually, if phase is wrong, maybe that's why it fails? 
-            // User reports "doesn't work". 
-            // If phase was reset to ACTION/ROLL, button wouldn't show?
-            // FiredView only shows if phase is correct? No, FiredView depends on... what?
-            // ActiveCardZone renders FiredView if `state.phase === 'DOWNSIZED_DECISION'` (checked implicitly by grep not confirming).
-            // Wait, strictly check phase.
+            // console.warn Phase mismatch
         }
 
         const expenses = player.expenses;
@@ -1184,6 +1179,131 @@ export class GameEngine {
         } else if (decision === 'BANKRUPT') {
             this.bankruptPlayer(player);
             this.endTurn();
+        }
+    }
+
+    // --- MLM Interactive Logic ---
+
+    /**
+     * Handles Inviter sending an invite to potential partner
+     */
+    handleMlmInvite(inviterId: string, targetId: string, slotIndex: number) {
+        if (this.state.phase !== 'MLM_PLACEMENT') throw new Error("Not in MLM Placement phase");
+
+        const inviter = this.state.players.find(p => p.id === inviterId);
+        if (!inviter || inviter.id !== this.state.players[this.state.currentPlayerIndex].id) {
+            throw new Error("Not your turn");
+        }
+
+        if (!this.state.mlmState) throw new Error("No active MLM session");
+
+        const target = this.state.players.find(p => p.id === targetId);
+        if (!target) throw new Error("Target player not found");
+
+        if (slotIndex < 0 || slotIndex > 2) throw new Error("Invalid slot");
+
+        // Check if slot is free
+        if (this.state.mlmState.slots[slotIndex].status !== 'EMPTY' && this.state.mlmState.slots[slotIndex].status !== 'DECLINED') {
+            throw new Error("Slot occupied or pending");
+        }
+
+        // Update Slot to Pending
+        this.state.mlmState.slots[slotIndex] = {
+            status: 'PENDING',
+            playerId: targetId,
+            timestamp: Date.now()
+        };
+
+        this.addLog(`🤝 ${inviter.name} приглашает ${target.name} в бизнес!`);
+
+        // Return data for Gateway to emit 'mlm_offer' to target
+        const cost = this.state.currentCard?.cost || 1000;
+        const income = this.state.currentCard?.cashflow || 500;
+
+        return {
+            targetId: targetId,
+            inviterId: inviter.id,
+            inviterName: inviter.name,
+            businessName: this.state.currentCard?.title || 'Business',
+            cost: cost,
+            income: income
+        };
+    }
+
+    /**
+     * Handles Invitee's response
+     */
+    handleMlmResponse(inviteeId: string, inviterId: string, accept: boolean) {
+        // Validation handled by gateway routing mainly, but verify phase
+        // Actually, inviter might be waiting, so phase is MLM_PLACEMENT.
+        // But Invitee is responding.
+
+        if (this.state.phase !== 'MLM_PLACEMENT') {
+            // Maybe timed out?
+            console.warn("MLM Response received outside phase");
+            return;
+        }
+
+        if (this.state.mlmState?.inviterId !== inviterId) return;
+
+        // Find Slot
+        const slotIndex = this.state.mlmState.slots.findIndex(s => s.playerId === inviteeId && s.status === 'PENDING');
+        if (slotIndex === -1) {
+            console.warn("No pending invite found for this player");
+            return;
+        }
+
+        const invitee = this.state.players.find(p => p.id === inviteeId);
+        const inviter = this.state.players.find(p => p.id === inviterId);
+
+        if (!invitee || !inviter) return;
+
+        const cost = this.state.currentCard?.cost || 1000;
+        const income = this.state.currentCard?.cashflow || 500;
+
+        if (accept) {
+            // Check Cash
+            if (invitee.cash < cost) {
+                // Auto-decline if poor
+                this.state.mlmState.slots[slotIndex].status = 'DECLINED';
+                this.addLog(`❌ ${invitee.name} не может принять предложение (не хватает средств).`);
+                return;
+            }
+
+            // Execute Transaction
+            invitee.cash -= cost;
+
+            // Add Asset to Invitee
+            invitee.assets.push({
+                title: `Партнерство: ${this.state.currentCard?.title || 'Network'}`,
+                cost: cost,
+                cashflow: income,
+                type: 'BUSINESS',
+                subtype: 'MLM_PARTNER'
+            });
+
+            // Add Cashflow to Inviter (via Asset mutation or new asset)
+            // Existing Logic: We usually added the MLM card to Inviter at start? 
+            // Or we add "Legs" as separate assets?
+            // Let's add "Network Partner" asset to Inviter too?
+            // "Network Leg: [Name]"
+            inviter.assets.push({
+                title: `Партнер: ${invitee.name}`,
+                cost: 0,
+                cashflow: income,
+                type: 'BUSINESS',
+                subtype: 'MLM_LEG'
+            });
+
+            this.state.mlmState.slots[slotIndex].status = 'ACCEPTED';
+
+            this.recalculateFinancials(invitee);
+            this.recalculateFinancials(inviter);
+
+            this.addLog(`✅ ${invitee.name} вступил в бизнес! (+${inviter.name} $${income}/мес)`);
+        } else {
+            this.state.mlmState.slots[slotIndex].status = 'DECLINED';
+            this.addLog(`🚫 ${invitee.name} отклонил предложение.`);
         }
     }
     movePlayer(steps: number) {
@@ -2573,867 +2693,879 @@ export class GameEngine {
         let shouldAddAsset = true;
 
         // MLM Logic (Subtype check)
-        // MLM Logic (Subtype check)
-        // MLM Logic (Subtype check)
-        return;
-    }
+        // Hard Patch for sd_health/Health Center which acts as MLM due to DB corruption
+        if (card.subtype === 'MLM_ROLL' && card.id !== 'sd_health') {
+            if (player.cash < costToPay) {
+                this.addLog(`${player.name} cannot afford ${card.title} ($${costToPay})`);
+                return;
+            }
+            player.cash -= costToPay;
+            this.addLog(`🤝 ${player.name} инвестировал в ${card.title} (-$${costToPay}). Бросаем кубик на количество партнеров...`);
+            this.state.phase = 'MLM_ROLL';
+            return;
+        } else if (card.subtype === 'MLM_PLACEMENT') {
+            if (player.cash < costToPay) {
+                this.addLog(`${player.name} cannot afford ${card.title} ($${costToPay})`);
+                return;
+            }
+            player.cash -= costToPay;
 
-    // MLM Logic (Subtype check)
-    // Hard Patch for sd_health/Health Center which acts as MLM due to DB corruption
-    if(card.subtype === 'MLM_ROLL' && card.id !== 'sd_health') {
-    // NEW LOGIC: Charge now, Roll later.
-    if (player.cash < costToPay) {
-        this.addLog(`${player.name} cannot afford ${card.title} ($${costToPay})`);
-        return;
-    }
+            // Initializing MLM Session
+            this.state.phase = 'MLM_PLACEMENT';
+            this.state.mlmState = {
+                cardId: card.id,
+                inviterId: player.id,
+                slots: [
+                    { status: 'EMPTY' },
+                    { status: 'EMPTY' },
+                    { status: 'EMPTY' }
+                ]
+            };
+            this.addLog(`🌐 ${player.name} открыл Сетевой Бизнес! Приглашаем партнеров...`);
+            return;
+        } else if (card.subtype === 'CHARITY_ROLL') {
+            const roll = Math.floor(Math.random() * 3) + 1;
+            if (roll === 1) {
+                shouldAddAsset = false;
+                this.addLog(`📉 Друг прогорел... Ваши инвестиции ($${costToPay}) сгорели.`);
+            } else if (roll === 2) {
+                shouldAddAsset = true;
+                card.title = "Бизнес друга";
+                card.cashflow = 1000;
+                this.addLog(`📈 Друг раскрутился! Вы получаете долю в бизнесе (+$1000/мес).`);
+            } else if (roll === 3) {
+                shouldAddAsset = false;
+                player.charityTurns = 3;
+                this.addLog(`🎓 Друг поделился мудростью! Вы получаете 3 хода с 2 кубиками.`);
+            }
+        }
 
-    player.cash -= costToPay; // Charge immediately
-    this.addLog(`🤝 ${player.name} инвестировал в ${card.title} (-$${costToPay}). Бросаем кубик на количество партнеров...`);
+        // Handle Payment
+        if (isMandatory && card.subtype !== 'CHARITY_ROLL') {
+            // Use Force Payment for Expenses/Mandatory
+            this.forcePayment(player, costToPay, card.title);
 
-    this.state.phase = 'MLM_ROLL';
-    // Do NOT add asset yet.
-    // Do NOT discard card yet (keep it as currentCard for the roll).
-    return;
-} else if (card.subtype === 'CHARITY_ROLL') {
-    // "Friend asks for a loan": 3 Random Outcomes
-    const roll = Math.floor(Math.random() * 3) + 1; // 1, 2, 3
+            // If player went bankrupt in forcePayment, stop
+            if (this.state.lastEvent?.type === 'BANKRUPTCY') {
+                // But wait, forcePayment calls bankruptPlayer which resets state.
+                // We should probably end turn immediately or return.
+                // engine usually expects turn end.
+                this.state.currentCard = undefined;
+                this.endTurn();
+                return;
+            }
+        } else {
+            // Standard Asset Buy
+            player.cash -= costToPay;
+        }
 
-    if (roll === 1) {
-        // 1. Friend went bust (Investments burned)
-        shouldAddAsset = false;
-        this.addLog(`📉 Друг прогорел... Ваши инвестиции ($${costToPay}) сгорели.`);
-    } else if (roll === 2) {
-        // 2. Friend succeeded (Business with $1000 income)
-        shouldAddAsset = true;
-        // Mutate card properties for the asset creation
-        card.title = "Бизнес друга";
-        card.cashflow = 1000;
-        // card.cost remains what you paid
-        this.addLog(`📈 Друг раскрутился! Вы получаете долю в бизнесе (+$1000/мес).`);
-    } else if (roll === 3) {
-        // 3. Friend shared wisdom (3x Charity Turns)
-        shouldAddAsset = false;
-        player.charityTurns = 3;
-        this.addLog(`🎓 Друг поделился мудростью! Вы получаете 3 хода с 2 кубиками.`);
-    }
-}
+        // Handle Expense Payment (No Asset added)
+        // Exception: CHARITY_ROLL has its own outcome logic (shouldAddAsset flag)
+        if (isMandatory && card.subtype !== 'CHARITY_ROLL') {
+            // Logic moved above to forcePayment. 
+            // Just clean up.
+            // this.addLog(`${player.name} paid: ${card.title} (-$${costToPay})`); // Logged in forcePayment
 
-// Handle Payment
-if (isMandatory && card.subtype !== 'CHARITY_ROLL') {
-    // Use Force Payment for Expenses/Mandatory
-    this.forcePayment(player, costToPay, card.title);
+            // Discard the paid expense card
+            if (this.state.currentCard && this.state.currentCard.id === card.id) {
+                this.cardManager.discard(this.state.currentCard);
+                this.state.currentCard = undefined;
+                this.endTurn();
+                return;
+            } else if (isMarketCard) {
+                // Discard from market
+                this.cardManager.discard(card);
+                this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
+                // Don't end turn if paying off a market card (unless logic dictates)
+                return;
+            }
 
-    // If player went bankrupt in forcePayment, stop
-    if (this.state.lastEvent?.type === 'BANKRUPTCY') {
-        // But wait, forcePayment calls bankruptPlayer which resets state.
-        // We should probably end turn immediately or return.
-        // engine usually expects turn end.
-        this.state.currentCard = undefined;
-        this.endTurn();
-        return;
-    }
-} else {
-    // Standard Asset Buy
-    player.cash -= costToPay;
-}
-
-// Handle Expense Payment (No Asset added)
-// Exception: CHARITY_ROLL has its own outcome logic (shouldAddAsset flag)
-if (isMandatory && card.subtype !== 'CHARITY_ROLL') {
-    // Logic moved above to forcePayment. 
-    // Just clean up.
-    // this.addLog(`${player.name} paid: ${card.title} (-$${costToPay})`); // Logged in forcePayment
-
-    // Discard the paid expense card
-    if (this.state.currentCard && this.state.currentCard.id === card.id) {
-        this.cardManager.discard(this.state.currentCard);
-        this.state.currentCard = undefined;
-        this.endTurn();
-        return;
-    } else if (isMarketCard) {
-        // Discard from market
-        this.cardManager.discard(card);
-        this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
-        // Don't end turn if paying off a market card (unless logic dictates)
-        return;
-    }
-
-    this.state.currentCard = undefined;
-    this.endTurn();
-    return;
-}
-
-// Add Asset
-if (shouldAddAsset) {
-    // Prevent duplicate ownership of Fast Track businesses
-    const cardAny = card as any;
-    if (cardAny.targetSquareIndex !== undefined) {
-        const alreadyOwned = player.assets.some(a => a.title === card.title);
-        if (alreadyOwned) {
-            this.addLog(`❌ ${player.name} уже владеет ${card.title}!`);
             this.state.currentCard = undefined;
-            this.state.phase = 'ACTION';
+            this.endTurn();
             return;
         }
-    }
 
-    const assetCashflow = card.cashflow || 0;
-    player.assets.push({
-        title: card.title,
-        cost: card.cost,
-        cashflow: assetCashflow,
-        symbol: card.symbol,
-        type: card.assetType || (card.symbol ? 'STOCK' : 'REAL_ESTATE'), // Use explicit type or fallback
-        quantity: 1,
-        businessType: card.businessType, // Store business type
-        sourceType: card.type // Store original card type (DEAL_SMALL, DEAL_BIG) for Discard Return logic
-    });
-
-    // Update player income stats
-    // Standard Rat Race assets handled by recalculateFinancials (called below).
-    // Fast Track assets also handled by recalculateFinancials (via new method).
-    // So we can remove manual delta updates if we are sure recalculateFinancials is called.
-    // It IS called at end of buyCard.
-    // So, just trigger victory check.
-
-    this.recalculateFinancials(player);
-
-    if (player.isFastTrack) {
-        this.checkFastTrackVictory(player);
-    }
-}
-
-// Handling Discard/Clean up after buy
-// Keep card visible for other players - move to activeMarketCards if it's currentCard
-// EXCEPT for private cards (MLM, CHARITY_ROLL) which should only be visible to buyer
-const isPrivateCard = card.subtype === 'CHARITY_ROLL';
-
-if (this.state.currentCard?.id === card.id && !isPrivateCard && (card.assetType === 'STOCK' || card.symbol)) {
-    // Check if it's already in activeMarketCards
-    const alreadyInMarket = this.state.activeMarketCards?.some(mc => mc.card.id === card.id);
-    if (!alreadyInMarket) {
-        // Move to activeMarketCards so it stays visible
-        if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
-        this.state.activeMarketCards.push({
-            id: `market_${card.id}_${Date.now()}`,
-            card: this.state.currentCard,
-            expiresAt: Date.now() + 120000, // 2 min
-            sourcePlayerId: this.state.players[this.state.currentPlayerIndex].id,
-            dismissedBy: [this.state.players[this.state.currentPlayerIndex].id]
-        });
-    }
-}
-
-// Clear currentCard (for all cards including private ones)
-if (this.state.currentCard?.id === card.id) {
-    this.state.currentCard = undefined;
-    this.state.phase = 'ACTION';
-} else if (isMarketCard) {
-    // CRITICAL FIX: If we bought a Deal/Business from Market, it must be removed!
-    // Stocks are handled earlier. This block is for unique assets.
-    this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
-    // Optionally discard if needed, but asset is already created.
-    // this.cardManager.discard(card); // Only if we want to recycle it immediately? 
-    // Better to just remove from active interactions.
-}
-// Don't remove from activeMarketCards - let cleanup handle it when all players dismiss (except private cards)
-
-
-// Fast Track Board Ownership Logic
-const cardAny = card as any;
-if (cardAny.targetSquareIndex !== undefined) {
-    const sqIndex = cardAny.targetSquareIndex;
-    // Ensure global index is correct?
-    // Since handleFastTrackSquare set it from `square.index`, checking if it's correct.
-    // Usually yes.
-
-    // Check if it was a Buyout
-    if (cardAny.isBuyout && cardAny.ownerId) {
-        const prevOwner = this.state.players.find(p => p.id === cardAny.ownerId);
-        if (prevOwner) {
-            // Pay Previous Owner
-            prevOwner.cash += (card.cost || 0);
-            this.addLog(`💸 ${player.name} paid $${card.cost} to ${prevOwner.name} for ${card.title}`);
-
-            // Remove Asset from Previous Owner
-            // Need to find asset by Title? Or by Square Index if tracked?
-            // Currently Assets don't store Square Index explicitly.
-            // But Title should be unique enough for FT businesses?
-            // "Moneo Corp", "Yoga Center"...
-            const assetIdx = prevOwner.assets.findIndex(a => a.title === card.title);
-            if (assetIdx !== -1) {
-                const removed = prevOwner.assets[assetIdx];
-                prevOwner.assets.splice(assetIdx, 1);
-
-                // Recalc Previous Owner Stats
-                if (removed.cashflow) {
-                    prevOwner.passiveIncome -= removed.cashflow;
-                    prevOwner.income = prevOwner.salary + prevOwner.passiveIncome;
-                    prevOwner.cashflow = prevOwner.income - prevOwner.expenses;
+        // Add Asset
+        if (shouldAddAsset) {
+            // Prevent duplicate ownership of Fast Track businesses
+            const cardAny = card as any;
+            if (cardAny.targetSquareIndex !== undefined) {
+                const alreadyOwned = player.assets.some(a => a.title === card.title);
+                if (alreadyOwned) {
+                    this.addLog(`❌ ${player.name} уже владеет ${card.title}!`);
+                    this.state.currentCard = undefined;
+                    this.state.phase = 'ACTION';
+                    return;
                 }
             }
-        }
-    }
 
-    // Set New Owner on Board
-    // We need to mutate the board in state
-    // We need to find the square in FULL_BOARD logic.
-    // If `this.state.board` is the source of truth, we update it there.
-    // `sqIndex` came from `square.index` on the board.
-    const boardSq = this.state.board.find(b => b.index === sqIndex);
-    if (boardSq) {
-        boardSq.ownerId = player.id;
-    }
-}
+            const assetCashflow = card.cashflow || 0;
+            player.assets.push({
+                title: card.title,
+                cost: card.cost,
+                cashflow: assetCashflow,
+                symbol: card.symbol,
+                type: card.assetType || (card.symbol ? 'STOCK' : 'REAL_ESTATE'), // Use explicit type or fallback
+                quantity: 1,
+                businessType: card.businessType, // Store business type
+                sourceType: card.type // Store original card type (DEAL_SMALL, DEAL_BIG) for Discard Return logic
+            });
 
-// Update Stats
-this.recalculateFinancials(player);
-// if (card.cashflow) {
-//     player.passiveIncome += card.cashflow;
-//     player.income = player.salary + player.passiveIncome;
-//     player.cashflow = player.income - player.expenses;
-// }
+            // Update player income stats
+            // Standard Rat Race assets handled by recalculateFinancials (called below).
+            // Fast Track assets also handled by recalculateFinancials (via new method).
+            // So we can remove manual delta updates if we are sure recalculateFinancials is called.
+            // It IS called at end of buyCard.
+            // So, just trigger victory check.
 
-// Add Liability (Mortgage) if downpayment was used
-if (card.downPayment !== undefined && (card.cost || 0) > card.downPayment) {
-    const mortgage = (card.cost || 0) - card.downPayment;
-    player.liabilities.push({ name: `Mortgage (${card.title})`, value: mortgage });
-}
+            this.recalculateFinancials(player);
 
-this.addLog(`${player.name} купил ${card.title}. Пассивный доход +$${card.cashflow || 0}`);
-
-// Critical Fix: Check Win Condition immediately after buying asset (e.g. Dream or Business)
-this.checkWinCondition(player);
-
-// Clear card so it isn't discarded in endTurn
-this.state.currentCard = undefined;
-
-this.checkFastTrackCondition(player);
-this.checkWinCondition(player);
-// Do NOT end turn. Allow player to continue actions.
-this.state.phase = 'ACTION';
-
-return mlmResult;
-    }
-
-giftCash(fromPlayerId: string, toPlayerId: string, amount: number) {
-    const fromPlayer = this.state.players.find(p => p.id === fromPlayerId);
-    const toPlayer = this.state.players.find(p => p.id === toPlayerId);
-
-    if (!fromPlayer || !toPlayer) throw new Error("Player not found");
-    if (amount <= 0) throw new Error("Invalid amount");
-    if (fromPlayer.cash < amount) throw new Error("Insufficient funds");
-
-    fromPlayer.cash -= amount;
-    toPlayer.cash += amount;
-
-    this.recordTransaction({
-        from: fromPlayer.name,
-        to: toPlayer.name,
-        amount: amount,
-        description: 'Gift for Baby 👶',
-        type: 'PAYDAY'
-    });
-
-    this.addLog(`🎁 ${fromPlayer.name} подарил $${amount.toLocaleString()} игроку ${toPlayer.name}`);
-
-    // Check Fast Track for recipient
-    this.checkFastTrackCondition(toPlayer);
-}
-
-giveCash(playerId: string, amount: number) {
-    const player = this.state.players.find(p => p.id === playerId);
-    if (!player) return;
-    if (amount <= 0) return;
-
-    player.cash += amount;
-    this.addLog(`🎁 Host gave $${amount.toLocaleString()} to ${player.name}`);
-
-    this.recordTransaction({
-        from: 'Host',
-        to: player.name,
-        amount: amount,
-        description: 'Gift from Host',
-        type: 'PAYDAY' // Green positive visual
-    });
-
-    this.checkFastTrackCondition(player);
-}
-
-sellStock(playerId: string, quantity: number) {
-    const player = this.state.players.find(p => p.id === playerId);
-    const card = this.state.currentCard;
-
-    if (!player || !card) return;
-    if (!card.symbol) return; // Must be stock card
-
-    // Find stock in assets
-    const stockIndex = player.assets.findIndex(a => a.symbol === card.symbol);
-    if (stockIndex === -1) return;
-    const stock = player.assets[stockIndex];
-
-    if ((stock.quantity || 0) < quantity) {
-        this.addLog(`${player.name} cannot sell ${quantity} ${stock.symbol}: Only have ${stock.quantity}`);
-        return;
-    }
-
-    const price = card.cost || 0; // Current price is usually defined in card.cost for Stock Cards
-    const saleTotal = price * quantity;
-
-    player.cash += saleTotal;
-
-    // Update Asset
-    stock.quantity -= quantity;
-
-    // Reduce Cashflow (assuming proportional) - Actually Recalc handles it cleaner
-    this.recalculateFinancials(player);
-
-    // if (stock.cashflow) {
-    //     const cashflowPerShare = stock.cashflow / (stock.quantity + quantity);
-    //     const lostCashflow = cashflowPerShare * quantity;
-    //     stock.cashflow -= lostCashflow;
-    //     player.passiveIncome -= lostCashflow;
-    //     player.income = player.salary + player.passiveIncome;
-    //     player.cashflow = player.income - player.expenses;
-    // }
-
-    if (stock.quantity <= 0) {
-        player.assets.splice(stockIndex, 1);
-    }
-
-    this.addLog(`📈 ${player.name} sold ${quantity} ${card.symbol} @ $${price} for $${saleTotal}`);
-
-    // Do NOT end turn. Selling stock is an open market action.
-    this.checkFastTrackCondition(player);
-}
-
-transferFunds(fromId: string, toId: string, amount: number) {
-    const fromPlayer = this.state.players.find(p => p.id === fromId);
-    const toPlayer = this.state.players.find(p => p.id === toId);
-
-    if (!fromPlayer || !toPlayer) return;
-    if (fromPlayer.cash < amount) {
-        this.addLog(`${fromPlayer.name} failed transfer: Insufficient funds.`);
-        return;
-    }
-
-    fromPlayer.cash -= amount;
-    toPlayer.cash += amount;
-
-    this.recordTransaction({
-        from: fromPlayer.name,
-        to: toPlayer.name,
-        amount,
-        description: 'Transfer',
-        type: 'TRANSFER'
-    });
-
-    this.addLog(`${fromPlayer.name} transferred $${amount} to ${toPlayer.name}`);
-}
-
-    private recordTransaction(t: Omit<Transaction, 'id' | 'timestamp'>) {
-    this.state.transactions.unshift({
-        id: Math.random().toString(36).substr(2, 9),
-        timestamp: Date.now(),
-        ...t
-    });
-    // Keep last 50 transactions
-    if (this.state.transactions.length > 50) this.state.transactions.pop();
-}
-
-checkTurnTimeout(): boolean {
-    if (this.state.isPaused) return false;
-
-    // Bot Logic Hook
-    const player = this.state.players[this.state.currentPlayerIndex];
-    if (player && player.userId && player.userId.startsWith('bot_')) {
-        // Check if we should move
-        const now = Date.now();
-        // Default 2 second delay between bot actions
-        if (!this.botNextActionAt) this.botNextActionAt = now + 2000;
-
-        if (now >= this.botNextActionAt) {
-            this.makeBotMove();
-            this.botNextActionAt = now + 2500; // Schedule next move
-            return true; // Use return true to signal state change? 
-            // Actually makeBotMove changes state, but Gateway uses return value to know if it should emit 'turn_ended'.
-            // 'turn_ended' event usually just sends state.
-            // If bot moves, we definitely strictly want to update state.
-            // But checkTurnTimeout caller (Gateway) emits 'turn_ended' ONLY if true returned.
-            // 'turn_ended' prompt might be confusing if it wasn't a timeout.
-            // Gateway line 58: `this.io.to(roomId).emit('turn_ended', { state: game.getState() });`
-            // It's just a state sync labeled 'turn_ended'.
-            // So returning true is fine to force sync.
-        }
-        return false;
-    } else {
-        // Reset bot timer when human turn
-        this.botNextActionAt = 0;
-    }
-
-    // Return true if state changed (turn ended)
-    if (!this.state.isPaused && this.state.turnExpiresAt && Date.now() > this.state.turnExpiresAt) {
-        if (player) {
-            this.addLog(`⌛ Turn timeout for ${player.name}`);
-
-            // Auto-Pay Mandatory Expense on Timeout
-            if (this.state.currentCard && (this.state.currentCard.type === 'EXPENSE' || this.state.currentCard.mandatory)) {
-                const cost = this.state.currentCard.cost || 0;
-                // Only pay if cost > 0
-                if (cost > 0) {
-                    this.addLog(`🤖 Timeout Auto-Pay: ${this.state.currentCard.title}`);
-                    this.forcePayment(player, cost, this.state.currentCard.title);
-                }
+            if (player.isFastTrack) {
+                this.checkFastTrackVictory(player);
             }
-        }
-        this.endTurn();
-        return true;
-    }
-    return false;
-}
 
-/**
- * Cleanup market cards that are expired or dismissed by all players
- */
-cleanupMarketCards() {
-    if (!this.state.activeMarketCards) return;
-
-    const now = Date.now();
-    const activePlayers = this.state.players.filter(p => !p.isBankrupted && !p.hasWon);
-
-    this.state.activeMarketCards = this.state.activeMarketCards.filter(mc => {
-        // Remove if expired
-        if (mc.expiresAt < now) {
-            this.cardManager.discard(mc.card);
-            return false;
-        }
-
-        // Remove if all active players dismissed it
-        if (mc.dismissedBy && activePlayers.length > 0) {
-            const allDismissed = activePlayers.every(p => mc.dismissedBy?.includes(p.id));
-            if (allDismissed) {
-                this.cardManager.discard(mc.card);
-                return false;
+            // Moneo Global Promo Check
+            if (card.id === 'bd_moneo_franchise') {
+                this.state.lastEvent = {
+                    type: 'MONEO_BOUGHT',
+                    payload: { player: player.name }
+                };
+                this.addLog(`🌍 ${player.name} купил франшизу MONEO!`);
             }
         }
 
-        return true;
-    });
-}
+        // Handling Discard/Clean up after buy
+        // Keep card visible for other players - move to activeMarketCards if it's currentCard
+        // EXCEPT for private cards (MLM, CHARITY_ROLL) which should only be visible to buyer
+        const isPrivateCard = card.subtype === 'CHARITY_ROLL';
 
-/**
- * Dismiss a market card for a specific player
- */
-dismissMarketCard(playerId: string, cardId: string) {
-    const marketCard = this.state.activeMarketCards?.find(mc => mc.card.id === cardId || mc.id === cardId);
-    if (!marketCard) return;
-
-    if (!marketCard.dismissedBy) {
-        marketCard.dismissedBy = [];
-    }
-
-    if (!marketCard.dismissedBy.includes(playerId)) {
-        marketCard.dismissedBy.push(playerId);
-        this.addLog(`${this.state.players.find(p => p.id === playerId)?.name} закрыл карточку`);
-    }
-
-    this.cleanupMarketCards();
-}
-
-endTurn() {
-    // CRITICAL FIX: If user clicks "Next" (Skip) on a Mandatory Card (Expense/Doodad), force payment!
-    if (this.state.currentCard && (this.state.currentCard.type === 'EXPENSE' || this.state.currentCard.mandatory)) {
-        const player = this.state.players[this.state.currentPlayerIndex];
-        const cost = this.state.currentCard.cost || 0;
-
-        // Force Deduct
-        player.cash -= cost;
-
-        this.addLog(`⚠️ ${player.name} пропустил оплату, списание: ${this.state.currentCard.title} (-$${cost})`);
-
-        this.recordTransaction({
-            from: player.name,
-            to: 'Bank',
-            amount: cost,
-            description: `Forced Payment: ${this.state.currentCard.title}`,
-            type: 'EXPENSE'
-        });
-    }
-    // 1. Clean up expired Active Cards
-    if (this.state.activeMarketCards) {
-        // Find expired ones to discard properly
-        const expired = this.state.activeMarketCards.filter(ac => ac.expiresAt <= Date.now());
-        // Remove expired from list
-        this.state.activeMarketCards = this.state.activeMarketCards.filter(ac => ac.expiresAt > Date.now());
-
-        // Discard them? We should discard if they are not in currentCard.
-        // But simplest is: when they leave 'activeMarketCards', we discard them?
-        // Actually, if we didn't discard in dismissCard, we must discard now.
-        for (const exp of expired) {
-            this.cardManager.discard(exp.card);
-        }
-    }
-
-    // 2. Clear current card (Discard if not persistent)
-    if (this.state.currentCard) {
-        const card = this.state.currentCard;
-        const isMarket = card.type === 'MARKET';
-        const isStock = !!card.symbol; // Stocks can be sold by anyone
-        const isPrivate = card.subtype === 'MLM_ROLL' || card.subtype === 'CHARITY_ROLL';
-
-        // Persist MARKET cards or STOCKS (excluding private ones)
-        if ((isMarket || isStock) && !isPrivate) {
-            const alreadyActive = this.state.activeMarketCards?.some(ac => ac.card.id === card.id);
-            if (!alreadyActive) {
+        if (this.state.currentCard?.id === card.id && !isPrivateCard && (card.assetType === 'STOCK' || card.symbol)) {
+            // Check if it's already in activeMarketCards
+            const alreadyInMarket = this.state.activeMarketCards?.some(mc => mc.card.id === card.id);
+            if (!alreadyInMarket) {
+                // Move to activeMarketCards so it stays visible
                 if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
                 this.state.activeMarketCards.push({
                     id: `market_${card.id}_${Date.now()}`,
-                    card: card,
-                    expiresAt: Date.now() + 120000, // 2 mins
+                    card: this.state.currentCard,
+                    expiresAt: Date.now() + 120000, // 2 min
                     sourcePlayerId: this.state.players[this.state.currentPlayerIndex].id,
-                    dismissedBy: []
+                    dismissedBy: [this.state.players[this.state.currentPlayerIndex].id]
                 });
             }
         }
 
-        const isPersistent = this.state.activeMarketCards?.some(ac => ac.card.id === card.id);
-        if (!isPersistent) {
-            this.cardManager.discard(card);
+        // Clear currentCard (for all cards including private ones)
+        if (this.state.currentCard?.id === card.id) {
+            this.state.currentCard = undefined;
+            this.state.phase = 'ACTION';
+        } else if (isMarketCard) {
+            // CRITICAL FIX: If we bought a Deal/Business from Market, it must be removed!
+            // Stocks are handled earlier. This block is for unique assets.
+            this.state.activeMarketCards = this.state.activeMarketCards?.filter(mc => mc.card.id !== card.id);
+            // Optionally discard if needed, but asset is already created.
+            // this.cardManager.discard(card); // Only if we want to recycle it immediately? 
+            // Better to just remove from active interactions.
         }
+        // Don't remove from activeMarketCards - let cleanup handle it when all players dismiss (except private cards)
+
+
+        // Fast Track Board Ownership Logic
+        const cardAny = card as any;
+        if (cardAny.targetSquareIndex !== undefined) {
+            const sqIndex = cardAny.targetSquareIndex;
+            // Ensure global index is correct?
+            // Since handleFastTrackSquare set it from `square.index`, checking if it's correct.
+            // Usually yes.
+
+            // Check if it was a Buyout
+            if (cardAny.isBuyout && cardAny.ownerId) {
+                const prevOwner = this.state.players.find(p => p.id === cardAny.ownerId);
+                if (prevOwner) {
+                    // Pay Previous Owner
+                    prevOwner.cash += (card.cost || 0);
+                    this.addLog(`💸 ${player.name} paid $${card.cost} to ${prevOwner.name} for ${card.title}`);
+
+                    // Remove Asset from Previous Owner
+                    // Need to find asset by Title? Or by Square Index if tracked?
+                    // Currently Assets don't store Square Index explicitly.
+                    // But Title should be unique enough for FT businesses?
+                    // "Moneo Corp", "Yoga Center"...
+                    const assetIdx = prevOwner.assets.findIndex(a => a.title === card.title);
+                    if (assetIdx !== -1) {
+                        const removed = prevOwner.assets[assetIdx];
+                        prevOwner.assets.splice(assetIdx, 1);
+
+                        // Recalc Previous Owner Stats
+                        if (removed.cashflow) {
+                            prevOwner.passiveIncome -= removed.cashflow;
+                            prevOwner.income = prevOwner.salary + prevOwner.passiveIncome;
+                            prevOwner.cashflow = prevOwner.income - prevOwner.expenses;
+                        }
+                    }
+                }
+            }
+
+            // Set New Owner on Board
+            // We need to mutate the board in state
+            // We need to find the square in FULL_BOARD logic.
+            // If `this.state.board` is the source of truth, we update it there.
+            // `sqIndex` came from `square.index` on the board.
+            const boardSq = this.state.board.find(b => b.index === sqIndex);
+            if (boardSq) {
+                boardSq.ownerId = player.id;
+            }
+        }
+
+        // Update Stats
+        this.recalculateFinancials(player);
+        // if (card.cashflow) {
+        //     player.passiveIncome += card.cashflow;
+        //     player.income = player.salary + player.passiveIncome;
+        //     player.cashflow = player.income - player.expenses;
+        // }
+
+        // Add Liability (Mortgage) if downpayment was used
+        if (card.downPayment !== undefined && (card.cost || 0) > card.downPayment) {
+            const mortgage = (card.cost || 0) - card.downPayment;
+            player.liabilities.push({ name: `Mortgage (${card.title})`, value: mortgage });
+        }
+
+        this.addLog(`${player.name} купил ${card.title}. Пассивный доход +$${card.cashflow || 0}`);
+
+        // Critical Fix: Check Win Condition immediately after buying asset (e.g. Dream or Business)
+        this.checkWinCondition(player);
+
+        // Clear card so it isn't discarded in endTurn
         this.state.currentCard = undefined;
+
+        this.checkFastTrackCondition(player);
+        this.checkWinCondition(player);
+        // Do NOT end turn. Allow player to continue actions.
+        this.state.phase = 'ACTION';
+
+        return mlmResult;
     }
 
-    // Clear events
-    this.state.lastEvent = undefined;
+    giftCash(fromPlayerId: string, toPlayerId: string, amount: number) {
+        const fromPlayer = this.state.players.find(p => p.id === fromPlayerId);
+        const toPlayer = this.state.players.find(p => p.id === toPlayerId);
 
-    let attempts = 0;
-    const totalPlayers = this.state.players.length;
+        if (!fromPlayer || !toPlayer) throw new Error("Player not found");
+        if (amount <= 0) throw new Error("Invalid amount");
+        if (fromPlayer.cash < amount) throw new Error("Insufficient funds");
 
-    // Decrement Charity Turns for the finishing player
-    // This ensures the turn they just finished counts against the limit.
-    const finishingPlayer = this.state.players[this.state.currentPlayerIndex];
-    if (finishingPlayer.charityTurns > 0 && !finishingPlayer.isFastTrack) {
-        finishingPlayer.charityTurns--;
-    }
-
-    // Safely iterate to find next valid player
-    while (attempts < totalPlayers * 2) { // Cap at 2 loops to prevent infinite freezes
-        this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % totalPlayers;
-        const nextPlayer = this.state.players[this.state.currentPlayerIndex];
-
-        // 1. Bankrupted -> SKIP PERMANENTLY
-        // Winner -> Only skip if they explicitly chose to skip (Sandbox Mode)
-        if (nextPlayer.isBankrupted || (nextPlayer.hasWon && nextPlayer.isSkippingTurns)) {
-            // Log only if skipping winner
-            // if (nextPlayer.hasWon) this.addLog(`⏩ Skipping winner ${nextPlayer.name}`);
-            attempts++;
-            continue;
-        }
-
-        // 2. AFK Players (isSkippingTurns) -> AUTO-SKIP TURN
-        if (nextPlayer.isSkippingTurns) {
-            this.addLog(`⏸ ${nextPlayer.name} пропускает ход (AFK)`);
-            attempts++;
-            continue;
-        }
-
-        // 3. Skipped Turns -> Decrement and Skip
-        if ((nextPlayer.skippedTurns || 0) > 0) {
-            nextPlayer.skippedTurns--;
-            this.addLog(`🚫 ${nextPlayer.name} skips turn (Remaining: ${nextPlayer.skippedTurns})`);
-            this.state.lastEvent = { type: 'TURN_SKIPPED', payload: { player: nextPlayer.name, remaining: nextPlayer.skippedTurns } };
-            attempts++;
-            continue;
-        }
-
-        // Valid player found
-        break;
-    }
-
-    this.state.phase = 'ROLL';
-    this.state.currentTurnTime = 120;
-    this.state.turnExpiresAt = Date.now() + 120000; // Reset timer 120s
-
-    const activePlayer = this.state.players[this.state.currentPlayerIndex];
-
-    // Decrement Charity Turns - MOVED TO END_TURN
-    // if (activePlayer.charityTurns > 0) {
-    //     activePlayer.charityTurns--;
-    // }
-
-    if (activePlayer.charityTurns > 0) {
-        this.addLog(`🎲 ${activePlayer.name}: Благотворительность активна (осталось ходов: ${activePlayer.charityTurns})`);
-    } else if (activePlayer.charityTurns === 0 && this.state.lastEvent?.type === 'CHARITY_EXPIRED') {
-        // Optional: Log expiration if we tracked it
-    }
-
-    // this.addLog(`Now it is ${activePlayer.name}'s turn.`);
-}
-
-    private forcePayment(player: PlayerState, amount: number, description: string) {
-    console.log(`[ForcePayment] Processing for ${player.name}: Amount $${amount}, Desc: ${description}, Cash: ${player.cash}`);
-    if (amount <= 0) return;
-
-    if (player.cash >= amount) {
-        player.cash -= amount;
-        this.addLog(`💸 ${player.name} paid $${amount} for ${description}`);
-        console.log(`[ForcePayment] Paid directly. New Cash: ${player.cash}`);
-        return;
-    }
-
-    // Insufficient Funds
-    const deficit = amount - player.cash;
-
-    // Max Loan Check: 
-    // Existing logic: Loan allowed if Cashflow - Interest >= 0.
-    // Interest = 10% of Loan.
-    // So Max Loan = Cashflow * 10
-    // But we must also support existing debt.
-    // Actually, `takeLoan` checks future state.
-    // `player.cashflow - interest < 0` where interest is NEW interest.
-    // So we just iterate taking 1000s until covered or failed.
-
-    // Calculate needed loan
-    const neededLoan = Math.ceil(deficit / 1000) * 1000;
-
-    // Dry run check
-    const potentialInterest = neededLoan * 0.1;
-
-    if (player.cashflow - potentialInterest >= 0 && !player.isBankrupted) {
-        // Auto Take Loan through public method to ensure strict logic
-        this.addLog(`⚠️ ${player.name} forcing loan $${neededLoan} for ${description}...`);
-
-        // We need to bypass "turn check" if any? No, takeLoan is open.
-        // But takeLoan uses `state.players.find...`. 
-        // Better to call internal logic or just `this.takeLoan`.
-        this.takeLoan(player.id, neededLoan);
-
-        // Verify if loan was taken (cash increased)
-        if (player.cash >= amount) {
-            player.cash -= amount;
-            this.addLog(`💸 Paid $${amount} after loan.`);
-        } else {
-            // Failed to take loan despite check? (Maybe block logic?)
-            this.bankruptPlayer(player);
-        }
-    } else {
-        // Cannot afford loan -> Bankrupt
-        this.bankruptPlayer(player);
-    }
-}
-
-    private bankruptPlayer(player: PlayerState) {
-    this.addLog(`☠️ ${player.name} IS BANKRUPT! Restarting with penalty...`);
-    this.state.lastEvent = { type: 'BANKRUPTCY', payload: { player: player.name } };
-
-    // Reset Logic
-    // player.isBankrupted = true; // DO NOT set to true effectively removing them. Prompt says "начинает заново".
-    // "начинает заново но уже может брать кредит только 50% от суммы пай дай"
-
-    // Reset finances
-    const profession = PROFESSIONS.find(p => p.name === player.professionName) || PROFESSIONS[0];
-
-    player.cash = profession.savings;
-    player.income = profession.salary;
-    player.expenses = profession.expenses;
-    player.cashflow = profession.salary - profession.expenses;
-    player.passiveIncome = 0;
-
-    player.assets = [];
-    // Restore initial liabilities
-    const liabilities = [];
-    if (profession.carLoan) liabilities.push({ name: 'Car Loan', value: profession.carLoan.cost, expense: profession.carLoan.payment });
-    if (profession.creditCard) liabilities.push({ name: 'Credit Card', value: profession.creditCard.cost, expense: profession.creditCard.payment });
-    if (profession.schoolLoan) liabilities.push({ name: 'School Loan', value: profession.schoolLoan.cost, expense: profession.schoolLoan.payment });
-    if (profession.mortgage) liabilities.push({ name: 'Mortgage', value: profession.mortgage.cost, expense: profession.mortgage.payment });
-    if (profession.retailDebt) liabilities.push({ name: 'Retail Debt', value: profession.retailDebt.cost, expense: profession.retailDebt.payment });
-    player.liabilities = liabilities;
-
-    player.loanDebt = 0;
-    player.position = 0;
-    player.isFastTrack = false;
-    player.childrenCount = 0;
-    player.charityTurns = 0;
-    player.skippedTurns = 0;
-
-    // Penalty
-    player.loanLimitFactor = 0.5;
-    this.addLog(`ℹ️ ${player.name} restarted. Loan Limit reduced to 50%.`);
-}
-
-transferCash(fromId: string, toId: string, amount: number) {
-    if (amount <= 0) return;
-
-    // Try finding by ID (socket) or userId
-    let fromPlayer = this.state.players.find(p => p.id === fromId);
-    if (!fromPlayer) fromPlayer = this.state.players.find(p => p.userId === fromId);
-
-    let toPlayer = this.state.players.find(p => p.id === toId);
-    if (!toPlayer) toPlayer = this.state.players.find(p => p.userId === toId);
-
-    if (!fromPlayer || !toPlayer) {
-        console.error(`[TransferCash] Player not found. From: ${fromId}, To: ${toId}`);
-        return;
-    }
-
-    if (fromPlayer.cash < amount) {
-        this.addLog(`⚠️ ${fromPlayer.name} не хватает денег для перевода ($${amount}).`);
-        return;
-    }
-
-    fromPlayer.cash -= amount;
-    toPlayer.cash += amount;
-
-    this.addLog(`💸 ${fromPlayer.name} перевел $${amount.toLocaleString()} игроку ${toPlayer.name}`);
-    this.recordTransaction({
-        from: fromPlayer.name,
-        to: toPlayer.name,
-        amount: amount,
-        description: `Перевод средств`,
-        type: 'TRANSFER'
-    });
-    // this.emitState(); // Usually called by gateway after action returns? No, gateway calls getState. 
-    // Gateway: game.transferDeal -> state updated -> emit. 
-    // So we don't need emitState here if gateway handles it. 
-    // Gateway `handleTransferDeal` calls `game.getState` and emits.
-    // My new `handleTransferCash` in gateway does NOT emit yet! 
-    // Wait, I checked `game.gateway.ts` changes. I added `game.transferCash(...)` but didn't add emit logic!
-    // I must fix gateway to emit state!
-}
-
-resolveBabyRoll(): number | { total: number, values: number[] } {
-    const player = this.state.players[this.state.currentPlayerIndex];
-    const roll = Math.floor(Math.random() * 6) + 1;
-    const rollResult = { total: roll, values: [roll] };
-
-    // User requested 100% success for now
-    const success = true;
-
-    if (success) {
-        if (player.childrenCount < 3) {
-            player.childrenCount++;
-            const currentChild = player.childrenCount; // 1, 2, or 3
-
-            const expenseIncrease = 500;
-            this.recalculateFinancials(player);
-
-            // 2. Cash Bonus Logic ($5k / $10k / $20k)
-            let bonus = 0;
-            if (currentChild === 1) bonus = 5000;
-            else if (currentChild === 2) bonus = 10000;
-            else if (currentChild === 3) bonus = 20000;
-
-            player.cash += bonus;
-            this.recordTransaction({
-                from: 'Bank',
-                to: player.name,
-                amount: bonus,
-                description: `Выплата на ребенка #${currentChild}`,
-                type: 'INCOME'
-            });
-
-            // 3. Add Non-Transferable Child Asset
-            // We define Asset interface here locally or use 'any' if global type missing. 
-            // Using 'any' to avoid build errors with missing import.
-            const childAsset: any = {
-                id: `child_${Date.now()}_${currentChild}`,
-                title: `Ребенок #${currentChild}`,
-                type: 'OTHER',
-                cost: 0,
-                cashflow: 0,
-                value: 0,
-                quantity: 1,
-                isTransferable: false
-            };
-            if (!player.assets) player.assets = [];
-            player.assets.push(childAsset);
-
-            this.addLog(`👶 Поздравляем! Родился ребёнок #${currentChild}! (Кубик: ${roll})`);
-            this.addLog(`💰 Получен бонус: $${bonus.toLocaleString()}`);
-            this.addLog(`📉 Расходы увеличены на $${expenseIncrease}`);
-
-            this.state.lastEvent = {
-                type: 'BABY_BORN',
-                payload: {
-                    player: player.name,
-                    playerId: player.id,
-                    roll,
-                    childCost: expenseIncrease,
-                    bonus: bonus,
-                    totalChildren: currentChild
-                }
-            };
-
-
-        } else {
-            this.addLog(`👶 У вас уже 3 детей! (Кубик: ${roll}). Больше 3 нельзя.`);
-            this.state.lastEvent = {
-                type: 'BABY_BORN',
-                payload: {
-                    player: player.name,
-                    playerId: player.id,
-                    roll,
-                    childCost: 0,
-                    message: "Максимум детей достигнут"
-                }
-            };
-        }
-    } else {
-        this.addLog(`🎲 ${player.name} выбросил ${roll}. Ребёнок не родился.`);
-    }
-
-    this.state.phase = 'ACTION'; // Enable Next
-    return rollResult;
-}
-
-
-
-getState(): GameState {
-    return {
-        ...this.state,
-        deckCounts: this.cardManager.getDeckCounts()
-    };
-}
-// --- Charity Logic ---
-handleCharityChoice(socketId: string, accept: boolean) {
-    if (this.state.phase !== 'CHARITY_CHOICE') throw new Error("Not in charity phase");
-    const player = this.state.players[this.state.currentPlayerIndex];
-    if (player.id !== socketId) throw new Error("Not your turn");
-
-    if (accept) {
-        let cost = 0;
-        if (player.isFastTrack) {
-            cost = 100000;
-        } else {
-            cost = Math.max(1000, Math.ceil((player.salary + (player.passiveIncome || 0)) * 0.1));
-        }
-
-        // Double check validation
-        if (player.cash < cost) {
-            this.addLog(`⚠️ ${player.name} пытался пожертвовать $${cost}, но имеет только $${player.cash}`);
-            throw new Error("Not enough cash");
-        }
-
-        player.cash -= cost;
-        player.charityTurns = 3; // >0 enables bonus. For FT, it doesn't decrement.
+        fromPlayer.cash -= amount;
+        toPlayer.cash += amount;
 
         this.recordTransaction({
-            from: player.name,
-            to: 'Charity',
-            amount: cost,
-            description: player.isFastTrack ? 'Charity (Fast Track)' : 'Charity Donation',
-            type: 'EXPENSE'
+            from: fromPlayer.name,
+            to: toPlayer.name,
+            amount: amount,
+            description: 'Gift for Baby 👶',
+            type: 'PAYDAY'
         });
 
-        const bonusText = player.isFastTrack ? "1-3 кубика навсегда" : "2 кубика на 3 хода";
-        this.addLog(`💖 ${player.name} пожертвовал $${cost} на благотворительность! (${bonusText})`);
-    } else {
-        this.addLog(`🤷 ${player.name} отказался от благотворительности.`);
+        this.addLog(`🎁 ${fromPlayer.name} подарил $${amount.toLocaleString()} игроку ${toPlayer.name}`);
+
+        // Check Fast Track for recipient
+        this.checkFastTrackCondition(toPlayer);
     }
 
-    // After choice, end turn immediately
-    this.endTurn();
-}
+    giveCash(playerId: string, amount: number) {
+        const player = this.state.players.find(p => p.id === playerId);
+        if (!player) return;
+        if (amount <= 0) return;
+
+        player.cash += amount;
+        this.addLog(`🎁 Host gave $${amount.toLocaleString()} to ${player.name}`);
+
+        this.recordTransaction({
+            from: 'Host',
+            to: player.name,
+            amount: amount,
+            description: 'Gift from Host',
+            type: 'PAYDAY' // Green positive visual
+        });
+
+        this.checkFastTrackCondition(player);
+    }
+
+    sellStock(playerId: string, quantity: number) {
+        const player = this.state.players.find(p => p.id === playerId);
+        const card = this.state.currentCard;
+
+        if (!player || !card) return;
+        if (!card.symbol) return; // Must be stock card
+
+        // Find stock in assets
+        const stockIndex = player.assets.findIndex(a => a.symbol === card.symbol);
+        if (stockIndex === -1) return;
+        const stock = player.assets[stockIndex];
+
+        if ((stock.quantity || 0) < quantity) {
+            this.addLog(`${player.name} cannot sell ${quantity} ${stock.symbol}: Only have ${stock.quantity}`);
+            return;
+        }
+
+        const price = card.cost || 0; // Current price is usually defined in card.cost for Stock Cards
+        const saleTotal = price * quantity;
+
+        player.cash += saleTotal;
+
+        // Update Asset
+        stock.quantity -= quantity;
+
+        // Reduce Cashflow (assuming proportional) - Actually Recalc handles it cleaner
+        this.recalculateFinancials(player);
+
+        // if (stock.cashflow) {
+        //     const cashflowPerShare = stock.cashflow / (stock.quantity + quantity);
+        //     const lostCashflow = cashflowPerShare * quantity;
+        //     stock.cashflow -= lostCashflow;
+        //     player.passiveIncome -= lostCashflow;
+        //     player.income = player.salary + player.passiveIncome;
+        //     player.cashflow = player.income - player.expenses;
+        // }
+
+        if (stock.quantity <= 0) {
+            player.assets.splice(stockIndex, 1);
+        }
+
+        this.addLog(`📈 ${player.name} sold ${quantity} ${card.symbol} @ $${price} for $${saleTotal}`);
+
+        // Do NOT end turn. Selling stock is an open market action.
+        this.checkFastTrackCondition(player);
+    }
+
+    transferFunds(fromId: string, toId: string, amount: number) {
+        const fromPlayer = this.state.players.find(p => p.id === fromId);
+        const toPlayer = this.state.players.find(p => p.id === toId);
+
+        if (!fromPlayer || !toPlayer) return;
+        if (fromPlayer.cash < amount) {
+            this.addLog(`${fromPlayer.name} failed transfer: Insufficient funds.`);
+            return;
+        }
+
+        fromPlayer.cash -= amount;
+        toPlayer.cash += amount;
+
+        this.recordTransaction({
+            from: fromPlayer.name,
+            to: toPlayer.name,
+            amount,
+            description: 'Transfer',
+            type: 'TRANSFER'
+        });
+
+        this.addLog(`${fromPlayer.name} transferred $${amount} to ${toPlayer.name}`);
+    }
+
+    private recordTransaction(t: Omit<Transaction, 'id' | 'timestamp'>) {
+        this.state.transactions.unshift({
+            id: Math.random().toString(36).substr(2, 9),
+            timestamp: Date.now(),
+            ...t
+        });
+        // Keep last 50 transactions
+        if (this.state.transactions.length > 50) this.state.transactions.pop();
+    }
+
+    checkTurnTimeout(): boolean {
+        if (this.state.isPaused) return false;
+
+        // Bot Logic Hook
+        const player = this.state.players[this.state.currentPlayerIndex];
+        if (player && player.userId && player.userId.startsWith('bot_')) {
+            // Check if we should move
+            const now = Date.now();
+            // Default 2 second delay between bot actions
+            if (!this.botNextActionAt) this.botNextActionAt = now + 2000;
+
+            if (now >= this.botNextActionAt) {
+                this.makeBotMove();
+                this.botNextActionAt = now + 2500; // Schedule next move
+                return true; // Use return true to signal state change? 
+                // Actually makeBotMove changes state, but Gateway uses return value to know if it should emit 'turn_ended'.
+                // 'turn_ended' event usually just sends state.
+                // If bot moves, we definitely strictly want to update state.
+                // But checkTurnTimeout caller (Gateway) emits 'turn_ended' ONLY if true returned.
+                // 'turn_ended' prompt might be confusing if it wasn't a timeout.
+                // Gateway line 58: `this.io.to(roomId).emit('turn_ended', { state: game.getState() });`
+                // It's just a state sync labeled 'turn_ended'.
+                // So returning true is fine to force sync.
+            }
+            return false;
+        } else {
+            // Reset bot timer when human turn
+            this.botNextActionAt = 0;
+        }
+
+        // Return true if state changed (turn ended)
+        if (!this.state.isPaused && this.state.turnExpiresAt && Date.now() > this.state.turnExpiresAt) {
+            if (player) {
+                this.addLog(`⌛ Turn timeout for ${player.name}`);
+
+                // Auto-Pay Mandatory Expense on Timeout
+                if (this.state.currentCard && (this.state.currentCard.type === 'EXPENSE' || this.state.currentCard.mandatory)) {
+                    const cost = this.state.currentCard.cost || 0;
+                    // Only pay if cost > 0
+                    if (cost > 0) {
+                        this.addLog(`🤖 Timeout Auto-Pay: ${this.state.currentCard.title}`);
+                        this.forcePayment(player, cost, this.state.currentCard.title);
+                    }
+                }
+            }
+            this.endTurn();
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Cleanup market cards that are expired or dismissed by all players
+     */
+    cleanupMarketCards() {
+        if (!this.state.activeMarketCards) return;
+
+        const now = Date.now();
+        const activePlayers = this.state.players.filter(p => !p.isBankrupted && !p.hasWon);
+
+        this.state.activeMarketCards = this.state.activeMarketCards.filter(mc => {
+            // Remove if expired
+            if (mc.expiresAt < now) {
+                this.cardManager.discard(mc.card);
+                return false;
+            }
+
+            // Remove if all active players dismissed it
+            if (mc.dismissedBy && activePlayers.length > 0) {
+                const allDismissed = activePlayers.every(p => mc.dismissedBy?.includes(p.id));
+                if (allDismissed) {
+                    this.cardManager.discard(mc.card);
+                    return false;
+                }
+            }
+
+            return true;
+        });
+    }
+
+    /**
+     * Dismiss a market card for a specific player
+     */
+    dismissMarketCard(playerId: string, cardId: string) {
+        const marketCard = this.state.activeMarketCards?.find(mc => mc.card.id === cardId || mc.id === cardId);
+        if (!marketCard) return;
+
+        if (!marketCard.dismissedBy) {
+            marketCard.dismissedBy = [];
+        }
+
+        if (!marketCard.dismissedBy.includes(playerId)) {
+            marketCard.dismissedBy.push(playerId);
+            this.addLog(`${this.state.players.find(p => p.id === playerId)?.name} закрыл карточку`);
+        }
+
+        this.cleanupMarketCards();
+    }
+
+    endTurn() {
+        // CRITICAL FIX: If user clicks "Next" (Skip) on a Mandatory Card (Expense/Doodad), force payment!
+        if (this.state.currentCard && (this.state.currentCard.type === 'EXPENSE' || this.state.currentCard.mandatory)) {
+            const player = this.state.players[this.state.currentPlayerIndex];
+            const cost = this.state.currentCard.cost || 0;
+
+            // Force Deduct
+            player.cash -= cost;
+
+            this.addLog(`⚠️ ${player.name} пропустил оплату, списание: ${this.state.currentCard.title} (-$${cost})`);
+
+            this.recordTransaction({
+                from: player.name,
+                to: 'Bank',
+                amount: cost,
+                description: `Forced Payment: ${this.state.currentCard.title}`,
+                type: 'EXPENSE'
+            });
+        }
+        // 1. Clean up expired Active Cards
+        if (this.state.activeMarketCards) {
+            // Find expired ones to discard properly
+            const expired = this.state.activeMarketCards.filter(ac => ac.expiresAt <= Date.now());
+            // Remove expired from list
+            this.state.activeMarketCards = this.state.activeMarketCards.filter(ac => ac.expiresAt > Date.now());
+
+            // Discard them? We should discard if they are not in currentCard.
+            // But simplest is: when they leave 'activeMarketCards', we discard them?
+            // Actually, if we didn't discard in dismissCard, we must discard now.
+            for (const exp of expired) {
+                this.cardManager.discard(exp.card);
+            }
+        }
+
+        // 2. Clear current card (Discard if not persistent)
+        if (this.state.currentCard) {
+            const card = this.state.currentCard;
+            const isMarket = card.type === 'MARKET';
+            const isStock = !!card.symbol; // Stocks can be sold by anyone
+            const isPrivate = card.subtype === 'MLM_ROLL' || card.subtype === 'CHARITY_ROLL';
+
+            // Persist MARKET cards or STOCKS (excluding private ones)
+            if ((isMarket || isStock) && !isPrivate) {
+                const alreadyActive = this.state.activeMarketCards?.some(ac => ac.card.id === card.id);
+                if (!alreadyActive) {
+                    if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
+                    this.state.activeMarketCards.push({
+                        id: `market_${card.id}_${Date.now()}`,
+                        card: card,
+                        expiresAt: Date.now() + 120000, // 2 mins
+                        sourcePlayerId: this.state.players[this.state.currentPlayerIndex].id,
+                        dismissedBy: []
+                    });
+                }
+            }
+
+            const isPersistent = this.state.activeMarketCards?.some(ac => ac.card.id === card.id);
+            if (!isPersistent) {
+                this.cardManager.discard(card);
+            }
+            this.state.currentCard = undefined;
+        }
+
+        // Clear events
+        this.state.lastEvent = undefined;
+
+        let attempts = 0;
+        const totalPlayers = this.state.players.length;
+
+        // Decrement Charity Turns for the finishing player
+        // This ensures the turn they just finished counts against the limit.
+        const finishingPlayer = this.state.players[this.state.currentPlayerIndex];
+        if (finishingPlayer.charityTurns > 0 && !finishingPlayer.isFastTrack) {
+            finishingPlayer.charityTurns--;
+        }
+
+        // Safely iterate to find next valid player
+        while (attempts < totalPlayers * 2) { // Cap at 2 loops to prevent infinite freezes
+            this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % totalPlayers;
+            const nextPlayer = this.state.players[this.state.currentPlayerIndex];
+
+            // 1. Bankrupted -> SKIP PERMANENTLY
+            // Winner -> Only skip if they explicitly chose to skip (Sandbox Mode)
+            if (nextPlayer.isBankrupted || (nextPlayer.hasWon && nextPlayer.isSkippingTurns)) {
+                // Log only if skipping winner
+                // if (nextPlayer.hasWon) this.addLog(`⏩ Skipping winner ${nextPlayer.name}`);
+                attempts++;
+                continue;
+            }
+
+            // 2. AFK Players (isSkippingTurns) -> AUTO-SKIP TURN
+            if (nextPlayer.isSkippingTurns) {
+                this.addLog(`⏸ ${nextPlayer.name} пропускает ход (AFK)`);
+                attempts++;
+                continue;
+            }
+
+            // 3. Skipped Turns -> Decrement and Skip
+            if ((nextPlayer.skippedTurns || 0) > 0) {
+                nextPlayer.skippedTurns--;
+                this.addLog(`🚫 ${nextPlayer.name} skips turn (Remaining: ${nextPlayer.skippedTurns})`);
+                this.state.lastEvent = { type: 'TURN_SKIPPED', payload: { player: nextPlayer.name, remaining: nextPlayer.skippedTurns } };
+                attempts++;
+                continue;
+            }
+
+            // Valid player found
+            break;
+        }
+
+        this.state.phase = 'ROLL';
+        this.state.currentTurnTime = 120;
+        this.state.turnExpiresAt = Date.now() + 120000; // Reset timer 120s
+
+        const activePlayer = this.state.players[this.state.currentPlayerIndex];
+
+        // Decrement Charity Turns - MOVED TO END_TURN
+        // if (activePlayer.charityTurns > 0) {
+        //     activePlayer.charityTurns--;
+        // }
+
+        if (activePlayer.charityTurns > 0) {
+            this.addLog(`🎲 ${activePlayer.name}: Благотворительность активна (осталось ходов: ${activePlayer.charityTurns})`);
+        } else if (activePlayer.charityTurns === 0 && this.state.lastEvent?.type === 'CHARITY_EXPIRED') {
+            // Optional: Log expiration if we tracked it
+        }
+
+        // this.addLog(`Now it is ${activePlayer.name}'s turn.`);
+    }
+
+    private forcePayment(player: PlayerState, amount: number, description: string) {
+        console.log(`[ForcePayment] Processing for ${player.name}: Amount $${amount}, Desc: ${description}, Cash: ${player.cash}`);
+        if (amount <= 0) return;
+
+        if (player.cash >= amount) {
+            player.cash -= amount;
+            this.addLog(`💸 ${player.name} paid $${amount} for ${description}`);
+            console.log(`[ForcePayment] Paid directly. New Cash: ${player.cash}`);
+            return;
+        }
+
+        // Insufficient Funds
+        const deficit = amount - player.cash;
+
+        // Max Loan Check: 
+        // Existing logic: Loan allowed if Cashflow - Interest >= 0.
+        // Interest = 10% of Loan.
+        // So Max Loan = Cashflow * 10
+        // But we must also support existing debt.
+        // Actually, `takeLoan` checks future state.
+        // `player.cashflow - interest < 0` where interest is NEW interest.
+        // So we just iterate taking 1000s until covered or failed.
+
+        // Calculate needed loan
+        const neededLoan = Math.ceil(deficit / 1000) * 1000;
+
+        // Dry run check
+        const potentialInterest = neededLoan * 0.1;
+
+        if (player.cashflow - potentialInterest >= 0 && !player.isBankrupted) {
+            // Auto Take Loan through public method to ensure strict logic
+            this.addLog(`⚠️ ${player.name} forcing loan $${neededLoan} for ${description}...`);
+
+            // We need to bypass "turn check" if any? No, takeLoan is open.
+            // But takeLoan uses `state.players.find...`. 
+            // Better to call internal logic or just `this.takeLoan`.
+            this.takeLoan(player.id, neededLoan);
+
+            // Verify if loan was taken (cash increased)
+            if (player.cash >= amount) {
+                player.cash -= amount;
+                this.addLog(`💸 Paid $${amount} after loan.`);
+            } else {
+                // Failed to take loan despite check? (Maybe block logic?)
+                this.bankruptPlayer(player);
+            }
+        } else {
+            // Cannot afford loan -> Bankrupt
+            this.bankruptPlayer(player);
+        }
+    }
+
+    private bankruptPlayer(player: PlayerState) {
+        this.addLog(`☠️ ${player.name} IS BANKRUPT! Restarting with penalty...`);
+        this.state.lastEvent = { type: 'BANKRUPTCY', payload: { player: player.name } };
+
+        // Reset Logic
+        // player.isBankrupted = true; // DO NOT set to true effectively removing them. Prompt says "начинает заново".
+        // "начинает заново но уже может брать кредит только 50% от суммы пай дай"
+
+        // Reset finances
+        const profession = PROFESSIONS.find(p => p.name === player.professionName) || PROFESSIONS[0];
+
+        player.cash = profession.savings;
+        player.income = profession.salary;
+        player.expenses = profession.expenses;
+        player.cashflow = profession.salary - profession.expenses;
+        player.passiveIncome = 0;
+
+        player.assets = [];
+        // Restore initial liabilities
+        const liabilities = [];
+        if (profession.carLoan) liabilities.push({ name: 'Car Loan', value: profession.carLoan.cost, expense: profession.carLoan.payment });
+        if (profession.creditCard) liabilities.push({ name: 'Credit Card', value: profession.creditCard.cost, expense: profession.creditCard.payment });
+        if (profession.schoolLoan) liabilities.push({ name: 'School Loan', value: profession.schoolLoan.cost, expense: profession.schoolLoan.payment });
+        if (profession.mortgage) liabilities.push({ name: 'Mortgage', value: profession.mortgage.cost, expense: profession.mortgage.payment });
+        if (profession.retailDebt) liabilities.push({ name: 'Retail Debt', value: profession.retailDebt.cost, expense: profession.retailDebt.payment });
+        player.liabilities = liabilities;
+
+        player.loanDebt = 0;
+        player.position = 0;
+        player.isFastTrack = false;
+        player.childrenCount = 0;
+        player.charityTurns = 0;
+        player.skippedTurns = 0;
+
+        // Penalty
+        player.loanLimitFactor = 0.5;
+        this.addLog(`ℹ️ ${player.name} restarted. Loan Limit reduced to 50%.`);
+    }
+
+    transferCash(fromId: string, toId: string, amount: number) {
+        if (amount <= 0) return;
+
+        // Try finding by ID (socket) or userId
+        let fromPlayer = this.state.players.find(p => p.id === fromId);
+        if (!fromPlayer) fromPlayer = this.state.players.find(p => p.userId === fromId);
+
+        let toPlayer = this.state.players.find(p => p.id === toId);
+        if (!toPlayer) toPlayer = this.state.players.find(p => p.userId === toId);
+
+        if (!fromPlayer || !toPlayer) {
+            console.error(`[TransferCash] Player not found. From: ${fromId}, To: ${toId}`);
+            return;
+        }
+
+        if (fromPlayer.cash < amount) {
+            this.addLog(`⚠️ ${fromPlayer.name} не хватает денег для перевода ($${amount}).`);
+            return;
+        }
+
+        fromPlayer.cash -= amount;
+        toPlayer.cash += amount;
+
+        this.addLog(`💸 ${fromPlayer.name} перевел $${amount.toLocaleString()} игроку ${toPlayer.name}`);
+        this.recordTransaction({
+            from: fromPlayer.name,
+            to: toPlayer.name,
+            amount: amount,
+            description: `Перевод средств`,
+            type: 'TRANSFER'
+        });
+        // this.emitState(); // Usually called by gateway after action returns? No, gateway calls getState. 
+        // Gateway: game.transferDeal -> state updated -> emit. 
+        // So we don't need emitState here if gateway handles it. 
+        // Gateway `handleTransferDeal` calls `game.getState` and emits.
+        // My new `handleTransferCash` in gateway does NOT emit yet! 
+        // Wait, I checked `game.gateway.ts` changes. I added `game.transferCash(...)` but didn't add emit logic!
+        // I must fix gateway to emit state!
+    }
+
+    resolveBabyRoll(): number | { total: number, values: number[] } {
+        const player = this.state.players[this.state.currentPlayerIndex];
+        const roll = Math.floor(Math.random() * 6) + 1;
+        const rollResult = { total: roll, values: [roll] };
+
+        // User requested 100% success for now
+        const success = true;
+
+        if (success) {
+            if (player.childrenCount < 3) {
+                player.childrenCount++;
+                const currentChild = player.childrenCount; // 1, 2, or 3
+
+                const expenseIncrease = 500;
+                this.recalculateFinancials(player);
+
+                // 2. Cash Bonus Logic ($5k / $10k / $20k)
+                let bonus = 0;
+                if (currentChild === 1) bonus = 5000;
+                else if (currentChild === 2) bonus = 10000;
+                else if (currentChild === 3) bonus = 20000;
+
+                player.cash += bonus;
+                this.recordTransaction({
+                    from: 'Bank',
+                    to: player.name,
+                    amount: bonus,
+                    description: `Выплата на ребенка #${currentChild}`,
+                    type: 'INCOME'
+                });
+
+                // 3. Add Non-Transferable Child Asset
+                // We define Asset interface here locally or use 'any' if global type missing. 
+                // Using 'any' to avoid build errors with missing import.
+                const childAsset: any = {
+                    id: `child_${Date.now()}_${currentChild}`,
+                    title: `Ребенок #${currentChild}`,
+                    type: 'OTHER',
+                    cost: 0,
+                    cashflow: 0,
+                    value: 0,
+                    quantity: 1,
+                    isTransferable: false
+                };
+                if (!player.assets) player.assets = [];
+                player.assets.push(childAsset);
+
+                this.addLog(`👶 Поздравляем! Родился ребёнок #${currentChild}! (Кубик: ${roll})`);
+                this.addLog(`💰 Получен бонус: $${bonus.toLocaleString()}`);
+                this.addLog(`📉 Расходы увеличены на $${expenseIncrease}`);
+
+                this.state.lastEvent = {
+                    type: 'BABY_BORN',
+                    payload: {
+                        player: player.name,
+                        playerId: player.id,
+                        roll,
+                        childCost: expenseIncrease,
+                        bonus: bonus,
+                        totalChildren: currentChild
+                    }
+                };
+
+
+            } else {
+                this.addLog(`👶 У вас уже 3 детей! (Кубик: ${roll}). Больше 3 нельзя.`);
+                this.state.lastEvent = {
+                    type: 'BABY_BORN',
+                    payload: {
+                        player: player.name,
+                        playerId: player.id,
+                        roll,
+                        childCost: 0,
+                        message: "Максимум детей достигнут"
+                    }
+                };
+            }
+        } else {
+            this.addLog(`🎲 ${player.name} выбросил ${roll}. Ребёнок не родился.`);
+        }
+
+        this.state.phase = 'ACTION'; // Enable Next
+        return rollResult;
+    }
+
+
+
+    getState(): GameState {
+        return {
+            ...this.state,
+            deckCounts: this.cardManager.getDeckCounts()
+        };
+    }
+    // --- Charity Logic ---
+    handleCharityChoice(socketId: string, accept: boolean) {
+        if (this.state.phase !== 'CHARITY_CHOICE') throw new Error("Not in charity phase");
+        const player = this.state.players[this.state.currentPlayerIndex];
+        if (player.id !== socketId) throw new Error("Not your turn");
+
+        if (accept) {
+            let cost = 0;
+            if (player.isFastTrack) {
+                cost = 100000;
+            } else {
+                cost = Math.max(1000, Math.ceil((player.salary + (player.passiveIncome || 0)) * 0.1));
+            }
+
+            // Double check validation
+            if (player.cash < cost) {
+                this.addLog(`⚠️ ${player.name} пытался пожертвовать $${cost}, но имеет только $${player.cash}`);
+                throw new Error("Not enough cash");
+            }
+
+            player.cash -= cost;
+            player.charityTurns = 3; // >0 enables bonus. For FT, it doesn't decrement.
+
+            this.recordTransaction({
+                from: player.name,
+                to: 'Charity',
+                amount: cost,
+                description: player.isFastTrack ? 'Charity (Fast Track)' : 'Charity Donation',
+                type: 'EXPENSE'
+            });
+
+            const bonusText = player.isFastTrack ? "1-3 кубика навсегда" : "2 кубика на 3 хода";
+            this.addLog(`💖 ${player.name} пожертвовал $${cost} на благотворительность! (${bonusText})`);
+        } else {
+            this.addLog(`🤷 ${player.name} отказался от благотворительности.`);
+        }
+
+        // After choice, end turn immediately
+        this.endTurn();
+    }
+
 
 
 
@@ -3442,48 +3574,48 @@ handleCharityChoice(socketId: string, accept: boolean) {
     // =========================================
 
     public adminGiveCash(targetPlayerId: string, amount: number) {
-    const player = this.state.players.find(p => p.id === targetPlayerId);
-    if (!player) throw new Error("Player not found");
+        const player = this.state.players.find(p => p.id === targetPlayerId);
+        if (!player) throw new Error("Player not found");
 
-    player.cash += amount;
-    this.addLog(`💰 ${player.name} получил $${amount.toLocaleString()} от Банка (Админ)`);
+        player.cash += amount;
+        this.addLog(`💰 ${player.name} получил $${amount.toLocaleString()} от Банка (Админ)`);
 
-    this.recordTransaction({
-        from: 'Bank (Admin)',
-        to: player.name,
-        amount: amount,
-        description: 'Admin Grant',
-        type: 'INCOME'
-    });
-    return player;
-}
+        this.recordTransaction({
+            from: 'Bank (Admin)',
+            to: player.name,
+            amount: amount,
+            description: 'Admin Grant',
+            type: 'INCOME'
+        });
+        return player;
+    }
 
     public adminSkipTurn(targetPlayerId: string, turns: number, isSkipping: boolean) {
-    const player = this.state.players.find(p => p.id === targetPlayerId);
-    if (!player) throw new Error("Player not found");
+        const player = this.state.players.find(p => p.id === targetPlayerId);
+        if (!player) throw new Error("Player not found");
 
-    player.skippedTurns = turns;
-    if (isSkipping !== undefined) {
-        player.isSkippingTurns = isSkipping;
-    }
+        player.skippedTurns = turns;
+        if (isSkipping !== undefined) {
+            player.isSkippingTurns = isSkipping;
+        }
 
-    if (isSkipping) {
-        this.addLog(`🛑 Администратор включил пропуск ходов для ${player.name} (AFK)`);
-    } else {
-        this.addLog(`▶️ Администратор вернул ${player.name} в игру`);
+        if (isSkipping) {
+            this.addLog(`🛑 Администратор включил пропуск ходов для ${player.name} (AFK)`);
+        } else {
+            this.addLog(`▶️ Администратор вернул ${player.name} в игру`);
+        }
     }
-}
 
     public adminForceMove(targetPlayerId: string) {
-    // Only allow forcing the CURRENT player
-    const currentPlayer = this.getCurrentPlayer();
-    if (currentPlayer.id !== targetPlayerId) {
-        throw new Error("Can only force move the active player");
-    }
+        // Only allow forcing the CURRENT player
+        const currentPlayer = this.getCurrentPlayer();
+        if (currentPlayer.id !== targetPlayerId) {
+            throw new Error("Can only force move the active player");
+        }
 
-    // Return instructions to Gateway, as we can't emit from here easily without refactor
-    // Actually, we can just throw if invalid, and let Gateway call handleRoll
-    return true;
-}
+        // Return instructions to Gateway, as we can't emit from here easily without refactor
+        // Actually, we can just throw if invalid, and let Gateway call handleRoll
+        return true;
+    }
 
 }

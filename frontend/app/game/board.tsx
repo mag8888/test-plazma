@@ -17,7 +17,10 @@ import { useVoice } from './VoiceContext';
 import { ConnectionState } from 'livekit-client';
 // import { VoiceRoom } from './VoiceRoom'; // Removed to avoid nesting
 import { VoiceControls } from './VoiceControls';
-import { SelectAssetModal } from './SelectAssetModal'; // Add import
+import { SelectAssetModal } from './SelectAssetModal';
+import { MlmNetworkModal } from './MlmNetworkModal';
+import { MlmOfferModal } from './MlmOfferModal';
+import { MoneoPromoModal } from './MoneoPromoModal';
 
 interface BoardProps {
     roomId: string;
@@ -242,6 +245,13 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
     const [showVictory, setShowVictory] = useState(false);
     const [showYouWon, setShowYouWon] = useState(false);
     const [victoryPlayer, setVictoryPlayer] = useState<any>(null);
+
+    // MLM State
+    const [mlmOffer, setMlmOffer] = useState<any>(null);
+    const [showMlmNetwork, setShowMlmNetwork] = useState(false);
+
+    // Global Promo State
+    const [showMoneoPromo, setShowMoneoPromo] = useState(false);
 
     // Auto-open modal when a new card appears
     useEffect(() => {
@@ -589,6 +599,24 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                 // }
                 // if (data.state.lastEvent?.type === 'FAST_TRACK') sfx.play('fasttrack');
                 // if (data.state.lastEvent?.type === 'STOCK') sfx.play('stock');
+                // My Turn Check
+                const oldIdx = state?.currentPlayerIndex;
+                const newIdx = data.state?.currentPlayerIndex;
+                const meInList = data.state?.players?.findIndex((p: any) => p.id === socket.id);
+
+                // If turn passed TO localPlayer
+                if (typeof oldIdx === 'number' && typeof newIdx === 'number' && oldIdx !== newIdx && newIdx === meInList) {
+                    sfx.play('turn');
+                }
+
+                if (data.state.lastEvent?.type === 'PAYDAY') {
+                    sfx.play('payday');
+                }
+                if (data.state.lastEvent?.type === 'DOWNSIZED') {
+                    sfx.play('fired');
+                }
+                if (data.state.lastEvent?.type === 'FAST_TRACK') sfx.play('fasttrack');
+                if (data.state.lastEvent?.type === 'STOCK') sfx.play('stock');
 
                 setState(data.state);
 
@@ -596,16 +624,33 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                 const currentMe = data.state.players.find((p: any) => p.id === socket.id);
                 const previousMe = state?.players?.find((p: any) => p.id === socket.id);
 
-                // If I just won (and wasn't winning before)
                 if (currentMe?.hasWon && !previousMe?.hasWon) {
                     setVictoryPlayer(currentMe);
-                    // Use new WinnerModal instead of VictoryModal or generic notification
                     setShowYouWon(true);
                 } else if (!currentMe?.hasWon && data.state.lastEvent?.type === 'WINNER') {
-                    // Someone ELSE won
                     setTurnNotification(`🏆 ${data.state.lastEvent.payload?.player} ЗАНЯЛ ${data.state.rankings?.length || 1}-Е МЕСТО!`);
                 }
+
+                // Check for Moneo Promo Global Event
+                if (data.state.lastEvent?.type === 'MONEO_BOUGHT') {
+                    setShowMoneoPromo(true);
+                    sfx.play('victory'); // Celebration sound
+                }
             }
+        });
+
+        return () => {
+            socket.off('dice_rolled');
+            socket.off('game_over');
+            socket.off('state_updated');
+        };
+    }, [state, userId]);
+
+    useEffect(() => {
+        socket.on('mlm_offer', (data: any) => {
+            console.log("Received MLM Offer:", data);
+            setMlmOffer(data);
+            sfx.play('turn');
         });
 
         socket.on('turn_ended', (data: any) => {
@@ -633,14 +678,49 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
         });
 
         return () => {
-            socket.off('dice_rolled');
-            socket.off('game_over');
+            socket.off('mlm_offer');
             socket.off('turn_ended');
-            socket.off('state_updated');
             socket.off('game_started');
             socket.off('room_deleted');
         };
     }, []);
+
+
+    // MLM Handlers
+    const handleMlmInvite = (targetId: string, slotIndex: number) => {
+        socket.emit('mlm_invite', { roomId, targetId, slotIndex });
+    };
+
+    const handleMlmResponse = (accept: boolean) => {
+        if (!mlmOffer) return;
+        socket.emit('mlm_response', {
+            roomId,
+            inviteeId: socket.id,
+            inviterId: mlmOffer.inviterId,
+            accept
+        });
+        setMlmOffer(null);
+    };
+
+    // Auto-open MLM Network for Inviter
+    useEffect(() => {
+        const currentPlayer = state?.players[state?.currentPlayerIndex];
+        const isMe = currentPlayer?.id === socket.id;
+
+        if (state?.phase === 'MLM_PLACEMENT' && isMe) {
+            setShowMlmNetwork(true);
+        } else {
+            // Should we auto-close? Maybe not if checking status.
+            // keeping it simple for now. 
+            // Only auto-close if phase changes AWAY from MLM_PLACEMENT.
+            if (state?.phase !== 'MLM_PLACEMENT') {
+                setShowMlmNetwork(false);
+            }
+        }
+    }, [state?.phase, state?.currentPlayerIndex]);
+
+
+
 
 
     // Duplicates removed - these are now handled via engineRef or were redefined at the top level
@@ -2283,6 +2363,27 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                 }}
                             />
                         )}
+
+                        {/* MLM Modals */}
+                        <MlmNetworkModal
+                            isOpen={showMlmNetwork}
+                            onClose={() => setShowMlmNetwork(false)}
+                            mlmState={state?.mlmState}
+                            players={state?.players || []}
+                            currentUserId={socket.id}
+                            onInvite={handleMlmInvite}
+                        />
+
+                        <MlmOfferModal
+                            data={mlmOffer}
+                            onAccept={() => handleMlmResponse(true)}
+                            onDecline={() => handleMlmResponse(false)}
+                        />
+
+                        <MoneoPromoModal
+                            isOpen={showMoneoPromo}
+                            onClose={() => setShowMoneoPromo(false)}
+                        />
 
                         {/* Square Info Modal (Interactive Board Cells) */}
                         {squareInfo && !squareInfo.card && (

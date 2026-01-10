@@ -17,7 +17,7 @@ export interface Card {
     targetTitle?: string;
     offerPrice?: number;
     businessType?: 'CLASSIC' | 'NETWORK';
-    subtype?: 'MLM_ROLL' | 'CHARITY_ROLL';
+    subtype?: 'MLM_ROLL' | 'CHARITY_ROLL' | 'MLM_PLACEMENT';
     assetType?: 'REAL_ESTATE' | 'BUSINESS' | 'STOCK' | 'OTHER';
     maxQuantity?: number;
     outcomeDescription?: string; // Revealed after purchase
@@ -147,15 +147,14 @@ export const SMALL_DEALS: Card[] = [
     { displayId: 45, id: 'sd_mlm_3', title: 'Сетевой бизнес', cost: 500, cashflow: 0, description: 'Старт в MLM компании. Бросок кубика (x$50/партнер).', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 
     // 46-48 Plazma
-    // 46-48 Plazma
-    { displayId: 46, id: 'sd_plazma_1', title: 'Сетевой бизнес: Plazma Water', cost: 1000, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($500/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
-    { displayId: 47, id: 'sd_plazma_2', title: 'Сетевой бизнес: Plazma Water', cost: 1000, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($500/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
-    { displayId: 48, id: 'sd_plazma_3', title: 'Сетевой бизнес: Plazma Water', cost: 1000, cashflow: 0, description: 'Plazma Water. Кол-во партнеров = Бросок кубика. ($500/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 46, id: 'sd_plazma_1', title: 'Сетевой бизнес: Plazma Water', cost: 1000, cashflow: 500, description: 'Plazma Water. Пригласи до 3 игроков. Твой доход: $500 за каждого.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 47, id: 'sd_plazma_2', title: 'Сетевой бизнес: Plazma Water', cost: 1000, cashflow: 500, description: 'Plazma Water. Пригласи до 3 игроков. Твой доход: $500 за каждого.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 48, id: 'sd_plazma_3', title: 'Сетевой бизнес: Plazma Water', cost: 1000, cashflow: 500, description: 'Plazma Water. Пригласи до 3 игроков. Твой доход: $500 за каждого.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 
     // 49-51 MONEO
-    { displayId: 49, id: 'sd_moneo_100', title: 'Сетевой бизнес: MONEO', cost: 100, cashflow: 0, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($50/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
-    { displayId: 50, id: 'sd_moneo_1000', title: 'Сетевой бизнес: MONEO', cost: 1000, cashflow: 0, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($200/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
-    { displayId: 51, id: 'sd_moneo_10000', title: 'Сетевой бизнес: MONEO', cost: 10000, cashflow: 0, description: 'MONEO Network. Кол-во партнеров = Бросок кубика. ($500/партнер)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 49, id: 'sd_moneo_100', title: 'Сетевой бизнес: MONEO', cost: 1000, cashflow: 500, description: 'MONEO Network. Пригласи до 3 игроков. Твой доход: $500 за каждого.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 50, id: 'sd_moneo_1000', title: 'Сетевой бизнес: MONEO', cost: 1000, cashflow: 500, description: 'MONEO Network. Пригласи до 3 игроков. Твой доход: $500 за каждого.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 51, id: 'sd_moneo_10000', title: 'Сетевой бизнес: MONEO', cost: 1000, cashflow: 500, description: 'MONEO Network. Пригласи до 3 игроков. Твой доход: $500 за каждого.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 
     // 52-54 Friend
     { displayId: 52, id: 'sd_friend_l1', title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Друг прогорел. Деньги потеряны.', type: 'DEAL_SMALL', mandatory: true },
@@ -190,7 +189,7 @@ export const BIG_DEALS: Card[] = [
     ...expand(4, { title: 'Мини-отель', cost: 100000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 75000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
 
     // Franchise
-    { id: 'bd_moneo_franchise', title: 'Франшиза MONEO', cost: 30000, cashflow: 3000, description: 'Франшиза MONEO. Стабильный доход при минимальной вовлеченности.', downPayment: 30000, businessType: 'CLASSIC', assetType: 'BUSINESS', type: 'DEAL_BIG' },
+    { id: 'bd_moneo_franchise', title: 'Франшиза MONEO', cost: 30000, cashflow: 3000, description: 'Франшиза MONEO. Партнер вносит $30к и получает доход $3к. Вы получаете $3к за каждого партнера (до 3).', downPayment: 30000, businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_BIG' },
 
     // Classic Business
     ...expand(4, { title: 'Сеть кафе быстрого питания', cost: 240000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 150000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),

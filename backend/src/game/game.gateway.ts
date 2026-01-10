@@ -176,6 +176,44 @@ export class GameGateway {
                 }
             });
 
+            // MLM Events
+            socket.on('mlm_invite', (data) => {
+                const { roomId, userId, targetPlayerId, slotIndex } = data;
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        const result = game.handleMlmInvite(userId, targetPlayerId, slotIndex);
+                        this.io.to(roomId).emit('state_updated', { state: game.getState() });
+                        // Notify Target specificly? Or State Update is enough?
+                        // Engine should create an event or log.
+                        // Ideally emit specific event to target?
+                        // Let's rely on state update + lastEvent logic or emit explicit event if needed.
+                        // Actually, Invite Modal needs to pop up.
+                        // Let's emit 'mlm_offer' to target.
+                        if (result && result.targetId) {
+                            this.io.to(roomId).emit('mlm_offer', result);
+                        }
+                        this.saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
+            socket.on('mlm_response', (data) => {
+                const { roomId, userId, inviterId, accept } = data; // userId is the Invitee
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.handleMlmResponse(userId, inviterId, accept);
+                        this.io.to(roomId).emit('state_updated', { state: game.getState() });
+                        this.saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
             // Get Deck Content
             socket.on('get_deck_content', (data) => {
                 const { type, roomId } = data;
