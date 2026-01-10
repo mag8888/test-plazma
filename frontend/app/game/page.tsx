@@ -724,9 +724,9 @@ function GameContent() {
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </VoiceRoom >
-            </div >
-        </div >
+                    );
+                }}
+            </VoiceRoom>
+        </div>
     );
 }
