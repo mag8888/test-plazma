@@ -359,7 +359,7 @@ function GameContent() {
     const userIdString = user?.id?.toString() || user?.telegram_id?.toString() || '';
 
     return (
-        <div className="h-screen w-screen overflow-hidden bg-slate-900">
+        <div className={`h-screen w-screen bg-slate-900 ${room.status === 'playing' ? 'overflow-hidden' : 'overflow-y-auto custom-scrollbar'}`}>
             <VoiceRoom
                 roomId={roomId}
                 userId={userIdString}
@@ -423,7 +423,7 @@ function GameContent() {
                                     <div className="lg:col-span-5 space-y-4">
                                         {/* Voice Controls Block */}
                                         {/* Voice Controls Block */}
-                                        <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-lg flex flex-col gap-2 sticky top-[100px] z-30 lg:static">
+                                        <div className="bg-slate-900/60 backdrop-blur-xl rounded-2xl p-4 border border-white/10 shadow-lg flex flex-col gap-2 relative z-10">
                                             <div className="flex items-center justify-between">
                                                 <span className="text-xs uppercase tracking-widest text-slate-400 font-bold flex items-center gap-2">
                                                     <span className={`w-2 h-2 rounded-full ${isConnected ? 'bg-emerald-500 animate-pulse' : voiceError ? 'bg-red-500' : 'bg-yellow-500 animate-pulse'}`}></span>
