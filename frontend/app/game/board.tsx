@@ -1572,11 +1572,15 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                         <div id="tutorial-players" className="hidden lg:flex flex-col w-[350px] h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4">
 
                             {/* 1. TURN INFO & TIMER */}
-                            <div id="tutorial-turn-timer" className="bg-[#151b2b] rounded-3xl p-6 border border-slate-800 shadow-lg flex items-center justify-between shrink-0">
+                            <div
+                                id="tutorial-turn-timer"
+                                onClick={() => setTransferTarget(currentPlayer)}
+                                className="bg-[#151b2b] rounded-3xl p-6 border border-slate-800 shadow-lg flex items-center justify-between shrink-0 cursor-pointer hover:bg-slate-800 transition-colors group"
+                            >
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className={`w-2 h-2 rounded-full ${state.turnExpiresAt && (new Date(state.turnExpiresAt).getTime() - Date.now()) / 1000 < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
-                                        <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">ХОД ИГРОКА</span>
+                                        <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider group-hover:text-emerald-400 transition-colors">ХОД ИГРОКА</span>
                                     </div>
                                     <div className="text-xl font-black text-white leading-none truncate max-w-[180px]">{currentPlayer.name}</div>
                                 </div>
@@ -1730,7 +1734,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                 <div className="mb-2 shrink-0 relative z-[200]">
                                     <div className="bg-[#1e293b] rounded-xl p-3 border border-slate-700 flex items-center justify-between shadow-sm">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-2">
-                                            🎤 Голосовой чат
+
                                             {isSpeaking && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />}
                                         </span>
                                         <VoiceControls

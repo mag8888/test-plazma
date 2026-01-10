@@ -209,12 +209,12 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
                         : 'bg-emerald-500/20 text-emerald-400'
                     } ${isSpeaking && !isMuted ? 'ring-2 ring-emerald-400/50 scale-105' : ''}`}
             >
-                {isDirectoryConnected(isConnected) ? (isMuted ? <MicOff size={16} /> : <Mic size={16} />) : <MicOff size={16} />}
+                {isConnected ? (isMuted ? <MicOff size={16} /> : <Mic size={16} />) : <MicOff size={16} />}
             </button>
 
-            {/* AVATAR LIST - Show ALL players regardless of connection */}
-            <div className="flex-1 overflow-x-auto custom-scrollbar mx-2 max-w-[calc(100vw-120px)] sm:max-w-none">
-                <div className="flex items-center gap-3 pl-2 border-l border-white/10 min-w-max py-1">
+            {/* AVATAR LIST - Grid 5x2 (5 columns) */}
+            <div className="flex-1 mx-2">
+                <div className="grid grid-cols-5 gap-x-3 gap-y-5 pl-2 border-l border-white/10 min-w-max pt-1 pb-2">
                     {players.map(player => {
                         // Find participant if online
                         // Match by identity (userId) usually
