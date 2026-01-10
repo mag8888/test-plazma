@@ -19,15 +19,22 @@ const seedTestUsers = async () => {
 
 export const connectDatabase = async () => {
     try {
-        const mongoUrl = process.env.MONGO_URL;
+        let mongoUrl = process.env.MONGO_URL;
+
+        // Fallback to DATABASE_URL if MONEO_URL is missing
+        if (!mongoUrl && process.env.DATABASE_URL) {
+            console.log('[Database] MONGO_URL not found, using DATABASE_URL instead.');
+            mongoUrl = process.env.DATABASE_URL;
+        }
+
         if (!mongoUrl) {
-            console.error('FATAL: MONGO_URL not found in environment variables. Database connections will fail.');
-            return;
+            console.error('FATAL: MONGO_URL (and DATABASE_URL) not found in environment variables. Database connections will fail.');
+            // We throw here so the bootstrap knows it failed, rather than silently returning
+            throw new Error('Missing MONGO_URL and DATABASE_URL');
         }
 
         mongoose.set('strictQuery', false);
 
-        // V19 DB ISOLATION: Check Environment
         // V19 DB ISOLATION: Check Environment and Service Name
         const envName = (process.env.RAILWAY_ENVIRONMENT_NAME || '').toLowerCase();
         const serviceName = (process.env.RAILWAY_SERVICE_NAME || '').toLowerCase();
@@ -44,14 +51,15 @@ export const connectDatabase = async () => {
             console.log(`[Database] Detected PROD/DEFAULT mode. Using default database from MONGO_URL.`);
         }
 
-        console.log(`[Database] Attempting to connect with MONGO_URL of type: ${typeof mongoUrl}`);
+        console.log(`[Database] Attempting to connect with Connection String of type: ${typeof mongoUrl}`);
+
         if (typeof mongoUrl !== 'string') {
             console.error('[Database] FATAL: mongoUrl is not a string:', mongoUrl);
-            throw new Error('MONGO_URL must be a string');
+            throw new Error(`MONGO_URL must be a string, got ${typeof mongoUrl}`);
         }
 
         // Sanitize log
-        const logSafeUrl = mongoUrl.includes('@') ? 'mongodb://***@' + mongoUrl.split('@')[1] : mongoUrl;
+        const logSafeUrl = mongoUrl.includes('@') ? 'mongodb://***@' + mongoUrl.split('@')[1] : 'mongodb://*** (Hidden)';
         console.log(`[Database] Connection String: ${logSafeUrl}`);
 
         await mongoose.connect(mongoUrl, dbOptions);
@@ -62,7 +70,6 @@ export const connectDatabase = async () => {
 
     } catch (error) {
         console.error('Error connecting to MongoDB:', error);
-        // process.exit(1); // Do not exit. Let the caller handle it or run without DB.
         throw error; // Re-throw so index.ts sees the failure
     }
 };

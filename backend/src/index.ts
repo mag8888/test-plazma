@@ -1709,9 +1709,13 @@ const bootstrap = async () => {
             const { DbCardManager } = await import('./game/db.card.manager');
             await DbCardManager.getInstance().init();
 
-        } catch (dbErr) {
-            console.error('DB Connection Failed (Handled):', dbErr);
-            dbStatus = `failed: ${dbErr}`;
+        } catch (dbErr: any) {
+            console.error('SERVER BOOTSTRAP ERROR: DB Connection Failed.');
+            console.error('Error Details:', dbErr.message);
+            if (dbErr.name === 'MongooseError') {
+                console.error('Mongoose-specific error. Check if MONGO_URL is properly set.');
+            }
+            dbStatus = `failed: ${dbErr.message}`;
         }
 
         // 2. Bot Service
