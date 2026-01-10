@@ -10,7 +10,7 @@ export interface GameState {
     players: PlayerState[];
     currentPlayerIndex: number;
     currentTurnTime: number;
-    phase: 'ROLL' | 'ACTION' | 'END' | 'OPPORTUNITY_CHOICE' | 'CHARITY_CHOICE' | 'BABY_ROLL' | 'DOWNSIZED_DECISION' | 'MARKET_WAITING' | 'EXPENSE_WAITING' | 'MLM_ROLL';
+    phase: 'ROLL' | 'ACTION' | 'END' | 'OPPORTUNITY_CHOICE' | 'CHARITY_CHOICE' | 'BABY_ROLL' | 'DOWNSIZED_DECISION' | 'MARKET_WAITING' | 'EXPENSE_WAITING' | 'MLM_ROLL' | 'MLM_RESULT';
     board: BoardSquare[];
     currentCard?: Card;
     log: string[];
@@ -984,15 +984,48 @@ export class GameEngine {
             if (!card) {
                 this.addLog("Error: No MLM Card found for roll.");
                 this.state.phase = 'ACTION';
-                return 0; // Or handle error
+                return 0;
             }
 
             const partners = roll;
             const cost = card.cost || 0;
-            const incomePerPartner = cost * 0.5;
+            let incomePerPartner = 0;
+
+            // Math Logic
+            if (card.title.includes('Plazma') || card.title.includes('MONEO')) {
+                incomePerPartner = cost * 0.5;
+            } else if (card.id === 'sd_shawarma' || card.id === 'sd_sushi') {
+                incomePerPartner = 200;
+            } else if (card.id === 'sd_health') {
+                incomePerPartner = 300;
+            } else {
+                // Fallback for unknown MLM cards
+                incomePerPartner = Math.max(100, cost * 0.1);
+            }
+
             const totalCashflow = partners * incomePerPartner;
 
-            // Add Asset
+            // Temporarily store result in card description for UI (or handled by lastEvent if we implemented it, but description is easy transport)
+            // We'll revert it or just discard the card anyway.
+            // Actually, let's just log it and rely on Frontend to parse?
+            // Better: state.lastEvent.
+            this.state.lastEvent = {
+                type: 'MLM_RESULT',
+                payload: {
+                    partners,
+                    incomePerPartner,
+                    totalCashflow,
+                    cardTitle: card.title
+                }
+            };
+
+            // Perform Logic (Add Asset) NOW, but wait for confirmation to proceed?
+            // User wants "See result -> Click OK -> Done".
+            // So we add asset now? Or wait?
+            // If we wait, we must store the temp result.
+            // If we add now, the user sees visual update immediately + the overlay.
+            // Let's add now.
+
             player.assets.push({
                 title: `${card.title} (${partners} Partners)`,
                 cost: cost,
@@ -1007,9 +1040,13 @@ export class GameEngine {
             this.addLog(`🎲 Выпало ${roll}! Привлечено ${partners} партнеров.`);
             this.addLog(`👥 Партнеры: ${partners}. Доход: +$${totalCashflow}/мес ($${incomePerPartner} за партнера).`);
 
-            this.cardManager.discard(card);
-            this.state.currentCard = undefined;
-            this.state.phase = 'ACTION';
+            // Don't discard yet? Or discard and keep result in overlay?
+            // If we discard, currentCard is gone. ActiveCardZone relies on currentCard?
+            // Yes. So KEEP currentCard until confirmation.
+            // this.cardManager.discard(card); 
+            // this.state.currentCard = undefined;
+
+            this.state.phase = 'MLM_RESULT';
             return { total: roll, values: [roll] };
         }
 
@@ -2271,6 +2308,22 @@ export class GameEngine {
     skipCharity(playerId: string) {
         this.addLog(`${this.state.players.find(p => p.id === playerId)?.name} declined Charity.`);
         this.endTurn();
+    }
+
+    confirmResult(playerId: string) {
+        const player = this.state.players.find(p => p.id === playerId);
+        if (!player) return;
+
+        if (this.state.phase !== 'MLM_RESULT') return;
+
+        // Cleanup after MLM Result confirmation
+        if (this.state.currentCard) {
+            this.cardManager.discard(this.state.currentCard);
+            this.state.currentCard = undefined;
+        }
+
+        this.state.phase = 'ACTION';
+        this.addLog(`${player.name} confirmed results.`);
     }
 
     /**

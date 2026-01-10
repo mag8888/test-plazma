@@ -176,6 +176,47 @@ export const ActiveCardZone = ({
     else if (showPhaseContent && state.phase === 'DOWNSIZED_DECISION') {
         phaseContent = <FiredView roomId={roomId} me={me} isMyTurn={isMyTurn} socket={socket} />;
     }
+    // 5. MLM RESULT
+    else if (showPhaseContent && state.phase === 'MLM_RESULT') {
+        const result = state.lastEvent?.payload || {};
+
+        phaseContent = (
+            <div className="flex flex-col h-full w-full relative bg-[#1e293b] rounded-2xl overflow-hidden border border-slate-700/50 shadow-lg animate-in fade-in duration-300">
+                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-emerald-500 to-teal-500"></div>
+                <div className="p-6 flex-1 flex flex-col items-center justify-center text-center">
+                    <div className="text-5xl mb-4 animate-bounce">👥</div>
+                    <h2 className="text-xl font-bold text-white mb-2">{result.cardTitle || 'Сетевой бизнес'}</h2>
+
+                    <div className="bg-slate-800/50 p-4 rounded-xl mb-6 w-full max-w-[280px]">
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-slate-400 text-sm">Партнеров:</span>
+                            <span className="text-white font-bold text-lg">{result.partners || 0}</span>
+                        </div>
+                        <div className="flex justify-between items-center mb-2">
+                            <span className="text-slate-400 text-sm">Доход с одного:</span>
+                            <span className="text-emerald-400 font-mono text-sm">+${(result.incomePerPartner || 0).toLocaleString()}</span>
+                        </div>
+                        <div className="h-px bg-slate-700 my-2"></div>
+                        <div className="flex justify-between items-center">
+                            <span className="text-white font-bold">ИТОГО ДОХОД:</span>
+                            <span className="text-emerald-400 font-black text-xl">+${(result.totalCashflow || 0).toLocaleString()}</span>
+                        </div>
+                    </div>
+
+                    <p className="text-slate-400 text-xs mb-6 max-w-[240px]">
+                        Отлично! Ваш бизнес растет. Этот доход добавлен в ваши активы.
+                    </p>
+
+                    <button
+                        onClick={() => socket.emit('confirm_result', { roomId, userId: me?.id })}
+                        className="w-full max-w-[200px] bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 rounded-xl uppercase tracking-wider shadow-lg shadow-emerald-900/20 active:scale-95 transition-all"
+                    >
+                        Хорошо
+                    </button>
+                </div>
+            </div>
+        );
+    }
 
     // If phase-specific content is set, return it
     if (phaseContent) return phaseContent;

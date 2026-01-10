@@ -827,6 +827,29 @@ export class GameGateway {
                 }
             });
 
+            // Confirm MLM Result
+            socket.on('confirm_result', (data) => {
+                const { roomId, userId } = data;
+                const game = this.games.get(roomId);
+                if (!game) return;
+
+                // Logic to resolve player: prefer userId, fallback to socket match or current player
+                let player = game.state.players.find(p => p.id === socket.id); // Guest/Matched Socket
+                if (!player && userId) player = game.state.players.find(p => p.userId === userId); // Auth User
+
+                // Fallback: use current player if it's their turn (Phase check in engine handles safety)
+                if (!player && game.state.players[game.state.currentPlayerIndex].id === socket.id) {
+                    player = game.state.players[game.state.currentPlayerIndex];
+                }
+
+                // Ultimate Fallback: Current Player (if we trust the client intent during this phase)
+                if (!player) player = game.state.players[game.state.currentPlayerIndex];
+
+                game.confirmResult(player.id);
+                this.io.to(roomId).emit('state_updated', { state: game.getState() });
+                saveState(roomId, game);
+            });
+
             // Chat Message
             socket.on('chat_message', (payload: { roomId: string, message: string }) => {
                 const { roomId, message } = payload;
