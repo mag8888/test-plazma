@@ -44,6 +44,16 @@ export const connectDatabase = async () => {
             console.log(`[Database] Detected PROD/DEFAULT mode. Using default database from MONGO_URL.`);
         }
 
+        console.log(`[Database] Attempting to connect with MONGO_URL of type: ${typeof mongoUrl}`);
+        if (typeof mongoUrl !== 'string') {
+            console.error('[Database] FATAL: mongoUrl is not a string:', mongoUrl);
+            throw new Error('MONGO_URL must be a string');
+        }
+
+        // Sanitize log
+        const logSafeUrl = mongoUrl.includes('@') ? 'mongodb://***@' + mongoUrl.split('@')[1] : mongoUrl;
+        console.log(`[Database] Connection String: ${logSafeUrl}`);
+
         await mongoose.connect(mongoUrl, dbOptions);
         console.log(`Successfully connected to MongoDB`);
 
