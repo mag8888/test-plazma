@@ -1900,52 +1900,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                 </div>
                             )}
 
-                            {/* 1. MINI PLAYERS STRIP */}
-                            <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-1 pb-2">
-                                {state.players.map((p: any) => {
-                                    const isCurrent = p.id === currentPlayer?.id;
-                                    const isMe = p.id === localPlayer?.id;
-                                    return (
-                                        <button
-                                            key={p.id}
-                                            onClick={() => {
-                                                if (isMe) {
-                                                    setShowBank(true);
-                                                } else if (isHost) {
-                                                    // Host: Open Menu (Skip/Kick/Transfer)
-                                                    setSelectedPlayerForMenu(p);
-                                                } else {
-                                                    // User: Direct Transfer
-                                                    setTransferTarget(p);
-                                                }
-                                            }}
-                                            className={`flex items-center gap-2 p-1.5 pr-3 rounded-full border shrink-0 transition-all cursor-pointer ${isCurrent
-                                                ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
-                                                : 'bg-slate-800/50 border-slate-700'
-                                                } active:scale-95`}
-                                        >
-                                            <div className="relative">
-                                                <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-700 relative">
-                                                    {(p.avatar || p.photo_url) ? (
-                                                        <img src={p.avatar || p.photo_url} alt={p.name} className="w-full h-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-full h-full flex items-center justify-center text-xs font-bold">{p.name?.[0]}</div>
-                                                    )}
-                                                </div>
-                                                {isCurrent && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>}
-                                            </div>
-                                            <div className="flex flex-col text-left">
-                                                <span className={`text-[10px] font-bold leading-none ${isCurrent ? 'text-white' : 'text-slate-400'}`}>
-                                                    {isMe ? 'Вы' : p.name}
-                                                </span>
-                                                <span className="text-[10px] font-mono text-green-400 leading-none">
-                                                    ${(p.cash || 0).toLocaleString()}
-                                                </span>
-                                            </div>
-                                        </button>
-                                    );
-                                })}
-                            </div>
+
 
                             {/* 2. MAIN CONTROLS */}
                             <div className="flex gap-3">
