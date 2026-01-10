@@ -106,13 +106,17 @@ export class BotService {
         if (!this.bot) return;
 
         // Global Commands
-        await this.bot.setMyCommands([
-            { command: 'start', description: '🏠 Главное меню' },
-            { command: 'game', description: '🎮 Играть' },
-            { command: 'language', description: '🌐 Язык / Language' },
-            { command: 'app', description: '📱 Приложение MONEO' },
-            { command: 'about', description: 'ℹ️ О проекте' }
-        ]);
+        try {
+            await this.bot.setMyCommands([
+                { command: 'start', description: '🏠 Главное меню' },
+                { command: 'game', description: '🎮 Играть' },
+                { command: 'language', description: '🌐 Язык / Language' },
+                { command: 'app', description: '📱 Приложение MONEO' },
+                { command: 'about', description: 'ℹ️ О проекте' }
+            ]);
+        } catch (e: any) {
+            console.error(`[BotService] Failed to set global commands: ${e.message}`);
+        }
 
         // Full Admin Commands
         const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => id.trim());
