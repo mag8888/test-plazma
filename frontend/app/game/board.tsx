@@ -1650,7 +1650,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         <>
                                             {/* ROLL BUTTON (Left, Big) */}
                                             {/* ROLL BUTTON (Left, Big) - UPDATED FOR CHARITY CHOICE */}
-                                            {(localPlayer?.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !isRollingRef.current) ? (
+                                            {(localPlayer?.charityTurns > 0 && isMyTurn && (state.phase === 'ROLL' || state.phase === 'MLM_ROLL') && !isRollingRef.current) ? (
                                                 <div className="col-span-1 grid grid-cols-2 gap-1 h-full">
                                                     <button onClick={() => handleRoll(1)} className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold flex flex-col items-center justify-center shadow-lg active:scale-95 transition-all">
                                                         <span className="text-xl">🎲</span>
@@ -1671,7 +1671,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                     onClick={() => handleRoll()}
                                                     disabled={!isMyTurn || state.phase !== 'ROLL' || isRollingRef.current}
                                                     className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative overflow-hidden group
-                                                        ${isMyTurn && state.phase === 'ROLL' && !isRollingRef.current
+                                                        ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'MLM_ROLL') && !isRollingRef.current
                                                             ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500/50 text-white hover:scale-[1.02] active:scale-95'
                                                             : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
                                                 >
@@ -1679,7 +1679,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                     <span className="text-[10px] font-black uppercase tracking-widest">
                                                         {diceCount > 1 ? `Бросить (${diceCount})` : 'Бросить'}
                                                     </span>
-                                                    {(isTutorial && isMyTurn && state.phase === 'ROLL' && state.tutorialStep <= 1) && (
+                                                    {(isTutorial && isMyTurn && (state.phase === 'ROLL' || state.phase === 'MLM_ROLL') && state.tutorialStep <= 1) && (
                                                         <TutorialTip
                                                             text={state.tutorialStep === 0 ? "1. Бросайте кубик, чтобы ходить" : "7. Бросьте кубик снова!"}
                                                             position="right-full mr-4 top-1/2 -translate-y-1/2"
@@ -1699,7 +1699,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                             {/* SKIP / NEXT BUTTON (Right, Big) */}
                                             <button
                                                 onClick={handleEndTurn}
-                                                disabled={!isMyTurn || (state.phase === 'ROLL') || isAnimating}
+                                                disabled={!isMyTurn || (state.phase === 'ROLL' || state.phase === 'MLM_ROLL') || isAnimating}
                                                 className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative
                                  ${isMyTurn && state.phase !== 'ROLL' && !isAnimating
                                                         ? 'bg-blue-600 hover:bg-blue-500 border-blue-500/50 text-white hover:scale-[1.02] active:scale-95'
@@ -1988,7 +1988,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         <span className="text-2xl">💸</span>
                                         <span>ОТКРЫТЬ</span>
                                     </button>
-                                ) : (localPlayer?.charityTurns || 0) > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
+                                ) : (localPlayer?.charityTurns || 0) > 0 && isMyTurn && (state.phase === 'ROLL' || state.phase === 'MLM_ROLL') && !hasRolled ? (
                                     <div className="flex gap-2 flex-1 h-16">
                                         <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
                                             <span className="text-xl">🎲</span>
@@ -2010,7 +2010,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         onClick={() => handleRoll()}
                                         disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
                                         className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg relative overflow-hidden
-                                ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
+                                ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL' || state.phase === 'MLM_ROLL') && !state.currentCard && !hasRolled
                                                 ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
                                                 : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
                                     >
@@ -2042,7 +2042,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         !isMyTurn ||
                                         isAnimating ||
                                         state.phase === 'BABY_ROLL' ||
-                                        (state.phase === 'ROLL' && !state.currentCard && !hasRolled)
+                                        ((state.phase === 'ROLL' || state.phase === 'MLM_ROLL') && !state.currentCard && !hasRolled)
                                     }
                                     className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
                         ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
