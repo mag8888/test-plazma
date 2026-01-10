@@ -1928,8 +1928,9 @@ export class GameEngine {
         }
 
         // 4. Add to target
-        // Check if target has same stock to merge?
-        const existingStock = toPlayer.assets.find(a => a.symbol === transferAsset.symbol && a.symbol !== undefined);
+        // Check if target has same stock to merge? (Only for STOCKS)
+        const isStock = transferAsset.type === 'STOCK' || transferAsset.type === 'MUTUAL' || transferAsset.type === 'MYSTERY_COIN';
+        const existingStock = isStock ? toPlayer.assets.find(a => a.symbol === transferAsset.symbol && a.symbol !== undefined) : undefined;
         if (existingStock) {
             existingStock.quantity = (existingStock.quantity || 0) + (transferAsset.quantity || 1);
             existingStock.cashflow = (existingStock.cashflow || 0) + (transferAsset.cashflow || 0);
@@ -1948,13 +1949,7 @@ export class GameEngine {
         // 8. Log and Record
         const cashflowStr = asset.cashflow ? ` (Поток: $${asset.cashflow})` : '';
         this.addLog(`🤝 ${fromPlayer.name} передал ${quantity}x ${asset.title}${cashflowStr} игроку ${toPlayer.name}`);
-        this.recordTransaction({
-            from: fromPlayer.name,
-            to: toPlayer.name,
-            amount: 0, // Asset transfer
-            description: `Transferred ${quantity}x ${asset.title}`,
-            type: 'TRANSFER'
-        });
+
     }
 
     dismissCard() {
@@ -3191,6 +3186,13 @@ export class GameEngine {
         toPlayer.cash += amount;
 
         this.addLog(`💸 ${fromPlayer.name} перевел $${amount.toLocaleString()} игроку ${toPlayer.name}`);
+        this.recordTransaction({
+            from: fromPlayer.name,
+            to: toPlayer.name,
+            amount: amount,
+            description: `Перевод средств`,
+            type: 'TRANSFER'
+        });
         // this.emitState(); // Usually called by gateway after action returns? No, gateway calls getState. 
         // Gateway: game.transferDeal -> state updated -> emit. 
         // So we don't need emitState here if gateway handles it. 
