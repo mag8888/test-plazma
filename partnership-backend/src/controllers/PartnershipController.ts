@@ -65,7 +65,7 @@ export class PartnershipController {
             const user = await User.findById(targetId).populate('referrer', 'username');
             if (!user) return res.status(404).json({ error: 'User not found' });
 
-            const avatarCount = await Avatar.countDocuments({ owner: user._id, isActive: true });
+            const avatarCount = await Avatar.countDocuments({ owner: user._id });
 
             // Calculate Tariff
             const bestAvatar = await Avatar.findOne({ owner: user._id, isActive: true })
@@ -247,8 +247,7 @@ export class PartnershipController {
 
             console.log(`[Partnership] Querying avatars for Owner: ${targetId}, Active: True`);
             const avatars = await Avatar.find({
-                owner: targetId,
-                isActive: true
+                owner: targetId
             }).populate('parent').sort({ createdAt: -1 });
 
             console.log(`[Partnership] Found ${avatars.length} avatars for ${targetId}`);
