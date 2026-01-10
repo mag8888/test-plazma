@@ -53,6 +53,11 @@ const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTr
                 )}
             </div>
 
+            {/* Name Display (Always visible ABOVE) */}
+            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-slate-900/80 px-1 rounded text-[8px] font-bold text-white pointer-events-none whitespace-nowrap max-w-[60px] truncate z-20">
+                {player?.name}
+            </div>
+
             {/* Offline Indicator */}
             {!isConnected && (
                 <div className="absolute -top-1 -right-1 bg-slate-900 rounded-full p-0.5 border border-red-500/50 z-10">
@@ -214,7 +219,7 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
 
             {/* AVATAR LIST - Grid 5x2 (5 columns) */}
             <div className="flex-1 mx-2">
-                <div className="grid grid-cols-5 gap-x-3 gap-y-5 pl-2 border-l border-white/10 min-w-max pt-1 pb-2">
+                <div className="grid grid-cols-5 gap-x-3 gap-y-7 pl-2 border-l border-white/10 min-w-max pt-4 pb-2">
                     {players.map(player => {
                         // Find participant if online
                         // Match by identity (userId) usually
