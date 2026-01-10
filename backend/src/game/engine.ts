@@ -1010,10 +1010,7 @@ export class GameEngine {
                 validCount = maxDice;
                 if (count > 0 && count <= maxDice) validCount = count;
             }
-            // Only decrease charity turns for Rat Race, Fast Track is permanent
-            if (!player.isFastTrack) {
-                player.charityTurns--;
-            }
+            // Decrement moved to endTurn to prevent double counting
         } else {
             // Normal Rules
             // Rat Race: 1 Die (Fixed)
@@ -2211,7 +2208,8 @@ export class GameEngine {
 
         player.cash -= amount;
         // FAST TRACK: Permanent. RAT RACE: 3 Turns.
-        player.charityTurns = player.isFastTrack ? 999 : 3;
+        // Set to 4 because endTurn() will decrement it immediately for this turn
+        player.charityTurns = player.isFastTrack ? 999 : 4;
 
         const message = player.isFastTrack
             ? `❤️ ${player.name} donated $${amount}. Can now choose 1-3 dice EVERY turn!`
@@ -3018,6 +3016,13 @@ export class GameEngine {
         let attempts = 0;
         const totalPlayers = this.state.players.length;
 
+        // Decrement Charity Turns for the finishing player
+        // This ensures the turn they just finished counts against the limit.
+        const finishingPlayer = this.state.players[this.state.currentPlayerIndex];
+        if (finishingPlayer.charityTurns > 0 && !finishingPlayer.isFastTrack) {
+            finishingPlayer.charityTurns--;
+        }
+
         // Safely iterate to find next valid player
         while (attempts < totalPlayers * 2) { // Cap at 2 loops to prevent infinite freezes
             this.state.currentPlayerIndex = (this.state.currentPlayerIndex + 1) % totalPlayers;
@@ -3058,14 +3063,15 @@ export class GameEngine {
 
         const activePlayer = this.state.players[this.state.currentPlayerIndex];
 
-        // Decrement Charity Turns
+        // Decrement Charity Turns - MOVED TO END_TURN
+        // if (activePlayer.charityTurns > 0) {
+        //     activePlayer.charityTurns--;
+        // }
+
         if (activePlayer.charityTurns > 0) {
-            activePlayer.charityTurns--;
-            if (activePlayer.charityTurns === 0) {
-                this.addLog(`🎲 ${activePlayer.name}: Благотворительность закончилась.`);
-            } else {
-                this.addLog(`🎲 ${activePlayer.name}: Благотворительность активна (осталось ходов: ${activePlayer.charityTurns})`);
-            }
+            this.addLog(`🎲 ${activePlayer.name}: Благотворительность активна (осталось ходов: ${activePlayer.charityTurns})`);
+        } else if (activePlayer.charityTurns === 0 && this.state.lastEvent?.type === 'CHARITY_EXPIRED') {
+            // Optional: Log expiration if we tracked it
         }
 
         // this.addLog(`Now it is ${activePlayer.name}'s turn.`);
@@ -3386,4 +3392,5 @@ export class GameEngine {
         // Actually, we can just throw if invalid, and let Gateway call handleRoll
         return true;
     }
+
 }
