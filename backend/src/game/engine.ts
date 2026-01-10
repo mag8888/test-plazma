@@ -2695,6 +2695,12 @@ export class GameEngine {
         // MLM Logic (Subtype check)
         // Hard Patch for sd_health/Health Center which acts as MLM due to DB corruption
         if (card.subtype === 'MLM_ROLL' && card.id !== 'sd_health') {
+            // FIX: Prevent double-buy if already in roll phase
+            if (this.state.phase === 'MLM_ROLL') {
+                this.addLog(`⚠️ ${player.name} уже купил этот актив, ожидание броска...`);
+                return;
+            }
+
             if (player.cash < costToPay) {
                 this.addLog(`${player.name} cannot afford ${card.title} ($${costToPay})`);
                 return;
@@ -2704,6 +2710,12 @@ export class GameEngine {
             this.state.phase = 'MLM_ROLL';
             return;
         } else if (card.subtype === 'MLM_PLACEMENT') {
+            // FIX: Prevent double-buy
+            if (this.state.phase === 'MLM_PLACEMENT') {
+                this.addLog(`⚠️ ${player.name} уже открыл бизнес, ожидание партнеров...`);
+                return;
+            }
+
             if (player.cash < costToPay) {
                 this.addLog(`${player.name} cannot afford ${card.title} ($${costToPay})`);
                 return;
