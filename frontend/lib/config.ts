@@ -31,3 +31,15 @@ export const getGameServiceUrl = () => {
     // Reuse the same logic for Game Service to keep them in sync
     return getBackendUrl();
 };
+
+export const getGiftsUrl = () => {
+    const envUrl = process.env.NEXT_PUBLIC_GIFTS_API_URL;
+    if (envUrl) return envUrl;
+
+    // Fallback for dev/local or assume it's set
+    // For now, let's return a placeholder that the user must replace, or default to localhost
+    if (typeof window !== 'undefined' && window.location.hostname.includes('localhost')) {
+        return 'http://localhost:3003';
+    }
+    return ''; // Should be set via Env
+};
