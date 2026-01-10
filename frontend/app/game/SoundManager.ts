@@ -54,7 +54,11 @@ class SoundManager {
 
         const audio = this.sounds.get(key);
         if (audio) {
-            audio.volume = this.volume;
+            let playbackVolume = this.volume;
+            if (key === 'baby') {
+                playbackVolume = this.volume * 0.7; // Reduce baby sound by 30%
+            }
+            audio.volume = playbackVolume;
             audio.currentTime = 0; // Reset to start
             const playPromise = audio.play();
 
