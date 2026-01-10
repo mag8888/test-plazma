@@ -1757,11 +1757,19 @@ export class BotService {
                     return;
                 }
 
+                // Escape HTML in user text
+                const escapeHtml = (s: string) => s
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;");
+
+                const safeText = escapeHtml(text);
+
                 let count = 0;
                 for (const p of game.participants) {
                     const user = await UserModel.findById(p.userId);
                     if (user) {
-                        this.bot?.sendMessage(user.telegram_id, `📢 **Сообщение от организатора:**\n\n${text}`, { parse_mode: 'Markdown' });
+                        this.bot?.sendMessage(user.telegram_id, `📢 <b>Сообщение от организатора:</b>\n\n${safeText}`, { parse_mode: 'HTML' });
                         count++;
                     }
                 }
@@ -1769,7 +1777,7 @@ export class BotService {
                 // Send copy to Master
                 const host = await UserModel.findById(game.hostId);
                 if (host) {
-                    this.bot?.sendMessage(host.telegram_id, `📢 **(Копия) Сообщение от организатора:**\n\n${text}`, { parse_mode: 'Markdown' });
+                    this.bot?.sendMessage(host.telegram_id, `📢 <b>(Копия) Сообщение от организатора:</b>\n\n${safeText}`, { parse_mode: 'HTML' });
                 }
 
                 this.bot?.editMessageText(`✅ Сообщение отправлено ${count} участникам.`, {
@@ -2563,7 +2571,7 @@ export class BotService {
                 return;
             }
 
-            this.bot?.sendMessage(chatId, "📋 **Ваши игры:**", { parse_mode: 'Markdown' });
+            this.bot?.sendMessage(chatId, "📋 <b>Ваши игры:</b>", { parse_mode: 'HTML' });
 
             for (const game of games) {
                 const dateStr = new Date(game.startTime).toLocaleString('ru-RU', {
@@ -2585,6 +2593,7 @@ export class BotService {
                 const link = `https://t.me/${botName}?start=game_${game._id}`;
 
                 this.bot?.sendMessage(chatId, `🗓 ${dateStr} (МСК)\n👥 ${participantsCount}/${game.maxPlayers}\n🔗 Ссылка: ${link}`, {
+                    parse_mode: 'HTML',
                     reply_markup: {
                         inline_keyboard: [[{ text: '⚙️ Управление', callback_data: `manage_game_${game._id}` }]]
                     }
@@ -2617,10 +2626,10 @@ export class BotService {
             } catch (e) { }
             const link = `https://t.me/${botName}?start=game_${game._id}`;
 
-            const text = `⚙️ **Управление игрой**\n\n🗓 ${dateStr} (МСК)\n👥 Мест: ${game.participants.length}/${game.maxPlayers}\n🎟 Промо: ${game.participants.filter((p: any) => p.type === 'PROMO').length}/${game.promoSpots}\n\n🔗 Ссылка: ${link}`;
+            const text = `⚙️ <b>Управление игрой</b>\n\n🗓 ${dateStr} (МСК)\n👥 Мест: ${game.participants.length}/${game.maxPlayers}\n🎟 Промо: ${game.participants.filter((p: any) => p.type === 'PROMO').length}/${game.promoSpots}\n\n🔗 Ссылка: ${link}`;
 
             this.bot?.sendMessage(chatId, text, {
-                parse_mode: 'Markdown',
+                parse_mode: 'HTML',
                 reply_markup: {
                     inline_keyboard: [
                         [
@@ -3222,11 +3231,11 @@ export class BotService {
                     if (state.photoId) {
                         await this.bot?.sendPhoto(user.telegram_id, state.photoId, {
                             caption: state.text,
-                            parse_mode: 'Markdown'
+                            parse_mode: 'HTML'
                         });
                     } else {
                         await this.bot?.sendMessage(user.telegram_id, state.text, {
-                            parse_mode: 'Markdown'
+                            parse_mode: 'HTML'
                         });
                     }
 
