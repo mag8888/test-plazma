@@ -175,6 +175,10 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
     const [isMuted, setIsMuted] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
 
+    // Derived mic state (localParticipant is truth only 90%)
+    // But we need instant feedback, so state is fine.
+    const isMicOn = !isMuted && isConnected;
+
     const toggleMute = () => {
         if (localParticipant) {
             const newState = !isMuted;
@@ -201,61 +205,49 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
     }, [localParticipant, onSpeakingChanged]);
 
     return (
-        <div className="flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/10">
-            {/* Mic Button - Only show active state if connected */}
-            <button
-                onClick={toggleMute}
-                disabled={!isConnected}
-                title={isConnected ? (isMuted ? "Включить микрофон" : "Выключить микрофон") : (error || "Голосовой чат недоступен")}
-                className={`p-2 rounded-full transition-all ${!isConnected
-                    ? 'bg-slate-700 text-slate-500 cursor-not-allowed'
-                    : isMuted
-                        ? 'bg-red-500/20 text-red-400'
-                        : 'bg-emerald-500/20 text-emerald-400'
-                    } ${isSpeaking && !isMuted ? 'ring-2 ring-emerald-400/50 scale-105' : ''}`}
-            >
-                {isConnected ? (isMuted ? <MicOff size={16} /> : <Mic size={16} />) : <MicOff size={16} />}
-            </button>
-
-            {/* AVATAR LIST - Grid 5x2 (5 columns) */}
-            <div className="flex-1 mx-2">
-                <div className="grid grid-cols-5 gap-x-3 gap-y-7 pl-2 border-l border-white/10 min-w-max pt-4 pb-2">
-                    {players.map(player => {
-                        // Find participant if online
-                        // Match by identity (userId) usually
-                        const participant = participants?.find(p => p.identity === player.id || p.identity === player.userId);
-
-                        return (
-                            <VoiceAvatar
-                                key={player.id}
-                                participant={participant} // Valid or undefined
-                                player={player}
-                                isHost={isHost}
-                                onKick={onKickPlayer}
-                                onTransferCash={onTransferCash}
-                                onTransferAsset={onTransferAsset}
-                                onSkip={onSkipTurn}
-                                onForceMove={onForceMove}
-                                isMe={player.id === myId || player.userId === myId}
-                            />
-                        );
-                    })}
-                </div>
+        <div className="flex flex-col items-center w-full">
+            {/* 1. MIC BUTTON - Floating Near Track (Fixed at bottom right) */}
+            <div className="fixed bottom-[140px] right-4 z-[160]">
+                <button
+                    onClick={toggleMute}
+                    className={`p-3 rounded-full border transition-all shadow-lg active:scale-95 flex items-center justify-center w-12 h-12 backdrop-blur-md
+                        ${isMicOn
+                            ? 'bg-slate-800/80 border-slate-600 text-white hover:bg-slate-700'
+                            : 'bg-red-500/80 border-red-500 text-white animate-pulse shadow-red-500/50'}
+                    `}
+                >
+                    {isMicOn ? <Mic size={20} /> : <MicOff size={20} />}
+                </button>
             </div>
 
-            {/* Simple Volume Indicator could go here */}
-            {isSpeaking && !isMuted && isConnected && (
-                <div className="flex gap-0.5 items-center h-3">
-                    <div className="w-0.5 h-2 bg-emerald-400 animate-pulse" />
-                    <div className="w-0.5 h-3 bg-emerald-400 animate-pulse delay-75" />
-                    <div className="w-0.5 h-2 bg-emerald-400 animate-pulse delay-150" />
-                </div>
-            )}
+            {/* 2. PLAYER GRID - Centered & Square-ish & Harmonious */}
+            {/* Using a flex wrap centered approach for harmony */}
+            <div className="flex flex-wrap justify-center gap-2 px-2 max-w-[95vw]">
+                {players.map((p) => {
+                    // Find participant
+                    const participant = participants.find(part => part.identity === p.id || part.identity === p.userId);
+                    return (
+                        <VoiceAvatar
+                            key={p.id}
+                            player={p}
+                            participant={participant}
+                            isHost={isHost}
+                            onKick={onKickPlayer}
+                            onTransferCash={onTransferCash}
+                            onTransferAsset={onTransferAsset}
+                            onSkip={onSkipTurn}
+                            onForceMove={onForceMove}
+                            isMe={p.id === myId || p.userId === myId}
+                        />
+                    );
+                })}
+            </div>
 
+            {/* Connection / Status line - optional/hidden to clean up UI as requested */}
             {!isConnected && (
-                <span className={`text-[10px] animate-pulse whitespace-nowrap px-2 font-bold ${error ? 'text-red-400' : 'text-yellow-500'}`}>
+                <div className="mt-2 text-[10px] animate-pulse text-yellow-500 text-center w-full">
                     {error ? (error === 'Timeout' ? 'ERR: Timeout' : 'ERR: Conn') : 'Подключение...'}
-                </span>
+                </div>
             )}
         </div>
     );

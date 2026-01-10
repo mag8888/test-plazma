@@ -1572,15 +1572,11 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                         <div id="tutorial-players" className="hidden lg:flex flex-col w-[350px] h-full bg-[#0f172a]/50 relative z-40 overflow-hidden shrink-0 pt-0 gap-4">
 
                             {/* 1. TURN INFO & TIMER */}
-                            <div
-                                id="tutorial-turn-timer"
-                                onClick={() => setTransferTarget(currentPlayer)}
-                                className="bg-[#151b2b] rounded-3xl p-6 border border-slate-800 shadow-lg flex items-center justify-between shrink-0 cursor-pointer hover:bg-slate-800 transition-colors group"
-                            >
+                            <div id="tutorial-turn-timer" className="bg-[#151b2b] rounded-3xl p-6 border border-slate-800 shadow-lg flex items-center justify-between shrink-0">
                                 <div className="flex flex-col">
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className={`w-2 h-2 rounded-full ${state.turnExpiresAt && (new Date(state.turnExpiresAt).getTime() - Date.now()) / 1000 < 15 ? 'bg-red-500 animate-pulse' : 'bg-green-500'}`}></span>
-                                        <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider group-hover:text-emerald-400 transition-colors">ХОД ИГРОКА</span>
+                                        <span className="text-[10px] text-slate-500 uppercase font-bold tracking-wider">ХОД ИГРОКА</span>
                                     </div>
                                     <div className="text-xl font-black text-white leading-none truncate max-w-[180px]">{currentPlayer.name}</div>
                                 </div>
@@ -1654,7 +1650,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         <>
                                             {/* ROLL BUTTON (Left, Big) */}
                                             {/* ROLL BUTTON (Left, Big) - UPDATED FOR CHARITY CHOICE */}
-                                            {(localPlayer?.charityTurns > 0 && isMyTurn && (state.phase === 'ROLL' || state.phase === 'MLM_ROLL') && !isRollingRef.current) ? (
+                                            {(localPlayer?.charityTurns > 0 && isMyTurn && state.phase === 'ROLL' && !isRollingRef.current) ? (
                                                 <div className="col-span-1 grid grid-cols-2 gap-1 h-full">
                                                     <button onClick={() => handleRoll(1)} className="bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold flex flex-col items-center justify-center shadow-lg active:scale-95 transition-all">
                                                         <span className="text-xl">🎲</span>
@@ -1675,7 +1671,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                     onClick={() => handleRoll()}
                                                     disabled={!isMyTurn || state.phase !== 'ROLL' || isRollingRef.current}
                                                     className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative overflow-hidden group
-                                                        ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'MLM_ROLL') && !isRollingRef.current
+                                                        ${isMyTurn && state.phase === 'ROLL' && !isRollingRef.current
                                                             ? 'bg-emerald-600 hover:bg-emerald-500 border-emerald-500/50 text-white hover:scale-[1.02] active:scale-95'
                                                             : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed opacity-50'}`}
                                                 >
@@ -1683,7 +1679,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                     <span className="text-[10px] font-black uppercase tracking-widest">
                                                         {diceCount > 1 ? `Бросить (${diceCount})` : 'Бросить'}
                                                     </span>
-                                                    {(isTutorial && isMyTurn && (state.phase === 'ROLL' || state.phase === 'MLM_ROLL') && state.tutorialStep <= 1) && (
+                                                    {(isTutorial && isMyTurn && state.phase === 'ROLL' && state.tutorialStep <= 1) && (
                                                         <TutorialTip
                                                             text={state.tutorialStep === 0 ? "1. Бросайте кубик, чтобы ходить" : "7. Бросьте кубик снова!"}
                                                             position="right-full mr-4 top-1/2 -translate-y-1/2"
@@ -1703,7 +1699,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                             {/* SKIP / NEXT BUTTON (Right, Big) */}
                                             <button
                                                 onClick={handleEndTurn}
-                                                disabled={!isMyTurn || (state.phase === 'ROLL' || state.phase === 'MLM_ROLL') || isAnimating}
+                                                disabled={!isMyTurn || (state.phase === 'ROLL') || isAnimating}
                                                 className={`rounded-3xl border flex flex-col items-center justify-center gap-1 transition-all shadow-xl relative
                                  ${isMyTurn && state.phase !== 'ROLL' && !isAnimating
                                                         ? 'bg-blue-600 hover:bg-blue-500 border-blue-500/50 text-white hover:scale-[1.02] active:scale-95'
@@ -1725,7 +1721,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                             </div>
 
                             {/* DEBUG OVERLAY */}
-
+                            <TutorialDebug step={state.tutorialStep} isTutorial={isTutorial || false} />
 
                             {/* TOP BAR: HUD & Game Stats */}
                             {/* BANK BUTTON (Desktop) */}
@@ -1734,13 +1730,13 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                 <div className="mb-2 shrink-0 relative z-[200]">
                                     <div className="bg-[#1e293b] rounded-xl p-3 border border-slate-700 flex items-center justify-between shadow-sm">
                                         <span className="text-[10px] font-bold text-slate-400 uppercase flex items-center gap-2">
-
+                                            🎤 Голосовой чат
                                             {isSpeaking && <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse shrink-0" />}
                                         </span>
                                         <VoiceControls
                                             onSpeakingChanged={setIsSpeaking}
                                             players={state.players}
-                                            isHost={isHost}
+                                            isHost={localPlayer?.id === state.creatorId}
                                             onKickPlayer={handleKickPlayer}
                                             myId={localPlayer?.id || localPlayer?.userId}
                                             onTransferCash={(targetId) => {
@@ -1754,14 +1750,6 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                 if (target) {
                                                     setShowAssetSelectForPlayer(target.id);
                                                 }
-                                            }}
-                                            onSkipTurn={(targetId) => {
-                                                console.log('Host skipping:', targetId);
-                                                socket.emit('host_skip_turn', { roomId, userId, targetPlayerId: targetId });
-                                            }}
-                                            onForceMove={(targetId) => {
-                                                console.log('Host force move:', targetId);
-                                                socket.emit('host_force_move', { roomId, userId, targetPlayerId: targetId });
                                             }}
                                         />
                                     </div>
@@ -1879,27 +1867,73 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
                             {/* VOICE CONTROLS (Mobile) */}
                             {userId && (
-                                <>
-                                    {/* Mobile Chat Toggle Button - FLOATING ABOVE */}
+                                <div className="flex items-center justify-between bg-[#151b2b] p-2 rounded-2xl border border-slate-800 gap-2">
+                                    {/* Mobile Chat Toggle Button */}
                                     <button
                                         onClick={() => setShowMobileChat(true)}
-                                        className="fixed bottom-[140px] left-4 p-3 rounded-full bg-slate-900/50 backdrop-blur-md border border-slate-700/50 hover:bg-slate-800 text-white shadow-lg active:scale-95 transition-all w-12 h-12 flex items-center justify-center z-[160]"
+                                        className="p-2 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-white relative shadow-lg active:scale-95 transition-all w-12 h-10 flex items-center justify-center"
                                     >
                                         <span className="text-xl">💬</span>
+                                        {/* Unread badge logic could go here */}
                                     </button>
 
-                                    {/* Voice Area (Mic + Avatars) - Centered & Harmonious */}
-                                    <div className="w-full flex justify-center mb-2">
+                                    {/* Voice Area (Mic + Avatars) - No Text Label */}
+                                    <div className="flex-1 flex justify-end">
                                         {isVoiceConnected ? (
                                             <VoiceControls onSpeakingChanged={setIsSpeaking} players={state?.players || []} />
                                         ) : (
-                                            <span className="text-[10px] animate-pulse text-yellow-500 px-2 text-center w-full">Подключение...</span>
+                                            <span className="text-[10px] animate-pulse text-yellow-500 px-2">Подключение...</span>
                                         )}
                                     </div>
-                                </>
+                                </div>
                             )}
 
-
+                            {/* 1. MINI PLAYERS STRIP */}
+                            <div className="flex items-center gap-3 overflow-x-auto custom-scrollbar px-1 pb-2">
+                                {state.players.map((p: any) => {
+                                    const isCurrent = p.id === currentPlayer?.id;
+                                    const isMe = p.id === localPlayer?.id;
+                                    return (
+                                        <button
+                                            key={p.id}
+                                            onClick={() => {
+                                                if (isMe) {
+                                                    setShowBank(true);
+                                                } else if (isHost) {
+                                                    // Host: Open Menu (Skip/Kick/Transfer)
+                                                    setSelectedPlayerForMenu(p);
+                                                } else {
+                                                    // User: Direct Transfer
+                                                    setTransferTarget(p);
+                                                }
+                                            }}
+                                            className={`flex items-center gap-2 p-1.5 pr-3 rounded-full border shrink-0 transition-all cursor-pointer ${isCurrent
+                                                ? 'bg-blue-600/20 border-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.3)]'
+                                                : 'bg-slate-800/50 border-slate-700'
+                                                } active:scale-95`}
+                                        >
+                                            <div className="relative">
+                                                <div className="w-8 h-8 rounded-full overflow-hidden bg-slate-700 relative">
+                                                    {(p.avatar || p.photo_url) ? (
+                                                        <img src={p.avatar || p.photo_url} alt={p.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-full h-full flex items-center justify-center text-xs font-bold">{p.name?.[0]}</div>
+                                                    )}
+                                                </div>
+                                                {isCurrent && <div className="absolute -bottom-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-slate-900 animate-pulse"></div>}
+                                            </div>
+                                            <div className="flex flex-col text-left">
+                                                <span className={`text-[10px] font-bold leading-none ${isCurrent ? 'text-white' : 'text-slate-400'}`}>
+                                                    {isMe ? 'Вы' : p.name}
+                                                </span>
+                                                <span className="text-[10px] font-mono text-green-400 leading-none">
+                                                    ${(p.cash || 0).toLocaleString()}
+                                                </span>
+                                            </div>
+                                        </button>
+                                    );
+                                })}
+                            </div>
 
                             {/* 2. MAIN CONTROLS */}
                             <div className="flex gap-3">
@@ -1946,7 +1980,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         <span className="text-2xl">💸</span>
                                         <span>ОТКРЫТЬ</span>
                                     </button>
-                                ) : (localPlayer?.charityTurns || 0) > 0 && isMyTurn && (state.phase === 'ROLL' || state.phase === 'MLM_ROLL') && !hasRolled ? (
+                                ) : (localPlayer?.charityTurns || 0) > 0 && isMyTurn && state.phase === 'ROLL' && !hasRolled ? (
                                     <div className="flex gap-2 flex-1 h-16">
                                         <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
                                             <span className="text-xl">🎲</span>
@@ -1968,7 +2002,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         onClick={() => handleRoll()}
                                         disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
                                         className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg relative overflow-hidden
-                                ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL' || state.phase === 'MLM_ROLL') && !state.currentCard && !hasRolled
+                                ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL') && !state.currentCard && !hasRolled
                                                 ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
                                                 : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
                                     >
@@ -2000,7 +2034,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         !isMyTurn ||
                                         isAnimating ||
                                         state.phase === 'BABY_ROLL' ||
-                                        ((state.phase === 'ROLL' || state.phase === 'MLM_ROLL') && !state.currentCard && !hasRolled)
+                                        (state.phase === 'ROLL' && !state.currentCard && !hasRolled)
                                     }
                                     className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
                         ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'

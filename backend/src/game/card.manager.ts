@@ -142,9 +142,9 @@ export const SMALL_DEALS: Card[] = [
     { displayId: 42, id: 'sd_flip_5', title: 'Флипинг студии', cost: 5000, cashflow: 50, description: 'Покупка и быстрая перепродажа (или доход). Есть покупатель на рынке за $15,000.', assetType: 'REAL_ESTATE', type: 'DEAL_SMALL' },
 
     // 43-45 MLM
-    { displayId: 43, id: 'sd_mlm_1', title: 'Сетевой бизнес', cost: 500, cashflow: 100, description: 'Старт в MLM компании.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
-    { displayId: 44, id: 'sd_mlm_2', title: 'Сетевой бизнес', cost: 500, cashflow: 100, description: 'Старт в MLM компании.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
-    { displayId: 45, id: 'sd_mlm_3', title: 'Сетевой бизнес', cost: 500, cashflow: 100, description: 'Старт в MLM компании.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 43, id: 'sd_mlm_1', title: 'Сетевой бизнес', cost: 500, cashflow: 0, description: 'Старт в MLM компании. Бросок кубика (x$50/партнер).', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 44, id: 'sd_mlm_2', title: 'Сетевой бизнес', cost: 500, cashflow: 0, description: 'Старт в MLM компании. Бросок кубика (x$50/партнер).', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 45, id: 'sd_mlm_3', title: 'Сетевой бизнес', cost: 500, cashflow: 0, description: 'Старт в MLM компании. Бросок кубика (x$50/партнер).', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 
     // 46-48 Plazma
     // 46-48 Plazma
