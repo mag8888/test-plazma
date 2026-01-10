@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, Fragment } from 'react';
 import { useRouter } from 'next/navigation';
-import { ChevronLeft, ChevronRight, Search, Users, Shield, Copy, Wand2, RefreshCw, Lock, Trash2, History, CreditCard, Calendar, BarChart, TreePine, Eye, XCircle, DollarSign, Maximize } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Search, Users, Shield, Copy, Wand2, RefreshCw, Lock, Trash2, History, CreditCard, Calendar, BarChart, TreePine, Eye, XCircle, DollarSign, Maximize, Gift } from 'lucide-react';
 import { AdminUserProfileModal } from './components/AdminUserProfileModal';
 import { partnershipApi } from '../../lib/partnershipApi';
 import { getBackendUrl, getGameServiceUrl } from '../../lib/config';
@@ -10,6 +10,7 @@ import CardEditor from './CardEditor';
 import { MatrixView } from '../earn/MatrixView';
 import AdminAvatarSelector from './components/AdminAvatarSelector';
 import BroadcastModal from './BroadcastModal';
+import GiftManager from './components/GiftManager';
 
 // Dynamic URLs to prevent static build relative path issues
 // We use a function or lazy init, but since this is 'use client', we can just call the functions.
@@ -23,7 +24,7 @@ export default function AdminPage() {
     const [secret, setSecret] = useState('');
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [activeTab, setActiveTab] = useState<'USERS' | 'STATS' | 'TREE' | 'LOGS' | 'CARDS' | 'GAMES'>('USERS');
+    const [activeTab, setActiveTab] = useState<'USERS' | 'STATS' | 'TREE' | 'LOGS' | 'CARDS' | 'GAMES' | 'GIFTS'>('USERS');
     const [showBroadcastModal, setShowBroadcastModal] = useState(false);
 
     // Stats
@@ -603,6 +604,9 @@ export default function AdminPage() {
                         </button>
                         <button onClick={() => setActiveTab('GAMES')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'GAMES' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
                             <Calendar size={18} /> Games
+                        </button>
+                        <button onClick={() => setActiveTab('GIFTS')} className={`flex items-center gap-2 px-3 py-1.5 rounded-lg transition ${activeTab === 'GIFTS' ? 'bg-slate-800 text-white' : 'hover:bg-slate-900'}`}>
+                            <Gift size={18} /> Gifts
                         </button>
                     </div>
                     <button onClick={logout} className="bg-red-900/30 hover:bg-red-900/50 text-red-400 px-4 py-1.5 rounded-lg text-xs font-bold transition border border-red-500/30">Выйти</button>
@@ -1232,6 +1236,8 @@ export default function AdminPage() {
                         </div>
                     </div>
                 )}
+                {/* GIFTS TAB */}
+                {activeTab === 'GIFTS' && <GiftManager />}
 
 
             </div>

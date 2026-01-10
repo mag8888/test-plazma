@@ -439,6 +439,21 @@ export default function EarnPage() {
                         <span className="text-[9px] bg-green-900/50 px-1.5 py-0.5 rounded text-green-300 border border-green-500/20">Управление</span>
                     </div>
                 </div>
+
+                {/* Gift Shop Card */}
+                <div
+                    onClick={() => router.push('/partnership/gifts')}
+                    className="bg-gradient-to-br from-purple-900/50 to-slate-800 p-4 rounded-xl border border-purple-500/30 col-span-2 cursor-pointer hover:bg-slate-700/50 transition-colors relative group active:scale-95 flex items-center justify-between"
+                >
+                    <div>
+                        <Gift className="text-purple-400 mb-2 group-hover:scale-110 transition-transform" />
+                        <div className="text-xl font-bold text-white">Магазин Подарков</div>
+                        <div className="text-xs text-slate-400">Секретные боксы и Аватары</div>
+                    </div>
+                    <div className="bg-purple-600 text-white px-3 py-1 rounded-lg text-xs font-bold shadow-lg shadow-purple-500/20">
+                        OPEN
+                    </div>
+                </div>
             </div>
 
             <BalanceModal

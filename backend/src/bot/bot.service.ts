@@ -959,7 +959,7 @@ export class BotService {
 
             // 0. GLOBAL COMMAND OVERRIDE
             // If user clicks a Menu Button while in a "Waiting" state, we must prioritize the Menu Button
-            const GLOBAL_COMMANDS = ['💸 Заработать', '🎲 Играть', '🤝 Получить клиентов', '🌐 Сообщество', 'ℹ️ О проекте', '📋 Мои игры', '/app', '🔑 Получить пароль', '📸 Моё фото'];
+            const GLOBAL_COMMANDS = ['💸 Заработать', '🎲 Играть', '🤝 Получить клиентов', '🌐 Сообщество', 'ℹ️ О проекте', '📋 Мои игры', '/app', '🔑 Получить пароль', '📸 Моё фото', '🎁 Боксы'];
             if (GLOBAL_COMMANDS.includes(text)) {
                 this.adminStates.delete(chatId);
                 this.transferStates.delete(chatId);
@@ -1440,6 +1440,17 @@ export class BotService {
                 await this.handleEarn(chatId, msg.from?.id);
             } else if (text === '🎲 Играть') {
                 this.handlePlay(chatId);
+            } else if (text === '🎁 Боксы') {
+                const baseUrl = (process.env.FRONTEND_URL || 'https://moneo.up.railway.app').replace(/\/$/, '');
+                const url = `${baseUrl}/partnership/gifts`;
+                this.bot?.sendMessage(chatId, "🎁 **Магазин Подарков**\n\nСекретные боксы с наградами и редкие аватары ждут тебя!", {
+                    parse_mode: 'Markdown',
+                    reply_markup: {
+                        inline_keyboard: [[
+                            { text: "🎁 Открыть Магазин", web_app: { url } }
+                        ]]
+                    }
+                });
             } else if (text === '🤝 Получить клиентов') {
                 await this.handleClients(chatId);
             } else if (text === '🌐 Сообщество') {
@@ -2027,7 +2038,7 @@ export class BotService {
         this.bot?.sendMessage(chatId, text, {
             reply_markup: {
                 keyboard: [
-                    [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
+                    [{ text: '🎲 Играть' }, { text: '💸 Заработать' }, { text: '🎁 Боксы' }],
                     [{ text: '🤝 Получить клиентов' }, { text: '📸 Моё фото' }],
                     [{ text: '🌐 Сообщество' }, { text: 'ℹ️ О проекте' }]
                 ],
@@ -2420,7 +2431,7 @@ export class BotService {
                 keyboard: [
                     [{ text: '➕ Добавить игру' }, { text: '📅 Ближайшие игры' }],
                     [{ text: '📋 Мои игры' }],
-                    [{ text: '🎲 Играть' }, { text: '💸 Заработать' }],
+                    [{ text: '🎲 Играть' }, { text: '💸 Заработать' }, { text: '🎁 Боксы' }],
                     [{ text: '🤝 Получить клиентов' }, { text: '🌐 Сообщество' }],
                     [{ text: 'ℹ️ О проекте' }]
                 ],
