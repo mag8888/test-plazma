@@ -2173,6 +2173,7 @@ export class BotService {
             this.bot?.sendMessage(chatId, text, {
                 reply_markup: {
                     inline_keyboard: [
+                        [{ text: '📱 Открыть Mini App', web_app: { url: process.env.FRONTEND_URL || 'https://moneo.up.railway.app' } }],
                         [{ text: 'Оставить заявку', callback_data: 'apply_earn' }],
                         [{ text: '🤝 Партнерская программа', callback_data: 'partnership_info' }]
                     ]
@@ -2359,7 +2360,14 @@ export class BotService {
             `🔶 **Партнер ($1000)**: Доход $24,000.\n\n` +
             `Денежная энергия работает на вас! 🚀`;
 
-        this.bot?.sendMessage(chatId, text, { parse_mode: 'Markdown' });
+        this.bot?.sendMessage(chatId, text, {
+            parse_mode: 'Markdown',
+            reply_markup: {
+                inline_keyboard: [
+                    [{ text: '📱 Открыть Mini App', web_app: { url: process.env.FRONTEND_URL || 'https://moneo.up.railway.app' } }],
+                ]
+            }
+        });
     }
 
     async handleBecomeMaster(chatId: number, telegramId: number) {
