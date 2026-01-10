@@ -994,10 +994,6 @@ export class GameEngine {
             // Math Logic
             if (card.title.includes('Plazma') || card.title.includes('MONEO')) {
                 incomePerPartner = cost * 0.5;
-            } else if (card.id === 'sd_shawarma' || card.id === 'sd_sushi') {
-                incomePerPartner = 200;
-            } else if (card.id === 'sd_health') {
-                incomePerPartner = 300;
             } else {
                 // Fallback for unknown MLM cards
                 incomePerPartner = Math.max(100, cost * 0.1);

@@ -113,13 +113,13 @@ export const SMALL_DEALS: Card[] = [
     { displayId: 29, id: 'sd_nail', title: 'Студия маникюра', cost: 5000, cashflow: 200, description: 'Студия маникюра на 1 место.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 
     // 30 Shawarma (Roll)
-    { displayId: 30, id: 'sd_shawarma', title: 'Шаверма', cost: 5000, cashflow: 0, description: 'Откройте бизнес по продаже шаурмы. Бросок кубика = 200 пассивного дохода.', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 30, id: 'sd_shawarma', title: 'Шаверма', cost: 5000, cashflow: 200, description: 'Откройте бизнес по продаже шаурмы.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 
     // 31 Coffee
     { displayId: 31, id: 'sd_coffee', title: 'Кофейня', cost: 3000, cashflow: 100, description: 'Небольшая кофейня.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 
     // 32 Sushi (Roll)
-    { displayId: 32, id: 'sd_sushi', title: 'Суши/Ролы', cost: 5000, cashflow: 0, description: 'Откройте бизнес. Бросок кубика = 200 пассивного дохода.', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 32, id: 'sd_sushi', title: 'Суши/Ролы', cost: 5000, cashflow: 200, description: 'Откройте бизнес по продаже суши и роллов.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 
     // 33 Auto
     { displayId: 33, id: 'sd_auto', title: 'Партнёрство в автомастерской', cost: 7000, cashflow: 350, description: 'Доля в бизнесе.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
@@ -169,7 +169,7 @@ export const SMALL_DEALS: Card[] = [
     { displayId: 56, id: 'sd_guide', title: 'Малый бизнес', cost: 0, cashflow: 100, description: 'Вы отлично знаете живописные места, вы составили маршрут и провели по нему туристов.', type: 'DEAL_SMALL', assetType: 'BUSINESS' },
 
     // 57 Health (Roll)
-    { displayId: 57, id: 'sd_health', title: 'Оздоровительный центр', cost: 5000, cashflow: 0, description: 'Откройте франшизу оздоровительного Центра = Бросок кубика. ($300/доход)', businessType: 'NETWORK', subtype: 'MLM_ROLL', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 57, id: 'sd_health', title: 'Оздоровительный центр', cost: 5000, cashflow: 300, description: 'Откройте франшизу оздоровительного Центра.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 
     // 58 Boutique
     { displayId: 58, id: 'sd_boutique', title: 'Бутик одежды', cost: 10000, cashflow: 800, description: 'Откройте франшизу бутика дизайнерской одежды.', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
