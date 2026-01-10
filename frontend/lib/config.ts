@@ -33,13 +33,23 @@ export const getGameServiceUrl = () => {
 };
 
 export const getGiftsUrl = () => {
-    const envUrl = process.env.NEXT_PUBLIC_GIFTS_API_URL;
-    if (envUrl) return envUrl;
+    // 1. Runtime Domain Sniffing (Browser Only)
+    if (typeof window !== 'undefined') {
+        const hostname = window.location.hostname;
 
-    // Fallback for dev/local or assume it's set
-    // For now, let's return a placeholder that the user must replace, or default to localhost
-    if (typeof window !== 'undefined' && window.location.hostname.includes('localhost')) {
-        return 'http://localhost:3003';
+        // DEV Environment
+        if (hostname.includes('dev') || hostname.includes('neodev') || hostname.includes('localhost') || hostname.includes('127.0.0.1')) {
+            if (process.env.NEXT_PUBLIC_GIFTS_API_URL && process.env.NEXT_PUBLIC_GIFTS_API_URL.includes('dev')) {
+                return process.env.NEXT_PUBLIC_GIFTS_API_URL;
+            }
+            return 'https://gifts-service-dev.up.railway.app';
+        }
     }
-    return ''; // Should be set via Env
+
+    // 2. Env Var (Priority for Live)
+    if (process.env.NEXT_PUBLIC_GIFTS_API_URL) return process.env.NEXT_PUBLIC_GIFTS_API_URL;
+
+    // 3. Fallback (Live)
+    // "Live is just moneo" logic -> Default to Live service
+    return 'https://gifts-service-live.up.railway.app';
 };
