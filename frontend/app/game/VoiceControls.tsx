@@ -12,10 +12,11 @@ interface VoiceControlsProps {
     onSkipTurn?: (playerId: string) => void;
     onForceMove?: (playerId: string) => void;
     myId?: string;
+    currentPlayerId?: string;
 }
 
 // Sub-component for individual avatar to handle speaking state efficiently
-const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTransferAsset, onSkip, onForceMove, isMe }: {
+const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTransferAsset, onSkip, onForceMove, isMe, isActive }: {
     participant?: any,
     player: any,
     isHost?: boolean,
@@ -24,7 +25,8 @@ const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTr
     onTransferAsset?: (id: string) => void,
     onSkip?: (id: string) => void,
     onForceMove?: (id: string) => void,
-    isMe?: boolean
+    isMe?: boolean,
+    isActive?: boolean
 }) => {
     // We rely on parent updates or participant property being present
     // Since we receive the participant object from context which updates on change, this is fine.
@@ -40,10 +42,14 @@ const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTr
     return (
         <div className="relative group cursor-pointer" title={player?.name || participant?.identity} onClick={(e) => { e.stopPropagation(); setShowMenu(!showMenu); }}>
             {/* Avatar */}
-            <div className={`w-10 h-10 rounded-full border-2 transition-all duration-300 overflow-hidden bg-slate-800
-                ${isSpeaking ? 'border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)] scale-110' :
-                    isConnected ? 'border-slate-500 opacity-90 group-hover:opacity-100' : 'border-red-500/50 opacity-50 grayscale'}
+            <div className={`w-10 h-10 rounded-full border-2 transition-all duration-300 overflow-hidden bg-slate-800 relative
+                ${isSpeaking ? 'border-green-500 shadow-[0_0_10px_rgba(34,197,94,0.6)] scale-110 z-10' :
+                    isActive ? 'border-amber-500 shadow-[0_0_15px_rgba(245,158,11,0.6)] scale-110 z-10' :
+                        isConnected ? 'border-slate-500 opacity-90 group-hover:opacity-100' : 'border-red-500/50 opacity-50 grayscale'}
             `}>
+                {isActive && (
+                    <div className="absolute inset-0 border-2 border-white/20 rounded-full animate-pulse"></div>
+                )}
                 {player?.photo_url ? (
                     <img src={player.photo_url} alt={player.name} className="w-full h-full object-cover" />
                 ) : (
@@ -168,7 +174,7 @@ const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTr
     );
 };
 
-export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickPlayer, onTransferCash, onTransferAsset, onSkipTurn, onForceMove, myId }: VoiceControlsProps) => {
+export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickPlayer, onTransferCash, onTransferAsset, onSkipTurn, onForceMove, myId, currentPlayerId }: VoiceControlsProps) => {
     // SAFELY consume context instead of direct hooks
     const { localParticipant, participants, room, isConnected, error } = useVoice();
 
@@ -208,7 +214,7 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
 
 
         <div className="flex flex-col items-center w-full">
-            <div className="flex flex-wrap justify-center gap-2 px-2 max-w-[95vw]">
+            <div className="flex flex-wrap justify-center gap-3 px-3 py-3 max-w-[95vw] bg-[#0f172a]/80 backdrop-blur-md rounded-2xl border border-slate-700/50 shadow-xl">
                 {/* Embedded Mic Button */}
                 <button
                     onClick={toggleMute}
@@ -236,6 +242,7 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
                             onSkip={onSkipTurn}
                             onForceMove={onForceMove}
                             isMe={p.id === myId || p.userId === myId}
+                            isActive={p.id === currentPlayerId}
                         />
                     );
                 })}

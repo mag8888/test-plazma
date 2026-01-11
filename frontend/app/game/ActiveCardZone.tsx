@@ -251,6 +251,17 @@ export const ActiveCardZone = ({
             // ALWAYS show cards that belong to me (e.g. transferred deals)
             if (item.sourcePlayerId === me?.id) return true;
 
+            // DEDUPLICATION FIX:
+            // If this is the "CURRENT" card (just drawn), check if an equivalent card exists in "MARKET" items.
+            // If so, hide the "CURRENT" one to avoid double rendering.
+            if (item.source === 'CURRENT') {
+                const isDuplicateOfMarket = marketCards.some((m: any) =>
+                    m.title === item.title &&
+                    m.type === item.type
+                );
+                if (isDuplicateOfMarket) return false;
+            }
+
             // If canShowCard is false (not my turn), only show cards that I can sell
             if (!canShowCard) {
                 const iOwnAsset = me?.assets?.some((a: any) =>

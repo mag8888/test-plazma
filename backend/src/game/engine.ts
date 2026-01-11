@@ -3,6 +3,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { CardManager, Card } from './card.manager';
 import { DbCardManager } from './db.card.manager';
 import { PROFESSIONS } from './professions';
+import { GameLogger } from '../services/game-logger.service';
 
 export interface GameState {
     roomId: string;
@@ -873,11 +874,6 @@ export class GameEngine {
         // Fast Track: Expenses are 0 (unless specific events add them temporarily?)
         // Standard rule: Cashflow = Passive Income (since Expenses 0)
         // Ensure manual expense additions (like Tax Audit?) are preserved?
-        // Usually Expenses are reset to 0 in enterFastTrack.
-        // If we have dynamic Fast Track expenses (suits, etc.), we should sum them.
-        // For now, assuming expenses are 0 or controlled elsewhere.
-        // But `recalculateFinancials` typically overwrites derived stats.
-        // Let's keep `player.expenses` if it was set by events?
         // Or should we recalcluate liabilities? 
         // Fast Track Liabilities? "Mortgage (Biz)"?
         // If we added Mortgage, we should sum it.
@@ -963,6 +959,12 @@ export class GameEngine {
             if (step === 0) {
                 this.addLog(`🎲 (Tutorial) Forced Roll: 2`);
                 this.movePlayer(2);
+                GameLogger.getInstance().logEvent(this.state.roomId, 'DICE_ROLL', {
+                    playerId: this.getCurrentPlayer().id,
+                    roll: 2,
+                    values: [2],
+                    phase: this.state.phase
+                }, this.state);
                 return { total: 2, values: [2] };
             }
             // Step 1: Force Roll 5 (Land on Market)
@@ -970,6 +972,12 @@ export class GameEngine {
             if (step === 1) {
                 this.addLog(`🎲 (Tutorial) Forced Roll: 5`);
                 this.movePlayer(5);
+                GameLogger.getInstance().logEvent(this.state.roomId, 'DICE_ROLL', {
+                    playerId: this.getCurrentPlayer().id,
+                    roll: 5,
+                    values: [5],
+                    phase: this.state.phase
+                }, this.state);
                 return { total: 5, values: [5] };
             }
         }
@@ -1047,6 +1055,14 @@ export class GameEngine {
             // this.cardManager.discard(card); 
             // this.state.currentCard = undefined;
 
+            GameLogger.getInstance().logEvent(this.state.roomId, 'MLM_ROLL_RESULT', {
+                playerId: player.id,
+                roll,
+                partners,
+                totalCashflow,
+                cardTitle: card.title
+            }, this.state);
+
             this.state.phase = 'MLM_RESULT';
             return { total: roll, values: [roll] };
         }
@@ -1119,6 +1135,13 @@ export class GameEngine {
             this.addLog(`${player.name} выбросил ${total}`);
         }
 
+        GameLogger.getInstance().logEvent(this.state.roomId, 'DICE_ROLL', {
+            playerId: player.id,
+            roll: total,
+            values,
+            phase: this.state.phase
+        }, this.state);
+
         console.log(`[Engine.rollDice] SUCCESS: ${player.name} rolled ${total}, Phase now: ${this.state.phase}`);
         return { total, values };
     }
@@ -1131,6 +1154,11 @@ export class GameEngine {
             console.error(`[Downsized] Player not found: ${playerId}`);
             return;
         }
+
+        GameLogger.getInstance().logEvent(this.state.roomId, 'DOWNSIZED_DECISION', {
+            playerId,
+            decision
+        }, this.state);
 
         const currentPlayer = this.state.players[this.state.currentPlayerIndex];
         if (player.id !== currentPlayer.id) {
@@ -1214,6 +1242,13 @@ export class GameEngine {
             timestamp: Date.now()
         };
 
+        GameLogger.getInstance().logEvent(this.state.roomId, 'MLM_INVITE', {
+            inviterId,
+            targetId,
+            slotIndex,
+            cardTitle: this.state.currentCard?.title
+        }, this.state);
+
         this.addLog(`🤝 ${inviter.name} приглашает ${target.name} в бизнес!`);
 
         // Return data for Gateway to emit 'mlm_offer' to target
@@ -1257,6 +1292,13 @@ export class GameEngine {
         const inviter = this.state.players.find(p => p.id === inviterId);
 
         if (!invitee || !inviter) return;
+
+        GameLogger.getInstance().logEvent(this.state.roomId, 'MLM_RESPONSE', {
+            inviteeId,
+            inviterId,
+            accept,
+            cardTitle: this.state.currentCard?.title
+        }, this.state);
 
         const cost = this.state.currentCard?.cost || 1000;
         const income = this.state.currentCard?.cashflow || 500;
@@ -1337,9 +1379,6 @@ export class GameEngine {
                 // FAST_TRACK_SQUARES indices are 24..71.
                 // player.position initially set to 0 in checkFastTrackCondition (Line 252).
                 // So player.position is 0-47 relative to Fast Track start?
-                // The getSquare mock used `this.state.board[pos]`.
-                // `FULL_BOARD` concat means index 0-23 (Rat), 24-71 (Fast).
-                // So if player.position is 0 (Fast Track Start), that maps to global index 24.
                 // We need to map local pos to global pos.
 
                 // Let's assume player.position for FT is 0-47.
@@ -1498,7 +1537,7 @@ export class GameEngine {
                 // Let's rely on standard properties or extend logic in buyAsset.
                 // We'll trust 'ft_INDEX' ID parsing or add transient props if Card allows.
                 // TypeScript 'Card' definition check? Assuming Card is flexible or I need to update it.
-                // Let's assume Card needs updating if strict. For now casting as any for safety in this tool call.
+                // For now casting as any for safety in this tool call.
 
                 this.state.phase = 'ACTION';
                 break;
@@ -1785,6 +1824,13 @@ export class GameEngine {
         }
 
         if (card) {
+            GameLogger.getInstance().logEvent(this.state.roomId, 'DEAL_DRAW', {
+                playerId,
+                type,
+                cardId: card.id,
+                cardTitle: card.title
+            }, this.state);
+
             // MLM Pre-Roll Logic to ensure consistency between UI and Transaction
             if (card.subtype === 'MLM_ROLL') {
                 const partners = Math.floor(Math.random() * 6) + 1; // 1-6
@@ -1809,6 +1855,11 @@ export class GameEngine {
         }
     }
 
+
+    resolveOpportunity(size: 'SMALL' | 'BIG') {
+        const player = this.state.players[this.state.currentPlayerIndex];
+        this.drawDeal(player.id, size);
+    }
 
     takeLoan(playerId: string, amount: number) {
         const player = this.state.players.find(p => p.id === playerId);
@@ -1873,134 +1924,25 @@ export class GameEngine {
         });
 
         this.addLog(`${player.name} взял кредит $${amount}. Расходы +$${interest}/мес`);
-    }
-
-    resolveOpportunity(size: 'SMALL' | 'BIG') {
-        if (this.state.phase !== 'OPPORTUNITY_CHOICE') return;
-
-        const player = this.state.players[this.state.currentPlayerIndex];
-
-        let card: Card | undefined;
-        if (size === 'SMALL') {
-            card = this.cardManager.drawSmallDeal();
-        } else {
-            card = this.cardManager.drawBigDeal();
-        }
-
-        if (!card) {
-            this.addLog(`${player.name} хотел ${size === 'SMALL' ? 'МАЛУЮ' : 'КРУПНУЮ'} сделку, но колода пуста!`);
-            this.state.phase = 'ACTION';
-            return;
-        }
-
-        this.state.currentCard = card;
-
-        // CHECK OWNERSHIP: Is this asset already owned by someone else?
-        // We match by Title AND Type (to avoid generic collisions if any, though Business/Real Estate are key)
-        if (card.type === 'REAL_ESTATE' || card.type === 'BUSINESS') {
-            for (const p of this.state.players) {
-                // Check if player owns this asset
-                // We use loose title matching or exact logic?
-                // Let's us loose includes for safety or exact ID if available
-                // If ID is unique per card template, two players can have "Condo 2Br".
-                // BUT "Buyout" implies buying THIS specific instance? 
-                // Actually, in Rat Race, cards are drawn from deck. If Player A has "Condo 2Br", and Player B draws "Condo 2Br", 
-                // is it the SAME condo? In board games, usually "You found a DEAL".
-                // However, user REQUEST is "re-buying". This implies specific targetability.
-                // OR it implies "If someone has this card, you can buy it from them".
-                // Let's assume if anyone owns an asset with SAME TITLE, it is candidate for buyout.
-                // EXCEPT: Multiple people can own "3Br House"?
-                // If unique (e.g. "Yoga Center"), then yes.
-                // Let's start with strict Title match.
-                const existingAsset = p.assets.find(a => a.title === card.title && a.type === card.type);
-                if (existingAsset) {
-                    card.ownerId = p.id; // Socket ID for UI
-                    card.ownerName = p.name;
-                    card.isBuyout = true;
-                    card.originalCost = existingAsset.cost; // Save original cost basis
-                    this.addLog(`🔍 Эту возможность (${card.title}) уже имеет ${p.name}. Возможен выкуп!`);
-                    break; // Found owner
-                }
-            }
-        }
-
-        // Persist if it offers to buy something
-        if (card.offerPrice && card.offerPrice > 0) {
-            if (!this.state.activeMarketCards) this.state.activeMarketCards = [];
-            this.state.activeMarketCards.push({
-                id: uuidv4(),
-                card: card,
-                expiresAt: Date.now() + 2 * 60 * 1000,
-                sourcePlayerId: player.id
-            });
-        }
-
-        // Handle Mandatory Cards (Damages/Events)
-        if (card.mandatory) {
-            let cost = card.cost || 0;
-
-            // Special Logic Checks
-            // Special Logic Checks
-            if (card.title.includes('Roof Leak') || card.title.includes('Крыша протекла')) {
-                // Only pay if player owns property (Real Estate)
-                const hasProperty = player.assets.some(a => a.type === 'REAL_ESTATE' || a.title.includes('Home') || a.title.includes('House') || a.title.includes('Condo') || a.title.includes('Plex') || a.title.includes('Дом') || a.title.includes('Квартира') || a.title.includes('Таунхаус'));
-
-                if (!hasProperty) {
-                    cost = 0;
-                    this.addLog(`😅 ${card.title}: Нет недвижимости. Вы ничего не платите.`);
-                }
-            } else if (card.title.includes('Sewer') || card.title.includes('Прорыв канализации')) {
-                // Also requires property ownership usually
-                const hasProperty = player.assets.some(a => a.type === 'REAL_ESTATE' || a.title.includes('Home') || a.title.includes('House') || a.title.includes('Condo') || a.title.includes('Plex') || a.title.includes('Дом') || a.title.includes('Квартира') || a.title.includes('Таунхаус'));
-
-                if (!hasProperty) {
-                    cost = 0;
-                    this.addLog(`😅 ${card.title}: Нет недвижимости. Вы ничего не платите.`);
-                }
-            }
-
-            if (cost > 0) {
-                // Do NOT force payment here. 
-                // Just log it and let the UI show the card in ACTION phase.
-                // The "Buy/Pay" button in UI will call buyAsset().
-
-                // We keep card.mandatory = true so UI knows to show "PAY" instead of "BUY".
-                this.state.phase = 'ACTION';
-                return;
-            } else {
-                // Show card even if cost is 0 so user knows what happened
-                card.cost = 0; // Explicitly set to 0
-                this.addLog(`😅 ${card.title}: Нет недвижимости. Вы ничего не платите.`);
-
-                // Keep card in state so UI shows it with "Pay $0" or "Ok"
-                this.state.phase = 'ACTION';
-                return;
-            }
-        }
-
-        const details = [];
-        if (card.cost) details.push(`Cost: $${card.cost}`);
-        if (card.cashflow) details.push(`Flow: $${card.cashflow}`);
-        if (card.downPayment) details.push(`Down: $${card.downPayment}`);
-        if ((card as any).rule) details.push(`Rule: ${(card as any).rule}`); // Cast to any to avoid TS error
-
-        const detailsStr = details.length > 0 ? ` (${details.join(', ')})` : '';
-        this.addLog(`${player.name} chose ${size} DEAL: ${card.title}${detailsStr}`);
-        this.state.phase = 'ACTION'; // Back to action phase to buy/pass
+        GameLogger.getInstance().logEvent(this.state.roomId, 'LOAN_TAKEN', {
+            playerId,
+            amount,
+            interest
+        }, this.state);
     }
 
     repayLoan(playerId: string, amount: number) {
-        // ... (existing code, keeping unrelated logic intact if not editing it)
-        // Actually, I am replacing the method or appending? 
-        // I will use replace_file_content to INSERT after repayLoan block ends.
-        // It's safer to target checking where repayLoan ends.
-        // repayLoan ends at line 704: this.checkFastTrackCondition(player); }
         const player = this.state.players.find(p => p.id === playerId);
         if (!player) return;
 
         if (amount <= 0 || amount % 1000 !== 0) return;
         if (player.loanDebt < amount) return; // Cannot overpay
         if (player.cash < amount) return;
+
+        GameLogger.getInstance().logEvent(this.state.roomId, 'LOAN_REPAID', {
+            playerId,
+            amount
+        }, this.state);
 
         const interest = amount * 0.1;
 
@@ -2137,10 +2079,24 @@ export class GameEngine {
         const cashflowStr = asset.cashflow ? ` (Поток: $${asset.cashflow})` : '';
         this.addLog(`🤝 ${fromPlayer.name} передал ${quantity}x ${asset.title}${cashflowStr} игроку ${toPlayer.name}`);
 
+        GameLogger.getInstance().logEvent(this.state.roomId, 'ASSET_TRANSFERRED', {
+            fromPlayerId,
+            toPlayerId,
+            assetTitle: asset.title,
+            quantity,
+            isPartial
+        }, this.state);
     }
 
     dismissCard() {
         const currentPlayer = this.state.players[this.state.currentPlayerIndex];
+
+        GameLogger.getInstance().logEvent(this.state.roomId, 'CARD_DISMISSED', {
+            playerId: currentPlayer?.id,
+            cardTitle: this.state.currentCard?.title,
+            cardId: this.state.currentCard?.id,
+            source: 'CURRENT'
+        }, this.state);
 
         // Auto-deduct Expense or Mandatory Card if not paid
         if (this.state.currentCard && (this.state.currentCard.type === 'EXPENSE' || this.state.currentCard.mandatory) && currentPlayer) {
@@ -2170,9 +2126,6 @@ export class GameEngine {
                     } else {
                         // Bankrupt logic or Debt?
                         // Usually auto-loan or bankrupt.
-                        // Let's rely on takeLoan if possible, or just force negative cash?
-                        // Monopoly style: Force negative, must resolve before end turn?
-                        // But dismissCard IS end turn essentially.
                         // Let's deduct into negative.
                         currentPlayer.cash -= expenseCost;
                         this.addLog(`💸 ${currentPlayer.name} оплатил (в долг) обязательный расход: ${this.state.currentCard.title} ($${expenseCost})`);
@@ -2213,7 +2166,7 @@ export class GameEngine {
     }
 
     transferDeal(fromUserId: string, toPlayerId: string, activeCardId: string) {
-        let activeCard = this.state.activeMarketCards?.find(ac => ac.id === activeCardId);
+        let activeCard = this.state.activeMarketCards?.find(ac => ac.card.id === activeCardId);
 
         // CHECK IF IT IS CURRENT CARD (Transient Deal)
         if (!activeCard && this.state.currentCard && this.state.currentCard.id === activeCardId) {
@@ -2256,6 +2209,13 @@ export class GameEngine {
         if (activeCard.sourcePlayerId !== fromPlayer.id) {
             throw new Error("You are not the owner of this deal");
         }
+
+        GameLogger.getInstance().logEvent(this.state.roomId, 'DEAL_TRANSFERRED', {
+            fromUserId,
+            toPlayerId,
+            cardTitle: activeCard.card.title,
+            cost: activeCard.card.cost
+        }, this.state);
 
         // Transfer Ownership to target player's socket.id
         activeCard.sourcePlayerId = toPlayer.id;
@@ -2319,6 +2279,13 @@ export class GameEngine {
         }
 
         const asset = player.assets[assetIndex];
+
+        GameLogger.getInstance().logEvent(this.state.roomId, 'ASSET_SOLD', {
+            playerId,
+            assetTitle: asset.title,
+            originalCost: asset.cost,
+            salePrice: salePrice
+        }, this.state);
 
         // Process Sale
         const oldCash = player.cash;
@@ -2396,6 +2363,11 @@ export class GameEngine {
             return;
         }
 
+        GameLogger.getInstance().logEvent(this.state.roomId, 'CHARITY_DONATION', {
+            playerId,
+            amount
+        }, this.state);
+
         player.cash -= amount;
         // FAST TRACK: Permanent. RAT RACE: 3 Turns.
         // Set to 4 because endTurn() will decrement it immediately for this turn
@@ -2423,6 +2395,9 @@ export class GameEngine {
 
     skipCharity(playerId: string) {
         this.addLog(`${this.state.players.find(p => p.id === playerId)?.name} declined Charity.`);
+        GameLogger.getInstance().logEvent(this.state.roomId, 'CHARITY_SKIPPED', {
+            playerId
+        }, this.state);
         this.endTurn();
     }
 
@@ -2437,6 +2412,10 @@ export class GameEngine {
             this.cardManager.discard(this.state.currentCard);
             this.state.currentCard = undefined;
         }
+
+        GameLogger.getInstance().logEvent(this.state.roomId, 'MLM_RESULT_CONFIRMED', {
+            playerId
+        }, this.state);
 
         this.state.phase = 'ACTION';
         this.addLog(`${player.name} confirmed results.`);
@@ -2481,6 +2460,13 @@ export class GameEngine {
 
                 this.state.tutorialStep = 2;
                 this.state.phase = 'ACTION';
+
+                GameLogger.getInstance().logEvent(this.state.roomId, 'CARD_DRAW', {
+                    playerId,
+                    type,
+                    cardTitle: card.title,
+                    cardId: card.id
+                }, this.state);
                 return;
             }
 
@@ -2510,6 +2496,12 @@ export class GameEngine {
                     });
                 }
                 this.state.phase = 'ACTION';
+                GameLogger.getInstance().logEvent(this.state.roomId, 'CARD_DRAW', {
+                    playerId,
+                    type,
+                    cardTitle: card.title,
+                    cardId: card.id
+                }, this.state);
             } else {
                 this.addLog(`🏪 РЫНОК: Карты закончились.`);
                 this.state.phase = 'ACTION';
@@ -2522,6 +2514,12 @@ export class GameEngine {
                 this.state.currentCard = card;
                 this.addLog(`💸 Трата: ${card.title} (-$${card.cost || 0})`);
                 this.state.phase = 'ACTION';
+                GameLogger.getInstance().logEvent(this.state.roomId, 'CARD_DRAW', {
+                    playerId,
+                    type,
+                    cardTitle: card.title,
+                    cardId: card.id
+                }, this.state);
             } else {
                 this.addLog(`💸 Трата: Нет карт расходов.`);
                 this.state.phase = 'ACTION';
@@ -2638,6 +2636,14 @@ export class GameEngine {
 
             this.addLog(`${player.name} bought ${quantity} ${card.symbol} @ $${card.cost}.`);
 
+            GameLogger.getInstance().logEvent(this.state.roomId, 'ASSET_BOUGHT', {
+                playerId,
+                cardTitle: card.title,
+                cost: totalCost,
+                symbol: card.symbol,
+                quantity
+            }, this.state);
+
             // Discard the stock card so it returns to deck (Market Fluctuation)
             this.cardManager.discard(card);
 
@@ -2708,6 +2714,12 @@ export class GameEngine {
             player.cash -= costToPay;
             this.addLog(`🤝 ${player.name} инвестировал в ${card.title} (-$${costToPay}). Бросаем кубик на количество партнеров...`);
             this.state.phase = 'MLM_ROLL';
+            GameLogger.getInstance().logEvent(this.state.roomId, 'ASSET_BOUGHT', {
+                playerId,
+                cardTitle: card.title,
+                cost: costToPay,
+                subtype: card.subtype
+            }, this.state);
             return;
         } else if (card.subtype === 'MLM_PLACEMENT') {
             // FIX: Prevent double-buy
@@ -2734,6 +2746,12 @@ export class GameEngine {
                 ]
             };
             this.addLog(`🌐 ${player.name} открыл Сетевой Бизнес! Приглашаем партнеров...`);
+            GameLogger.getInstance().logEvent(this.state.roomId, 'ASSET_BOUGHT', {
+                playerId,
+                cardTitle: card.title,
+                cost: costToPay,
+                subtype: card.subtype
+            }, this.state);
             return;
         } else if (card.subtype === 'CHARITY_ROLL') {
             const roll = Math.floor(Math.random() * 3) + 1;
@@ -2750,6 +2768,12 @@ export class GameEngine {
                 player.charityTurns = 3;
                 this.addLog(`🎓 Друг поделился мудростью! Вы получаете 3 хода с 2 кубиками.`);
             }
+            GameLogger.getInstance().logEvent(this.state.roomId, 'CHARITY_ROLL_OUTCOME', {
+                playerId,
+                roll,
+                outcome: shouldAddAsset ? 'success' : 'failure',
+                cardTitle: card.title
+            }, this.state);
         }
 
         // Handle Payment
@@ -2844,6 +2868,13 @@ export class GameEngine {
                 };
                 this.addLog(`🌍 ${player.name} купил франшизу MONEO!`);
             }
+            GameLogger.getInstance().logEvent(this.state.roomId, 'ASSET_BOUGHT', {
+                playerId,
+                cardTitle: card.title,
+                cost: costToPay,
+                cashflow: assetCashflow,
+                type: card.type
+            }, this.state);
         }
 
         // Handling Discard/Clean up after buy
@@ -2980,6 +3011,12 @@ export class GameEngine {
 
         this.addLog(`🎁 ${fromPlayer.name} подарил $${amount.toLocaleString()} игроку ${toPlayer.name}`);
 
+        GameLogger.getInstance().logEvent(this.state.roomId, 'CASH_GIFTED', {
+            fromPlayerId,
+            toPlayerId,
+            amount
+        }, this.state);
+
         // Check Fast Track for recipient
         this.checkFastTrackCondition(toPlayer);
     }
@@ -2999,6 +3036,11 @@ export class GameEngine {
             description: 'Gift from Host',
             type: 'PAYDAY' // Green positive visual
         });
+
+        GameLogger.getInstance().logEvent(this.state.roomId, 'ADMIN_GIVE_CASH', {
+            playerId,
+            amount
+        }, this.state);
 
         this.checkFastTrackCondition(player);
     }
@@ -3046,6 +3088,14 @@ export class GameEngine {
 
         this.addLog(`📈 ${player.name} sold ${quantity} ${card.symbol} @ $${price} for $${saleTotal}`);
 
+        GameLogger.getInstance().logEvent(this.state.roomId, 'STOCK_SOLD', {
+            playerId,
+            symbol: card.symbol,
+            quantity,
+            price,
+            saleTotal
+        }, this.state);
+
         // Do NOT end turn. Selling stock is an open market action.
         this.checkFastTrackCondition(player);
     }
@@ -3072,6 +3122,11 @@ export class GameEngine {
         });
 
         this.addLog(`${fromPlayer.name} transferred $${amount} to ${toPlayer.name}`);
+        GameLogger.getInstance().logEvent(this.state.roomId, 'FUNDS_TRANSFERRED', {
+            fromPlayerId: fromId,
+            toPlayerId: toId,
+            amount
+        }, this.state);
     }
 
     private recordTransaction(t: Omit<Transaction, 'id' | 'timestamp'>) {
@@ -3178,12 +3233,19 @@ export class GameEngine {
         if (!marketCard.dismissedBy.includes(playerId)) {
             marketCard.dismissedBy.push(playerId);
             this.addLog(`${this.state.players.find(p => p.id === playerId)?.name} закрыл карточку`);
+            GameLogger.getInstance().logEvent(this.state.roomId, 'CARD_DISMISSED', {
+                playerId,
+                cardTitle: marketCard.card.title,
+                cardId: marketCard.card.id,
+                source: 'MARKET'
+            }, this.state);
         }
 
         this.cleanupMarketCards();
     }
 
     endTurn() {
+        const currentPlayer = this.state.players[this.state.currentPlayerIndex];
         // CRITICAL FIX: If user clicks "Next" (Skip) on a Mandatory Card (Expense/Doodad), force payment!
         if (this.state.currentCard && (this.state.currentCard.type === 'EXPENSE' || this.state.currentCard.mandatory)) {
             const player = this.state.players[this.state.currentPlayerIndex];
@@ -3310,6 +3372,12 @@ export class GameEngine {
             // Optional: Log expiration if we tracked it
         }
 
+        GameLogger.getInstance().logEvent(this.state.roomId, 'TURN_ENDED', {
+            playerId: currentPlayer?.id,
+            nextPlayerId: activePlayer?.id,
+            phase: this.state.phase
+        }, this.state);
+
         // this.addLog(`Now it is ${activePlayer.name}'s turn.`);
     }
 
@@ -3368,6 +3436,11 @@ export class GameEngine {
     private bankruptPlayer(player: PlayerState) {
         this.addLog(`☠️ ${player.name} IS BANKRUPT! Restarting with penalty...`);
         this.state.lastEvent = { type: 'BANKRUPTCY', payload: { player: player.name } };
+
+        GameLogger.getInstance().logEvent(this.state.roomId, 'PLAYER_BANKRUPTED', {
+            playerId: player.id,
+            playerName: player.name
+        }, this.state);
 
         // Reset Logic
         // player.isBankrupted = true; // DO NOT set to true effectively removing them. Prompt says "начинает заново".
@@ -3438,10 +3511,7 @@ export class GameEngine {
         // this.emitState(); // Usually called by gateway after action returns? No, gateway calls getState. 
         // Gateway: game.transferDeal -> state updated -> emit. 
         // So we don't need emitState here if gateway handles it. 
-        // Gateway `handleTransferDeal` calls `game.getState` and emits.
-        // My new `handleTransferCash` in gateway does NOT emit yet! 
-        // Wait, I checked `game.gateway.ts` changes. I added `game.transferCash(...)` but didn't add emit logic!
-        // I must fix gateway to emit state!
+        // Gateway `handleTransferCash` calls `game.getState` and emits.
     }
 
     resolveBabyRoll(): number | { total: number, values: number[] } {
@@ -3507,6 +3577,13 @@ export class GameEngine {
                     }
                 };
 
+                GameLogger.getInstance().logEvent(this.state.roomId, 'BABY_BORN', {
+                    playerId: player.id,
+                    roll,
+                    childNumber: currentChild,
+                    bonus,
+                    expenseIncrease
+                }, this.state);
 
             } else {
                 this.addLog(`👶 У вас уже 3 детей! (Кубик: ${roll}). Больше 3 нельзя.`);
@@ -3520,9 +3597,18 @@ export class GameEngine {
                         message: "Максимум детей достигнут"
                     }
                 };
+                GameLogger.getInstance().logEvent(this.state.roomId, 'BABY_ROLL_MAX_CHILDREN', {
+                    playerId: player.id,
+                    roll,
+                    totalChildren: player.childrenCount
+                }, this.state);
             }
         } else {
             this.addLog(`🎲 ${player.name} выбросил ${roll}. Ребёнок не родился.`);
+            GameLogger.getInstance().logEvent(this.state.roomId, 'BABY_ROLL_NO_BIRTH', {
+                playerId: player.id,
+                roll
+            }, this.state);
         }
 
         this.state.phase = 'ACTION'; // Enable Next
@@ -3542,6 +3628,11 @@ export class GameEngine {
         if (this.state.phase !== 'CHARITY_CHOICE') throw new Error("Not in charity phase");
         const player = this.state.players[this.state.currentPlayerIndex];
         if (player.id !== socketId) throw new Error("Not your turn");
+
+        GameLogger.getInstance().logEvent(this.state.roomId, 'CHARITY_CHOICE', {
+            playerId: player.id,
+            accept
+        }, this.state);
 
         if (accept) {
             let cost = 0;
@@ -3621,6 +3712,8 @@ export class GameEngine {
     public adminForceMove(targetPlayerId: string) {
         // Only allow forcing the CURRENT player
         const currentPlayer = this.getCurrentPlayer();
+
+        // 3. Mark hasRolled flag (usually handled in UI state, but backend can track too if needed)
         if (currentPlayer.id !== targetPlayerId) {
             throw new Error("Can only force move the active player");
         }

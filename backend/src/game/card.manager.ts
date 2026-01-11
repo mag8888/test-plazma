@@ -32,41 +32,47 @@ export interface Card {
 
 // Expense Cards
 // Helper to expand counts
-const expand = (count: number, template: Partial<Card>, type: Card['type']): Card[] => {
-    return Array(count).fill(null).map((_, i) => ({ ...template, id: `${type}_${template.title}_${i}`, type } as Card));
+// Helper to expand counts
+const expand = (count: number, template: Partial<Card>, type: Card['type'], startDisplayId: number): Card[] => {
+    return Array(count).fill(null).map((_, i) => ({
+        ...template,
+        id: `${type}_${template.title}_${i}`,
+        type,
+        displayId: startDisplayId + i
+    } as Card));
 };
 
 // Expense Cards
 export const EXPENSE_CARDS: Card[] = [
     // Low ($50 - $400)
-    { id: 'e1', type: 'EXPENSE', title: 'Обед в ресторане', description: 'С друзьями.', cost: 50, mandatory: true },
-    { id: 'e2', type: 'EXPENSE', title: 'Ремонт кофемашины', description: 'Поломка.', cost: 100, mandatory: true },
-    { id: 'e3', type: 'EXPENSE', title: 'Новые кроссовки', description: 'Спорт.', cost: 150, mandatory: true },
-    { id: 'e4', type: 'EXPENSE', title: 'Штраф ПДД', description: 'Превышение скорости.', cost: 200, mandatory: true },
-    { id: 'e5', type: 'EXPENSE', title: 'Ужин премиум', description: 'Гастрономический сет.', cost: 250, mandatory: true },
-    { id: 'e6', type: 'EXPENSE', title: 'Концерт', description: 'Обычные места.', cost: 300, mandatory: true },
-    { id: 'e7', type: 'EXPENSE', title: 'Подписки на сервисы', description: 'Годовая подписка.', cost: 350, mandatory: true },
-    { id: 'e8', type: 'EXPENSE', title: 'Абонемент в фитнес', description: 'Квартальный.', cost: 400, mandatory: true },
+    { displayId: 1, id: 'e1', type: 'EXPENSE', title: 'Обед в ресторане', description: 'С друзьями.', cost: 50, mandatory: true },
+    { displayId: 2, id: 'e2', type: 'EXPENSE', title: 'Ремонт кофемашины', description: 'Поломка.', cost: 100, mandatory: true },
+    { displayId: 3, id: 'e3', type: 'EXPENSE', title: 'Новые кроссовки', description: 'Спорт.', cost: 150, mandatory: true },
+    { displayId: 4, id: 'e4', type: 'EXPENSE', title: 'Штраф ПДД', description: 'Превышение скорости.', cost: 200, mandatory: true },
+    { displayId: 5, id: 'e5', type: 'EXPENSE', title: 'Ужин премиум', description: 'Гастрономический сет.', cost: 250, mandatory: true },
+    { displayId: 6, id: 'e6', type: 'EXPENSE', title: 'Концерт', description: 'Обычные места.', cost: 300, mandatory: true },
+    { displayId: 7, id: 'e7', type: 'EXPENSE', title: 'Подписки на сервисы', description: 'Годовая подписка.', cost: 350, mandatory: true },
+    { displayId: 8, id: 'e8', type: 'EXPENSE', title: 'Абонемент в фитнес', description: 'Квартальный.', cost: 400, mandatory: true },
 
     // Mid ($500 - $1500)
-    { id: 'e9', type: 'EXPENSE', title: 'Благотворительность', description: 'Пожертвование.', cost: 500, mandatory: true },
-    { id: 'e10', type: 'EXPENSE', title: 'Ветеринар', description: 'Лечение питомца.', cost: 600, mandatory: true },
-    { id: 'e11', type: 'EXPENSE', title: 'Новый смартфон', description: 'Бюджетная модель.', cost: 800, mandatory: true },
-    { id: 'e12', type: 'EXPENSE', title: 'ТО Автомобиля', description: 'Замена масла и фильтров.', cost: 900, mandatory: true },
-    { id: 'e13', type: 'EXPENSE', title: 'Шопинг', description: 'Одежда (сезонная).', cost: 1000, mandatory: true },
-    { id: 'e14', type: 'EXPENSE', title: 'Бытовая техника', description: 'Посудомоечная машина.', cost: 1100, mandatory: true },
-    { id: 'e15', type: 'EXPENSE', title: 'Ремонт машины', description: 'Замена деталей.', cost: 1200, mandatory: true },
-    { id: 'e16', type: 'EXPENSE', title: 'Стоматолог', description: 'Лечение зубов.', cost: 1300, mandatory: true },
-    { id: 'e17', type: 'EXPENSE', title: 'Страховка', description: 'Страхование жизни.', cost: 1400, mandatory: true },
-    { id: 'e18', type: 'EXPENSE', title: 'Новый ноутбук', description: 'Рабочий инструмент.', cost: 1500, mandatory: true },
+    { displayId: 9, id: 'e9', type: 'EXPENSE', title: 'Благотворительность', description: 'Пожертвование.', cost: 500, mandatory: true },
+    { displayId: 10, id: 'e10', type: 'EXPENSE', title: 'Ветеринар', description: 'Лечение питомца.', cost: 600, mandatory: true },
+    { displayId: 11, id: 'e11', type: 'EXPENSE', title: 'Новый смартфон', description: 'Бюджетная модель.', cost: 800, mandatory: true },
+    { displayId: 12, id: 'e12', type: 'EXPENSE', title: 'ТО Автомобиля', description: 'Замена масла и фильтров.', cost: 900, mandatory: true },
+    { displayId: 13, id: 'e13', type: 'EXPENSE', title: 'Шопинг', description: 'Одежда (сезонная).', cost: 1000, mandatory: true },
+    { displayId: 14, id: 'e14', type: 'EXPENSE', title: 'Бытовая техника', description: 'Посудомоечная машина.', cost: 1100, mandatory: true },
+    { displayId: 15, id: 'e15', type: 'EXPENSE', title: 'Ремонт машины', description: 'Замена деталей.', cost: 1200, mandatory: true },
+    { displayId: 16, id: 'e16', type: 'EXPENSE', title: 'Стоматолог', description: 'Лечение зубов.', cost: 1300, mandatory: true },
+    { displayId: 17, id: 'e17', type: 'EXPENSE', title: 'Страховка', description: 'Страхование жизни.', cost: 1400, mandatory: true },
+    { displayId: 18, id: 'e18', type: 'EXPENSE', title: 'Новый ноутбук', description: 'Рабочий инструмент.', cost: 1500, mandatory: true },
 
     // High ($2000 - $5000)
-    { id: 'e19', type: 'EXPENSE', title: 'Отпуск', description: 'Тур на море.', cost: 2000, mandatory: true },
-    { id: 'e20', type: 'EXPENSE', title: 'Брендовая сумка', description: 'Подарок.', cost: 2500, mandatory: true },
-    { id: 'e21', type: 'EXPENSE', title: 'Ремонт дома', description: 'Косметический ремонт.', cost: 3000, mandatory: true },
-    { id: 'e22', type: 'EXPENSE', title: 'Обслуживание катера', description: 'Сезонное обслуживание.', cost: 3500, mandatory: true },
-    { id: 'e23', type: 'EXPENSE', title: 'Подарок на свадьбу', description: 'Щедрый подарок.', cost: 4000, mandatory: true },
-    { id: 'e24', type: 'EXPENSE', title: 'Аренда виллы', description: 'Вечеринка для друзей.', cost: 5000, mandatory: true },
+    { displayId: 19, id: 'e19', type: 'EXPENSE', title: 'Отпуск', description: 'Тур на море.', cost: 2000, mandatory: true },
+    { displayId: 20, id: 'e20', type: 'EXPENSE', title: 'Брендовая сумка', description: 'Подарок.', cost: 2500, mandatory: true },
+    { displayId: 21, id: 'e21', type: 'EXPENSE', title: 'Ремонт дома', description: 'Косметический ремонт.', cost: 3000, mandatory: true },
+    { displayId: 22, id: 'e22', type: 'EXPENSE', title: 'Обслуживание катера', description: 'Сезонное обслуживание.', cost: 3500, mandatory: true },
+    { displayId: 23, id: 'e23', type: 'EXPENSE', title: 'Подарок на свадьбу', description: 'Щедрый подарок.', cost: 4000, mandatory: true },
+    { displayId: 24, id: 'e24', type: 'EXPENSE', title: 'Аренда виллы', description: 'Вечеринка для друзей.', cost: 5000, mandatory: true },
 ];
 
 export const SMALL_DEALS: Card[] = [
@@ -179,27 +185,27 @@ export const SMALL_DEALS: Card[] = [
 
 export const BIG_DEALS: Card[] = [
     // Real Estate
-    { id: 'bd_house_ex', title: 'Дом (3Br/2Ba)', description: 'Дом под сдачу. Цена $7000-10000. Доход $200.', cost: 7000, cashflow: 200, type: 'DEAL_BIG' },
-    ...expand(3, { title: 'Дом 3Br/2Ba (Дуплекс)', cost: 14000, cashflow: 400, description: 'Дуплекс в хорошем районе.', downPayment: 10000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
-    ...expand(4, { title: '4-квартирный дом', cost: 35000, cashflow: 1200, description: 'Многоквартирный дом. Стабильные жильцы.', downPayment: 30000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
-    ...expand(4, { title: '8-квартирный комплекс', cost: 90000, cashflow: 2800, description: 'Жилой комплекс с управляющим.', downPayment: 70000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
-    { id: 'bd_8plex_3', title: 'ЖК "Заря"', cost: 100000, downPayment: 75000, cashflow: 3000, description: 'Эконом класс.', assetType: 'REAL_ESTATE', type: 'DEAL_BIG' },
+    { displayId: 1, id: 'bd_house_ex', title: 'Дом (3Br/2Ba)', description: 'Дом под сдачу. Цена $7000-10000. Доход $200.', cost: 7000, cashflow: 200, type: 'DEAL_BIG' },
+    ...expand(3, { title: 'Дом 3Br/2Ba (Дуплекс)', cost: 14000, cashflow: 400, description: 'Дуплекс в хорошем районе.', downPayment: 10000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG', 2),
+    ...expand(4, { title: '4-квартирный дом', cost: 35000, cashflow: 1200, description: 'Многоквартирный дом. Стабильные жильцы.', downPayment: 30000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG', 5),
+    ...expand(4, { title: '8-квартирный комплекс', cost: 90000, cashflow: 2800, description: 'Жилой комплекс с управляющим.', downPayment: 70000, assetType: 'REAL_ESTATE' }, 'DEAL_BIG', 9),
+    { displayId: 13, id: 'bd_8plex_3', title: 'ЖК "Заря"', cost: 100000, downPayment: 75000, cashflow: 3000, description: 'Эконом класс.', assetType: 'REAL_ESTATE', type: 'DEAL_BIG' },
 
     // Hospitality
-    ...expand(4, { title: 'Мини-отель', cost: 100000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 75000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' }, 'DEAL_BIG'),
+    ...expand(4, { title: 'Мини-отель', cost: 100000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 75000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' }, 'DEAL_BIG', 14),
 
     // Franchise
-    { id: 'bd_moneo_franchise', title: 'Франшиза MONEO', cost: 30000, cashflow: 3000, description: 'Франшиза MONEO. Партнер вносит $30к и получает доход $3к. Вы получаете $3к за каждого партнера (до 3).', downPayment: 30000, businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_BIG' },
+    { displayId: 18, id: 'bd_moneo_franchise', title: 'Франшиза MONEO', cost: 30000, cashflow: 3000, description: 'Франшиза MONEO. Партнер вносит $30к и получает доход $3к. Вы получаете $3к за каждого партнера (до 3).', downPayment: 30000, businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_BIG' },
 
     // Classic Business
-    ...expand(4, { title: 'Сеть кафе быстрого питания', cost: 240000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 150000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
-    ...expand(3, { title: 'Ферма органических овощей', cost: 150000, cashflow: 4500, description: 'Экологичное хозяйство с контрактами на поставку.', downPayment: 100000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
-    ...expand(3, { title: 'Сеть автомоек', cost: 175000, cashflow: 5000, description: 'Хорошее расположение, стабильный трафик клиентов.', downPayment: 125000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
-    ...expand(3, { title: 'Коворкинг-центр', cost: 280000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 200000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG'),
+    ...expand(4, { title: 'Сеть кафе быстрого питания', cost: 240000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 150000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG', 19),
+    ...expand(3, { title: 'Ферма органических овощей', cost: 150000, cashflow: 4500, description: 'Экологичное хозяйство с контрактами на поставку.', downPayment: 100000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG', 23),
+    ...expand(3, { title: 'Сеть автомоек', cost: 175000, cashflow: 5000, description: 'Хорошее расположение, стабильный трафик клиентов.', downPayment: 125000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG', 26),
+    ...expand(3, { title: 'Коворкинг-центр', cost: 280000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 200000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG', 29),
 
     // Network
-    ...expand(6, { title: 'Франшиза: Plazma Water', cost: 30000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG'),
-    ...expand(5, { title: 'Франшиза: MONEO', cost: 30000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG'),
+    ...expand(6, { title: 'Франшиза: Plazma Water', cost: 30000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG', 32),
+    ...expand(5, { title: 'Франшиза: MONEO', cost: 30000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG', 38),
 ];
 
 export const MARKET_CARDS: Card[] = [
@@ -208,44 +214,44 @@ export const MARKET_CARDS: Card[] = [
     // --- REAL ESTATE & BUSINESS BUYERS (MULTIPLIERS 1.5x - 5x) ---
 
     // 3Br/2Ba House (Cost $8,500)
-    { title: 'Покупатель дома', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 13000, description: 'Семья ищет дом. Предлагают $13,000.', type: 'MARKET', id: 'mkt_house_1.5' },
-    { title: 'Инвестор в недвижимость', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 25500, description: 'Инвестор скупает районы. $25,500.', type: 'MARKET', id: 'mkt_house_3' },
+    { displayId: 1, title: 'Покупатель дома', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 13000, description: 'Семья ищет дом. Предлагают $13,000.', type: 'MARKET', id: 'mkt_house_1.5' },
+    { displayId: 2, title: 'Инвестор в недвижимость', targetTitle: 'Дом (3Br/2Ba)', offerPrice: 25500, description: 'Инвестор скупает районы. $25,500.', type: 'MARKET', id: 'mkt_house_3' },
 
     // Mini-Hotel (Cost $80,000)
-    { title: 'Отельная сеть (M)', targetTitle: 'Мини-отель', offerPrice: 120000, description: 'Сеть расширяется. Предлагают $120,000.', type: 'MARKET', id: 'mkt_hotel_1.5' },
-    { title: 'Крупный игрок', targetTitle: 'Мини-отель', offerPrice: 240000, description: 'Фонд хочет ваш отель. $240,000.', type: 'MARKET', id: 'mkt_hotel_3' },
-    { title: 'Монополист', targetTitle: 'Мини-отель', offerPrice: 400000, description: 'Предложение, от которого нельзя отказаться. $400,000!', type: 'MARKET', id: 'mkt_hotel_5' },
+    { displayId: 3, title: 'Отельная сеть (M)', targetTitle: 'Мини-отель', offerPrice: 120000, description: 'Сеть расширяется. Предлагают $120,000.', type: 'MARKET', id: 'mkt_hotel_1.5' },
+    { displayId: 4, title: 'Крупный игрок', targetTitle: 'Мини-отель', offerPrice: 240000, description: 'Фонд хочет ваш отель. $240,000.', type: 'MARKET', id: 'mkt_hotel_3' },
+    { displayId: 5, title: 'Монополист', targetTitle: 'Мини-отель', offerPrice: 400000, description: 'Предложение, от которого нельзя отказаться. $400,000!', type: 'MARKET', id: 'mkt_hotel_5' },
 
     // Fast Food (Cost $200,000)
-    { title: 'Конкурент (FastFood)', targetTitle: 'Сеть кафе быстрого питания', offerPrice: 300000, description: 'Конкурент выкупает точки. $300,000.', type: 'MARKET', id: 'mkt_ff_1.5' },
-    { title: 'Мировой бренд', targetTitle: 'Сеть кафе быстрого питания', offerPrice: 1000000, description: 'Глобальная корпорация поглощает вас. $1,000,000!', type: 'MARKET', id: 'mkt_ff_5' },
+    { displayId: 6, title: 'Конкурент (FastFood)', targetTitle: 'Сеть кафе быстрого питания', offerPrice: 300000, description: 'Конкурент выкупает точки. $300,000.', type: 'MARKET', id: 'mkt_ff_1.5' },
+    { displayId: 7, title: 'Мировой бренд', targetTitle: 'Сеть кафе быстрого питания', offerPrice: 1000000, description: 'Глобальная корпорация поглощает вас. $1,000,000!', type: 'MARKET', id: 'mkt_ff_5' },
 
     // Organic Farm (Cost $120,000)
-    { title: 'Эко-ритейлер', targetTitle: 'Ферма органических овощей', offerPrice: 240000, description: 'Сеть супермаркетов покупает производство. $240,000.', type: 'MARKET', id: 'mkt_farm_2' },
-    { title: 'Агрохолдинг', targetTitle: 'Ферма органических овощей', offerPrice: 600000, description: 'Крупный агрохолдинг. $600,000!', type: 'MARKET', id: 'mkt_farm_5' },
+    { displayId: 8, title: 'Эко-ритейлер', targetTitle: 'Ферма органических овощей', offerPrice: 240000, description: 'Сеть супермаркетов покупает производство. $240,000.', type: 'MARKET', id: 'mkt_farm_2' },
+    { displayId: 9, title: 'Агрохолдинг', targetTitle: 'Ферма органических овощей', offerPrice: 600000, description: 'Крупный агрохолдинг. $600,000!', type: 'MARKET', id: 'mkt_farm_5' },
 
     // Car Wash (Cost $150,000)
-    { title: 'Франчайзинг', targetTitle: 'Сеть автомоек', offerPrice: 450000, description: 'Вас хотят сделать частью франшизы. $450,000.', type: 'MARKET', id: 'mkt_wash_3' },
-    { title: 'Девелопер', targetTitle: 'Сеть автомоек', offerPrice: 600000, description: 'Земля под мойками нужна под застройку. $600,000.', type: 'MARKET', id: 'mkt_wash_4' },
+    { displayId: 10, title: 'Франчайзинг', targetTitle: 'Сеть автомоек', offerPrice: 450000, description: 'Вас хотят сделать частью франшизы. $450,000.', type: 'MARKET', id: 'mkt_wash_3' },
+    { displayId: 11, title: 'Девелопер', targetTitle: 'Сеть автомоек', offerPrice: 600000, description: 'Земля под мойками нужна под застройку. $600,000.', type: 'MARKET', id: 'mkt_wash_4' },
 
     // Coworking (Cost $250,000)
-    { title: 'IT-Стартап', targetTitle: 'Коворкинг-центр', offerPrice: 500000, description: 'Единорог покупает офис. $500,000.', type: 'MARKET', id: 'mkt_cowork_2' },
-    { title: 'Google', targetTitle: 'Коворкинг-центр', offerPrice: 1250000, description: 'Техногигант открывает штаб-квартиру. $1,250,000!', type: 'MARKET', id: 'mkt_cowork_5' },
+    { displayId: 12, title: 'IT-Стартап', targetTitle: 'Коворкинг-центр', offerPrice: 500000, description: 'Единорог покупает офис. $500,000.', type: 'MARKET', id: 'mkt_cowork_2' },
+    { displayId: 13, title: 'Google', targetTitle: 'Коворкинг-центр', offerPrice: 1250000, description: 'Техногигант открывает штаб-квартиру. $1,250,000!', type: 'MARKET', id: 'mkt_cowork_5' },
 
     // Plazma Water (Cost $5,000)
-    { title: 'Выкуп франшизы', targetTitle: 'Франшиза: Plazma Water', offerPrice: 25000, description: 'Головная компания выкупает точку. $25,000.', type: 'MARKET', id: 'mkt_plazma_5' },
+    { displayId: 14, title: 'Выкуп франшизы', targetTitle: 'Франшиза: Plazma Water', offerPrice: 25000, description: 'Головная компания выкупает точку. $25,000.', type: 'MARKET', id: 'mkt_plazma_5' },
 
     // Generic / Other
-    { title: 'Слияние сетей', targetTitle: 'Студия маникюра', offerPrice: 25000, description: 'Выкуп сети. $25,000.', type: 'MARKET', id: 'mkt_nail_5' },
-    { title: 'Покупатель бизнеса', targetTitle: 'Кофейня', offerPrice: 15000, description: 'Инвестор. $15,000.', type: 'MARKET', id: 'mkt_coffee_3' },
-    { title: 'Застройщик', targetTitle: 'Участок земли 20га', offerPrice: 150000, description: 'Цена земли взлетела до $150,000.', type: 'MARKET', id: 'mkt_land_high' },
-    { title: 'Покупатель студии', targetTitle: 'Флипинг студии', offerPrice: 3000, description: 'Покупатель квартиры студии (субаренда) за $3,000.', type: 'MARKET', id: 'mkt_6' },
-    { title: 'Покупатель студии', targetTitle: 'Флипинг студии', offerPrice: 15000, description: 'Покупатель готовой студии. $15,000.', type: 'MARKET', id: 'mkt_flip_15k' },
-    { title: 'Выкуп доли', targetTitle: 'Партнёрство в автомастерской', offerPrice: 20000, description: 'Есть покупатель на партнерство за $20,000.', type: 'MARKET', id: 'mkt_4' },
-    { title: 'Покупатель жилья', targetTitle: 'Комната в пригороде', offerPrice: 12000, description: 'Старое жилье идет под снос. Предлагают $12,000 за комнату.', type: 'MARKET', id: 'mkt_1' },
+    { displayId: 15, title: 'Слияние сетей', targetTitle: 'Студия маникюра', offerPrice: 25000, description: 'Выкуп сети. $25,000.', type: 'MARKET', id: 'mkt_nail_5' },
+    { displayId: 16, title: 'Покупатель бизнеса', targetTitle: 'Кофейня', offerPrice: 15000, description: 'Инвестор. $15,000.', type: 'MARKET', id: 'mkt_coffee_3' },
+    { displayId: 17, title: 'Застройщик', targetTitle: 'Участок земли 20га', offerPrice: 150000, description: 'Цена земли взлетела до $150,000.', type: 'MARKET', id: 'mkt_land_high' },
+    { displayId: 18, title: 'Покупатель студии', targetTitle: 'Флипинг студии', offerPrice: 3000, description: 'Покупатель квартиры студии (субаренда) за $3,000.', type: 'MARKET', id: 'mkt_6' },
+    { displayId: 19, title: 'Покупатель студии', targetTitle: 'Флипинг студии', offerPrice: 15000, description: 'Покупатель готовой студии. $15,000.', type: 'MARKET', id: 'mkt_flip_15k' },
+    { displayId: 20, title: 'Выкуп доли', targetTitle: 'Партнёрство в автомастерской', offerPrice: 20000, description: 'Есть покупатель на партнерство за $20,000.', type: 'MARKET', id: 'mkt_4' },
+    { displayId: 21, title: 'Покупатель жилья', targetTitle: 'Комната в пригороде', offerPrice: 12000, description: 'Старое жилье идет под снос. Предлагают $12,000 за комнату.', type: 'MARKET', id: 'mkt_1' },
 
     // BITCOIN SCAM
-    { title: 'Скам на криптобирже', targetTitle: 'Bitcoin', offerPrice: 0, description: '🔥 Биржа рухнула! ВСЕ BTC СГОРАЮТ! (Цена $0)', type: 'MARKET', id: 'mkt_btc_scam' },
+    { displayId: 22, title: 'Скам на криптобирже', targetTitle: 'Bitcoin', offerPrice: 0, description: '🔥 Биржа рухнула! ВСЕ BTC СГОРАЮТ! (Цена $0)', type: 'MARKET', id: 'mkt_btc_scam' },
 ];
 
 export class CardManager {

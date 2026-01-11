@@ -606,17 +606,17 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
                 // If turn passed TO localPlayer
                 if (typeof oldIdx === 'number' && typeof newIdx === 'number' && oldIdx !== newIdx && newIdx === meInList) {
-                    sfx.play('turn');
+                    //    sfx.play('turn');
                 }
 
-                if (data.state.lastEvent?.type === 'PAYDAY') {
-                    sfx.play('payday');
-                }
-                if (data.state.lastEvent?.type === 'DOWNSIZED') {
-                    sfx.play('fired');
-                }
-                if (data.state.lastEvent?.type === 'FAST_TRACK') sfx.play('fasttrack');
-                if (data.state.lastEvent?.type === 'STOCK') sfx.play('stock');
+                //if (data.state.lastEvent?.type === 'PAYDAY') {
+                //    sfx.play('payday');
+                //}
+                //if (data.state.lastEvent?.type === 'DOWNSIZED') {
+                //    sfx.play('fired');
+                //}
+                //if (data.state.lastEvent?.type === 'FAST_TRACK') sfx.play('fasttrack');
+                //if (data.state.lastEvent?.type === 'STOCK') sfx.play('stock');
 
                 setState(data.state);
 
@@ -1847,6 +1847,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                 console.log('Host force move:', targetId);
                                                 socket.emit('host_force_move', { roomId, userId, targetPlayerId: targetId });
                                             }}
+                                            currentPlayerId={state.players[state.currentPlayerIndex]?.id}
                                         />
                                     </div>
                                 </div>
@@ -1975,7 +1976,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                     {/* Voice Area (Mic + Avatars) - Centered & Harmonious */}
                                     <div className="w-full flex justify-center mb-2">
                                         {isVoiceConnected ? (
-                                            <VoiceControls onSpeakingChanged={setIsSpeaking} players={state?.players || []} />
+                                            <VoiceControls onSpeakingChanged={setIsSpeaking} players={state?.players || []} currentPlayerId={state.players[state.currentPlayerIndex]?.id} />
                                         ) : (
                                             <span className="text-[10px] animate-pulse text-yellow-500 px-2 text-center w-full">Подключение...</span>
                                         )}
@@ -2031,7 +2032,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         <span>ОТКРЫТЬ</span>
                                     </button>
                                 ) : (localPlayer?.charityTurns || 0) > 0 && isMyTurn && (state.phase === 'ROLL' || state.phase === 'MLM_ROLL') && !hasRolled ? (
-                                    <div className="flex gap-2 flex-1 h-16">
+                                    <div className="flex gap-2 flex-1 h-12">
                                         <button onClick={() => handleRoll(1)} className="flex-1 bg-emerald-600 active:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow-lg flex flex-col items-center justify-center gap-1 transition-all">
                                             <span className="text-xl">🎲</span>
                                             <span>1</span>
@@ -2051,7 +2052,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                     <button
                                         onClick={() => handleRoll()}
                                         disabled={!isMyTurn || (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL') || !!state.currentCard || hasRolled}
-                                        className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg relative overflow-hidden
+                                        className={`flex-1 h-12 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg relative overflow-hidden
                                 ${isMyTurn && (state.phase === 'ROLL' || state.phase === 'BABY_ROLL' || state.phase === 'MLM_ROLL') && !state.currentCard && !hasRolled
                                                 ? 'bg-emerald-600 active:bg-emerald-500 border-emerald-400/50 text-white shadow-emerald-900/30'
                                                 : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
@@ -2086,7 +2087,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         state.phase === 'BABY_ROLL' ||
                                         ((state.phase === 'ROLL' || state.phase === 'MLM_ROLL') && !state.currentCard && !hasRolled)
                                     }
-                                    className={`flex-1 h-16 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
+                                    className={`flex-1 h-12 rounded-xl border flex items-center justify-center gap-2 transition-all shadow-lg
                         ${isMyTurn && (state.phase !== 'ROLL' && state.phase !== 'BABY_ROLL' || !!state.currentCard || hasRolled) && !isAnimating && state.phase !== 'BABY_ROLL'
                                             ? 'bg-blue-600 active:bg-blue-500 border-blue-400/50 text-white shadow-blue-900/30'
                                             : 'bg-slate-800/40 border-slate-700/50 text-slate-600 cursor-not-allowed'}`}
