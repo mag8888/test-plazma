@@ -157,6 +157,5 @@ export const MlmNetworkModal: React.FC<MlmNetworkModalProps> = ({ isOpen, onClos
                 </div>
             </div>
         </div>
-        </div >
     );
 };

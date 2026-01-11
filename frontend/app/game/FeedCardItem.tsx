@@ -333,9 +333,8 @@ export const FeedCardItem = ({
                                 </>) : card.type === 'MARKET' ? (
                                     <>
                                         {/* Market Card Actions */}
-                                        {/* Market Card Actions */}
-                                        {/* Allow Buying if you control the card (or it's an offer) */}
-                                        {canControl && (
+                                        {/* Allow Buying if you control the card (or it's an offer) AND it has a positive price */}
+                                        {canControl && (card.offerPrice > 0 || card.cost > 0 || card.price > 0) && (
                                             <button
                                                 onClick={() => {
                                                     setTransactionMode('BUY');
