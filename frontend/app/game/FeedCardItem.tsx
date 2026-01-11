@@ -294,8 +294,8 @@ export const FeedCardItem = ({
                         {/* Actions */}
                         {(isMyTurn || isOwner || canControl || (isStock && ownedQty > 0)) && (
                             <div className="grid grid-cols-1 gap-2 mt-1 w-full">
-                                {/* Asset Ownership Warning */}
-                                {card.offerPrice && isOffer && !hasAsset && (
+                                {/* Asset Ownership Warning - Removed as it confuses buyers */}
+                                {false && card.offerPrice && isOffer && !hasAsset && (
                                     <div className="bg-red-900/30 border border-red-500/50 rounded-lg p-2 mb-2 animate-pulse">
                                         <div className="flex items-center gap-2">
                                             <span className="text-lg">⚠️</span>
@@ -333,8 +333,9 @@ export const FeedCardItem = ({
                                 </>) : card.type === 'MARKET' ? (
                                     <>
                                         {/* Market Card Actions */}
-                                        {/* If it's a Stock, you can also BUY at this price - ONLY if you control the card */}
-                                        {isStock && canControl && (
+                                        {/* Market Card Actions */}
+                                        {/* Allow Buying if you control the card (or it's an offer) */}
+                                        {canControl && (
                                             <button
                                                 onClick={() => {
                                                     setTransactionMode('BUY');

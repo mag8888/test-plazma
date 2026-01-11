@@ -256,8 +256,8 @@ export const ActiveCardZone = ({
             // If so, hide the "CURRENT" one to avoid double rendering.
             if (item.source === 'CURRENT') {
                 const isDuplicateOfMarket = marketCards.some((m: any) =>
-                    m.title === item.title &&
-                    m.type === item.type
+                    (m.id && item.id && m.id === item.id) || // ID Match
+                    (m.title === item.title && m.type === item.type) // Or props match
                 );
                 if (isDuplicateOfMarket) return false;
             }
