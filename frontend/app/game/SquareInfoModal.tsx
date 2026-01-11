@@ -13,6 +13,7 @@ export const SquareInfoModal = ({ square, onClose, player, roomId }: SquareInfoM
     const [galleryType, setGalleryType] = useState<'SMALL' | 'BIG' | 'MARKET' | null>(null);
 
     if (!square) return null;
+    if (square.type === 'DOWNSIZED') return null; // Handled by DownsizedModal
 
     const isMarket = square.type === 'MARKET';
     const isDeal = square.type === 'DEAL';

@@ -3246,6 +3246,13 @@ export class GameEngine {
 
     endTurn() {
         const currentPlayer = this.state.players[this.state.currentPlayerIndex];
+
+        // CRITICAL: Handle Timeout/Skip on Downsized Decision -> Default to Skip 2 Turns
+        if (this.state.phase === 'DOWNSIZED_DECISION') {
+            this.addLog(`⏳ Время вышло / Пропуск для ${currentPlayer.name}: Применен дефолтный сценарий (Пропуск 2 ходов).`);
+            currentPlayer.skippedTurns = 2; // Default penalty
+        }
+
         // CRITICAL FIX: If user clicks "Next" (Skip) on a Mandatory Card (Expense/Doodad), force payment!
         if (this.state.currentCard && (this.state.currentCard.type === 'EXPENSE' || this.state.currentCard.mandatory)) {
             const player = this.state.players[this.state.currentPlayerIndex];
