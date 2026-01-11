@@ -706,7 +706,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
         if (!mlmOffer) return;
         socket.emit('mlm_response', {
             roomId,
-            inviteeId: socket.id,
+            userId: localPlayer?.id || socket.id, // Fixed: Gateway expects 'userId'
             inviterId: mlmOffer.inviterId,
             accept
         });
