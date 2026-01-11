@@ -192,12 +192,21 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
     // SAFELY consume context instead of direct hooks
     const { localParticipant, participants, room, isConnected, error } = useVoice();
 
-    const [isMuted, setIsMuted] = useState(false);
+    const [isMuted, setIsMuted] = useState(true);
     const [isSpeaking, setIsSpeaking] = useState(false);
+    const [hasInitializedMute, setHasInitializedMute] = useState(false);
 
     // Derived mic state (localParticipant is truth only 90%)
     // But we need instant feedback, so state is fine.
     const isMicOn = !isMuted && isConnected;
+
+    // Enforce initial mute
+    useEffect(() => {
+        if (localParticipant && !hasInitializedMute) {
+            localParticipant.setMicrophoneEnabled(false);
+            setHasInitializedMute(true);
+        }
+    }, [localParticipant, hasInitializedMute]);
 
     const toggleMute = () => {
         if (localParticipant) {

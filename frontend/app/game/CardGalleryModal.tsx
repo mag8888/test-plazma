@@ -104,6 +104,18 @@ export const CardGalleryModal = ({ isOpen, onClose, type, roomId }: CardGalleryM
                                             <h3 className="font-bold text-white leading-tight group-hover:text-blue-300 transition-colors">{card.title}</h3>
                                             <span className="text-[10px] bg-slate-900 px-1.5 py-0.5 rounded text-slate-500 font-mono">#{i + 1}</span>
                                         </div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                if (confirm(`Сделать карту "${card.title}" следующей?`)) {
+                                                    socket.emit('admin_set_next_card', { cardId: card.id, type, roomId });
+                                                    onClose();
+                                                }
+                                            }}
+                                            className="w-full mt-2 mb-3 bg-purple-500/10 hover:bg-purple-500/20 text-purple-300 text-[10px] uppercase font-bold py-1.5 rounded transition-colors border border-purple-500/20 hover:border-purple-500/40"
+                                        >
+                                            ⚡ Сделать следующей
+                                        </button>
                                         <p className="text-xs text-slate-400 mb-4 line-clamp-4 leading-relaxed">
                                             {card.description}
                                         </p>

@@ -387,4 +387,36 @@ export class CardManager {
             expense: { remaining: this.expenseDeck.length, discarded: this.expenseDeckDiscard.length, total: this.expenseDeck.length + this.expenseDeckDiscard.length }
         };
     }
+    setNextCard(type: string, cardId: string) {
+        let deck: Card[] | undefined;
+        let discardDeck: Card[] | undefined;
+
+        if (type === 'SMALL') { deck = this.smallDeals; discardDeck = this.smallDealsDiscard; }
+        else if (type === 'BIG') { deck = this.bigDeals; discardDeck = this.bigDealsDiscard; }
+        else if (type === 'MARKET') { deck = this.marketDeck; discardDeck = this.marketDeckDiscard; }
+        else if (type === 'EXPENSE') { deck = this.expenseDeck; discardDeck = this.expenseDeckDiscard; }
+
+        if (!deck || !discardDeck) return false;
+
+        // Find in deck
+        let idx = deck.findIndex(c => c.id === cardId);
+        let card: Card | undefined;
+
+        if (idx !== -1) {
+            card = deck.splice(idx, 1)[0];
+        } else {
+            // Find in discard
+            idx = discardDeck.findIndex(c => c.id === cardId);
+            if (idx !== -1) {
+                card = discardDeck.splice(idx, 1)[0];
+            }
+        }
+
+        if (card) {
+            deck.unshift(card);
+            console.log(`[CardManager] Set next card: ${card.title} (${card.id})`);
+            return true;
+        }
+        return false;
+    }
 }

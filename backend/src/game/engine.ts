@@ -1284,41 +1284,19 @@ export class GameEngine {
         const player = this.state.players.find(p => p.id === userId);
         if (!player) throw new Error("Player not found");
 
-        const card = this.state.currentCard;
-        if (!card) throw new Error("No active card");
+        // Asset was already bought in buyAsset. Invites handled in handleMlmResponse.
+        // Just cleanup here.
 
-        // Franchise Cost
-        const cost = card.cost || 0;
-
-        if (player.cash < cost) {
-            // For now, simple block. Ideally allow loan?
-            throw new Error("Недостаточно средств для оплаты франшизы!");
-        }
-
-        player.cash -= cost;
-
-        // Add Main Asset
-        player.assets.push({
-            ...card,
-            displayId: undefined, // Cleanup
-            subtype: 'MLM_HEAD' // Distinguish from legs
-        });
-
-        this.addLog(`⭐ ${player.name} завершил формирование сети и приобрел ${card.title} (-$${cost}).`);
-
-        // Cleanup
+        this.addLog(`${player.name} завершил формирование сети.`);
         this.state.mlmState = undefined;
-        this.state.currentCard = undefined; // Card consumed
+        this.state.currentCard = undefined;
         this.state.phase = 'ACTION';
 
-        GameLogger.getInstance().logEvent(this.state.roomId, 'MLM_FINISH', {
-            playerId: userId,
-            cardTitle: card.title,
-            cost
-        }, this.state);
-
+        // Final sync
         this.recalculateFinancials(player);
+        this.endTurn();
     }
+
     movePlayer(steps: number) {
         const player = this.state.players[this.state.currentPlayerIndex];
         const oldPos = player.position;
@@ -1801,30 +1779,6 @@ export class GameEngine {
                 cardId: card.id,
                 cardTitle: card.title
             }, this.state);
-
-            // MLM PLACEMENT LOGIC
-            // If card has subtype 'MLM_PLACEMENT' -> switch to MLM_PLACEMENT phase
-            if (card.subtype === 'MLM_PLACEMENT') {
-                this.state.phase = 'MLM_PLACEMENT';
-                this.state.mlmState = {
-                    cardId: card.id,
-                    inviterId: playerId,
-                    slots: [
-                        { status: 'EMPTY' },
-                        { status: 'EMPTY' },
-                        { status: 'EMPTY' }
-                    ]
-                };
-                this.state.currentCard = card;
-                this.addLog(`Selected Network Deal: ${card.title}. Waiting for invites...`);
-
-                GameLogger.getInstance().logEvent(this.state.roomId, 'MLM_START', {
-                    playerId,
-                    cardId: card.id,
-                    cardTitle: card.title
-                }, this.state);
-                return; // EXIT HERE so phase stays MLM_PLACEMENT
-            }
 
             this.state.currentCard = card;
             this.addLog(`Selected ${type} deal: ${card.title} (#${(card as any).displayId || '?'})`);
@@ -2715,14 +2669,15 @@ export class GameEngine {
             player.cash -= costToPay;
 
             // Initializing MLM Session
-            this.state.phase = 'MLM_PLACEMENT';
-            this.state.mlmState = {
+            // We do NOT return here. We allow the asset to be added first.
+            // Then we switch phase at the end.
+            mlmResult = {
                 cardId: card.id,
                 inviterId: player.id,
                 slots: [
-                    { status: 'EMPTY' },
-                    { status: 'EMPTY' },
-                    { status: 'EMPTY' }
+                    { status: 'EMPTY' as const },
+                    { status: 'EMPTY' as const },
+                    { status: 'EMPTY' as const }
                 ]
             };
             this.addLog(`🌐 ${player.name} открыл Сетевой Бизнес! Приглашаем партнеров...`);
@@ -2732,7 +2687,7 @@ export class GameEngine {
                 cost: costToPay,
                 subtype: card.subtype
             }, this.state);
-            return;
+            // Fall through to add asset
         } else if (card.subtype === 'CHARITY_ROLL') {
             const roll = Math.floor(Math.random() * 3) + 1;
             if (roll === 1) {
@@ -2876,6 +2831,15 @@ export class GameEngine {
                     dismissedBy: [this.state.players[this.state.currentPlayerIndex].id]
                 });
             }
+        }
+
+        // Check for MLM Transition
+        if (mlmResult) {
+            this.state.phase = 'MLM_PLACEMENT';
+            this.state.mlmState = mlmResult;
+            // Keep currentCard for context logic if needed, or rely on phase
+            this.state.currentCard = card;
+            return;
         }
 
         // Clear currentCard (for all cards including private ones)

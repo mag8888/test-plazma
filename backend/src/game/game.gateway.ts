@@ -258,6 +258,14 @@ export class GameGateway {
                 socket.emit('deck_content', content);
             });
 
+            socket.on('admin_set_next_card', (data) => {
+                const { roomId, type, cardId } = data;
+                const game = this.games.get(roomId);
+                if (game) {
+                    game.cardManager.setNextCard(type, cardId);
+                }
+            });
+
             // Get Leaderboard
             socket.on('get_leaderboard', async (callback) => {
                 try {
