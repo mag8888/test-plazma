@@ -21,6 +21,11 @@ export const connectDatabase = async () => {
     try {
         let mongoUrl = process.env.MONGO_URL;
 
+        // DEBUG: Print all env keys to see what is actually available
+        console.log('[DEBUG] Available Env Keys:', Object.keys(process.env).sort().join(', '));
+        console.log('[DEBUG] MONGO_URL value type:', typeof process.env.MONGO_URL, process.env.MONGO_URL ? '(Present)' : '(Missing)');
+        console.log('[DEBUG] DATABASE_URL value type:', typeof process.env.DATABASE_URL, process.env.DATABASE_URL ? '(Present)' : '(Missing)');
+
         // Fallback to DATABASE_URL if MONEO_URL is missing
         if (!mongoUrl && process.env.DATABASE_URL) {
             console.log('[Database] MONGO_URL not found, using DATABASE_URL instead.');
