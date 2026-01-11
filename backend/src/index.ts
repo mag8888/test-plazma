@@ -1,3 +1,4 @@
+console.log('🚀 STARTING BACKEND VERSION 1.0.3 - FORCE DEBUG');
 import express from 'express';
 import { createServer } from 'http';
 import cors from 'cors';
