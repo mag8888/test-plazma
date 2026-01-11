@@ -195,7 +195,7 @@ export const BIG_DEALS: Card[] = [
     ...expand(4, { title: 'Мини-отель', cost: 100000, cashflow: 3000, description: 'Бутик-отель на 10 номеров, стабильно приносит доход.', downPayment: 75000, businessType: 'CLASSIC', assetType: 'REAL_ESTATE' }, 'DEAL_BIG', 14),
 
     // Franchise
-    { displayId: 18, id: 'bd_moneo_franchise', title: 'Франшиза MONEO', cost: 30000, cashflow: 3000, description: 'Франшиза MONEO. Партнер вносит $30к и получает доход $3к. Вы получаете $3к за каждого партнера (до 3).', downPayment: 30000, businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_BIG' },
+    ...expand(2, { title: 'Франшиза MONEO', cost: 30000, cashflow: 3000, description: 'Франшиза MONEO. Партнер вносит $30к и получает доход $3к. Вы получаете $3к за каждого партнера (до 3).', downPayment: 30000, businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS' }, 'DEAL_BIG', 18),
 
     // Classic Business
     ...expand(4, { title: 'Сеть кафе быстрого питания', cost: 240000, cashflow: 7000, description: 'Прибыльный бизнес, несколько точек в центре города.', downPayment: 150000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG', 19),
@@ -204,8 +204,7 @@ export const BIG_DEALS: Card[] = [
     ...expand(3, { title: 'Коворкинг-центр', cost: 280000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 200000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG', 29),
 
     // Network
-    ...expand(6, { title: 'Франшиза: Plazma Water', cost: 30000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG', 32),
-    ...expand(5, { title: 'Франшиза: MONEO', cost: 30000, cashflow: 1000, description: 'Франшиза MONEO. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG', 38),
+    ...expand(2, { title: 'Франшиза: Plazma Water', cost: 30000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG', 32),
 ];
 
 export const MARKET_CARDS: Card[] = [
