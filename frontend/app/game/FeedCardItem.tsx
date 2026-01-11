@@ -374,22 +374,14 @@ export const FeedCardItem = ({
                                     /* Standard Deal Actions */
                                     <>
                                         {/* Buy Button - Only for Drawer OR Transferred Owner */}
+                                        {/* Buy Button - Only for Drawer OR Transferred Owner */}
                                         {canControl && (
-                                            isMLM ? (
-                                                state.phase === 'MLM_PLACEMENT' ? (
-                                                    <div className="w-full bg-indigo-900/40 border border-indigo-500/30 p-3 rounded-lg flex flex-col items-center justify-center text-center animate-pulse">
-                                                        <span className="text-xl mb-1">👥</span>
-                                                        <span className="text-[10px] text-indigo-200 font-bold uppercase">Сетевой этап</span>
-                                                        <span className="text-[9px] text-indigo-300">Пригласите партнеров в окне выше</span>
-                                                    </div>
-                                                ) : (
-                                                    <button
-                                                        onClick={() => onDismiss()}
-                                                        className="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-3 rounded-xl text-lg uppercase tracking-wider shadow-lg"
-                                                    >
-                                                        Закрыть
-                                                    </button>
-                                                )
+                                            state.phase === 'MLM_PLACEMENT' ? (
+                                                <div className="w-full bg-indigo-900/40 border border-indigo-500/30 p-3 rounded-lg flex flex-col items-center justify-center text-center animate-pulse">
+                                                    <span className="text-xl mb-1">👥</span>
+                                                    <span className="text-[10px] text-indigo-200 font-bold uppercase">Сетевой этап</span>
+                                                    <span className="text-[9px] text-indigo-300">Пригласите партнеров в окне выше</span>
+                                                </div>
                                             ) : (
                                                 <button
                                                     onClick={() => {
