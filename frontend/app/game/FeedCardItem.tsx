@@ -58,8 +58,8 @@ export const FeedCardItem = ({
     const [pendingLoan, setPendingLoan] = useState<{ amount: number; quantity: number } | null>(null);
     const [showTransfer, setShowTransfer] = useState(false);
 
-    // MLM Detection REMOVED (Legacy)
-    const isMLM = false;
+    // MLM Detection
+    const isMLM = card.subtype === 'MLM_PLACEMENT';
 
     // Auto-start in MLM_ROLL if needed and not yet done REMOVED
 
@@ -375,23 +375,36 @@ export const FeedCardItem = ({
                                     <>
                                         {/* Buy Button - Only for Drawer OR Transferred Owner */}
                                         {canControl && (
-                                            <button
-                                                onClick={() => {
-                                                    if (isMLM) {
-                                                        setViewMode('MLM_ROLL');
-                                                    } else {
+                                            isMLM ? (
+                                                state.phase === 'MLM_PLACEMENT' ? (
+                                                    <div className="w-full bg-indigo-900/40 border border-indigo-500/30 p-3 rounded-lg flex flex-col items-center justify-center text-center animate-pulse">
+                                                        <span className="text-xl mb-1">👥</span>
+                                                        <span className="text-[10px] text-indigo-200 font-bold uppercase">Сетевой этап</span>
+                                                        <span className="text-[9px] text-indigo-300">Пригласите партнеров в окне выше</span>
+                                                    </div>
+                                                ) : (
+                                                    <button
+                                                        onClick={() => onDismiss()}
+                                                        className="w-full bg-slate-700 hover:bg-slate-600 text-slate-300 font-bold py-3 rounded-xl text-lg uppercase tracking-wider shadow-lg"
+                                                    >
+                                                        Закрыть
+                                                    </button>
+                                                )
+                                            ) : (
+                                                <button
+                                                    onClick={() => {
                                                         setTransactionMode('BUY');
                                                         const price = card.cost || card.price || 0;
                                                         const maxBuy = price > 0 ? Math.floor(me.cash / price) : 1;
                                                         setStockQty(isStock && maxBuy > 0 ? maxBuy : 1);
                                                         setViewMode('TRANSACTION');
-                                                    }
-                                                }}
-                                                className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
-                                            >
-                                                {isMLM ? '🎲 Бросить' : 'Купить'}
-                                                {isTutorial && tutorialStep === 1 && <TutorialTip text="1. Купите акции!" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
-                                            </button>
+                                                    }}
+                                                    className="flex-1 bg-green-600 hover:bg-green-500 text-white font-bold py-2 rounded-lg text-[10px] uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                                                >
+                                                    {'Купить'}
+                                                    {isTutorial && tutorialStep === 1 && <TutorialTip text="1. Купите акции!" position="bottom-full mb-2" arrow="bottom-[-6px] border-t-emerald-500 border-b-0" />}
+                                                </button>
+                                            )
                                         )}
 
                                         {/* Sell Button - Open to everyone who owns the asset */}

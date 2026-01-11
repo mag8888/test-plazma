@@ -2387,6 +2387,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                             players={state?.players || []}
                             currentUserId={socket.id}
                             onInvite={handleMlmInvite}
+                            onFinish={() => socket.emit('mlm_finish', { roomId, userId: localPlayer?.id })}
                         />
 
                         <MlmOfferModal

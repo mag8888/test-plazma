@@ -25,9 +25,10 @@ interface MlmNetworkModalProps {
     players: Player[];
     currentUserId: string;
     onInvite: (targetId: string, slotIndex: number) => void;
+    onFinish: () => void;
 }
 
-export const MlmNetworkModal: React.FC<MlmNetworkModalProps> = ({ isOpen, onClose, mlmState, players, currentUserId, onInvite }) => {
+export const MlmNetworkModal: React.FC<MlmNetworkModalProps> = ({ isOpen, onClose, mlmState, players, currentUserId, onInvite, onFinish }) => {
     const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
 
     if (!isOpen || !mlmState) return null;
@@ -113,6 +114,13 @@ export const MlmNetworkModal: React.FC<MlmNetworkModalProps> = ({ isOpen, onClos
                             );
                         })}
                     </div>
+
+                    <button
+                        onClick={onFinish}
+                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3 rounded-xl text-lg uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98] mt-4"
+                    >
+                        ✅ Завершить и Купить
+                    </button>
                 </div>
 
                 {/* Player Select Overlay */}

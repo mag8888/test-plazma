@@ -1272,6 +1272,53 @@ export class GameEngine {
             this.addLog(`🚫 ${invitee.name} отклонил предложение.`);
         }
     }
+
+    /**
+     * Finalizes the MLM Placement phase.
+     * Inviter pays the franchise cost and acquires the main asset.
+     */
+    handleMlmFinish(userId: string) {
+        if (this.state.phase !== 'MLM_PLACEMENT') throw new Error("Not in MLM phase");
+        if (this.state.mlmState?.inviterId !== userId) throw new Error("Not your MLM session");
+
+        const player = this.state.players.find(p => p.id === userId);
+        if (!player) throw new Error("Player not found");
+
+        const card = this.state.currentCard;
+        if (!card) throw new Error("No active card");
+
+        // Franchise Cost
+        const cost = card.cost || 0;
+
+        if (player.cash < cost) {
+            // For now, simple block. Ideally allow loan?
+            throw new Error("Недостаточно средств для оплаты франшизы!");
+        }
+
+        player.cash -= cost;
+
+        // Add Main Asset
+        player.assets.push({
+            ...card,
+            displayId: undefined, // Cleanup
+            subtype: 'MLM_HEAD' // Distinguish from legs
+        });
+
+        this.addLog(`⭐ ${player.name} завершил формирование сети и приобрел ${card.title} (-$${cost}).`);
+
+        // Cleanup
+        this.state.mlmState = undefined;
+        this.state.currentCard = undefined; // Card consumed
+        this.state.phase = 'ACTION';
+
+        GameLogger.getInstance().logEvent(this.state.roomId, 'MLM_FINISH', {
+            playerId: userId,
+            cardTitle: card.title,
+            cost
+        }, this.state);
+
+        this.recalculateFinancials(player);
+    }
     movePlayer(steps: number) {
         const player = this.state.players[this.state.currentPlayerIndex];
         const oldPos = player.position;
