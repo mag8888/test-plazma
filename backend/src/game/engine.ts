@@ -1225,7 +1225,7 @@ export class GameEngine {
         }, this.state);
 
         const cost = this.state.currentCard?.cost || 1000;
-        const income = this.state.currentCard?.cashflow || 500;
+        const income = 500; // Fixed $500 per partner independent of base card cashflow
 
         if (accept) {
             // Check Cash

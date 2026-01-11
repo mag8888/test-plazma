@@ -155,9 +155,9 @@ export const SMALL_DEALS: Card[] = [
     { displayId: 48, id: 'sd_plazma_3', title: 'Сетевой бизнес: Plazma Water', cost: 1000, cashflow: 500, description: 'Plazma Water. Пригласи до 3 игроков. Твой доход: $500 за каждого.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 
     // 49-51 MONEO
-    { displayId: 49, id: 'sd_moneo_100', title: 'Сетевой бизнес: MONEO', cost: 1000, cashflow: 500, description: 'MONEO Network. Пригласи до 3 игроков. Твой доход: $500 за каждого.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
-    { displayId: 50, id: 'sd_moneo_1000', title: 'Сетевой бизнес: MONEO', cost: 1000, cashflow: 500, description: 'MONEO Network. Пригласи до 3 игроков. Твой доход: $500 за каждого.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
-    { displayId: 51, id: 'sd_moneo_10000', title: 'Сетевой бизнес: MONEO', cost: 1000, cashflow: 500, description: 'MONEO Network. Пригласи до 3 игроков. Твой доход: $500 за каждого.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 49, id: 'sd_moneo_100', title: 'Сетевой бизнес: MONEO', cost: 1000, cashflow: 0, description: 'MONEO Network. Пригласи до 3 игроков. Твой доход: $500 за каждого.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 50, id: 'sd_moneo_1000', title: 'Сетевой бизнес: MONEO', cost: 1000, cashflow: 0, description: 'MONEO Network. Пригласи до 3 игроков. Твой доход: $500 за каждого.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
+    { displayId: 51, id: 'sd_moneo_10000', title: 'Сетевой бизнес: MONEO', cost: 1000, cashflow: 0, description: 'MONEO Network. Пригласи до 3 игроков. Твой доход: $500 за каждого.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT', assetType: 'BUSINESS', type: 'DEAL_SMALL' },
 
     // 52-54 Friend
     { displayId: 52, id: 'sd_friend_l1', title: 'Друг просит в займ', cost: 5000, cashflow: 0, description: 'Ваш друг просит $5,000 на "верное дело". Помочь?', outcomeDescription: 'Друг прогорел. Деньги потеряны.', type: 'DEAL_SMALL', mandatory: true },
