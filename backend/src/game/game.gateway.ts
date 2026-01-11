@@ -228,6 +228,20 @@ export class GameGateway {
                 }
             });
 
+            socket.on('confirm_result', (data) => {
+                const { roomId, userId } = data;
+                const game = this.games.get(roomId);
+                if (game) {
+                    try {
+                        game.handleConfirmResult(userId);
+                        this.io.to(roomId).emit('state_updated', { state: game.getState() });
+                        this.saveState(roomId, game);
+                    } catch (e: any) {
+                        socket.emit('error', e.message);
+                    }
+                }
+            });
+
             // Get Deck Content
             socket.on('get_deck_content', (data) => {
                 const { type, roomId } = data;

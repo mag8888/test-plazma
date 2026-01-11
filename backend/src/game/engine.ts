@@ -1248,18 +1248,29 @@ export class GameEngine {
                 subtype: 'MLM_PARTNER'
             });
 
-            // Add Cashflow to Inviter (via Asset mutation or new asset)
-            // Existing Logic: We usually added the MLM card to Inviter at start? 
-            // Or we add "Legs" as separate assets?
-            // Let's add "Network Partner" asset to Inviter too?
-            // "Network Leg: [Name]"
-            inviter.assets.push({
-                title: `Партнер: ${invitee.name}`,
-                cost: 0,
-                cashflow: income,
-                type: 'BUSINESS',
-                subtype: 'MLM_LEG'
-            });
+            // CONSOLIDATION FIX for Inviter:
+            // Find existing Network Business asset
+            const networkAsset = inviter.assets.find(a =>
+                (a.subtype === 'MLM_PLACEMENT' || a.title.includes('Сетевой бизнес')) && a.type === 'BUSINESS'
+            );
+
+            if (networkAsset) {
+                // Update existing asset
+                networkAsset.cashflow += income;
+                // Optional: Update title to show partner count?
+                // Keeping title clean "Сетевой бизнес: MONEO" is usually better, but maybe append count?
+                // Let's keep it simple or maybe add a counter property if we had one.
+                // For now, increasing cashflow is the key request.
+            } else {
+                // Fallback (Should not happen if they bought it): Add new if missing
+                inviter.assets.push({
+                    title: `Сетевой бизнес: MONEO`,
+                    cost: 0,
+                    cashflow: 500 + income, // Base + Partner
+                    type: 'BUSINESS',
+                    subtype: 'MLM_PLACEMENT'
+                });
+            }
 
             this.state.mlmState.slots[slotIndex].status = 'ACCEPTED';
 
@@ -1275,7 +1286,6 @@ export class GameEngine {
 
     /**
      * Finalizes the MLM Placement phase.
-     * Inviter pays the franchise cost and acquires the main asset.
      */
     handleMlmFinish(userId: string) {
         if (this.state.phase !== 'MLM_PLACEMENT') throw new Error("Not in MLM phase");
@@ -1284,16 +1294,60 @@ export class GameEngine {
         const player = this.state.players.find(p => p.id === userId);
         if (!player) throw new Error("Player not found");
 
-        // Asset was already bought in buyAsset. Invites handled in handleMlmResponse.
-        // Just cleanup here.
+        // Calculate Result
+        const acceptedSlots = this.state.mlmState.slots.filter(s => s.status === 'ACCEPTED');
+        const partnersCount = acceptedSlots.length;
+        const incomePerPartner = 500;
+        const baseIncome = 500;
+        const totalIncome = baseIncome + (partnersCount * incomePerPartner);
 
-        this.addLog(`${player.name} завершил формирование сети.`);
+        // Update Duplicate Prevention / Consolidation Title?
+        const networkAsset = player.assets.find(a =>
+            (a.subtype === 'MLM_PLACEMENT' || a.title.includes('Сетевой бизнес')) && a.type === 'BUSINESS'
+        );
+        if (networkAsset) {
+            networkAsset.title = `Сетевой бизнес: MONEO (${partnersCount} партн.)`;
+        }
+
+        // Custom Result Log/Event for UI
+        this.addLog(`🏆 ${player.name} завершил формирование сети. Партнеров: ${partnersCount}.`);
+
+        // Emulate a "Result" card for the UI popup
+        this.state.lastEvent = {
+            type: 'MLM_RESULT',
+            payload: {
+                cardTitle: 'Сетевой бизнес: MONEO',
+                partners: partnersCount,
+                incomePerPartner: incomePerPartner,
+                baseIncome: baseIncome, // New field for clearer UI
+                totalCashflow: totalIncome,
+                message: `Ваш бизнес MONEO приносит $${baseIncome} + бонус за каждого партнера $${incomePerPartner}. Итого ваш доход: $${totalIncome}`
+            }
+        };
+
         this.state.mlmState = undefined;
-        this.state.currentCard = undefined;
-        this.state.phase = 'ACTION';
+        this.state.currentCard = undefined; // Clear current card
+        this.state.phase = 'MLM_RESULT'; // Switch to Result Phase first!
 
-        // Final sync
+        // Recalc
         this.recalculateFinancials(player);
+        // Note: Do NOT call endTurn() immediately. Let the user click "OK" on the result screen.
+        // But previously we called endTurn() here? 
+        // If we switch phase to MLM_RESULT, the frontend ActiveCardZone will show the result.
+        // Then user clicks "Confirm" -> calling confirm_result -> which calls endTurn.
+        // I need to ensure confirm_result exists in gateway.
+    }
+
+    handleConfirmResult(userId: string) {
+        if (this.state.phase !== 'MLM_RESULT') return;
+        // Verify user? Maybe only current player can confirm
+        const player = this.state.players.find(p => p.id === userId);
+        if (!player) return;
+
+        this.addLog(`${player.name} подтвердил результаты.`);
+        this.state.phase = 'ACTION';
+        this.state.currentCard = undefined;
+        this.state.lastEvent = undefined; // Clear the result payload
         this.endTurn();
     }
 

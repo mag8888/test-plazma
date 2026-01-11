@@ -187,25 +187,17 @@ export const ActiveCardZone = ({
                     <div className="text-5xl mb-4 animate-bounce">👥</div>
                     <h2 className="text-xl font-bold text-white mb-2">{result.cardTitle || 'Сетевой бизнес'}</h2>
 
-                    <div className="bg-slate-800/50 p-4 rounded-xl mb-6 w-full max-w-[280px]">
-                        <div className="flex justify-between items-center mb-2">
-                            <span className="text-slate-400 text-sm">Партнеров:</span>
-                            <span className="text-white font-bold text-lg">{result.partners || 0}</span>
-                        </div>
-                        <div className="flex justify-between items-center mb-2">
-                            <span className="text-slate-400 text-sm">Доход с одного:</span>
-                            <span className="text-emerald-400 font-mono text-sm">+${(result.incomePerPartner || 0).toLocaleString()}</span>
-                        </div>
-                        <div className="h-px bg-slate-700 my-2"></div>
-                        <div className="flex justify-between items-center">
-                            <span className="text-white font-bold">ИТОГО ДОХОД:</span>
+                    <div className="bg-slate-800/50 p-4 rounded-xl mb-6 w-full max-w-[320px]">
+                        {/* Optional: Show breakdown if needed, or just the main message */}
+                        <p className="text-white text-sm font-medium leading-relaxed mb-4">
+                            {result.message || `Ваш бизнес приносит $${(result.totalCashflow || 500)}/мес.`}
+                        </p>
+
+                        <div className="flex justify-between items-center border-t border-slate-700 pt-2">
+                            <span className="text-slate-400 text-xs uppercase font-bold">Общий поток:</span>
                             <span className="text-emerald-400 font-black text-xl">+${(result.totalCashflow || 0).toLocaleString()}</span>
                         </div>
                     </div>
-
-                    <p className="text-slate-400 text-xs mb-6 max-w-[240px]">
-                        Отлично! Ваш бизнес растет. Этот доход добавлен в ваши активы.
-                    </p>
 
                     <button
                         onClick={() => socket.emit('confirm_result', { roomId, userId: me?.id })}
