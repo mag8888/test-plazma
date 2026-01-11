@@ -989,83 +989,7 @@ export class GameEngine {
             return this.resolveBabyRoll();
         }
 
-        // MLM ROLL Logic
-        if (this.state.phase === 'MLM_ROLL') {
-            const roll = Math.floor(Math.random() * 6) + 1;
-            const card = this.state.currentCard;
 
-            if (!card) {
-                this.addLog("Error: No MLM Card found for roll.");
-                this.state.phase = 'ACTION';
-                return 0;
-            }
-
-            const partners = roll;
-            const cost = card.cost || 0;
-            let incomePerPartner = 0;
-
-            // Math Logic
-            if (card.title.includes('Plazma') || card.title.includes('MONEO')) {
-                incomePerPartner = cost * 0.5;
-            } else {
-                // Fallback for unknown MLM cards
-                incomePerPartner = Math.max(100, cost * 0.1);
-            }
-
-            const totalCashflow = partners * incomePerPartner;
-
-            // Temporarily store result in card description for UI (or handled by lastEvent if we implemented it, but description is easy transport)
-            // We'll revert it or just discard the card anyway.
-            // Actually, let's just log it and rely on Frontend to parse?
-            // Better: state.lastEvent.
-            this.state.lastEvent = {
-                type: 'MLM_RESULT',
-                payload: {
-                    partners,
-                    incomePerPartner,
-                    totalCashflow,
-                    cardTitle: card.title
-                }
-            };
-
-            // Perform Logic (Add Asset) NOW, but wait for confirmation to proceed?
-            // User wants "See result -> Click OK -> Done".
-            // So we add asset now? Or wait?
-            // If we wait, we must store the temp result.
-            // If we add now, the user sees visual update immediately + the overlay.
-            // Let's add now.
-
-            player.assets.push({
-                title: `${card.title} (${partners} Partners)`,
-                cost: cost,
-                cashflow: totalCashflow,
-                downPayment: 0,
-                type: card.assetType || 'BUSINESS',
-                businessType: card.businessType,
-                subtype: card.subtype
-            });
-
-            this.recalculateFinancials(player);
-            this.addLog(`🎲 Выпало ${roll}! Привлечено ${partners} партнеров.`);
-            this.addLog(`👥 Партнеры: ${partners}. Доход: +$${totalCashflow}/мес ($${incomePerPartner} за партнера).`);
-
-            // Don't discard yet? Or discard and keep result in overlay?
-            // If we discard, currentCard is gone. ActiveCardZone relies on currentCard?
-            // Yes. So KEEP currentCard until confirmation.
-            // this.cardManager.discard(card); 
-            // this.state.currentCard = undefined;
-
-            GameLogger.getInstance().logEvent(this.state.roomId, 'MLM_ROLL_RESULT', {
-                playerId: player.id,
-                roll,
-                partners,
-                totalCashflow,
-                cardTitle: card.title
-            }, this.state);
-
-            this.state.phase = 'MLM_RESULT';
-            return { total: roll, values: [roll] };
-        }
 
         if (player.skippedTurns > 0) {
             player.skippedTurns--;
@@ -1831,19 +1755,28 @@ export class GameEngine {
                 cardTitle: card.title
             }, this.state);
 
-            // MLM Pre-Roll Logic to ensure consistency between UI and Transaction
-            if (card.subtype === 'MLM_ROLL') {
-                const partners = Math.floor(Math.random() * 6) + 1; // 1-6
-                const costPerPartner = 1000;
-                const cashflowPerPartner = 500; // 500 per partner
+            // MLM PLACEMENT LOGIC
+            // If card has subtype 'MLM_PLACEMENT' -> switch to MLM_PLACEMENT phase
+            if (card.subtype === 'MLM_PLACEMENT') {
+                this.state.phase = 'MLM_PLACEMENT';
+                this.state.mlmState = {
+                    cardId: card.id,
+                    inviterId: playerId,
+                    slots: [
+                        { status: 'EMPTY' },
+                        { status: 'EMPTY' },
+                        { status: 'EMPTY' }
+                    ]
+                };
+                this.state.currentCard = card;
+                this.addLog(`Selected Network Deal: ${card.title}. Waiting for invites...`);
 
-                // Store original values if needed, simpler to just override for the instance
-                (card as any).baseCost = card.cost;
-                (card as any).partners = partners;
-                card.cost = partners * costPerPartner;
-                card.cashflow = partners * cashflowPerPartner;
-                card.title = `${card.title} (${partners} Partners)`;
-                card.description = `Roll: ${partners}. Income: +$${card.cashflow}. Cost: $${card.cost}`;
+                GameLogger.getInstance().logEvent(this.state.roomId, 'MLM_START', {
+                    playerId,
+                    cardId: card.id,
+                    cardTitle: card.title
+                }, this.state);
+                return; // EXIT HERE so phase stays MLM_PLACEMENT
             }
 
             this.state.currentCard = card;

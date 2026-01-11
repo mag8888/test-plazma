@@ -58,15 +58,11 @@ export const FeedCardItem = ({
     const [pendingLoan, setPendingLoan] = useState<{ amount: number; quantity: number } | null>(null);
     const [showTransfer, setShowTransfer] = useState(false);
 
-    // MLM Detection
-    const isMLM = card.title?.toLowerCase().includes('network') || card.title?.toLowerCase().includes('сетевой') || card.description?.toLowerCase().includes('partners') || card.description?.toLowerCase().includes('партнер');
+    // MLM Detection REMOVED (Legacy)
+    const isMLM = false;
 
-    // Auto-start in MLM_ROLL if needed and not yet done
-    useEffect(() => {
-        if (isMLM && viewMode === 'DETAILS') {
-            setViewMode('MLM_ROLL');
-        }
-    }, [isMLM]);
+    // Auto-start in MLM_ROLL if needed and not yet done REMOVED
+
 
     // Timer Logic Corrected: Use expiresAt if available, else default to 120 (but don't reset on re-render if possible?)
     // Actually, if re-rendered with same wrapper, we want to persist. 
@@ -456,27 +452,7 @@ export const FeedCardItem = ({
                             </div>
                         </>)}
                     </>
-                ) : viewMode === 'MLM_ROLL' ? (
-                    <div className="bg-slate-900/40 p-3 rounded-lg border border-white/5 flex-1 flex flex-col items-center justify-center text-center animate-in zoom-in-95">
-                        <div className="text-4xl mb-4 animate-bounce">🎲</div>
-                        <h3 className="text-sm font-bold text-white mb-2">Сетевой Бизнес</h3>
-                        <p className="text-[10px] text-slate-400 mb-6 max-w-[200px]">
-                            Бросьте кубик, чтобы определить количество партнеров в вашей структуре.
-                        </p>
-                        <button
-                            onClick={() => {
-                                const roll = Math.floor(Math.random() * 6) + 1;
-                                setMlmRoll(roll);
-                                setStockQty(roll); // Set partners count
-                                setTransactionMode('BUY');
-                                setTimeout(() => setViewMode('TRANSACTION'), 1000); // Small delay to show result?
-                                // For now immediate
-                            }}
-                            className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3 rounded-xl text-xs uppercase tracking-wider shadow-lg"
-                        >
-                            Бросить кубик
-                        </button>
-                    </div>
+
                 ) : viewMode === 'RESULT' ? (
                     <div className="bg-slate-900/40 p-3 rounded-lg border border-white/5 flex-1 flex flex-col items-center justify-center text-center animate-in zoom-in-95">
                         <div className="text-4xl mb-4 animate-pulse">

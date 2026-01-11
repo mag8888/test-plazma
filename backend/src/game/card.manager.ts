@@ -201,7 +201,7 @@ export const BIG_DEALS: Card[] = [
     ...expand(3, { title: 'Коворкинг-центр', cost: 280000, cashflow: 8000, description: 'Большое пространство для аренды под стартапы и фрилансеров.', downPayment: 200000, businessType: 'CLASSIC', assetType: 'BUSINESS' }, 'DEAL_BIG', 29),
 
     // Network
-    ...expand(2, { title: 'Франшиза: Plazma Water', cost: 30000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход.', businessType: 'NETWORK' }, 'DEAL_BIG', 32),
+    ...expand(2, { title: 'Франшиза: Plazma Water', cost: 30000, cashflow: 1000, description: 'Франшиза Plazma Water. Стабильный доход. Пригласи до 3 игроков.', businessType: 'NETWORK', subtype: 'MLM_PLACEMENT' }, 'DEAL_BIG', 32),
 ];
 
 export const MARKET_CARDS: Card[] = [
