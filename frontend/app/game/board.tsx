@@ -1847,6 +1847,16 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                 console.log('Host force move:', targetId);
                                                 socket.emit('host_force_move', { roomId, userId, targetPlayerId: targetId });
                                             }}
+                                            onGiveCash={(targetId) => {
+                                                const amountStr = prompt("Введите сумму для начисления ($):");
+                                                if (!amountStr) return;
+                                                const amount = parseInt(amountStr, 10);
+                                                if (isNaN(amount) || amount <= 0) return;
+
+                                                socket.emit('host_give_cash', { roomId, userId, targetPlayerId: targetId, amount }, (res: any) => {
+                                                    if (res?.error) alert("Ошибка: " + res.error);
+                                                });
+                                            }}
                                             currentPlayerId={state.players[state.currentPlayerIndex]?.id}
                                         />
                                     </div>

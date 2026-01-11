@@ -11,12 +11,13 @@ interface VoiceControlsProps {
     onTransferAsset?: (playerId: string) => void;
     onSkipTurn?: (playerId: string) => void;
     onForceMove?: (playerId: string) => void;
+    onGiveCash?: (playerId: string) => void;
     myId?: string;
     currentPlayerId?: string;
 }
 
 // Sub-component for individual avatar to handle speaking state efficiently
-const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTransferAsset, onSkip, onForceMove, isMe, isActive }: {
+const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTransferAsset, onSkip, onForceMove, onGiveCash, isMe, isActive }: {
     participant?: any,
     player: any,
     isHost?: boolean,
@@ -25,6 +26,7 @@ const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTr
     onTransferAsset?: (id: string) => void,
     onSkip?: (id: string) => void,
     onForceMove?: (id: string) => void,
+    onGiveCash?: (id: string) => void,
     isMe?: boolean,
     isActive?: boolean
 }) => {
@@ -126,6 +128,18 @@ const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTr
                     {isHost && !isMe && (
                         <>
                             <div className="h-px bg-slate-700/50 my-1"></div>
+                            {onGiveCash && (
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        onGiveCash(player.id);
+                                        setShowMenu(false);
+                                    }}
+                                    className="w-full text-[10px] text-green-400 hover:bg-green-500/20 px-2 py-1.5 rounded text-center transition-colors font-bold uppercase"
+                                >
+                                    Начислить $
+                                </button>
+                            )}
                             {onSkip && (
                                 <button
                                     onClick={(e) => {
@@ -174,7 +188,7 @@ const VoiceAvatar = ({ participant, player, isHost, onKick, onTransferCash, onTr
     );
 };
 
-export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickPlayer, onTransferCash, onTransferAsset, onSkipTurn, onForceMove, myId, currentPlayerId }: VoiceControlsProps) => {
+export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickPlayer, onTransferCash, onTransferAsset, onSkipTurn, onForceMove, onGiveCash, myId, currentPlayerId }: VoiceControlsProps) => {
     // SAFELY consume context instead of direct hooks
     const { localParticipant, participants, room, isConnected, error } = useVoice();
 
@@ -245,6 +259,7 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
                             onTransferAsset={onTransferAsset}
                             onSkip={onSkipTurn}
                             onForceMove={onForceMove}
+                            onGiveCash={onGiveCash}
                             isMe={p.id === myId || p.userId === myId}
                             isActive={p.id === currentPlayerId}
                         />
