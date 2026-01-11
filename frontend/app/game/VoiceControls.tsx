@@ -218,14 +218,18 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
                 {/* Embedded Mic Button */}
                 <button
                     onClick={toggleMute}
-                    className={`rounded-full border transition-all shadow-lg active:scale-95 flex items-center justify-center w-10 h-10 backdrop-blur-md shrink-0
+                    className={`rounded-full border-2 transition-all shadow-xl active:scale-95 flex items-center justify-center w-14 h-14 backdrop-blur-md shrink-0 mr-2
                         ${isMicOn
-                            ? 'bg-slate-800 border-slate-600 text-white hover:bg-slate-700'
-                            : 'bg-red-500/80 border-red-500 text-white animate-pulse shadow-red-500/50'}
+                            ? 'bg-emerald-500/20 border-emerald-500 text-emerald-400 hover:bg-emerald-500/30 shadow-[0_0_15px_rgba(16,185,129,0.3)]'
+                            : 'bg-red-500/20 border-red-500 text-red-500 hover:bg-red-500/30'
+                        }
                     `}
                     title={isMicOn ? "Выключить микрофон" : "Включить микрофон"}
                 >
-                    {isMicOn ? <Mic size={16} /> : <MicOff size={16} />}
+                    {isMicOn
+                        ? <Mic size={28} className="drop-shadow-lg" />
+                        : <MicOff size={28} className="drop-shadow-lg" />
+                    }
                 </button>
                 {players.map((p) => {
                     // Find participant
