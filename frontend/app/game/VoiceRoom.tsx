@@ -191,7 +191,15 @@ export const VoiceRoom = ({ roomId, userId, username, onSpeakingChanged, onActiv
             serverUrl={url}
             token={token}
             connect={true}
-            options={{ adaptiveStream: true }}
+            options={{
+                adaptiveStream: true,
+                publishDefaults: {
+                    simulcast: true,
+                    dtx: true, // Discontinuous Transmission (saves bandwidth on silence)
+                    red: true, // Redundant Audio Data (helps packet loss)
+                },
+                dynacast: true, // Dynamic quality scaling
+            }}
             data-lk-theme="default"
             style={{ height: '100%', width: '100%' }} // Ensure full size
             onError={(e) => { console.error("LiveKit Error:", e); setTokenError(e.message); }}

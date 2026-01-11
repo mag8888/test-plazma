@@ -12,8 +12,10 @@ export const socket = (typeof window !== 'undefined' ? io(SOCKET_URL, {
     reconnectionAttempts: Infinity,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 5000,
-    transports: ['polling', 'websocket'], // Robust Mode: Polling first, then Upgrade. Fixes connection issues.
-    timeout: 20000,
+    transports: ['websocket', 'polling'], // Prefer Websocket for mobile stability
+    timeout: 45000,
+    forceNew: false,
+    upgrade: true,
 }) : {
     // Mock for Server Side Rendering
     on: () => { },
