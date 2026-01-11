@@ -649,8 +649,18 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
     useEffect(() => {
         socket.on('mlm_offer', (data: any) => {
             console.log("Received MLM Offer:", data);
-            setMlmOffer(data);
-            sfx.play('turn');
+
+            // Filter: Only show if I am the target
+            // We check against socket.id OR userId if available
+            const isForMe = data.targetId === socket.id || (userId && data.targetId === userId) || (localPlayer && data.targetId === localPlayer.id);
+
+            if (isForMe) {
+                console.log("✅ MLM Offer is for me!");
+                setMlmOffer(data);
+                sfx.play('turn');
+            } else {
+                console.log(`ℹ️ MLM Offer ignored (Target: ${data.targetId}, Me: ${socket.id}/${userId})`);
+            }
         });
 
         socket.on('turn_ended', (data: any) => {
