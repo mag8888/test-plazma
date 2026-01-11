@@ -51,11 +51,11 @@ export const MlmNetworkModal: React.FC<MlmNetworkModalProps> = ({ isOpen, onClos
     };
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
-            <div className="relative w-full max-w-lg bg-[#1a1b1e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200">
+            <div className="relative w-full max-w-lg bg-[#1a1b1e] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh]">
 
                 {/* Header */}
-                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-blue-900/20 to-purple-900/20">
+                <div className="p-6 border-b border-white/10 flex justify-between items-center bg-gradient-to-r from-blue-900/20 to-purple-900/20 shrink-0">
                     <h2 className="text-xl font-bold text-white flex items-center gap-2">
                         🌐 <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400">Моя Сеть</span>
                     </h2>
@@ -64,13 +64,13 @@ export const MlmNetworkModal: React.FC<MlmNetworkModalProps> = ({ isOpen, onClos
                     </button>
                 </div>
 
-                {/* Content */}
-                <div className="p-6 space-y-6">
+                {/* Content - Scrollable */}
+                <div className="p-6 space-y-6 overflow-y-auto flex-1">
                     <p className="text-gray-400 text-sm text-center">
                         Пригласите партнеров в свой бизнес. Вы получаете доход за каждого активного партнера.
                     </p>
 
-                    <div className="grid gap-4">
+                    <div className="grid gap-3">
                         {mlmState.slots.map((slot, index) => {
                             const partner = slot.playerId ? players.find(p => p.id === slot.playerId) : null;
 
@@ -115,12 +115,14 @@ export const MlmNetworkModal: React.FC<MlmNetworkModalProps> = ({ isOpen, onClos
                         })}
                     </div>
 
-                    <button
-                        onClick={onFinish}
-                        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3 rounded-xl text-lg uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98] mt-4"
-                    >
-                        ✅ Завершить и Купить
-                    </button>
+                    <div className="pt-2">
+                        <button
+                            onClick={onFinish}
+                            className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white font-bold py-3 rounded-xl text-lg uppercase tracking-wider shadow-lg transition-transform active:scale-[0.98]"
+                        >
+                            ✅ Завершить и Купить
+                        </button>
+                    </div>
                 </div>
 
                 {/* Player Select Overlay */}
