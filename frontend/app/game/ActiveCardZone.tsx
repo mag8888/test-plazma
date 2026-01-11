@@ -251,15 +251,16 @@ export const ActiveCardZone = ({
             // ALWAYS show cards that belong to me (e.g. transferred deals)
             if (item.sourcePlayerId === me?.id) return true;
 
-            // DEDUPLICATION FIX:
-            // If this is the "CURRENT" card (just drawn), check if an equivalent card exists in "MARKET" items.
-            // If so, hide the "CURRENT" one to avoid double rendering.
-            if (item.source === 'CURRENT') {
-                const isDuplicateOfMarket = marketCards.some((m: any) =>
-                    (m.id && item.id && m.id === item.id) || // ID Match
-                    (m.title === item.title && m.type === item.type) // Or props match
-                );
-                if (isDuplicateOfMarket) return false;
+            // DEDUPLICATION FIX (Reversed):
+            // If this is a "MARKET" card, check if it duplicates the "CURRENT" active card.
+            // If so, hide the "MARKET" one and let the "CURRENT" one take precedence (it's the fresh event).
+            if (item.source === 'MARKET' && state.currentCard) {
+                const current = state.currentCard;
+                const isDuplicateOfCurrent =
+                    (current.id && item.id && current.id === item.id) || // ID Match
+                    (current.title === item.title && current.type === item.type); // Props Match
+
+                if (isDuplicateOfCurrent) return false;
             }
 
             // If canShowCard is false (not my turn), only show cards that I can sell

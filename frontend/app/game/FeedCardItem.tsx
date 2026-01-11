@@ -333,13 +333,13 @@ export const FeedCardItem = ({
                                 </>) : card.type === 'MARKET' ? (
                                     <>
                                         {/* Market Card Actions */}
-                                        {/* Allow Buying if you control the card (or it's an offer) AND it has a positive price */}
-                                        {canControl && (card.offerPrice > 0 || card.cost > 0 || card.price > 0) && (
+
+                                        {/* 1. BUY BUTTON: Only if it represents a purchase (Stock/Business) AND NOT an Offer */}
+                                        {canControl && !card.offerPrice && (card.cost > 0 || card.price > 0) && (
                                             <button
                                                 onClick={() => {
                                                     setTransactionMode('BUY');
-                                                    const price = card.offerPrice || card.cost || card.price || 0;
-                                                    // const maxBuy = price > 0 ? Math.floor(me.cash / price) : 1; // Unused
+                                                    const price = card.cost || card.price || 0;
                                                     setStockQty(1);
                                                     setViewMode('TRANSACTION');
                                                 }}
