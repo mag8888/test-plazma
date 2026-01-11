@@ -1801,7 +1801,7 @@ export class GameEngine {
             }
 
             this.state.currentCard = card;
-            this.addLog(`Selected ${type} deal: ${card.title}`);
+            this.addLog(`Selected ${type} deal: ${card.title} (#${(card as any).displayId || '?'})`);
             this.state.phase = 'ACTION';
         } else {
             this.addLog(`Нет ${type === 'SMALL' ? 'МАЛЫХ' : 'КРУПНЫХ'} сделок!`);

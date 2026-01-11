@@ -1231,7 +1231,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                         setSelectedPlayerForMenu(p);
                                                     }}
                                                     className={`flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer hover:border-slate-500 active:scale-[0.98]
-                                            ${p.id === currentPlayer.id ? 'bg-slate-800/80 border-blue-500/50 shadow-lg shadow-blue-900/10' : 'bg-slate-900/30 border-slate-800/50'}
+                                            ${p.id === currentPlayer.id ? 'bg-blue-600/10 border-blue-500 shadow-[0_0_15px_rgba(59,130,246,0.5)] scale-[1.02] ring-1 ring-blue-400' : 'bg-slate-900/30 border-slate-800/50'}
                                             ${p.hasWon ? 'ring-2 ring-yellow-500' : ''}
                                             ${p.isBankrupted ? 'opacity-50 grayscale' : ''}
                                         `}
@@ -1242,6 +1242,10 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                         ) : (
                                                             getInitials(p.name)
                                                         )}
+                                                        {/* Active Indicator Dot */}
+                                                        {p.id === currentPlayer.id && (
+                                                            <div className="absolute -top-1 -right-1 w-4 h-4 bg-blue-500 border-2 border-slate-900 rounded-full animate-pulse shadow-[0_0_10px_#3b82f6]"></div>
+                                                        )}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <div className="flex justify-between items-center mb-1">
@@ -1251,7 +1255,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                                             </div>
                                                             {p.id === currentPlayer.id && (
                                                                 <div className="flex items-center gap-2">
-                                                                    <span className="text-[9px] bg-blue-500/20 text-blue-300 px-1.5 py-0.5 rounded uppercase font-bold tracking-wider">Ходит</span>
+                                                                    <span className="text-[9px] bg-blue-500 text-white px-2 py-0.5 rounded shadow shadow-blue-500/50 uppercase font-bold tracking-wider animate-bounce">Ходит</span>
                                                                 </div>
                                                             )}
                                                         </div>

@@ -41,6 +41,16 @@ export const SquareInfoModal = ({ square, onClose, player, roomId }: SquareInfoM
                             {square.description || 'Нет описания'}
                         </p>
 
+                        {/* Payday Amount */}
+                        {square.type === 'PAYDAY' && (
+                            <div className="bg-green-500/10 border border-green-500/20 p-4 rounded-xl mb-4">
+                                <h3 className="text-green-400 font-bold text-sm mb-1 uppercase tracking-wider">Сумма</h3>
+                                <div className="text-2xl font-mono text-green-400 font-bold tracking-tight">
+                                    +${player.cashflow?.toLocaleString()}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Market Actions */}
                         {isMarket && (
                             <div className="space-y-4">

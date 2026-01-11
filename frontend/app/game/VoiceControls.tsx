@@ -205,24 +205,22 @@ export const VoiceControls = ({ onSpeakingChanged, players = [], isHost, onKickP
     }, [localParticipant, onSpeakingChanged]);
 
     return (
+
+
         <div className="flex flex-col items-center w-full">
-            {/* 1. MIC BUTTON - Floating Near Track (Fixed at bottom right) */}
-            <div className="fixed bottom-[140px] right-4 z-[160]">
+            <div className="flex flex-wrap justify-center gap-2 px-2 max-w-[95vw]">
+                {/* Embedded Mic Button */}
                 <button
                     onClick={toggleMute}
-                    className={`p-3 rounded-full border transition-all shadow-lg active:scale-95 flex items-center justify-center w-12 h-12 backdrop-blur-md
+                    className={`rounded-full border transition-all shadow-lg active:scale-95 flex items-center justify-center w-10 h-10 backdrop-blur-md shrink-0
                         ${isMicOn
-                            ? 'bg-slate-800/80 border-slate-600 text-white hover:bg-slate-700'
+                            ? 'bg-slate-800 border-slate-600 text-white hover:bg-slate-700'
                             : 'bg-red-500/80 border-red-500 text-white animate-pulse shadow-red-500/50'}
                     `}
+                    title={isMicOn ? "Выключить микрофон" : "Включить микрофон"}
                 >
-                    {isMicOn ? <Mic size={20} /> : <MicOff size={20} />}
+                    {isMicOn ? <Mic size={16} /> : <MicOff size={16} />}
                 </button>
-            </div>
-
-            {/* 2. PLAYER GRID - Centered & Square-ish & Harmonious */}
-            {/* Using a flex wrap centered approach for harmony */}
-            <div className="flex flex-wrap justify-center gap-2 px-2 max-w-[95vw]">
                 {players.map((p) => {
                     // Find participant
                     const participant = participants.find(part => part.identity === p.id || part.identity === p.userId);
