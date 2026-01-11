@@ -698,7 +698,8 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
 
     // MLM Handlers
     const handleMlmInvite = (targetId: string, slotIndex: number) => {
-        socket.emit('mlm_invite', { roomId, targetPlayerId: targetId, slotIndex });
+        if (!localPlayer) return;
+        socket.emit('mlm_invite', { roomId, userId: localPlayer.id, targetPlayerId: targetId, slotIndex });
     };
 
     const handleMlmResponse = (accept: boolean) => {
