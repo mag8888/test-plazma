@@ -47,6 +47,7 @@ export class BotService {
     participantStates: Map<number, { state: 'WAITING_POST_LINK', gameId: string }> = new Map();
     photoUploadStates: Map<number, { state: 'WAITING_PHOTO' }> = new Map();
     depositStates: Map<number, DepositState> = new Map();
+    registrationLocks: Set<string> = new Set(); // Lock to prevent race conditions
     cloudinaryService: CloudinaryService;
     authService: AuthService;
     i18n: I18nService;
@@ -1497,15 +1498,31 @@ export class BotService {
                 await this.showJoinOptions(chatId, gameId);
             } else if (data.startsWith('join_red_')) {
                 const gameId = data.replace('join_red_', '');
+                if (!gameId || !gameId.match(/^[0-9a-fA-F]{24}$/)) {
+                    this.bot?.sendMessage(chatId, "❌ Неверная ссылка. Попробуйте через /schedule");
+                    return;
+                }
                 await this.handleJoinGame(chatId, userId, gameId, 'PAY_RED');
             } else if (data.startsWith('join_green_')) {
                 const gameId = data.replace('join_green_', '');
+                if (!gameId || !gameId.match(/^[0-9a-fA-F]{24}$/)) {
+                    this.bot?.sendMessage(chatId, "❌ Неверная ссылка. Попробуйте через /schedule");
+                    return;
+                }
                 await this.handleJoinGame(chatId, userId, gameId, 'PAY_GREEN');
             } else if (data.startsWith('join_onsite_')) {
                 const gameId = data.replace('join_onsite_', '');
+                if (!gameId || !gameId.match(/^[0-9a-fA-F]{24}$/)) {
+                    this.bot?.sendMessage(chatId, "❌ Неверная ссылка. Попробуйте через /schedule");
+                    return;
+                }
                 await this.handleJoinGame(chatId, userId, gameId, 'PAY_SPOT');
             } else if (data.startsWith('join_promo_')) {
                 const gameId = data.replace('join_promo_', '');
+                if (!gameId || !gameId.match(/^[0-9a-fA-F]{24}$/)) {
+                    this.bot?.sendMessage(chatId, "❌ Неверная ссылка. Попробуйте через /schedule");
+                    return;
+                }
                 await this.handleJoinGame(chatId, userId, gameId, 'PROMO');
             } else if (data.startsWith('view_game_')) {
                 const gameId = data.replace('view_game_', '');
@@ -2768,11 +2785,26 @@ export class BotService {
 
     async handleJoinGame(chatId: number, telegramId: number, gameId: string, type: 'PROMO' | 'PAY_RED' | 'PAY_GREEN' | 'PAY_SPOT') {
         try {
+            // Validate ObjectId format
+            if (!gameId || !gameId.match(/^[0-9a-fA-F]{24}$/)) {
+                this.bot?.sendMessage(chatId, "❌ Неверный формат игры. Попробуйте через /schedule");
+                console.error('[Registration Error] Invalid gameId format:', { chatId, gameId, type });
+                return;
+            }
+
             const { ScheduledGameModel } = await import('../models/scheduled-game.model');
             const { UserModel } = await import('../models/user.model');
 
             const game = await ScheduledGameModel.findById(gameId);
             const user = await UserModel.findOne({ telegram_id: telegramId });
+
+            // Registration lock to prevent race conditions
+            const lockKey = `join_${user?._id}_${gameId}`;
+            if (this.registrationLocks.has(lockKey)) {
+                this.bot?.sendMessage(chatId, "⏳ Запись уже обрабатывается. Подождите...");
+                return;
+            }
+            this.registrationLocks.add(lockKey);
 
             if (!game || !user) {
                 this.bot?.sendMessage(chatId, "Игра или пользователь не найдены.");
@@ -2819,20 +2851,36 @@ export class BotService {
                     paymentStatus = 'PAY_AT_GAME';
                 } else if (type === 'PAY_RED') {
                     if (user.balanceRed >= 20) {
-                        user.balanceRed -= 20;
-                        await user.save();
-                        paymentStatus = 'PAID';
+                        try {
+                            user.balanceRed -= 20;
+                            await user.save();
+                            paymentStatus = 'PAID';
+                        } catch (saveError) {
+                            console.error('[Balance Save Error - Red]', { chatId, userId: user._id, error: saveError });
+                            this.bot?.sendMessage(chatId, "❌ Ошибка списания баланса. Попробуйте позже.");
+                            this.registrationLocks.delete(lockKey);
+                            return;
+                        }
                     } else {
                         this.bot?.sendMessage(chatId, `❌ Недостаточно средств на Красном счете ($20).\nБаланс: $${user.balanceRed}`);
+                        this.registrationLocks.delete(lockKey);
                         return;
                     }
                 } else if (type === 'PAY_GREEN') {
                     if (user.referralBalance >= 20) {
-                        user.referralBalance -= 20;
-                        await user.save();
-                        paymentStatus = 'PAID';
+                        try {
+                            user.referralBalance -= 20;
+                            await user.save();
+                            paymentStatus = 'PAID';
+                        } catch (saveError) {
+                            console.error('[Balance Save Error - Green]', { chatId, userId: user._id, error: saveError });
+                            this.bot?.sendMessage(chatId, "❌ Ошибка списания баланса. Попробуйте позже.");
+                            this.registrationLocks.delete(lockKey);
+                            return;
+                        }
                     } else {
                         this.bot?.sendMessage(chatId, `❌ Недостаточно средств на Зеленом счете ($20).\nБаланс: $${user.referralBalance}`);
+                        this.registrationLocks.delete(lockKey);
                         return;
                     }
                 }
@@ -2889,8 +2937,32 @@ export class BotService {
             }
 
         } catch (e) {
-            console.error("Join error:", e);
-            this.bot?.sendMessage(chatId, "Ошибка записи на игру.");
+            console.error('[Game Registration Error]', {
+                chatId,
+                telegramId,
+                gameId,
+                type,
+                error: e instanceof Error ? e.message : String(e),
+                stack: e instanceof Error ? e.stack : undefined
+            });
+
+            // User-friendly error based on type
+            let errorMsg = "Ошибка записи на игру. Попробуйте позже.";
+            if (e instanceof Error) {
+                if (e.message.includes('Cast to ObjectId failed')) {
+                    errorMsg = "❌ Неверный ID игры. Попробуйте снова через /schedule";
+                } else if (e.message.includes('duplicate key') || e.message.includes('E11000')) {
+                    errorMsg = "⚠️ Дублирующая запись. Проверьте список участников.";
+                } else if (e.message.includes('ECONNREFUSED') || e.message.includes('MongoNetworkError')) {
+                    errorMsg = "❌ Проблема соединения с сервером. Попробуйте через минуту.";
+                }
+            }
+
+            this.bot?.sendMessage(chatId, errorMsg);
+        } finally {
+            // Always clear lock
+            const lockKey = `join_${telegramId}_${gameId}`;
+            this.registrationLocks.delete(lockKey);
         }
     }
 
