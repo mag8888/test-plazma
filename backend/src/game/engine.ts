@@ -2825,6 +2825,15 @@ export class GameEngine {
             }
 
             const assetCashflow = card.cashflow || 0;
+
+            console.log(`[BuyAsset] Adding asset for ${player.name}:`, {
+                title: card.title,
+                cardCashflow: card.cashflow,
+                assetCashflow,
+                type: card.type,
+                assetType: card.assetType
+            });
+
             player.assets.push({
                 title: card.title,
                 cost: card.cost,
@@ -2844,6 +2853,14 @@ export class GameEngine {
             // So, just trigger victory check.
 
             this.recalculateFinancials(player);
+
+            console.log(`[BuyAsset] After recalc for ${player.name}:`, {
+                passiveIncome: player.passiveIncome,
+                income: player.income,
+                expenses: player.expenses,
+                cashflow: player.cashflow,
+                assetsCount: player.assets.length
+            });
 
             if (player.isFastTrack) {
                 this.checkFastTrackVictory(player);
