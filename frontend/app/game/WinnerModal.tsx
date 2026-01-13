@@ -33,7 +33,7 @@ export const WinnerModal: React.FC<WinnerModalProps> = ({ onContinue, rank, reas
     }, []);
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-md animate-in fade-in duration-500">
             <div className="relative bg-[#0F172A] border-2 border-amber-500/50 rounded-3xl p-8 max-w-md w-full text-center shadow-[0_0_100px_rgba(245,158,11,0.3)] animate-in zoom-in-95 duration-300">
                 <div className="absolute -top-12 left-1/2 -translate-x-1/2 text-8xl drop-shadow-[0_0_30px_rgba(245,158,11,0.8)] filter">
                     🏆

@@ -28,8 +28,8 @@ export const ExitToFastTrackModal: React.FC<ExitToFastTrackModalProps> = ({ onCl
     const allReady = reqLoan && reqPassive && reqCash;
 
     return (
-        <div className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
-            <div className="bg-slate-900 border border-slate-700/50 rounded-3xl w-full max-w-md max-h-[85vh] overflow-y-auto shadow-2xl relative" onClick={e => e.stopPropagation()}>
+        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200" onClick={onClose}>
+            <div className="bg-slate-900 border border-slate-700/50 rounded-3xl w-full max-w-md max-h-[80vh] overflow-y-auto shadow-2xl relative custom-scrollbar" onClick={e => e.stopPropagation()}>
 
                 {/* Header */}
                 <div className="bg-gradient-to-r from-pink-600 to-rose-600 p-6 text-center">

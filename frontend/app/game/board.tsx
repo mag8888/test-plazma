@@ -1113,7 +1113,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                         </div>
                                         <div className="bg-[#0B0E14]/30 p-2.5 rounded-lg border border-slate-800/50">
                                             <div className="text-[9px] text-slate-500 uppercase tracking-wider">Денежный поток</div>
-                                            <div className="font-mono text-green-400 font-medium">+${localPlayer.cashflow?.toLocaleString()}</div>
+                                            <div className={`font-mono font-medium ${(localPlayer.cashflow || 0) < 0 ? 'text-red-400' : 'text-green-400'}`}>{(localPlayer.cashflow || 0) >= 0 ? '+' : ''}${localPlayer.cashflow?.toLocaleString()}</div>
                                         </div>
                                     </div>
 
@@ -1458,7 +1458,7 @@ function GameBoardContent({ roomId, userId, username, isHost, isTutorial, state,
                                 </div>
                                 <div className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm">
                                     <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Выплата</span>
-                                    <span className="text-sm font-black text-green-400 font-mono tracking-tight">+${(localPlayer?.cashflow || 0).toLocaleString()}</span>
+                                    <span className={`text-sm font-black font-mono tracking-tight ${(localPlayer?.cashflow || 0) < 0 ? 'text-red-400' : 'text-green-400'}`}>{(localPlayer?.cashflow || 0) >= 0 ? '+' : ''}${(localPlayer?.cashflow || 0).toLocaleString()}</span>
                                 </div>
                                 <div onClick={() => setShowBank(true)} className="bg-[#0f172a]/80 rounded-xl p-2 flex flex-col items-center justify-center border border-white/5 shadow-sm cursor-pointer active:scale-95 transition-transform relative">
                                     <span className="text-[8px] text-slate-400 uppercase font-black tracking-wider">Кредит</span>

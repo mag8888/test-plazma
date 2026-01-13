@@ -171,7 +171,7 @@ export const RulesModal: React.FC<RulesModalProps> = ({ onClose, counts, isTutor
     // ... (rest of renderCard and getTabContent)
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
             <div className="bg-[#1e293b] rounded-2xl border border-slate-700 w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl relative animate-in fade-in zoom-in duration-300">
 
                 {/* Fast Read Warning Overlay */}

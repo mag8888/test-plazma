@@ -169,7 +169,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                             Баланс
                             {/* Removed Hint from here, moving focus to Income Block */}
                         </div>
-                        <div className="text-4xl md:text-5xl font-mono font-bold text-emerald-400 tracking-tighter drop-shadow-lg break-all">${player.cash?.toLocaleString()}</div>
+                        <div className={`text-4xl md:text-5xl font-mono font-bold tracking-tighter drop-shadow-lg break-all ${(player.cash || 0) < 0 ? 'text-red-400' : 'text-emerald-400'}`}>${player.cash?.toLocaleString()}</div>
                     </div>
 
                     <div
@@ -234,7 +234,7 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                             <span className="text-yellow-400 font-black tracking-widest text-xs relative">
                                 PAYDAY
                             </span>
-                            <span className="text-white font-mono font-bold text-xl drop-shadow">${player.cashflow?.toLocaleString()}</span>
+                            <span className={`font-mono font-bold text-xl drop-shadow ${(player.cashflow || 0) < 0 ? 'text-red-400' : 'text-white'}`}>${player.cashflow?.toLocaleString()}</span>
                         </div>
                     </div>
 
@@ -363,7 +363,9 @@ export const BankModal = ({ isOpen, onClose, player, roomId, transactions, playe
                                             </div>
                                             <div>
                                                 <div className="font-bold text-slate-200 text-sm">
-                                                    {t.type === 'TRANSFER' ? (t.from === player.name ? `Перевод игроку ${t.to}` : `Перевод от ${t.from}`) : t.description}
+                                                    {t.type === 'TRANSFER'
+                                                        ? (t.from === player.name ? `Перевод игроку ${t.to}` : `Перевод от ${t.from}`)
+                                                        : (t.description.includes('Gift') && t.from !== player.name ? `${t.description} от ${t.from}` : t.description)}
                                                 </div>
                                                 <div className="text-[10px] text-slate-500 flex items-center gap-1 uppercase tracking-wide font-bold mt-0.5">
                                                     {t.from === player.name ? 'Списание' : 'Пополнение'} • {new Date(t.timestamp).toLocaleTimeString()}

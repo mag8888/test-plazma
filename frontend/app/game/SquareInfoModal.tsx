@@ -20,7 +20,7 @@ export const SquareInfoModal = ({ square, onClose, player, roomId }: SquareInfoM
 
     return (
         <>
-            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 p-4 animate-in fade-in">
+            <div className="fixed inset-0 z-[200] flex items-center justify-center bg-black/60 p-4 animate-in fade-in">
                 <div className="bg-slate-900 rounded-2xl border border-slate-700 shadow-2xl max-w-md w-full overflow-hidden relative">
                     {/* Header */}
                     <div className="p-6 bg-slate-800/50 border-b border-slate-700/50 flex justify-between items-start">

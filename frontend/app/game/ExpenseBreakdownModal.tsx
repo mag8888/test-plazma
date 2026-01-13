@@ -22,7 +22,7 @@ export const ExpenseBreakdownModal: React.FC<ExpenseBreakdownModalProps> = ({ br
     if (!breakdown) return null;
 
     return createPortal(
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
+        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-fadeIn">
             <div className="bg-[#1e2330] rounded-3xl p-6 max-w-sm w-full border border-slate-700 shadow-2xl relative overflow-hidden">
 
                 <h2 className="text-xl font-bold text-white mb-6 flex items-center gap-2">
