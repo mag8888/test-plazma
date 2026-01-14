@@ -6,6 +6,9 @@ import { UserModel } from '../models/user.model';
 import { AuthService } from '../auth/auth.service';
 import { ScheduledGameModel } from '../models/scheduled-game.model';
 import { I18nService } from '../services/i18n.service';
+import { LocalizationService } from '../services/localization.service';
+import fs from 'fs';
+import path from 'path';
 
 // Transfer State
 type TransferState = {
@@ -46,16 +49,19 @@ export class BotService {
     broadcastStates: Map<number, BroadcastState> = new Map();
     participantStates: Map<number, { state: 'WAITING_POST_LINK', gameId: string }> = new Map();
     photoUploadStates: Map<number, { state: 'WAITING_PHOTO' }> = new Map();
+    localesImportStates: Map<number, { state: 'WAITING_LOCALE_FILE' }> = new Map();
     depositStates: Map<number, DepositState> = new Map();
     registrationLocks: Set<string> = new Set(); // Lock to prevent race conditions
     cloudinaryService: CloudinaryService;
     authService: AuthService;
     i18n: I18nService;
+    localizationService: LocalizationService;
 
     constructor(polling = true) {
         this.cloudinaryService = new CloudinaryService();
         this.authService = new AuthService();
         this.i18n = new I18nService();
+        this.localizationService = new LocalizationService();
 
         // Safety Override via Env Var
         if (process.env.DISABLE_BOT_POLLING === 'true') {
@@ -800,6 +806,7 @@ export class BotService {
                     return;
                 }
 
+
                 const latest = backups[0];
                 this.bot?.sendMessage(chatId, `📥 Найдена копия от: ${latest.created_at}\nВосстанавливаю из: ${latest.secure_url}`);
 
@@ -812,31 +819,30 @@ export class BotService {
             }
         });
 
-        // /get_locales command - Admin export localization
-        this.bot.onText(/\/get_locales/, async (msg) => {
+        // /export_locales command - Admin export localization
+        this.bot.onText(/\/export_locales/, async (msg) => {
             const chatId = msg.chat.id;
             const telegramId = msg.from?.id;
-            const isAdmin = process.env.ADMIN_IDS?.split(',').includes(String(telegramId)) || String(telegramId) === process.env.TELEGRAM_ADMIN_ID;
+
+            // Admin check
+            const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => id.trim());
+            if (process.env.TELEGRAM_ADMIN_ID) adminIds.push(process.env.TELEGRAM_ADMIN_ID.trim());
+            const isAdmin = adminIds.includes(String(telegramId));
 
             if (!isAdmin) {
                 this.bot?.sendMessage(chatId, "⛔ Доступ запрещен.");
                 return;
             }
 
-            this.bot?.sendMessage(chatId, "⏳ Генерация файла локализации...");
+            this.bot?.sendMessage(chatId, "⏳ Генерация файла локализации (CSV)...");
 
             try {
-                // Dynamic import to avoid init checks
-                const { LocalizationExportService } = await import('../services/localization-export.service');
-                const service = new LocalizationExportService();
-                const csvContent = service.generateCsv();
-                const buffer = Buffer.from(csvContent, 'utf-8');
+                const csv = await this.localizationService.exportToCsv();
+                const filePath = path.join(__dirname, '../../localization_export.csv');
+                fs.writeFileSync(filePath, csv);
 
-                await this.bot?.sendDocument(chatId, buffer, {
-                    caption: `📄 Файл локализации (CSV)\nДата: ${new Date().toLocaleString()}`
-                }, {
-                    filename: `moneo_locales_${new Date().toISOString().split('T')[0]}.csv`,
-                    contentType: 'text/csv'
+                await this.bot?.sendDocument(chatId, filePath, {
+                    caption: `✅ Файл локализации.\nОтредактируйте и отправьте обратно для импорта.\nВнимание: Это перезапишет переводы и обновит код карточек.`
                 });
             } catch (e: any) {
                 console.error("Export Error:", e);
@@ -844,7 +850,23 @@ export class BotService {
             }
         });
 
-        // Handle Documents (Backup Restore)
+        // /import_locales command
+        this.bot.onText(/\/import_locales/, async (msg) => {
+            const chatId = msg.chat.id;
+            const telegramId = msg.from?.id;
+
+            // Admin check
+            const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => id.trim());
+            if (process.env.TELEGRAM_ADMIN_ID) adminIds.push(process.env.TELEGRAM_ADMIN_ID.trim());
+            const isAdmin = adminIds.includes(String(telegramId));
+
+            if (!isAdmin) return;
+
+            this.localesImportStates.set(chatId, { state: 'WAITING_LOCALE_FILE' });
+            this.bot?.sendMessage(chatId, "📂 **Импорт Локализации**\n\nОтправьте файл `localization_export.csv` для применения изменений.\n\n⚠️ **Внимание**: Это перезапишет текущие переводы и исходный код карточек!", { parse_mode: 'Markdown' });
+        });
+
+        // Handle Documents (Backup Restore + Localization Import)
         this.bot.on('document', async (msg) => {
             const chatId = msg.chat.id;
             const telegramId = msg.from?.id;
@@ -852,32 +874,50 @@ export class BotService {
             // 1. Check Admin
             const adminIds = (process.env.ADMIN_IDS || '').split(',').map(id => id.trim());
             if (process.env.TELEGRAM_ADMIN_ID) adminIds.push(process.env.TELEGRAM_ADMIN_ID.trim());
+            if (!adminIds.includes(String(telegramId))) return;
 
-            if (!adminIds.includes(String(telegramId))) return; // Ignore non-admins
-
-            // 2. Check File Type
             const file = msg.document;
-            if (!file || !file.file_name?.endsWith('.json')) {
-                // Quietly ignore or maybe warn if it looks like they tried?
-                // Let's ignore to avoid spamming on random uploads
+            if (!file) return;
+
+            // 2. Localization Import (CSV)
+            const localesState = this.localesImportStates.get(chatId);
+            if (localesState && localesState.state === 'WAITING_LOCALE_FILE' && file.file_name?.endsWith('.csv')) {
+                this.bot?.sendMessage(chatId, "⏳ Загрузка и импорт CSV...");
+                try {
+                    const downloadPath = await this.bot?.downloadFile(file.file_id, path.join(__dirname, '../../'));
+                    if (downloadPath) {
+                        const content = fs.readFileSync(downloadPath, 'utf-8');
+                        const logs = await this.localizationService.importFromCsv(content);
+
+                        this.bot?.sendMessage(chatId, `✅ Импорт завершен!\n\n${logs.join('\n')}\n\n♻️ Рекомендуется перезапустить сервер.`);
+                        this.localesImportStates.delete(chatId);
+                        fs.unlinkSync(downloadPath);
+                    }
+                } catch (e: any) {
+                    console.error("Import Locales Error:", e);
+                    this.bot?.sendMessage(chatId, `❌ Ошибка импорта: ${e.message}`);
+                    this.localesImportStates.delete(chatId);
+                }
                 return;
             }
 
-            // 3. Confirm Intent
-            // Ideally we'd ask for confirmation, but for now let's just do it as requested "when uploading... it updates"
-            this.bot?.sendMessage(chatId, `⏳ Обнаружен файл бэкапа: ${file.file_name}\nСкачивание и восстановление...`);
+            // 3. Backup Restore (JSON) - Only if explicitly detected or maybe via state?
+            // Existing logic was permissive (just check extension). Let's keep it but slightly safer.
+            if (file.file_name?.endsWith('.json')) {
+                this.bot?.sendMessage(chatId, `⏳ Обнаружен файл бэкапа: ${file.file_name}\nСкачивание и восстановление...`);
+                try {
+                    const fileLink = await this.bot?.getFileLink(file.file_id);
+                    if (!fileLink) throw new Error("Could not get file link");
 
-            try {
-                const fileLink = await this.bot?.getFileLink(file.file_id);
-                if (!fileLink) throw new Error("Could not get file link");
+                    const { restoreBackup } = await import('../restore_db');
+                    await restoreBackup(fileLink);
 
-                const { restoreBackup } = await import('../restore_db');
-                await restoreBackup(fileLink);
-
-                this.bot?.sendMessage(chatId, "✅ База данных успешно восстановлена из загруженного файла!");
-            } catch (e: any) {
-                console.error("File Restore Error:", e);
-                this.bot?.sendMessage(chatId, `❌ Ошибка восстановления:\n${e.message}`);
+                    this.bot?.sendMessage(chatId, "✅ База данных успешно восстановлена из загруженного файла!");
+                } catch (e: any) {
+                    console.error("File Restore Error:", e);
+                    this.bot?.sendMessage(chatId, `❌ Ошибка восстановления:\n${e.message}`);
+                }
+                return;
             }
         });
 
